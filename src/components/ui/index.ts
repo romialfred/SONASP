@@ -41,3 +41,9 @@ export type { SiteSelectorProps, Site } from './SiteSelector';
 
 export { NotificationPanel } from './NotificationPanel';
 export type { NotificationPanelProps, Notification } from './NotificationPanel';
+
+export { default as DatePicker } from './DatePicker';
+export type { DatePickerProps } from './DatePicker';
+
+export { FileUpload } from './FileUpload';
+export type { FileUploadProps } from './FileUpload';

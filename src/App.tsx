@@ -7,6 +7,13 @@ import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
 import { RefineryDashboard } from './pages/dashboards/RefineryDashboard';
 import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
+import { BatchListing } from './pages/batches/BatchListing';
+import { BatchCreate } from './pages/batches/BatchCreate';
+import { BatchDetails } from './pages/batches/BatchDetails';
+import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
+import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
+import { RefiningDashboard } from './pages/refining/RefiningDashboard';
+import { RefiningProcess } from './pages/refining/RefiningProcess';
 
 function App() {
   return (
@@ -21,6 +28,16 @@ function App() {
           <Route path="/dashboard/refinery" element={<RefineryDashboard />} />
           <Route path="/dashboard/customer" element={<CustomerDashboard />} />
           <Route path="/profile" element={<Profile />} />
+
+          <Route path="/batches" element={<BatchListing />} />
+          <Route path="/batches/new" element={<BatchCreate />} />
+          <Route path="/batches/:id" element={<BatchDetails />} />
+
+          <Route path="/receiving" element={<ReceivingDashboard />} />
+          <Route path="/receiving/:id/confirm" element={<ReceivingConfirm />} />
+
+          <Route path="/refining" element={<RefiningDashboard />} />
+          <Route path="/refining/:id/process" element={<RefiningProcess />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>

@@ -16,6 +16,7 @@ export interface TableProps<T> {
   className?: string;
   pagination?: boolean;
   pageSize?: number;
+  onRowClick?: (row: T) => void;
 }
 
 export function Table<T extends Record<string, any>>({
@@ -24,6 +25,7 @@ export function Table<T extends Record<string, any>>({
   className,
   pagination = false,
   pageSize = 10,
+  onRowClick,
 }: TableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -102,7 +104,14 @@ export function Table<T extends Record<string, any>>({
               </tr>
             ) : (
               paginatedData.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
+                <tr
+                  key={rowIndex}
+                  className={cn(
+                    "hover:bg-gray-50",
+                    onRowClick && "cursor-pointer"
+                  )}
+                  onClick={() => onRowClick?.(row)}
+                >
                   {columns.map((column) => (
                     <td
                       key={column.key}

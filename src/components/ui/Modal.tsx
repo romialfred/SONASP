@@ -6,11 +6,12 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
+  title?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   className?: string;
 }
 
-export function Modal({ isOpen, onClose, children, size = 'md', className }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, size = 'md', className }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -65,7 +66,14 @@ export function Modal({ isOpen, onClose, children, size = 'md', className }: Mod
         role="dialog"
         aria-modal="true"
       >
-        {children}
+        {title ? (
+          <>
+            <ModalHeader onClose={onClose}>{title}</ModalHeader>
+            {children}
+          </>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );

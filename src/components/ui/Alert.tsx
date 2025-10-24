@@ -4,11 +4,15 @@ import { cn } from '@/utils/cn';
 
 export interface AlertProps {
   variant?: 'info' | 'success' | 'warning' | 'error';
+  type?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
   children: ReactNode;
   className?: string;
 }
 
-export function Alert({ variant = 'info', children, className }: AlertProps) {
+export function Alert({ variant = 'info', type, title, children, className }: AlertProps) {
+  const actualVariant = type || variant;
+
   const variants = {
     info: {
       container: 'bg-blue-50 border-blue-200 text-blue-800',
@@ -28,12 +32,15 @@ export function Alert({ variant = 'info', children, className }: AlertProps) {
     },
   };
 
-  const { container, icon } = variants[variant];
+  const { container, icon } = variants[actualVariant];
 
   return (
     <div className={cn('flex items-start gap-3 p-4 rounded-lg border', container, className)}>
       <div className="flex-shrink-0 mt-0.5">{icon}</div>
-      <div className="flex-1 text-sm">{children}</div>
+      <div className="flex-1">
+        {title && <div className="font-semibold mb-1">{title}</div>}
+        <div className="text-sm">{children}</div>
+      </div>
     </div>
   );
 }

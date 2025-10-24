@@ -393,6 +393,336 @@ export interface Database {
           updated_at?: string
         }
       }
+      user_profiles: {
+        Row: {
+          id: string
+          email: string
+          full_name: string | null
+          phone: string | null
+          role: 'factory' | 'airport' | 'refinery' | 'customer' | 'management'
+          is_active: boolean
+          two_factor_enabled: boolean
+          two_factor_secret: string | null
+          backup_codes: string[] | null
+          language: 'en' | 'fr'
+          email_notifications: boolean
+          batch_notifications: boolean
+          approval_notifications: boolean
+          last_login_at: string | null
+          last_login_ip: string | null
+          failed_login_attempts: number
+          locked_until: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          full_name?: string | null
+          phone?: string | null
+          role?: 'factory' | 'airport' | 'refinery' | 'customer' | 'management'
+          is_active?: boolean
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          backup_codes?: string[] | null
+          language?: 'en' | 'fr'
+          email_notifications?: boolean
+          batch_notifications?: boolean
+          approval_notifications?: boolean
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          failed_login_attempts?: number
+          locked_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string | null
+          phone?: string | null
+          role?: 'factory' | 'airport' | 'refinery' | 'customer' | 'management'
+          is_active?: boolean
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          backup_codes?: string[] | null
+          language?: 'en' | 'fr'
+          email_notifications?: boolean
+          batch_notifications?: boolean
+          approval_notifications?: boolean
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          failed_login_attempts?: number
+          locked_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_site_assignments: {
+        Row: {
+          id: string
+          user_id: string
+          site_id: string
+          is_primary: boolean
+          assigned_by: string | null
+          assigned_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          site_id: string
+          is_primary?: boolean
+          assigned_by?: string | null
+          assigned_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          site_id?: string
+          is_primary?: boolean
+          assigned_by?: string | null
+          assigned_at?: string
+        }
+      }
+      user_permissions: {
+        Row: {
+          id: string
+          user_id: string
+          permission: string
+          resource: string
+          granted_by: string | null
+          granted_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          permission: string
+          resource: string
+          granted_by?: string | null
+          granted_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          permission?: string
+          resource?: string
+          granted_by?: string | null
+          granted_at?: string
+        }
+      }
+      user_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          session_token: string
+          ip_address: string | null
+          user_agent: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_token: string
+          ip_address?: string | null
+          user_agent?: string | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_token?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+      }
+      security_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_type: string
+          ip_address: string | null
+          user_agent: string | null
+          details: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_type: string
+          ip_address?: string | null
+          user_agent?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          event_type?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+      }
+      batch_status_history: {
+        Row: {
+          id: string
+          batch_id: string
+          status: string
+          changed_by: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          batch_id: string
+          status: string
+          changed_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          batch_id?: string
+          status?: string
+          changed_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+      }
+      receiving_records: {
+        Row: {
+          id: string
+          batch_id: string
+          site_id: string
+          expected_weight_grams: number
+          received_weight_grams: number
+          variance_grams: number
+          variance_percentage: number
+          received_by: string | null
+          reconciled: boolean
+          reconciliation_notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          batch_id: string
+          site_id: string
+          expected_weight_grams: number
+          received_weight_grams: number
+          variance_grams: number
+          variance_percentage: number
+          received_by?: string | null
+          reconciled?: boolean
+          reconciliation_notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          batch_id?: string
+          site_id?: string
+          expected_weight_grams?: number
+          received_weight_grams?: number
+          variance_grams?: number
+          variance_percentage?: number
+          received_by?: string | null
+          reconciled?: boolean
+          reconciliation_notes?: string | null
+          created_at?: string
+        }
+      }
+      refining_records: {
+        Row: {
+          id: string
+          batch_id: string
+          pre_melt_weight_grams: number
+          post_melt_weight_grams: number
+          fineness_percentage: number
+          metal_retained_percentage: number
+          final_fine_grams: number
+          final_fine_ounces: number
+          processed_by: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          batch_id: string
+          pre_melt_weight_grams: number
+          post_melt_weight_grams: number
+          fineness_percentage: number
+          metal_retained_percentage: number
+          final_fine_grams: number
+          final_fine_ounces: number
+          processed_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          batch_id?: string
+          pre_melt_weight_grams?: number
+          post_melt_weight_grams?: number
+          fineness_percentage?: number
+          metal_retained_percentage?: number
+          final_fine_grams?: number
+          final_fine_ounces?: number
+          processed_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          sale_id: string
+          amount: number
+          currency: string
+          exchange_rate: number
+          expected_payment_date: string | null
+          actual_payment_date: string | null
+          bank_reference: string | null
+          payment_proof_url: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          amount: number
+          currency: string
+          exchange_rate: number
+          expected_payment_date?: string | null
+          actual_payment_date?: string | null
+          bank_reference?: string | null
+          payment_proof_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          amount?: number
+          currency?: string
+          exchange_rate?: number
+          expected_payment_date?: string | null
+          actual_payment_date?: string | null
+          bank_reference?: string | null
+          payment_proof_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -422,6 +752,33 @@ export interface Database {
       refresh_sales_analytics: {
         Args: Record<string, never>
         Returns: void
+      }
+      log_security_event: {
+        Args: {
+          p_user_id: string | null
+          p_event_type: string
+          p_ip_address?: string | null
+          p_user_agent?: string | null
+          p_details?: Json | null
+        }
+        Returns: void
+      }
+      user_has_permission: {
+        Args: {
+          p_user_id: string
+          p_permission: string
+          p_resource: string
+        }
+        Returns: boolean
+      }
+      get_user_sites: {
+        Args: { p_user_id: string }
+        Returns: {
+          site_id: string
+          site_name: string
+          site_type: string
+          is_primary: boolean
+        }[]
       }
     }
     Enums: {

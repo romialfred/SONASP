@@ -1,5 +1,1259 @@
-For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+# Product Requirements Document: Gold Shipper
 
-By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
+## 1\. Overview
 
-Use icons from lucide-react for logos.
+**App/Website Name:** Gold Shipper
+
+Gold Shipper is a comprehensive web platform designed for Mansa Resources to digitize and track gold and silver shipments and sales across their West African operations in Guinea, Côte d'Ivoire, and Mali. The platform provides end-to-end traceability from mine extraction to final sale, enabling real-time visibility into operations, automated calculations, workflow management, and comprehensive analytics for management oversight.
+
+The application serves mining professionals, logistics coordinators, refinery operators, customers, and management across multiple countries and roles. It solves critical challenges in manual tracking, calculation errors, lack of real-time visibility, compliance requirements, and operational inefficiencies in precious metals supply chain management.
+
+## 2\. Essential Core Features
+
+### User Management & Security
+
+* Multi-role authentication system (Factory, Airport, Refinery, Customer, Management)
+* Two-factor authentication (2FA)
+* Role-based access control with granular permissions
+* Multi-tenant architecture supporting multiple countries/sites
+* Complete audit trail and action logging
+* Multilingual support (French/English)
+
+### Batch Management & Tracking
+
+* Unique auto-generated batch number system
+* Weight tracking in grams with automatic ounce conversion
+* Interactive batch status flow with BPMN-style visualization
+* Status management across the complete supply chain
+* Real-time status updates and notifications
+
+### Shipping & Receiving
+
+* Mine shipping form with batch registration
+* Airport and refinery receiving confirmations
+* Automatic variance detection with threshold alerts
+* Reconciliation workflows for discrepancies
+* Transportation company management
+
+### Gold Refining Management
+
+* Pre and post-melting weight tracking
+* Fineness and metal retention percentage calculations
+* Automatic final fine calculations in grams and ounces
+* Monthly aggregation reporting
+* Approval workflows for processed metals
+
+### Sales Management
+
+* Available balance tracking
+* Customer selection and management
+* Sales price configuration with London AM rates
+* Freight and cost calculations
+* Automatic gross/net proceeds calculations
+* Net smelted royalties (3%) processing
+* Customer approval workflows via email
+
+### Payment Processing
+
+* Customer payment form completion
+* Multiple currency support
+* FX rate tracking and comparison
+* Payment proof upload and verification
+* Management approval workflows
+
+### Analytics & Reporting
+
+* Real-time dashboard with key metrics
+* Sales performance tracking
+* Price trend analysis
+* Customer performance metrics
+* FX rate monitoring and spread analysis
+* Monthly and annual reporting
+
+### External Integrations
+
+* ECB exchange rate API for USD/CFA and USD/GNF
+* Gold price feeds for daily opening/closing rates
+* Email notification system
+* Power BI/Metabase integration capabilities
+
+## 3\. Tech Stack
+
+### Front-End
+
+* **Framework:** React with Vite
+* **Styling:** Tailwind CSS
+* **Charts & Visualization:** Recharts for analytics dashboards
+* **Icons:** Lucide React
+* **Routing:** React Router DOM
+
+### Back-End
+
+* **Database & Backend:** Supabase
+* **Authentication:** Supabase Auth with 2FA
+* **Real-time:** Supabase Realtime for live updates
+* **Storage:** Supabase Storage for document uploads
+* **Database:** PostgreSQL (via Supabase)
+
+### APIs & Integrations
+
+* **Exchange Rates:** European Central Bank (ECB) API
+* **Gold Prices:** Financial data API (Alpha Vantage or similar)
+* **Email Services:** Supabase Edge Functions with email providers
+* **File Storage:** Supabase Storage for payment proofs and documents
+
+### Additional Requirements
+
+* Progressive Web App (PWA) capabilities for mobile access
+* Multi-language support with i18next
+* Export capabilities for reporting
+* Audit logging system
+* Data validation and business rule enforcement
+
+## 4\. Design Preferences
+
+### Interface
+
+The interface should reflect professionalism and trust appropriate for a mining industry application, with clean lines, intuitive workflows, and clear data visualization that supports complex operational processes.
+
+### Color Palette
+
+* **Primary:** Deep Gold (#B8860B) - representing the core business
+* **Secondary:** Slate Blue (#475569) - for professional contrast
+* **Accent:** Emerald Green (#10B981) - for success states and approvals
+
+### Typography
+
+* **Headings:** Inter (modern, professional, highly readable)
+* **Body Text:** Open Sans (clean, widely supported, excellent readability)
+
+### Additional Design Considerations
+
+* Mobile-responsive design for field operations
+* High contrast for outdoor/industrial environments
+* Clear status indicators with color coding
+* Progressive disclosure for complex forms
+* Contextual help and tooltips for calculations
+
+## 5\. All Screens/Pages
+
+### Authentication & User Management
+
+#### `/login` \- Login Page
+
+* Email/username input field
+* Password input field
+* Two-factor authentication code input
+* Remember me checkbox
+* Login button
+* Forgot password link
+* Company logo and branding
+    **Navigation:** Entry point, leads to dashboard based on user role
+
+#### `/dashboard` \- Main Dashboard
+
+* Role-specific navigation menu
+* Key metrics widgets (pending batches, active shipments, sales summary)
+* Recent activity feed
+* Quick action buttons
+* Country/site selector for multi-location users
+* Language toggle (FR/EN)
+* User profile dropdown with logout option
+    **Navigation:** Central hub, accessible from all authenticated pages
+
+#### `/profile` \- User Profile Management
+
+* Personal information form
+* Password change functionality
+* 2FA setup/management
+* Language preference selection
+* Notification settings
+* Activity history
+    **Navigation:** Accessed via user dropdown, back to dashboard
+
+### Batch & Shipment Management
+
+#### `/batches` \- Batch Listing
+
+* Filterable table of all batches
+* Status column with visual indicators
+* Search functionality by batch number, date, weight
+* Country/site filter
+* Export functionality
+* Pagination controls
+* New batch creation button
+    **Navigation:** From main navigation, to individual batch details
+
+#### `/batches/new` \- Create New Batch
+
+* Shipping date picker
+* Auto-generated batch number display
+* Weight in grams input with real-time ounce conversion
+* Comments textarea
+* Site selection dropdown
+* Save draft and submit buttons
+* Validation messages
+    **Navigation:** From batch listing, returns to batch listing after creation
+
+#### `/batches/:id` \- Batch Details
+
+* Batch information header
+* Interactive status flow diagram
+* Timeline of all status changes with timestamps
+* Current location and responsible party
+* Weight conversion display
+* Edit button (if permitted)
+* Status update form (role-dependent)
+* Related documents section
+    **Navigation:** From batch listing, back button to listing
+
+#### `/batches/:id/edit` \- Edit Batch \(if permitted\)
+
+* Editable batch information form
+* Change history display
+* Reason for change requirement
+* Save changes button
+* Cancel button
+    **Navigation:** From batch details, back to batch details
+
+### Receiving & Processing
+
+#### `/receiving` \- Receiving Dashboard
+
+* Pending receipts table
+* Recently received items
+* Site-specific filtering
+* Quick receive action buttons
+* Discrepancy alerts section
+    **Navigation:** From main navigation for Airport/Refinery roles
+
+#### `/receiving/:id/confirm` \- Confirm Receipt
+
+* Batch information display
+* Expected vs received weight comparison
+* Variance calculation and percentage
+* Confirm receipt button (enabled/disabled based on variance)
+* Reconciliation button for high variances
+* Comments section for justification
+* Upload supporting documents
+    **Navigation:** From receiving dashboard, back to dashboard after completion
+
+#### `/refining` \- Refining Management
+
+* Batches ready for processing table
+* Processing in progress section
+* Completed processing awaiting approval
+* Monthly aggregation display
+    **Navigation:** From main navigation for Refinery role
+
+#### `/refining/:id/process` \- Process Refining Data
+
+* Pre-melting weight input
+* Post-melting weight input
+* Fineness percentage input
+* Metal retained percentage input
+* Automatic final fine calculations display
+* Processing notes textarea
+* Submit for approval button
+    **Navigation:** From refining dashboard, back after completion
+
+### Sales Management
+
+#### `/sales` \- Sales Dashboard
+
+* Available inventory summary
+* Pending sales table
+* Approved sales awaiting customer confirmation
+* Monthly sales metrics
+* Customer performance overview
+    **Navigation:** From main navigation for authorized roles
+
+#### `/sales/new` \- Create New Sale
+
+* Available balance display
+* Customer selection dropdown
+* Quantity to sell input
+* London AM rate input with current rate suggestion
+* Freight and other costs input
+* Automatic calculations display (gross proceeds, net proceeds, etc.)
+* Multi-step form for partial stock sales
+* Submit to management button
+    **Navigation:** From sales dashboard, back after completion
+
+#### `/sales/:id` \- Sale Details
+
+* Complete sale information
+* Calculation breakdown
+* Customer details
+* Status tracking
+* Email communication log
+* Payment tracking section
+* Approval workflow status
+    **Navigation:** From sales dashboard, back button to listing
+
+### Customer Management
+
+#### `/customers` \- Customer Listing
+
+* Customer directory table
+* Contact information display
+* Recent transaction history
+* Performance metrics
+* Add new customer button
+* Search and filter functionality
+    **Navigation:** From main navigation for authorized roles
+
+#### `/customers/:id` \- Customer Profile
+
+* Complete customer information
+* Transaction history
+* Payment performance metrics
+* Communication history
+* Edit customer button
+* Active sales with this customer
+    **Navigation:** From customer listing, back to listing
+
+#### `/customers/:id/payments` \- Customer Payment Processing
+
+* Payment form with expected date
+* Amount and currency inputs
+* Bank information section
+* FX rate display and comparison
+* Payment proof upload
+* Submit for approval workflow
+    **Navigation:** From customer profile or sales details
+
+### Analytics & Reporting
+
+#### `/analytics` \- Analytics Dashboard
+
+* Interactive charts for sales trends
+* Price movement visualization
+* Customer performance metrics
+* FX rate tracking charts
+* Export functionality for all reports
+* Date range selectors
+* Country/site filtering
+    **Navigation:** From main navigation for Management role
+
+#### `/reports` \- Report Generation
+
+* Predefined report templates
+* Custom report builder
+* Scheduled report configuration
+* Report history and downloads
+* Email delivery setup
+    **Navigation:** From main navigation for authorized roles
+
+### Administration
+
+#### `/admin/users` \- User Management
+
+* User listing table
+* Role assignment interface
+* Permission matrix
+* User creation form
+* Deactivate/activate user controls
+* Audit trail for user changes
+    **Navigation:** From admin menu for Management role
+
+#### `/admin/settings` \- System Settings
+
+* Company information management
+* Exchange rate configuration
+* Gold price feed settings
+* Email template customization
+* Threshold configuration for variances
+* Notification settings
+    **Navigation:** From admin menu for authorized roles
+
+#### `/admin/audit` \- Audit Trail
+
+* Complete action logging
+* User activity tracking
+* Filter by date, user, action type
+* Export audit logs
+* Compliance reporting
+    **Navigation:** From admin menu for authorized roles
+
+## 6\. App Menu and Navigation Structure
+
+### Primary Navigation (Horizontal Top Bar)
+
+* Logo and company name on the left
+* Role-based navigation menu items
+* Language toggle (FR/EN)
+* User profile dropdown on the right
+* Notification bell icon with badge count
+
+### Role-Based Menu Structure
+
+#### Factory Role
+
+* Dashboard
+* Batches (Create New, View All)
+* Shipments
+* Reports
+
+#### Airport Role
+
+* Dashboard
+* Receiving
+* Batches (View Assigned)
+* Shipments
+
+#### Refinery Role
+
+* Dashboard
+* Receiving
+* Refining
+* Batches (View Processing)
+* Quality Control
+
+#### Customer Role
+
+* Dashboard
+* Sales (View Assigned)
+* Payments
+* Documents
+
+#### Management Role
+
+* Dashboard
+* Analytics
+* Sales Management
+* Customer Management
+* User Administration
+* System Settings
+* Audit Trail
+* Reports
+
+### Secondary Navigation
+
+* Breadcrumb navigation for deep pages
+* Back buttons on detail pages
+* Quick action floating buttons where appropriate
+* Context-sensitive menus on data tables
+
+### Mobile Navigation Considerations
+
+Since this is a web application, responsive design ensures mobile accessibility with:
+
+* Collapsible hamburger menu for smaller screens
+* Touch-friendly button sizes
+* Swipe gestures for table navigation
+* Modal dialogs for forms on mobile
+
+## 7\. User Flow
+
+### Primary User Flow: Complete Batch Processing
+
+#### Step 1: Factory User Creates Batch
+
+1. Factory user logs in with 2FA authentication
+2. Navigates to Dashboard showing pending shipments
+3. Clicks "Create New Batch" button
+4. Fills shipping form with date, weight in grams
+5. System auto-generates batch number and converts to ounces
+6. Adds optional comments about the batch
+7. Submits batch which triggers "Shipped" status
+8. System sends notification to Airport team
+9. Factory user can track batch status on dashboard
+
+#### Step 2: Airport Confirms Receipt
+
+1. Airport user receives notification of incoming batch
+2. Navigates to Receiving dashboard
+3. Sees pending batch in incoming table
+4. Clicks "Confirm Receipt" for the batch
+5. Reviews expected vs actual weight
+6. If variance is within threshold, clicks "Confirm Receipt"
+7. If variance exceeds threshold, system requires reconciliation
+8. Enters justification and supporting documentation
+9. Updates batch status to "Received at Airport"
+10. System notifies Refinery of incoming batch
+
+#### Step 3: Refinery Processing
+
+1. Refinery user sees batch in their receiving queue
+2. Confirms receipt at refinery location
+3. Navigates to Refining section when ready to process
+4. Opens processing form for the batch
+5. Enters pre-melting weight, post-melting weight
+6. Inputs fineness percentage and metal retained percentage
+7. System automatically calculates final fine in grams and ounces
+8. Submits processing data which requires approval
+9. Supervisor with "Agree for Sell" rights reviews and approves
+10. Batch moves to "Ready for Sale" status
+
+#### Step 4: Sales Process
+
+1. Sales user accesses Sales dashboard
+2. Sees available inventory including processed batch
+3. Creates new sale by selecting customer
+4. Enters quantity to sell and current London AM rate
+5. System calculates gross proceeds, net proceeds, royalties
+6. Reviews all automatic calculations
+7. Submits sale to Management for approval
+8. Management reviews and approves sale
+9. System emails customer with sale details
+10. Customer receives email and clicks "Approve for Payment"
+
+#### Step 5: Payment and Completion
+
+1. Customer completes payment form with bank details
+2. Uploads proof of payment
+3. Submits payment confirmation
+4. Management reviews and approves payment
+5. System closes the batch with final status
+6. All stakeholders receive completion notification
+7. Batch appears in completed sales analytics
+
+### Alternative Flows
+
+#### Variance Resolution Flow
+
+* When receiving variance exceeds threshold
+* System disables standard confirm button
+* User must provide detailed justification
+* Supervisor approval required before proceeding
+* Complete audit trail maintained
+
+#### Customer Rejection Flow
+
+* Customer clicks "Reject" instead of "Approve for Payment"
+* System notifies sales team of rejection
+* Sale returns to pending status
+* Renegotiation or cancellation process initiated
+
+#### Multi-Customer Sale Flow
+
+* When selling less than 100% to single customer
+* System presents additional customer forms
+* Each customer receives separate approval email
+* Payment tracking maintained per customer
+* Final batch closure when all payments complete
+
+### Emergency/Exception Flows
+
+* System maintenance mode with user notifications
+* Data synchronization issues with clear error messages
+* Network connectivity problems with offline capability
+* Security breach protocols with immediate lockdown procedures
+
+# Implementation Plan Overview
+
+This implementation plan covers building Gold Shipper, a comprehensive web platform for tracking gold and silver shipments across West African operations. The project will be developed as a Progressive Web App using React, Vite, Tailwind CSS, and Supabase backend.
+
+**Implementation Phases:**
+
+1. **Phase 1:** Core UI Foundation & Authentication Pages
+2. **Phase 2:** Dashboard & Navigation System
+3. **Phase 3:** Batch Management & Tracking Interface
+4. **Phase 4:** Sales, Customer & Analytics Interfaces
+5. **Phase 5:** Authentication & Security Implementation
+6. **Phase 6:** Core Backend Integration & Database Setup
+7. **Phase 7:** Advanced Features & Third-party Integrations
+8. **Phase 8:** Review, Testing & Optimization
+
+# Phase 1: Core UI Foundation & Authentication Pages
+
+## Objective
+
+Establish the foundational UI components, styling system, and authentication-related interfaces using React, Vite, and Tailwind CSS.
+
+## Detailed Tasks
+
+### 1.1 Project Setup & Configuration
+
+* Initialize new Vite + React project with TypeScript
+* Configure Tailwind CSS with custom color palette (Deep Gold #B8860B, Slate Blue #475569, Emerald Green #10B981)
+* Set up Google Fonts (Inter for headings, Open Sans for body text)
+* Configure React Router DOM for navigation
+* Install and configure Lucide React for icons
+* Set up i18next for multilingual support (French/English)
+* Configure PWA capabilities with Vite PWA plugin
+
+### 1.2 Base Component Library
+
+* Create reusable Button components with variants (primary, secondary, success, danger)
+* Build Input components (text, number, password, textarea, select, date picker)
+* Develop Form components with validation states
+* Create Card components for content containers
+* Build Modal/Dialog components for popups
+* Design Alert/Notification components for status messages
+* Create Loading states and Spinner components
+* Build Table components with sorting and filtering capabilities
+
+### 1.3 Authentication Pages
+
+* **Login Page (/login)**
+    * Email/username input field with validation
+    * Password input field with show/hide toggle
+    * Two-factor authentication code input (conditional)
+    * Remember me checkbox
+    * Login button with loading state
+    * Forgot password link
+    * Company logo and branding section
+    * Language toggle in header
+    * Responsive design for mobile devices
+* **Profile Page (/profile)**
+    * Personal information form (name, email, phone)
+    * Password change section with current/new password fields
+    * 2FA setup/management toggle
+    * Language preference dropdown
+    * Notification settings checkboxes
+    * Activity history table
+    * Save changes button with success feedback
+
+### 1.4 Layout Components
+
+* Create main layout wrapper with header and content areas
+* Build responsive header with logo, navigation placeholder, and user dropdown
+* Design breadcrumb component for page navigation
+* Create mobile-responsive navigation structure
+* Build page wrapper components with consistent spacing
+
+## Expected Deliverables
+
+* Fully configured React + Vite project with Tailwind CSS
+* Complete component library with consistent styling
+* Login and profile pages with responsive design
+* PWA configuration and basic offline capabilities
+* Multilingual infrastructure setup
+* Base layout structure ready for content integration
+
+# Phase 2: Dashboard & Navigation System
+
+## Objective
+
+Implement role-based navigation system and dashboard interfaces for all user types with real-time metrics display.
+
+## Detailed Tasks
+
+### 2.1 Navigation System
+
+* Create role-based navigation menu component
+* Implement horizontal top bar with logo, menu items, and user controls
+* Build collapsible hamburger menu for mobile devices
+* Design role-specific menu structures:
+    * Factory: Dashboard, Batches, Shipments, Reports
+    * Airport: Dashboard, Receiving, Batches, Shipments
+    * Refinery: Dashboard, Receiving, Refining, Batches, Quality Control
+    * Customer: Dashboard, Sales, Payments, Documents
+    * Management: Dashboard, Analytics, Sales, Customers, Admin, Settings, Audit, Reports
+* Add language toggle and notification bell with badge
+* Create user profile dropdown with logout functionality
+
+### 2.2 Dashboard Components
+
+* Build metrics widgets for key statistics display
+* Create activity feed component for recent actions
+* Design quick action buttons section
+* Build country/site selector for multi-location users
+* Create status indicator components with color coding
+* Develop chart components using Recharts for data visualization
+
+### 2.3 Main Dashboard (/dashboard)
+
+* **Factory Dashboard:**
+    * Pending shipments widget
+    * Recent batch creation activity
+    * Shipping statistics chart
+    * Quick "Create New Batch" action button
+* **Airport Dashboard:**
+    * Incoming batches awaiting receipt
+    * Recently received items
+    * Variance alerts section
+    * Quick receive action buttons
+* **Refinery Dashboard:**
+    * Batches ready for processing
+    * Processing in progress
+    * Completed processing awaiting approval
+    * Monthly processing statistics
+* **Customer Dashboard:**
+    * Assigned sales summary
+    * Payment status overview
+    * Recent transaction history
+    * Document access section
+* **Management Dashboard:**
+    * Company-wide metrics overview
+    * Sales performance charts
+    * Customer performance summary
+    * System alerts and notifications
+
+### 2.4 Responsive Design Implementation
+
+* Ensure all dashboard components work on mobile devices
+* Implement touch-friendly button sizes
+* Create swipe gestures for chart navigation
+* Design modal dialogs for mobile form interactions
+* Test cross-browser compatibility
+
+## Expected Deliverables
+
+* Complete navigation system with role-based menus
+* All dashboard interfaces for different user roles
+* Responsive design working on mobile and desktop
+* Real-time metrics display components (placeholder data)
+* Chart components integrated and functional
+* Mobile navigation with hamburger menu
+
+# Phase 3: Batch Management & Tracking Interface
+
+## Objective
+
+Create comprehensive batch management system with creation, tracking, and status management capabilities.
+
+## Detailed Tasks
+
+### 3.1 Batch Listing Interface (/batches)
+
+* Build filterable data table with search functionality
+* Implement status column with visual indicators
+* Add country/site filter dropdown
+* Create export functionality buttons
+* Design pagination controls
+* Add "New Batch" creation button
+* Implement real-time updates for status changes
+* Build bulk action capabilities for batch operations
+
+### 3.2 Batch Creation (/batches/new)
+
+* Design shipping date picker component
+* Create auto-generated batch number display
+* Build weight input with real-time gram-to-ounce conversion
+* Add comments textarea with character limit
+* Implement site selection dropdown
+* Create save draft functionality
+* Design submit button with confirmation dialog
+* Add validation messages for all fields
+* Build form progress indication
+
+### 3.3 Batch Details & Tracking (/batches/:id)
+
+* Create batch information header with key details
+* Build interactive status flow diagram (BPMN-style visualization)
+* Design timeline component for status changes with timestamps
+* Add current location and responsible party display
+* Implement weight conversion display (grams/ounces)
+* Create edit button with permission checking
+* Build status update form (role-dependent visibility)
+* Add related documents section with upload capability
+
+### 3.4 Receiving & Processing Interfaces
+
+* **Receiving Dashboard (/receiving):**
+    * Pending receipts table with batch details
+    * Recently received items section
+    * Site-specific filtering options
+    * Quick receive action buttons
+    * Discrepancy alerts with color coding
+* **Confirm Receipt (/receiving/:id/confirm):**
+    * Expected vs received weight comparison
+    * Automatic variance calculation and percentage display
+    * Conditional confirm receipt button (enabled/disabled based on variance)
+    * Reconciliation workflow for high variances
+    * Comments section for justification
+    * Document upload for supporting evidence
+* **Refining Management (/refining):**
+    * Batches ready for processing table
+    * Processing in progress section with progress indicators
+    * Completed processing awaiting approval
+    * Monthly aggregation display with charts
+* **Process Refining (/refining/:id/process):**
+    * Pre-melting weight input field
+    * Post-melting weight input field
+    * Fineness percentage input with validation
+    * Metal retained percentage input
+    * Automatic final fine calculations display
+    * Processing notes textarea
+    * Submit for approval workflow
+
+### 3.5 Status Management System
+
+* Create status flow visualization component
+* Implement automatic status transitions
+* Build notification system for status changes
+* Design approval workflow interfaces
+* Create status history tracking
+* Add status-based permission controls
+
+## Expected Deliverables
+
+* Complete batch listing with search and filtering
+* Batch creation form with validation and auto-calculations
+* Detailed batch tracking with interactive status flow
+* Receiving and processing interfaces for different roles
+* Status management system with workflows
+* Document upload and management capabilities
+* Real-time updates for batch status changes
+
+# Phase 4: Sales, Customer & Analytics Interfaces
+
+## Objective
+
+Implement sales management, customer relationship management, and analytics reporting interfaces.
+
+## Detailed Tasks
+
+### 4.1 Sales Management Interface
+
+* **Sales Dashboard (/sales):**
+    * Available inventory summary with real-time data
+    * Pending sales table with status indicators
+    * Approved sales awaiting customer confirmation
+    * Monthly sales metrics with trend charts
+    * Customer performance overview
+* **Create New Sale (/sales/new):**
+    * Available balance display with inventory breakdown
+    * Customer selection dropdown with search
+    * Quantity to sell input with validation
+    * London AM rate input with current rate suggestion
+    * Freight and costs input fields
+    * Automatic calculations display (gross proceeds, net proceeds, royalties)
+    * Multi-step form for partial stock sales
+    * Submit to management workflow
+* **Sale Details (/sales/:id):**
+    * Complete sale information display
+    * Calculation breakdown with formulas
+    * Customer details section
+    * Status tracking timeline
+    * Email communication log
+    * Payment tracking section
+    * Approval workflow status indicators
+
+### 4.2 Customer Management System
+
+* **Customer Listing (/customers):**
+    * Customer directory with contact information
+    * Recent transaction history preview
+    * Performance metrics display
+    * Add new customer button
+    * Advanced search and filtering
+    * Export customer data functionality
+* **Customer Profile (/customers/:id):**
+    * Complete customer information form
+    * Transaction history with pagination
+    * Payment performance metrics and charts
+    * Communication history timeline
+    * Edit customer functionality
+    * Active sales display
+* **Payment Processing (/customers/:id/payments):**
+    * Payment form with expected date picker
+    * Amount and currency inputs with validation
+    * Bank information section
+    * FX rate display and comparison tool
+    * Payment proof upload with file validation
+    * Approval workflow submission
+
+### 4.3 Analytics & Reporting Dashboard
+
+* **Analytics Dashboard (/analytics):**
+    * Interactive sales trend charts using Recharts
+    * Price movement visualization with time controls
+    * Customer performance metrics with comparisons
+    * FX rate tracking charts with multiple currencies
+    * Export functionality for all reports
+    * Date range selectors with presets
+    * Country/site filtering options
+* **Report Generation (/reports):**
+    * Predefined report templates gallery
+    * Custom report builder with drag-and-drop
+    * Scheduled report configuration
+    * Report history with download links
+    * Email delivery setup and management
+
+### 4.4 Administrative Interfaces
+
+* **User Management (/admin/users):**
+    * User listing table with role indicators
+    * Role assignment interface with permissions matrix
+    * User creation form with validation
+    * Activate/deactivate user controls
+    * Audit trail for user changes
+* **System Settings (/admin/settings):**
+    * Company information management
+    * Exchange rate configuration
+    * Gold price feed settings
+    * Email template customization
+    * Threshold configuration for variances
+    * Notification settings management
+* **Audit Trail (/admin/audit):**
+    * Complete action logging display
+    * User activity tracking with filters
+    * Date range filtering
+    * Export audit logs functionality
+    * Compliance reporting tools
+
+## Expected Deliverables
+
+* Complete sales management system with workflow automation
+* Customer relationship management interface
+* Analytics dashboard with interactive charts
+* Report generation system with templates
+* Administrative interfaces for user and system management
+* Audit trail system with comprehensive logging
+* All interfaces responsive and role-based access controlled
+
+# Phase 5: Authentication & Security Implementation
+
+## Objective
+
+Implement comprehensive authentication system with 2FA, role-based access control, and security measures using Supabase Auth.
+
+## Detailed Tasks
+
+### 5.1 Supabase Authentication Setup
+
+* Configure Supabase project and authentication settings
+* Set up email-based authentication with Supabase Auth
+* Configure OAuth providers if needed
+* Set up custom email templates for authentication flows
+* Configure session management and token refresh
+* Implement password policy enforcement
+
+### 5.2 Two-Factor Authentication
+
+* Integrate TOTP (Time-based One-Time Password) system
+* Build 2FA setup flow with QR code generation
+* Create 2FA verification component for login
+* Implement backup codes generation and storage
+* Add 2FA recovery process
+* Build 2FA management in user profile
+
+### 5.3 Role-Based Access Control
+
+* Create user roles table in Supabase
+* Implement permission system with granular controls
+* Build role assignment interface for administrators
+* Create route protection middleware
+* Implement component-level permission checking
+* Add role-based UI element visibility
+
+### 5.4 Multi-Tenant Architecture
+
+* Design country/site-based data isolation
+* Implement tenant-aware database queries
+* Create site assignment system for users
+* Build cross-site access controls for management roles
+* Add tenant selection in user interface
+
+### 5.5 Security Features
+
+* Implement complete audit trail logging
+* Create action logging for all user activities
+* Build IP-based access controls
+* Add session management with timeout
+* Implement password strength requirements
+* Create account lockout after failed attempts
+* Add security headers and CSRF protection
+
+### 5.6 Authentication State Management
+
+* Create authentication context for React app
+* Implement login/logout functionality
+* Build protected route components
+* Add authentication state persistence
+* Create token refresh mechanism
+* Implement automatic logout on token expiry
+
+## Expected Deliverables
+
+* Fully functional Supabase authentication system
+* Two-factor authentication with setup and recovery
+* Role-based access control with granular permissions
+* Multi-tenant architecture supporting multiple sites
+* Comprehensive audit trail and logging system
+* Secure session management with automatic refresh
+* Protected routes and components based on roles
+
+# Phase 6: Core Backend Integration & Database Setup
+
+## Objective
+
+Design and implement the complete database schema, API endpoints, and core business logic using Supabase.
+
+## Detailed Tasks
+
+### 6.1 Database Schema Design
+
+* **Users and Authentication:**
+    * Users table with profile information
+    * User roles and permissions tables
+    * Multi-tenant site assignments
+    * Session management tables
+* **Batch Management:**
+    * Batches table with auto-generated numbers
+    * Batch status tracking with timestamps
+    * Weight conversion and calculations
+    * Site and location tracking
+* **Shipping and Receiving:**
+    * Shipments table with transportation details
+    * Receiving confirmations with variance tracking
+    * Reconciliation workflows and approvals
+    * Document attachments and proofs
+* **Refining Operations:**
+    * Refining processes with pre/post weights
+    * Fineness and retention calculations
+    * Monthly aggregation data
+    * Quality control approvals
+* **Sales and Customer Management:**
+    * Sales transactions with pricing details
+    * Customer information and profiles
+    * Payment tracking and confirmations
+    * Commission and royalty calculations
+
+### 6.2 Supabase Database Implementation
+
+* Create all database tables with proper relationships
+* Set up Row Level Security (RLS) policies for multi-tenant access
+* Create database functions for complex calculations
+* Implement triggers for automatic status updates
+* Set up database indexes for performance optimization
+* Create views for reporting and analytics
+
+### 6.3 API Design & Endpoints
+
+* **Authentication APIs:**
+    * Login/logout with 2FA support
+    * Password reset and recovery
+    * Role and permission management
+    * Session validation and refresh
+* **Batch Management APIs:**
+    * CRUD operations for batches
+    * Status update endpoints
+    * Weight calculation services
+    * Batch tracking and timeline
+* **Sales and Customer APIs:**
+    * Customer management endpoints
+    * Sales creation and approval workflows
+    * Payment processing and confirmation
+    * Price calculation services
+* **Reporting and Analytics APIs:**
+    * Dashboard metrics aggregation
+    * Report generation services
+    * Data export functionality
+    * Historical data analysis
+
+### 6.4 Real-time Features Implementation
+
+* Set up Supabase Realtime for live updates
+* Implement real-time batch status changes
+* Create live dashboard metric updates
+* Add real-time notifications for approvals
+* Build live chat/messaging for customer communications
+
+### 6.5 File Storage and Document Management
+
+* Configure Supabase Storage for document uploads
+* Implement file validation and security
+* Create document versioning system
+* Build image and PDF preview capabilities
+* Add file compression and optimization
+
+### 6.6 Business Logic Implementation
+
+* Create automatic calculation engines for weights and conversions
+* Implement pricing calculation with London AM rates
+* Build commission and royalty calculation logic
+* Create variance detection and alert systems
+* Implement approval workflow engines
+
+## Expected Deliverables
+
+* Complete database schema with all tables and relationships
+* Row Level Security policies for multi-tenant access
+* Full API endpoints for all application features
+* Real-time functionality for status updates and notifications
+* File storage system with security and validation
+* Business logic implementation for calculations and workflows
+* Database triggers and functions for automation
+
+# Phase 7: Advanced Features & Third-party Integrations
+
+## Objective
+
+Integrate external APIs, implement advanced features, and add comprehensive notification systems.
+
+## Detailed Tasks
+
+### 7.1 Exchange Rate Integration
+
+* Integrate European Central Bank (ECB) API for exchange rates
+* Create automated daily rate fetching service
+* Implement USD/CFA and USD/GNF rate tracking
+* Build rate comparison and spread analysis
+* Add historical rate tracking and charts
+* Create rate alert system for significant changes
+
+### 7.2 Gold Price Feed Integration
+
+* Integrate financial data API (Alpha Vantage or similar)
+* Set up daily gold price fetching for London AM rates
+* Implement price trend analysis and visualization
+* Create price alert system for significant movements
+* Add historical price data storage and analysis
+* Build price prediction indicators
+
+### 7.3 Email Notification System
+
+* Set up Supabase Edge Functions for email processing
+* Create email templates for all notification types:
+    * Batch status changes
+    * Sales approvals and rejections
+    * Payment confirmations
+    * Variance alerts
+    * System notifications
+* Implement email delivery tracking
+* Add email preference management for users
+
+### 7.4 Advanced Analytics Features
+
+* Build Power BI integration capabilities
+* Create Metabase dashboard connections
+* Implement advanced reporting with custom queries
+* Add predictive analytics for sales trends
+* Create customer behavior analysis tools
+* Build operational efficiency metrics
+
+### 7.5 Workflow Automation
+
+* Implement automated approval workflows
+* Create conditional logic for different approval paths
+* Build escalation procedures for delayed approvals
+* Add automated reminders and follow-ups
+* Implement batch processing automation
+* Create scheduled report generation
+
+### 7.6 Advanced Security Features
+
+* Implement advanced audit logging with detailed tracking
+* Create data encryption for sensitive information
+* Add backup and disaster recovery procedures
+* Implement data retention policies
+* Create compliance reporting for regulatory requirements
+* Add data anonymization for analytics
+
+### 7.7 Performance Optimization
+
+* Implement caching strategies for frequently accessed data
+* Add database query optimization
+* Create lazy loading for large datasets
+* Implement pagination for all data tables
+* Add search optimization with indexing
+* Create background job processing
+
+## Expected Deliverables
+
+* Fully integrated exchange rate and gold price feeds
+* Comprehensive email notification system
+* Advanced analytics with external tool integration
+* Automated workflow systems with approvals
+* Enhanced security features and compliance tools
+* Performance optimizations for scalability
+* All third-party integrations tested and operational
+
+# Phase 8: Review, Testing & Optimization
+
+## Objective
+
+Conduct comprehensive testing, security review, code refactoring, and final optimization to ensure production readiness.
+
+## Detailed Tasks
+
+### 8.1 Comprehensive Feature Verification
+
+* Test all user flows from PRD requirements
+* Verify role-based access controls work correctly
+* Test multi-tenant functionality across different sites
+* Validate all calculation engines (weights, prices, commissions)
+* Confirm approval workflows function properly
+* Test real-time updates and notifications
+* Verify email system functionality
+* Validate file upload and storage capabilities
+
+### 8.2 Security Review & Hardening
+
+* Conduct security audit of authentication system
+* Review and test 2FA implementation thoroughly
+* Validate Row Level Security policies in Supabase
+* Test for potential SQL injection vulnerabilities
+* Review API endpoint security and rate limiting
+* Audit user permission systems for privilege escalation
+* Test session management and timeout functionality
+* Validate file upload security and virus scanning
+
+### 8.3 Performance Testing & Optimization
+
+* Load test with simulated user traffic
+* Optimize database queries for better performance
+* Test API response times under various loads
+* Optimize frontend bundle size and loading times
+* Test mobile performance and responsiveness
+* Validate PWA functionality and offline capabilities
+* Optimize image and file handling
+* Test real-time features under high load
+
+### 8.4 Cross-Browser & Device Testing
+
+* Test on all major browsers (Chrome, Firefox, Safari, Edge)
+* Validate mobile responsiveness on different screen sizes
+* Test PWA installation and functionality
+* Verify touch interfaces work properly on mobile
+* Test offline functionality and sync capabilities
+* Validate print functionality for reports
+* Test accessibility features and compliance
+
+### 8.5 Data Validation & Business Rules
+
+* Verify all business rule implementations
+* Test edge cases in calculation engines
+* Validate data integrity constraints
+* Test error handling and user feedback
+* Verify audit trail completeness
+* Test data export functionality
+* Validate backup and recovery procedures
+
+### 8.6 User Experience Review
+
+* Review all user interfaces for consistency
+* Test navigation flows and user journeys
+* Validate error messages and user guidance
+* Review mobile user experience
+* Test loading states and feedback
+* Verify internationalization (French/English)
+* Review accessibility features
+
+### 8.7 Code Quality & Documentation
+
+* Code review and refactoring for maintainability
+* Update all component documentation
+* Create deployment documentation
+* Document API endpoints and usage
+* Update user guides and help documentation
+* Create troubleshooting guides
+* Document security procedures
+
+### 8.8 Production Deployment Preparation
+
+* Set up production environment configuration
+* Configure monitoring and logging
+* Set up backup procedures
+* Create deployment scripts
+* Test deployment process
+* Set up monitoring alerts
+* Prepare rollback procedures
+* Conduct final production readiness review
+
+## Expected Deliverables
+
+* Fully tested application with all PRD requirements implemented
+* Security audit report with all issues resolved
+* Performance benchmarks and optimization report
+* Cross-browser compatibility verification
+* Complete documentation package
+* Production deployment package with monitoring
+* User training materials and guides
+* Maintenance and support procedures documentation
+* Final project review and handover documentation

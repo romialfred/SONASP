@@ -4,10 +4,11 @@ import { cn } from '@/utils/cn';
 export interface FormFieldProps extends HTMLAttributes<HTMLDivElement> {
   label?: string;
   error?: string;
+  hint?: string;
   required?: boolean;
 }
 
-export function FormField({ label, error, required, className, children, ...props }: FormFieldProps) {
+export function FormField({ label, error, hint, required, className, children, ...props }: FormFieldProps) {
   return (
     <div className={cn('space-y-2', className)} {...props}>
       {label && (
@@ -17,6 +18,9 @@ export function FormField({ label, error, required, className, children, ...prop
         </label>
       )}
       {children}
+      {hint && !error && (
+        <p className="text-xs text-gray-500">{hint}</p>
+      )}
       {error && (
         <p className="text-sm text-red-600">{error}</p>
       )}

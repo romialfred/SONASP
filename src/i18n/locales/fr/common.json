@@ -108,5 +108,70 @@
     "noRecentActivity": "Aucune activité récente",
     "allSites": "Tous les sites",
     "selectSite": "Sélectionner le site"
+  },
+  "sales": {
+    "title": "Gestion des ventes",
+    "createNewSale": "Créer une nouvelle vente",
+    "saleNumber": "Numéro de vente",
+    "customer": "Client",
+    "quantity": "Quantité",
+    "amount": "Montant",
+    "status": "Statut",
+    "createdDate": "Date de création",
+    "availableInventory": "Inventaire disponible",
+    "pendingSales": "Ventes en attente",
+    "monthlyRevenue": "Revenu mensuel",
+    "completedSales": "Ventes terminées",
+    "londonAMRate": "Taux London AM",
+    "freightCost": "Coût de fret",
+    "otherCosts": "Autres coûts",
+    "grossProceeds": "Produit brut",
+    "netProceeds": "Produit net",
+    "royalties": "Redevances",
+    "finalProceeds": "Produit final",
+    "calculateProceeds": "Calculer les produits",
+    "submitToManagement": "Soumettre à la direction"
+  },
+  "customers": {
+    "title": "Gestion des clients",
+    "addCustomer": "Ajouter un client",
+    "customerName": "Nom du client",
+    "email": "Email",
+    "country": "Pays",
+    "totalPurchases": "Total des achats",
+    "totalSpent": "Total dépensé",
+    "paymentRate": "Taux de paiement",
+    "lastPurchase": "Dernier achat",
+    "contactInfo": "Informations de contact",
+    "performance": "Indicateurs de performance",
+    "transactions": "Historique des transactions",
+    "activeSales": "Ventes actives"
+  },
+  "analytics": {
+    "title": "Tableau de bord analytique",
+    "salesTrend": "Tendance des ventes",
+    "customerPerformance": "Performance client",
+    "goldPrice": "Mouvement du prix de l'or",
+    "fxRates": "Suivi des taux de change",
+    "distribution": "Distribution de production",
+    "exportData": "Exporter les données"
+  },
+  "reports": {
+    "title": "Génération de rapports",
+    "customBuilder": "Créateur de rapports personnalisés",
+    "generateReport": "Générer un rapport",
+    "scheduleReport": "Planifier un rapport",
+    "reportHistory": "Historique des rapports",
+    "templates": "Modèles de rapports"
+  },
+  "admin": {
+    "userManagement": "Gestion des utilisateurs",
+    "systemSettings": "Paramètres système",
+    "auditTrail": "Piste d'audit",
+    "addUser": "Ajouter un nouvel utilisateur",
+    "managePermissions": "Gérer les permissions",
+    "companyInfo": "Informations sur l'entreprise",
+    "thresholds": "Seuils",
+    "notifications": "Notifications"
   }
 }

@@ -108,5 +108,70 @@
     "noRecentActivity": "No recent activity",
     "allSites": "All Sites",
     "selectSite": "Select Site"
+  },
+  "sales": {
+    "title": "Sales Management",
+    "createNewSale": "Create New Sale",
+    "saleNumber": "Sale Number",
+    "customer": "Customer",
+    "quantity": "Quantity",
+    "amount": "Amount",
+    "status": "Status",
+    "createdDate": "Created Date",
+    "availableInventory": "Available Inventory",
+    "pendingSales": "Pending Sales",
+    "monthlyRevenue": "Monthly Revenue",
+    "completedSales": "Completed Sales",
+    "londonAMRate": "London AM Rate",
+    "freightCost": "Freight Cost",
+    "otherCosts": "Other Costs",
+    "grossProceeds": "Gross Proceeds",
+    "netProceeds": "Net Proceeds",
+    "royalties": "Royalties",
+    "finalProceeds": "Final Proceeds",
+    "calculateProceeds": "Calculate Proceeds",
+    "submitToManagement": "Submit to Management"
+  },
+  "customers": {
+    "title": "Customer Management",
+    "addCustomer": "Add Customer",
+    "customerName": "Customer Name",
+    "email": "Email",
+    "country": "Country",
+    "totalPurchases": "Total Purchases",
+    "totalSpent": "Total Spent",
+    "paymentRate": "Payment Rate",
+    "lastPurchase": "Last Purchase",
+    "contactInfo": "Contact Information",
+    "performance": "Performance Metrics",
+    "transactions": "Transaction History",
+    "activeSales": "Active Sales"
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "salesTrend": "Sales Trend",
+    "customerPerformance": "Customer Performance",
+    "goldPrice": "Gold Price Movement",
+    "fxRates": "FX Rate Tracking",
+    "distribution": "Production Distribution",
+    "exportData": "Export Data"
+  },
+  "reports": {
+    "title": "Report Generation",
+    "customBuilder": "Custom Report Builder",
+    "generateReport": "Generate Report",
+    "scheduleReport": "Schedule Report",
+    "reportHistory": "Report History",
+    "templates": "Report Templates"
+  },
+  "admin": {
+    "userManagement": "User Management",
+    "systemSettings": "System Settings",
+    "auditTrail": "Audit Trail",
+    "addUser": "Add New User",
+    "managePermissions": "Manage Permissions",
+    "companyInfo": "Company Information",
+    "thresholds": "Thresholds",
+    "notifications": "Notifications"
   }
 }

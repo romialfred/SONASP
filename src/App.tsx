@@ -14,6 +14,17 @@ import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
 import { RefiningDashboard } from './pages/refining/RefiningDashboard';
 import { RefiningProcess } from './pages/refining/RefiningProcess';
+import { SalesDashboard } from './pages/sales/SalesDashboard';
+import { SaleCreate } from './pages/sales/SaleCreate';
+import { SaleDetails } from './pages/sales/SaleDetails';
+import { CustomerListing } from './pages/customers/CustomerListing';
+import { CustomerProfile } from './pages/customers/CustomerProfile';
+import { PaymentProcessing } from './pages/customers/PaymentProcessing';
+import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
+import { ReportGeneration } from './pages/reports/ReportGeneration';
+import { UserManagement } from './pages/admin/UserManagement';
+import { SystemSettings } from './pages/admin/SystemSettings';
+import { AuditTrail } from './pages/admin/AuditTrail';
 
 function App() {
   return (
@@ -38,6 +49,21 @@ function App() {
 
           <Route path="/refining" element={<RefiningDashboard />} />
           <Route path="/refining/:id/process" element={<RefiningProcess />} />
+
+          <Route path="/sales" element={<SalesDashboard />} />
+          <Route path="/sales/new" element={<SaleCreate />} />
+          <Route path="/sales/:id" element={<SaleDetails />} />
+
+          <Route path="/customers" element={<CustomerListing />} />
+          <Route path="/customers/:id" element={<CustomerProfile />} />
+          <Route path="/customers/:id/payments" element={<PaymentProcessing />} />
+
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
+          <Route path="/reports" element={<ReportGeneration />} />
+
+          <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/settings" element={<SystemSettings />} />
+          <Route path="/audit" element={<AuditTrail />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>

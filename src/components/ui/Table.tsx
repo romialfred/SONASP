@@ -1,0 +1,154 @@
+import { ReactNode, useState } from 'react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/utils/cn';
+import Button from './Button';
+
+export interface Column<T> {
+  key: string;
+  label: string;
+  sortable?: boolean;
+  render?: (value: any, row: T) => ReactNode;
+}
+
+export interface TableProps<T> {
+  data: T[];
+  columns: Column<T>[];
+  className?: string;
+  pagination?: boolean;
+  pageSize?: number;
+}
+
+export function Table<T extends Record<string, any>>({
+  data,
+  columns,
+  className,
+  pagination = false,
+  pageSize = 10,
+}: TableProps<T>) {
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handleSort = (columnKey: string) => {
+    if (sortColumn === columnKey) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(columnKey);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedData = [...data].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
+
+    if (aVal === bVal) return 0;
+
+    const comparison = aVal > bVal ? 1 : -1;
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = pagination ? sortedData.slice(startIndex, endIndex) : sortedData;
+
+  return (
+    <div className={cn('w-full', className)}>
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  className={cn(
+                    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                    column.sortable && 'cursor-pointer select-none hover:bg-gray-100'
+                  )}
+                  onClick={() => column.sortable && handleSort(column.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.label}
+                    {column.sortable && (
+                      <div className="flex flex-col">
+                        {sortColumn === column.key ? (
+                          sortDirection === 'asc' ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-gray-300" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {paginatedData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-6 py-8 text-center text-sm text-gray-500"
+                >
+                  No data available
+                </td>
+              </tr>
+            ) : (
+              paginatedData.map((row, rowIndex) => (
+                <tr key={rowIndex} className="hover:bg-gray-50">
+                  {columns.map((column) => (
+                    <td
+                      key={column.key}
+                      className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap"
+                    >
+                      {column.render
+                        ? column.render(row[column.key], row)
+                        : row[column.key]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {pagination && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-4">
+          <div className="text-sm text-gray-700">
+            Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of{' '}
+            {sortedData.length} results
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

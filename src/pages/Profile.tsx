@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Lock, Globe, Bell, Clock } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -10,6 +10,8 @@ import Button from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { useToast } from '@/components/ui/Toast';
 import { Table, Column } from '@/components/ui/Table';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface ActivityLog {
   action: string;
@@ -20,10 +22,11 @@ interface ActivityLog {
 export function Profile() {
   const { t } = useTranslation();
   const { addToast } = useToast();
+  const { user, updatePassword, refreshProfile } = useAuth();
 
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [phone, setPhone] = useState('+1234567890');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,6 +37,19 @@ export function Profile() {
   const [approvalNotifications, setApprovalNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (user) {
+      setName(user.full_name || '');
+      setEmail(user.email);
+      setPhone(user.phone || '');
+      setTwoFactorEnabled(user.two_factor_enabled);
+      setLanguage(user.language);
+      setEmailNotifications(user.email_notifications);
+      setBatchNotifications(user.batch_notifications);
+      setApprovalNotifications(user.approval_notifications);
+    }
+  }, [user]);
 
   const activityLogs: ActivityLog[] = [
     { action: 'Login', timestamp: '2025-10-24 10:30:00', ip: '192.168.1.1' },
@@ -92,10 +108,26 @@ export function Profile() {
 
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          full_name: name,
+          phone: phone || null,
+          language,
+          email_notifications: emailNotifications,
+          batch_notifications: batchNotifications,
+          approval_notifications: approvalNotifications,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await refreshProfile();
       addToast(t('auth.changesSaved'), 'success');
-    } catch (error) {
-      addToast('Failed to save changes', 'error');
+    } catch (error: any) {
+      addToast(error.message || 'Failed to save changes', 'error');
     } finally {
       setLoading(false);
     }
@@ -108,13 +140,18 @@ export function Profile() {
 
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast(t('auth.changesSaved'), 'success');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      addToast('Failed to change password', 'error');
+      const result = await updatePassword(newPassword);
+
+      if (result.error) {
+        addToast(result.error, 'error');
+      } else {
+        addToast(t('auth.changesSaved'), 'success');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error: any) {
+      addToast(error.message || 'Failed to change password', 'error');
     } finally {
       setLoading(false);
     }

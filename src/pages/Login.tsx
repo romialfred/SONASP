@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
@@ -6,9 +7,13 @@ import Input from '@/components/ui/Input';
 import PasswordInput from '@/components/ui/PasswordInput';
 import Button from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDefaultRoute } from '@/lib/permissions';
 
 export function Login() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -51,12 +56,16 @@ export function Login() {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log('Login:', { email, password, twoFactorCode, rememberMe });
-    } catch (error) {
-      console.error('Login failed:', error);
+      const result = await signIn(email, password);
+
+      if (result.error) {
+        setErrors({ general: result.error });
+      }
+    } catch (error: any) {
+      setErrors({ general: error.message || 'An unexpected error occurred' });
     } finally {
       setLoading(false);
     }
@@ -89,6 +98,12 @@ export function Login() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.general && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800">{errors.general}</p>
+              </div>
+            )}
+
             <FormField
               label={t('auth.email')}
               error={errors.email}

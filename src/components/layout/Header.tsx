@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Bell, LogOut, User, Globe } from 'lucide-react';
 import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface HeaderProps {
   onMenuClick: () => void;
@@ -10,6 +11,8 @@ export interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -135,6 +138,12 @@ export function Header({ onMenuClick }: HeaderProps) {
               <div className="w-8 h-8 bg-secondary-500 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-white" />
               </div>
+              {user && (
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium text-gray-900">{user.full_name || user.email}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                </div>
+              )}
             </button>
 
             {showUserMenu && (
@@ -153,7 +162,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                     {t('auth.profile')}
                   </Link>
                   <button
-                    onClick={() => console.log('Logout')}
+                    onClick={async () => {
+                      await signOut();
+                      setShowUserMenu(false);
+                      navigate('/login');
+                    }}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                   >
                     <LogOut className="h-4 w-4" />

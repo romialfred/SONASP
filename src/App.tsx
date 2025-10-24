@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { PublicRoute } from './components/auth/PublicRoute';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
@@ -25,47 +28,227 @@ import { ReportGeneration } from './pages/reports/ReportGeneration';
 import { UserManagement } from './pages/admin/UserManagement';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { AuditTrail } from './pages/admin/AuditTrail';
+import { PERMISSIONS } from './lib/permissions';
 
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<ManagementDashboard />} />
-          <Route path="/dashboard/factory" element={<FactoryDashboard />} />
-          <Route path="/dashboard/airport" element={<AirportDashboard />} />
-          <Route path="/dashboard/refinery" element={<RefineryDashboard />} />
-          <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-          <Route path="/profile" element={<Profile />} />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
 
-          <Route path="/batches" element={<BatchListing />} />
-          <Route path="/batches/new" element={<BatchCreate />} />
-          <Route path="/batches/:id" element={<BatchDetails />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ManagementDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/factory"
+              element={
+                <ProtectedRoute allowedRoles={['factory']}>
+                  <FactoryDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/airport"
+              element={
+                <ProtectedRoute allowedRoles={['airport']}>
+                  <AirportDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/refinery"
+              element={
+                <ProtectedRoute allowedRoles={['refinery']}>
+                  <RefineryDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/customer"
+              element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <CustomerDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/receiving" element={<ReceivingDashboard />} />
-          <Route path="/receiving/:id/confirm" element={<ReceivingConfirm />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/refining" element={<RefiningDashboard />} />
-          <Route path="/refining/:id/process" element={<RefiningProcess />} />
+            <Route
+              path="/batches"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                  <BatchListing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/batches/new"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_CREATE}>
+                  <BatchCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/batches/:id"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                  <BatchDetails />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/sales" element={<SalesDashboard />} />
-          <Route path="/sales/new" element={<SaleCreate />} />
-          <Route path="/sales/:id" element={<SaleDetails />} />
+            <Route
+              path="/receiving"
+              element={
+                <ProtectedRoute allowedRoles={['airport', 'refinery']}>
+                  <ReceivingDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/receiving/:id/confirm"
+              element={
+                <ProtectedRoute allowedRoles={['airport', 'refinery']}>
+                  <ReceivingConfirm />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/customers" element={<CustomerListing />} />
-          <Route path="/customers/:id" element={<CustomerProfile />} />
-          <Route path="/customers/:id/payments" element={<PaymentProcessing />} />
+            <Route
+              path="/refining"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <RefiningDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/refining/:id/process"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <RefiningProcess />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/analytics" element={<AnalyticsDashboard />} />
-          <Route path="/reports" element={<ReportGeneration />} />
+            <Route
+              path="/sales"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                  <SalesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales/new"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                  <SaleCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales/:id"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                  <SaleDetails />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/settings" element={<SystemSettings />} />
-          <Route path="/audit" element={<AuditTrail />} />
-        </Routes>
-      </BrowserRouter>
+            <Route
+              path="/customers"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                  <CustomerListing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers/:id"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                  <CustomerProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers/:id/payments"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                  <PaymentProcessing />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <AnalyticsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
+                  <ReportGeneration />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SETTINGS_VIEW}>
+                  <SystemSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
+                  <AuditTrail />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ToastProvider>
   );
 }

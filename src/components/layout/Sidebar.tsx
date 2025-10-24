@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -23,6 +24,7 @@ export interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarProps) {
   const { t } = useTranslation();
+  const location = useLocation();
 
   const menuItems = {
     factory: [
@@ -89,20 +91,25 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
         </div>
 
         <nav className="p-4 space-y-1">
-          {items.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-              }}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
-            </a>
-          ))}
+          {items.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                  isActive
+                    ? "bg-primary-100 text-primary-700 font-semibold"
+                    : "text-gray-700 hover:bg-primary-50 hover:text-primary-700"
+                )}
+                onClick={onClose}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </aside>
     </>

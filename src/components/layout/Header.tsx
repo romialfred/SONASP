@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Menu, Bell, LogOut, User, Globe } from 'lucide-react';
+import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
 
 export interface HeaderProps {
   onMenuClick: () => void;
@@ -10,6 +12,36 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const mockNotifications: Notification[] = [
+    {
+      id: '1',
+      type: 'success',
+      title: 'Batch Received',
+      message: 'Batch #BT-2024-001 has been successfully received at airport',
+      time: '5 minutes ago',
+      read: false
+    },
+    {
+      id: '2',
+      type: 'warning',
+      title: 'Weight Variance Detected',
+      message: 'Batch #BT-2024-002 has a 2.5% variance in weight',
+      time: '1 hour ago',
+      read: false
+    },
+    {
+      id: '3',
+      type: 'info',
+      title: 'Approval Required',
+      message: 'Sale #SL-2024-015 is pending your approval',
+      time: '3 hours ago',
+      read: true
+    }
+  ];
+
+  const unreadCount = mockNotifications.filter(n => !n.read).length;
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
@@ -63,10 +95,37 @@ export function Header({ onMenuClick }: HeaderProps) {
             )}
           </div>
 
-          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 bg-red-500 rounded-full w-2 h-2"></span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg relative"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {showNotifications && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowNotifications(false)}
+                />
+                <div className="absolute right-0 mt-2 z-20">
+                  <NotificationPanel
+                    notifications={mockNotifications}
+                    onNotificationClick={(id) => {
+                      console.log('Notification clicked:', id);
+                      setShowNotifications(false);
+                    }}
+                    onMarkAllRead={() => console.log('Mark all as read')}
+                  />
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="relative">
             <button
@@ -79,22 +138,29 @@ export function Header({ onMenuClick }: HeaderProps) {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                <a
-                  href="/profile"
-                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
-                >
-                  <User className="h-4 w-4" />
-                  {t('auth.profile')}
-                </a>
-                <button
-                  onClick={() => console.log('Logout')}
-                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t('auth.logout')}
-                </button>
-              </div>
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowUserMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    {t('auth.profile')}
+                  </Link>
+                  <button
+                    onClick={() => console.log('Logout')}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {t('auth.logout')}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

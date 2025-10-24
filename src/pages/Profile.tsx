@@ -10,8 +10,10 @@ import Button from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { useToast } from '@/components/ui/Toast';
 import { Table, Column } from '@/components/ui/Table';
+import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
 
 interface ActivityLog {
   action: string;
@@ -37,6 +39,7 @@ export function Profile() {
   const [approvalNotifications, setApprovalNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [show2FASetup, setShow2FASetup] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -50,6 +53,39 @@ export function Profile() {
       setApprovalNotifications(user.approval_notifications);
     }
   }, [user]);
+
+  const handleDisable2FA = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          two_factor_enabled: false,
+          two_factor_secret: null,
+          backup_codes: null,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await supabase.rpc('log_security_event', {
+        p_user_id: user.id,
+        p_event_type: '2fa_disabled',
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent,
+        p_details: null,
+      });
+
+      await refreshProfile();
+      addToast('Two-factor authentication disabled', 'success');
+    } catch (error: any) {
+      addToast(error.message || 'Failed to disable 2FA', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const activityLogs: ActivityLog[] = [
     { action: 'Login', timestamp: '2025-10-24 10:30:00', ip: '192.168.1.1' },
@@ -268,13 +304,28 @@ export function Profile() {
                 <Button
                   variant={twoFactorEnabled ? 'danger' : 'success'}
                   size="sm"
-                  onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
+                  onClick={() => twoFactorEnabled ? handleDisable2FA() : setShow2FASetup(true)}
+                  loading={loading}
                 >
                   {twoFactorEnabled ? t('auth.disable2FA') : t('auth.enable2FA')}
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          <Modal
+            isOpen={show2FASetup}
+            onClose={() => setShow2FASetup(false)}
+            title=""
+          >
+            <TwoFactorSetup
+              onComplete={() => {
+                setShow2FASetup(false);
+                addToast('Two-factor authentication enabled successfully', 'success');
+              }}
+              onCancel={() => setShow2FASetup(false)}
+            />
+          </Modal>
 
           <Card>
             <CardHeader>

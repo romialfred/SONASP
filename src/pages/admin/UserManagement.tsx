@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Edit, Lock, Unlock, Shield } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -10,79 +10,198 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
+import { useToast } from '@/components/ui/Toast';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { logUserAction } from '@/lib/auditLog';
+import type { UserRole } from '@/types/auth';
 
 interface User {
   id: string;
-  name: string;
+  full_name: string | null;
   email: string;
-  role: 'factory' | 'airport' | 'refinery' | 'customer' | 'management';
-  site: string;
-  status: 'active' | 'inactive';
-  lastLogin: string;
-  createdDate: string;
+  role: UserRole;
+  site_ids: string[];
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
 }
 
 export function UserManagement() {
   const { t } = useTranslation();
+  const { addToast } = useToast();
+  const { user: currentUser } = useAuth();
 
+  const [users, setUsers] = useState<User[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    role: '' as UserRole | '',
+    siteIds: [] as string[],
+    password: '',
+  });
 
-  const users: User[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@mansa.com',
-      role: 'management',
-      site: 'All Sites',
-      status: 'active',
-      lastLogin: '2024-10-24T09:30:00',
-      createdDate: '2024-01-15',
-    },
-    {
-      id: '2',
-      name: 'Marie Koné',
-      email: 'marie.kone@mansa.com',
-      role: 'factory',
-      site: 'Siguiri Mine',
-      status: 'active',
-      lastLogin: '2024-10-23T16:45:00',
-      createdDate: '2024-02-20',
-    },
-    {
-      id: '3',
-      name: 'Ahmed Traoré',
-      email: 'ahmed.traore@mansa.com',
-      role: 'airport',
-      site: 'Conakry Airport',
-      status: 'active',
-      lastLogin: '2024-10-24T08:15:00',
-      createdDate: '2024-03-10',
-    },
-    {
-      id: '4',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@mansa.com',
-      role: 'refinery',
-      site: 'Bamako Refinery',
-      status: 'active',
-      lastLogin: '2024-10-23T14:20:00',
-      createdDate: '2024-04-05',
-    },
-    {
-      id: '5',
-      name: 'David Smith',
-      email: 'david.smith@premiumgold.com',
-      role: 'customer',
-      site: 'N/A',
-      status: 'inactive',
-      lastLogin: '2024-09-15T10:00:00',
-      createdDate: '2024-05-12',
-    },
-  ];
+  useEffect(() => {
+    fetchUsers();
+    fetchSites();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select(`
+          *,
+          user_site_assignments(site_id)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const usersData: User[] = data.map((profile: any) => ({
+        id: profile.id,
+        full_name: profile.full_name,
+        email: profile.email,
+        role: profile.role,
+        site_ids: profile.user_site_assignments?.map((a: any) => a.site_id) || [],
+        is_active: profile.is_active,
+        last_login_at: profile.last_login_at,
+        created_at: profile.created_at,
+      }));
+
+      setUsers(usersData);
+    } catch (error: any) {
+      addToast(error.message || 'Failed to fetch users', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSites = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sites')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setSites(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch sites:', error);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!currentUser || !formData.email || !formData.role || !formData.password) {
+      addToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({
+            full_name: formData.fullName,
+            phone: formData.phone || null,
+            role: formData.role,
+          })
+          .eq('id', authData.user.id);
+
+        if (profileError) throw profileError;
+
+        if (formData.siteIds.length > 0) {
+          const siteAssignments = formData.siteIds.map((siteId, index) => ({
+            user_id: authData.user!.id,
+            site_id: siteId,
+            is_primary: index === 0,
+            assigned_by: currentUser.id,
+          }));
+
+          const { error: siteError } = await supabase
+            .from('user_site_assignments')
+            .insert(siteAssignments);
+
+          if (siteError) throw siteError;
+        }
+
+        await logUserAction(
+          currentUser.id,
+          currentUser.email,
+          'CREATE',
+          formData.email,
+          `Created new user with role: ${formData.role}`
+        );
+
+        addToast('User created successfully', 'success');
+        setShowCreateModal(false);
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          role: '',
+          siteIds: [],
+          password: '',
+        });
+        fetchUsers();
+      }
+    } catch (error: any) {
+      addToast(error.message || 'Failed to create user', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleUserStatus = async (user: User) => {
+    if (!currentUser) return;
+
+    try {
+      const newStatus = !user.is_active;
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ is_active: newStatus })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await logUserAction(
+        currentUser.id,
+        currentUser.email,
+        newStatus ? 'ACTIVATE' : 'DEACTIVATE',
+        user.email,
+        `${newStatus ? 'Activated' : 'Deactivated'} user account`
+      );
+
+      addToast(`User ${newStatus ? 'activated' : 'deactivated'} successfully`, 'success');
+      fetchUsers();
+    } catch (error: any) {
+      addToast(error.message || 'Failed to update user status', 'error');
+    }
+  };
 
   const roleLabels = {
     factory: 'Factory',
@@ -126,7 +245,11 @@ export function UserManagement() {
   };
 
   const columns = [
-    { key: 'name', label: 'Name' },
+    {
+      key: 'full_name',
+      label: 'Name',
+      render: (user: User) => user.full_name || user.email,
+    },
     { key: 'email', label: 'Email' },
     {
       key: 'role',
@@ -138,21 +261,32 @@ export function UserManagement() {
         />
       ),
     },
-    { key: 'site', label: 'Site' },
     {
-      key: 'status',
+      key: 'site_ids',
+      label: 'Sites',
+      render: (user: User) => (
+        <span className="text-sm">
+          {user.site_ids.length > 0 ? `${user.site_ids.length} site(s)` : 'No sites'}
+        </span>
+      ),
+    },
+    {
+      key: 'is_active',
       label: 'Status',
       render: (user: User) => (
         <StatusBadge
-          label={user.status === 'active' ? 'Active' : 'Inactive'}
-          variant={user.status === 'active' ? 'success' : 'neutral'}
+          label={user.is_active ? 'Active' : 'Inactive'}
+          variant={user.is_active ? 'success' : 'neutral'}
         />
       ),
     },
     {
-      key: 'lastLogin',
+      key: 'last_login_at',
       label: 'Last Login',
-      render: (user: User) => new Date(user.lastLogin).toLocaleString(),
+      render: (user: User) =>
+        user.last_login_at
+          ? new Date(user.last_login_at).toLocaleString()
+          : 'Never',
     },
     {
       key: 'actions',
@@ -173,12 +307,12 @@ export function UserManagement() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              console.log('Toggle user status:', user.id);
+              handleToggleUserStatus(user);
             }}
             className="p-1 hover:bg-gray-100 rounded"
-            title={user.status === 'active' ? 'Deactivate' : 'Activate'}
+            title={user.is_active ? 'Deactivate' : 'Activate'}
           >
-            {user.status === 'active' ? (
+            {user.is_active ? (
               <Lock className="h-4 w-4 text-red-600" />
             ) : (
               <Unlock className="h-4 w-4 text-accent-600" />
@@ -191,7 +325,7 @@ export function UserManagement() {
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -226,7 +360,7 @@ export function UserManagement() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold text-accent-600">
-                {users.filter(u => u.status === 'active').length}
+                {users.filter(u => u.is_active).length}
               </p>
               <p className="text-sm text-gray-600 mt-1">Active Users</p>
             </CardContent>
@@ -291,19 +425,36 @@ export function UserManagement() {
       >
         <div className="space-y-4">
           <FormField label="Full Name" required>
-            <Input placeholder="Enter full name" />
+            <Input
+              placeholder="Enter full name"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+            />
           </FormField>
 
           <FormField label="Email Address" required>
-            <Input type="email" placeholder="user@example.com" />
+            <Input
+              type="email"
+              placeholder="user@example.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
           </FormField>
 
           <FormField label="Phone Number">
-            <Input type="tel" placeholder="+1 234 567 8900" />
+            <Input
+              type="tel"
+              placeholder="+1 234 567 8900"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
           </FormField>
 
           <FormField label="Role" required>
-            <Select>
+            <Select
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+            >
               <option value="">Select role</option>
               <option value="factory">Factory</option>
               <option value="airport">Airport</option>
@@ -314,24 +465,33 @@ export function UserManagement() {
           </FormField>
 
           <FormField label="Site Assignment" required>
-            <Select>
+            <Select
+              value={formData.siteIds[0] || ''}
+              onChange={(e) => setFormData({ ...formData, siteIds: e.target.value ? [e.target.value] : [] })}
+            >
               <option value="">Select site</option>
-              <option value="all">All Sites</option>
-              <option value="guinea">Siguiri Mine, Guinea</option>
-              <option value="mali">Bamako Operations, Mali</option>
-              <option value="ivory">Abidjan Facility, Côte d'Ivoire</option>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.name} ({site.country})
+                </option>
+              ))}
             </Select>
           </FormField>
 
           <FormField label="Initial Password" required hint="User will be prompted to change on first login">
-            <Input type="password" placeholder="Enter temporary password" />
+            <Input
+              type="password"
+              placeholder="Enter temporary password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
           </FormField>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setShowCreateModal(false)}>
+            <Button onClick={handleCreateUser} loading={loading}>
               Create User
             </Button>
           </div>

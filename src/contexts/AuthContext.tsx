@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState } from '@/types/auth';
+import { SessionManager } from '@/lib/sessionManager';
+import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -20,6 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     initialized: false,
   });
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(300);
+  const sessionManagerRef = useRef<SessionManager | null>(null);
 
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
@@ -118,6 +123,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (state.user) {
         await logSecurityEvent(state.user.id, 'logout', {});
       }
+
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stop();
+        sessionManagerRef.current = null;
+      }
+
       await supabase.auth.signOut();
       setState({
         user: null,
@@ -227,7 +238,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading: false,
             initialized: true,
           });
+
+          if (!sessionManagerRef.current) {
+            sessionManagerRef.current = new SessionManager(
+              () => {
+                setRemainingSeconds(300);
+                setShowSessionWarning(true);
+              },
+              async () => {
+                setShowSessionWarning(false);
+                await signOut();
+              }
+            );
+            sessionManagerRef.current.start();
+          }
         } else if (event === 'SIGNED_OUT') {
+          if (sessionManagerRef.current) {
+            sessionManagerRef.current.stop();
+            sessionManagerRef.current = null;
+          }
+
           setState({
             user: null,
             session: null,
@@ -249,8 +279,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stop();
+      }
     };
   }, []);
+
+  const handleExtendSession = () => {
+    if (sessionManagerRef.current) {
+      sessionManagerRef.current.extendSession();
+    }
+    setShowSessionWarning(false);
+  };
 
   const value: AuthContextType = {
     ...state,
@@ -261,7 +301,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <SessionTimeoutWarning
+        isOpen={showSessionWarning}
+        remainingSeconds={remainingSeconds}
+        onExtend={handleExtendSession}
+        onLogout={signOut}
+      />
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

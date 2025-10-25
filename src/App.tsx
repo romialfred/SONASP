@@ -13,6 +13,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditTrailPage } from './pages/AuditTrailPage';
 import { UsersPage } from './pages/users/UsersPage';
+import { CreateUserPage } from './pages/users/CreateUserPage';
 import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
 import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
@@ -123,6 +124,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/create"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <CreateUserPage />
                 </ProtectedRoute>
               }
             />

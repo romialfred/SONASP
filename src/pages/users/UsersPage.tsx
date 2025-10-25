@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { Search, Download, Mail, Shield, CheckCircle, XCircle, UserPlus, Key, Lock, Unlock } from 'lucide-react';
 import { demoUsers, type User } from '@/lib/demoSeed';
@@ -27,14 +26,6 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  const [formData, setFormData] = useState({
-    email: '',
-    full_name: '',
-    phone: '',
-    role: 'factory',
-  });
 
   const navigate = useNavigate();
 
@@ -60,63 +51,6 @@ export function UsersPage() {
   };
 
 
-  const generateRandomPassword = () => {
-    const length = 12;
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return password;
-  };
-
-  const handleCreateUser = async () => {
-    try {
-      const defaultPassword = generateRandomPassword();
-      const invitationToken = crypto.randomUUID();
-
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: defaultPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: formData.full_name,
-          phone: formData.phone,
-        },
-      });
-
-      if (authError) throw authError;
-
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email: formData.email,
-          full_name: formData.full_name,
-          phone: formData.phone,
-          role: formData.role,
-          is_active: true,
-          two_factor_enabled: true,
-          password_must_change: true,
-        });
-
-      if (profileError) throw profileError;
-
-      alert(`User created successfully!\n\nEmail: ${formData.email}\nTemporary Password: ${defaultPassword}\n\nThe user must change this password on first login.`);
-
-      setShowCreateModal(false);
-      setFormData({
-        email: '',
-        full_name: '',
-        phone: '',
-        role: 'factory',
-      });
-      loadUsers();
-    } catch (error: any) {
-      console.error('Error creating user:', error);
-      alert(`Failed to create user: ${error.message}`);
-    }
-  };
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
@@ -171,7 +105,7 @@ export function UsersPage() {
           <div className="flex gap-3">
             <Button
               variant="primary"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => navigate('/users/create')}
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Add New User
@@ -322,92 +256,6 @@ export function UsersPage() {
             )}
           </div>
         </Card>
-
-        {/* Create User Modal */}
-        <Modal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          title="Add New User"
-          size="lg"
-        >
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="John Doe"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
-              <Input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+1234567890"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="factory">Factory</option>
-                <option value="airport">Airport</option>
-                <option value="refinery">Refinery</option>
-                <option value="customer">Customer</option>
-                <option value="management">Management</option>
-              </select>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> A random secure password will be generated and displayed after creation.
-                The user must change this password on first login. 2FA will be enabled by default.
-              </p>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleCreateUser}
-                disabled={!formData.email || !formData.full_name}
-              >
-                Create User
-              </Button>
-            </div>
-          </div>
-        </Modal>
 
       </div>
     </MainLayout>

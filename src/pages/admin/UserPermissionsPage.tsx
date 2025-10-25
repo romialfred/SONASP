@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { Toggle } from '@/components/ui/Toggle';
 import { ArrowLeft, Save, User, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -230,6 +231,12 @@ export function UserPermissionsPage() {
 
   const filteredModules = modules.filter((m) => m.category === activeTab);
 
+  useEffect(() => {
+    if (filteredModules.length > 0 && !selectedModule) {
+      setSelectedModule(filteredModules[0]);
+    }
+  }, [filteredModules]);
+
   if (loading) {
     return (
       <MainLayout>
@@ -371,44 +378,41 @@ export function UserPermissionsPage() {
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 uppercase mb-4">Module-Level Permissions</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="checkbox"
-                              checked={permissions[selectedModule.id]?.can_read || false}
-                              onChange={(e) => updateModulePermission(selectedModule.id, 'can_read', e.target.checked)}
-                              className="h-5 w-5 text-blue-600 rounded"
-                            />
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                             <div>
                               <p className="font-medium text-gray-900">Read</p>
                               <p className="text-xs text-gray-500">View module data</p>
                             </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="checkbox"
-                              checked={permissions[selectedModule.id]?.can_write || false}
-                              onChange={(e) => updateModulePermission(selectedModule.id, 'can_write', e.target.checked)}
-                              className="h-5 w-5 text-blue-600 rounded"
+                            <Toggle
+                              checked={permissions[selectedModule.id]?.can_read || false}
+                              onChange={(checked) => updateModulePermission(selectedModule.id, 'can_read', checked)}
+                              size="lg"
                             />
+                          </div>
+
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                             <div>
                               <p className="font-medium text-gray-900">Write</p>
                               <p className="text-xs text-gray-500">Create and edit data</p>
                             </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="checkbox"
-                              checked={permissions[selectedModule.id]?.can_delete || false}
-                              onChange={(e) => updateModulePermission(selectedModule.id, 'can_delete', e.target.checked)}
-                              className="h-5 w-5 text-blue-600 rounded"
+                            <Toggle
+                              checked={permissions[selectedModule.id]?.can_write || false}
+                              onChange={(checked) => updateModulePermission(selectedModule.id, 'can_write', checked)}
+                              size="lg"
                             />
+                          </div>
+
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                             <div>
                               <p className="font-medium text-gray-900">Delete</p>
                               <p className="text-xs text-gray-500">Remove data</p>
                             </div>
-                          </label>
+                            <Toggle
+                              checked={permissions[selectedModule.id]?.can_delete || false}
+                              onChange={(checked) => updateModulePermission(selectedModule.id, 'can_delete', checked)}
+                              size="lg"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -435,25 +439,27 @@ export function UserPermissionsPage() {
                                           {field.replace(/_/g, ' ')}
                                         </p>
                                       </td>
-                                      <td className="py-3 px-4 text-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={fieldPerm.read}
-                                          onChange={(e) =>
-                                            updateFieldPermission(selectedModule.id, field, 'read', e.target.checked)
-                                          }
-                                          className="h-4 w-4 text-blue-600 rounded"
-                                        />
+                                      <td className="py-3 px-4">
+                                        <div className="flex justify-center">
+                                          <Toggle
+                                            checked={fieldPerm.read}
+                                            onChange={(checked) =>
+                                              updateFieldPermission(selectedModule.id, field, 'read', checked)
+                                            }
+                                            size="md"
+                                          />
+                                        </div>
                                       </td>
-                                      <td className="py-3 px-4 text-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={fieldPerm.write}
-                                          onChange={(e) =>
-                                            updateFieldPermission(selectedModule.id, field, 'write', e.target.checked)
-                                          }
-                                          className="h-4 w-4 text-blue-600 rounded"
-                                        />
+                                      <td className="py-3 px-4">
+                                        <div className="flex justify-center">
+                                          <Toggle
+                                            checked={fieldPerm.write}
+                                            onChange={(checked) =>
+                                              updateFieldPermission(selectedModule.id, field, 'write', checked)
+                                            }
+                                            size="md"
+                                          />
+                                        </div>
                                       </td>
                                     </tr>
                                   );

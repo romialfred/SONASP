@@ -384,7 +384,8 @@ export function BatchDetailsWorkflow() {
 
   const statusSteps = getStatusSteps();
   const isCreator = batch.created_by === user?.id;
-  const canValidate = batch.status === 'created' && isCreator;
+  const isPlantManager = user && (user.role === 'factory' || user.role === 'management');
+  const canValidate = batch.status === 'created' && isCreator && isPlantManager;
 
   return (
     <MainLayout userRole="factory">
@@ -497,11 +498,11 @@ export function BatchDetailsWorkflow() {
 
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <StatusBadge status={batch.status as any} label={batch.status} />
+                      <CheckCircle className="h-5 w-5 text-purple-600" />
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Current Status</p>
-                      <p className="text-sm font-semibold text-gray-900 capitalize">{batch.status.replace('_', ' ')}</p>
+                      <p className="text-sm font-semibold text-gray-900 capitalize">{batch.status.replace(/_/g, ' ')}</p>
                     </div>
                   </div>
 
@@ -617,7 +618,7 @@ export function BatchDetailsWorkflow() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-primary-800">
-                    As the creator, you need to validate this batch for transportation before it can proceed.
+                    As the Plant Manager who created this batch, you need to validate it for transportation.
                   </p>
                   <Button
                     variant="primary"
@@ -642,14 +643,15 @@ export function BatchDetailsWorkflow() {
             )}
 
             {/* Airport Receiving Form */}
-            {batch?.status === 'validated_for_transport' && (
+            {batch?.status === 'validated_for_transport' &&
+             user && (user.role === 'airport' || user.role === 'management') && (
               <Card className="border-blue-200 bg-blue-50">
                 <CardHeader>
                   <CardTitle className="text-blue-900">Airport Receiving</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-blue-800 mb-4">
-                    Confirm batch receipt at airport and assign freight company for transport to refinery.
+                    <strong>Airport Team:</strong> Confirm batch receipt, enter actual weight received, and assign freight company for transport to refinery.
                   </p>
 
                   {/* Weight Confirmation */}

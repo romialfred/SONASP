@@ -296,6 +296,14 @@ function App() {
             />
 
             <Route
+              path="/users"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/users"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>

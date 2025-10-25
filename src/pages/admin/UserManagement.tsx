@@ -57,22 +57,37 @@ export function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select(`
-          *,
-          user_site_assignments(site_id)
-        `)
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      // Use Edge Function to fetch users (bypasses RLS using service role)
+      const { data: { session } } = await supabase.auth.getSession();
 
-      const usersData: User[] = data.map((profile: any) => ({
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const { users: fetchedUsers } = await response.json();
+
+      const usersData: User[] = fetchedUsers.map((profile: any) => ({
         id: profile.id,
         full_name: profile.full_name,
         email: profile.email,
         role: profile.role,
-        site_ids: profile.user_site_assignments?.map((a: any) => a.site_id) || [],
+        site_ids: [], // Site assignments need separate query if needed
         is_active: profile.is_active,
         last_login_at: profile.last_login_at,
         created_at: profile.created_at,

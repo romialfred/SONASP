@@ -47,20 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const MAX_RETRIES = 2;
     const FETCH_TIMEOUT = 5000;
 
-    // In demo mode, immediately return demo user without trying database
-    if (DEMO_MODE) {
-      console.warn('Demo mode: Skipping database profile fetch, using demo user');
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          return createDemoUserProfile(userId, user.email);
-        }
-      } catch (error) {
-        console.error('Error getting auth user for demo profile:', error);
-      }
-      return null;
-    }
-
     const fetchWithTimeout = async (promise: Promise<any>, timeoutMs: number) => {
       return Promise.race([
         promise,

@@ -12,6 +12,7 @@ import {
   FileText,
   Settings,
   Shield,
+  GitBranch,
   X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -56,6 +57,7 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
       { icon: DollarSign, label: t('nav.sales'), href: '/sales' },
       { icon: Users, label: t('nav.customers'), href: '/customers' },
       { icon: Package, label: t('nav.batches'), href: '/batches' },
+      { icon: GitBranch, label: 'Workflow', href: '/admin/workflow' },
       { icon: FileText, label: t('nav.reports'), href: '/reports' },
       { icon: Settings, label: t('nav.settings'), href: '/settings' },
       { icon: Shield, label: t('nav.audit'), href: '/audit' },

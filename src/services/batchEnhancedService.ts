@@ -95,12 +95,15 @@ export const batchEnhancedService = {
       .from('batch_quality_checks')
       .select(`
         *,
-        inspector:user_profiles(full_name, email)
+        inspector:user_profiles!batch_quality_checks_inspector_id_fkey(full_name, email)
       `)
       .eq('batch_id', batchId)
       .order('inspection_date', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[batchEnhancedService] Error loading quality checks:', error);
+      throw error;
+    }
     return data;
   },
 
@@ -376,13 +379,16 @@ export const batchEnhancedService = {
       .from('batch_reservations')
       .select(`
         *,
-        reserved_by_user:user_profiles(full_name, email)
+        reserved_by_user:user_profiles!batch_reservations_reserved_by_fkey(full_name, email)
       `)
       .eq('batch_id', batchId)
       .eq('status', 'active')
       .order('reserved_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[batchEnhancedService] Error loading reservations:', error);
+      throw error;
+    }
     return data;
   },
 

@@ -80,16 +80,23 @@ export function BatchDetails() {
 
   const loadTimeline = async () => {
     try {
+      console.log('[BatchDetails] Loading timeline for batch:', id);
+
       const { data, error } = await supabase
         .from('batch_status_history')
         .select(`
           *,
-          user:user_profiles(full_name)
+          user:user_profiles!batch_status_history_changed_by_fkey(full_name)
         `)
         .eq('batch_id', id)
         .order('changed_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[BatchDetails] Timeline query error:', error);
+        throw error;
+      }
+
+      console.log('[BatchDetails] Timeline data loaded:', data?.length || 0, 'events');
 
       const events: TimelineEvent[] = (data || []).map((item: any, index: number) => ({
         id: item.id,
@@ -103,7 +110,8 @@ export function BatchDetails() {
 
       setTimelineEvents(events);
     } catch (error) {
-      console.error('Error loading timeline:', error);
+      console.error('[BatchDetails] Error loading timeline:', error);
+      setTimelineEvents([]);
     }
   };
 

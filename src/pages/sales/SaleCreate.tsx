@@ -9,7 +9,10 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
+import { Loading } from '@/components/ui/Loading';
 import { calculateSaleProceeds, formatCurrency, formatWeight } from '@/utils/salesUtils';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Customer {
   id: string;
@@ -25,6 +28,7 @@ interface Customer {
 export function SaleCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     customerId: '',
@@ -36,52 +40,68 @@ export function SaleCreate() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCalculations, setShowCalculations] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+
+      if (customersError) throw customersError;
+
+      const { data: salesData, error: salesError } = await supabase
+        .from('sales')
+        .select('customer_id, quantity_oz, london_am_rate, final_proceeds')
+        .in('status', ['approved', 'customer_approved', 'payment_received', 'completed']);
+
+      if (salesError) throw salesError;
+
+      const customerStats = (customersData || []).map(customer => {
+        const customerSales = (salesData || []).filter(s => s.customer_id === customer.id);
+        const ytdGoldSold = customerSales.reduce((sum, s) => sum + parseFloat(s.quantity_oz || 0), 0);
+        const ytdAmount = customerSales.reduce((sum, s) => sum + parseFloat(s.final_proceeds || 0), 0);
+        const ytdAvgPrice = ytdGoldSold > 0
+          ? customerSales.reduce((sum, s) => sum + parseFloat(s.london_am_rate || 0), 0) / customerSales.length
+          : 0;
+
+        return {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          country: customer.country,
+          ytdGoldSold: ytdGoldSold,
+          ytdAvgPrice: ytdAvgPrice,
+          ytdAmount: ytdAmount,
+          isBestCustomer: false
+        };
+      });
+
+      if (customerStats.length > 0) {
+        const maxAmount = Math.max(...customerStats.map(c => c.ytdAmount || 0));
+        customerStats.forEach(c => {
+          c.isBestCustomer = c.ytdAmount === maxAmount && maxAmount > 0;
+        });
+      }
+
+      setCustomers(customerStats);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const availableInventoryGrams = 1250.5;
   const availableInventoryOz = availableInventoryGrams / 31.1035;
-
-  const customers: Customer[] = [
-    {
-      id: '1',
-      name: 'Premium Gold Ltd.',
-      email: 'contact@premiumgold.com',
-      country: 'Switzerland',
-      ytdGoldSold: 458.5,
-      ytdAvgPrice: 2435,
-      ytdAmount: 1116458,
-      isBestCustomer: true
-    },
-    {
-      id: '2',
-      name: 'Global Metals Inc.',
-      email: 'sales@globalmetals.com',
-      country: 'UAE',
-      ytdGoldSold: 325.2,
-      ytdAvgPrice: 2410,
-      ytdAmount: 783732,
-      isBestCustomer: false
-    },
-    {
-      id: '3',
-      name: 'Swiss Refineries SA',
-      email: 'info@swissref.ch',
-      country: 'Switzerland',
-      ytdGoldSold: 412.8,
-      ytdAvgPrice: 2442,
-      ytdAmount: 1008058,
-      isBestCustomer: false
-    },
-    {
-      id: '4',
-      name: 'Asian Gold Trading',
-      email: 'trading@asiangold.com',
-      country: 'Singapore',
-      ytdGoldSold: 289.6,
-      ytdAvgPrice: 2398,
-      ytdAmount: 694501,
-      isBestCustomer: false
-    },
-  ];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -120,9 +140,64 @@ export function SaleCreate() {
     }
   };
 
-  const handleSubmit = () => {
-    if (validateForm() && showCalculations) {
+  const handleSubmit = async () => {
+    if (!validateForm() || !showCalculations) return;
+
+    setSubmitting(true);
+    try {
+      const calculations = calculateSaleProceeds(
+        parseFloat(formData.quantityOz),
+        parseFloat(formData.londonAMRate),
+        parseFloat(formData.freightCost) || 0,
+        parseFloat(formData.otherCosts) || 0
+      );
+
+      const currentYear = new Date().getFullYear();
+      const { data: latestSale } = await supabase
+        .from('sales')
+        .select('sale_number')
+        .like('sale_number', `SL-${currentYear}-%`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      let saleNumber;
+      if (latestSale?.sale_number) {
+        const lastNumber = parseInt(latestSale.sale_number.split('-')[2]);
+        saleNumber = `SL-${currentYear}-${String(lastNumber + 1).padStart(3, '0')}`;
+      } else {
+        saleNumber = `SL-${currentYear}-001`;
+      }
+
+      const { data, error } = await supabase
+        .from('sales')
+        .insert([
+          {
+            sale_number: saleNumber,
+            customer_id: formData.customerId,
+            quantity_oz: parseFloat(formData.quantityOz),
+            london_am_rate: parseFloat(formData.londonAMRate),
+            freight_cost: parseFloat(formData.freightCost) || 0,
+            other_costs: parseFloat(formData.otherCosts) || 0,
+            gross_proceeds: calculations.grossProceeds,
+            net_proceeds: calculations.netProceeds,
+            royalties: calculations.royalties,
+            final_proceeds: calculations.finalAmount,
+            status: 'pending',
+            created_by: user?.id
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
       navigate('/sales');
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      alert('Failed to create sale. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -137,6 +212,16 @@ export function SaleCreate() {
 
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
 
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="flex gap-6">
@@ -146,6 +231,7 @@ export function SaleCreate() {
               variant="outline"
               onClick={() => navigate('/sales')}
               className="flex items-center gap-2"
+              disabled={submitting}
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -472,9 +558,9 @@ export function SaleCreate() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!showCalculations}
+              disabled={!showCalculations || submitting}
             >
-              Submit to Management
+              {submitting ? 'Submitting...' : 'Submit to Management'}
             </Button>
           </div>
         </div>

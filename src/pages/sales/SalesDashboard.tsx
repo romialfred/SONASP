@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Table } from '@/components/ui/Table';
+import { Loading } from '@/components/ui/Loading';
 import { Button } from '@/components/ui/Button';
-import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { formatCurrency, formatWeight } from '@/utils/salesUtils';
+import { supabase } from '@/lib/supabase';
 
 interface Sale {
   id: string;
@@ -27,6 +27,42 @@ export function SalesDashboard() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSales();
+  }, []);
+
+  const fetchSales = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          customer:customers(name, email, country)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const salesData: Sale[] = (data || []).map(sale => ({
+        id: sale.id,
+        saleNumber: sale.sale_number,
+        customer: sale.customer?.name || 'Unknown Customer',
+        quantity: parseFloat(sale.quantity_oz || 0),
+        amount: parseFloat(sale.final_proceeds || 0),
+        status: sale.status,
+        createdDate: sale.created_at
+      }));
+
+      setSales(salesData);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const availableInventory = {
     gold: 1250.5,
@@ -68,35 +104,6 @@ export function SalesDashboard() {
     },
   ];
 
-  const pendingSales: Sale[] = [
-    {
-      id: '1',
-      saleNumber: 'SL-2024-042',
-      customer: 'Premium Gold Ltd.',
-      quantity: 42.5,
-      amount: 156450,
-      status: 'pending',
-      createdDate: '2024-10-20',
-    },
-    {
-      id: '2',
-      saleNumber: 'SL-2024-043',
-      customer: 'Global Metals Inc.',
-      quantity: 38.2,
-      amount: 140538,
-      status: 'approved',
-      createdDate: '2024-10-21',
-    },
-    {
-      id: '3',
-      saleNumber: 'SL-2024-044',
-      customer: 'Swiss Refineries SA',
-      quantity: 55.8,
-      amount: 205242,
-      status: 'customer_approved',
-      createdDate: '2024-10-22',
-    },
-  ];
 
   const monthlySalesData = [
     { name: 'Jan', sales: 12, revenue: 420 },
@@ -111,48 +118,23 @@ export function SalesDashboard() {
     { name: 'Oct', sales: 23, revenue: 812 },
   ];
 
-  const columns = [
-    { key: 'saleNumber', label: 'Sale Number' },
-    { key: 'customer', label: 'Customer' },
-    {
-      key: 'quantity',
-      label: 'Quantity',
-      render: (sale: Sale) => formatWeight(sale.quantity * 31.1035, 'oz'),
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      render: (sale: Sale) => formatCurrency(sale.amount),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (sale: Sale) => {
-        const statusMap = {
-          pending: { label: 'Pending Approval', variant: 'warning' as const },
-          approved: { label: 'Management Approved', variant: 'info' as const },
-          customer_approved: { label: 'Customer Approved', variant: 'success' as const },
-          payment_received: { label: 'Payment Received', variant: 'success' as const },
-          completed: { label: 'Completed', variant: 'success' as const },
-        };
-        const status = statusMap[sale.status] || { label: sale.status, variant: 'info' as const };
-        return <StatusBadge label={status.label} variant={status.variant} />;
-      },
-    },
-    {
-      key: 'createdDate',
-      label: 'Created Date',
-      render: (sale: Sale) => new Date(sale.createdDate).toLocaleDateString(),
-    },
-  ];
-
-  const filteredSales = pendingSales.filter((sale) => {
+  const filteredSales = sales.filter((sale) => {
     const matchesSearch =
       sale.saleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sale.customer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -251,7 +233,7 @@ export function SalesDashboard() {
               </select>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSales.map((sale) => {
                 const statusConfig = {
                   pending: {

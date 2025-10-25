@@ -1,39 +1,80 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Loading } from '@/components/ui/Loading';
 import { Search, Download, Mail, MapPin } from 'lucide-react';
-import { demoCustomers, type Customer } from '@/lib/demoSeed';
+import { supabase } from '@/lib/supabase';
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  country: string;
+  phone?: string;
+  address?: string;
+  status: string;
+}
 
 export function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [segmentFilter, setSegmentFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCustomers = demoCustomers.filter((customer) => {
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.contact_email.toLowerCase().includes(searchQuery.toLowerCase());
+      customer.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesSegment = segmentFilter === 'all' || customer.segment === segmentFilter;
+    const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
 
-    return matchesSearch && matchesSegment;
+    return matchesSearch && matchesStatus;
   });
 
-  const getSegmentColor = (segment: Customer['segment']) => {
-    switch (segment) {
-      case 'Jeweler':
-        return 'bg-purple-100 text-purple-800';
-      case 'Trader':
-        return 'bg-blue-100 text-blue-800';
-      case 'Bank':
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
         return 'bg-green-100 text-green-800';
-      case 'Industrial':
-        return 'bg-orange-100 text-orange-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -43,7 +84,7 @@ export function CustomersPage() {
             <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
             <p className="text-gray-600 mt-1">Manage customer relationships and contacts</p>
           </div>
-          <button className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+          <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <Download className="w-4 h-4" />
             Export
           </button>
@@ -63,31 +104,30 @@ export function CustomersPage() {
                 />
               </div>
               <select
-                value={segmentFilter}
-                onChange={(e) => setSegmentFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="all">All Segments</option>
-                <option value="Jeweler">Jeweler</option>
-                <option value="Trader">Trader</option>
-                <option value="Bank">Bank</option>
-                <option value="Industrial">Industrial</option>
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
               </select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCustomers.map((customer) => (
                 <div
-                  key={customer.customer_id}
+                  key={customer.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{customer.name}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{customer.customer_id}</p>
+                      {customer.phone && <p className="text-xs text-gray-500 mt-1">{customer.phone}</p>}
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSegmentColor(customer.segment)}`}>
-                      {customer.segment}
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(customer.status)}`}>
+                      {customer.status}
                     </span>
                   </div>
 
@@ -98,7 +138,7 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Mail className="w-4 h-4" />
-                      <span className="truncate">{customer.contact_email}</span>
+                      <span className="truncate">{customer.email}</span>
                     </div>
                   </div>
                 </div>

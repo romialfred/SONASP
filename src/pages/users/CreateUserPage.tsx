@@ -21,16 +21,6 @@ export function CreateUserPage() {
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const generateRandomPassword = () => {
-    const length = 12;
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return password;
-  };
-
   const handleCreateUser = async () => {
     if (!formData.email || !formData.full_name) {
       showWarning('Missing Information', 'Please fill in all required fields (Full Name and Email).');
@@ -39,42 +29,35 @@ export function CreateUserPage() {
 
     try {
       setCreating(true);
-      const defaultPassword = generateRandomPassword();
 
-      // Use Supabase signUp instead of admin API
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: defaultPassword,
-        options: {
-          data: {
-            full_name: formData.full_name,
-            phone: formData.phone,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('User creation failed');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('You must be logged in to create users');
       }
 
-      // Update the user profile with additional information
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
           full_name: formData.full_name,
           phone: formData.phone,
           role: formData.role,
-          is_active: true,
-          two_factor_enabled: true,
-          password_must_change: true,
-        })
-        .eq('id', authData.user.id);
+        }),
+      });
 
-      if (profileError) throw profileError;
+      const result = await response.json();
 
-      setGeneratedPassword(defaultPassword);
+      if (!result.success) {
+        throw new Error(result.error || 'User creation failed');
+      }
+
+      setGeneratedPassword(result.temporary_password);
       setShowPassword(true);
     } catch (error: any) {
       console.error('Error creating user:', error);

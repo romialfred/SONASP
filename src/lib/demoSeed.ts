@@ -6,7 +6,13 @@ export interface Batch {
   supplier: string;
   gross_weight_g: number;
   purity_pct: number;
-  status: 'Received' | 'In Process' | 'Shipped' | 'Refined';
+  status: 'Received' | 'In Process' | 'Shipped' | 'Refined' | 'shipped' | 'airport_received' | 'refinery_received' | 'refined' | 'sold';
+  received_weight_g?: number;
+  received_weight_oz?: number;
+  refined_weight_g?: number;
+  fineness_pct?: number;
+  created_at: string;
+  refined_at?: string;
 }
 
 export interface Shipment {
@@ -36,7 +42,7 @@ export interface Customer {
   name: string;
   country: string;
   contact_email: string;
-  segment: 'Jeweler' | 'Trader' | 'Bank' | 'Industrial';
+  segment: 'Jeweler' | 'Trader' | 'Bank' | 'Industrial' | 'Refiner' | 'Exchange' | 'Vault' | 'Market';
 }
 
 export interface Sale {
@@ -70,381 +76,309 @@ export interface User {
   full_name: string;
 }
 
-// Generate dates for the last 14 days
-const generateDates = (days: number): string[] => {
+// Generate dates for a given range
+const generateDates = (days: number, startDate?: Date): string[] => {
   const dates: string[] = [];
-  const today = new Date();
+  const start = startDate || new Date();
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
+    const date = new Date(start);
     date.setDate(date.getDate() - i);
     dates.push(date.toISOString().split('T')[0]);
   }
   return dates;
 };
 
-// Demo Batches
-export const demoBatches: Batch[] = [
-  {
-    batch_id: 'BTH-2025-001',
-    date_received: '2025-10-15',
-    supplier: 'Siguiri Mining Co.',
-    gross_weight_g: 1250.5,
-    purity_pct: 92.5,
-    status: 'Refined',
-  },
-  {
-    batch_id: 'BTH-2025-002',
-    date_received: '2025-10-18',
-    supplier: 'Kankan Gold Ltd.',
-    gross_weight_g: 980.3,
-    purity_pct: 88.2,
-    status: 'In Process',
-  },
-  {
-    batch_id: 'BTH-2025-003',
-    date_received: '2025-10-20',
-    supplier: 'Dinguiraye Resources',
-    gross_weight_g: 1500.8,
-    purity_pct: 94.1,
-    status: 'Shipped',
-  },
-  {
-    batch_id: 'BTH-2025-004',
-    date_received: '2025-10-22',
-    supplier: 'Mandiana Gold Corp.',
-    gross_weight_g: 750.2,
-    purity_pct: 90.3,
-    status: 'Received',
-  },
-  {
-    batch_id: 'BTH-2025-005',
-    date_received: '2025-10-24',
-    supplier: 'Kouroussa Mining',
-    gross_weight_g: 1100.0,
-    purity_pct: 91.8,
-    status: 'Received',
-  },
+// Generate random date within range
+const randomDateInRange = (startDate: string, endDate: string): string => {
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const randomTime = start + Math.random() * (end - start);
+  return new Date(randomTime).toISOString().split('T')[0];
+};
+
+// Suppliers
+const suppliers = [
+  'Siguiri Mining Co.',
+  'Kankan Gold Ltd.',
+  'Dinguiraye Resources',
+  'Mandiana Gold Corp.',
+  'Kouroussa Mining',
+  'Bamako Gold Traders',
+  'Abidjan Mining Group',
+  'West African Gold Co.',
+  'Sahel Resources Ltd.',
+  'Guinea Gold Mining',
 ];
 
-// Demo Shipments
-export const demoShipments: Shipment[] = [
-  {
-    shipment_id: 'SHP-2025-001',
-    batch_id: 'BTH-2025-001',
-    carrier: 'Securitas Transport',
-    origin: 'Conakry Airport',
-    destination: 'Dubai Refinery',
-    ship_date: '2025-10-16',
-    status: 'Delivered',
-  },
-  {
-    shipment_id: 'SHP-2025-002',
-    batch_id: 'BTH-2025-002',
-    carrier: 'Brinks International',
-    origin: 'Conakry Airport',
-    destination: 'Swiss Refinery',
-    ship_date: '2025-10-19',
-    status: 'In Transit',
-  },
-  {
-    shipment_id: 'SHP-2025-003',
-    batch_id: 'BTH-2025-003',
-    carrier: 'Securitas Transport',
-    origin: 'Bamako Airport',
-    destination: 'London Refinery',
-    ship_date: '2025-10-21',
-    status: 'In Transit',
-  },
-  {
-    shipment_id: 'SHP-2025-004',
-    batch_id: 'BTH-2025-004',
-    carrier: 'DHL Secure',
-    origin: 'Abidjan Airport',
-    destination: 'Dubai Refinery',
-    ship_date: '2025-10-23',
-    status: 'Pending',
-  },
-  {
-    shipment_id: 'SHP-2025-005',
-    batch_id: 'BTH-2025-005',
-    carrier: 'Brinks International',
-    origin: 'Conakry Airport',
-    destination: 'Swiss Refinery',
-    ship_date: '2025-10-25',
-    status: 'Pending',
-  },
-];
+// Generate 10 months of batches (100 batches)
+const generateBatches = (): Batch[] => {
+  const batches: Batch[] = [];
+  const startDate = new Date('2025-01-01');
+  const endDate = new Date('2025-10-31');
 
-// Demo Refining
-export const demoRefining: Refining[] = [
-  {
-    refining_id: 'REF-2025-001',
-    batch_id: 'BTH-2025-001',
-    refinery: 'Dubai Gold Refinery',
-    start_date: '2025-10-17',
-    end_date: '2025-10-19',
-    fine_weight_g: 1156.0,
-    assay_pct: 99.95,
-    yield_pct: 99.82,
-    status: 'Completed',
-  },
-  {
-    refining_id: 'REF-2025-002',
-    batch_id: 'BTH-2025-002',
-    refinery: 'Swiss Gold Refinery AG',
-    start_date: '2025-10-20',
-    end_date: null,
-    fine_weight_g: 864.5,
-    assay_pct: 99.99,
-    yield_pct: 99.95,
-    status: 'Processing',
-  },
-  {
-    refining_id: 'REF-2025-003',
-    batch_id: 'BTH-2025-003',
-    refinery: 'London Bullion',
-    start_date: '2025-10-22',
-    end_date: null,
-    fine_weight_g: 0,
-    assay_pct: 0,
-    yield_pct: 0,
-    status: 'Queued',
-  },
-  {
-    refining_id: 'REF-2025-004',
-    batch_id: 'BTH-2025-004',
-    refinery: 'Dubai Gold Refinery',
-    start_date: '2025-10-24',
-    end_date: null,
-    fine_weight_g: 0,
-    assay_pct: 0,
-    yield_pct: 0,
-    status: 'Queued',
-  },
-  {
-    refining_id: 'REF-2025-005',
-    batch_id: 'BTH-2025-005',
-    refinery: 'Swiss Gold Refinery AG',
-    start_date: '2025-10-25',
-    end_date: null,
-    fine_weight_g: 0,
-    assay_pct: 0,
-    yield_pct: 0,
-    status: 'Queued',
-  },
-];
+  for (let i = 0; i < 100; i++) {
+    const createdDate = randomDateInRange('2025-01-01', '2025-10-31');
+    const created = new Date(createdDate);
+    const weight = 500 + Math.random() * 2500; // 500-3000g
+    const variance = (Math.random() * 4) - 2; // -2% to +2%
+    const receivedWeight = weight * (1 + variance / 100);
 
-// Demo Customers
+    // Determine status based on age
+    let status: Batch['status'];
+    const monthsOld = (new Date().getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
+
+    if (monthsOld > 8) {
+      status = 'sold';
+    } else if (monthsOld > 6) {
+      status = 'refined';
+    } else if (monthsOld > 4) {
+      status = 'refinery_received';
+    } else if (monthsOld > 2) {
+      status = 'airport_received';
+    } else {
+      const statuses: Batch['status'][] = ['shipped', 'airport_received', 'refinery_received', 'refined', 'sold'];
+      status = statuses[Math.floor(Math.random() * statuses.length)];
+    }
+
+    const batch: Batch = {
+      batch_id: `BTH-2025-${String(i + 1).padStart(3, '0')}`,
+      date_received: createdDate,
+      supplier: suppliers[Math.floor(Math.random() * suppliers.length)],
+      gross_weight_g: weight,
+      purity_pct: 88 + Math.random() * 7, // 88-95%
+      status,
+      created_at: createdDate,
+    };
+
+    // Add received weight for appropriate statuses
+    if (['airport_received', 'refinery_received', 'refined', 'sold'].includes(status)) {
+      batch.received_weight_g = receivedWeight;
+      batch.received_weight_oz = receivedWeight / 31.1035;
+    }
+
+    // Add refining data for refined/sold batches
+    if (['refined', 'sold'].includes(status)) {
+      const refinedDate = new Date(created);
+      refinedDate.setDate(refinedDate.getDate() + 5);
+      batch.refined_weight_g = receivedWeight * 0.97; // 3% loss
+      batch.fineness_pct = 99.5 + Math.random() * 0.5; // 99.5-100%
+      batch.refined_at = refinedDate.toISOString().split('T')[0];
+    }
+
+    batches.push(batch);
+  }
+
+  return batches;
+};
+
+// Demo Customers - 10 diverse customers
 export const demoCustomers: Customer[] = [
   {
     customer_id: 'CUST-001',
-    name: 'Dubai Gold Traders LLC',
-    country: 'UAE',
-    contact_email: 'contact@dubaigoldtraders.ae',
-    segment: 'Trader',
-  },
-  {
-    customer_id: 'CUST-002',
-    name: 'Swiss Jewelry House',
-    country: 'Switzerland',
-    contact_email: 'sales@swissjewelry.ch',
-    segment: 'Jeweler',
-  },
-  {
-    customer_id: 'CUST-003',
-    name: 'Standard Bank of Africa',
-    country: 'South Africa',
-    contact_email: 'commodities@standardbank.co.za',
-    segment: 'Bank',
-  },
-  {
-    customer_id: 'CUST-004',
-    name: 'London Bullion Markets',
-    country: 'United Kingdom',
-    contact_email: 'trading@londonbullion.co.uk',
-    segment: 'Trader',
-  },
-  {
-    customer_id: 'CUST-005',
-    name: 'Tanishq Jewellers',
-    country: 'India',
-    contact_email: 'procurement@tanishq.co.in',
-    segment: 'Jeweler',
-  },
-  {
-    customer_id: 'CUST-006',
-    name: 'Industrial Gold Solutions',
-    country: 'Germany',
-    contact_email: 'orders@indgoldsol.de',
-    segment: 'Industrial',
-  },
-  {
-    customer_id: 'CUST-007',
-    name: 'Cartier SA',
-    country: 'France',
-    contact_email: 'supply@cartier.fr',
-    segment: 'Jeweler',
-  },
-  {
-    customer_id: 'CUST-008',
     name: 'HSBC Precious Metals',
-    country: 'Hong Kong',
-    contact_email: 'metals@hsbc.com.hk',
+    country: 'United Kingdom',
+    contact_email: 'trading@hsbc.com',
     segment: 'Bank',
   },
   {
-    customer_id: 'CUST-009',
-    name: 'Shanghai Gold Exchange',
-    country: 'China',
-    contact_email: 'international@sge.com.cn',
+    customer_id: 'CUST-002',
+    name: 'UBS Gold Trading',
+    country: 'Switzerland',
+    contact_email: 'gold@ubs.com',
+    segment: 'Bank',
+  },
+  {
+    customer_id: 'CUST-003',
+    name: 'Dubai Gold & Commodities Exchange',
+    country: 'UAE',
+    contact_email: 'info@dgcx.ae',
+    segment: 'Exchange',
+  },
+  {
+    customer_id: 'CUST-004',
+    name: 'Johnson Matthey',
+    country: 'United Kingdom',
+    contact_email: 'precious@matthey.com',
+    segment: 'Refiner',
+  },
+  {
+    customer_id: 'CUST-005',
+    name: 'Singapore Precious Metals',
+    country: 'Singapore',
+    contact_email: 'trading@spmex.sg',
     segment: 'Trader',
   },
   {
-    customer_id: 'CUST-010',
-    name: 'Electronics Components Ltd',
-    country: 'Singapore',
-    contact_email: 'purchasing@electronics.sg',
-    segment: 'Industrial',
-  },
-];
-
-// Demo Sales
-export const demoSales: Sale[] = [
-  {
-    sale_id: 'SALE-2025-001',
-    date: '2025-10-20',
-    customer_id: 'CUST-001',
-    fine_weight_oz: 37.15,
-    price_per_oz_usd: 2650.00,
-    fx_code: 'AED',
-    fx_rate_to_usd: 3.6725,
-    amount_usd: 98447.50,
-    amount_fx: 361503.64,
-  },
-  {
-    sale_id: 'SALE-2025-002',
-    date: '2025-10-21',
-    customer_id: 'CUST-002',
-    fine_weight_oz: 25.80,
-    price_per_oz_usd: 2655.00,
-    fx_code: 'CHF',
-    fx_rate_to_usd: 0.8850,
-    amount_usd: 68499.00,
-    amount_fx: 60621.62,
-  },
-  {
-    sale_id: 'SALE-2025-003',
-    date: '2025-10-21',
-    customer_id: 'CUST-003',
-    fine_weight_oz: 50.00,
-    price_per_oz_usd: 2648.00,
-    fx_code: 'ZAR',
-    fx_rate_to_usd: 18.25,
-    amount_usd: 132400.00,
-    amount_fx: 2416300.00,
-  },
-  {
-    sale_id: 'SALE-2025-004',
-    date: '2025-10-22',
-    customer_id: 'CUST-004',
-    fine_weight_oz: 32.50,
-    price_per_oz_usd: 2652.00,
-    fx_code: 'GBP',
-    fx_rate_to_usd: 0.7750,
-    amount_usd: 86190.00,
-    amount_fx: 66797.25,
-  },
-  {
-    sale_id: 'SALE-2025-005',
-    date: '2025-10-22',
-    customer_id: 'CUST-005',
-    fine_weight_oz: 40.20,
-    price_per_oz_usd: 2660.00,
-    fx_code: 'INR',
-    fx_rate_to_usd: 83.50,
-    amount_usd: 106932.00,
-    amount_fx: 8928822.00,
-  },
-  {
-    sale_id: 'SALE-2025-006',
-    date: '2025-10-23',
     customer_id: 'CUST-006',
-    fine_weight_oz: 15.75,
-    price_per_oz_usd: 2658.00,
-    fx_code: 'EUR',
-    fx_rate_to_usd: 0.9250,
-    amount_usd: 41863.50,
-    amount_fx: 38723.74,
+    name: 'Zurich Gold Vault',
+    country: 'Switzerland',
+    contact_email: 'secure@zurichgold.ch',
+    segment: 'Vault',
   },
   {
-    sale_id: 'SALE-2025-007',
-    date: '2025-10-23',
     customer_id: 'CUST-007',
-    fine_weight_oz: 28.40,
-    price_per_oz_usd: 2662.00,
-    fx_code: 'EUR',
-    fx_rate_to_usd: 0.9250,
-    amount_usd: 75600.80,
-    amount_fx: 69930.74,
+    name: 'Emirates Gold Trading LLC',
+    country: 'UAE',
+    contact_email: 'sales@emiratesgold.ae',
+    segment: 'Trader',
   },
   {
-    sale_id: 'SALE-2025-008',
-    date: '2025-10-24',
     customer_id: 'CUST-008',
-    fine_weight_oz: 60.00,
-    price_per_oz_usd: 2665.00,
-    fx_code: 'HKD',
-    fx_rate_to_usd: 7.8000,
-    amount_usd: 159900.00,
-    amount_fx: 1247220.00,
+    name: 'London Bullion Market',
+    country: 'United Kingdom',
+    contact_email: 'info@lbma.org.uk',
+    segment: 'Market',
   },
   {
-    sale_id: 'SALE-2025-009',
-    date: '2025-10-24',
     customer_id: 'CUST-009',
-    fine_weight_oz: 45.30,
-    price_per_oz_usd: 2668.00,
-    fx_code: 'CNY',
-    fx_rate_to_usd: 7.1500,
-    amount_usd: 120860.40,
-    amount_fx: 864151.86,
+    name: 'Swiss Gold Refiners AG',
+    country: 'Switzerland',
+    contact_email: 'contact@swissgold.ch',
+    segment: 'Refiner',
   },
   {
-    sale_id: 'SALE-2025-010',
-    date: '2025-10-25',
     customer_id: 'CUST-010',
-    fine_weight_oz: 12.50,
-    price_per_oz_usd: 2670.00,
-    fx_code: 'SGD',
-    fx_rate_to_usd: 1.3200,
-    amount_usd: 33375.00,
-    amount_fx: 44055.00,
+    name: 'Asia Pacific Gold Corp',
+    country: 'Singapore',
+    contact_email: 'trading@apgold.sg',
+    segment: 'Trader',
   },
 ];
 
-// Demo Gold Prices (last 14 days)
-const goldPriceDates = generateDates(14);
-export const demoGoldPrices: GoldPrice[] = goldPriceDates.map((date, index) => ({
-  as_of: date,
-  price_per_oz_usd: 2620 + (index * 3) + (Math.random() * 10 - 5), // Trending up with noise
-}));
+// Generate batches
+export const demoBatches: Batch[] = generateBatches();
 
-// Demo FX Rates (last 14 days, 4 currencies)
-const fxCurrencies = ['EUR', 'XOF', 'GHS', 'GNF'];
-const fxBasesRates = {
-  EUR: 0.9250,
-  XOF: 615.50,
-  GHS: 15.80,
-  GNF: 8600.00,
+// Generate sales for sold batches
+const generateSales = (): Sale[] => {
+  const sales: Sale[] = [];
+  const soldBatches = demoBatches.filter(b => b.status === 'sold');
+
+  soldBatches.forEach((batch, index) => {
+    const customer = demoCustomers[Math.floor(Math.random() * demoCustomers.length)];
+    const saleDate = new Date(batch.created_at);
+    saleDate.setDate(saleDate.getDate() + 7);
+
+    // Get gold price for that date (use base price with variation)
+    const basePrice = 2650 + ((new Date(saleDate).getTime() - new Date('2025-01-01').getTime()) / (1000 * 60 * 60 * 24)) * 0.5;
+    const price = basePrice + (Math.random() * 40 - 20); // +/- $20
+
+    const fineWeightOz = batch.refined_weight_g ? batch.refined_weight_g / 31.1035 : 0;
+    const amountUsd = fineWeightOz * price;
+
+    sales.push({
+      sale_id: `SALE-2025-${String(index + 1).padStart(3, '0')}`,
+      date: saleDate.toISOString().split('T')[0],
+      customer_id: customer.customer_id,
+      fine_weight_oz: fineWeightOz,
+      price_per_oz_usd: price,
+      fx_code: 'USD',
+      fx_rate_to_usd: 1,
+      amount_usd: amountUsd,
+      amount_fx: amountUsd,
+    });
+  });
+
+  return sales;
 };
 
-export const demoFxRates: FxRate[] = goldPriceDates.flatMap(date =>
-  fxCurrencies.map(code => ({
-    as_of: date,
-    code,
-    rate_to_usd: fxBasesRates[code as keyof typeof fxBasesRates] * (1 + (Math.random() * 0.02 - 0.01)),
-  }))
-);
+export const demoSales: Sale[] = generateSales();
+
+// Generate 10 months of gold prices (daily, excluding weekends)
+const generateGoldPrices = (): GoldPrice[] => {
+  const prices: GoldPrice[] = [];
+  const startDate = new Date('2025-01-01');
+  const endDate = new Date('2025-10-31');
+  let currentDate = new Date(startDate);
+  let basePrice = 2650;
+
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay();
+    // Skip weekends
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      const variation = Math.random() * 100 - 50; // +/- $50
+      const trend = ((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) * 0.5; // $0.50 per day uptrend
+
+      prices.push({
+        as_of: currentDate.toISOString().split('T')[0],
+        price_per_oz_usd: basePrice + variation + trend,
+      });
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return prices;
+};
+
+export const demoGoldPrices: GoldPrice[] = generateGoldPrices();
+
+// Generate 10 months of FX rates (daily, excluding weekends)
+const generateFxRates = (): FxRate[] => {
+  const rates: FxRate[] = [];
+  const startDate = new Date('2025-01-01');
+  const endDate = new Date('2025-10-31');
+  const currencies = [
+    { code: 'EUR', base: 0.9250 },
+    { code: 'XOF', base: 605.50 },
+    { code: 'GNF', base: 8600.00 },
+    { code: 'CHF', base: 0.8850 },
+  ];
+
+  let currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay();
+    // Skip weekends
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      currencies.forEach(currency => {
+        const variation = (Math.random() * 0.04 - 0.02); // +/- 2%
+        rates.push({
+          as_of: currentDate.toISOString().split('T')[0],
+          code: currency.code,
+          rate_to_usd: currency.base * (1 + variation),
+        });
+      });
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return rates;
+};
+
+export const demoFxRates: FxRate[] = generateFxRates();
+
+// Demo Shipments
+export const demoShipments: Shipment[] = demoBatches.slice(0, 20).map((batch, index) => ({
+  shipment_id: `SHP-2025-${String(index + 1).padStart(3, '0')}`,
+  batch_id: batch.batch_id,
+  carrier: ['Securitas Transport', 'Brinks International', 'DHL Secure', 'G4S Logistics'][Math.floor(Math.random() * 4)],
+  origin: ['Conakry Airport', 'Bamako Airport', 'Abidjan Airport'][Math.floor(Math.random() * 3)],
+  destination: ['Dubai Refinery', 'Swiss Refinery', 'London Refinery'][Math.floor(Math.random() * 3)],
+  ship_date: batch.date_received,
+  status: batch.status === 'sold' || batch.status === 'refined' ? 'Delivered' :
+          batch.status === 'shipped' ? 'Pending' : 'In Transit',
+}));
+
+// Demo Refining
+export const demoRefining: Refining[] = demoBatches
+  .filter(b => ['refined', 'sold'].includes(b.status))
+  .slice(0, 30)
+  .map((batch, index) => {
+    const startDate = new Date(batch.date_received);
+    startDate.setDate(startDate.getDate() + 2);
+    const endDate = batch.refined_at ? new Date(batch.refined_at) : null;
+
+    return {
+      refining_id: `REF-2025-${String(index + 1).padStart(3, '0')}`,
+      batch_id: batch.batch_id,
+      refinery: ['Dubai Gold Refinery', 'Swiss Gold Refinery AG', 'London Bullion'][Math.floor(Math.random() * 3)],
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate ? endDate.toISOString().split('T')[0] : null,
+      fine_weight_g: batch.refined_weight_g || 0,
+      assay_pct: batch.fineness_pct || 0,
+      yield_pct: 99.8 + Math.random() * 0.3,
+      status: batch.status === 'sold' ? 'Completed' : 'Processing',
+    };
+  });
 
 // Demo Users
 export const demoUsers: User[] = [

@@ -43,6 +43,7 @@ import { AuditTrail } from './pages/admin/AuditTrail';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
+import { ParametersPage } from './pages/admin/ParametersPage';
 import { ShippingPage } from './pages/shipping/ShippingPage';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -335,6 +336,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
                   <UserPermissionsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/parameters"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SETTINGS_VIEW}>
+                  <ParametersPage />
                 </ProtectedRoute>
               }
             />

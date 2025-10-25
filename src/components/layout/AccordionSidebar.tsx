@@ -74,13 +74,13 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    id: 'system',
-    label: 'System',
+    id: 'administration',
+    label: 'Administration',
     groupIconColor: 'text-red-500',
     items: [
-      { label: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-orange-500' },
+      { label: 'Users Management', path: '/users', icon: Users, iconColor: 'text-slate-500' },
+      { label: 'Parameters', path: '/parameters', icon: Settings, iconColor: 'text-orange-500' },
       { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-500' },
-      { label: 'Users', path: '/users', icon: Users, iconColor: 'text-slate-500' },
     ],
   },
 ];

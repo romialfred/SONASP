@@ -3,13 +3,14 @@ import { supabase } from './supabase';
 // Session only expires on explicit logout - no automatic timeout
 // Keep token refresh active to maintain connection
 // Supabase JWT tokens expire after 1 hour by default
-// Refresh every 30 minutes to ensure token never expires
-const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000; // Refresh token every 30 minutes
+// Refresh every 50 minutes to ensure token never expires (well before the 60 min expiry)
+const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // Refresh token every 50 minutes
 
 export class SessionManager {
   private lastActivityTime: number = Date.now();
   private tokenRefreshTimer: NodeJS.Timeout | null = null;
   private isActive: boolean = true;
+  private isRefreshing: boolean = false;
 
   constructor() {
     this.setupActivityListeners();
@@ -65,19 +66,23 @@ export class SessionManager {
   private startTokenRefresh() {
     // Periodically refresh the auth token to keep session alive indefinitely
     this.tokenRefreshTimer = setInterval(async () => {
-      if (!this.isActive) return;
+      if (!this.isActive || this.isRefreshing) return;
+
+      this.isRefreshing = true;
 
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error('[SessionManager] Error getting session:', error);
+          this.isRefreshing = false;
           // Don't logout on error, just log and retry on next interval
           return;
         }
 
         if (!session) {
           console.warn('[SessionManager] No active session found');
+          this.isRefreshing = false;
           return;
         }
 
@@ -86,6 +91,11 @@ export class SessionManager {
         if (expiresAt) {
           const expiresInSeconds = expiresAt - Math.floor(Date.now() / 1000);
           console.log('[SessionManager] Token expires in', Math.floor(expiresInSeconds / 60), 'minutes');
+
+          // If token expires in less than 10 minutes, refresh immediately
+          if (expiresInSeconds < 600) {
+            console.warn('[SessionManager] Token expiring soon, refreshing immediately');
+          }
         }
 
         // Refresh the session token
@@ -106,8 +116,30 @@ export class SessionManager {
       } catch (error) {
         console.error('[SessionManager] Token refresh error:', error);
         // Don't logout on error, just log and continue
+      } finally {
+        this.isRefreshing = false;
       }
     }, TOKEN_REFRESH_INTERVAL);
+
+    // Also do an immediate refresh on start to ensure token is fresh
+    setTimeout(async () => {
+      if (!this.isActive || this.isRefreshing) return;
+      this.isRefreshing = true;
+
+      try {
+        console.log('[SessionManager] Performing initial token refresh');
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('[SessionManager] Initial refresh error:', error);
+        } else {
+          console.log('[SessionManager] Initial token refresh successful');
+        }
+      } catch (error) {
+        console.error('[SessionManager] Initial refresh exception:', error);
+      } finally {
+        this.isRefreshing = false;
+      }
+    }, 5000); // Wait 5 seconds after start before first refresh
   }
 
   public getInactivityDuration(): number {

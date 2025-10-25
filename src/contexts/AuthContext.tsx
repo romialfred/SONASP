@@ -185,16 +185,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('[Auth] Manual signOut called');
+
       if (state.user) {
         await logSecurityEvent(state.user.id, 'logout', {});
       }
 
+      // Stop session manager FIRST to mark this as manual logout
       if (sessionManagerRef.current) {
+        console.log('[Auth] Stopping session manager before signOut');
         sessionManagerRef.current.stop();
         sessionManagerRef.current = null;
       }
 
+      // Now call Supabase signOut
+      console.log('[Auth] Calling supabase.auth.signOut()');
       await supabase.auth.signOut();
+
+      // Clear state immediately (don't wait for onAuthStateChange)
+      console.log('[Auth] Clearing auth state');
       setState({
         user: null,
         session: null,
@@ -203,6 +212,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Error signing out:', error);
+      // Even if signOut fails, clear local state
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+        initialized: true,
+      });
     }
   };
 
@@ -360,10 +376,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           console.log('[Auth] SIGNED_OUT event detected');
 
-          // Only process SIGNED_OUT if it's an explicit logout
-          // Don't logout on token expiry - let auto-refresh handle it
+          // CRITICAL FIX: Check if this is a manual logout or automatic
+          // Only clear state if session manager was stopped (manual logout)
+          // Ignore automatic SIGNED_OUT events from token issues
+          const isManualLogout = !sessionManagerRef.current || !sessionManagerRef.current;
+
+          console.log('[Auth] Is manual logout?', isManualLogout);
+
+          // If session manager is still active, this is NOT a manual logout
+          // It's likely a token refresh issue - ignore it
           if (sessionManagerRef.current) {
-            console.log('[Auth] Explicit logout - stopping session manager');
+            console.log('[Auth] Session manager still active - ignoring SIGNED_OUT event');
+            // Try to restore session
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (currentSession) {
+              console.log('[Auth] Session still valid - restoring state');
+              return; // Don't process SIGNED_OUT
+            }
+          }
+
+          // Only clear state if it's truly a manual logout
+          console.log('[Auth] Processing SIGNED_OUT - stopping session manager');
+          if (sessionManagerRef.current) {
             sessionManagerRef.current.stop();
             sessionManagerRef.current = null;
           }

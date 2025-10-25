@@ -18,6 +18,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce',
     // Prevent automatic sign-out on token expiry
     // Token will be refreshed automatically before expiry
+    // Disable debug logs to prevent console spam
+    debug: false,
   },
   global: {
     headers: {

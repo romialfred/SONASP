@@ -1,32 +1,236 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Search, Download, Mail, Shield, CheckCircle, XCircle } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
+import { Search, Download, Mail, Shield, CheckCircle, XCircle, UserPlus, Key, Lock, Unlock } from 'lucide-react';
 import { demoUsers, type User } from '@/lib/demoSeed';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  role: string;
+  is_active: boolean;
+  two_factor_enabled: boolean;
+  created_at: string;
+}
 
 export function UsersPage() {
+  const { user: currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [modules, setModules] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<Record<string, any>>({});
 
-  const filteredUsers = demoUsers.filter((user) => {
+  const [formData, setFormData] = useState({
+    email: '',
+    full_name: '',
+    phone: '',
+    role: 'factory',
+  });
+
+  useEffect(() => {
+    loadUsers();
+    loadModules();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadModules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_name');
+
+      if (error) throw error;
+      setModules(data || []);
+    } catch (error) {
+      console.error('Error loading modules:', error);
+    }
+  };
+
+  const loadUserPermissions = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_permissions')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const perms: Record<string, any> = {};
+      data?.forEach((p) => {
+        perms[p.module_id] = {
+          module_id: p.module_id,
+          can_read: p.can_read,
+          can_write: p.can_write,
+          can_delete: p.can_delete,
+        };
+      });
+
+      setPermissions(perms);
+    } catch (error) {
+      console.error('Error loading permissions:', error);
+    }
+  };
+
+  const generateRandomPassword = () => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      const defaultPassword = generateRandomPassword();
+      const invitationToken = crypto.randomUUID();
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: defaultPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: formData.full_name,
+          phone: formData.phone,
+        },
+      });
+
+      if (authError) throw authError;
+
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: formData.email,
+          full_name: formData.full_name,
+          phone: formData.phone,
+          role: formData.role,
+          is_active: true,
+          two_factor_enabled: true,
+          password_must_change: true,
+        });
+
+      if (profileError) throw profileError;
+
+      alert(`User created successfully!\n\nEmail: ${formData.email}\nTemporary Password: ${defaultPassword}\n\nThe user must change this password on first login.`);
+
+      setShowCreateModal(false);
+      setFormData({
+        email: '',
+        full_name: '',
+        phone: '',
+        role: 'factory',
+      });
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      alert(`Failed to create user: ${error.message}`);
+    }
+  };
+
+  const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ is_active: !isActive })
+        .eq('id', userId);
+
+      if (error) throw error;
+      loadUsers();
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+    }
+  };
+
+  const handleUpdatePermissions = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await supabase
+        .from('user_permissions')
+        .delete()
+        .eq('user_id', selectedUser.id);
+
+      const permsToInsert = Object.entries(permissions)
+        .filter(([_, perm]: [string, any]) => perm.can_read || perm.can_write || perm.can_delete)
+        .map(([moduleId, perm]: [string, any]) => ({
+          user_id: selectedUser.id,
+          module_id: moduleId,
+          can_read: perm.can_read,
+          can_write: perm.can_write,
+          can_delete: perm.can_delete,
+          granted_by: currentUser?.id,
+        }));
+
+      if (permsToInsert.length > 0) {
+        const { error } = await supabase
+          .from('user_permissions')
+          .insert(permsToInsert);
+
+        if (error) throw error;
+      }
+
+      alert('Permissions updated successfully!');
+      setShowPermissionsModal(false);
+    } catch (error: any) {
+      console.error('Error updating permissions:', error);
+      alert(`Failed to update permissions: ${error.message}`);
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+      (user.full_name && user.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
 
     return matchesSearch && matchesRole;
   });
 
-  const getRoleColor = (role: User['role']) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin':
+      case 'management':
         return 'bg-red-100 text-red-800';
-      case 'analyst':
+      case 'factory':
         return 'bg-blue-100 text-blue-800';
-      case 'viewer':
-        return 'bg-gray-100 text-gray-800';
+      case 'airport':
+        return 'bg-green-100 text-green-800';
+      case 'refinery':
+        return 'bg-purple-100 text-purple-800';
+      case 'customer':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -40,24 +244,33 @@ export function UsersPage() {
             <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
             <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
           </div>
-          <button className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
+          <div className="flex gap-3">
+            <Button
+              variant="primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add New User
+            </Button>
+            <button className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <div className="p-4">
               <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">{demoUsers.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
             </div>
           </Card>
           <Card>
             <div className="p-4">
               <p className="text-sm text-gray-600">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
-                {demoUsers.filter(u => u.status === 'active').length}
+                {users.filter(u => u.is_active).length}
               </p>
             </div>
           </Card>
@@ -65,7 +278,7 @@ export function UsersPage() {
             <div className="p-4">
               <p className="text-sm text-gray-600">Disabled Users</p>
               <p className="text-2xl font-bold text-red-600">
-                {demoUsers.filter(u => u.status === 'disabled').length}
+                {users.filter(u => !u.is_active).length}
               </p>
             </div>
           </Card>
@@ -90,9 +303,11 @@ export function UsersPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="analyst">Analyst</option>
-                <option value="viewer">Viewer</option>
+                <option value="management">Management</option>
+                <option value="factory">Factory</option>
+                <option value="airport">Airport</option>
+                <option value="refinery">Refinery</option>
+                <option value="customer">Customer</option>
               </select>
             </div>
 
@@ -114,12 +329,12 @@ export function UsersPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-600">
-                              {user.full_name.split(' ').map(n => n[0]).join('')}
+                              {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('') : user.email.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{user.full_name}</p>
-                            <p className="text-xs text-gray-500">{user.id}</p>
+                            <p className="text-sm font-medium text-gray-900">{user.full_name || user.email}</p>
+                            <p className="text-xs text-gray-500">{user.id.substring(0, 8)}...</p>
                           </div>
                         </div>
                       </td>
@@ -130,13 +345,13 @@ export function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full capitalize ${getRoleColor(user.role)}`}>
                           <Shield className="w-3 h-3" />
                           {user.role}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {user.status === 'active' ? (
+                        {user.is_active ? (
                           <span className="inline-flex items-center gap-1 text-sm text-green-600">
                             <CheckCircle className="w-4 h-4" />
                             Active
@@ -148,10 +363,31 @@ export function UsersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-amber-600 hover:text-amber-700 font-medium">
-                          Edit
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              loadUserPermissions(user.id);
+                              setShowPermissionsModal(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Manage Permissions"
+                          >
+                            <Key className="h-4 w-4 text-blue-600" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleUserStatus(user.id, user.is_active)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title={user.is_active ? 'Deactivate' : 'Activate'}
+                          >
+                            {user.is_active ? (
+                              <Lock className="h-4 w-4 text-red-600" />
+                            ) : (
+                              <Unlock className="h-4 w-4 text-green-600" />
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -166,6 +402,197 @@ export function UsersPage() {
             )}
           </div>
         </Card>
+
+        {/* Create User Modal */}
+        <Modal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          title="Add New User"
+          size="lg"
+        >
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                placeholder="John Doe"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="john@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone
+              </label>
+              <Input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+1234567890"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Role <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="factory">Factory</option>
+                <option value="airport">Airport</option>
+                <option value="refinery">Refinery</option>
+                <option value="customer">Customer</option>
+                <option value="management">Management</option>
+              </select>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> A random secure password will be generated and displayed after creation.
+                The user must change this password on first login. 2FA will be enabled by default.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleCreateUser}
+                disabled={!formData.email || !formData.full_name}
+              >
+                Create User
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Permissions Modal */}
+        <Modal
+          isOpen={showPermissionsModal}
+          onClose={() => setShowPermissionsModal(false)}
+          title={`Manage Permissions - ${selectedUser?.full_name || selectedUser?.email}`}
+          size="xl"
+        >
+          <div className="p-6">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Configure module-level permissions. If a user doesn't have Read permission for a module,
+                it won't be visible in their navigation menu.
+              </p>
+
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Module</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Read</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Write</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modules.map((module) => {
+                      const perm = permissions[module.id] || {
+                        module_id: module.id,
+                        can_read: false,
+                        can_write: false,
+                        can_delete: false,
+                      };
+
+                      return (
+                        <tr key={module.id} className="border-t hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-medium text-gray-900">{module.display_name}</p>
+                              <p className="text-xs text-gray-500">{module.description}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={perm.can_read}
+                              onChange={(e) =>
+                                setPermissions({
+                                  ...permissions,
+                                  [module.id]: { ...perm, can_read: e.target.checked },
+                                })
+                              }
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={perm.can_write}
+                              onChange={(e) =>
+                                setPermissions({
+                                  ...permissions,
+                                  [module.id]: { ...perm, can_write: e.target.checked },
+                                })
+                              }
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={perm.can_delete}
+                              onChange={(e) =>
+                                setPermissions({
+                                  ...permissions,
+                                  [module.id]: { ...perm, can_delete: e.target.checked },
+                                })
+                              }
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setShowPermissionsModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleUpdatePermissions}
+              >
+                Save Permissions
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </MainLayout>
   );

@@ -75,19 +75,35 @@ export default function UserManagementPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading users:', error);
-        setError(`Failed to load users: ${error.message}`);
+      // Use Edge Function to fetch users (bypasses RLS using service role)
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setError('Not authenticated');
         setUsers([]);
-      } else {
-        setUsers(data || []);
-        setError(null);
+        setLoading(false);
+        return;
       }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const { users: fetchedUsers } = await response.json();
+      setUsers(fetchedUsers || []);
+      setError(null);
     } catch (error: any) {
       console.error('Error loading users:', error);
       setError(`Failed to load users: ${error?.message || 'Unknown error'}`);

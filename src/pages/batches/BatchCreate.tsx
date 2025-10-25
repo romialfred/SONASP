@@ -12,44 +12,47 @@ import DatePicker from '@/components/ui/DatePicker';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
-import { createBatch, getSites } from '@/services/batchCreationService';
+import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
 
 interface FormData {
-  supplier: string;
   shipping_date: string;
   weight_grams: string;
   purity_percentage: string;
   site_id: string;
-  carrier: string;
-  destination: string;
+  mine_to_airport_transport_id: string;
+  airport_to_refinery_transport_id: string;
+  destination_refinery_id: string;
   comments: string;
 }
 
 interface FormErrors {
-  supplier?: string;
   shipping_date?: string;
   weight_grams?: string;
   purity_percentage?: string;
   site_id?: string;
-  carrier?: string;
-  destination?: string;
+  mine_to_airport_transport_id?: string;
+  airport_to_refinery_transport_id?: string;
+  destination_refinery_id?: string;
 }
 
 export function BatchCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
-    supplier: '',
     shipping_date: new Date().toISOString().split('T')[0],
     weight_grams: '',
     purity_percentage: '',
     site_id: '',
-    carrier: '',
-    destination: '',
+    mine_to_airport_transport_id: '',
+    airport_to_refinery_transport_id: '',
+    destination_refinery_id: '',
     comments: '',
   });
   const [sites, setSites] = useState<any[]>([]);
+  const [mineToAirportTransports, setMineToAirportTransports] = useState<any[]>([]);
+  const [airportToRefineryTransports, setAirportToRefineryTransports] = useState<any[]>([]);
+  const [refineries, setRefineries] = useState<any[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [batchNumber, setBatchNumber] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -62,11 +65,25 @@ export function BatchCreate() {
 
   useEffect(() => {
     loadSites();
+    loadTransportCompanies();
+    loadRefineries();
   }, []);
 
   const loadSites = async () => {
     const sitesData = await getSites();
     setSites(sitesData);
+  };
+
+  const loadTransportCompanies = async () => {
+    const mineToAirport = await getTransportCompanies('mine_to_airport');
+    const airportToRefinery = await getTransportCompanies('airport_to_refinery');
+    setMineToAirportTransports(mineToAirport);
+    setAirportToRefineryTransports(airportToRefinery);
+  };
+
+  const loadRefineries = async () => {
+    const refineriesData = await getRefineries();
+    setRefineries(refineriesData);
   };
 
   const weightInOunces = formData.weight_grams
@@ -75,10 +92,6 @@ export function BatchCreate() {
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-
-    if (!formData.supplier.trim()) {
-      newErrors.supplier = 'Supplier is required';
-    }
 
     if (!formData.shipping_date) {
       newErrors.shipping_date = 'Shipping date is required';
@@ -103,12 +116,16 @@ export function BatchCreate() {
       newErrors.site_id = 'Site selection is required';
     }
 
-    if (!formData.carrier.trim()) {
-      newErrors.carrier = 'Carrier is required';
+    if (!formData.mine_to_airport_transport_id) {
+      newErrors.mine_to_airport_transport_id = 'Mine to airport transport company is required';
     }
 
-    if (!formData.destination.trim()) {
-      newErrors.destination = 'Destination is required';
+    if (!formData.airport_to_refinery_transport_id) {
+      newErrors.airport_to_refinery_transport_id = 'Airport to refinery transport company is required';
+    }
+
+    if (!formData.destination_refinery_id) {
+      newErrors.destination_refinery_id = 'Destination refinery is required';
     }
 
     setErrors(newErrors);
@@ -141,13 +158,13 @@ export function BatchCreate() {
 
     try {
       const batchData: CreateBatchData = {
-        supplier: formData.supplier,
         origin_site_id: formData.site_id,
         weight_grams: parseFloat(formData.weight_grams),
         purity_percentage: parseFloat(formData.purity_percentage),
         shipping_date: formData.shipping_date,
-        carrier: formData.carrier,
-        destination: formData.destination,
+        mine_to_airport_transport_id: formData.mine_to_airport_transport_id,
+        airport_to_refinery_transport_id: formData.airport_to_refinery_transport_id,
+        destination_refinery_id: formData.destination_refinery_id,
         comments: formData.comments || undefined,
       };
 
@@ -206,20 +223,6 @@ export function BatchCreate() {
                   <p className="text-sm text-gray-600 mb-1">Auto-generated Batch Number</p>
                   <p className="text-2xl font-bold text-primary-700">{batchNumber}</p>
                 </div>
-
-                <FormField
-                  label="Supplier"
-                  required
-                  error={errors.supplier}
-                  hint="Name of the gold supplier or mining entity"
-                >
-                  <Input
-                    placeholder="Enter supplier name"
-                    value={formData.supplier}
-                    onChange={(e) => handleInputChange('supplier', e.target.value)}
-                    error={!!errors.supplier}
-                  />
-                </FormField>
 
                 <FormField
                   label="Shipping Date"
@@ -285,33 +288,69 @@ export function BatchCreate() {
                   </Select>
                 </FormField>
 
-                <FormField
-                  label="Carrier"
-                  required
-                  error={errors.carrier}
-                  hint="Transportation company handling the shipment"
-                >
-                  <Input
-                    placeholder="Enter carrier name"
-                    value={formData.carrier}
-                    onChange={(e) => handleInputChange('carrier', e.target.value)}
-                    error={!!errors.carrier}
-                  />
-                </FormField>
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Transportation & Destination</h3>
 
-                <FormField
-                  label="Destination"
-                  required
-                  error={errors.destination}
-                  hint="Final destination (Airport or Refinery)"
-                >
-                  <Input
-                    placeholder="Enter destination"
-                    value={formData.destination}
-                    onChange={(e) => handleInputChange('destination', e.target.value)}
-                    error={!!errors.destination}
-                  />
-                </FormField>
+                  <FormField
+                    label="Mine to Airport Transport Company"
+                    required
+                    error={errors.mine_to_airport_transport_id}
+                    hint="Company responsible for transporting gold from mine to airport"
+                  >
+                    <Select
+                      value={formData.mine_to_airport_transport_id}
+                      onChange={(e) => handleInputChange('mine_to_airport_transport_id', e.target.value)}
+                      error={!!errors.mine_to_airport_transport_id}
+                    >
+                      <option value="">Select transport company</option>
+                      {mineToAirportTransports.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name} - {company.contact_person || 'N/A'}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  <FormField
+                    label="Airport to Refinery Transport Company"
+                    required
+                    error={errors.airport_to_refinery_transport_id}
+                    hint="Company responsible for transporting gold from airport to refinery"
+                  >
+                    <Select
+                      value={formData.airport_to_refinery_transport_id}
+                      onChange={(e) => handleInputChange('airport_to_refinery_transport_id', e.target.value)}
+                      error={!!errors.airport_to_refinery_transport_id}
+                    >
+                      <option value="">Select transport company</option>
+                      {airportToRefineryTransports.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name} - {company.contact_person || 'N/A'}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  <FormField
+                    label="Destination Refinery"
+                    required
+                    error={errors.destination_refinery_id}
+                    hint="Refinery responsible for processing and sale"
+                  >
+                    <Select
+                      value={formData.destination_refinery_id}
+                      onChange={(e) => handleInputChange('destination_refinery_id', e.target.value)}
+                      error={!!errors.destination_refinery_id}
+                    >
+                      <option value="">Select refinery</option>
+                      {refineries.map((refinery) => (
+                        <option key={refinery.id} value={refinery.id}>
+                          {refinery.name} - {refinery.location}, {refinery.country}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+                </div>
 
                 <FormField
                   label="Comments"
@@ -376,13 +415,13 @@ export function BatchCreate() {
                     <span>Required Fields</span>
                     <span className="font-medium">
                       {[
-                        formData.supplier,
                         formData.shipping_date,
                         formData.weight_grams,
                         formData.purity_percentage,
                         formData.site_id,
-                        formData.carrier,
-                        formData.destination,
+                        formData.mine_to_airport_transport_id,
+                        formData.airport_to_refinery_transport_id,
+                        formData.destination_refinery_id,
                       ].filter(Boolean).length}{' '}
                       / 7
                     </span>
@@ -393,13 +432,13 @@ export function BatchCreate() {
                       style={{
                         width: `${
                           ([
-                            formData.supplier,
                             formData.shipping_date,
                             formData.weight_grams,
                             formData.purity_percentage,
                             formData.site_id,
-                            formData.carrier,
-                            formData.destination,
+                            formData.mine_to_airport_transport_id,
+                            formData.airport_to_refinery_transport_id,
+                            formData.destination_refinery_id,
                           ].filter(Boolean).length /
                             7) *
                           100
@@ -418,10 +457,6 @@ export function BatchCreate() {
               <CardContent>
                 <div className="space-y-4 text-sm">
                   <div>
-                    <p className="font-medium text-gray-900 mb-1">Supplier</p>
-                    <p className="text-gray-600">Name of the gold supplier or mining entity</p>
-                  </div>
-                  <div>
                     <p className="font-medium text-gray-900 mb-1">Weight</p>
                     <p className="text-gray-600">Enter weight in grams. System automatically converts to ounces</p>
                   </div>
@@ -430,12 +465,16 @@ export function BatchCreate() {
                     <p className="text-gray-600">Percentage purity of the gold (0-100%)</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 mb-1">Carrier</p>
-                    <p className="text-gray-600">Transportation company handling the shipment</p>
+                    <p className="font-medium text-gray-900 mb-1">Mine to Airport Transport</p>
+                    <p className="text-gray-600">Company handling the first leg from mine to airport. They will receive notifications when batch is shipped.</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 mb-1">Destination</p>
-                    <p className="text-gray-600">Final destination for this shipment (Airport or Refinery)</p>
+                    <p className="font-medium text-gray-900 mb-1">Airport to Refinery Transport</p>
+                    <p className="text-gray-600">Company handling the second leg from airport to refinery. They will be notified when batch reaches airport.</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Destination Refinery</p>
+                    <p className="text-gray-600">Final refinery for processing and sale. Will receive notifications when batch arrives.</p>
                   </div>
                 </div>
               </CardContent>

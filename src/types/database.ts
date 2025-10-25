@@ -9,6 +9,85 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      transport_companies: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both'
+          address: string | null
+          contact_person: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          phone: string
+          company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both'
+          address?: string | null
+          contact_person?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          phone?: string
+          company_type?: 'mine_to_airport' | 'airport_to_refinery' | 'both'
+          address?: string | null
+          contact_person?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      refineries: {
+        Row: {
+          id: string
+          name: string
+          location: string
+          country: string
+          email: string
+          phone: string
+          contact_person: string | null
+          capacity_grams_per_month: number | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          location: string
+          country: string
+          email: string
+          phone: string
+          contact_person?: string | null
+          capacity_grams_per_month?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          location?: string
+          country?: string
+          email?: string
+          phone?: string
+          contact_person?: string | null
+          capacity_grams_per_month?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       sites: {
         Row: {
           id: string
@@ -59,6 +138,9 @@ export interface Database {
           shipping_date: string
           comments: string | null
           transportation_company: string | null
+          mine_to_airport_transport_id: string | null
+          airport_to_refinery_transport_id: string | null
+          destination_refinery_id: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -74,6 +156,9 @@ export interface Database {
           shipping_date: string
           comments?: string | null
           transportation_company?: string | null
+          mine_to_airport_transport_id?: string | null
+          airport_to_refinery_transport_id?: string | null
+          destination_refinery_id?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -89,6 +174,9 @@ export interface Database {
           shipping_date?: string
           comments?: string | null
           transportation_company?: string | null
+          mine_to_airport_transport_id?: string | null
+          airport_to_refinery_transport_id?: string | null
+          destination_refinery_id?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string

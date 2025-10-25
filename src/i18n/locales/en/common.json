@@ -172,6 +172,57 @@
     "managePermissions": "Manage Permissions",
     "companyInfo": "Company Information",
     "thresholds": "Thresholds",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "transportCompanies": "Transport Companies",
+    "refineries": "Refineries"
+  },
+  "batch": {
+    "createNew": "Create New Batch",
+    "batchNumber": "Batch Number",
+    "shippingDate": "Shipping Date",
+    "weightGrams": "Weight (grams)",
+    "weightOunces": "Weight (ounces)",
+    "purity": "Purity (%)",
+    "originSite": "Origin Site",
+    "mineToAirportTransport": "Mine to Airport Transport",
+    "airportToRefineryTransport": "Airport to Refinery Transport",
+    "destinationRefinery": "Destination Refinery",
+    "comments": "Comments",
+    "transportationDestination": "Transportation & Destination",
+    "selectTransportCompany": "Select transport company",
+    "selectRefinery": "Select refinery",
+    "transportHint": "Company handling the first leg from mine to airport. They will receive notifications when batch is shipped.",
+    "airportTransportHint": "Company handling the second leg from airport to refinery. They will be notified when batch reaches airport.",
+    "refineryHint": "Final refinery for processing and sale. Will receive notifications when batch arrives."
+  },
+  "shipping": {
+    "title": "Shipping",
+    "trackShipments": "Track shipments and logistics across the supply chain",
+    "mineTransport": "Mine Transport",
+    "airportTransport": "Airport Transport",
+    "destination": "Destination"
+  },
+  "transport": {
+    "title": "Transport Companies",
+    "manageFreight": "Manage freight companies for gold shipments",
+    "addCompany": "Add Company",
+    "companyName": "Company Name",
+    "companyType": "Company Type",
+    "mineToAirport": "Mine to Airport",
+    "airportToRefinery": "Airport to Refinery",
+    "both": "Both",
+    "contactPerson": "Contact Person",
+    "address": "Address",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "refinery": {
+    "title": "Refineries",
+    "manageRefineries": "Manage gold processing refineries",
+    "addRefinery": "Add Refinery",
+    "refineryName": "Refinery Name",
+    "location": "Location",
+    "capacity": "Capacity (grams/month)",
+    "capacityPerMonth": "Capacity per Month"
   }
 }

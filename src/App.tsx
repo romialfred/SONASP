@@ -38,6 +38,9 @@ import { UserManagement } from './pages/admin/UserManagement';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { AuditTrail } from './pages/admin/AuditTrail';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
+import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
+import { RefineriesPage } from './pages/admin/RefineriesPage';
+import { ShippingPage } from './pages/shipping/ShippingPage';
 import { PERMISSIONS } from './lib/permissions';
 
 function App() {
@@ -199,6 +202,15 @@ function App() {
             />
 
             <Route
+              path="/shipping"
+              element={
+                <ProtectedRoute>
+                  <ShippingPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/receiving"
               element={
                 <ProtectedRoute allowedRoles={['airport', 'refinery']}>
@@ -328,6 +340,24 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ApprovalsDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/transport-companies"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <TransportCompaniesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/refineries"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <RefineriesPage />
                 </ProtectedRoute>
               }
             />

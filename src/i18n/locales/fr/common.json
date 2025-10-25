@@ -172,6 +172,57 @@
     "managePermissions": "Gérer les permissions",
     "companyInfo": "Informations sur l'entreprise",
     "thresholds": "Seuils",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "transportCompanies": "Sociétés de transport",
+    "refineries": "Raffineries"
+  },
+  "batch": {
+    "createNew": "Créer un nouveau lot",
+    "batchNumber": "Numéro de lot",
+    "shippingDate": "Date d'expédition",
+    "weightGrams": "Poids (grammes)",
+    "weightOunces": "Poids (onces)",
+    "purity": "Pureté (%)",
+    "originSite": "Site d'origine",
+    "mineToAirportTransport": "Transport de la mine à l'aéroport",
+    "airportToRefineryTransport": "Transport de l'aéroport à la raffinerie",
+    "destinationRefinery": "Raffinerie de destination",
+    "comments": "Commentaires",
+    "transportationDestination": "Transport et destination",
+    "selectTransportCompany": "Sélectionner une société de transport",
+    "selectRefinery": "Sélectionner une raffinerie",
+    "transportHint": "Société chargée du transport de la mine à l'aéroport. Ils recevront des notifications lorsque le lot est expédié.",
+    "airportTransportHint": "Société chargée du transport de l'aéroport à la raffinerie. Ils seront notifiés lorsque le lot arrive à l'aéroport.",
+    "refineryHint": "Raffinerie chargée du traitement et de la vente. Recevra des notifications lorsque le lot arrive."
+  },
+  "shipping": {
+    "title": "Expédition",
+    "trackShipments": "Suivre les expéditions et la logistique à travers la chaîne d'approvisionnement",
+    "mineTransport": "Transport de la mine",
+    "airportTransport": "Transport de l'aéroport",
+    "destination": "Destination"
+  },
+  "transport": {
+    "title": "Sociétés de transport",
+    "manageFreight": "Gérer les sociétés de fret pour les expéditions d'or",
+    "addCompany": "Ajouter une société",
+    "companyName": "Nom de la société",
+    "companyType": "Type de société",
+    "mineToAirport": "Mine à l'aéroport",
+    "airportToRefinery": "Aéroport à la raffinerie",
+    "both": "Les deux",
+    "contactPerson": "Personne de contact",
+    "address": "Adresse",
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "refinery": {
+    "title": "Raffineries",
+    "manageRefineries": "Gérer les raffineries de traitement d'or",
+    "addRefinery": "Ajouter une raffinerie",
+    "refineryName": "Nom de la raffinerie",
+    "location": "Emplacement",
+    "capacity": "Capacité (grammes/mois)",
+    "capacityPerMonth": "Capacité par mois"
   }
 }

@@ -1,13 +1,13 @@
 import { supabase } from '@/lib/supabase';
 
 export interface CreateBatchData {
-  supplier: string;
   origin_site_id: string;
   weight_grams: number;
   purity_percentage: number;
   shipping_date: string;
-  carrier: string;
-  destination: string;
+  mine_to_airport_transport_id: string;
+  airport_to_refinery_transport_id: string;
+  destination_refinery_id: string;
   comments?: string;
 }
 
@@ -31,16 +31,15 @@ export async function createBatch(data: CreateBatchData): Promise<BatchResponse>
     const batchData = {
       batch_number: batchNumber,
       status: 'created',
-      supplier: data.supplier,
       origin_site_id: data.origin_site_id,
       current_site_id: data.origin_site_id,
       weight_grams: data.weight_grams,
       weight_ounces: weightOz,
       purity_percentage: data.purity_percentage,
       shipping_date: data.shipping_date,
-      transportation_company: data.carrier,
-      carrier: data.carrier,
-      destination: data.destination,
+      mine_to_airport_transport_id: data.mine_to_airport_transport_id,
+      airport_to_refinery_transport_id: data.airport_to_refinery_transport_id,
+      destination_refinery_id: data.destination_refinery_id,
       comments: data.comments || null,
       created_by: user.id,
     };
@@ -85,6 +84,42 @@ export async function getSites() {
 
   if (error) {
     console.error('Error fetching sites:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getTransportCompanies(type?: 'mine_to_airport' | 'airport_to_refinery' | 'both') {
+  let query = supabase
+    .from('transport_companies')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+
+  if (type && type !== 'both') {
+    query = query.or(`company_type.eq.${type},company_type.eq.both`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching transport companies:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getRefineries() {
+  const { data, error } = await supabase
+    .from('refineries')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching refineries:', error);
     return [];
   }
 

@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_profiles')
         .select(`
           *,
-          user_site_assignments!inner(
+          user_site_assignments(
             site_id,
             is_primary
           )

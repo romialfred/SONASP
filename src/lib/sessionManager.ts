@@ -2,7 +2,9 @@ import { supabase } from './supabase';
 
 // Session only expires on explicit logout - no automatic timeout
 // Keep token refresh active to maintain connection
-const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes
+// Supabase JWT tokens expire after 1 hour by default
+// Refresh every 30 minutes to ensure token never expires
+const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000; // Refresh token every 30 minutes
 
 export class SessionManager {
   private lastActivityTime: number = Date.now();
@@ -70,21 +72,40 @@ export class SessionManager {
 
         if (error) {
           console.error('[SessionManager] Error getting session:', error);
+          // Don't logout on error, just log and retry on next interval
           return;
         }
 
-        if (session) {
-          // Refresh the session token
-          const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!session) {
+          console.warn('[SessionManager] No active session found');
+          return;
+        }
 
-          if (refreshError) {
-            console.error('[SessionManager] Error refreshing session:', refreshError);
-          } else {
-            console.log('[SessionManager] Session token refreshed successfully');
+        // Check if token is still valid (has more than 5 minutes left)
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiresInSeconds = expiresAt - Math.floor(Date.now() / 1000);
+          console.log('[SessionManager] Token expires in', Math.floor(expiresInSeconds / 60), 'minutes');
+        }
+
+        // Refresh the session token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          console.error('[SessionManager] Error refreshing session:', refreshError);
+          // Don't logout on refresh error, Supabase will retry automatically
+          // The autoRefreshToken setting in supabase.ts handles this
+        } else if (refreshData.session) {
+          console.log('[SessionManager] Session token refreshed successfully');
+          const newExpiresAt = refreshData.session.expires_at;
+          if (newExpiresAt) {
+            const newExpiresInSeconds = newExpiresAt - Math.floor(Date.now() / 1000);
+            console.log('[SessionManager] New token expires in', Math.floor(newExpiresInSeconds / 60), 'minutes');
           }
         }
       } catch (error) {
         console.error('[SessionManager] Token refresh error:', error);
+        // Don't logout on error, just log and continue
       }
     }, TOKEN_REFRESH_INTERVAL);
   }

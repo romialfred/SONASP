@@ -16,6 +16,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: window.localStorage,
     storageKey: 'gold-shipper-auth',
     flowType: 'pkce',
+    // Prevent automatic sign-out on token expiry
+    // Token will be refreshed automatically before expiry
   },
   global: {
     headers: {

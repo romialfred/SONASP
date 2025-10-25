@@ -253,22 +253,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let keepAliveInterval: NodeJS.Timeout | null = null;
-
-    // Set up keepalive to ping session every 4 minutes
-    const startKeepAlive = () => {
-      keepAliveInterval = setInterval(async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            // Session exists, keep it alive
-            console.log('[Auth] Keepalive ping - session active');
-          }
-        } catch (error) {
-          console.error('[Auth] Keepalive error:', error);
-        }
-      }, 4 * 60 * 1000); // Every 4 minutes
-    };
 
     const initializeAuth = async () => {
       try {
@@ -373,22 +357,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current = new SessionManager();
             sessionManagerRef.current.start();
           }
-
-          // Start keepalive when user signs in
-          if (!keepAliveInterval) {
-            startKeepAlive();
-          }
         } else if (event === 'SIGNED_OUT') {
-          console.log('[Auth] User signed out');
+          console.log('[Auth] SIGNED_OUT event detected');
+
+          // Only process SIGNED_OUT if it's an explicit logout
+          // Don't logout on token expiry - let auto-refresh handle it
           if (sessionManagerRef.current) {
+            console.log('[Auth] Explicit logout - stopping session manager');
             sessionManagerRef.current.stop();
             sessionManagerRef.current = null;
-          }
-
-          // Stop keepalive
-          if (keepAliveInterval) {
-            clearInterval(keepAliveInterval);
-            keepAliveInterval = null;
           }
 
           setState({
@@ -398,7 +375,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             initialized: true,
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log('[Auth] Token refreshed, updating session');
+          console.log('[Auth] Token refreshed successfully, updating session');
           // Keep existing user profile to avoid unnecessary refetch
           setState(prev => ({
             ...prev,
@@ -424,9 +401,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       if (sessionManagerRef.current) {
         sessionManagerRef.current.stop();
-      }
-      if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
       }
     };
   }, []);

@@ -12,8 +12,6 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditTrailPage } from './pages/AuditTrailPage';
-import { UsersPage } from './pages/users/UsersPage';
-import { CreateUserPage } from './pages/users/CreateUserPage';
 import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
 import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
@@ -45,7 +43,6 @@ import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
-import { ShippingPage } from './pages/shipping/ShippingPage';
 import { PERMISSIONS } from './lib/permissions';
 
 function App() {
@@ -121,23 +118,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute>
-                  <UsersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users/create"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
-                  <CreateUserPage />
-                </ProtectedRoute>
-              }
-            />
-
             {/* Legacy dashboard routes */}
             <Route
               path="/dashboard/management"
@@ -210,15 +190,6 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <BatchDetailsWorkflow />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/shipping"
-              element={
-                <ProtectedRoute>
-                  <ShippingPage />
                 </ProtectedRoute>
               }
             />

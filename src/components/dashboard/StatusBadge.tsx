@@ -1,11 +1,17 @@
 import { cn } from '@/utils/cn';
 
 export type StatusType =
+  | 'created'
   | 'shipped'
   | 'received'
+  | 'received_airport'
+  | 'shipped_refinery'
+  | 'received_refinery'
   | 'processing'
+  | 'processed'
   | 'completed'
   | 'approved'
+  | 'ready_for_sale'
   | 'pending'
   | 'rejected'
   | 'alert';
@@ -18,12 +24,18 @@ export interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, label, variant, size = 'md' }: StatusBadgeProps) {
-  const statusConfig = {
+  const statusConfig: Record<string, { color: string; label: string }> = {
+    created: { color: 'bg-gray-100 text-gray-700', label: 'Created' },
     shipped: { color: 'bg-blue-100 text-blue-700', label: 'Shipped' },
     received: { color: 'bg-purple-100 text-purple-700', label: 'Received' },
+    received_airport: { color: 'bg-purple-100 text-purple-700', label: 'Received at Airport' },
+    shipped_refinery: { color: 'bg-blue-100 text-blue-700', label: 'Shipped to Refinery' },
+    received_refinery: { color: 'bg-purple-100 text-purple-700', label: 'Received at Refinery' },
     processing: { color: 'bg-yellow-100 text-yellow-700', label: 'Processing' },
+    processed: { color: 'bg-accent-100 text-accent-700', label: 'Processed' },
     completed: { color: 'bg-accent-100 text-accent-700', label: 'Completed' },
     approved: { color: 'bg-green-100 text-green-700', label: 'Approved' },
+    ready_for_sale: { color: 'bg-green-100 text-green-700', label: 'Ready for Sale' },
     pending: { color: 'bg-orange-100 text-orange-700', label: 'Pending' },
     rejected: { color: 'bg-red-100 text-red-700', label: 'Rejected' },
     alert: { color: 'bg-red-100 text-red-700', label: 'Alert' }
@@ -48,7 +60,7 @@ export function StatusBadge({ status, label, variant, size = 'md' }: StatusBadge
 
   if (variant) {
     colorClass = variantConfig[variant];
-  } else if (status) {
+  } else if (status && statusConfig[status]) {
     const config = statusConfig[status];
     colorClass = config.color;
     displayLabel = label || config.label;

@@ -28,14 +28,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     const MAX_RETRIES = 2;
+    const FETCH_TIMEOUT = 5000;
+
+    const fetchWithTimeout = async (promise: Promise<any>, timeoutMs: number) => {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Profile fetch timeout')), timeoutMs)
+        ),
+      ]);
+    };
 
     try {
-      // First, fetch the user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      // First, fetch the user profile with timeout
+      const { data: profile, error: profileError } = await fetchWithTimeout(
+        supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle(),
+        FETCH_TIMEOUT
+      ) as any;
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
@@ -75,11 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      // Then fetch site assignments separately (this will only work after the user is authenticated)
-      const { data: assignments, error: assignmentError } = await supabase
-        .from('user_site_assignments')
-        .select('site_id, is_primary')
-        .eq('user_id', userId);
+      // Then fetch site assignments separately with timeout
+      const { data: assignments, error: assignmentError } = await fetchWithTimeout(
+        supabase
+          .from('user_site_assignments')
+          .select('site_id, is_primary')
+          .eq('user_id', userId),
+        FETCH_TIMEOUT
+      ) as any;
 
       if (assignmentError) {
         console.warn('Site assignment fetch error (non-fatal):', assignmentError);
@@ -106,8 +122,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Error fetching user profile:', error);
 
-      // If we still have retries and it's a 500 error, retry
-      if (retryCount < MAX_RETRIES && error?.message?.includes('500')) {
+      // If we still have retries and it's a timeout or 500 error, retry
+      const isRetryable =
+        error?.message?.includes('500') ||
+        error?.message?.includes('timeout') ||
+        error?.message?.includes('network');
+
+      if (retryCount < MAX_RETRIES && isRetryable) {
         console.log(`Retrying profile fetch (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return fetchUserProfile(userId, retryCount + 1);
@@ -238,33 +259,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        console.log('[Auth] Starting auth initialization...');
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error('Session error:', sessionError);
+          console.error('[Auth] Session error:', sessionError);
         }
 
-        if (mounted) {
-          if (session?.user) {
+        if (!mounted) {
+          console.log('[Auth] Component unmounted, skipping state update');
+          return;
+        }
+
+        if (session?.user) {
+          console.log('[Auth] Active session found, fetching profile for:', session.user.id);
+
+          try {
             const profile = await fetchUserProfile(session.user.id);
-            setState({
-              user: profile,
-              session,
-              loading: false,
-              initialized: true,
-            });
-          } else {
-            setState({
-              user: null,
-              session: null,
-              loading: false,
-              initialized: true,
-            });
+
+            if (mounted) {
+              console.log('[Auth] Profile fetched successfully, updating state');
+              setState({
+                user: profile,
+                session,
+                loading: false,
+                initialized: true,
+              });
+            }
+          } catch (profileError) {
+            console.error('[Auth] Profile fetch failed during initialization:', profileError);
+
+            if (mounted) {
+              console.log('[Auth] Setting initialized=true despite profile error');
+              setState({
+                user: null,
+                session: null,
+                loading: false,
+                initialized: true,
+              });
+            }
           }
+        } else {
+          console.log('[Auth] No active session, setting unauthenticated state');
+          setState({
+            user: null,
+            session: null,
+            loading: false,
+            initialized: true,
+          });
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('[Auth] Critical error initializing auth:', error);
         if (mounted) {
+          console.log('[Auth] Setting fallback state due to critical error');
           setState({
             user: null,
             session: null,
@@ -275,7 +323,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initializeAuth();
+    const timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.error('[Auth] Initialization timeout - forcing initialized state');
+        setState({
+          user: null,
+          session: null,
+          loading: false,
+          initialized: true,
+        });
+      }
+    }, 10000);
+
+    initializeAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {

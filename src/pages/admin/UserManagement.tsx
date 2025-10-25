@@ -101,7 +101,12 @@ export function UserManagement() {
       setLoading(true);
 
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) {
+        console.error('[UserManagement] No session found');
+        throw new Error('Not authenticated');
+      }
+
+      console.log('[UserManagement] Fetching users from Edge Function');
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
@@ -113,28 +118,46 @@ export function UserManagement() {
         }
       );
 
+      console.log('[UserManagement] Edge Function response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        console.error('[UserManagement] Edge Function error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      const { users: fetchedUsers } = await response.json();
+      const responseData = await response.json();
+      const fetchedUsers = responseData.users;
 
-      const usersData: User[] = fetchedUsers.map((profile: any) => ({
-        id: profile.id,
-        full_name: profile.full_name,
-        email: profile.email,
-        role: profile.role,
-        phone: profile.phone,
-        site_ids: [],
-        is_active: profile.is_active,
-        last_login_at: profile.last_login_at,
-        created_at: profile.created_at,
-      }));
+      console.log('[UserManagement] Fetched users:', fetchedUsers);
 
+      if (!fetchedUsers || !Array.isArray(fetchedUsers)) {
+        console.error('[UserManagement] Invalid users data:', fetchedUsers);
+        setUsers([]);
+        addToast('No users data received', 'warning');
+        return;
+      }
+
+      const usersData: User[] = fetchedUsers
+        .filter((profile: any) => profile && profile.id && profile.email)
+        .map((profile: any) => ({
+          id: profile.id,
+          full_name: profile.full_name,
+          email: profile.email,
+          role: profile.role,
+          phone: profile.phone,
+          site_ids: [],
+          is_active: profile.is_active,
+          last_login_at: profile.last_login_at,
+          created_at: profile.created_at,
+        }));
+
+      console.log('[UserManagement] Processed users:', usersData.length, 'users');
       setUsers(usersData);
     } catch (error: any) {
+      console.error('[UserManagement] Error in fetchUsers:', error);
       addToast(error.message || 'Failed to fetch users', 'error');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -420,84 +443,99 @@ export function UserManagement() {
     {
       key: 'full_name',
       label: 'Name',
-      render: (user: User) => (
-        <div>
-          <div className="font-medium text-gray-900">{user.full_name || 'N/A'}</div>
-          <div className="text-sm text-gray-500">{user.email}</div>
-        </div>
-      ),
+      render: (user: User) => {
+        if (!user) return 'N/A';
+        return (
+          <div>
+            <div className="font-medium text-gray-900">{user.full_name || 'N/A'}</div>
+            <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
+          </div>
+        );
+      },
     },
     {
       key: 'role',
       label: 'Role',
-      render: (user: User) => (
-        <StatusBadge
-          label={roleLabels[user.role]}
-          variant="info"
-        />
-      ),
+      render: (user: User) => {
+        if (!user || !user.role) return 'N/A';
+        return (
+          <StatusBadge
+            label={roleLabels[user.role] || user.role}
+            variant="info"
+          />
+        );
+      },
     },
     {
       key: 'phone',
       label: 'Phone',
-      render: (user: User) => user.phone || 'N/A',
+      render: (user: User) => (user && user.phone) ? user.phone : 'N/A',
     },
     {
       key: 'is_active',
       label: 'Status',
-      render: (user: User) => (
-        <StatusBadge
-          label={user.is_active ? 'Active' : 'Inactive'}
-          variant={user.is_active ? 'success' : 'neutral'}
-        />
-      ),
+      render: (user: User) => {
+        if (!user) return 'N/A';
+        return (
+          <StatusBadge
+            label={user.is_active ? 'Active' : 'Inactive'}
+            variant={user.is_active ? 'success' : 'neutral'}
+          />
+        );
+      },
     },
     {
       key: 'last_login_at',
       label: 'Last Login',
-      render: (user: User) =>
-        user.last_login_at
+      render: (user: User) => {
+        if (!user) return 'Never';
+        return user.last_login_at
           ? new Date(user.last_login_at).toLocaleString()
-          : 'Never',
+          : 'Never';
+      },
     },
     {
       key: 'actions',
       label: 'Actions',
-      render: (user: User) => (
-        <div className="flex gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setSearchParams({ mode: 'edit', userId: user.id });
-            }}
-            className="p-1 hover:bg-gray-100 rounded"
-            title="Edit User"
-          >
-            <Shield className="h-4 w-4 text-primary-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleUserStatus(user);
-            }}
-            className="p-1 hover:bg-gray-100 rounded"
-            title={user.is_active ? 'Deactivate' : 'Activate'}
-          >
-            {user.is_active ? (
-              <Lock className="h-4 w-4 text-red-600" />
-            ) : (
-              <Unlock className="h-4 w-4 text-accent-600" />
-            )}
-          </button>
-        </div>
-      ),
+      render: (user: User) => {
+        if (!user) return null;
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSearchParams({ mode: 'edit', userId: user.id });
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              title="Edit User"
+            >
+              <Shield className="h-4 w-4 text-primary-600" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleUserStatus(user);
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              title={user.is_active ? 'Deactivate' : 'Activate'}
+            >
+              {user.is_active ? (
+                <Lock className="h-4 w-4 text-red-600" />
+              ) : (
+                <Unlock className="h-4 w-4 text-accent-600" />
+              )}
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
   const filteredUsers = users.filter((user) => {
+    if (!user) return false;
     const matchesSearch =
       (user.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -589,11 +627,24 @@ export function UserManagement() {
                   <option value="customer">Customer</option>
                 </select>
               </div>
-              <Table
-                columns={columns}
-                data={filteredUsers}
-                onRowClick={(user) => setSearchParams({ mode: 'edit', userId: user.id })}
-              />
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <p className="mt-2 text-gray-600">Loading users...</p>
+                  </div>
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">No users found</p>
+                </div>
+              ) : (
+                <Table
+                  columns={columns}
+                  data={filteredUsers}
+                  onRowClick={(user) => user && setSearchParams({ mode: 'edit', userId: user.id })}
+                />
+              )}
             </CardContent>
           </Card>
         </div>

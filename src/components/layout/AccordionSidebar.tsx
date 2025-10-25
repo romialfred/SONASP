@@ -13,6 +13,7 @@ import {
   FileText,
   Settings,
   Shield,
+  GitBranch,
   ChevronDown,
   ChevronRight,
   Menu,
@@ -80,6 +81,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { label: 'Users Management', path: '/users', icon: Users, iconColor: 'text-slate-500' },
       { label: 'Parameters', path: '/parameters', icon: Settings, iconColor: 'text-orange-500' },
+      { label: 'Workflow', path: '/admin/workflow', icon: GitBranch, iconColor: 'text-blue-500' },
       { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-500' },
     ],
   },

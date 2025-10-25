@@ -1,29 +1,20 @@
 import { supabase } from './supabase';
 
-// Extended session timeouts for better user experience
-const SESSION_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours instead of 30 minutes
-const INACTIVITY_WARNING = 10 * 60 * 1000; // Warn at 10 minutes of inactivity
-const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
+// Session only expires on explicit logout - no automatic timeout
+// Keep token refresh active to maintain connection
 const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes
 
 export class SessionManager {
   private lastActivityTime: number = Date.now();
-  private sessionTimer: NodeJS.Timeout | null = null;
-  private warningTimer: NodeJS.Timeout | null = null;
-  private activityCheckTimer: NodeJS.Timeout | null = null;
   private tokenRefreshTimer: NodeJS.Timeout | null = null;
-  private onWarning?: () => void;
-  private onTimeout?: () => void;
   private isActive: boolean = true;
 
-  constructor(onWarning?: () => void, onTimeout?: () => void) {
-    this.onWarning = onWarning;
-    this.onTimeout = onTimeout;
+  constructor() {
     this.setupActivityListeners();
   }
 
   private setupActivityListeners() {
-    // Listen to multiple user activity events
+    // Listen to user activity to update last activity time
     const events = [
       'mousedown',
       'keydown',
@@ -39,7 +30,7 @@ export class SessionManager {
       document.addEventListener(event, () => this.updateActivity(), { passive: true });
     });
 
-    // Also listen to visibility changes
+    // Listen to visibility changes
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.updateActivity();
@@ -53,88 +44,24 @@ export class SessionManager {
   }
 
   public start() {
-    console.log('[SessionManager] Starting session management');
+    console.log('[SessionManager] Starting session management - NO AUTO LOGOUT');
     this.updateActivity();
-    this.startActivityCheck();
     this.startTokenRefresh();
   }
 
   public stop() {
     console.log('[SessionManager] Stopping session management');
     this.isActive = false;
-    if (this.sessionTimer) clearTimeout(this.sessionTimer);
-    if (this.warningTimer) clearTimeout(this.warningTimer);
-    if (this.activityCheckTimer) clearInterval(this.activityCheckTimer);
     if (this.tokenRefreshTimer) clearInterval(this.tokenRefreshTimer);
   }
 
   private updateActivity() {
     if (!this.isActive) return;
-
-    const now = Date.now();
-    const timeSinceLastActivity = now - this.lastActivityTime;
-
-    // Only update if enough time has passed to reduce excessive updates
-    if (timeSinceLastActivity > 1000) {
-      this.lastActivityTime = now;
-      this.resetTimers();
-    }
-  }
-
-  private resetTimers() {
-    if (!this.isActive) return;
-
-    if (this.sessionTimer) clearTimeout(this.sessionTimer);
-    if (this.warningTimer) clearTimeout(this.warningTimer);
-
-    const warningTime = SESSION_TIMEOUT - INACTIVITY_WARNING;
-
-    // Only show warning if user has been inactive
-    this.warningTimer = setTimeout(() => {
-      if (this.onWarning && this.isActive) {
-        const inactiveDuration = Date.now() - this.lastActivityTime;
-        // Only warn if actually inactive
-        if (inactiveDuration >= warningTime) {
-          console.log('[SessionManager] Showing inactivity warning');
-          this.onWarning();
-        }
-      }
-    }, warningTime);
-
-    this.sessionTimer = setTimeout(() => {
-      if (this.onTimeout && this.isActive) {
-        const inactiveDuration = Date.now() - this.lastActivityTime;
-        // Only timeout if actually inactive
-        if (inactiveDuration >= SESSION_TIMEOUT) {
-          console.log('[SessionManager] Session timeout due to inactivity');
-          this.onTimeout();
-        } else {
-          // User is still active, reset timer
-          this.resetTimers();
-        }
-      }
-    }, SESSION_TIMEOUT);
-  }
-
-  private startActivityCheck() {
-    this.activityCheckTimer = setInterval(() => {
-      if (!this.isActive) return;
-
-      const inactiveDuration = Date.now() - this.lastActivityTime;
-
-      // Only timeout after extended inactivity
-      if (inactiveDuration >= SESSION_TIMEOUT) {
-        console.log('[SessionManager] Extended inactivity detected, logging out');
-        this.stop();
-        if (this.onTimeout) {
-          this.onTimeout();
-        }
-      }
-    }, ACTIVITY_CHECK_INTERVAL);
+    this.lastActivityTime = Date.now();
   }
 
   private startTokenRefresh() {
-    // Periodically refresh the auth token to keep session alive
+    // Periodically refresh the auth token to keep session alive indefinitely
     this.tokenRefreshTimer = setInterval(async () => {
       if (!this.isActive) return;
 
@@ -166,11 +93,6 @@ export class SessionManager {
     return Date.now() - this.lastActivityTime;
   }
 
-  public getRemainingTime(): number {
-    const elapsed = this.getInactivityDuration();
-    return Math.max(0, SESSION_TIMEOUT - elapsed);
-  }
-
   public extendSession() {
     console.log('[SessionManager] Session extended by user action');
     this.updateActivity();
@@ -184,7 +106,8 @@ export class SessionManager {
 
 export async function createSessionRecord(userId: string, sessionToken: string) {
   try {
-    const expiresAt = new Date(Date.now() + SESSION_TIMEOUT);
+    // Session records are maintained but don't enforce timeout
+    const expiresAt = new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)); // 1 year
 
     await supabase.from('user_sessions').insert({
       user_id: userId,

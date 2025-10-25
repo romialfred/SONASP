@@ -3,7 +3,6 @@ import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
-import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -22,8 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     initialized: false,
   });
-  const [showSessionWarning, setShowSessionWarning] = useState(false);
-  const [remainingSeconds, setRemainingSeconds] = useState(300);
   const sessionManagerRef = useRef<SessionManager | null>(null);
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
@@ -373,17 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (!sessionManagerRef.current) {
             console.log('[Auth] Starting session manager');
-            sessionManagerRef.current = new SessionManager(
-              () => {
-                setRemainingSeconds(600);
-                setShowSessionWarning(true);
-              },
-              async () => {
-                console.log('[Auth] Session timeout callback triggered');
-                setShowSessionWarning(false);
-                await signOut();
-              }
-            );
+            sessionManagerRef.current = new SessionManager();
             sessionManagerRef.current.start();
           }
 
@@ -444,13 +431,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const handleExtendSession = () => {
-    if (sessionManagerRef.current) {
-      sessionManagerRef.current.extendSession();
-    }
-    setShowSessionWarning(false);
-  };
-
   const value: AuthContextType = {
     ...state,
     signIn,
@@ -463,12 +443,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
-      <SessionTimeoutWarning
-        isOpen={showSessionWarning}
-        remainingSeconds={remainingSeconds}
-        onExtend={handleExtendSession}
-        onLogout={signOut}
-      />
     </AuthContext.Provider>
   );
 }

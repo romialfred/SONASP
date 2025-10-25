@@ -64,11 +64,33 @@ export function BatchDetailsWorkflow() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Airport receiving form state
+  const [receivedWeight, setReceivedWeight] = useState<string>('');
+  const [receiptDate, setReceiptDate] = useState<string>('');
+  const [freightCompany, setFreightCompany] = useState<string>('');
+  const [freightDocument, setFreightDocument] = useState<File | null>(null);
+  const [freightCompanies, setFreightCompanies] = useState<Array<{id: string, name: string}>>([]);
+
   useEffect(() => {
     if (id) {
       loadBatchData();
+      loadFreightCompanies();
     }
   }, [id]);
+
+  const loadFreightCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transport_companies')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setFreightCompanies(data || []);
+    } catch (error) {
+      console.error('Error loading freight companies:', error);
+    }
+  };
 
   const loadBatchData = async () => {
     try {
@@ -137,7 +159,7 @@ export function BatchDetailsWorkflow() {
 
       const { error: updateError } = await supabase
         .from('batches')
-        .update({ status: 'received_airport' })
+        .update({ status: 'validated_for_transport' })
         .eq('id', batch.id);
 
       if (updateError) throw updateError;
@@ -146,9 +168,9 @@ export function BatchDetailsWorkflow() {
         .from('batch_status_history')
         .insert({
           batch_id: batch.id,
-          status: 'received_airport',
+          status: 'validated_for_transport',
           changed_by: user.id,
-          comments: 'Batch validated for transportation by creator',
+          comments: 'Batch validated for transportation by Plant Manager',
         });
 
       if (historyError) throw historyError;
@@ -193,9 +215,102 @@ export function BatchDetailsWorkflow() {
     }
   };
 
+  const calculateVariance = () => {
+    if (!batch || !receivedWeight) return null;
+
+    const expected = batch.weight_grams;
+    const actual = parseFloat(receivedWeight);
+    const difference = actual - expected;
+    const percentage = expected !== 0 ? (difference / expected) * 100 : 0;
+
+    return {
+      difference: difference.toFixed(2),
+      percentage: percentage.toFixed(2),
+      isSignificant: Math.abs(percentage) > 2
+    };
+  };
+
+  const handleAirportReceiving = async () => {
+    if (!batch || !user || !receivedWeight || !receiptDate || !freightCompany) {
+      setSuccessMessage('Please fill in all required fields');
+      setShowSuccessModal(true);
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+
+      const actualWeight = parseFloat(receivedWeight);
+      const actualOunces = actualWeight * 0.03527396195;
+
+      // Upload document if provided
+      let documentUrl = '';
+      if (freightDocument) {
+        const fileExt = freightDocument.name.split('.').pop();
+        const fileName = `${batch.id}_freight_${Date.now()}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('batch-documents')
+          .upload(fileName, freightDocument);
+
+        if (uploadError) throw uploadError;
+        documentUrl = uploadData.path;
+      }
+
+      // Update batch with received weight and freight info
+      const { error: updateError } = await supabase
+        .from('batches')
+        .update({
+          status: 'received_airport',
+          received_weight_grams: actualWeight,
+          received_weight_ounces: actualOunces,
+          received_date: receiptDate,
+          transport_company_id: freightCompany,
+          freight_document_url: documentUrl
+        })
+        .eq('id', batch.id);
+
+      if (updateError) throw updateError;
+
+      // Add status history
+      const variance = calculateVariance();
+      const comments = variance
+        ? `Received at airport. Weight variance: ${variance.percentage}% (${variance.difference}g). Freight company assigned.`
+        : 'Received at airport. Freight company assigned.';
+
+      const { error: historyError } = await supabase
+        .from('batch_status_history')
+        .insert({
+          batch_id: batch.id,
+          status: 'received_airport',
+          changed_by: user.id,
+          comments: comments,
+        });
+
+      if (historyError) throw historyError;
+
+      await loadBatchData();
+      setSuccessMessage('Batch received at airport successfully!');
+      setShowSuccessModal(true);
+
+      // Reset form
+      setReceivedWeight('');
+      setReceiptDate('');
+      setFreightCompany('');
+      setFreightDocument(null);
+    } catch (error) {
+      console.error('Error receiving batch at airport:', error);
+      setSuccessMessage('Failed to receive batch. Please try again.');
+      setShowSuccessModal(true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusSteps = () => {
     const steps = [
       { key: 'created', label: 'Created', sublabel: 'Batch registered' },
+      { key: 'validated_for_transport', label: 'Validated', sublabel: 'Ready for transport' },
       { key: 'received_airport', label: 'Airport', sublabel: 'Received at airport' },
       { key: 'received_refinery', label: 'Refinery', sublabel: 'Received at refinery' },
       { key: 'processed', label: 'Processed', sublabel: 'Refining completed' },
@@ -216,6 +331,7 @@ export function BatchDetailsWorkflow() {
   const getTimelineIcon = (status: string) => {
     const iconMap: Record<string, any> = {
       created: Package,
+      validated_for_transport: CheckCircle,
       received_airport: MapPin,
       received_refinery: Building2,
       processed: CheckCircle,
@@ -230,6 +346,7 @@ export function BatchDetailsWorkflow() {
   const getTimelineColor = (status: string) => {
     const colorMap: Record<string, string> = {
       created: 'bg-gray-500',
+      validated_for_transport: 'bg-green-500',
       received_airport: 'bg-blue-500',
       received_refinery: 'bg-purple-500',
       processed: 'bg-accent-500',
@@ -519,6 +636,118 @@ export function BatchDetailsWorkflow() {
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject Batch
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Airport Receiving Form */}
+            {batch?.status === 'validated_for_transport' && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="text-blue-900">Airport Receiving</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-blue-800 mb-4">
+                    Confirm batch receipt at airport and assign freight company for transport to refinery.
+                  </p>
+
+                  {/* Weight Confirmation */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Received Weight (g) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={receivedWeight}
+                      onChange={(e) => setReceivedWeight(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter received weight"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Original: {batch.weight_grams.toFixed(2)}g ({batch.weight_ounces.toFixed(2)} oz)
+                    </p>
+                  </div>
+
+                  {/* Variance Display */}
+                  {receivedWeight && calculateVariance() && (
+                    <div className={`p-3 rounded-md ${
+                      calculateVariance()!.isSignificant ? 'bg-red-100 border border-red-300' : 'bg-green-100 border border-green-300'
+                    }`}>
+                      <p className="text-sm font-medium mb-1">
+                        {calculateVariance()!.isSignificant ? 'Significant Variance Detected' : 'Variance Within Tolerance'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">Difference:</span>
+                          <span className="font-semibold ml-1">{calculateVariance()!.difference}g</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Variance:</span>
+                          <span className="font-semibold ml-1">{calculateVariance()!.percentage}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Receipt Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date of Receipt <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={receiptDate}
+                      onChange={(e) => setReceiptDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Freight Company Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Freight Company (Airport to Refinery) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={freightCompany}
+                      onChange={(e) => setFreightCompany(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select freight company...</option>
+                      {freightCompanies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Document Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Freight Document (Optional)
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => setFreightDocument(e.target.files?.[0] || null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supported formats: PDF, JPG, PNG
+                    </p>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={handleAirportReceiving}
+                    disabled={actionLoading || !receivedWeight || !receiptDate || !freightCompany}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Validate for Shipping to Refinery
                   </Button>
                 </CardContent>
               </Card>

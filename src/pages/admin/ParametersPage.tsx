@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
-import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle } from 'lucide-react';
+import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, TrendingDown, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface UserProfile {
@@ -16,17 +16,32 @@ interface UserProfile {
   is_active: boolean;
 }
 
+interface BusinessRule {
+  id: string;
+  rule_key: string;
+  rule_name: string;
+  rule_value: number;
+  rule_category: string;
+  description: string | null;
+  unit: string | null;
+  updated_at: string;
+}
+
 export function ParametersPage() {
   const [activeTab, setActiveTab] = useState('preferences');
   const { notification, showSuccess, showError, closeNotification } = useNotification();
 
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [businessRules, setBusinessRules] = useState<BusinessRule[]>([]);
+  const [editedRules, setEditedRules] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (activeTab === '2fa') {
       loadUsers();
+    } else if (activeTab === 'business-rules') {
+      loadBusinessRules();
     }
   }, [activeTab]);
 
@@ -80,8 +95,72 @@ export function ParametersPage() {
     }
   };
 
+  const loadBusinessRules = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('business_rules')
+        .select('*')
+        .order('rule_category', { ascending: true })
+        .order('rule_name', { ascending: true });
+
+      if (error) throw error;
+      setBusinessRules(data || []);
+
+      const initialValues: Record<string, number> = {};
+      data?.forEach(rule => {
+        initialValues[rule.rule_key] = rule.rule_value;
+      });
+      setEditedRules(initialValues);
+    } catch (error: any) {
+      console.error('Error loading business rules:', error);
+      showError('Load Failed', 'Could not load business rules. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRuleChange = (ruleKey: string, value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      setEditedRules(prev => ({ ...prev, [ruleKey]: numValue }));
+    }
+  };
+
+  const saveBusinessRules = async () => {
+    try {
+      setSaving(true);
+
+      const updates = businessRules.map(rule => ({
+        id: rule.id,
+        rule_value: editedRules[rule.rule_key] || rule.rule_value,
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('business_rules')
+          .update({ rule_value: update.rule_value })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      await loadBusinessRules();
+      showSuccess('Business Rules Updated', 'All business rules have been saved successfully.');
+    } catch (error: any) {
+      console.error('Error saving business rules:', error);
+      showError(
+        'Save Failed',
+        error.message || 'Could not save business rules. Please try again.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const tabs = [
     { id: 'preferences', label: 'Preferences', icon: Settings },
+    { id: 'business-rules', label: 'Business Rules', icon: Scale },
     { id: '2fa', label: '2FA Management', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
@@ -186,6 +265,139 @@ export function ParametersPage() {
                       Save Preferences
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'business-rules' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Business Rules Configuration</h2>
+                  <p className="text-gray-600 mb-6">
+                    Configure conversion rates and variance thresholds used throughout the system.
+                  </p>
+
+                  {loading ? (
+                    <Card>
+                      <div className="p-12 text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+                        <p className="mt-4 text-gray-500">Loading business rules...</p>
+                      </div>
+                    </Card>
+                  ) : (
+                    <>
+                      <div className="grid gap-6 mb-6">
+                        <Card>
+                          <div className="p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <Scale className="h-6 w-6 text-blue-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Conversion Rates</h3>
+                                <p className="text-sm text-gray-500">Standard conversion rates for weight measurements</p>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              {businessRules
+                                .filter(rule => rule.rule_category === 'conversion')
+                                .map((rule) => (
+                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
+                                      <p className="text-sm text-gray-500">{rule.description}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="number"
+                                        step="0.0001"
+                                        value={editedRules[rule.rule_key] || rule.rule_value}
+                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
+                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
+                                      />
+                                      {rule.unit && (
+                                        <span className="text-sm text-gray-600 w-32">{rule.unit}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        </Card>
+
+                        <Card>
+                          <div className="p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="p-2 bg-amber-100 rounded-lg">
+                                <AlertTriangle className="h-6 w-6 text-amber-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Variance Thresholds</h3>
+                                <p className="text-sm text-gray-500">Maximum acceptable variance percentages between locations</p>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              {businessRules
+                                .filter(rule => rule.rule_category === 'threshold')
+                                .map((rule) => (
+                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
+                                      <p className="text-sm text-gray-500">{rule.description}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="100"
+                                        value={editedRules[rule.rule_key] || rule.rule_value}
+                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
+                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
+                                      />
+                                      {rule.unit && (
+                                        <span className="text-sm text-gray-600 w-12">{rule.unit}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        </Card>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <AlertTriangle className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-900">Important Notice</p>
+                            <p className="text-sm text-blue-700">Changes to business rules will affect all future calculations throughout the system.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end mt-6">
+                        <Button
+                          variant="primary"
+                          className="px-6"
+                          onClick={saveBusinessRules}
+                          disabled={saving}
+                        >
+                          {saving ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Save Business Rules
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

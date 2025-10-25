@@ -4,7 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Download, ZoomIn, ZoomOut } from 'lucide-react';
 
-type WorkflowView = 'batch-management' | 'sales-process' | 'combined';
+type WorkflowView = 'batch-management' | 'sales-process' | 'depositing-process' | 'combined';
 
 interface BPMNElement {
   id: string;
@@ -209,17 +209,127 @@ const salesFlows: BPMNFlow[] = [
   { id: 'sf20', from: 'f_complete', to: 's_end', type: 'sequence' },
 ];
 
+// BPMN Depositing Process (High Level)
+const depositingLanes: BPMNLane[] = [
+  { id: 'receipt', name: 'Receipt & Weighing', color: '#a78bfa', y: 0, height: 200 },
+  { id: 'melt_sample', name: 'Melt & Sample', color: '#34d399', y: 200, height: 180 },
+  { id: 'evaluate', name: 'Evaluate', color: '#60a5fa', y: 380, height: 180 },
+];
+
+const depositingElements: BPMNElement[] = [
+  // Receipt & Weighing Lane
+  { id: 'd_start', type: 'start-event', name: 'Doré From Depositor', x: 50, y: 100, lane: 'receipt',
+    description: 'With Waybill and Mine Weight or Depositor Wet Weigh'
+  },
+  { id: 'd_packaging', type: 'task', name: 'Packaging\nInspected', x: 180, y: 80, lane: 'receipt',
+    validations: ['Visual inspection', 'Seal check', 'Documentation verified']
+  },
+  { id: 'd_gross_mass', type: 'task', name: 'Gross Mass\n& Count Recon\nwith Waybill', x: 330, y: 80, lane: 'receipt',
+    validations: ['Weight recorded', 'Count verified', 'Waybill reconciliation']
+  },
+  { id: 'd_unpack', type: 'task', name: 'Unpack bars\nand Inspection', x: 480, y: 80, lane: 'receipt',
+    description: 'Physical inspection of each bar'
+  },
+  { id: 'd_deposit_num', type: 'task', name: 'Deposit Number\nAssigned', x: 630, y: 80, lane: 'receipt',
+    outputs: ['Unique deposit ID', 'Tracking number']
+  },
+  { id: 'd_barcode', type: 'task', name: 'Bar Code\nLabelling', x: 780, y: 80, lane: 'receipt',
+    outputs: ['Individual bar labels', 'Tracking system entry']
+  },
+  { id: 'd_weighing_1', type: 'task', name: 'Weighing', x: 930, y: 80, lane: 'receipt',
+    description: 'RR Wet Weight',
+    validations: ['Calibrated scale', 'Recorded weight']
+  },
+  { id: 'd_driers', type: 'task', name: '2 x conveyor\ndriers at 350°C', x: 930, y: 150, lane: 'receipt',
+    description: 'Drying process'
+  },
+  { id: 'd_weighing_2', type: 'task', name: 'Weighing', x: 780, y: 150, lane: 'receipt',
+    description: 'RR Dry Weight',
+    validations: ['Post-drying weight', 'Moisture loss calculated']
+  },
+  { id: 'd_compare', type: 'task', name: 'Mine vs RR\nWet & Dry\nWeight Compare', x: 630, y: 150, lane: 'receipt',
+    description: 'Weight discrepancy form',
+    validations: ['Variance within tolerance', 'Discrepancy documented']
+  },
+
+  // Melt & Sample Lane
+  { id: 'd_sample_trigger', type: 'intermediate-event', name: 'Once samples\ntaken\nmaterial released', x: 930, y: 240, lane: 'melt_sample',
+    description: 'Drill Sample Results - Mine Assay'
+  },
+  { id: 'd_melt', type: 'task', name: 'Melt in one lot\nin dedicated\ncrucible', x: 480, y: 270, lane: 'melt_sample',
+    validations: ['Temperature controlled', 'Dedicated equipment', 'Safety protocols']
+  },
+  { id: 'd_samples', type: 'task', name: 'Samples =\nRR, Umpire', x: 630, y: 270, lane: 'melt_sample',
+    description: 'Sample collection for analysis'
+  },
+  { id: 'd_official_weight', type: 'task', name: 'Official Weight =\nSamples +\nIngots', x: 780, y: 270, lane: 'melt_sample',
+    validations: ['Combined weight', 'Recorded officially']
+  },
+
+  // Evaluate Lane
+  { id: 'd_xrf_ag', type: 'task', name: 'XRF for Ag', x: 180, y: 450, lane: 'evaluate',
+    description: 'Silver content analysis'
+  },
+  { id: 'd_fire_assay', type: 'task', name: 'Fire Assay\nfor Au', x: 330, y: 450, lane: 'evaluate',
+    description: 'Gold content determination'
+  },
+  { id: 'd_official_au', type: 'task', name: 'Official Weight x\nFire Assay % =\nOfficial Au Content', x: 480, y: 450, lane: 'evaluate',
+    description: 'Calculate final gold content'
+  },
+  { id: 'd_assay_limits', type: 'task', name: 'Assay Exchange\n& Splitting Limits', x: 630, y: 450, lane: 'evaluate',
+    description: 'Assay discrepancy form',
+    validations: ['Within acceptable range', 'Documented variances']
+  },
+  { id: 'd_umpire', type: 'task', name: 'Umpire\nAssay', x: 780, y: 450, lane: 'evaluate',
+    description: 'Independent verification'
+  },
+  { id: 'd_final', type: 'task', name: 'Final Official\nAu Content & To\nBe Accounted for\nAu', x: 930, y: 450, lane: 'evaluate',
+    outputs: ['Final gold content', 'Accounting records', 'Quality certificate']
+  },
+  { id: 'd_end', type: 'end-event', name: 'End', x: 1050, y: 475, lane: 'evaluate',
+    description: 'Material released for refining'
+  },
+];
+
+const depositingFlows: BPMNFlow[] = [
+  { id: 'df1', from: 'd_start', to: 'd_packaging', type: 'sequence' },
+  { id: 'df2', from: 'd_packaging', to: 'd_gross_mass', type: 'sequence' },
+  { id: 'df3', from: 'd_gross_mass', to: 'd_unpack', type: 'sequence' },
+  { id: 'df4', from: 'd_unpack', to: 'd_deposit_num', type: 'sequence' },
+  { id: 'df5', from: 'd_deposit_num', to: 'd_barcode', type: 'sequence' },
+  { id: 'df6', from: 'd_barcode', to: 'd_weighing_1', type: 'sequence' },
+  { id: 'df7', from: 'd_weighing_1', to: 'd_driers', type: 'sequence' },
+  { id: 'df8', from: 'd_driers', to: 'd_weighing_2', type: 'sequence' },
+  { id: 'df9', from: 'd_weighing_2', to: 'd_compare', type: 'sequence' },
+  { id: 'df10', from: 'd_compare', to: 'd_melt', type: 'message', label: 'Drill Sample' },
+  { id: 'df11', from: 'd_melt', to: 'd_samples', type: 'sequence' },
+  { id: 'df12', from: 'd_samples', to: 'd_official_weight', type: 'sequence' },
+  { id: 'df13', from: 'd_official_weight', to: 'd_sample_trigger', type: 'sequence' },
+  { id: 'df14', from: 'd_sample_trigger', to: 'd_final', type: 'message' },
+  { id: 'df15', from: 'd_melt', to: 'd_xrf_ag', type: 'message' },
+  { id: 'df16', from: 'd_samples', to: 'd_xrf_ag', type: 'message' },
+  { id: 'df17', from: 'd_xrf_ag', to: 'd_fire_assay', type: 'sequence' },
+  { id: 'df18', from: 'd_fire_assay', to: 'd_official_au', type: 'sequence' },
+  { id: 'df19', from: 'd_official_au', to: 'd_assay_limits', type: 'sequence' },
+  { id: 'df20', from: 'd_assay_limits', to: 'd_umpire', type: 'sequence' },
+  { id: 'df21', from: 'd_umpire', to: 'd_final', type: 'sequence' },
+  { id: 'df22', from: 'd_final', to: 'd_end', type: 'sequence' },
+];
+
 export default function GoldShippingWorkflow() {
   const [activeView, setActiveView] = useState<WorkflowView>('batch-management');
   const [selectedElement, setSelectedElement] = useState<BPMNElement | null>(null);
   const [zoom, setZoom] = useState(1);
 
   const currentLanes = activeView === 'batch-management' ? batchLanes :
-                       activeView === 'sales-process' ? salesLanes : batchLanes;
+                       activeView === 'sales-process' ? salesLanes :
+                       activeView === 'depositing-process' ? depositingLanes : batchLanes;
   const currentElements = activeView === 'batch-management' ? batchElements :
-                         activeView === 'sales-process' ? salesElements : batchElements;
+                         activeView === 'sales-process' ? salesElements :
+                         activeView === 'depositing-process' ? depositingElements : batchElements;
   const currentFlows = activeView === 'batch-management' ? batchFlows :
-                      activeView === 'sales-process' ? salesFlows : batchFlows;
+                      activeView === 'sales-process' ? salesFlows :
+                      activeView === 'depositing-process' ? depositingFlows : batchFlows;
 
   const renderBPMNElement = (element: BPMNElement) => {
     const baseClass = "cursor-pointer transition-all duration-200 hover:opacity-80";
@@ -459,6 +569,16 @@ export default function GoldShippingWorkflow() {
           }`}
         >
           Sales & Payment Process
+        </button>
+        <button
+          onClick={() => setActiveView('depositing-process')}
+          className={`px-6 py-3 font-semibold transition-colors ${
+            activeView === 'depositing-process'
+              ? 'text-amber-600 border-b-2 border-amber-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Depositing Process
         </button>
         <button
           onClick={() => setActiveView('combined')}

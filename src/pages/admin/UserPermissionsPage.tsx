@@ -4,6 +4,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
+import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
 import { ArrowLeft, Save, User, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +38,7 @@ export function UserPermissionsPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { notification, showSuccess, showError, closeNotification } = useNotification();
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -184,10 +186,16 @@ export function UserPermissionsPage() {
         if (error) throw error;
       }
 
-      alert('Permissions saved successfully!');
+      showSuccess(
+        'Permissions Saved',
+        `Permissions for ${user?.full_name || user?.email} have been successfully updated.`
+      );
     } catch (error: any) {
       console.error('Error saving permissions:', error);
-      alert(`Failed to save permissions: ${error.message}`);
+      showError(
+        'Failed to Save Permissions',
+        error.message || 'An unexpected error occurred while saving permissions. Please try again.'
+      );
     } finally {
       setSaving(false);
     }
@@ -495,6 +503,19 @@ export function UserPermissionsPage() {
           </div>
         </div>
       </div>
+
+      {/* Notification Dialog */}
+      <NotificationDialog
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        confirmText={notification.confirmText}
+        onConfirm={notification.onConfirm}
+        cancelText={notification.cancelText}
+        showCancel={notification.showCancel}
+      />
     </MainLayout>
   );
 }

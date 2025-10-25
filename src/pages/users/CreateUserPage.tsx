@@ -4,11 +4,13 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
 import { ArrowLeft, Save, Info, CheckCircle, AlertCircle, Key, Shield, Mail, Phone, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export function CreateUserPage() {
   const navigate = useNavigate();
+  const { notification, showError, showWarning, closeNotification } = useNotification();
   const [formData, setFormData] = useState({
     email: '',
     full_name: '',
@@ -31,7 +33,7 @@ export function CreateUserPage() {
 
   const handleCreateUser = async () => {
     if (!formData.email || !formData.full_name) {
-      alert('Please fill in all required fields');
+      showWarning('Missing Information', 'Please fill in all required fields (Full Name and Email).');
       return;
     }
 
@@ -39,30 +41,36 @@ export function CreateUserPage() {
       setCreating(true);
       const defaultPassword = generateRandomPassword();
 
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use Supabase signUp instead of admin API
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: defaultPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: formData.full_name,
-          phone: formData.phone,
+        options: {
+          data: {
+            full_name: formData.full_name,
+            phone: formData.phone,
+          },
         },
       });
 
       if (authError) throw authError;
 
+      if (!authData.user) {
+        throw new Error('User creation failed');
+      }
+
+      // Update the user profile with additional information
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email: formData.email,
+        .update({
           full_name: formData.full_name,
           phone: formData.phone,
           role: formData.role,
           is_active: true,
           two_factor_enabled: true,
           password_must_change: true,
-        });
+        })
+        .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
 
@@ -70,19 +78,27 @@ export function CreateUserPage() {
       setShowPassword(true);
     } catch (error: any) {
       console.error('Error creating user:', error);
-      alert(`Failed to create user: ${error.message}`);
+      showError(
+        'User Creation Failed',
+        error.message || 'An unexpected error occurred while creating the user. Please try again.'
+      );
       setCreating(false);
     }
   };
+
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleClose = () => {
     if (showPassword) {
       navigate('/users');
     } else {
-      if (confirm('Are you sure you want to cancel? All entered data will be lost.')) {
-        navigate('/users');
-      }
+      setShowCancelConfirm(true);
     }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelConfirm(false);
+    navigate('/users');
   };
 
   if (showPassword) {
@@ -377,6 +393,31 @@ export function CreateUserPage() {
           </div>
         </div>
       </div>
+
+      {/* Notification Dialogs */}
+      <NotificationDialog
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        confirmText={notification.confirmText}
+        onConfirm={notification.onConfirm}
+        cancelText={notification.cancelText}
+        showCancel={notification.showCancel}
+      />
+
+      <NotificationDialog
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        type="warning"
+        title="Cancel User Creation"
+        message="Are you sure you want to cancel? All entered data will be lost."
+        confirmText="Yes, Cancel"
+        cancelText="No, Continue"
+        showCancel={true}
+        onConfirm={confirmCancel}
+      />
     </MainLayout>
   );
 }

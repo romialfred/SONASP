@@ -135,7 +135,7 @@ export function SalesDashboard() {
           payment_received: { label: 'Payment Received', variant: 'success' as const },
           completed: { label: 'Completed', variant: 'success' as const },
         };
-        const status = statusMap[sale.status];
+        const status = statusMap[sale.status] || { label: sale.status, variant: 'info' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },

@@ -72,7 +72,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
       <div className="absolute top-4 right-4">
         <button
           onClick={toggleLanguage}
@@ -85,15 +85,17 @@ export function Login() {
         </button>
       </div>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-3xl">M</span>
-            </div>
+            <img
+              src="/image.png"
+              alt="Mansa Logo"
+              className="h-24 w-auto object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl">Gold Shipper</CardTitle>
-          <CardDescription>Mansa Resources - {t('auth.login')}</CardDescription>
+          <CardTitle className="text-2xl">Mansa Gold Tracker</CardTitle>
+          <CardDescription>Gold Sales Management Solution - {t('auth.login')}</CardDescription>
         </CardHeader>
 
         <CardContent>

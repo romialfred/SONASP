@@ -44,7 +44,7 @@ import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
-import { GoldShippingWorkflow } from './pages/admin/GoldShippingWorkflow';
+import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import { ShippingPage } from './pages/shipping/ShippingPage';
 import { PERMISSIONS } from './lib/permissions';
 

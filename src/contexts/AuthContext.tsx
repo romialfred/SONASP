@@ -3,7 +3,6 @@ import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
-import { DEMO_MODE } from '@/lib/demoSeed';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -23,25 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialized: false,
   });
   const sessionManagerRef = useRef<SessionManager | null>(null);
-
-  const createDemoUserProfile = (userId: string, email: string): UserProfile => {
-    return {
-      id: userId,
-      email: email,
-      full_name: 'Demo User',
-      phone: null,
-      role: 'management',
-      site_ids: [],
-      is_active: true,
-      two_factor_enabled: false,
-      language: 'en',
-      email_notifications: true,
-      batch_notifications: true,
-      approval_notifications: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  };
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     const MAX_RETRIES = 2;
@@ -73,16 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Check for infinite recursion error (42P17)
         if (profileError.code === '42P17') {
           console.error('CRITICAL: Infinite recursion detected in RLS policies. This should not happen after migration.');
-
-          // In demo mode, return a demo user instead of throwing
-          if (DEMO_MODE) {
-            console.warn('Demo mode: Using demo user profile due to RLS recursion error');
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email) {
-              return createDemoUserProfile(userId, user.email);
-            }
-          }
-
           throw new Error('Database configuration error. Please contact support.');
         }
 
@@ -94,15 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Wait briefly then retry (profile might be created by trigger)
             await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
             return fetchUserProfile(userId, retryCount + 1);
-          }
-
-          // After all retries failed, use demo profile if in demo mode
-          if (DEMO_MODE) {
-            console.warn('Demo mode: Using demo user profile after retry exhaustion');
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email) {
-              return createDemoUserProfile(userId, user.email);
-            }
           }
         }
 
@@ -119,18 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return fetchUserProfile(userId, retryCount + 1);
         }
 
-        // Profile still missing after retries
+        // Profile still missing after retries - this shouldn't happen with trigger
         console.error('Profile missing after retries. Trigger may have failed.');
-
-        // In demo mode, return a demo user profile if database fetch fails
-        if (DEMO_MODE) {
-          console.warn('Demo mode: Using demo user profile due to missing profile');
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user?.email) {
-            return createDemoUserProfile(userId, user.email);
-          }
-        }
-
         return null;
       }
 
@@ -178,15 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log(`Retrying profile fetch (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return fetchUserProfile(userId, retryCount + 1);
-      }
-
-      // In demo mode, return a demo user profile if database fetch fails
-      if (DEMO_MODE) {
-        console.warn('Demo mode: Using demo user profile due to database error');
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          return createDemoUserProfile(userId, user.email);
-        }
       }
 
       return null;
@@ -334,59 +276,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(session.user.id);
 
             if (mounted) {
-              if (profile) {
-                console.log('[Auth] Profile fetched successfully, updating state');
-                setState({
-                  user: profile,
-                  session,
-                  loading: false,
-                  initialized: true,
-                });
-              } else {
-                console.warn('[Auth] Profile fetch returned null');
-                // In demo mode with session but no profile, create demo user
-                if (DEMO_MODE && session.user.email) {
-                  console.warn('[Auth] Demo mode: Creating demo user for active session');
-                  const demoProfile = createDemoUserProfile(session.user.id, session.user.email);
-                  setState({
-                    user: demoProfile,
-                    session,
-                    loading: false,
-                    initialized: true,
-                  });
-                } else {
-                  setState({
-                    user: null,
-                    session: null,
-                    loading: false,
-                    initialized: true,
-                  });
-                }
-              }
+              console.log('[Auth] Profile fetched successfully, updating state');
+              setState({
+                user: profile,
+                session,
+                loading: false,
+                initialized: true,
+              });
             }
           } catch (profileError) {
             console.error('[Auth] Profile fetch failed during initialization:', profileError);
 
             if (mounted) {
-              // In demo mode, provide demo user even on error
-              if (DEMO_MODE && session?.user?.email) {
-                console.warn('[Auth] Demo mode: Using demo user after initialization error');
-                const demoProfile = createDemoUserProfile(session.user.id, session.user.email);
-                setState({
-                  user: demoProfile,
-                  session,
-                  loading: false,
-                  initialized: true,
-                });
-              } else {
-                console.log('[Auth] Setting initialized=true despite profile error');
-                setState({
-                  user: null,
-                  session: null,
-                  loading: false,
-                  initialized: true,
-                });
-              }
+              console.log('[Auth] Setting initialized=true despite profile error');
+              setState({
+                user: null,
+                session: null,
+                loading: false,
+                initialized: true,
+              });
             }
           }
         } else {
@@ -436,46 +344,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[Auth] User signed in, fetching profile');
-          try {
-            const profile = await fetchUserProfile(session.user.id);
+          const profile = await fetchUserProfile(session.user.id);
+          setState({
+            user: profile,
+            session,
+            loading: false,
+            initialized: true,
+          });
 
-            // Use demo profile if fetch returned null in demo mode
-            const userProfile = profile || (DEMO_MODE && session.user.email
-              ? createDemoUserProfile(session.user.id, session.user.email)
-              : null);
-
-            setState({
-              user: userProfile,
-              session,
-              loading: false,
-              initialized: true,
-            });
-
-            if (!sessionManagerRef.current && userProfile) {
-              console.log('[Auth] Starting session manager');
-              sessionManagerRef.current = new SessionManager();
-              sessionManagerRef.current.start();
-            }
-          } catch (error) {
-            console.error('[Auth] Error during sign in profile fetch:', error);
-
-            // In demo mode, provide demo user even on error
-            if (DEMO_MODE && session.user.email) {
-              const demoProfile = createDemoUserProfile(session.user.id, session.user.email);
-              setState({
-                user: demoProfile,
-                session,
-                loading: false,
-                initialized: true,
-              });
-            } else {
-              setState({
-                user: null,
-                session: null,
-                loading: false,
-                initialized: true,
-              });
-            }
+          if (!sessionManagerRef.current) {
+            console.log('[Auth] Starting session manager');
+            sessionManagerRef.current = new SessionManager();
+            sessionManagerRef.current.start();
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('[Auth] SIGNED_OUT event detected');
@@ -505,34 +385,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }));
         } else if (event === 'USER_UPDATED' && session?.user) {
           console.log('[Auth] User updated, refreshing profile');
-          try {
-            const profile = await fetchUserProfile(session.user.id);
-
-            // Use demo profile if fetch returned null in demo mode
-            const userProfile = profile || (DEMO_MODE && session.user.email
-              ? createDemoUserProfile(session.user.id, session.user.email)
-              : null);
-
-            setState({
-              user: userProfile,
-              session,
-              loading: false,
-              initialized: true,
-            });
-          } catch (error) {
-            console.error('[Auth] Error refreshing profile after user update:', error);
-
-            // In demo mode, provide demo user even on error
-            if (DEMO_MODE && session.user.email) {
-              const demoProfile = createDemoUserProfile(session.user.id, session.user.email);
-              setState({
-                user: demoProfile,
-                session,
-                loading: false,
-                initialized: true,
-              });
-            }
-          }
+          const profile = await fetchUserProfile(session.user.id);
+          setState({
+            user: profile,
+            session,
+            loading: false,
+            initialized: true,
+          });
         }
       }
     );

@@ -1,4 +1,4 @@
-export const DEMO_MODE = false;
+export const DEMO_MODE = true;
 
 export interface Batch {
   batch_id: string;

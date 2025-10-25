@@ -1,64 +1,159 @@
+import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
+import { Select } from '@/components/ui/Select';
 import { demoSales, demoCustomers, demoGoldPrices, demoBatches } from '@/lib/demoSeed';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, Package, Users } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Users, Filter, Calendar } from 'lucide-react';
+
+type TimeRange = '3m' | '6m' | '12m' | 'all';
 
 export function AnalyticsPage() {
-  // Sales performance over time
-  const salesByDate = demoSales.reduce((acc, sale) => {
-    const date = new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const existing = acc.find(item => item.date === date);
-    if (existing) {
-      existing.revenue += sale.amount_usd;
-      existing.weight += sale.fine_weight_oz;
-      existing.count += 1;
-    } else {
-      acc.push({ date, revenue: sale.amount_usd, weight: sale.fine_weight_oz, count: 1 });
-    }
-    return acc;
-  }, [] as { date: string; revenue: number; weight: number; count: number }[]);
+  const [timeRange, setTimeRange] = useState<TimeRange>('6m');
+  const [selectedSegment, setSelectedSegment] = useState<string>('all');
 
-  // Customer analysis
-  const customerAnalysis = demoCustomers.map(customer => {
-    const customerSales = demoSales.filter(s => s.customer_id === customer.customer_id);
-    const totalRevenue = customerSales.reduce((sum, s) => sum + s.amount_usd, 0);
-    const totalWeight = customerSales.reduce((sum, s) => sum + s.fine_weight_oz, 0);
-    return {
-      name: customer.name,
-      segment: customer.segment,
-      revenue: totalRevenue,
-      weight: totalWeight,
-      salesCount: customerSales.length,
-    };
-  }).filter(c => c.salesCount > 0).sort((a, b) => b.revenue - a.revenue);
+  const segments = ['all', ...Array.from(new Set(demoCustomers.map(c => c.segment)))];
 
-  // Gold price correlation with sales
-  const priceVsSales = demoGoldPrices.slice(-7).map((price, index) => {
-    const date = new Date(price.as_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const daySales = demoSales.filter(s => {
-      const saleDate = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      return saleDate === date;
+  const getDateRange = (range: TimeRange) => {
+    const now = new Date();
+    const months = range === '3m' ? 3 : range === '6m' ? 6 : range === '12m' ? 12 : 36;
+    const startDate = new Date(now.getFullYear(), now.getMonth() - months, 1);
+    return startDate;
+  };
+
+  // MONTHLY Sales Performance
+  const monthlySalesData = useMemo(() => {
+    const startDate = getDateRange(timeRange);
+    const filteredSales = demoSales.filter(sale => new Date(sale.date) >= startDate);
+
+    const monthlyMap = filteredSales.reduce((acc, sale) => {
+      const monthKey = new Date(sale.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      if (!acc[monthKey]) {
+        acc[monthKey] = { date: monthKey, revenue: 0, weight: 0 };
+      }
+      acc[monthKey].revenue += sale.amount_usd;
+      acc[monthKey].weight += sale.fine_weight_oz;
+      return acc;
+    }, {} as Record<string, { date: string; revenue: number; weight: number }>);
+
+    return Object.values(monthlyMap).sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [timeRange]);
+
+  // MONTHLY Gold Price vs Revenue
+  const monthlyPriceCorrelation = useMemo(() => {
+    const startDate = getDateRange(timeRange);
+
+    const pricesByMonth = demoGoldPrices.reduce((acc, price) => {
+      const priceDate = new Date(price.as_of);
+      if (priceDate >= startDate) {
+        const monthKey = priceDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!acc[monthKey]) acc[monthKey] = [];
+        acc[monthKey].push(price.price_per_oz_usd);
+      }
+      return acc;
+    }, {} as Record<string, number[]>);
+
+    const salesByMonth = demoSales.reduce((acc, sale) => {
+      const saleDate = new Date(sale.date);
+      if (saleDate >= startDate) {
+        const monthKey = saleDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!acc[monthKey]) acc[monthKey] = 0;
+        acc[monthKey] += sale.amount_usd;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const monthKeys = Array.from(new Set([...Object.keys(pricesByMonth), ...Object.keys(salesByMonth)]));
+
+    return monthKeys.map(month => ({
+      date: month,
+      price: pricesByMonth[month] ? Math.round(pricesByMonth[month].reduce((a, b) => a + b, 0) / pricesByMonth[month].length) : 0,
+      revenue: Math.round((salesByMonth[month] || 0) / 1000),
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [timeRange]);
+
+  // TOP 3 Customers by MONTH
+  const topCustomersMonthly = useMemo(() => {
+    const startDate = getDateRange(timeRange);
+    const filteredSales = demoSales.filter(sale => {
+      const saleDate = new Date(sale.date);
+      const matchesTime = saleDate >= startDate;
+      if (selectedSegment === 'all') return matchesTime;
+      const customer = demoCustomers.find(c => c.customer_id === sale.customer_id);
+      return matchesTime && customer?.segment === selectedSegment;
     });
-    const revenue = daySales.reduce((sum, s) => sum + s.amount_usd, 0);
-    return {
-      date,
-      price: price.price_per_oz_usd,
-      revenue: revenue / 1000, // in thousands
-    };
-  });
 
-  // Batch processing efficiency
-  const batchEfficiency = demoBatches.map(batch => ({
-    id: batch.batch_id,
-    weight: batch.gross_weight_g,
-    purity: batch.purity_pct,
-    status: batch.status,
-  }));
+    // Get top 3 customers
+    const customerTotals = demoCustomers.map(customer => {
+      const customerSales = filteredSales.filter(s => s.customer_id === customer.customer_id);
+      const totalRevenue = customerSales.reduce((sum, s) => sum + s.amount_usd, 0);
+      return { customer, totalRevenue, sales: customerSales };
+    }).filter(c => c.totalRevenue > 0)
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 3);
+
+    // Aggregate by month
+    const monthlyData: Record<string, any> = {};
+    customerTotals.forEach(({ customer, sales }) => {
+      sales.forEach(sale => {
+        const monthKey = new Date(sale.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!monthlyData[monthKey]) monthlyData[monthKey] = { month: monthKey };
+        if (!monthlyData[monthKey][customer.name]) monthlyData[monthKey][customer.name] = 0;
+        monthlyData[monthKey][customer.name] += sale.amount_usd;
+      });
+    });
+
+    return Object.values(monthlyData).sort((a: any, b: any) =>
+      new Date(a.month).getTime() - new Date(b.month).getTime()
+    );
+  }, [timeRange, selectedSegment]);
+
+  const top3CustomerNames = useMemo(() => {
+    const startDate = getDateRange(timeRange);
+    const filteredSales = demoSales.filter(sale => new Date(sale.date) >= startDate);
+
+    return demoCustomers.map(customer => {
+      const customerSales = filteredSales.filter(s => s.customer_id === customer.customer_id);
+      const totalRevenue = customerSales.reduce((sum, s) => sum + s.amount_usd, 0);
+      return { name: customer.name, revenue: totalRevenue };
+    }).filter(c => c.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 3)
+      .map(c => c.name);
+  }, [timeRange]);
+
+  // Customer analysis for table
+  const customerAnalysis = useMemo(() => {
+    const startDate = getDateRange(timeRange);
+    const filteredSales = demoSales.filter(sale => {
+      const saleDate = new Date(sale.date);
+      const matchesTime = saleDate >= startDate;
+      if (selectedSegment === 'all') return matchesTime;
+      const customer = demoCustomers.find(c => c.customer_id === sale.customer_id);
+      return matchesTime && customer?.segment === selectedSegment;
+    });
+
+    return demoCustomers.map(customer => {
+      const customerSales = filteredSales.filter(s => s.customer_id === customer.customer_id);
+      const totalRevenue = customerSales.reduce((sum, s) => sum + s.amount_usd, 0);
+      const totalWeight = customerSales.reduce((sum, s) => sum + s.fine_weight_oz, 0);
+      return {
+        name: customer.name,
+        segment: customer.segment,
+        revenue: totalRevenue,
+        weight: totalWeight,
+        salesCount: customerSales.length,
+      };
+    }).filter(c => c.salesCount > 0).sort((a, b) => b.revenue - a.revenue);
+  }, [timeRange, selectedSegment]);
 
   const totalRevenue = demoSales.reduce((sum, s) => sum + s.amount_usd, 0);
   const avgSaleSize = totalRevenue / demoSales.length;
   const topCustomer = customerAnalysis[0];
+
+  const customerColors = ['#8b5cf6', '#06b6d4', '#f59e0b'];
 
   return (
     <MainLayout>
@@ -67,6 +162,49 @@ export function AnalyticsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
           <p className="text-gray-600 mt-1">Detailed business insights and performance metrics</p>
         </div>
+
+        {/* Filters Section */}
+        <Card>
+          <div className="p-4 bg-gray-50">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold text-gray-700">Filters:</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <label className="text-sm text-gray-600">Time Range:</label>
+                <Select
+                  value={timeRange}
+                  onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+                  className="min-w-[150px]"
+                >
+                  <option value="3m">Last 3 Months</option>
+                  <option value="6m">Last 6 Months</option>
+                  <option value="12m">Last 12 Months</option>
+                  <option value="all">All Time</option>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-gray-600" />
+                <label className="text-sm text-gray-600">Segment:</label>
+                <Select
+                  value={selectedSegment}
+                  onChange={(e) => setSelectedSegment(e.target.value)}
+                  className="min-w-[150px]"
+                >
+                  {segments.map(segment => (
+                    <option key={segment} value={segment}>
+                      {segment === 'all' ? 'All Segments' : segment}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </div>
+        </Card>
 
         {/* Key Insights */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -106,7 +244,7 @@ export function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-600">Top Customer</p>
-                  <p className="text-sm font-bold text-gray-900">{topCustomer.name.split(' ')[0]}</p>
+                  <p className="text-sm font-bold text-gray-900">{topCustomer ? topCustomer.name.split(' ')[0] : 'HSBC'}</p>
                 </div>
               </div>
             </div>
@@ -127,13 +265,13 @@ export function AnalyticsPage() {
           </Card>
         </div>
 
-        {/* Sales Performance */}
+        {/* Sales Performance Over Time - MONTHLY */}
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Sales Performance Over Time</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesByDate}>
+                <AreaChart data={monthlySalesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis yAxisId="left" />
@@ -152,47 +290,49 @@ export function AnalyticsPage() {
           </div>
         </Card>
 
-        {/* Gold Price vs Sales Revenue */}
+        {/* Gold Price vs Sales Revenue - MONTHLY */}
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Gold Price vs Sales Revenue Correlation</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={priceVsSales}>
+                <LineChart data={monthlyPriceCorrelation}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis yAxisId="left" label={{ value: 'Price/oz (USD)', angle: -90, position: 'insideLeft' }} />
                   <YAxis yAxisId="right" orientation="right" label={{ value: 'Revenue (K)', angle: 90, position: 'insideRight' }} />
                   <Tooltip />
                   <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="price" stroke="#fbbf24" strokeWidth={2} name="Gold Price (USD/oz)" />
-                  <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Revenue (K)" />
+                  <Line yAxisId="left" type="monotone" dataKey="price" stroke="#fbbf24" strokeWidth={2} name="Gold Price (USD/oz)" dot={{ r: 4 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Revenue (K)" dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
         </Card>
 
-        {/* Top Customers */}
+        {/* Top 3 Customers by Month */}
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Top Customers by Revenue</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={customerAnalysis.slice(0, 5)} layout="vertical">
+                <BarChart data={topCustomersMonthly}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="name" width={150} />
+                  <XAxis dataKey="month" />
+                  <YAxis />
                   <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']} />
                   <Legend />
-                  <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue (USD)" />
+                  {top3CustomerNames.map((name, index) => (
+                    <Bar key={name} dataKey={name} fill={customerColors[index]} name={name} />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </Card>
 
-        {/* Customer Details Table */}
+        {/* Customer Performance Details */}
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Customer Performance Details</h3>

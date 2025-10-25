@@ -255,6 +255,23 @@ export interface Database {
           approved_by: string | null
           approved_at: string | null
           updated_at: string
+          salesperson_id: string | null
+          salesperson_name: string | null
+          contract_id: string | null
+          payment_terms: string
+          payment_schedule_type: string
+          discount_percentage: number
+          discount_amount: number
+          price_adjustment: number
+          customer_approved_at: string | null
+          customer_approved_by: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          completed_at: string | null
+          internal_notes: string | null
+          customer_notes: string | null
+          metadata: Json | null
         }
         Insert: {
           id?: string
@@ -275,6 +292,23 @@ export interface Database {
           approved_by?: string | null
           approved_at?: string | null
           updated_at?: string
+          salesperson_id?: string | null
+          salesperson_name?: string | null
+          contract_id?: string | null
+          payment_terms?: string
+          payment_schedule_type?: string
+          discount_percentage?: number
+          discount_amount?: number
+          price_adjustment?: number
+          customer_approved_at?: string | null
+          customer_approved_by?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          completed_at?: string | null
+          internal_notes?: string | null
+          customer_notes?: string | null
+          metadata?: Json | null
         }
         Update: {
           id?: string
@@ -295,6 +329,23 @@ export interface Database {
           approved_by?: string | null
           approved_at?: string | null
           updated_at?: string
+          salesperson_id?: string | null
+          salesperson_name?: string | null
+          contract_id?: string | null
+          payment_terms?: string
+          payment_schedule_type?: string
+          discount_percentage?: number
+          discount_amount?: number
+          price_adjustment?: number
+          customer_approved_at?: string | null
+          customer_approved_by?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          completed_at?: string | null
+          internal_notes?: string | null
+          customer_notes?: string | null
+          metadata?: Json | null
         }
       }
       audit_logs: {
@@ -815,6 +866,644 @@ export interface Database {
           status?: string
           created_at?: string
           updated_at?: string
+        }
+      }
+      sales_line_items: {
+        Row: {
+          id: string
+          sale_id: string
+          batch_id: string | null
+          line_number: number
+          metal_type: string
+          quantity_grams: number
+          quantity_oz: number
+          unit_price: number
+          fineness_percentage: number | null
+          fine_weight_oz: number | null
+          line_total: number
+          allocated_from_refining_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          batch_id?: string | null
+          line_number: number
+          metal_type?: string
+          quantity_grams: number
+          quantity_oz: number
+          unit_price: number
+          fineness_percentage?: number | null
+          fine_weight_oz?: number | null
+          line_total: number
+          allocated_from_refining_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          batch_id?: string | null
+          line_number?: number
+          metal_type?: string
+          quantity_grams?: number
+          quantity_oz?: number
+          unit_price?: number
+          fineness_percentage?: number | null
+          fine_weight_oz?: number | null
+          line_total?: number
+          allocated_from_refining_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      commission_rules: {
+        Row: {
+          id: string
+          rule_name: string
+          rule_type: 'percentage' | 'fixed' | 'tiered' | 'hybrid'
+          customer_tier: 'premium' | 'standard' | 'basic' | 'all' | null
+          metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other' | 'all' | null
+          min_quantity_oz: number | null
+          max_quantity_oz: number | null
+          min_value_usd: number | null
+          max_value_usd: number | null
+          commission_percentage: number | null
+          fixed_amount: number | null
+          tier_config: Json | null
+          valid_from: string
+          valid_until: string | null
+          is_active: boolean
+          priority: number
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          rule_name: string
+          rule_type: 'percentage' | 'fixed' | 'tiered' | 'hybrid'
+          customer_tier?: 'premium' | 'standard' | 'basic' | 'all' | null
+          metal_type?: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other' | 'all' | null
+          min_quantity_oz?: number | null
+          max_quantity_oz?: number | null
+          min_value_usd?: number | null
+          max_value_usd?: number | null
+          commission_percentage?: number | null
+          fixed_amount?: number | null
+          tier_config?: Json | null
+          valid_from?: string
+          valid_until?: string | null
+          is_active?: boolean
+          priority?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          rule_name?: string
+          rule_type?: 'percentage' | 'fixed' | 'tiered' | 'hybrid'
+          customer_tier?: 'premium' | 'standard' | 'basic' | 'all' | null
+          metal_type?: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other' | 'all' | null
+          min_quantity_oz?: number | null
+          max_quantity_oz?: number | null
+          min_value_usd?: number | null
+          max_value_usd?: number | null
+          commission_percentage?: number | null
+          fixed_amount?: number | null
+          tier_config?: Json | null
+          valid_from?: string
+          valid_until?: string | null
+          is_active?: boolean
+          priority?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_commissions: {
+        Row: {
+          id: string
+          sale_id: string
+          commission_rule_id: string | null
+          salesperson_id: string
+          salesperson_name: string
+          commission_type: 'percentage' | 'fixed' | 'tiered' | 'hybrid' | 'manual'
+          basis_amount: number
+          commission_rate: number | null
+          commission_amount: number
+          currency: string
+          calculation_details: Json | null
+          status: 'pending' | 'approved' | 'rejected' | 'paid' | 'cancelled'
+          approved_by: string | null
+          approved_at: string | null
+          paid_at: string | null
+          payment_reference: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          commission_rule_id?: string | null
+          salesperson_id: string
+          salesperson_name: string
+          commission_type: 'percentage' | 'fixed' | 'tiered' | 'hybrid' | 'manual'
+          basis_amount: number
+          commission_rate?: number | null
+          commission_amount: number
+          currency?: string
+          calculation_details?: Json | null
+          status?: 'pending' | 'approved' | 'rejected' | 'paid' | 'cancelled'
+          approved_by?: string | null
+          approved_at?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          commission_rule_id?: string | null
+          salesperson_id?: string
+          salesperson_name?: string
+          commission_type?: 'percentage' | 'fixed' | 'tiered' | 'hybrid' | 'manual'
+          basis_amount?: number
+          commission_rate?: number | null
+          commission_amount?: number
+          currency?: string
+          calculation_details?: Json | null
+          status?: 'pending' | 'approved' | 'rejected' | 'paid' | 'cancelled'
+          approved_by?: string | null
+          approved_at?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_approvals: {
+        Row: {
+          id: string
+          sale_id: string
+          approval_level: number
+          approval_type: 'management' | 'customer' | 'finance' | 'compliance' | 'executive'
+          required_approver_role: string | null
+          required_approver_id: string | null
+          approver_id: string | null
+          approver_name: string | null
+          status: 'pending' | 'approved' | 'rejected' | 'conditional' | 'expired'
+          approval_token: string | null
+          token_expires_at: string | null
+          decision_notes: string | null
+          conditions: string | null
+          approved_at: string | null
+          ip_address: string | null
+          user_agent: string | null
+          notification_sent_at: string | null
+          reminder_count: number
+          last_reminder_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          approval_level: number
+          approval_type: 'management' | 'customer' | 'finance' | 'compliance' | 'executive'
+          required_approver_role?: string | null
+          required_approver_id?: string | null
+          approver_id?: string | null
+          approver_name?: string | null
+          status?: 'pending' | 'approved' | 'rejected' | 'conditional' | 'expired'
+          approval_token?: string | null
+          token_expires_at?: string | null
+          decision_notes?: string | null
+          conditions?: string | null
+          approved_at?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          notification_sent_at?: string | null
+          reminder_count?: number
+          last_reminder_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          approval_level?: number
+          approval_type?: 'management' | 'customer' | 'finance' | 'compliance' | 'executive'
+          required_approver_role?: string | null
+          required_approver_id?: string | null
+          approver_id?: string | null
+          approver_name?: string | null
+          status?: 'pending' | 'approved' | 'rejected' | 'conditional' | 'expired'
+          approval_token?: string | null
+          token_expires_at?: string | null
+          decision_notes?: string | null
+          conditions?: string | null
+          approved_at?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          notification_sent_at?: string | null
+          reminder_count?: number
+          last_reminder_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_allocations: {
+        Row: {
+          id: string
+          sale_id: string
+          batch_id: string | null
+          refining_record_id: string | null
+          allocated_quantity_oz: number
+          allocated_fine_oz: number | null
+          allocation_status: 'reserved' | 'confirmed' | 'released' | 'delivered'
+          reserved_at: string
+          confirmed_at: string | null
+          released_at: string | null
+          release_reason: string | null
+          allocated_by: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          batch_id?: string | null
+          refining_record_id?: string | null
+          allocated_quantity_oz: number
+          allocated_fine_oz?: number | null
+          allocation_status?: 'reserved' | 'confirmed' | 'released' | 'delivered'
+          reserved_at?: string
+          confirmed_at?: string | null
+          released_at?: string | null
+          release_reason?: string | null
+          allocated_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          batch_id?: string | null
+          refining_record_id?: string | null
+          allocated_quantity_oz?: number
+          allocated_fine_oz?: number | null
+          allocation_status?: 'reserved' | 'confirmed' | 'released' | 'delivered'
+          reserved_at?: string
+          confirmed_at?: string | null
+          released_at?: string | null
+          release_reason?: string | null
+          allocated_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      customer_contracts: {
+        Row: {
+          id: string
+          customer_id: string
+          contract_number: string
+          contract_type: 'master' | 'spot' | 'term' | 'consignment'
+          pricing_model: 'london_am' | 'london_pm' | 'fixed' | 'formula' | 'negotiated'
+          base_price_adjustment: number
+          discount_percentage: number
+          payment_terms: string
+          credit_limit: number | null
+          minimum_order_oz: number | null
+          maximum_order_oz: number | null
+          annual_volume_commitment_oz: number | null
+          priority_level: number
+          contract_terms: string | null
+          special_conditions: string | null
+          valid_from: string
+          valid_until: string
+          auto_renew: boolean
+          renewal_notice_days: number
+          status: 'draft' | 'active' | 'suspended' | 'expired' | 'terminated'
+          signed_date: string | null
+          signed_by_customer: string | null
+          signed_by_company: string | null
+          document_url: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          contract_number: string
+          contract_type: 'master' | 'spot' | 'term' | 'consignment'
+          pricing_model: 'london_am' | 'london_pm' | 'fixed' | 'formula' | 'negotiated'
+          base_price_adjustment?: number
+          discount_percentage?: number
+          payment_terms: string
+          credit_limit?: number | null
+          minimum_order_oz?: number | null
+          maximum_order_oz?: number | null
+          annual_volume_commitment_oz?: number | null
+          priority_level?: number
+          contract_terms?: string | null
+          special_conditions?: string | null
+          valid_from: string
+          valid_until: string
+          auto_renew?: boolean
+          renewal_notice_days?: number
+          status?: 'draft' | 'active' | 'suspended' | 'expired' | 'terminated'
+          signed_date?: string | null
+          signed_by_customer?: string | null
+          signed_by_company?: string | null
+          document_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          contract_number?: string
+          contract_type?: 'master' | 'spot' | 'term' | 'consignment'
+          pricing_model?: 'london_am' | 'london_pm' | 'fixed' | 'formula' | 'negotiated'
+          base_price_adjustment?: number
+          discount_percentage?: number
+          payment_terms?: string
+          credit_limit?: number | null
+          minimum_order_oz?: number | null
+          maximum_order_oz?: number | null
+          annual_volume_commitment_oz?: number | null
+          priority_level?: number
+          contract_terms?: string | null
+          special_conditions?: string | null
+          valid_from?: string
+          valid_until?: string
+          auto_renew?: boolean
+          renewal_notice_days?: number
+          status?: 'draft' | 'active' | 'suspended' | 'expired' | 'terminated'
+          signed_date?: string | null
+          signed_by_customer?: string | null
+          signed_by_company?: string | null
+          document_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_payment_schedules: {
+        Row: {
+          id: string
+          sale_id: string
+          payment_id: string | null
+          installment_number: number
+          due_date: string
+          amount_due: number
+          amount_paid: number
+          currency: string
+          status: 'pending' | 'overdue' | 'partial' | 'paid' | 'waived'
+          payment_method: 'wire' | 'swift' | 'check' | 'ach' | 'other' | null
+          paid_date: string | null
+          late_fee: number
+          notes: string | null
+          reminder_sent_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          payment_id?: string | null
+          installment_number: number
+          due_date: string
+          amount_due: number
+          amount_paid?: number
+          currency?: string
+          status?: 'pending' | 'overdue' | 'partial' | 'paid' | 'waived'
+          payment_method?: 'wire' | 'swift' | 'check' | 'ach' | 'other' | null
+          paid_date?: string | null
+          late_fee?: number
+          notes?: string | null
+          reminder_sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          payment_id?: string | null
+          installment_number?: number
+          due_date?: string
+          amount_due?: number
+          amount_paid?: number
+          currency?: string
+          status?: 'pending' | 'overdue' | 'partial' | 'paid' | 'waived'
+          payment_method?: 'wire' | 'swift' | 'check' | 'ach' | 'other' | null
+          paid_date?: string | null
+          late_fee?: number
+          notes?: string | null
+          reminder_sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_documents: {
+        Row: {
+          id: string
+          sale_id: string
+          document_type: 'contract' | 'invoice' | 'proforma' | 'packing_list' | 'certificate' | 'export_doc' | 'payment_proof' | 'other'
+          document_number: string | null
+          document_name: string
+          file_url: string
+          file_size: number | null
+          mime_type: string | null
+          version: number
+          previous_version_id: string | null
+          status: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'archived' | 'superseded'
+          approved_by: string | null
+          approved_at: string | null
+          valid_until: string | null
+          access_level: 'internal' | 'customer' | 'public'
+          tags: string[] | null
+          metadata: Json | null
+          uploaded_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          document_type: 'contract' | 'invoice' | 'proforma' | 'packing_list' | 'certificate' | 'export_doc' | 'payment_proof' | 'other'
+          document_number?: string | null
+          document_name: string
+          file_url: string
+          file_size?: number | null
+          mime_type?: string | null
+          version?: number
+          previous_version_id?: string | null
+          status?: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'archived' | 'superseded'
+          approved_by?: string | null
+          approved_at?: string | null
+          valid_until?: string | null
+          access_level?: 'internal' | 'customer' | 'public'
+          tags?: string[] | null
+          metadata?: Json | null
+          uploaded_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          document_type?: 'contract' | 'invoice' | 'proforma' | 'packing_list' | 'certificate' | 'export_doc' | 'payment_proof' | 'other'
+          document_number?: string | null
+          document_name?: string
+          file_url?: string
+          file_size?: number | null
+          mime_type?: string | null
+          version?: number
+          previous_version_id?: string | null
+          status?: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'archived' | 'superseded'
+          approved_by?: string | null
+          approved_at?: string | null
+          valid_until?: string | null
+          access_level?: 'internal' | 'customer' | 'public'
+          tags?: string[] | null
+          metadata?: Json | null
+          uploaded_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sales_notifications_log: {
+        Row: {
+          id: string
+          sale_id: string | null
+          notification_type: 'email' | 'sms' | 'in_app' | 'webhook'
+          event_type: 'sale_created' | 'approval_request' | 'approval_reminder' | 'approved' | 'rejected' | 'payment_due' | 'payment_received' | 'document_ready' | 'status_change'
+          recipient_type: 'customer' | 'salesperson' | 'approver' | 'management' | 'system'
+          recipient_id: string | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          subject: string | null
+          message: string
+          template_used: string | null
+          delivery_status: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | 'read'
+          sent_at: string | null
+          delivered_at: string | null
+          read_at: string | null
+          error_message: string | null
+          retry_count: number
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id?: string | null
+          notification_type: 'email' | 'sms' | 'in_app' | 'webhook'
+          event_type: 'sale_created' | 'approval_request' | 'approval_reminder' | 'approved' | 'rejected' | 'payment_due' | 'payment_received' | 'document_ready' | 'status_change'
+          recipient_type: 'customer' | 'salesperson' | 'approver' | 'management' | 'system'
+          recipient_id?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          subject?: string | null
+          message: string
+          template_used?: string | null
+          delivery_status?: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | 'read'
+          sent_at?: string | null
+          delivered_at?: string | null
+          read_at?: string | null
+          error_message?: string | null
+          retry_count?: number
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string | null
+          notification_type?: 'email' | 'sms' | 'in_app' | 'webhook'
+          event_type?: 'sale_created' | 'approval_request' | 'approval_reminder' | 'approved' | 'rejected' | 'payment_due' | 'payment_received' | 'document_ready' | 'status_change'
+          recipient_type?: 'customer' | 'salesperson' | 'approver' | 'management' | 'system'
+          recipient_id?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          subject?: string | null
+          message?: string
+          template_used?: string | null
+          delivery_status?: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | 'read'
+          sent_at?: string | null
+          delivered_at?: string | null
+          read_at?: string | null
+          error_message?: string | null
+          retry_count?: number
+          metadata?: Json | null
+          created_at?: string
+        }
+      }
+      sales_audit_trail: {
+        Row: {
+          id: string
+          sale_id: string
+          action: 'create' | 'update' | 'approve' | 'reject' | 'cancel' | 'complete' | 'payment' | 'document_add' | 'note_add'
+          actor_id: string | null
+          actor_name: string
+          actor_role: string | null
+          field_changed: string | null
+          old_value: string | null
+          new_value: string | null
+          change_reason: string | null
+          ip_address: string | null
+          user_agent: string | null
+          session_id: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sale_id: string
+          action: 'create' | 'update' | 'approve' | 'reject' | 'cancel' | 'complete' | 'payment' | 'document_add' | 'note_add'
+          actor_id?: string | null
+          actor_name: string
+          actor_role?: string | null
+          field_changed?: string | null
+          old_value?: string | null
+          new_value?: string | null
+          change_reason?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sale_id?: string
+          action?: 'create' | 'update' | 'approve' | 'reject' | 'cancel' | 'complete' | 'payment' | 'document_add' | 'note_add'
+          actor_id?: string | null
+          actor_name?: string
+          actor_role?: string | null
+          field_changed?: string | null
+          old_value?: string | null
+          new_value?: string | null
+          change_reason?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          metadata?: Json | null
+          created_at?: string
         }
       }
     }

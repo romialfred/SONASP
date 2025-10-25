@@ -23,6 +23,7 @@ import {
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { supabase } from '@/lib/supabase';
 
@@ -60,6 +61,8 @@ export function BatchDetailsWorkflow() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -151,10 +154,12 @@ export function BatchDetailsWorkflow() {
       if (historyError) throw historyError;
 
       await loadBatchData();
-      alert('Batch validated for transportation successfully!');
+      setSuccessMessage('Batch validated for transportation successfully!');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error validating batch:', error);
-      alert('Failed to validate batch');
+      setSuccessMessage('Failed to validate batch. Please try again.');
+      setShowSuccessModal(true);
     } finally {
       setActionLoading(false);
     }
@@ -177,10 +182,12 @@ export function BatchDetailsWorkflow() {
       if (error) throw error;
 
       await loadBatchData();
-      alert('Batch rejected');
+      setSuccessMessage('Batch rejected successfully');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error rejecting batch:', error);
-      alert('Failed to reject batch');
+      setSuccessMessage('Failed to reject batch. Please try again.');
+      setShowSuccessModal(true);
     } finally {
       setActionLoading(false);
     }
@@ -344,8 +351,8 @@ export function BatchDetailsWorkflow() {
                       <Package className="h-5 w-5 text-primary-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Batch Number</p>
-                      <p className="font-semibold text-gray-900">{batch.batch_number}</p>
+                      <p className="text-xs text-gray-500">Batch Number</p>
+                      <p className="text-sm font-semibold text-gray-900">{batch.batch_number}</p>
                     </div>
                   </div>
 
@@ -354,8 +361,8 @@ export function BatchDetailsWorkflow() {
                       <Weight className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Weight</p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="text-xs text-gray-500">Weight</p>
+                      <p className="text-sm font-semibold text-gray-900">
                         {batch.weight_grams.toFixed(2)}g ({batch.weight_ounces.toFixed(2)} oz)
                       </p>
                     </div>
@@ -366,8 +373,8 @@ export function BatchDetailsWorkflow() {
                       <Calendar className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Shipping Date</p>
-                      <p className="font-semibold text-gray-900">{batch.shipping_date}</p>
+                      <p className="text-xs text-gray-500">Shipping Date</p>
+                      <p className="text-sm font-semibold text-gray-900">{batch.shipping_date}</p>
                     </div>
                   </div>
 
@@ -376,8 +383,8 @@ export function BatchDetailsWorkflow() {
                       <StatusBadge status={batch.status as any} label={batch.status} />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Current Status</p>
-                      <p className="font-semibold text-gray-900 capitalize">{batch.status.replace('_', ' ')}</p>
+                      <p className="text-xs text-gray-500">Current Status</p>
+                      <p className="text-sm font-semibold text-gray-900 capitalize">{batch.status.replace('_', ' ')}</p>
                     </div>
                   </div>
 
@@ -386,8 +393,8 @@ export function BatchDetailsWorkflow() {
                       <MapPin className="h-5 w-5 text-orange-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Origin Site</p>
-                      <p className="font-semibold text-gray-900">{batch.origin_site_name}</p>
+                      <p className="text-xs text-gray-500">Origin Site</p>
+                      <p className="text-sm font-semibold text-gray-900">{batch.origin_site_name}</p>
                     </div>
                   </div>
 
@@ -396,8 +403,8 @@ export function BatchDetailsWorkflow() {
                       <MapPin className="h-5 w-5 text-teal-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Current Location</p>
-                      <p className="font-semibold text-gray-900">{batch.current_site_name}</p>
+                      <p className="text-xs text-gray-500">Current Location</p>
+                      <p className="text-sm font-semibold text-gray-900">{batch.current_site_name}</p>
                     </div>
                   </div>
 
@@ -407,8 +414,8 @@ export function BatchDetailsWorkflow() {
                         <Building2 className="h-5 w-5 text-yellow-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Transportation</p>
-                        <p className="font-semibold text-gray-900">{batch.transportation_company}</p>
+                        <p className="text-xs text-gray-500">Transportation</p>
+                        <p className="text-sm font-semibold text-gray-900">{batch.transportation_company}</p>
                       </div>
                     </div>
                   )}
@@ -418,8 +425,8 @@ export function BatchDetailsWorkflow() {
                       <User className="h-5 w-5 text-pink-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Created By</p>
-                      <p className="font-semibold text-gray-900">{batch.created_by_name}</p>
+                      <p className="text-xs text-gray-500">Created By</p>
+                      <p className="text-sm font-semibold text-gray-900">{batch.created_by_name}</p>
                     </div>
                   </div>
                 </div>
@@ -593,6 +600,36 @@ export function BatchDetailsWorkflow() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        size="sm"
+      >
+        <div className="p-6 text-center">
+          <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+            successMessage.includes('Failed') ? 'bg-red-100' : 'bg-green-100'
+          }`}>
+            {successMessage.includes('Failed') ? (
+              <XCircle className="h-6 w-6 text-red-600" />
+            ) : (
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            )}
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {successMessage.includes('Failed') ? 'Error' : 'Success'}
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">{successMessage}</p>
+          <Button
+            variant="primary"
+            onClick={() => setShowSuccessModal(false)}
+            className="w-full"
+          >
+            OK
+          </Button>
+        </div>
+      </Modal>
     </MainLayout>
   );
 }

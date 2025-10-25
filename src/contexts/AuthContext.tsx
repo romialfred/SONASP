@@ -35,14 +35,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (profileError) throw profileError;
-      if (!profile) return null;
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
+
+      if (!profile) {
+        console.warn('No profile found for user:', userId);
+        return null;
+      }
 
       // Then fetch site assignments separately (this will only work after the user is authenticated)
-      const { data: assignments } = await supabase
+      const { data: assignments, error: assignmentError } = await supabase
         .from('user_site_assignments')
         .select('site_id, is_primary')
         .eq('user_id', userId);
+
+      if (assignmentError) {
+        console.warn('Site assignment fetch error (non-fatal):', assignmentError);
+      }
 
       const siteIds = assignments?.map((assignment: any) => assignment.site_id) || [];
 
@@ -189,7 +200,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+        }
 
         if (mounted) {
           if (session?.user) {

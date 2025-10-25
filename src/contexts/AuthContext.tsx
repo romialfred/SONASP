@@ -28,42 +28,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      const { data: profile, error } = await supabase
+      // First, fetch the user profile
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select(`
-          *,
-          user_site_assignments(
-            site_id,
-            is_primary
-          )
-        `)
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+      if (!profile) return null;
 
-      if (profile) {
-        const siteIds = profile.user_site_assignments?.map((assignment: any) => assignment.site_id) || [];
+      // Then fetch site assignments separately (this will only work after the user is authenticated)
+      const { data: assignments } = await supabase
+        .from('user_site_assignments')
+        .select('site_id, is_primary')
+        .eq('user_id', userId);
 
-        return {
-          id: profile.id,
-          email: profile.email,
-          full_name: profile.full_name,
-          phone: profile.phone,
-          role: profile.role,
-          site_ids: siteIds,
-          is_active: profile.is_active,
-          two_factor_enabled: profile.two_factor_enabled,
-          language: profile.language,
-          email_notifications: profile.email_notifications,
-          batch_notifications: profile.batch_notifications,
-          approval_notifications: profile.approval_notifications,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-        };
-      }
+      const siteIds = assignments?.map((assignment: any) => assignment.site_id) || [];
 
-      return null;
+      return {
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.full_name,
+        phone: profile.phone,
+        role: profile.role,
+        site_ids: siteIds,
+        is_active: profile.is_active,
+        two_factor_enabled: profile.two_factor_enabled,
+        language: profile.language,
+        email_notifications: profile.email_notifications,
+        batch_notifications: profile.batch_notifications,
+        approval_notifications: profile.approval_notifications,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+      };
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;

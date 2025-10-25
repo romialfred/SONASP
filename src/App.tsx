@@ -41,6 +41,7 @@ import { ReportGeneration } from './pages/reports/ReportGeneration';
 import { UserManagement } from './pages/admin/UserManagement';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { AuditTrail } from './pages/admin/AuditTrail';
+import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { PERMISSIONS } from './lib/permissions';
 
 function App() {
@@ -363,6 +364,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
                   <AuditTrail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/approvals"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ApprovalsDashboard />
                 </ProtectedRoute>
               }
             />

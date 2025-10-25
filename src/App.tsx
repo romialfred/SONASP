@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PublicRoute } from './components/auth/PublicRoute';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { DashboardPage } from './pages/DashboardPage';
 import { BatchesPage } from './pages/batches/BatchesPage';
 import { ShippingPage } from './pages/shipping/ShippingPage';
 import { RefiningPage } from './pages/refining/RefiningPage';
@@ -12,6 +13,10 @@ import { CustomersPage } from './pages/customers/CustomersPage';
 import { SalesPage } from './pages/sales/SalesPage';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { AuditTrailPage } from './pages/AuditTrailPage';
 import { UsersPage } from './pages/users/UsersPage';
 import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
 import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
@@ -44,7 +49,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/batches" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/login"
               element={
@@ -55,6 +60,14 @@ function App() {
             />
 
             {/* New main pages with demo data */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/batches"
               element={
@@ -112,6 +125,38 @@ function App() {
               }
             />
             <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <ReportsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit"
+              element={
+                <ProtectedRoute>
+                  <AuditTrailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/users"
               element={
                 <ProtectedRoute>
@@ -120,8 +165,9 @@ function App() {
               }
             />
 
+            {/* Legacy dashboard routes */}
             <Route
-              path="/dashboard"
+              path="/dashboard/management"
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ManagementDashboard />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  LayoutDashboard,
   Package,
   Truck,
   FlaskConical,
@@ -8,6 +9,10 @@ import {
   ShoppingCart,
   TrendingUp,
   DollarSign,
+  BarChart3,
+  FileText,
+  Settings,
+  Shield,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -17,32 +22,63 @@ interface MenuItem {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
 }
 
 interface MenuGroup {
   id: string;
   label: string;
   items: MenuItem[];
+  groupColor: string;
 }
 
 const menuGroups: MenuGroup[] = [
   {
+    id: 'overview',
+    label: 'Overview',
+    groupColor: 'text-blue-400',
+    items: [
+      { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-blue-400' },
+    ],
+  },
+  {
     id: 'batches',
     label: 'Batches Management',
+    groupColor: 'text-green-400',
     items: [
-      { label: 'Batches', path: '/batches', icon: Package },
-      { label: 'Shipping', path: '/shipping', icon: Truck },
-      { label: 'Refining', path: '/refining', icon: FlaskConical },
+      { label: 'Batches', path: '/batches', icon: Package, iconColor: 'text-green-400' },
+      { label: 'Shipping', path: '/shipping', icon: Truck, iconColor: 'text-cyan-400' },
+      { label: 'Refining', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-400' },
     ],
   },
   {
     id: 'sales',
     label: 'Sales Management',
+    groupColor: 'text-amber-400',
     items: [
-      { label: 'Customers', path: '/customers', icon: Users },
-      { label: 'Sales', path: '/sales', icon: ShoppingCart },
-      { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp },
-      { label: 'FX Rates', path: '/fx-rates', icon: DollarSign },
+      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-purple-400' },
+      { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-400' },
+      { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-yellow-400' },
+      { label: 'FX Rates', path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-400' },
+    ],
+  },
+  {
+    id: 'insights',
+    label: 'Insights & Reports',
+    groupColor: 'text-indigo-400',
+    items: [
+      { label: 'Analytics', path: '/analytics', icon: BarChart3, iconColor: 'text-indigo-400' },
+      { label: 'Reports', path: '/reports', icon: FileText, iconColor: 'text-violet-400' },
+    ],
+  },
+  {
+    id: 'system',
+    label: 'System',
+    groupColor: 'text-red-400',
+    items: [
+      { label: 'Settings', path: '/settings', icon: Settings, iconColor: 'text-orange-400' },
+      { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-400' },
+      { label: 'Users', path: '/users', icon: Users, iconColor: 'text-slate-400' },
     ],
   },
 ];
@@ -85,15 +121,22 @@ export function AccordionSidebar() {
   };
 
   return (
-    <aside className="w-[280px] bg-slate-900 min-h-screen border-r border-slate-800 flex flex-col">
+    <aside className="w-[280px] bg-gradient-to-b from-amber-500/20 via-yellow-500/15 to-amber-600/20 backdrop-blur-sm min-h-screen border-r border-amber-500/30 flex flex-col shadow-xl">
       {/* Sidebar Header */}
-      <div className="p-6 border-b border-slate-800">
-        <h2 className="text-white font-bold text-lg leading-tight">
-          Mansa Resources
-          <span className="block text-sm font-normal text-slate-400 mt-1">
-            Gold Sales Management
-          </span>
-        </h2>
+      <div className="p-6 border-b border-amber-500/30 bg-gradient-to-r from-amber-500/30 to-yellow-500/20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-xl">M</span>
+          </div>
+          <div>
+            <h2 className="text-gray-900 font-bold text-lg leading-tight">
+              Mansa Resources
+            </h2>
+            <span className="block text-xs font-normal text-gray-700">
+              Gold Sales Management
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -114,20 +157,22 @@ export function AccordionSidebar() {
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900',
+                  'w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all',
+                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
                   isOpen || hasActiveItem
-                    ? 'bg-slate-800 text-white font-semibold'
-                    : 'text-slate-200 hover:bg-slate-800'
+                    ? 'bg-white/80 backdrop-blur-sm text-gray-900 font-semibold shadow-md'
+                    : 'text-gray-800 hover:bg-white/50 hover:backdrop-blur-sm'
                 )}
                 aria-expanded={isOpen}
                 aria-controls={`group-${group.id}`}
               >
-                <span className="text-sm">{group.label}</span>
+                <span className={cn('text-sm flex items-center gap-2', group.groupColor)}>
+                  {group.label}
+                </span>
                 {isOpen ? (
-                  <ChevronDown className="w-4 h-4 text-slate-400 transition-transform" />
+                  <ChevronDown className="w-4 h-4 text-gray-600 transition-transform" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-400 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-gray-600 transition-transform" />
                 )}
               </button>
 
@@ -148,18 +193,18 @@ export function AccordionSidebar() {
                         key={item.path}
                         to={item.path}
                         className={cn(
-                          'flex items-center gap-3 px-4 py-2 rounded-md transition-colors',
-                          'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900',
+                          'flex items-center gap-3 px-4 py-2 rounded-md transition-all',
+                          'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
                           active
-                            ? 'bg-amber-500/20 text-amber-300 border-l-4 border-amber-400 pl-[14px]'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                            ? 'bg-gradient-to-r from-amber-400/40 to-yellow-400/30 backdrop-blur-sm text-gray-900 font-medium border-l-4 border-amber-500 pl-[14px] shadow-md'
+                            : 'text-gray-700 hover:bg-white/40 hover:backdrop-blur-sm hover:text-gray-900'
                         )}
                         aria-current={active ? 'page' : undefined}
                       >
                         <Icon
                           className={cn(
                             'w-5 h-5 flex-shrink-0',
-                            active ? 'text-amber-300' : 'text-slate-400'
+                            active ? item.iconColor : 'text-gray-600'
                           )}
                         />
                         <span className="text-sm">{item.label}</span>
@@ -174,26 +219,10 @@ export function AccordionSidebar() {
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-slate-800">
-        <Link
-          to="/users"
-          className={cn(
-            'flex items-center gap-3 px-4 py-2 rounded-md transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900',
-            isActive('/users')
-              ? 'bg-amber-500/20 text-amber-300 border-l-4 border-amber-400 pl-[14px]'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-          )}
-          aria-current={isActive('/users') ? 'page' : undefined}
-        >
-          <Users
-            className={cn(
-              'w-5 h-5 flex-shrink-0',
-              isActive('/users') ? 'text-amber-300' : 'text-slate-400'
-            )}
-          />
-          <span className="text-sm">Users Management</span>
-        </Link>
+      <div className="p-4 border-t border-amber-500/30 bg-gradient-to-r from-amber-500/20 to-yellow-500/10">
+        <p className="text-xs text-gray-600 text-center">
+          © 2025 Mansa Resources
+        </p>
       </div>
     </aside>
   );

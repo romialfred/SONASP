@@ -12,11 +12,13 @@ import {
   User,
   FileText,
   Upload,
-  Printer,
-  Share2,
-  Download,
   CheckCircle,
   XCircle,
+  Truck,
+  Factory,
+  DollarSign,
+  CreditCard,
+  Info,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -24,7 +26,6 @@ import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
-import { batchWorkflowService } from '@/services';
 
 interface BatchData {
   id: string;
@@ -39,6 +40,7 @@ interface BatchData {
   origin_site_country: string;
   current_site_name: string;
   created_by_name: string;
+  created_by: string;
   created_at: string;
   transportation_company?: string;
 }
@@ -94,6 +96,7 @@ export function BatchDetailsWorkflow() {
         origin_site_country: batchData.origin_site?.country || 'Unknown',
         current_site_name: batchData.current_site?.name || 'Unknown',
         created_by_name: batchData.created_by_user?.full_name || 'Unknown',
+        created_by: batchData.created_by,
       });
 
       // Load timeline
@@ -124,44 +127,41 @@ export function BatchDetailsWorkflow() {
     }
   };
 
-  const handleApproveShipment = async () => {
+  const handleValidateForTransport = async () => {
     if (!batch || !user) return;
 
     try {
       setActionLoading(true);
 
-      // Update batch status to 'shipped'
       const { error: updateError } = await supabase
         .from('batches')
-        .update({ status: 'shipped' })
+        .update({ status: 'received_airport' })
         .eq('id', batch.id);
 
       if (updateError) throw updateError;
 
-      // Add to status history
       const { error: historyError } = await supabase
         .from('batch_status_history')
         .insert({
           batch_id: batch.id,
-          status: 'shipped',
+          status: 'received_airport',
           changed_by: user.id,
-          comments: 'Shipment approved by Plant Manager',
+          comments: 'Batch validated for transportation by creator',
         });
 
       if (historyError) throw historyError;
 
-      // Reload data
       await loadBatchData();
-      alert('Shipment approved successfully!');
+      alert('Batch validated for transportation successfully!');
     } catch (error) {
-      console.error('Error approving shipment:', error);
-      alert('Failed to approve shipment');
+      console.error('Error validating batch:', error);
+      alert('Failed to validate batch');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleRejectShipment = async () => {
+  const handleRejectBatch = async () => {
     const reason = prompt('Please provide a reason for rejection:');
     if (!reason || !batch || !user) return;
 
@@ -172,16 +172,16 @@ export function BatchDetailsWorkflow() {
         batch_id: batch.id,
         status: 'rejected',
         changed_by: user.id,
-        comments: `Shipment rejected: ${reason}`,
+        comments: `Batch rejected: ${reason}`,
       });
 
       if (error) throw error;
 
       await loadBatchData();
-      alert('Shipment rejected');
+      alert('Batch rejected');
     } catch (error) {
-      console.error('Error rejecting shipment:', error);
-      alert('Failed to reject shipment');
+      console.error('Error rejecting batch:', error);
+      alert('Failed to reject batch');
     } finally {
       setActionLoading(false);
     }
@@ -190,13 +190,12 @@ export function BatchDetailsWorkflow() {
   const getStatusSteps = () => {
     const steps = [
       { key: 'created', label: 'Created', sublabel: 'Batch registered' },
-      { key: 'shipped', label: 'Shipped', sublabel: 'En route to airport' },
       { key: 'received_airport', label: 'Airport', sublabel: 'Received at airport' },
-      { key: 'shipped_refinery', label: 'To Refinery', sublabel: 'Shipped to refinery' },
       { key: 'received_refinery', label: 'Refinery', sublabel: 'Received at refinery' },
-      { key: 'processing', label: 'Processing', sublabel: 'Refining in progress' },
       { key: 'processed', label: 'Processed', sublabel: 'Refining completed' },
-      { key: 'ready_for_sale', label: 'Approved', sublabel: 'Ready for sale' },
+      { key: 'approved', label: 'Approved', sublabel: 'Ready for sale' },
+      { key: 'sold', label: 'Sell', sublabel: 'Sale completed' },
+      { key: 'paid', label: 'Paid', sublabel: 'Payment received' },
     ];
 
     const currentIndex = steps.findIndex((s) => s.key === batch?.status);
@@ -206,6 +205,34 @@ export function BatchDetailsWorkflow() {
       current: index === currentIndex,
       upcoming: index > currentIndex,
     }));
+  };
+
+  const getTimelineIcon = (status: string) => {
+    const iconMap: Record<string, any> = {
+      created: Package,
+      received_airport: MapPin,
+      received_refinery: Building2,
+      processed: CheckCircle,
+      approved: CheckCircle,
+      sold: DollarSign,
+      paid: CreditCard,
+      rejected: XCircle,
+    };
+    return iconMap[status] || Package;
+  };
+
+  const getTimelineColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      created: 'bg-gray-500',
+      received_airport: 'bg-blue-500',
+      received_refinery: 'bg-purple-500',
+      processed: 'bg-accent-500',
+      approved: 'bg-green-500',
+      sold: 'bg-primary-500',
+      paid: 'bg-green-600',
+      rejected: 'bg-red-500',
+    };
+    return colorMap[status] || 'bg-gray-500';
   };
 
   if (loading) {
@@ -233,7 +260,8 @@ export function BatchDetailsWorkflow() {
   }
 
   const statusSteps = getStatusSteps();
-  const canApprove = batch.status === 'created' && user?.role === 'factory';
+  const isCreator = batch.created_by === user?.id;
+  const canValidate = batch.status === 'created' && isCreator;
 
   return (
     <MainLayout userRole="factory">
@@ -412,31 +440,44 @@ export function BatchDetailsWorkflow() {
                 <CardTitle>Timeline</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {timeline.length === 0 ? (
                     <p className="text-sm text-gray-500">No timeline events yet</p>
                   ) : (
-                    timeline.map((event, index) => (
-                      <div key={event.id} className="flex items-start space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0">
-                          <div className="w-3 h-3 rounded-full bg-white"></div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-900 capitalize">
-                              {event.status.replace('_', ' ')}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(event.changed_at).toLocaleString()}
-                            </p>
+                    timeline.map((event, index) => {
+                      const Icon = getTimelineIcon(event.status);
+                      const colorClass = getTimelineColor(event.status);
+
+                      return (
+                        <div key={event.id} className="flex items-start space-x-4">
+                          <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
+                            <Icon className="h-5 w-5 text-white" />
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {event.comments || `Batch status changed to ${event.status}`}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">By {event.changed_by_name}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <p className="font-semibold text-gray-900 capitalize">
+                                {event.status === 'received_airport'
+                                  ? 'Quality Check Passed'
+                                  : event.status === 'received_refinery'
+                                  ? 'Shipment Initiated'
+                                  : event.status.replace('_', ' ')}
+                              </p>
+                              <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                {new Date(event.changed_at).toLocaleDateString()} {new Date(event.changed_at).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              {event.comments ||
+                                (event.status === 'created' ? 'Initial batch registration at factory' :
+                                 event.status === 'received_airport' ? 'Batch passed initial quality inspection' :
+                                 event.status === 'received_refinery' ? 'Batch handed over to TransGold Logistics' :
+                                 `Batch status changed to ${event.status.replace('_', ' ')}`)}
+                            </p>
+                            <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </CardContent>
@@ -445,37 +486,78 @@ export function BatchDetailsWorkflow() {
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Approval Actions */}
-            {canApprove && (
+            {/* Validation Actions */}
+            {canValidate && (
               <Card className="border-primary-200 bg-primary-50">
                 <CardHeader>
-                  <CardTitle className="text-primary-900">Approval Required</CardTitle>
+                  <CardTitle className="text-primary-900">Validation Required</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-primary-800">
-                    As Plant Manager, you need to approve this shipment before it can proceed to the airport.
+                    As the creator, you need to validate this batch for transportation before it can proceed.
                   </p>
                   <Button
                     variant="primary"
                     className="w-full"
-                    onClick={handleApproveShipment}
+                    onClick={handleValidateForTransport}
                     disabled={actionLoading}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve Shipment
+                    Validate for Transportation
                   </Button>
                   <Button
                     variant="secondary"
                     className="w-full border-red-300 text-red-700 hover:bg-red-50"
-                    onClick={handleRejectShipment}
+                    onClick={handleRejectBatch}
                     disabled={actionLoading}
                   >
                     <XCircle className="h-4 w-4 mr-2" />
-                    Reject Shipment
+                    Reject Batch
                   </Button>
                 </CardContent>
               </Card>
             )}
+
+            {/* Field Guide */}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-blue-900 flex items-center">
+                  <Info className="h-5 w-5 mr-2" />
+                  Batch Tracking Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-blue-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-blue-900 mb-1">Batch Number</p>
+                  <p className="text-xs text-blue-700">Unique identifier generated automatically for tracking purposes</p>
+                </div>
+
+                <div className="bg-green-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-green-900 mb-1">Weight Information</p>
+                  <p className="text-xs text-green-700">Total weight in grams with automatic conversion to ounces</p>
+                </div>
+
+                <div className="bg-orange-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-orange-900 mb-1">Shipping Date</p>
+                  <p className="text-xs text-orange-700">Date when batch is scheduled for transportation</p>
+                </div>
+
+                <div className="bg-purple-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-purple-900 mb-1">Current Status</p>
+                  <p className="text-xs text-purple-700">Current stage in the batch processing workflow</p>
+                </div>
+
+                <div className="bg-pink-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-pink-900 mb-1">Origin & Location</p>
+                  <p className="text-xs text-pink-700">Where the batch started and its current physical location</p>
+                </div>
+
+                <div className="bg-yellow-100 rounded-lg p-3">
+                  <p className="text-sm font-medium text-yellow-900 mb-1">Transportation</p>
+                  <p className="text-xs text-yellow-700">Logistics company handling the shipment</p>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Documents */}
             <Card>
@@ -483,31 +565,29 @@ export function BatchDetailsWorkflow() {
                 <CardTitle>Documents</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-gray-500">No documents uploaded yet</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-gray-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Initial Quality Report.pdf</p>
+                        <p className="text-xs text-gray-500">245 KB • 2024-10-20 09:15 AM</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-gray-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Shipping Manifest.pdf</p>
+                        <p className="text-xs text-gray-500">180 KB • 2024-10-20 10:00 AM</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <Button variant="secondary" className="w-full">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Document
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="secondary" className="w-full justify-start">
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Details
-                </Button>
-                <Button variant="secondary" className="w-full justify-start">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
-                <Button variant="secondary" className="w-full justify-start">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share with Team
                 </Button>
               </CardContent>
             </Card>

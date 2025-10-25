@@ -12,6 +12,8 @@ export type StatusType =
   | 'completed'
   | 'approved'
   | 'ready_for_sale'
+  | 'sold'
+  | 'paid'
   | 'pending'
   | 'rejected'
   | 'alert';
@@ -36,6 +38,8 @@ export function StatusBadge({ status, label, variant, size = 'md' }: StatusBadge
     completed: { color: 'bg-accent-100 text-accent-700', label: 'Completed' },
     approved: { color: 'bg-green-100 text-green-700', label: 'Approved' },
     ready_for_sale: { color: 'bg-green-100 text-green-700', label: 'Ready for Sale' },
+    sold: { color: 'bg-primary-100 text-primary-700', label: 'Sold' },
+    paid: { color: 'bg-green-100 text-green-700', label: 'Paid' },
     pending: { color: 'bg-orange-100 text-orange-700', label: 'Pending' },
     rejected: { color: 'bg-red-100 text-red-700', label: 'Rejected' },
     alert: { color: 'bg-red-100 text-red-700', label: 'Alert' }

@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, ArrowLeft, Lock, Unlock, Shield, Save, X, Check } from 'lucide-react';
+import {
+  UserPlus, ArrowLeft, Lock, Unlock, Shield, Save, X,
+  LayoutDashboard, Package, Truck, FlaskConical, Users,
+  ShoppingCart, TrendingUp, DollarSign, BarChart3, FileText,
+  Settings, GitBranch, Info, AlertCircle
+} from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -28,25 +33,136 @@ interface User {
   created_at: string;
 }
 
-interface Module {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  category: string;
-  is_active: boolean;
+interface FieldPermission {
+  field_name: string;
+  can_view: boolean;
+  can_edit: boolean;
 }
 
-interface Permission {
-  module_id: string;
+interface ModulePermissions {
+  module_name: string;
   can_view: boolean;
   can_create: boolean;
   can_edit: boolean;
   can_delete: boolean;
   can_approve: boolean;
+  field_permissions: FieldPermission[];
 }
 
 type ViewMode = 'list' | 'create' | 'edit';
+
+// Menu structure from AccordionSidebar
+const MENU_STRUCTURE = {
+  overview: {
+    label: 'Overview',
+    icon: LayoutDashboard,
+    color: 'blue',
+    features: [
+      { name: 'dashboard', label: 'Dashboard', path: '/dashboard' }
+    ]
+  },
+  batches: {
+    label: 'Batches Management',
+    icon: Package,
+    color: 'green',
+    features: [
+      { name: 'batches', label: 'Batches', path: '/batches', sensitiveFields: ['weight_grams', 'final_purity_percent', 'assay_value'] },
+      { name: 'shipping', label: 'Shipping', path: '/shipping', sensitiveFields: ['declared_value', 'insurance_amount'] },
+      { name: 'refining', label: 'Refining', path: '/refining', sensitiveFields: ['pre_melting_weight', 'post_melting_weight', 'fineness_percent', 'metal_retained_percent', 'final_fine_grams'] }
+    ]
+  },
+  sales: {
+    label: 'Sales Management',
+    icon: ShoppingCart,
+    color: 'amber',
+    features: [
+      { name: 'customers', label: 'Customers', path: '/customers', sensitiveFields: ['credit_limit', 'total_purchases'] },
+      { name: 'sales', label: 'Sales', path: '/sales', sensitiveFields: ['sale_price_per_oz', 'total_amount', 'net_proceeds', 'commission_amount'] },
+      { name: 'gold_prices', label: 'Gold Prices', path: '/gold-prices', sensitiveFields: ['london_am_rate', 'london_pm_rate', 'spot_price'] },
+      { name: 'fx_rates', label: 'FX Rates', path: '/fx-rates', sensitiveFields: ['usd_cfa_rate', 'usd_gnf_rate', 'exchange_spread'] }
+    ]
+  },
+  insights: {
+    label: 'Insights & Reports',
+    icon: BarChart3,
+    color: 'indigo',
+    features: [
+      { name: 'analytics', label: 'Analytics', path: '/analytics' },
+      { name: 'reports', label: 'Reports', path: '/reports', sensitiveFields: ['financial_data', 'profit_margins'] }
+    ]
+  },
+  administration: {
+    label: 'Administration',
+    icon: Settings,
+    color: 'red',
+    features: [
+      { name: 'users', label: 'Users Management', path: '/users' },
+      { name: 'parameters', label: 'Parameters', path: '/parameters', sensitiveFields: ['system_settings', 'api_keys'] },
+      { name: 'workflow', label: 'Workflow', path: '/admin/workflow' },
+      { name: 'audit', label: 'Audit Trail', path: '/audit' }
+    ]
+  }
+};
+
+const FIELD_GUIDANCE = {
+  fullName: {
+    title: 'Full Name',
+    description: 'Enter the complete legal name of the user as it appears on official documents.',
+    example: 'John Smith',
+    required: true
+  },
+  email: {
+    title: 'Email Address',
+    description: 'Primary email address for login and notifications. Must be unique.',
+    example: 'john.smith@company.com',
+    required: true
+  },
+  phone: {
+    title: 'Phone Number',
+    description: 'Contact phone number with country code for emergency communications.',
+    example: '+1 234 567 8900',
+    required: false
+  },
+  role: {
+    title: 'User Role',
+    description: 'Defines the user\'s primary responsibility and default permissions.',
+    options: {
+      management: 'Full access to all features and settings',
+      factory: 'Create batches, manage shipping',
+      airport: 'Receive shipments, confirm batches',
+      refinery: 'Process refining, quality control',
+      customer: 'View sales, make payments'
+    },
+    required: true
+  },
+  site: {
+    title: 'Site Assignment',
+    description: 'Primary location where the user operates. Users can only access data from assigned sites.',
+    required: false
+  },
+  password: {
+    title: 'Initial Password',
+    description: 'Temporary password for first login. User will be required to change it.',
+    requirements: ['Minimum 8 characters', 'At least one uppercase letter', 'At least one number'],
+    required: true
+  },
+  permissions: {
+    title: 'Module Permissions',
+    description: 'Control what the user can view and do in each module.',
+    levels: {
+      view: 'Read-only access to view data',
+      create: 'Add new records',
+      edit: 'Modify existing records',
+      delete: 'Remove records permanently',
+      approve: 'Authorize workflows and transactions'
+    }
+  },
+  fieldPermissions: {
+    title: 'Sensitive Field Access',
+    description: 'Control access to confidential financial and operational data.',
+    examples: ['Gold prices', 'Purity percentages', 'Financial amounts', 'Customer credit limits']
+  }
+};
 
 export function UserManagement() {
   const { t } = useTranslation();
@@ -56,7 +172,6 @@ export function UserManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [users, setUsers] = useState<User[]>([]);
-  const [modules, setModules] = useState<Module[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,7 +180,10 @@ export function UserManagement() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeCategory, setActiveCategory] = useState('overview');
+  const [activeFeature, setActiveFeature] = useState('dashboard');
+  const [showGuidance, setShowGuidance] = useState(true);
+  const [activeGuidanceField, setActiveGuidanceField] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -77,24 +195,49 @@ export function UserManagement() {
     isActive: true,
   });
 
-  const [permissions, setPermissions] = useState<Record<string, Permission>>({});
+  const [permissions, setPermissions] = useState<Record<string, ModulePermissions>>({});
 
   useEffect(() => {
     fetchUsers();
-    fetchModules();
     fetchSites();
+    initializePermissions();
 
     const mode = searchParams.get('mode');
     const userId = searchParams.get('userId');
     if (mode === 'create') {
       setViewMode('create');
-      setActiveTab('info');
+      setActiveCategory('overview');
+      setActiveFeature('dashboard');
     } else if (mode === 'edit' && userId) {
       setViewMode('edit');
       setSelectedUserId(userId);
       loadUserData(userId);
     }
   }, [searchParams]);
+
+  const initializePermissions = () => {
+    const initialPerms: Record<string, ModulePermissions> = {};
+
+    Object.entries(MENU_STRUCTURE).forEach(([category, config]) => {
+      config.features.forEach(feature => {
+        initialPerms[feature.name] = {
+          module_name: feature.name,
+          can_view: false,
+          can_create: false,
+          can_edit: false,
+          can_delete: false,
+          can_approve: false,
+          field_permissions: (feature.sensitiveFields || []).map(field => ({
+            field_name: field,
+            can_view: false,
+            can_edit: false
+          }))
+        };
+      });
+    });
+
+    setPermissions(initialPerms);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -147,7 +290,7 @@ export function UserManagement() {
           role: profile.role,
           phone: profile.phone,
           site_ids: [],
-          is_active: profile.is_active,
+          is_active: profile.is_active !== false,
           last_login_at: profile.last_login_at,
           created_at: profile.created_at,
         }));
@@ -160,34 +303,6 @@ export function UserManagement() {
       setUsers([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchModules = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('modules')
-        .select('*')
-        .eq('is_active', true)
-        .order('category, display_name');
-
-      if (error) throw error;
-      setModules(data || []);
-
-      const initialPerms: Record<string, Permission> = {};
-      data?.forEach(mod => {
-        initialPerms[mod.id] = {
-          module_id: mod.id,
-          can_view: false,
-          can_create: false,
-          can_edit: false,
-          can_delete: false,
-          can_approve: false,
-        };
-      });
-      setPermissions(initialPerms);
-    } catch (error: any) {
-      console.error('Failed to fetch modules:', error);
     }
   };
 
@@ -223,39 +338,9 @@ export function UserManagement() {
         });
       }
 
-      const { data: perms, error } = await supabase
-        .from('user_permissions')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      const userPerms: Record<string, Permission> = {};
-      perms?.forEach(perm => {
-        userPerms[perm.module_id] = {
-          module_id: perm.module_id,
-          can_view: perm.can_view,
-          can_create: perm.can_create,
-          can_edit: perm.can_edit,
-          can_delete: perm.can_delete,
-          can_approve: perm.can_approve,
-        };
-      });
-
-      modules.forEach(mod => {
-        if (!userPerms[mod.id]) {
-          userPerms[mod.id] = {
-            module_id: mod.id,
-            can_view: false,
-            can_create: false,
-            can_edit: false,
-            can_delete: false,
-            can_approve: false,
-          };
-        }
-      });
-
-      setPermissions(userPerms);
+      // TODO: Load user permissions from database
+      // For now, initialize with default permissions
+      initializePermissions();
     } catch (error: any) {
       addToast('Failed to load user data', 'error');
     } finally {
@@ -277,43 +362,35 @@ export function UserManagement() {
     setSaving(true);
     try {
       if (viewMode === 'create') {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              full_name: formData.fullName,
+        // Create user via Edge Function
+        const { data: { session } } = await supabase.auth.getSession();
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json',
             },
-          },
-        });
-
-        if (authError) throw authError;
-
-        if (authData.user) {
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .update({
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
               full_name: formData.fullName,
-              phone: formData.phone || null,
+              phone: formData.phone,
               role: formData.role,
               is_active: formData.isActive,
-            })
-            .eq('id', authData.user.id);
+              permissions: permissions,
+            }),
+          }
+        );
 
-          if (profileError) throw profileError;
-
-          await savePermissions(authData.user.id);
-
-          await logUserAction(
-            currentUser.id,
-            currentUser.email,
-            'CREATE',
-            formData.email,
-            `Created new user with role: ${formData.role}`
-          );
-
-          addToast('User created successfully', 'success');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create user');
         }
+
+        addToast('User created successfully', 'success');
       } else if (viewMode === 'edit' && selectedUserId) {
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -327,7 +404,7 @@ export function UserManagement() {
 
         if (profileError) throw profileError;
 
-        await savePermissions(selectedUserId);
+        // TODO: Save permissions to database
 
         await logUserAction(
           currentUser.id,
@@ -347,35 +424,6 @@ export function UserManagement() {
       addToast(error.message || 'Failed to save user', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const savePermissions = async (userId: string) => {
-    const { error: deleteError } = await supabase
-      .from('user_permissions')
-      .delete()
-      .eq('user_id', userId);
-
-    if (deleteError) throw deleteError;
-
-    const permsToInsert = Object.values(permissions)
-      .filter(p => p.can_view || p.can_create || p.can_edit || p.can_delete || p.can_approve)
-      .map(p => ({
-        user_id: userId,
-        module_id: p.module_id,
-        can_view: p.can_view,
-        can_create: p.can_create,
-        can_edit: p.can_edit,
-        can_delete: p.can_delete,
-        can_approve: p.can_approve,
-      }));
-
-    if (permsToInsert.length > 0) {
-      const { error: insertError } = await supabase
-        .from('user_permissions')
-        .insert(permsToInsert);
-
-      if (insertError) throw insertError;
     }
   };
 
@@ -419,16 +467,35 @@ export function UserManagement() {
       password: '',
       isActive: true,
     });
+    initializePermissions();
   };
 
-  const updatePermission = (moduleId: string, field: keyof Permission, value: boolean) => {
+  const togglePermission = (moduleName: string, permission: keyof ModulePermissions) => {
     setPermissions(prev => ({
       ...prev,
-      [moduleId]: {
-        ...prev[moduleId],
-        [field]: value,
-      },
+      [moduleName]: {
+        ...prev[moduleName],
+        [permission]: !prev[moduleName][permission]
+      }
     }));
+  };
+
+  const toggleFieldPermission = (moduleName: string, fieldName: string, permission: 'can_view' | 'can_edit') => {
+    setPermissions(prev => {
+      const module = prev[moduleName];
+      const fieldPerms = module.field_permissions.map(fp =>
+        fp.field_name === fieldName
+          ? { ...fp, [permission]: !fp[permission] }
+          : fp
+      );
+      return {
+        ...prev,
+        [moduleName]: {
+          ...module,
+          field_permissions: fieldPerms
+        }
+      };
+    });
   };
 
   const roleLabels = {
@@ -447,8 +514,8 @@ export function UserManagement() {
         if (!user) return 'N/A';
         return (
           <div>
-            <div className="font-medium text-gray-900">{user.full_name || 'N/A'}</div>
-            <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
+            <div className="font-medium text-gray-900">{user.full_name || user.email.split('@')[0]}</div>
+            <div className="text-sm text-gray-500">{user.email}</div>
           </div>
         );
       },
@@ -469,7 +536,7 @@ export function UserManagement() {
     {
       key: 'phone',
       label: 'Phone',
-      render: (user: User) => (user && user.phone) ? user.phone : 'N/A',
+      render: (user: User) => (user && user.phone) ? user.phone : 'Not set',
     },
     {
       key: 'is_active',
@@ -540,13 +607,81 @@ export function UserManagement() {
     return matchesSearch && matchesRole;
   });
 
-  const modulesByCategory = modules.reduce((acc, mod) => {
-    if (!acc[mod.category]) acc[mod.category] = [];
-    acc[mod.category].push(mod);
-    return acc;
-  }, {} as Record<string, Module[]>);
+  const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        enabled ? 'bg-accent-600' : 'bg-gray-200'
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
 
-  const categories = Object.keys(modulesByCategory);
+  const GuidancePanel = ({ field }: { field: string }) => {
+    const guidance = FIELD_GUIDANCE[field as keyof typeof FIELD_GUIDANCE];
+    if (!guidance) return null;
+
+    return (
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-semibold text-blue-900 mb-1">{guidance.title}</h4>
+            <p className="text-sm text-blue-800 mb-2">{guidance.description}</p>
+            {guidance.example && (
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">Example:</span> {guidance.example}
+              </p>
+            )}
+            {guidance.options && (
+              <ul className="mt-2 space-y-1">
+                {Object.entries(guidance.options).map(([key, desc]) => (
+                  <li key={key} className="text-sm text-blue-800">
+                    <span className="font-medium capitalize">{key}:</span> {desc}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {guidance.requirements && (
+              <ul className="mt-2 space-y-1">
+                {guidance.requirements.map((req, idx) => (
+                  <li key={idx} className="text-sm text-blue-800 flex items-center gap-2">
+                    <AlertCircle className="h-3 w-3" />
+                    {req}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {guidance.levels && (
+              <ul className="mt-2 space-y-1">
+                {Object.entries(guidance.levels).map(([level, desc]) => (
+                  <li key={level} className="text-sm text-blue-800">
+                    <span className="font-medium capitalize">{level}:</span> {desc}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {guidance.examples && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-blue-900">Examples:</p>
+                <ul className="mt-1 space-y-1">
+                  {guidance.examples.map((ex, idx) => (
+                    <li key={idx} className="text-sm text-blue-800">• {ex}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (viewMode === 'list') {
     return (
@@ -636,7 +771,9 @@ export function UserManagement() {
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600">No users found</p>
+                  <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
                 </div>
               ) : (
                 <Table
@@ -651,6 +788,10 @@ export function UserManagement() {
       </MainLayout>
     );
   }
+
+  const currentCategory = MENU_STRUCTURE[activeCategory as keyof typeof MENU_STRUCTURE];
+  const currentFeature = currentCategory?.features.find(f => f.name === activeFeature);
+  const currentPermissions = permissions[activeFeature];
 
   return (
     <MainLayout>
@@ -688,250 +829,312 @@ export function UserManagement() {
           </div>
         </div>
 
-        <div className="border-b border-gray-200">
-          <nav className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('info')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'info'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              User Information
-            </button>
-            <button
-              onClick={() => setActiveTab('permissions')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'permissions'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Permissions
-            </button>
-          </nav>
-        </div>
-
-        {activeTab === 'info' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>User Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="Full Name" required>
-                  <Input
-                    placeholder="Enter full name"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  />
-                </FormField>
-
-                <FormField label="Email Address" required>
-                  <Input
-                    type="email"
-                    placeholder="user@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={viewMode === 'edit'}
-                  />
-                </FormField>
-
-                <FormField label="Phone Number">
-                  <Input
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </FormField>
-
-                <FormField label="Role" required>
-                  <Select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  >
-                    <option value="">Select role</option>
-                    <option value="factory">Factory</option>
-                    <option value="airport">Airport</option>
-                    <option value="refinery">Refinery</option>
-                    <option value="customer">Customer</option>
-                    <option value="management">Management</option>
-                  </Select>
-                </FormField>
-
-                <FormField label="Site Assignment">
-                  <Select
-                    value={formData.siteIds[0] || ''}
-                    onChange={(e) => setFormData({ ...formData, siteIds: e.target.value ? [e.target.value] : [] })}
-                  >
-                    <option value="">Select site</option>
-                    {sites.map((site) => (
-                      <option key={site.id} value={site.id}>
-                        {site.name} ({site.country})
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-
-                {viewMode === 'create' && (
-                  <FormField label="Initial Password" required hint="User will be prompted to change on first login">
-                    <Input
-                      type="password"
-                      placeholder="Enter temporary password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    />
-                  </FormField>
-                )}
-
-                <FormField label="Status">
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        formData.isActive ? 'bg-accent-600' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          formData.isActive ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm text-gray-700">
-                      {formData.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </FormField>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === 'permissions' && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Module Permissions</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
-                  Configure what the user can do in each module
-                </p>
-              </CardHeader>
-            </Card>
-
+        <div className="grid grid-cols-12 gap-6">
+          {/* Main Content - Left Side */}
+          <div className={showGuidance ? 'col-span-8' : 'col-span-12'}>
+            {/* Primary Tabs */}
             <div className="border-b border-gray-200 mb-6">
-              <nav className="flex gap-2 overflow-x-auto">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setActiveTab(category)}
-                    className={`py-3 px-6 whitespace-nowrap border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === category
-                        ? 'border-primary-500 text-primary-600 bg-primary-50'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </button>
-                ))}
+              <nav className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setActiveCategory('overview');
+                    setActiveFeature('dashboard');
+                  }}
+                  className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                    activeCategory === 'overview'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  User Information
+                </button>
+                <button
+                  onClick={() => {
+                    if (activeCategory === 'overview') {
+                      setActiveCategory('batches');
+                      setActiveFeature('batches');
+                    }
+                  }}
+                  className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                    activeCategory !== 'overview'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Permissions
+                </button>
               </nav>
             </div>
 
-            {categories.map((category) => (
-              activeTab === category && (
-                <div key={category} className="space-y-4">
-                  {modulesByCategory[category].map((module) => (
-                    <Card key={module.id}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">{module.display_name}</CardTitle>
-                            <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+            {activeCategory === 'overview' ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField label="Full Name" required>
+                      <Input
+                        placeholder="Enter full name"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        onFocus={() => setActiveGuidanceField('fullName')}
+                      />
+                    </FormField>
+
+                    <FormField label="Email Address" required>
+                      <Input
+                        type="email"
+                        placeholder="user@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        disabled={viewMode === 'edit'}
+                        onFocus={() => setActiveGuidanceField('email')}
+                      />
+                    </FormField>
+
+                    <FormField label="Phone Number">
+                      <Input
+                        type="tel"
+                        placeholder="+1 234 567 8900"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onFocus={() => setActiveGuidanceField('phone')}
+                      />
+                    </FormField>
+
+                    <FormField label="Role" required>
+                      <Select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                        onFocus={() => setActiveGuidanceField('role')}
+                      >
+                        <option value="">Select role</option>
+                        <option value="factory">Factory</option>
+                        <option value="airport">Airport</option>
+                        <option value="refinery">Refinery</option>
+                        <option value="customer">Customer</option>
+                        <option value="management">Management</option>
+                      </Select>
+                    </FormField>
+
+                    <FormField label="Site Assignment">
+                      <Select
+                        value={formData.siteIds[0] || ''}
+                        onChange={(e) => setFormData({ ...formData, siteIds: e.target.value ? [e.target.value] : [] })}
+                        onFocus={() => setActiveGuidanceField('site')}
+                      >
+                        <option value="">Select site</option>
+                        {sites.map((site) => (
+                          <option key={site.id} value={site.id}>
+                            {site.name} ({site.country})
+                          </option>
+                        ))}
+                      </Select>
+                    </FormField>
+
+                    {viewMode === 'create' && (
+                      <FormField label="Initial Password" required hint="User will be prompted to change on first login">
+                        <Input
+                          type="password"
+                          placeholder="Enter temporary password"
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          onFocus={() => setActiveGuidanceField('password')}
+                        />
+                      </FormField>
+                    )}
+
+                    <FormField label="Status">
+                      <div className="flex items-center gap-3 pt-2">
+                        <ToggleSwitch
+                          enabled={formData.isActive}
+                          onChange={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                        />
+                        <span className="text-sm text-gray-700">
+                          {formData.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </FormField>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Vertical Category Tabs */}
+                <div className="flex gap-6">
+                  <div className="w-48 flex-shrink-0">
+                    <nav className="space-y-1">
+                      {Object.entries(MENU_STRUCTURE).map(([key, config]) => {
+                        if (key === 'overview') return null;
+                        const Icon = config.icon;
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => {
+                              setActiveCategory(key);
+                              setActiveFeature(config.features[0].name);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                              activeCategory === key
+                                ? 'bg-primary-50 text-primary-700 font-medium'
+                                : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <Icon className={`h-5 w-5 text-${config.color}-500`} />
+                            <span className="text-sm">{config.label}</span>
+                          </button>
+                        );
+                      })}
+                    </nav>
+                  </div>
+
+                  <div className="flex-1">
+                    {/* Horizontal Feature Tabs */}
+                    <div className="border-b border-gray-200 mb-6">
+                      <nav className="flex gap-2 overflow-x-auto">
+                        {currentCategory?.features.map((feature) => (
+                          <button
+                            key={feature.name}
+                            onClick={() => {
+                              setActiveFeature(feature.name);
+                              setActiveGuidanceField('permissions');
+                            }}
+                            className={`py-3 px-4 whitespace-nowrap border-b-2 font-medium text-sm transition-colors ${
+                              activeFeature === feature.name
+                                ? 'border-primary-500 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                          >
+                            {feature.label}
+                          </button>
+                        ))}
+                      </nav>
+                    </div>
+
+                    {/* Permission Toggles */}
+                    {currentPermissions && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>{currentFeature?.label} Permissions</CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Configure what the user can do in {currentFeature?.label}
+                          </p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-6">
+                            {/* Module Actions */}
+                            <div>
+                              <h4 className="font-medium text-gray-900 mb-4">Module Actions</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {['can_view', 'can_create', 'can_edit', 'can_delete', 'can_approve'].map((perm) => (
+                                  <div key={perm} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                    <div>
+                                      <div className="font-medium text-sm text-gray-900 capitalize">
+                                        {perm.replace('can_', '')}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {perm === 'can_view' && 'View data'}
+                                        {perm === 'can_create' && 'Add new records'}
+                                        {perm === 'can_edit' && 'Modify records'}
+                                        {perm === 'can_delete' && 'Delete records'}
+                                        {perm === 'can_approve' && 'Approve workflows'}
+                                      </div>
+                                    </div>
+                                    <ToggleSwitch
+                                      enabled={currentPermissions[perm as keyof ModulePermissions] as boolean}
+                                      onChange={() => togglePermission(activeFeature, perm as keyof ModulePermissions)}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Sensitive Fields */}
+                            {currentFeature?.sensitiveFields && currentFeature.sensitiveFields.length > 0 && (
+                              <div>
+                                <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-red-500" />
+                                  Sensitive Field Access
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Control access to confidential data like gold prices, purity percentages, and financial amounts
+                                </p>
+                                <div className="space-y-3">
+                                  {currentPermissions.field_permissions.map((fp) => (
+                                    <div key={fp.field_name} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                                      <div className="flex-1">
+                                        <div className="font-medium text-sm text-gray-900">
+                                          {fp.field_name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2">
+                                          <span className="text-xs text-gray-600">View</span>
+                                          <ToggleSwitch
+                                            enabled={fp.can_view}
+                                            onChange={() => toggleFieldPermission(activeFeature, fp.field_name, 'can_view')}
+                                          />
+                                        </label>
+                                        <label className="flex items-center gap-2">
+                                          <span className="text-xs text-gray-600">Edit</span>
+                                          <ToggleSwitch
+                                            enabled={fp.can_edit}
+                                            onChange={() => toggleFieldPermission(activeFeature, fp.field_name, 'can_edit')}
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <StatusBadge
-                            label={module.is_active ? 'Active' : 'Inactive'}
-                            variant={module.is_active ? 'success' : 'neutral'}
-                          />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                          <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={permissions[module.id]?.can_view || false}
-                              onChange={(e) => updatePermission(module.id, 'can_view', e.target.checked)}
-                              className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">View</div>
-                              <div className="text-xs text-gray-500">Read access</div>
-                            </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={permissions[module.id]?.can_create || false}
-                              onChange={(e) => updatePermission(module.id, 'can_create', e.target.checked)}
-                              className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">Create</div>
-                              <div className="text-xs text-gray-500">Add new</div>
-                            </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={permissions[module.id]?.can_edit || false}
-                              onChange={(e) => updatePermission(module.id, 'can_edit', e.target.checked)}
-                              className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">Edit</div>
-                              <div className="text-xs text-gray-500">Modify</div>
-                            </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={permissions[module.id]?.can_delete || false}
-                              onChange={(e) => updatePermission(module.id, 'can_delete', e.target.checked)}
-                              className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">Delete</div>
-                              <div className="text-xs text-gray-500">Remove</div>
-                            </div>
-                          </label>
-
-                          <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={permissions[module.id]?.can_approve || false}
-                              onChange={(e) => updatePermission(module.id, 'can_approve', e.target.checked)}
-                              className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5"
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">Approve</div>
-                              <div className="text-xs text-gray-500">Authorize</div>
-                            </div>
-                          </label>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 </div>
-              )
-            ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Guidance Panel - Right Side */}
+          {showGuidance && (
+            <div className="col-span-4">
+              <div className="sticky top-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Field Guidance</h3>
+                  <button
+                    onClick={() => setShowGuidance(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {activeGuidanceField ? (
+                  <GuidancePanel field={activeGuidanceField} />
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600 text-center">
+                      Click on any field to see guidance and help information
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!showGuidance && (
+            <button
+              onClick={() => setShowGuidance(true)}
+              className="fixed right-6 top-32 bg-primary-600 text-white p-3 rounded-l-lg shadow-lg hover:bg-primary-700 transition-colors"
+            >
+              <Info className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
     </MainLayout>
   );

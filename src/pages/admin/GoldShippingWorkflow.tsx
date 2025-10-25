@@ -480,8 +480,39 @@ export default function GoldShippingWorkflow() {
     const strokeStyle = isMessage ? '5,5' : 'none';
     const color = isMessage ? '#6366f1' : '#374151';
 
-    // Simple straight or curved arrow
-    const path = `M ${fromElement.x} ${fromElement.y} L ${toElement.x} ${toElement.y}`;
+    // Calculate path with proper BPMN routing (orthogonal lines)
+    let path: string;
+    const fromX = fromElement.x;
+    const fromY = fromElement.y;
+    const toX = toElement.x;
+    const toY = toElement.y;
+
+    // Determine if same lane (horizontal) or different lanes (vertical with horizontal)
+    const sameLane = fromElement.lane === toElement.lane;
+    const goingForward = toX > fromX;
+    const goingBack = toX < fromX;
+    const goingDown = toY > fromY;
+
+    if (sameLane && goingForward) {
+      // Simple horizontal line forward
+      path = `M ${fromX} ${fromY} L ${toX} ${toY}`;
+    } else if (sameLane && goingBack) {
+      // Loop back in same lane - go up, back, then down
+      const midY = fromY - 40;
+      path = `M ${fromX} ${fromY} L ${fromX} ${midY} L ${toX} ${midY} L ${toX} ${toY}`;
+    } else if (goingDown) {
+      // Different lanes - vertical transition with one horizontal segment
+      const midX = fromX + (toX - fromX) / 2;
+      path = `M ${fromX} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${toX} ${toY}`;
+    } else {
+      // Going up or complex routing
+      const midX = fromX + (toX - fromX) / 2;
+      path = `M ${fromX} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${toX} ${toY}`;
+    }
+
+    // Calculate label position at the middle of the path
+    const labelX = (fromX + toX) / 2;
+    const labelY = sameLane ? fromY - 10 : (fromY + toY) / 2 - 10;
 
     return (
       <g key={flow.id}>
@@ -494,18 +525,28 @@ export default function GoldShippingWorkflow() {
           markerEnd={`url(#arrowhead-${flow.type})`}
         />
         {flow.label && (
-          <text
-            x={(fromElement.x + toElement.x) / 2}
-            y={(fromElement.y + toElement.y) / 2 - 10}
-            textAnchor="middle"
-            className="text-xs font-semibold fill-gray-700 bg-white px-1"
-          >
-            {flow.label.split('\n').map((line, i) => (
-              <tspan key={i} x={(fromElement.x + toElement.x) / 2} dy={i === 0 ? 0 : 14}>
-                {line}
-              </tspan>
-            ))}
-          </text>
+          <g>
+            <rect
+              x={labelX - 25}
+              y={labelY - 10}
+              width="50"
+              height="20"
+              fill="white"
+              stroke="none"
+            />
+            <text
+              x={labelX}
+              y={labelY + 4}
+              textAnchor="middle"
+              className="text-xs font-semibold fill-gray-700"
+            >
+              {flow.label.split('\n').map((line, i) => (
+                <tspan key={i} x={labelX} dy={i === 0 ? 0 : 12}>
+                  {line}
+                </tspan>
+              ))}
+            </text>
+          </g>
         )}
       </g>
     );

@@ -54,6 +54,7 @@ export default function UserManagementPage() {
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -79,10 +80,18 @@ export default function UserManagementPage() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
+      if (error) {
+        console.error('Error loading users:', error);
+        setError(`Failed to load users: ${error.message}`);
+        setUsers([]);
+      } else {
+        setUsers(data || []);
+        setError(null);
+      }
+    } catch (error: any) {
       console.error('Error loading users:', error);
+      setError(`Failed to load users: ${error?.message || 'Unknown error'}`);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -299,6 +308,25 @@ export default function UserManagementPage() {
             Create User
           </Button>
         </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <XCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-800">Error Loading Users</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button
+                  onClick={loadUsers}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800 font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

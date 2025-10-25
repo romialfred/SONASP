@@ -299,15 +299,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 loading: false,
                 initialized: true,
               });
+
+              // Start session manager if not already started
+              if (!sessionManagerRef.current) {
+                console.log('[Auth] Starting session manager on init');
+                sessionManagerRef.current = new SessionManager();
+                sessionManagerRef.current.start();
+              }
             }
           } catch (profileError) {
             console.error('[Auth] Profile fetch failed during initialization:', profileError);
 
             if (mounted) {
-              console.log('[Auth] Setting initialized=true despite profile error');
+              console.log('[Auth] Keeping session active despite profile error');
+              // Keep the session but mark profile as null
               setState({
                 user: null,
-                session: null,
+                session, // Keep the session!
                 loading: false,
                 initialized: true,
               });
@@ -336,17 +344,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Timeout only to prevent infinite loading - don't clear session
     const timeoutId = setTimeout(() => {
       if (mounted) {
-        console.error('[Auth] Initialization timeout - forcing initialized state');
-        setState({
-          user: null,
-          session: null,
+        console.error('[Auth] Initialization timeout - setting initialized flag only');
+        setState(prev => ({
+          ...prev,
           loading: false,
           initialized: true,
-        });
+        }));
       }
-    }, 10000);
+    }, 30000); // Increased to 30 seconds
 
     initializeAuth().finally(() => {
       clearTimeout(timeoutId);
@@ -354,9 +362,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('[Auth] Auth state changed:', event, session ? 'with session' : 'no session');
+        console.log('[Auth] ========================================');
+        console.log('[Auth] Auth state changed:', event);
+        console.log('[Auth] Session present:', !!session);
+        console.log('[Auth] User ID:', session?.user?.id);
+        console.log('[Auth] Session Manager active:', !!sessionManagerRef.current);
+        console.log('[Auth] ========================================');
 
-        if (!mounted) return;
+        if (!mounted) {
+          console.log('[Auth] Component unmounted - ignoring event');
+          return;
+        }
 
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[Auth] User signed in, fetching profile');
@@ -375,28 +391,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('[Auth] SIGNED_OUT event detected');
+          console.log('[Auth] SessionManager active?', !!sessionManagerRef.current);
 
-          // CRITICAL FIX: Check if this is a manual logout or automatic
-          // Only clear state if session manager was stopped (manual logout)
-          // Ignore automatic SIGNED_OUT events from token issues
-          const isManualLogout = !sessionManagerRef.current || !sessionManagerRef.current;
+          // CRITICAL: Check if session is actually gone
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
 
-          console.log('[Auth] Is manual logout?', isManualLogout);
+          if (currentSession && sessionManagerRef.current) {
+            // Session still exists and manager is active - this is a false SIGNED_OUT
+            console.log('[Auth] FALSE ALARM - Session still valid, ignoring SIGNED_OUT');
+            console.log('[Auth] Restoring state with current session');
 
-          // If session manager is still active, this is NOT a manual logout
-          // It's likely a token refresh issue - ignore it
-          if (sessionManagerRef.current) {
-            console.log('[Auth] Session manager still active - ignoring SIGNED_OUT event');
-            // Try to restore session
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            if (currentSession) {
-              console.log('[Auth] Session still valid - restoring state');
-              return; // Don't process SIGNED_OUT
-            }
+            // Restore the state with current session
+            const profile = await fetchUserProfile(currentSession.user.id);
+            setState({
+              user: profile,
+              session: currentSession,
+              loading: false,
+              initialized: true,
+            });
+            return; // Don't process logout
           }
 
-          // Only clear state if it's truly a manual logout
-          console.log('[Auth] Processing SIGNED_OUT - stopping session manager');
+          // If we reach here, it's a real logout
+          console.log('[Auth] Confirmed logout - clearing state');
+
           if (sessionManagerRef.current) {
             sessionManagerRef.current.stop();
             sessionManagerRef.current = null;
@@ -431,11 +449,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
+      console.log('[Auth] Component unmounting - cleaning up');
       mounted = false;
       subscription.unsubscribe();
-      if (sessionManagerRef.current) {
-        sessionManagerRef.current.stop();
-      }
+      // DON'T stop session manager on unmount - it should persist
+      // Only stop on explicit logout
+      console.log('[Auth] Cleanup complete (session manager kept alive)');
     };
   }, []);
 

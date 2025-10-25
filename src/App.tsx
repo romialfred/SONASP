@@ -36,6 +36,7 @@ import { PaymentProcessing } from './pages/customers/PaymentProcessing';
 import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
 import { ReportGeneration } from './pages/reports/ReportGeneration';
 import { UserManagement } from './pages/admin/UserManagement';
+import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { AuditTrail } from './pages/admin/AuditTrail';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
@@ -317,6 +318,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users/:userId/permissions"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserPermissionsPage />
                 </ProtectedRoute>
               }
             />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -27,10 +28,6 @@ export function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [modules, setModules] = useState<any[]>([]);
-  const [permissions, setPermissions] = useState<Record<string, any>>({});
 
   const [formData, setFormData] = useState({
     email: '',
@@ -39,9 +36,10 @@ export function UsersPage() {
     role: 'factory',
   });
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     loadUsers();
-    loadModules();
   }, []);
 
   const loadUsers = async () => {
@@ -61,45 +59,6 @@ export function UsersPage() {
     }
   };
 
-  const loadModules = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('modules')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_name');
-
-      if (error) throw error;
-      setModules(data || []);
-    } catch (error) {
-      console.error('Error loading modules:', error);
-    }
-  };
-
-  const loadUserPermissions = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_permissions')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      const perms: Record<string, any> = {};
-      data?.forEach((p) => {
-        perms[p.module_id] = {
-          module_id: p.module_id,
-          can_read: p.can_read,
-          can_write: p.can_write,
-          can_delete: p.can_delete,
-        };
-      });
-
-      setPermissions(perms);
-    } catch (error) {
-      console.error('Error loading permissions:', error);
-    }
-  };
 
   const generateRandomPassword = () => {
     const length = 12;
@@ -173,41 +132,6 @@ export function UsersPage() {
     }
   };
 
-  const handleUpdatePermissions = async () => {
-    if (!selectedUser) return;
-
-    try {
-      await supabase
-        .from('user_permissions')
-        .delete()
-        .eq('user_id', selectedUser.id);
-
-      const permsToInsert = Object.entries(permissions)
-        .filter(([_, perm]: [string, any]) => perm.can_read || perm.can_write || perm.can_delete)
-        .map(([moduleId, perm]: [string, any]) => ({
-          user_id: selectedUser.id,
-          module_id: moduleId,
-          can_read: perm.can_read,
-          can_write: perm.can_write,
-          can_delete: perm.can_delete,
-          granted_by: currentUser?.id,
-        }));
-
-      if (permsToInsert.length > 0) {
-        const { error } = await supabase
-          .from('user_permissions')
-          .insert(permsToInsert);
-
-        if (error) throw error;
-      }
-
-      alert('Permissions updated successfully!');
-      setShowPermissionsModal(false);
-    } catch (error: any) {
-      console.error('Error updating permissions:', error);
-      alert(`Failed to update permissions: ${error.message}`);
-    }
-  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -366,11 +290,7 @@ export function UsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              loadUserPermissions(user.id);
-                              setShowPermissionsModal(true);
-                            }}
+                            onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Manage Permissions"
                           >
@@ -489,110 +409,6 @@ export function UsersPage() {
           </div>
         </Modal>
 
-        {/* Permissions Modal */}
-        <Modal
-          isOpen={showPermissionsModal}
-          onClose={() => setShowPermissionsModal(false)}
-          title={`Manage Permissions - ${selectedUser?.full_name || selectedUser?.email}`}
-          size="xl"
-        >
-          <div className="p-6">
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Configure module-level permissions. If a user doesn't have Read permission for a module,
-                it won't be visible in their navigation menu.
-              </p>
-
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Module</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Read</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Write</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Delete</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modules.map((module) => {
-                      const perm = permissions[module.id] || {
-                        module_id: module.id,
-                        can_read: false,
-                        can_write: false,
-                        can_delete: false,
-                      };
-
-                      return (
-                        <tr key={module.id} className="border-t hover:bg-gray-50">
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium text-gray-900">{module.display_name}</p>
-                              <p className="text-xs text-gray-500">{module.description}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={perm.can_read}
-                              onChange={(e) =>
-                                setPermissions({
-                                  ...permissions,
-                                  [module.id]: { ...perm, can_read: e.target.checked },
-                                })
-                              }
-                              className="h-4 w-4 text-blue-600 rounded"
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={perm.can_write}
-                              onChange={(e) =>
-                                setPermissions({
-                                  ...permissions,
-                                  [module.id]: { ...perm, can_write: e.target.checked },
-                                })
-                              }
-                              className="h-4 w-4 text-blue-600 rounded"
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={perm.can_delete}
-                              onChange={(e) =>
-                                setPermissions({
-                                  ...permissions,
-                                  [module.id]: { ...perm, can_delete: e.target.checked },
-                                })
-                              }
-                              className="h-4 w-4 text-blue-600 rounded"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-6">
-              <Button
-                variant="secondary"
-                onClick={() => setShowPermissionsModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleUpdatePermissions}
-              >
-                Save Permissions
-              </Button>
-            </div>
-          </div>
-        </Modal>
       </div>
     </MainLayout>
   );

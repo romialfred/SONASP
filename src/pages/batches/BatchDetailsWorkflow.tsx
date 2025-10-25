@@ -24,7 +24,6 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
 
 interface BatchData {
@@ -357,7 +356,7 @@ export function BatchDetailsWorkflow() {
                     <div>
                       <p className="text-sm text-gray-500">Weight</p>
                       <p className="font-semibold text-gray-900">
-                        {formatWeight(batch.weight_grams)} ({batch.weight_ounces.toFixed(2)} oz)
+                        {batch.weight_grams.toFixed(2)}g ({batch.weight_ounces.toFixed(2)} oz)
                       </p>
                     </div>
                   </div>

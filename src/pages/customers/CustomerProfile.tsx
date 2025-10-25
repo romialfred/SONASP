@@ -121,7 +121,7 @@ export function CustomerProfile() {
   ];
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6 max-w-7xl">
         <div className="flex items-center gap-4">
           <Button

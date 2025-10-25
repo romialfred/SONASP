@@ -83,7 +83,7 @@ export function FactoryDashboard() {
   ];
 
   return (
-    <MainLayout userRole="factory">
+    <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

@@ -360,7 +360,7 @@ export function BatchDetailsWorkflow() {
 
   if (loading) {
     return (
-      <MainLayout userRole="factory">
+      <MainLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-600">Loading batch details...</div>
         </div>
@@ -370,7 +370,7 @@ export function BatchDetailsWorkflow() {
 
   if (!batch) {
     return (
-      <MainLayout userRole="factory">
+      <MainLayout>
         <div className="flex flex-col items-center justify-center h-64">
           <Package className="h-16 w-16 text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-700 mb-2">Batch not found</h2>
@@ -388,7 +388,7 @@ export function BatchDetailsWorkflow() {
   const canValidate = batch.status === 'created' && isCreator && isPlantManager;
 
   return (
-    <MainLayout userRole="factory">
+    <MainLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">

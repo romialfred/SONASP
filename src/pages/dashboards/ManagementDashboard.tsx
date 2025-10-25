@@ -120,7 +120,7 @@ export function ManagementDashboard() {
   const distributionColors = ['#B8860B', '#475569', '#10B981'];
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>

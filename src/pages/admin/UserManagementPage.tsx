@@ -270,7 +270,7 @@ export default function UserManagementPage() {
   );
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">

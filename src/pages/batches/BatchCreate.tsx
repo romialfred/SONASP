@@ -244,7 +244,7 @@ export function BatchCreate() {
   const remainingChars = characterLimit - formData.comments.length;
 
   return (
-    <MainLayout userRole="factory">
+    <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button

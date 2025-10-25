@@ -96,7 +96,7 @@ export function SaleCreate() {
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6 max-w-4xl">
         <div className="flex items-center gap-4">
           <Button

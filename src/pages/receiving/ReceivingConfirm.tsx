@@ -73,7 +73,7 @@ export function ReceivingConfirm() {
   };
 
   return (
-    <MainLayout userRole="airport">
+    <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button

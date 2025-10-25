@@ -123,7 +123,7 @@ export function SaleDetails() {
   const currentStatus = statusConfig[sale.status as keyof typeof statusConfig];
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6 max-w-6xl">
         <div className="flex items-center gap-4">
           <Button

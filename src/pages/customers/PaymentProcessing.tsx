@@ -106,7 +106,7 @@ export function PaymentProcessing() {
   const fxSpread = enteredFXRate && referenceFXRate ? calculateFXSpread(enteredFXRate, referenceFXRate) : 0;
 
   return (
-    <MainLayout userRole="management">
+    <MainLayout>
       <div className="space-y-6 max-w-4xl">
         <div className="flex items-center gap-4">
           <Button

@@ -162,7 +162,7 @@ export function BatchDetails() {
 
   if (loading) {
     return (
-      <MainLayout userRole="factory">
+      <MainLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-600">Loading batch details...</div>
         </div>
@@ -172,7 +172,7 @@ export function BatchDetails() {
 
   if (!batch) {
     return (
-      <MainLayout userRole="factory">
+      <MainLayout>
         <div className="text-center py-12">
           <p className="text-gray-600">Batch not found</p>
           <Button onClick={() => navigate('/batches')} className="mt-4">
@@ -184,7 +184,7 @@ export function BatchDetails() {
   }
 
   return (
-    <MainLayout userRole="factory">
+    <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

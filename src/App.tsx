@@ -6,11 +6,6 @@ import { PublicRoute } from './components/auth/PublicRoute';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { DashboardPage } from './pages/DashboardPage';
-import { BatchesPage } from './pages/batches/BatchesPage';
-import { ShippingPage } from './pages/shipping/ShippingPage';
-import { RefiningPage } from './pages/refining/RefiningPage';
-import { CustomersPage } from './pages/customers/CustomersPage';
-import { SalesPage } from './pages/sales/SalesPage';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
@@ -66,46 +61,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/batches"
-              element={
-                <ProtectedRoute>
-                  <BatchesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping"
-              element={
-                <ProtectedRoute>
-                  <ShippingPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/refining"
-              element={
-                <ProtectedRoute>
-                  <RefiningPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers"
-              element={
-                <ProtectedRoute>
-                  <CustomersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sales"
-              element={
-                <ProtectedRoute>
-                  <SalesPage />
                 </ProtectedRoute>
               }
             />

@@ -1,16 +1,20 @@
 import { supabase } from './supabase';
 
-const SESSION_TIMEOUT = 30 * 60 * 1000;
-const INACTIVITY_WARNING = 5 * 60 * 1000;
-const ACTIVITY_CHECK_INTERVAL = 60 * 1000;
+// Extended session timeouts for better user experience
+const SESSION_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours instead of 30 minutes
+const INACTIVITY_WARNING = 10 * 60 * 1000; // Warn at 10 minutes of inactivity
+const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
+const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes
 
 export class SessionManager {
   private lastActivityTime: number = Date.now();
   private sessionTimer: NodeJS.Timeout | null = null;
   private warningTimer: NodeJS.Timeout | null = null;
   private activityCheckTimer: NodeJS.Timeout | null = null;
+  private tokenRefreshTimer: NodeJS.Timeout | null = null;
   private onWarning?: () => void;
   private onTimeout?: () => void;
+  private isActive: boolean = true;
 
   constructor(onWarning?: () => void, onTimeout?: () => void) {
     this.onWarning = onWarning;
@@ -19,59 +23,143 @@ export class SessionManager {
   }
 
   private setupActivityListeners() {
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    // Listen to multiple user activity events
+    const events = [
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'click',
+      'mousemove',
+      'keypress',
+      'touchmove'
+    ];
 
     events.forEach(event => {
       document.addEventListener(event, () => this.updateActivity(), { passive: true });
     });
+
+    // Also listen to visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.updateActivity();
+      }
+    });
+
+    // Listen to window focus
+    window.addEventListener('focus', () => {
+      this.updateActivity();
+    });
   }
 
   public start() {
+    console.log('[SessionManager] Starting session management');
     this.updateActivity();
     this.startActivityCheck();
+    this.startTokenRefresh();
   }
 
   public stop() {
+    console.log('[SessionManager] Stopping session management');
+    this.isActive = false;
     if (this.sessionTimer) clearTimeout(this.sessionTimer);
     if (this.warningTimer) clearTimeout(this.warningTimer);
     if (this.activityCheckTimer) clearInterval(this.activityCheckTimer);
+    if (this.tokenRefreshTimer) clearInterval(this.tokenRefreshTimer);
   }
 
   private updateActivity() {
-    this.lastActivityTime = Date.now();
-    this.resetTimers();
+    if (!this.isActive) return;
+
+    const now = Date.now();
+    const timeSinceLastActivity = now - this.lastActivityTime;
+
+    // Only update if enough time has passed to reduce excessive updates
+    if (timeSinceLastActivity > 1000) {
+      this.lastActivityTime = now;
+      this.resetTimers();
+    }
   }
 
   private resetTimers() {
+    if (!this.isActive) return;
+
     if (this.sessionTimer) clearTimeout(this.sessionTimer);
     if (this.warningTimer) clearTimeout(this.warningTimer);
 
     const warningTime = SESSION_TIMEOUT - INACTIVITY_WARNING;
 
+    // Only show warning if user has been inactive
     this.warningTimer = setTimeout(() => {
-      if (this.onWarning) {
-        this.onWarning();
+      if (this.onWarning && this.isActive) {
+        const inactiveDuration = Date.now() - this.lastActivityTime;
+        // Only warn if actually inactive
+        if (inactiveDuration >= warningTime) {
+          console.log('[SessionManager] Showing inactivity warning');
+          this.onWarning();
+        }
       }
     }, warningTime);
 
     this.sessionTimer = setTimeout(() => {
-      if (this.onTimeout) {
-        this.onTimeout();
+      if (this.onTimeout && this.isActive) {
+        const inactiveDuration = Date.now() - this.lastActivityTime;
+        // Only timeout if actually inactive
+        if (inactiveDuration >= SESSION_TIMEOUT) {
+          console.log('[SessionManager] Session timeout due to inactivity');
+          this.onTimeout();
+        } else {
+          // User is still active, reset timer
+          this.resetTimers();
+        }
       }
     }, SESSION_TIMEOUT);
   }
 
   private startActivityCheck() {
-    this.activityCheckTimer = setInterval(async () => {
+    this.activityCheckTimer = setInterval(() => {
+      if (!this.isActive) return;
+
       const inactiveDuration = Date.now() - this.lastActivityTime;
 
+      // Only timeout after extended inactivity
       if (inactiveDuration >= SESSION_TIMEOUT) {
+        console.log('[SessionManager] Extended inactivity detected, logging out');
         this.stop();
         if (this.onTimeout) {
           this.onTimeout();
         }
       }
     }, ACTIVITY_CHECK_INTERVAL);
+  }
+
+  private startTokenRefresh() {
+    // Periodically refresh the auth token to keep session alive
+    this.tokenRefreshTimer = setInterval(async () => {
+      if (!this.isActive) return;
+
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('[SessionManager] Error getting session:', error);
+          return;
+        }
+
+        if (session) {
+          // Refresh the session token
+          const { error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError) {
+            console.error('[SessionManager] Error refreshing session:', refreshError);
+          } else {
+            console.log('[SessionManager] Session token refreshed successfully');
+          }
+        }
+      } catch (error) {
+        console.error('[SessionManager] Token refresh error:', error);
+      }
+    }, TOKEN_REFRESH_INTERVAL);
   }
 
   public getInactivityDuration(): number {
@@ -84,7 +172,13 @@ export class SessionManager {
   }
 
   public extendSession() {
+    console.log('[SessionManager] Session extended by user action');
     this.updateActivity();
+
+    // Also refresh the token when user explicitly extends
+    supabase.auth.refreshSession().catch(error => {
+      console.error('[SessionManager] Error refreshing on extend:', error);
+    });
   }
 }
 

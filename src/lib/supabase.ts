@@ -17,4 +17,17 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storageKey: 'gold-shipper-auth',
     flowType: 'pkce',
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'gold-shipper-web',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });

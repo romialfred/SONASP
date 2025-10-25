@@ -256,6 +256,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let keepAliveInterval: NodeJS.Timeout | null = null;
+
+    // Set up keepalive to ping session every 4 minutes
+    const startKeepAlive = () => {
+      keepAliveInterval = setInterval(async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            // Session exists, keep it alive
+            console.log('[Auth] Keepalive ping - session active');
+          }
+        } catch (error) {
+          console.error('[Auth] Keepalive error:', error);
+        }
+      }, 4 * 60 * 1000); // Every 4 minutes
+    };
 
     const initializeAuth = async () => {
       try {
@@ -341,9 +357,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
+        console.log('[Auth] Auth state changed:', event, session ? 'with session' : 'no session');
+
         if (!mounted) return;
 
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('[Auth] User signed in, fetching profile');
           const profile = await fetchUserProfile(session.user.id);
           setState({
             user: profile,
@@ -353,22 +372,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
 
           if (!sessionManagerRef.current) {
+            console.log('[Auth] Starting session manager');
             sessionManagerRef.current = new SessionManager(
               () => {
-                setRemainingSeconds(300);
+                setRemainingSeconds(600);
                 setShowSessionWarning(true);
               },
               async () => {
+                console.log('[Auth] Session timeout callback triggered');
                 setShowSessionWarning(false);
                 await signOut();
               }
             );
             sessionManagerRef.current.start();
           }
+
+          // Start keepalive when user signs in
+          if (!keepAliveInterval) {
+            startKeepAlive();
+          }
         } else if (event === 'SIGNED_OUT') {
+          console.log('[Auth] User signed out');
           if (sessionManagerRef.current) {
             sessionManagerRef.current.stop();
             sessionManagerRef.current = null;
+          }
+
+          // Stop keepalive
+          if (keepAliveInterval) {
+            clearInterval(keepAliveInterval);
+            keepAliveInterval = null;
           }
 
           setState({
@@ -378,6 +411,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             initialized: true,
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('[Auth] Token refreshed, updating session');
+          // Keep existing user profile to avoid unnecessary refetch
+          setState(prev => ({
+            ...prev,
+            session,
+            loading: false,
+            initialized: true,
+          }));
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          console.log('[Auth] User updated, refreshing profile');
           const profile = await fetchUserProfile(session.user.id);
           setState({
             user: profile,
@@ -394,6 +437,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       if (sessionManagerRef.current) {
         sessionManagerRef.current.stop();
+      }
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
       }
     };
   }, []);

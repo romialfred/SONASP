@@ -26,7 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [remainingSeconds, setRemainingSeconds] = useState(300);
   const sessionManagerRef = useRef<SessionManager | null>(null);
 
-  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
+    const MAX_RETRIES = 2;
+
     try {
       // First, fetch the user profile
       const { data: profile, error: profileError } = await supabase
@@ -37,11 +39,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
+
+        // Check for infinite recursion error (42P17)
+        if (profileError.code === '42P17') {
+          console.error('CRITICAL: Infinite recursion detected in RLS policies. This should not happen after migration.');
+          throw new Error('Database configuration error. Please contact support.');
+        }
+
+        // Check for missing profile (PGRST116 or null data)
+        if (profileError.code === 'PGRST116' || profileError.message?.includes('no rows')) {
+          console.warn('Profile not found for user:', userId, '- attempting retry');
+
+          if (retryCount < MAX_RETRIES) {
+            // Wait briefly then retry (profile might be created by trigger)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+            return fetchUserProfile(userId, retryCount + 1);
+          }
+        }
+
         throw profileError;
       }
 
       if (!profile) {
         console.warn('No profile found for user:', userId);
+
+        // Retry if this is the first attempt
+        if (retryCount < MAX_RETRIES) {
+          console.log('Retrying profile fetch in case trigger is still processing...');
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return fetchUserProfile(userId, retryCount + 1);
+        }
+
+        // Profile still missing after retries - this shouldn't happen with trigger
+        console.error('Profile missing after retries. Trigger may have failed.');
         return null;
       }
 
@@ -73,8 +103,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         created_at: profile.created_at,
         updated_at: profile.updated_at,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user profile:', error);
+
+      // If we still have retries and it's a 500 error, retry
+      if (retryCount < MAX_RETRIES && error?.message?.includes('500')) {
+        console.log(`Retrying profile fetch (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        return fetchUserProfile(userId, retryCount + 1);
+      }
+
       return null;
     }
   };

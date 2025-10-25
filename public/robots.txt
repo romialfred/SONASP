@@ -1,0 +1,5 @@
+# Gold Shipper - Mansa Resources
+# Internal application - restrict crawling
+
+User-agent: *
+Disallow: /

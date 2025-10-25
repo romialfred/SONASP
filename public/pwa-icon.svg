@@ -1,0 +1,36 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Deep Gold background -->
+  <rect width="512" height="512" fill="#B8860B"/>
+
+  <!-- Slate Blue accent border -->
+  <rect x="20" y="20" width="472" height="472" fill="none" stroke="#475569" stroke-width="8"/>
+
+  <!-- Gold Shipper Icon - Simplified ship/gold bar design -->
+  <g transform="translate(256, 256)">
+    <!-- Gold bar icon -->
+    <rect x="-80" y="-40" width="160" height="80" fill="#FFD700" stroke="#475569" stroke-width="4" rx="8"/>
+
+    <!-- Shine effect -->
+    <rect x="-60" y="-30" width="40" height="20" fill="#FFFFFF" opacity="0.3" rx="4"/>
+
+    <!-- Text: GS -->
+    <text
+      x="0"
+      y="15"
+      font-family="Arial, sans-serif"
+      font-size="60"
+      font-weight="bold"
+      fill="#475569"
+      text-anchor="middle">GS</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text
+    x="256"
+    y="460"
+    font-family="Arial, sans-serif"
+    font-size="24"
+    font-weight="600"
+    fill="#FFFFFF"
+    text-anchor="middle">GOLD SHIPPER</text>
+</svg>

@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Bell, LogOut, User, Globe } from 'lucide-react';
+import { Bell, LogOut, User, Globe } from 'lucide-react';
 import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface HeaderProps {
-  onMenuClick: () => void;
-}
-
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -55,23 +51,10 @@ export function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">M</span>
-            </div>
-            <div>
-              <h1 className="font-heading text-lg font-bold text-gray-900">Gold Shipper</h1>
-              <p className="text-xs text-gray-500">Mansa Resources</p>
-            </div>
-          </div>
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-gray-900">
+            Mansa Resources <span className="text-gray-500 font-normal">Gold Sales Management Solution</span>
+          </h1>
         </div>
 
         <div className="flex items-center gap-3">

@@ -5,6 +5,14 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PublicRoute } from './components/auth/PublicRoute';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { BatchesPage } from './pages/batches/BatchesPage';
+import { ShippingPage } from './pages/shipping/ShippingPage';
+import { RefiningPage } from './pages/refining/RefiningPage';
+import { CustomersPage } from './pages/customers/CustomersPage';
+import { SalesPage } from './pages/sales/SalesPage';
+import { GoldPricesPage } from './pages/prices/GoldPricesPage';
+import { FxRatesPage } from './pages/prices/FxRatesPage';
+import { UsersPage } from './pages/users/UsersPage';
 import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
 import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
@@ -36,13 +44,79 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Navigate to="/batches" replace />} />
             <Route
               path="/login"
               element={
                 <PublicRoute>
                   <Login />
                 </PublicRoute>
+              }
+            />
+
+            {/* New main pages with demo data */}
+            <Route
+              path="/batches"
+              element={
+                <ProtectedRoute>
+                  <BatchesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shipping"
+              element={
+                <ProtectedRoute>
+                  <ShippingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/refining"
+              element={
+                <ProtectedRoute>
+                  <RefiningPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers"
+              element={
+                <ProtectedRoute>
+                  <CustomersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales"
+              element={
+                <ProtectedRoute>
+                  <SalesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gold-prices"
+              element={
+                <ProtectedRoute>
+                  <GoldPricesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fx-rates"
+              element={
+                <ProtectedRoute>
+                  <FxRatesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <UsersPage />
+                </ProtectedRoute>
               }
             />
 

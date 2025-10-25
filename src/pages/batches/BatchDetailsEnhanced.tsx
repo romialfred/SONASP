@@ -84,6 +84,7 @@ export function BatchDetailsEnhanced() {
 
       if (error) {
         console.error('[BatchDetailsEnhanced] Query error:', error);
+        console.error('[BatchDetailsEnhanced] Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
 
@@ -151,7 +152,8 @@ export function BatchDetailsEnhanced() {
       const checks = await batchEnhancedService.getQualityChecks(id!);
       setQualityChecks(checks || []);
     } catch (error) {
-      console.error('Error loading quality checks:', error);
+      console.error('[BatchDetailsEnhanced] Error loading quality checks:', error);
+      setQualityChecks([]);
     }
   };
 
@@ -160,7 +162,8 @@ export function BatchDetailsEnhanced() {
       const alertsData = await batchEnhancedService.getAlerts(id);
       setAlerts(alertsData || []);
     } catch (error) {
-      console.error('Error loading alerts:', error);
+      console.error('[BatchDetailsEnhanced] Error loading alerts:', error);
+      setAlerts([]);
     }
   };
 
@@ -169,7 +172,8 @@ export function BatchDetailsEnhanced() {
       const approvalsData = await batchWorkflowService.getApprovalHistory(id!);
       setApprovals(approvalsData || []);
     } catch (error) {
-      console.error('Error loading approvals:', error);
+      console.error('[BatchDetailsEnhanced] Error loading approvals:', error);
+      setApprovals([]);
     }
   };
 
@@ -178,7 +182,8 @@ export function BatchDetailsEnhanced() {
       const tagsData = await batchEnhancedService.getBatchTags(id!);
       setTags(tagsData || []);
     } catch (error) {
-      console.error('Error loading tags:', error);
+      console.error('[BatchDetailsEnhanced] Error loading tags:', error);
+      setTags([]);
     }
   };
 
@@ -187,7 +192,8 @@ export function BatchDetailsEnhanced() {
       const details = await batchEnhancedService.getTransportationDetails(id!);
       setTransportDetails(details);
     } catch (error) {
-      console.error('Error loading transport details:', error);
+      console.error('[BatchDetailsEnhanced] Error loading transport details:', error);
+      setTransportDetails(null);
     }
   };
 
@@ -196,7 +202,8 @@ export function BatchDetailsEnhanced() {
       const reservationsData = await batchEnhancedService.getReservations(id!);
       setReservations(reservationsData || []);
     } catch (error) {
-      console.error('Error loading reservations:', error);
+      console.error('[BatchDetailsEnhanced] Error loading reservations:', error);
+      setReservations([]);
     }
   };
 

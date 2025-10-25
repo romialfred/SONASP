@@ -269,6 +269,19 @@ export default function UserManagementPage() {
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading users...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
@@ -363,21 +376,39 @@ export default function UserManagementPage() {
             <CardTitle>Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">User</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">2FA</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Last Login</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
+            {filteredUsers.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">
+                  {searchTerm ? 'No users found matching your search' : 'No users yet'}
+                </p>
+                {!searchTerm && (
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
+                    className="mt-4"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First User
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">User</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">2FA</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Last Login</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium text-gray-900">{user.full_name}</p>
@@ -451,6 +482,7 @@ export default function UserManagementPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </CardContent>
         </Card>
 

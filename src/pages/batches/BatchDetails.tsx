@@ -38,18 +38,31 @@ export function BatchDetails() {
 
   const loadBatch = async () => {
     try {
+      console.log('[BatchDetails] Loading batch with ID:', id);
+
       const { data, error } = await supabase
         .from('batches')
         .select(`
           *,
           origin_site:sites!batches_origin_site_id_fkey(name),
           current_site:sites!batches_current_site_id_fkey(name),
-          created_by_user:user_profiles(full_name)
+          created_by_user:user_profiles!batches_created_by_fkey(full_name)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[BatchDetails] Query error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.warn('[BatchDetails] No batch found with ID:', id);
+        setBatch(null);
+        return;
+      }
+
+      console.log('[BatchDetails] Batch loaded successfully:', data);
 
       setBatch({
         ...data,
@@ -58,7 +71,8 @@ export function BatchDetails() {
         created_by: data.created_by_user?.full_name || 'Unknown',
       });
     } catch (error) {
-      console.error('Error loading batch:', error);
+      console.error('[BatchDetails] Error loading batch:', error);
+      setBatch(null);
     } finally {
       setLoading(false);
     }

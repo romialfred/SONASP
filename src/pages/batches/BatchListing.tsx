@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search, Download, Filter } from 'lucide-react';
@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { formatWeight } from '@/utils/batchUtils';
+import { supabase } from '@/lib/supabase';
 
 interface Batch {
   id: string;
@@ -28,41 +29,46 @@ export function BatchListing() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [siteFilter, setSiteFilter] = useState('all');
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockBatches: Batch[] = [
-    {
-      id: '1',
-      batch_number: 'BT-202410-GN-0001',
-      status: 'shipped',
-      weight_grams: 1250.50,
-      shipping_date: '2024-10-20',
-      origin_site: 'Conakry Factory',
-      current_site: 'Conakry Airport',
-      created_at: '2024-10-20T08:30:00Z',
-    },
-    {
-      id: '2',
-      batch_number: 'BT-202410-CI-0002',
-      status: 'received_airport',
-      weight_grams: 980.75,
-      shipping_date: '2024-10-19',
-      origin_site: 'Abidjan Factory',
-      current_site: 'Abidjan Airport',
-      created_at: '2024-10-19T14:15:00Z',
-    },
-    {
-      id: '3',
-      batch_number: 'BT-202410-ML-0003',
-      status: 'processing',
-      weight_grams: 1500.25,
-      shipping_date: '2024-10-18',
-      origin_site: 'Bamako Factory',
-      current_site: 'Regional Refinery',
-      created_at: '2024-10-18T10:00:00Z',
-    },
-  ];
+  useEffect(() => {
+    loadBatches();
+  }, []);
 
-  const filteredBatches = mockBatches.filter((batch) => {
+  const loadBatches = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('batches')
+        .select(`
+          *,
+          origin_site:sites!batches_origin_site_id_fkey(name),
+          current_site:sites!batches_current_site_id_fkey(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedBatches = (data || []).map((batch: any) => ({
+        id: batch.id,
+        batch_number: batch.batch_number,
+        status: batch.status,
+        weight_grams: parseFloat(batch.weight_grams),
+        shipping_date: batch.shipping_date,
+        origin_site: batch.origin_site?.name || 'Unknown',
+        current_site: batch.current_site?.name || 'Unknown',
+        created_at: batch.created_at,
+      }));
+
+      setBatches(formattedBatches);
+    } catch (error) {
+      console.error('Error loading batches:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredBatches = batches.filter((batch) => {
     const matchesSearch =
       batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       batch.origin_site.toLowerCase().includes(searchQuery.toLowerCase());
@@ -206,12 +212,30 @@ export function BatchListing() {
             <CardTitle>All Batches ({filteredBatches.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table
-              data={filteredBatches}
-              columns={columns}
-              pagination
-              pageSize={10}
-            />
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="text-gray-600">Loading batches...</div>
+              </div>
+            ) : filteredBatches.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">No batches found</p>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate('/batches/new')}
+                  className="mt-4 gap-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  Create First Batch
+                </Button>
+              </div>
+            ) : (
+              <Table
+                data={filteredBatches}
+                columns={columns}
+                pagination
+                pageSize={10}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

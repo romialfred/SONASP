@@ -208,6 +208,20 @@ export function BatchCreate() {
                 </div>
 
                 <FormField
+                  label="Supplier"
+                  required
+                  error={errors.supplier}
+                  hint="Name of the gold supplier or mining entity"
+                >
+                  <Input
+                    placeholder="Enter supplier name"
+                    value={formData.supplier}
+                    onChange={(e) => handleInputChange('supplier', e.target.value)}
+                    error={!!errors.supplier}
+                  />
+                </FormField>
+
+                <FormField
                   label="Shipping Date"
                   required
                   error={errors.shipping_date}
@@ -240,6 +254,22 @@ export function BatchCreate() {
                   )}
                 </FormField>
 
+                <FormField
+                  label="Purity (%)"
+                  required
+                  error={errors.purity_percentage}
+                  hint="Percentage purity of the gold (0-100%)"
+                >
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    value={formData.purity_percentage}
+                    onChange={(e) => handleInputChange('purity_percentage', e.target.value)}
+                    error={!!errors.purity_percentage}
+                  />
+                </FormField>
+
                 <FormField label="Origin Site" required error={errors.site_id}>
                   <Select
                     value={formData.site_id}
@@ -247,19 +277,39 @@ export function BatchCreate() {
                     error={!!errors.site_id}
                   >
                     <option value="">Select site</option>
-                    <option value="1">Conakry Factory - Guinea</option>
-                    <option value="2">Abidjan Factory - Côte d'Ivoire</option>
-                    <option value="3">Bamako Factory - Mali</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name} - {site.country}
+                      </option>
+                    ))}
                   </Select>
                 </FormField>
 
-                <FormField label="Transportation Company">
+                <FormField
+                  label="Carrier"
+                  required
+                  error={errors.carrier}
+                  hint="Transportation company handling the shipment"
+                >
                   <Input
-                    placeholder="Enter transporter name"
-                    value={formData.transportation_company}
-                    onChange={(e) =>
-                      handleInputChange('transportation_company', e.target.value)
-                    }
+                    placeholder="Enter carrier name"
+                    value={formData.carrier}
+                    onChange={(e) => handleInputChange('carrier', e.target.value)}
+                    error={!!errors.carrier}
+                  />
+                </FormField>
+
+                <FormField
+                  label="Destination"
+                  required
+                  error={errors.destination}
+                  hint="Final destination (Airport or Refinery)"
+                >
+                  <Input
+                    placeholder="Enter destination"
+                    value={formData.destination}
+                    onChange={(e) => handleInputChange('destination', e.target.value)}
+                    error={!!errors.destination}
                   />
                 </FormField>
 
@@ -326,11 +376,15 @@ export function BatchCreate() {
                     <span>Required Fields</span>
                     <span className="font-medium">
                       {[
+                        formData.supplier,
                         formData.shipping_date,
                         formData.weight_grams,
+                        formData.purity_percentage,
                         formData.site_id,
+                        formData.carrier,
+                        formData.destination,
                       ].filter(Boolean).length}{' '}
-                      / 3
+                      / 7
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -339,15 +393,49 @@ export function BatchCreate() {
                       style={{
                         width: `${
                           ([
+                            formData.supplier,
                             formData.shipping_date,
                             formData.weight_grams,
+                            formData.purity_percentage,
                             formData.site_id,
+                            formData.carrier,
+                            formData.destination,
                           ].filter(Boolean).length /
-                            3) *
+                            7) *
                           100
                         }%`,
                       }}
                     />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Field Guide</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Supplier</p>
+                    <p className="text-gray-600">Name of the gold supplier or mining entity</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Weight</p>
+                    <p className="text-gray-600">Enter weight in grams. System automatically converts to ounces</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Purity</p>
+                    <p className="text-gray-600">Percentage purity of the gold (0-100%)</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Carrier</p>
+                    <p className="text-gray-600">Transportation company handling the shipment</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Destination</p>
+                    <p className="text-gray-600">Final destination for this shipment (Airport or Refinery)</p>
                   </div>
                 </div>
               </CardContent>

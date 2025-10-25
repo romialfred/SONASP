@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,56 +19,107 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { StatusFlow, BatchStatus } from '@/components/batch/StatusFlow';
 import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
 import { formatWeight } from '@/utils/batchUtils';
+import { supabase } from '@/lib/supabase';
 
 export function BatchDetails() {
   const { id } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [batch, setBatch] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
 
-  const batch = {
-    id: id,
-    batch_number: 'BT-202410-GN-0001',
-    status: 'shipped' as BatchStatus,
-    weight_grams: 1250.5,
-    weight_ounces: 44.09,
-    shipping_date: '2024-10-20',
-    origin_site: 'Conakry Factory',
-    current_site: 'In Transit to Airport',
-    transportation_company: 'TransGold Logistics',
-    comments: 'High-grade gold from northern mine. Handle with priority.',
-    created_by: 'John Doe',
-    created_at: '2024-10-20T08:30:00Z',
+  useEffect(() => {
+    if (id) {
+      loadBatch();
+      loadTimeline();
+    }
+  }, [id]);
+
+  const loadBatch = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('batches')
+        .select(`
+          *,
+          origin_site:sites!batches_origin_site_id_fkey(name),
+          current_site:sites!batches_current_site_id_fkey(name),
+          created_by_user:user_profiles(full_name)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      setBatch({
+        ...data,
+        origin_site: data.origin_site?.name || 'Unknown',
+        current_site: data.current_site?.name || 'Unknown',
+        created_by: data.created_by_user?.full_name || 'Unknown',
+      });
+    } catch (error) {
+      console.error('Error loading batch:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const timelineEvents: TimelineEvent[] = [
-    {
-      id: '1',
-      title: 'Batch Created',
-      description: 'Initial batch registration at factory',
-      timestamp: '2024-10-20 08:30 AM',
-      user: 'John Doe',
-      icon: Package,
-      iconColor: 'bg-primary-500',
-    },
-    {
-      id: '2',
-      title: 'Quality Check Passed',
-      description: 'Batch passed initial quality inspection',
-      timestamp: '2024-10-20 09:15 AM',
-      user: 'Jane Smith',
-      icon: FileText,
-      iconColor: 'bg-accent-500',
-    },
-    {
-      id: '3',
-      title: 'Shipment Initiated',
-      description: 'Batch handed over to TransGold Logistics',
-      timestamp: '2024-10-20 10:00 AM',
-      user: 'John Doe',
-      icon: Truck,
-      iconColor: 'bg-blue-500',
-    },
-  ];
+  const loadTimeline = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('batch_status_history')
+        .select(`
+          *,
+          user:user_profiles(full_name)
+        `)
+        .eq('batch_id', id)
+        .order('changed_at', { ascending: true });
+
+      if (error) throw error;
+
+      const events: TimelineEvent[] = (data || []).map((item: any, index: number) => ({
+        id: item.id,
+        title: getStatusTitle(item.status),
+        description: item.comments || `Batch status changed to ${item.status}`,
+        timestamp: new Date(item.changed_at).toLocaleString(),
+        user: item.user?.full_name || 'System',
+        icon: getStatusIcon(item.status),
+        iconColor: getStatusColor(index),
+      }));
+
+      setTimelineEvents(events);
+    } catch (error) {
+      console.error('Error loading timeline:', error);
+    }
+  };
+
+  const getStatusTitle = (status: string) => {
+    const titles: Record<string, string> = {
+      created: 'Batch Created',
+      shipped: 'Shipment Initiated',
+      received_airport: 'Received at Airport',
+      shipped_refinery: 'Shipped to Refinery',
+      received_refinery: 'Received at Refinery',
+      processing: 'Processing Started',
+      processed: 'Processing Completed',
+      approved: 'Approved for Sale',
+      ready_for_sale: 'Ready for Sale',
+    };
+    return titles[status] || status;
+  };
+
+  const getStatusIcon = (status: string) => {
+    if (status.includes('received')) return FileText;
+    if (status.includes('shipped')) return Truck;
+    if (status.includes('processing') || status.includes('processed')) return Building2;
+    return Package;
+  };
+
+  const getStatusColor = (index: number) => {
+    const colors = ['bg-primary-500', 'bg-accent-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500'];
+    return colors[index % colors.length];
+  };
+
 
   const documents = [
     {
@@ -85,6 +137,29 @@ export function BatchDetails() {
       uploaded_at: '2024-10-20 10:00 AM',
     },
   ];
+
+  if (loading) {
+    return (
+      <MainLayout userRole="factory">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-600">Loading batch details...</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!batch) {
+    return (
+      <MainLayout userRole="factory">
+        <div className="text-center py-12">
+          <p className="text-gray-600">Batch not found</p>
+          <Button onClick={() => navigate('/batches')} className="mt-4">
+            Back to Batches
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout userRole="factory">

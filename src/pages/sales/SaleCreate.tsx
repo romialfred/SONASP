@@ -311,69 +311,153 @@ export function SaleCreate() {
             </CardContent>
           </Card>
 
-          {showCalculations && calculations && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Sale Calculations</CardTitle>
+          {showCalculations && calculations && selectedCustomer && (
+            <Card className="border-2 border-primary-200 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary-50 to-blue-50 border-b-2 border-primary-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">Sale Calculations Report</CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">Prepared for Management Review</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Sale Date</p>
+                    <p className="text-sm font-semibold text-gray-900">{new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">Quantity</span>
-                    <span className="text-sm font-semibold text-gray-900">
+              <CardContent className="pt-6">
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Customer Name</p>
+                      <p className="text-lg font-bold text-gray-900">{selectedCustomer.name}</p>
+                      <p className="text-xs text-gray-600 mt-1">{selectedCustomer.email} • {selectedCustomer.country}</p>
+                    </div>
+                    {selectedCustomer.isBestCustomer && (
+                      <div className="flex items-center gap-1 px-3 py-1.5 bg-yellow-100 border border-yellow-300 rounded-full">
+                        <Award className="h-4 w-4 text-yellow-600" />
+                        <span className="text-xs font-semibold text-yellow-700">Best Customer</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-700">Quantity</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Base quantity for sale</div>
+                      </div>
+                    </div>
+                    <span className="text-base font-bold text-gray-900">
                       {parseFloat(formData.quantityOz).toFixed(3)} oz
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">London AM Rate</span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(parseFloat(formData.londonAMRate))} per oz
+
+                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-700">London AM Rate</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Current market rate per ounce</div>
+                      </div>
+                    </div>
+                    <span className="text-base font-bold text-gray-900">
+                      {formatCurrency(parseFloat(formData.londonAMRate))} / oz
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">Gross Proceeds</span>
-                    <span className="text-sm font-semibold text-gray-900">
+
+                  <div className="h-px bg-gray-200 my-2"></div>
+
+                  <div className="group relative flex justify-between items-center py-3 px-4 bg-green-50 hover:bg-green-100 rounded transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-green-900">Gross Proceeds</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-32 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        Formula: Quantity × London AM Rate<br/>
+                        {parseFloat(formData.quantityOz).toFixed(3)} oz × {formatCurrency(parseFloat(formData.londonAMRate))}
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-green-700">
                       {formatCurrency(calculations.grossProceeds)}
                     </span>
                   </div>
-                  {(calculations.freight > 0 || calculations.otherCosts > 0) && (
-                    <>
-                      {calculations.freight > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-sm font-medium text-gray-700">Freight Cost</span>
-                          <span className="text-sm font-semibold text-red-600">
-                            -{formatCurrency(calculations.freight)}
-                          </span>
+
+                  {calculations.freight > 0 && (
+                    <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-700">Freight Cost</span>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Transportation expenses</div>
                         </div>
-                      )}
-                      {calculations.otherCosts > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-sm font-medium text-gray-700">Other Costs</span>
-                          <span className="text-sm font-semibold text-red-600">
-                            -{formatCurrency(calculations.otherCosts)}
-                          </span>
-                        </div>
-                      )}
-                    </>
+                      </div>
+                      <span className="text-base font-bold text-red-600">
+                        -{formatCurrency(calculations.freight)}
+                      </span>
+                    </div>
                   )}
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">Net Proceeds</span>
-                    <span className="text-sm font-semibold text-gray-900">
+
+                  {calculations.otherCosts > 0 && (
+                    <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-700">Other Costs</span>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Additional expenses</div>
+                        </div>
+                      </div>
+                      <span className="text-base font-bold text-red-600">
+                        -{formatCurrency(calculations.otherCosts)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-gray-300 my-2"></div>
+
+                  <div className="group relative flex justify-between items-center py-3 px-4 bg-blue-50 hover:bg-blue-100 rounded transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-blue-900">Net Proceeds</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-32 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        Formula: Gross Proceeds - Total Costs<br/>
+                        {formatCurrency(calculations.grossProceeds)} - {formatCurrency(calculations.freight + calculations.otherCosts)}
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-blue-700">
                       {formatCurrency(calculations.netProceeds)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">Net Smelted Royalties (3%)</span>
-                    <span className="text-sm font-semibold text-red-600">
+
+                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-700">Net Smelted Royalties (3%)</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-56 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        Formula: Net Proceeds × 3%<br/>
+                        {formatCurrency(calculations.netProceeds)} × 0.03
+                      </div>
+                    </div>
+                    <span className="text-base font-bold text-red-600">
                       -{formatCurrency(calculations.royalties)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-3 bg-primary-50 rounded-lg px-3 mt-2">
-                    <span className="text-base font-bold text-gray-900">Final Proceeds</span>
-                    <span className="text-base font-bold text-primary-700">
+
+                  <div className="h-1 bg-gradient-to-r from-primary-200 to-blue-200 my-3 rounded-full"></div>
+
+                  <div className="group relative flex justify-between items-center py-4 px-4 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg shadow-md">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-gray-900">Final Proceeds</span>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-40 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        Formula: Net Proceeds - Royalties<br/>
+                        {formatCurrency(calculations.netProceeds)} - {formatCurrency(calculations.royalties)}
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-primary-700">
                       {formatCurrency(calculations.finalAmount)}
                     </span>
                   </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-800">
+                    <strong>Note:</strong> This calculation is subject to management approval. Final amount will be communicated to the customer via email upon approval.
+                  </p>
                 </div>
               </CardContent>
             </Card>

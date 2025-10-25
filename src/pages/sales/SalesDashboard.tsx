@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -230,7 +230,7 @@ export function SalesDashboard() {
             <CardTitle>Active Sales</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 flex flex-wrap gap-4">
+            <div className="mb-6 flex flex-wrap gap-4">
               <input
                 type="text"
                 placeholder="Search by sale number or customer..."
@@ -250,11 +250,105 @@ export function SalesDashboard() {
                 <option value="payment_received">Payment Received</option>
               </select>
             </div>
-            <Table
-              columns={columns}
-              data={filteredSales}
-              onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-            />
+
+            <div className="grid gap-4">
+              {filteredSales.map((sale) => {
+                const statusConfig = {
+                  pending: {
+                    label: 'Pending Approval',
+                    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                    icon: Clock
+                  },
+                  approved: {
+                    label: 'Management Approved',
+                    color: 'bg-blue-100 text-blue-800 border-blue-300',
+                    icon: CheckCircle
+                  },
+                  customer_approved: {
+                    label: 'Customer Approved',
+                    color: 'bg-green-100 text-green-800 border-green-300',
+                    icon: CheckCircle
+                  },
+                  payment_received: {
+                    label: 'Payment Received',
+                    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                    icon: DollarSign
+                  },
+                  completed: {
+                    label: 'Completed',
+                    color: 'bg-gray-100 text-gray-800 border-gray-300',
+                    icon: CheckCircle
+                  },
+                };
+
+                const status = statusConfig[sale.status] || statusConfig.pending;
+                const StatusIcon = status.icon;
+
+                return (
+                  <div
+                    key={sale.id}
+                    onClick={() => navigate(`/sales/${sale.id}`)}
+                    className="group relative p-5 border-2 border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-lg transition-all cursor-pointer bg-white"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-700 transition-colors">
+                            {sale.saleNumber}
+                          </h3>
+                          <div className={`flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
+                            <StatusIcon className="h-3 w-3" />
+                            {status.label}
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 font-medium">{sale.customer}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Created: {new Date(sale.createdDate).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+                        <p className="text-2xl font-bold text-primary-700">
+                          {formatCurrency(sale.amount)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Quantity</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {sale.quantity.toFixed(3)} oz
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Price per oz</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {formatCurrency(sale.amount / sale.quantity)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="text-xs text-primary-600 font-semibold flex items-center gap-1">
+                        View Details
+                        <ArrowRight className="h-3 w-3" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredSales.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No sales found matching your criteria</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

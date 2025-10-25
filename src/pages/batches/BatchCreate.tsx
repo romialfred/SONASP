@@ -12,31 +12,44 @@ import DatePicker from '@/components/ui/DatePicker';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
+import { createBatch, getSites } from '@/services/batchCreationService';
+import type { CreateBatchData } from '@/services/batchCreationService';
 
 interface FormData {
+  supplier: string;
   shipping_date: string;
   weight_grams: string;
+  purity_percentage: string;
   site_id: string;
-  transportation_company: string;
+  carrier: string;
+  destination: string;
   comments: string;
 }
 
 interface FormErrors {
+  supplier?: string;
   shipping_date?: string;
   weight_grams?: string;
+  purity_percentage?: string;
   site_id?: string;
+  carrier?: string;
+  destination?: string;
 }
 
 export function BatchCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
+    supplier: '',
     shipping_date: new Date().toISOString().split('T')[0],
     weight_grams: '',
+    purity_percentage: '',
     site_id: '',
-    transportation_company: '',
+    carrier: '',
+    destination: '',
     comments: '',
   });
+  const [sites, setSites] = useState<any[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [batchNumber, setBatchNumber] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -47,12 +60,25 @@ export function BatchCreate() {
     setBatchNumber(number);
   }, [formData.shipping_date]);
 
+  useEffect(() => {
+    loadSites();
+  }, []);
+
+  const loadSites = async () => {
+    const sitesData = await getSites();
+    setSites(sitesData);
+  };
+
   const weightInOunces = formData.weight_grams
     ? gramsToOunces(parseFloat(formData.weight_grams))
     : 0;
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
+
+    if (!formData.supplier.trim()) {
+      newErrors.supplier = 'Supplier is required';
+    }
 
     if (!formData.shipping_date) {
       newErrors.shipping_date = 'Shipping date is required';
@@ -64,8 +90,25 @@ export function BatchCreate() {
       newErrors.weight_grams = 'Weight must be greater than 0';
     }
 
+    if (!formData.purity_percentage) {
+      newErrors.purity_percentage = 'Purity is required';
+    } else {
+      const purity = parseFloat(formData.purity_percentage);
+      if (purity <= 0 || purity > 100) {
+        newErrors.purity_percentage = 'Purity must be between 0 and 100';
+      }
+    }
+
     if (!formData.site_id) {
       newErrors.site_id = 'Site selection is required';
+    }
+
+    if (!formData.carrier.trim()) {
+      newErrors.carrier = 'Carrier is required';
+    }
+
+    if (!formData.destination.trim()) {
+      newErrors.destination = 'Destination is required';
     }
 
     setErrors(newErrors);
@@ -97,21 +140,34 @@ export function BatchCreate() {
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting batch:', {
-        ...formData,
-        batch_number: batchNumber,
-        weight_ounces: weightInOunces,
-      });
+      const batchData: CreateBatchData = {
+        supplier: formData.supplier,
+        origin_site_id: formData.site_id,
+        weight_grams: parseFloat(formData.weight_grams),
+        purity_percentage: parseFloat(formData.purity_percentage),
+        shipping_date: formData.shipping_date,
+        carrier: formData.carrier,
+        destination: formData.destination,
+        comments: formData.comments || undefined,
+      };
 
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setShowConfirmModal(false);
+      const result = await createBatch(batchData);
+
+      if (result.success) {
         localStorage.removeItem('batch_draft');
-        navigate('/batches');
-      }, 1500);
-    } catch (error) {
+        navigate('/batches', {
+          state: { message: 'Batch created successfully!' }
+        });
+      } else {
+        alert('Error creating batch: ' + result.error);
+        setIsSubmitting(false);
+      }
+    } catch (error: any) {
       console.error('Error creating batch:', error);
+      alert('Error: ' + error.message);
       setIsSubmitting(false);
+    } finally {
+      setShowConfirmModal(false);
     }
   };
 

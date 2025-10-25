@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Download, ZoomIn, ZoomOut } from 'lucide-react';
@@ -403,7 +404,8 @@ export default function GoldShippingWorkflow() {
   const totalHeight = currentLanes.reduce((sum, lane) => sum + lane.height, 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -691,6 +693,7 @@ export default function GoldShippingWorkflow() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

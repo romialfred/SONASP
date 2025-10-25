@@ -136,6 +136,8 @@ export interface Database {
           weight_grams: number
           weight_ounces: number
           shipping_date: string
+          metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other'
+          documents: Json
           comments: string | null
           transportation_company: string | null
           mine_to_airport_transport_id: string | null
@@ -154,6 +156,8 @@ export interface Database {
           weight_grams: number
           weight_ounces: number
           shipping_date: string
+          metal_type?: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other'
+          documents?: Json
           comments?: string | null
           transportation_company?: string | null
           mine_to_airport_transport_id?: string | null
@@ -172,6 +176,8 @@ export interface Database {
           weight_grams?: number
           weight_ounces?: number
           shipping_date?: string
+          metal_type?: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other'
+          documents?: Json
           comments?: string | null
           transportation_company?: string | null
           mine_to_airport_transport_id?: string | null

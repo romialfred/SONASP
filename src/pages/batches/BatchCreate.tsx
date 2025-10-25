@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Upload, X } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,11 +14,12 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Moda
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
 import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
+import { supabase } from '@/lib/supabase';
 
 interface FormData {
   shipping_date: string;
   weight_grams: string;
-  purity_percentage: string;
+  metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
   site_id: string;
   mine_to_airport_transport_id: string;
   airport_to_refinery_transport_id: string;
@@ -29,11 +30,19 @@ interface FormData {
 interface FormErrors {
   shipping_date?: string;
   weight_grams?: string;
-  purity_percentage?: string;
+  metal_type?: string;
   site_id?: string;
   mine_to_airport_transport_id?: string;
   airport_to_refinery_transport_id?: string;
   destination_refinery_id?: string;
+}
+
+interface UploadedDocument {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploaded_at: string;
 }
 
 export function BatchCreate() {
@@ -42,7 +51,7 @@ export function BatchCreate() {
   const [formData, setFormData] = useState<FormData>({
     shipping_date: new Date().toISOString().split('T')[0],
     weight_grams: '',
-    purity_percentage: '',
+    metal_type: 'gold',
     site_id: '',
     mine_to_airport_transport_id: '',
     airport_to_refinery_transport_id: '',
@@ -53,6 +62,8 @@ export function BatchCreate() {
   const [mineToAirportTransports, setMineToAirportTransports] = useState<any[]>([]);
   const [airportToRefineryTransports, setAirportToRefineryTransports] = useState<any[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<UploadedDocument[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [batchNumber, setBatchNumber] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -103,25 +114,20 @@ export function BatchCreate() {
       newErrors.weight_grams = 'Weight must be greater than 0';
     }
 
-    if (!formData.purity_percentage) {
-      newErrors.purity_percentage = 'Purity is required';
-    } else {
-      const purity = parseFloat(formData.purity_percentage);
-      if (purity <= 0 || purity > 100) {
-        newErrors.purity_percentage = 'Purity must be between 0 and 100';
-      }
+    if (!formData.metal_type) {
+      newErrors.metal_type = 'Metal type is required';
     }
 
     if (!formData.site_id) {
-      newErrors.site_id = 'Site selection is required';
+      newErrors.site_id = 'Origin site is required';
     }
 
     if (!formData.mine_to_airport_transport_id) {
-      newErrors.mine_to_airport_transport_id = 'Mine to airport transport company is required';
+      newErrors.mine_to_airport_transport_id = 'Mine to airport transport is required';
     }
 
     if (!formData.airport_to_refinery_transport_id) {
-      newErrors.airport_to_refinery_transport_id = 'Airport to refinery transport company is required';
+      newErrors.airport_to_refinery_transport_id = 'Airport to refinery transport is required';
     }
 
     if (!formData.destination_refinery_id) {
@@ -142,9 +148,54 @@ export function BatchCreate() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `batch-documents/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+
+        const newDoc: UploadedDocument = {
+          name: file.name,
+          url: publicUrl,
+          type: file.type,
+          size: file.size,
+          uploaded_at: new Date().toISOString(),
+        };
+
+        setDocuments(prev => [...prev, newDoc]);
+      }
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
+      alert('Error uploading file: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSaveDraft = () => {
-    localStorage.setItem('batch_draft', JSON.stringify(formData));
-    console.log('Draft saved');
+    localStorage.setItem('batch_draft', JSON.stringify({ ...formData, documents }));
+    alert('Draft saved');
   };
 
   const handleSubmit = () => {
@@ -160,11 +211,12 @@ export function BatchCreate() {
       const batchData: CreateBatchData = {
         origin_site_id: formData.site_id,
         weight_grams: parseFloat(formData.weight_grams),
-        purity_percentage: parseFloat(formData.purity_percentage),
+        metal_type: formData.metal_type,
         shipping_date: formData.shipping_date,
         mine_to_airport_transport_id: formData.mine_to_airport_transport_id,
         airport_to_refinery_transport_id: formData.airport_to_refinery_transport_id,
         destination_refinery_id: formData.destination_refinery_id,
+        documents: documents,
         comments: formData.comments || undefined,
       };
 
@@ -208,7 +260,7 @@ export function BatchCreate() {
             <h1 className="font-heading text-3xl font-bold text-gray-900">
               Create New Batch
             </h1>
-            <p className="text-gray-600 mt-1">Register a new gold shipment batch</p>
+            <p className="text-gray-600 mt-1">Register a new precious metals shipment batch</p>
           </div>
         </div>
 
@@ -224,118 +276,131 @@ export function BatchCreate() {
                   <p className="text-2xl font-bold text-primary-700">{batchNumber}</p>
                 </div>
 
-                <FormField
-                  label="Shipping Date"
-                  required
-                  error={errors.shipping_date}
-                >
-                  <DatePicker
-                    value={formData.shipping_date}
-                    onChange={(e) => handleInputChange('shipping_date', e.target.value)}
-                    error={!!errors.shipping_date}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Weight (grams)"
-                  required
-                  error={errors.weight_grams}
-                  hint="Enter weight in grams. Conversion to ounces will be automatic."
-                >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.weight_grams}
-                    onChange={(e) => handleInputChange('weight_grams', e.target.value)}
-                    error={!!errors.weight_grams}
-                  />
-                  {formData.weight_grams && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      ≈ <span className="font-semibold">{weightInOunces.toFixed(2)} oz</span>
-                    </p>
-                  )}
-                </FormField>
-
-                <FormField
-                  label="Purity (%)"
-                  required
-                  error={errors.purity_percentage}
-                  hint="Percentage purity of the gold (0-100%)"
-                >
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="0.0"
-                    value={formData.purity_percentage}
-                    onChange={(e) => handleInputChange('purity_percentage', e.target.value)}
-                    error={!!errors.purity_percentage}
-                  />
-                </FormField>
-
-                <FormField label="Origin Site" required error={errors.site_id}>
-                  <Select
-                    value={formData.site_id}
-                    onChange={(e) => handleInputChange('site_id', e.target.value)}
-                    error={!!errors.site_id}
+                {/* Row 1: Shipping Date and Metal Type */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Shipping Date"
+                    required
+                    error={errors.shipping_date}
                   >
-                    <option value="">Select site</option>
-                    {sites.map((site) => (
-                      <option key={site.id} value={site.id}>
-                        {site.name} - {site.country}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
+                    <DatePicker
+                      value={formData.shipping_date}
+                      onChange={(e) => handleInputChange('shipping_date', e.target.value)}
+                      error={!!errors.shipping_date}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Metal Type"
+                    required
+                    error={errors.metal_type}
+                    hint="Type of precious metal being shipped"
+                  >
+                    <Select
+                      value={formData.metal_type}
+                      onChange={(e) => handleInputChange('metal_type', e.target.value as any)}
+                      error={!!errors.metal_type}
+                    >
+                      <option value="gold">Gold</option>
+                      <option value="silver">Silver</option>
+                      <option value="zinc">Zinc</option>
+                      <option value="diamond">Diamond</option>
+                      <option value="other">Other</option>
+                    </Select>
+                  </FormField>
+                </div>
+
+                {/* Row 2: Weight and Site */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Weight (grams)"
+                    required
+                    error={errors.weight_grams}
+                    hint="Enter weight in grams. Conversion to ounces is automatic."
+                  >
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.weight_grams}
+                      onChange={(e) => handleInputChange('weight_grams', e.target.value)}
+                      error={!!errors.weight_grams}
+                    />
+                    {formData.weight_grams && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        ≈ <span className="font-semibold">{weightInOunces.toFixed(2)} oz</span>
+                      </p>
+                    )}
+                  </FormField>
+
+                  <FormField label="Origin Site" required error={errors.site_id}>
+                    <Select
+                      value={formData.site_id}
+                      onChange={(e) => handleInputChange('site_id', e.target.value)}
+                      error={!!errors.site_id}
+                    >
+                      <option value="">Select origin site</option>
+                      {sites.map((site) => (
+                        <option key={site.id} value={site.id}>
+                          {site.name} - {site.country}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+                </div>
 
                 <div className="border-t pt-6 mt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Transportation & Destination</h3>
 
-                  <FormField
-                    label="Mine to Airport Transport Company"
-                    required
-                    error={errors.mine_to_airport_transport_id}
-                    hint="Company responsible for transporting gold from mine to airport"
-                  >
-                    <Select
-                      value={formData.mine_to_airport_transport_id}
-                      onChange={(e) => handleInputChange('mine_to_airport_transport_id', e.target.value)}
-                      error={!!errors.mine_to_airport_transport_id}
+                  {/* Row 3: Mine to Airport and Airport to Refinery Transport */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <FormField
+                      label="Mine to Airport Transport"
+                      required
+                      error={errors.mine_to_airport_transport_id}
+                      hint="Company for first leg transport"
                     >
-                      <option value="">Select transport company</option>
-                      {mineToAirportTransports.map((company) => (
-                        <option key={company.id} value={company.id}>
-                          {company.name} - {company.contact_person || 'N/A'}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormField>
+                      <Select
+                        value={formData.mine_to_airport_transport_id}
+                        onChange={(e) => handleInputChange('mine_to_airport_transport_id', e.target.value)}
+                        error={!!errors.mine_to_airport_transport_id}
+                      >
+                        <option value="">Select transport company</option>
+                        {mineToAirportTransports.map((company) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormField>
 
-                  <FormField
-                    label="Airport to Refinery Transport Company"
-                    required
-                    error={errors.airport_to_refinery_transport_id}
-                    hint="Company responsible for transporting gold from airport to refinery"
-                  >
-                    <Select
-                      value={formData.airport_to_refinery_transport_id}
-                      onChange={(e) => handleInputChange('airport_to_refinery_transport_id', e.target.value)}
-                      error={!!errors.airport_to_refinery_transport_id}
+                    <FormField
+                      label="Airport to Refinery Transport"
+                      required
+                      error={errors.airport_to_refinery_transport_id}
+                      hint="Company for second leg transport"
                     >
-                      <option value="">Select transport company</option>
-                      {airportToRefineryTransports.map((company) => (
-                        <option key={company.id} value={company.id}>
-                          {company.name} - {company.contact_person || 'N/A'}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormField>
+                      <Select
+                        value={formData.airport_to_refinery_transport_id}
+                        onChange={(e) => handleInputChange('airport_to_refinery_transport_id', e.target.value)}
+                        error={!!errors.airport_to_refinery_transport_id}
+                      >
+                        <option value="">Select transport company</option>
+                        {airportToRefineryTransports.map((company) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormField>
+                  </div>
 
+                  {/* Row 4: Destination Refinery */}
                   <FormField
                     label="Destination Refinery"
                     required
                     error={errors.destination_refinery_id}
-                    hint="Refinery responsible for processing and sale"
+                    hint="Refinery for processing and sale"
                   >
                     <Select
                       value={formData.destination_refinery_id}
@@ -349,6 +414,55 @@ export function BatchCreate() {
                         </option>
                       ))}
                     </Select>
+                  </FormField>
+                </div>
+
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents</h3>
+
+                  <FormField
+                    label="Attach Documents"
+                    hint="Upload shipping manifests, certificates, photos, etc."
+                  >
+                    <div className="space-y-3">
+                      <label className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 transition-colors">
+                        <div className="text-center">
+                          <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                          <p className="mt-2 text-sm text-gray-600">
+                            {uploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+                          </p>
+                          <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {documents.length > 0 && (
+                        <div className="space-y-2">
+                          {documents.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                                <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDocument(index)}
+                                className="ml-3 text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </FormField>
                 </div>
 
@@ -417,7 +531,7 @@ export function BatchCreate() {
                       {[
                         formData.shipping_date,
                         formData.weight_grams,
-                        formData.purity_percentage,
+                        formData.metal_type,
                         formData.site_id,
                         formData.mine_to_airport_transport_id,
                         formData.airport_to_refinery_transport_id,
@@ -434,7 +548,7 @@ export function BatchCreate() {
                           ([
                             formData.shipping_date,
                             formData.weight_grams,
-                            formData.purity_percentage,
+                            formData.metal_type,
                             formData.site_id,
                             formData.mine_to_airport_transport_id,
                             formData.airport_to_refinery_transport_id,
@@ -445,36 +559,6 @@ export function BatchCreate() {
                         }%`,
                       }}
                     />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Field Guide</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <p className="font-medium text-gray-900 mb-1">Weight</p>
-                    <p className="text-gray-600">Enter weight in grams. System automatically converts to ounces</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 mb-1">Purity</p>
-                    <p className="text-gray-600">Percentage purity of the gold (0-100%)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 mb-1">Mine to Airport Transport</p>
-                    <p className="text-gray-600">Company handling the first leg from mine to airport. They will receive notifications when batch is shipped.</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 mb-1">Airport to Refinery Transport</p>
-                    <p className="text-gray-600">Company handling the second leg from airport to refinery. They will be notified when batch reaches airport.</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 mb-1">Destination Refinery</p>
-                    <p className="text-gray-600">Final refinery for processing and sale. Will receive notifications when batch arrives.</p>
                   </div>
                 </div>
               </CardContent>
@@ -498,10 +582,18 @@ export function BatchCreate() {
                 <span className="text-sm font-semibold">{batchNumber}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Metal Type:</span>
+                <span className="text-sm font-semibold capitalize">{formData.metal_type}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Weight:</span>
                 <span className="text-sm font-semibold">
                   {formData.weight_grams}g ({weightInOunces.toFixed(2)} oz)
                 </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Documents:</span>
+                <span className="text-sm font-semibold">{documents.length} file(s)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Shipping Date:</span>
@@ -511,8 +603,8 @@ export function BatchCreate() {
               </div>
             </div>
             <p className="text-sm text-gray-600">
-              After submission, the batch status will be set to "Shipped" and notifications
-              will be sent to the receiving team.
+              After submission, the batch status will be set to "Created" and notifications
+              will be sent to transport companies and refinery.
             </p>
           </div>
         </ModalBody>

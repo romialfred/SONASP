@@ -111,7 +111,7 @@ BEGIN
       id,
       sale_number,
       customer_id,
-      sale_date,
+      batch_id,
       quantity_oz,
       london_am_rate,
       freight_cost,
@@ -120,15 +120,13 @@ BEGIN
       net_proceeds,
       royalties,
       final_proceeds,
-      currency,
       status,
-      created_at,
-      notes
+      created_at
     ) VALUES (
       sale_id,
       'SL-2024-' || LPAD(sale_counter::TEXT, 3, '0'),
       customer_id,
-      (batch_record.created_at + INTERVAL '5 days')::DATE,
+      batch_record.id,
       batch_record.weight_ounces,
       london_am_rate,
       500.00,
@@ -137,16 +135,15 @@ BEGIN
       net_proceeds,
       total_amount * 0.03,
       net_proceeds,
-      'USD',
       'approved',
-      batch_record.created_at + INTERVAL '5 days',
-      'Sale for batch ' || batch_record.batch_number
+      batch_record.created_at + INTERVAL '5 days'
     );
 
     -- Create sale line item
     INSERT INTO sales_line_items (
       sale_id,
       batch_id,
+      line_number,
       metal_type,
       quantity_grams,
       quantity_oz,
@@ -155,6 +152,7 @@ BEGIN
     ) VALUES (
       sale_id,
       batch_record.id,
+      1,
       'gold',
       batch_record.weight_grams,
       batch_record.weight_ounces,

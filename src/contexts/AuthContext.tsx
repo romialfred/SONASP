@@ -395,32 +395,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] SIGNED_OUT event detected');
           console.log('[Auth] SessionManager active?', !!sessionManagerRef.current);
 
-          // CRITICAL: Check if session is actually gone
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
-
-          if (currentSession && sessionManagerRef.current) {
-            // Session still exists and manager is active - this is a false SIGNED_OUT
-            console.log('[Auth] FALSE ALARM - Session still valid, ignoring SIGNED_OUT');
-            console.log('[Auth] Restoring state with current session');
-
-            // Restore the state with current session
-            const profile = await fetchUserProfile(currentSession.user.id);
-            setState({
-              user: profile,
-              session: currentSession,
-              loading: false,
-              initialized: true,
-            });
-            return; // Don't process logout
-          }
-
-          // If we reach here, it's a real logout
-          console.log('[Auth] Confirmed logout - clearing state');
-
+          // If session manager is active, this is likely a false SIGNED_OUT during token refresh
+          // The session manager only runs when user is logged in
           if (sessionManagerRef.current) {
-            sessionManagerRef.current.stop();
-            sessionManagerRef.current = null;
+            console.log('[Auth] FALSE ALARM - SessionManager is active, ignoring spurious SIGNED_OUT event');
+            console.log('[Auth] Token refresh may be in progress, keeping session active');
+            return; // Ignore this event completely - don't check session or update state
           }
+
+          // Only process logout if session manager is not active (real logout)
+          console.log('[Auth] Confirmed logout - no active session manager');
 
           setState({
             user: null,

@@ -20,7 +20,7 @@ interface Customer {
   totalSpent: number;
   lastPurchaseDate: string;
   status: 'active' | 'inactive' | 'pending';
-  paymentRate: number;
+  paymentRate?: number;
 }
 
 export function CustomerListing() {
@@ -136,11 +136,14 @@ export function CustomerListing() {
     {
       key: 'paymentRate',
       label: 'Payment Rate',
-      render: (customer: Customer) => (
-        <span className={customer.paymentRate >= 95 ? 'text-accent-600' : 'text-orange-600'}>
-          {customer.paymentRate.toFixed(1)}%
-        </span>
-      ),
+      render: (customer: Customer) => {
+        const rate = customer.paymentRate ?? 0;
+        return (
+          <span className={rate >= 95 ? 'text-accent-600' : 'text-orange-600'}>
+            {rate.toFixed(1)}%
+          </span>
+        );
+      },
     },
     {
       key: 'status',

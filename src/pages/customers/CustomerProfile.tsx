@@ -273,7 +273,7 @@ export function CustomerProfile() {
                     <p className="text-sm font-medium text-gray-500">Payment Success Rate</p>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-xl font-semibold text-accent-600">
-                        {customer.paymentRate}%
+                        {customer.paymentRate ?? 0}%
                       </p>
                       <TrendingUp className="h-4 w-4 text-accent-600" />
                     </div>

@@ -27,6 +27,8 @@ export function Table<T extends Record<string, any>>({
   pageSize = 10,
   onRowClick,
 }: TableProps<T>) {
+  const safeData = Array.isArray(data) ? data : ([] as T[]);
+  const safeColumns = Array.isArray(columns) ? columns : ([] as Column<T>[]);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,7 +42,7 @@ export function Table<T extends Record<string, any>>({
     }
   };
 
-  const sortedData = [...data].sort((a, b) => {
+  const sortedData = [...safeData].sort((a, b) => {
     if (!sortColumn) return 0;
 
     const aVal = a[sortColumn];
@@ -52,7 +54,7 @@ export function Table<T extends Record<string, any>>({
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedData = pagination ? sortedData.slice(startIndex, endIndex) : sortedData;
@@ -63,7 +65,7 @@ export function Table<T extends Record<string, any>>({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {columns.map((column) => (
+              {safeColumns.map((column) => (
                 <th
                   key={column.key}
                   className={cn(
@@ -96,7 +98,7 @@ export function Table<T extends Record<string, any>>({
             {paginatedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length}
+                  colSpan={safeColumns.length || 1}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   No data available
@@ -112,7 +114,7 @@ export function Table<T extends Record<string, any>>({
                   )}
                   onClick={() => onRowClick?.(row)}
                 >
-                  {columns.map((column) => (
+                  {safeColumns.map((column) => (
                     <td
                       key={column.key}
                       className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap"

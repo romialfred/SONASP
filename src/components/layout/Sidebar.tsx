@@ -64,7 +64,8 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
     ],
   };
 
-  const items = menuItems[userRole] || menuItems.management;
+  const rawItems = menuItems[userRole] || menuItems.management;
+  const items = Array.isArray(rawItems) ? rawItems : menuItems.management;
 
   return (
     <>
@@ -94,6 +95,10 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
 
         <nav className="p-4 space-y-1">
           {items.map((item) => {
+            if (!item) {
+              return null;
+            }
+            const Icon = item.icon ?? LayoutDashboard;
             const isActive = location.pathname === item.href;
             return (
               <Link
@@ -107,7 +112,7 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
                 )}
                 onClick={onClose}
               >
-                <item.icon className="h-5 w-5" />
+                <Icon className="h-5 w-5" />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );

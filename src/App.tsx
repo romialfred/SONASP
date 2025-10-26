@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
@@ -219,7 +220,9 @@ function AppRoutes() {
               path="/shipping"
               element={
                 <ProtectedRoute allowedRoles={['factory', 'management']}>
-                  <ReceivingDashboard />
+                  <ProfileGuard>
+                    <ReceivingDashboard />
+                  </ProfileGuard>
                 </ProtectedRoute>
               }
             />
@@ -270,7 +273,9 @@ function AppRoutes() {
               path="/customers"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <CustomerListing />
+                  <ProfileGuard>
+                    <CustomerListing />
+                  </ProfileGuard>
                 </ProtectedRoute>
               }
             />
@@ -278,7 +283,9 @@ function AppRoutes() {
               path="/customers/:id"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <CustomerProfile />
+                  <ProfileGuard>
+                    <CustomerProfile />
+                  </ProfileGuard>
                 </ProtectedRoute>
               }
             />
@@ -286,7 +293,9 @@ function AppRoutes() {
               path="/customers/:id/payments"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <PaymentProcessing />
+                  <ProfileGuard>
+                    <PaymentProcessing />
+                  </ProfileGuard>
                 </ProtectedRoute>
               }
             />

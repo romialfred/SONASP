@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
@@ -20,6 +20,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session: null,
     loading: true,
     initialized: false,
+    profileLoading: true,
+    profileError: null,
   });
   const sessionManagerRef = useRef<SessionManager | null>(null);
 
@@ -211,6 +213,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session: null,
         loading: false,
         initialized: true,
+        profileLoading: false,
+        profileError: null,
       });
     } catch (error) {
       console.error('Error signing out:', error);
@@ -220,6 +224,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session: null,
         loading: false,
         initialized: true,
+        profileLoading: false,
+        profileError: null,
       });
     }
   };
@@ -262,10 +268,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
+    setState(prev => ({
+      ...prev,
+      profileLoading: true,
+      profileError: null,
+    }));
+
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const profile = await fetchUserProfile(user.id);
-      setState((prev) => ({ ...prev, user: profile }));
+
+      setState(prev => ({
+        ...prev,
+        user: profile,
+        profileLoading: false,
+        profileError: profile ? null : 'Unable to load user profile. Please try again.',
+      }));
+    } else {
+      setState(prev => ({
+        ...prev,
+        user: null,
+        session: null,
+        profileLoading: false,
+        profileError: 'Session expired. Please sign in again.',
+      }));
     }
   };
 
@@ -277,6 +303,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[Auth] Starting auth initialization...');
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        console.log('[Auth] INITIAL_SESSION event processed. Session present:', !!session);
 
         if (sessionError) {
           console.error('[Auth] Session error:', sessionError);
@@ -291,19 +319,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] Active session found, fetching profile for:', session.user.id);
 
           try {
+            setState(prev => ({
+              ...prev,
+              profileLoading: true,
+              profileError: null,
+            }));
             const profile = await fetchUserProfile(session.user.id);
 
             if (mounted) {
               console.log('[Auth] Profile fetched successfully, updating state');
-              setState({
+              setState(prev => ({
+                ...prev,
                 user: profile,
                 session,
                 loading: false,
                 initialized: true,
-              });
+                profileLoading: false,
+                profileError: profile ? null : 'Unable to load user profile. Please try again.',
+              }));
 
               // Start session manager if not already started
-              if (!sessionManagerRef.current) {
+              if (profile && !sessionManagerRef.current) {
                 console.log('[Auth] Starting session manager on init');
                 sessionManagerRef.current = new SessionManager();
                 sessionManagerRef.current.start();
@@ -315,12 +351,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (mounted) {
               console.log('[Auth] Keeping session active despite profile error');
               // Keep the session but mark profile as null
-              setState({
+              setState(prev => ({
+                ...prev,
                 user: null,
                 session, // Keep the session!
                 loading: false,
                 initialized: true,
-              });
+                profileLoading: false,
+                profileError: 'Unable to load user profile. Please try again.',
+              }));
             }
           }
         } else {
@@ -330,6 +369,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             session: null,
             loading: false,
             initialized: true,
+            profileLoading: false,
+            profileError: null,
           });
         }
       } catch (error) {
@@ -341,6 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             session: null,
             loading: false,
             initialized: true,
+            profileLoading: false,
+            profileError: 'Authentication failed to initialize. Please refresh or sign in again.',
           });
         }
       }
@@ -354,6 +397,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...prev,
           loading: false,
           initialized: true,
+          profileLoading: false,
+          profileError: prev.profileError,
         }));
       }
     }, 30000); // Increased to 30 seconds
@@ -378,15 +423,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[Auth] User signed in, fetching profile');
+          setState(prev => ({
+            ...prev,
+            profileLoading: true,
+            profileError: null,
+          }));
+
           const profile = await fetchUserProfile(session.user.id);
-          setState({
+          setState(prev => ({
+            ...prev,
             user: profile,
             session,
             loading: false,
             initialized: true,
-          });
+            profileLoading: false,
+            profileError: profile ? null : 'Unable to load user profile. Please try again.',
+          }));
 
-          if (!sessionManagerRef.current) {
+          if (profile && !sessionManagerRef.current) {
             console.log('[Auth] Starting session manager');
             sessionManagerRef.current = new SessionManager();
             sessionManagerRef.current.start();
@@ -411,6 +465,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             session: null,
             loading: false,
             initialized: true,
+            profileLoading: false,
+            profileError: null,
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log('[Auth] Token refreshed successfully, updating session');
@@ -420,16 +476,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             session,
             loading: false,
             initialized: true,
+            profileLoading: false,
           }));
         } else if (event === 'USER_UPDATED' && session?.user) {
           console.log('[Auth] User updated, refreshing profile');
+          setState(prev => ({
+            ...prev,
+            profileLoading: true,
+            profileError: null,
+          }));
           const profile = await fetchUserProfile(session.user.id);
-          setState({
+          setState(prev => ({
+            ...prev,
             user: profile,
             session,
             loading: false,
             initialized: true,
-          });
+            profileLoading: false,
+            profileError: profile ? null : 'Unable to load user profile. Please try again.',
+          }));
         }
       }
     );

@@ -18,7 +18,15 @@ export function ProtectedRoute({
   requiredPermission,
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
-  const { user, session, loading, initialized } = useAuth();
+  const {
+    user,
+    session,
+    loading,
+    initialized,
+    profileLoading,
+    profileError,
+    refreshProfile,
+  } = useAuth();
   const location = useLocation();
 
   if (loading || !initialized) {
@@ -33,12 +41,52 @@ export function ProtectedRoute({
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  if (!user) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <Loading size="lg" />
           <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900">Unable to load user profile</h2>
+          <p className="text-gray-600">{profileError}</p>
+          <div className="flex justify-center">
+            <button
+              onClick={refreshProfile}
+              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            >
+              Retry loading profile
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900">Profile not available</h2>
+          <p className="text-gray-600">
+            We could not load the information required for this page. Please try refreshing your profile.
+          </p>
+          <div className="flex justify-center">
+            <button
+              onClick={refreshProfile}
+              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            >
+              Refresh profile
+            </button>
+          </div>
         </div>
       </div>
     );

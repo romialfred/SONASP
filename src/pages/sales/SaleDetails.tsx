@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { Loading } from '@/components/ui/Loading';
 import {
   ArrowLeft,
   CheckCircle,
@@ -29,34 +31,70 @@ export function SaleDetails() {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalNotes, setApprovalNotes] = useState('');
+  const [sale, setSale] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const sale = {
-    id: '1',
-    saleNumber: 'SL-2024-042',
-    status: 'pending',
-    createdDate: '2024-10-20T14:30:00',
-    createdBy: 'John Smith',
-    customer: {
-      name: 'Premium Gold Ltd.',
-      email: 'contact@premiumgold.com',
-      country: 'Switzerland',
-      phone: '+41 22 345 6789',
-      ytdGoldSold: 458.5,
-      ytdAvgPrice: 2435,
-      ytdAmount: 1116458,
-      isBestCustomer: true
-    },
-    quantity: 23.006,
-    londonAMRate: 2450,
-    freightCost: 12569,
-    otherCosts: 569,
-    calculations: {
-      grossProceeds: 56365,
-      freight: 12569,
-      otherCosts: 569,
-      netProceeds: 43227,
-      royalties: 1297,
-      finalAmount: 41930
+  useEffect(() => {
+    if (id) {
+      fetchSaleDetails();
+    }
+  }, [id]);
+
+  const fetchSaleDetails = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          customer:customers(
+            id,
+            name,
+            email,
+            country,
+            phone
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSale({
+          id: data.id,
+          saleNumber: data.sale_number,
+          status: data.status,
+          createdDate: data.created_at,
+          createdBy: 'System',
+          customer: {
+            name: data.customer?.name || 'Unknown Customer',
+            email: data.customer?.email || '',
+            country: data.customer?.country || '',
+            phone: data.customer?.phone || '',
+            ytdGoldSold: 0,
+            ytdAvgPrice: 0,
+            ytdAmount: 0,
+            isBestCustomer: false
+          },
+          quantity: data.quantity_oz,
+          londonAMRate: data.london_am_rate,
+          freightCost: data.freight_cost || 0,
+          otherCosts: data.other_costs || 0,
+          calculations: {
+            grossProceeds: data.gross_proceeds,
+            freight: data.freight_cost || 0,
+            otherCosts: data.other_costs || 0,
+            netProceeds: data.net_proceeds,
+            royalties: data.royalty_amount,
+            finalAmount: data.final_proceeds
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching sale details:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,6 +139,29 @@ export function SaleDetails() {
     setShowRejectionModal(false);
     navigate('/sales');
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading size="lg" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!sale) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-500">Sale not found</p>
+          <Button onClick={() => navigate('/sales')} className="mt-4">
+            Back to Sales
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

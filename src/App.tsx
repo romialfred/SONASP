@@ -197,7 +197,7 @@ function App() {
             <Route
               path="/receiving"
               element={
-                <ProtectedRoute allowedRoles={['airport', 'refinery']}>
+                <ProtectedRoute allowedRoles={['airport', 'refinery', 'management']}>
                   <ReceivingDashboard />
                 </ProtectedRoute>
               }
@@ -205,8 +205,16 @@ function App() {
             <Route
               path="/receiving/:id/confirm"
               element={
-                <ProtectedRoute allowedRoles={['airport', 'refinery']}>
+                <ProtectedRoute allowedRoles={['airport', 'refinery', 'management']}>
                   <ReceivingConfirm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shipping"
+              element={
+                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                  <ReceivingDashboard />
                 </ProtectedRoute>
               }
             />

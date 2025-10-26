@@ -250,7 +250,7 @@ export function ReceivingDashboard() {
             {varianceAlerts.map((alert, index) => (
               <AlertBox
                 key={index}
-                variant="warning"
+                type="warning"
                 title="Variance Alert"
                 message={`${alert.batch_number}: ${alert.message}`}
                 action={{

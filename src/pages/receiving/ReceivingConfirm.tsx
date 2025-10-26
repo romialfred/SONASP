@@ -220,7 +220,7 @@ export function ReceivingConfirm() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <AlertBox
-                    variant="warning"
+                    type="warning"
                     title="High Variance Detected"
                     message="This variance exceeds the acceptable threshold. Please provide detailed justification and supporting documentation before proceeding."
                   />

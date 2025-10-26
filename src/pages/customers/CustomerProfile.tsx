@@ -109,7 +109,7 @@ export function CustomerProfile() {
           pending: { label: 'Pending', variant: 'warning' as const },
           payment_pending: { label: 'Payment Pending', variant: 'info' as const },
         };
-        const status = statusMap[tx.status];
+        const status = statusMap[tx.status] || { label: 'Unknown', variant: 'neutral' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },

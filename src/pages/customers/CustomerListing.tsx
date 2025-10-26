@@ -154,7 +154,7 @@ export function CustomerListing() {
           inactive: { label: 'Inactive', variant: 'neutral' as const },
           pending: { label: 'Pending', variant: 'warning' as const },
         };
-        const status = statusMap[customer.status];
+        const status = statusMap[customer.status] || { label: 'Unknown', variant: 'neutral' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },

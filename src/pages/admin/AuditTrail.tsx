@@ -141,7 +141,7 @@ export function AuditTrail() {
           failed: { label: 'Failed', variant: 'error' as const },
           warning: { label: 'Warning', variant: 'warning' as const },
         };
-        const status = statusMap[log.status];
+        const status = statusMap[log.status] || { label: 'Unknown', variant: 'neutral' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },

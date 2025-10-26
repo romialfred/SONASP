@@ -57,14 +57,71 @@ export function PaymentsPage() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('payments_with_details')
-        .select('*')
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          sales:sale_id (
+            sale_number,
+            sale_date,
+            total_amount,
+            net_proceeds,
+            status,
+            london_am_rate,
+            customer_id,
+            customers:customer_id (
+              customer_name,
+              email,
+              phone,
+              company_name,
+              country
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (paymentsError) throw paymentsError;
 
-      setPayments(data || []);
+      const processedPayments = (paymentsData || []).map((payment: any) => {
+        const sale = payment.sales || {};
+        const customer = sale.customers || {};
+
+        const daysOverdue = payment.due_date
+          ? Math.floor((new Date().getTime() - new Date(payment.due_date).getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        let paymentStatusCategory = 'unknown';
+        if (payment.status === 'approved') paymentStatusCategory = 'paid';
+        else if (payment.status === 'pending' && daysOverdue && daysOverdue > 0) paymentStatusCategory = 'overdue';
+        else if (payment.status === 'pending') paymentStatusCategory = 'pending';
+        else if (payment.status === 'rejected') paymentStatusCategory = 'rejected';
+
+        return {
+          id: payment.id,
+          sale_id: payment.sale_id,
+          customer_id: payment.customer_id || sale.customer_id,
+          invoice_number: payment.invoice_number || `INV-${payment.id.slice(0, 8)}`,
+          expected_date: payment.expected_date,
+          actual_date: payment.actual_date,
+          due_date: payment.due_date,
+          amount: payment.amount,
+          currency: payment.currency,
+          fx_rate: payment.fx_rate,
+          payment_method: payment.payment_method,
+          status: payment.status,
+          sale_number: sale.sale_number,
+          customer_name: customer.customer_name,
+          customer_email: customer.email,
+          company_name: customer.company_name,
+          payment_status_category: paymentStatusCategory,
+          days_overdue: daysOverdue,
+          document_count: 0,
+          proof_count: payment.proof_url ? 1 : 0,
+          created_at: payment.created_at,
+        };
+      });
+
+      setPayments(processedPayments);
     } catch (error: any) {
       console.error('Error fetching payments:', error);
       addToast('Failed to load payments', 'error');

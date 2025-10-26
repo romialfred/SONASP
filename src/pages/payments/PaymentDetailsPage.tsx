@@ -131,23 +131,81 @@ export function PaymentDetailsPage() {
     try {
       setLoading(true);
 
-      const [paymentRes, docsRes, historyRes] = await Promise.all([
-        supabase.from('payments_with_details').select('*').eq('id', id).single(),
-        supabase.from('payment_documents').select('*').eq('payment_id', id).order('uploaded_at', { ascending: false }),
-        supabase.from('payment_history').select('*').eq('payment_id', id).order('changed_at', { ascending: false }),
-      ]);
+      const { data: paymentData, error: paymentError } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          sales:sale_id (
+            sale_number,
+            sale_date,
+            total_amount,
+            net_proceeds,
+            status,
+            london_am_rate,
+            customer_id,
+            customers:customer_id (
+              customer_name,
+              email,
+              phone,
+              company_name,
+              country
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
 
-      if (paymentRes.error) throw paymentRes.error;
-      setPayment(paymentRes.data);
+      if (paymentError) throw paymentError;
 
-      setDocuments(docsRes.data || []);
-      setHistory(historyRes.data || []);
+      const sale = paymentData.sales || {};
+      const customer = sale.customers || {};
 
-      if (paymentRes.data?.sale_id) {
+      const daysOverdue = paymentData.due_date
+        ? Math.floor((new Date().getTime() - new Date(paymentData.due_date).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+
+      let paymentStatusCategory = 'unknown';
+      if (paymentData.status === 'approved') paymentStatusCategory = 'paid';
+      else if (paymentData.status === 'pending' && daysOverdue && daysOverdue > 0) paymentStatusCategory = 'overdue';
+      else if (paymentData.status === 'pending') paymentStatusCategory = 'pending';
+      else if (paymentData.status === 'rejected') paymentStatusCategory = 'rejected';
+
+      const processedPayment = {
+        ...paymentData,
+        sale_number: sale.sale_number,
+        sale_date: sale.sale_date,
+        sale_total_amount: sale.total_amount,
+        net_proceeds: sale.net_proceeds,
+        sale_status: sale.status,
+        london_am_rate: sale.london_am_rate,
+        customer_name: customer.customer_name,
+        customer_email: customer.email,
+        customer_phone: customer.phone,
+        company_name: customer.company_name,
+        customer_country: customer.country,
+        payment_status_category: paymentStatusCategory,
+        days_overdue: daysOverdue,
+        document_count: 0,
+        proof_count: paymentData.proof_url ? 1 : 0,
+        created_by_name: '',
+        created_by_email: '',
+        approved_by_name: '',
+        approved_by_email: '',
+        verified_by_name: '',
+        verified_by_email: '',
+        invoice_number: paymentData.invoice_number || `INV-${paymentData.id.slice(0, 8)}`,
+      };
+
+      setPayment(processedPayment);
+
+      setDocuments([]);
+      setHistory([]);
+
+      if (paymentData?.sale_id) {
         const { data: lineItems, error: lineItemsError } = await supabase
           .from('sales_line_items')
           .select('*')
-          .eq('sale_id', paymentRes.data.sale_id);
+          .eq('sale_id', paymentData.sale_id);
 
         if (!lineItemsError && lineItems) {
           setSaleLineItems(lineItems);

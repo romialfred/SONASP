@@ -15,6 +15,7 @@ import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
 import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
 import { supabase } from '@/lib/supabase';
+import { extractArrayData } from '@/utils/arrayUtils';
 
 interface FormData {
   shipping_date: string;
@@ -81,20 +82,36 @@ export function BatchCreate() {
   }, []);
 
   const loadSites = async () => {
-    const sitesData = await getSites();
-    setSites(sitesData);
+    try {
+      const sitesData = await getSites();
+      setSites(extractArrayData(sitesData));
+    } catch (error) {
+      console.error('Error loading sites:', error);
+      setSites([]);
+    }
   };
 
   const loadTransportCompanies = async () => {
-    const mineToAirport = await getTransportCompanies('mine_to_airport');
-    const airportToRefinery = await getTransportCompanies('airport_to_refinery');
-    setMineToAirportTransports(mineToAirport);
-    setAirportToRefineryTransports(airportToRefinery);
+    try {
+      const mineToAirport = await getTransportCompanies('mine_to_airport');
+      const airportToRefinery = await getTransportCompanies('airport_to_refinery');
+      setMineToAirportTransports(extractArrayData(mineToAirport));
+      setAirportToRefineryTransports(extractArrayData(airportToRefinery));
+    } catch (error) {
+      console.error('Error loading transport companies:', error);
+      setMineToAirportTransports([]);
+      setAirportToRefineryTransports([]);
+    }
   };
 
   const loadRefineries = async () => {
-    const refineriesData = await getRefineries();
-    setRefineries(refineriesData);
+    try {
+      const refineriesData = await getRefineries();
+      setRefineries(extractArrayData(refineriesData));
+    } catch (error) {
+      console.error('Error loading refineries:', error);
+      setRefineries([]);
+    }
   };
 
   const weightInOunces = formData.weight_grams
@@ -340,7 +357,7 @@ export function BatchCreate() {
                       error={!!errors.site_id}
                     >
                       <option value="">Select origin site</option>
-                      {sites.map((site) => (
+                      {Array.isArray(sites) && sites.map((site) => (
                         <option key={site.id} value={site.id}>
                           {site.name} - {site.country}
                         </option>
@@ -366,7 +383,7 @@ export function BatchCreate() {
                         error={!!errors.mine_to_airport_transport_id}
                       >
                         <option value="">Select transport company</option>
-                        {mineToAirportTransports.map((company) => (
+                        {Array.isArray(mineToAirportTransports) && mineToAirportTransports.map((company) => (
                           <option key={company.id} value={company.id}>
                             {company.name}
                           </option>
@@ -386,7 +403,7 @@ export function BatchCreate() {
                         error={!!errors.airport_to_refinery_transport_id}
                       >
                         <option value="">Select transport company</option>
-                        {airportToRefineryTransports.map((company) => (
+                        {Array.isArray(airportToRefineryTransports) && airportToRefineryTransports.map((company) => (
                           <option key={company.id} value={company.id}>
                             {company.name}
                           </option>
@@ -408,7 +425,7 @@ export function BatchCreate() {
                       error={!!errors.destination_refinery_id}
                     >
                       <option value="">Select refinery</option>
-                      {refineries.map((refinery) => (
+                      {Array.isArray(refineries) && refineries.map((refinery) => (
                         <option key={refinery.id} value={refinery.id}>
                           {refinery.name} - {refinery.location}, {refinery.country}
                         </option>
@@ -443,7 +460,7 @@ export function BatchCreate() {
                         />
                       </label>
 
-                      {documents.length > 0 && (
+                      {Array.isArray(documents) && documents.length > 0 && (
                         <div className="space-y-2">
                           {documents.map((doc, index) => (
                             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

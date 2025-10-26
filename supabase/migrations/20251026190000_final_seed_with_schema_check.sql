@@ -108,7 +108,7 @@ DECLARE
   net_proceeds NUMERIC;
   sale_counter INTEGER := 1;
   payment_counter INTEGER := 1;
-  payment_statuses TEXT[] := ARRAY['completed', 'approved', 'verified', 'under_review', 'pending'];
+  payment_statuses TEXT[] := ARRAY['approved', 'approved', 'pending', 'approved', 'pending'];
   payment_methods TEXT[] := ARRAY['wire_transfer', 'swift', 'bank_transfer'];
 BEGIN
   -- Create sales for first 16 batches only

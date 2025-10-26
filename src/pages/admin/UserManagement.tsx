@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
+import { safeFetch } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { logUserAction } from '@/lib/auditLog';
 import type { UserRole } from '@/types/auth';
@@ -251,26 +252,26 @@ export function UserManagement() {
 
       console.log('[UserManagement] Fetching users from Edge Function');
 
-      const response = await fetch(
+      const result = await safeFetch<{ users?: any[] }>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
         {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
         }
       );
 
-      console.log('[UserManagement] Edge Function response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-        console.error('[UserManagement] Edge Function error:', errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+      if (!result.ok) {
+        console.error('[UserManagement] Edge Function error:', result.error);
+        addToast(result.error.message || 'Failed to fetch users', 'error');
+        setUsers([]);
+        return;
       }
 
-      const responseData = await response.json();
-      const fetchedUsers = responseData.users;
+      console.log('[UserManagement] Edge Function response status:', result.status);
+
+      const fetchedUsers = result.data.users;
 
       console.log('[UserManagement] Fetched users:', fetchedUsers);
 

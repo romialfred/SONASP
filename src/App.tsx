@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -44,13 +45,17 @@ import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import { PERMISSIONS } from './lib/permissions';
+import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
+import { RouteFallback } from './components/common/RouteFallback';
 
-function App() {
+function AppRoutes() {
+  const location = useLocation();
+
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+    <RouteErrorBoundary key={location.pathname}>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/login"
@@ -386,7 +391,20 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          </Routes>
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppErrorBoundary>
+            <AppRoutes />
+          </AppErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
     </ToastProvider>

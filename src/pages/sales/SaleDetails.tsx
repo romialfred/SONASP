@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Loading } from '@/components/ui/Loading';
+import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeft,
   CheckCircle,
@@ -11,7 +12,6 @@ import {
   User,
   Mail,
   MapPin,
-  Calendar,
   Award,
   TrendingUp,
   AlertCircle,
@@ -23,6 +23,46 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import TextArea from '@/components/ui/TextArea';
 import { formatCurrency } from '@/utils/salesUtils';
+import {
+  saleDetailSchema,
+  normalizeSaleStatus,
+  extractCustomerName,
+  SaleStatus,
+} from '@/lib/schemas/sales';
+
+interface SaleDetailsCustomer {
+  name: string;
+  email: string;
+  country: string;
+  phone: string;
+  ytdGoldSold: number;
+  ytdAvgPrice: number;
+  ytdAmount: number;
+  isBestCustomer: boolean;
+}
+
+interface SaleCalculations {
+  grossProceeds: number;
+  freight: number;
+  otherCosts: number;
+  netProceeds: number;
+  royalties: number;
+  finalAmount: number;
+}
+
+interface SaleDetailsView {
+  id: string;
+  saleNumber: string;
+  status: SaleStatus;
+  createdDate: string;
+  createdBy: string;
+  customer: SaleDetailsCustomer;
+  quantity: number;
+  londonAMRate: number;
+  freightCost: number;
+  otherCosts: number;
+  calculations: SaleCalculations;
+}
 
 export function SaleDetails() {
   const { id } = useParams();
@@ -31,19 +71,25 @@ export function SaleDetails() {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalNotes, setApprovalNotes] = useState('');
-  const [sale, setSale] = useState<any>(null);
+  const [sale, setSale] = useState<SaleDetailsView | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const mountedRef = useRef(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchSaleDetails();
+  const loadSaleDetails = useCallback(async () => {
+    if (!id) {
+      if (mountedRef.current) {
+        setSale(null);
+        setErrorMessage('Sale not found');
+        setLoading(false);
+      }
+      return;
     }
-  }, [id]);
 
-  const fetchSaleDetails = async () => {
+    setLoading(true);
+    setErrorMessage(null);
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      const query = supabase
         .from('sales')
         .select(`
           *,
@@ -58,47 +104,109 @@ export function SaleDetails() {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      const response = await query;
 
-      if (data) {
-        setSale({
-          id: data.id,
-          saleNumber: data.sale_number,
-          status: data.status,
-          createdDate: data.created_at,
-          createdBy: 'System',
-          customer: {
-            name: data.customer?.name || 'Unknown Customer',
-            email: data.customer?.email || '',
-            country: data.customer?.country || '',
-            phone: data.customer?.phone || '',
-            ytdGoldSold: 0,
-            ytdAvgPrice: 0,
-            ytdAmount: 0,
-            isBestCustomer: false
-          },
-          quantity: data.quantity_oz,
-          londonAMRate: data.london_am_rate,
-          freightCost: data.freight_cost || 0,
-          otherCosts: data.other_costs || 0,
-          calculations: {
-            grossProceeds: data.gross_proceeds,
-            freight: data.freight_cost || 0,
-            otherCosts: data.other_costs || 0,
-            netProceeds: data.net_proceeds,
-            royalties: data.royalty_amount,
-            finalAmount: data.final_proceeds
-          }
-        });
+      if (response.error) {
+        throw response.error;
       }
+
+      if (!response.data) {
+        if (!mountedRef.current) {
+          return;
+        }
+        setSale(null);
+        setErrorMessage('Sale not found');
+        return;
+      }
+
+      const parsed = saleDetailSchema.safeParse(response.data);
+
+      if (!parsed.success) {
+        console.error('Sale detail validation failed', parsed.error.issues);
+        if (!mountedRef.current) {
+          return;
+        }
+        setSale(null);
+        setErrorMessage('Received unexpected data for this sale.');
+        return;
+      }
+
+      if (!mountedRef.current) {
+        return;
+      }
+
+      const record = parsed.data;
+
+      setSale({
+        id: record.id,
+        saleNumber: record.sale_number,
+        status: normalizeSaleStatus(record.status ?? undefined),
+        createdDate: record.created_at,
+        createdBy: 'System',
+        customer: {
+          name: extractCustomerName(record.customer),
+          email: record.customer?.email ?? '',
+          country: record.customer?.country ?? '',
+          phone: record.customer?.phone ?? '',
+          ytdGoldSold: 0,
+          ytdAvgPrice: 0,
+          ytdAmount: 0,
+          isBestCustomer: false,
+        },
+        quantity: record.quantity_oz,
+        londonAMRate: record.london_am_rate,
+        freightCost: record.freight_cost,
+        otherCosts: record.other_costs,
+        calculations: {
+          grossProceeds: record.gross_proceeds,
+          freight: record.freight_cost,
+          otherCosts: record.other_costs,
+          netProceeds: record.net_proceeds,
+          royalties: record.royalty_amount,
+          finalAmount: record.final_proceeds,
+        },
+      });
     } catch (error) {
       console.error('Error fetching sale details:', error);
+      if (!mountedRef.current) {
+        return;
+      }
+      setSale(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to load sale details.'
+      );
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
+  }, [id]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void loadSaleDetails();
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [loadSaleDetails]);
+
+  const handleRetry = () => {
+    if (!mountedRef.current) {
+      return;
+    }
+    void loadSaleDetails();
   };
 
-  const statusConfig = {
+  type StatusDisplay = {
+    label: string;
+    color: string;
+    icon: LucideIcon;
+  };
+
+  const statusConfig: Partial<Record<SaleStatus, StatusDisplay>> & {
+    pending: StatusDisplay;
+  } = {
     pending: {
       label: 'Pending Approval',
       color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -114,6 +222,16 @@ export function SaleDetails() {
       color: 'bg-green-100 text-green-800 border-green-300',
       icon: CheckCircle
     },
+    payment_received: {
+      label: 'Payment Received',
+      color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      icon: DollarSign
+    },
+    completed: {
+      label: 'Completed',
+      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      icon: CheckCircle
+    },
     rejected: {
       label: 'Rejected',
       color: 'bg-red-100 text-red-800 border-red-300',
@@ -121,13 +239,10 @@ export function SaleDetails() {
     }
   };
 
-  const status = statusConfig[sale.status] || statusConfig.pending;
-  const StatusIcon = status.icon;
-
   const handleApprove = () => {
     console.log('Approving sale with notes:', approvalNotes);
     setShowApprovalModal(false);
-    navigate('/sales');
+    void navigate('/sales');
   };
 
   const handleReject = () => {
@@ -137,7 +252,7 @@ export function SaleDetails() {
     }
     console.log('Rejecting sale with reason:', rejectionReason);
     setShowRejectionModal(false);
-    navigate('/sales');
+    void navigate('/sales');
   };
 
   if (loading) {
@@ -153,15 +268,34 @@ export function SaleDetails() {
   if (!sale) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Sale not found</p>
-          <Button onClick={() => navigate('/sales')} className="mt-4">
-            Back to Sales
-          </Button>
+        <div className="max-w-xl mx-auto py-12 space-y-6 text-center">
+          <Alert variant="error" title="Unable to load sale">
+            {errorMessage || 'Sale not found'}
+          </Alert>
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                handleRetry();
+              }}
+            >
+              Retry
+            </Button>
+            <Button
+              onClick={() => {
+                void navigate('/sales');
+              }}
+            >
+              Back to Sales
+            </Button>
+          </div>
         </div>
       </MainLayout>
     );
   }
+
+  const status = statusConfig[sale.status] ?? statusConfig.pending;
+  const StatusIcon = status.icon;
 
   return (
     <MainLayout>
@@ -169,7 +303,9 @@ export function SaleDetails() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => navigate('/sales')}
+            onClick={() => {
+              void navigate('/sales');
+            }}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -376,7 +512,9 @@ export function SaleDetails() {
                 {sale.status === 'pending' ? (
                   <div className="space-y-3">
                     <Button
-                      onClick={() => setShowApprovalModal(true)}
+                      onClick={() => {
+                        setShowApprovalModal(true);
+                      }}
                       className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4" />
@@ -384,7 +522,9 @@ export function SaleDetails() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setShowRejectionModal(true)}
+                      onClick={() => {
+                        setShowRejectionModal(true);
+                      }}
                       className="w-full flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
                     >
                       <XCircle className="h-4 w-4" />
@@ -489,7 +629,9 @@ export function SaleDetails() {
                   </label>
                   <TextArea
                     value={approvalNotes}
-                    onChange={(e) => setApprovalNotes(e.target.value)}
+                    onChange={(event) => {
+                      setApprovalNotes(event.target.value);
+                    }}
                     placeholder="Add any notes about this approval..."
                     rows={3}
                   />
@@ -497,7 +639,9 @@ export function SaleDetails() {
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => setShowApprovalModal(false)}
+                    onClick={() => {
+                      setShowApprovalModal(false);
+                    }}
                     className="flex-1"
                   >
                     Cancel
@@ -533,7 +677,9 @@ export function SaleDetails() {
                   </label>
                   <TextArea
                     value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
+                    onChange={(event) => {
+                      setRejectionReason(event.target.value);
+                    }}
                     placeholder="Explain why this sale is being rejected..."
                     rows={4}
                     required

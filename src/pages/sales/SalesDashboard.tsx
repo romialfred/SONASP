@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { formatCurrency, formatWeight } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
+import {
+  saleSummaryListSchema,
+  normalizeSaleStatus,
+  extractCustomerName,
+  SaleStatus,
+} from '@/lib/schemas/sales';
 
 interface Sale {
   id: string;
@@ -17,26 +25,67 @@ interface Sale {
   customer: string;
   quantity: number;
   amount: number;
-  status: 'pending' | 'approved' | 'customer_approved' | 'payment_received' | 'completed';
+  status: SaleStatus;
   createdDate: string;
 }
+
+type StatusDisplay = {
+  label: string;
+  color: string;
+  icon: LucideIcon;
+};
+
+const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
+  pending: StatusDisplay;
+} = {
+  pending: {
+    label: 'Pending Approval',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    icon: Clock,
+  },
+  approved: {
+    label: 'Management Approved',
+    color: 'bg-blue-100 text-blue-800 border-blue-300',
+    icon: CheckCircle,
+  },
+  customer_approved: {
+    label: 'Customer Approved',
+    color: 'bg-green-100 text-green-800 border-green-300',
+    icon: CheckCircle,
+  },
+  payment_received: {
+    label: 'Payment Received',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    icon: DollarSign,
+  },
+  completed: {
+    label: 'Completed',
+    color: 'bg-gray-100 text-gray-800 border-gray-300',
+    icon: CheckCircle,
+  },
+  rejected: {
+    label: 'Rejected',
+    color: 'bg-red-100 text-red-800 border-red-300',
+    icon: XCircle,
+  },
+};
 
 export function SalesDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | SaleStatus>('all');
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const mountedRef = useRef(false);
 
-  useEffect(() => {
-    fetchSales();
-  }, []);
-
-  const fetchSales = async () => {
+  const loadSales = useCallback(async () => {
+    setLoading(true);
+    setPageError(null);
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('sales')
         .select(`
           *,
@@ -44,24 +93,70 @@ export function SalesDashboard() {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      const response = await query;
 
-      const salesData: Sale[] = (data || []).map(sale => ({
+      if (response.error) {
+        throw response.error;
+      }
+
+      const supabaseData = Array.isArray(response.data) ? response.data : [];
+      const parsed = saleSummaryListSchema.safeParse(supabaseData);
+
+      if (!parsed.success) {
+        console.error('Sales data validation failed', parsed.error.issues);
+        if (!mountedRef.current) {
+          return;
+        }
+        setSales([]);
+        setPageError('We received unexpected sales data. Please try again in a moment.');
+        return;
+      }
+
+      if (!mountedRef.current) {
+        return;
+      }
+
+      const salesData: Sale[] = parsed.data.map((sale) => ({
         id: sale.id,
         saleNumber: sale.sale_number,
-        customer: sale.customer?.name || 'Unknown Customer',
-        quantity: parseFloat(sale.quantity_oz || 0),
-        amount: parseFloat(sale.final_proceeds || 0),
-        status: sale.status,
-        createdDate: sale.created_at
+        customer: extractCustomerName(sale.customer),
+        quantity: sale.quantity_oz,
+        amount: sale.final_proceeds,
+        status: normalizeSaleStatus(sale.status ?? undefined),
+        createdDate: sale.created_at,
       }));
 
       setSales(salesData);
     } catch (error) {
       console.error('Error fetching sales:', error);
+      if (!mountedRef.current) {
+        return;
+      }
+      setPageError(
+        error instanceof Error ? error.message : 'Failed to load sales. Please try again.'
+      );
+      setSales([]);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void loadSales();
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [loadSales]);
+
+  const handleRetry = () => {
+      if (!mountedRef.current) {
+        return;
+      }
+      void loadSales();
   };
 
   const availableInventory = {
@@ -146,14 +241,35 @@ export function SalesDashboard() {
             </h1>
             <p className="text-gray-600 mt-1">Sales Management Dashboard</p>
           </div>
-          <Button
-            onClick={() => navigate('/sales/new')}
-            className="flex items-center gap-2"
-          >
+            <Button
+              onClick={() => {
+                void navigate('/sales/new');
+              }}
+              className="flex items-center gap-2"
+            >
             <Plus className="h-4 w-4" />
             Create New Sale
           </Button>
         </div>
+
+        {pageError && (
+          <Alert
+            variant="error"
+            title="Sales data unavailable"
+            className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+          >
+            <span>{pageError}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  handleRetry();
+                }}
+              >
+              Retry
+            </Button>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((metric) => (
@@ -195,11 +311,13 @@ export function SalesDashboard() {
                   <span className="text-sm font-medium text-gray-700">Payment Success Rate</span>
                   <span className="text-sm font-semibold text-accent-600">98.5%</span>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/customers')}
-                  className="w-full"
-                >
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void navigate('/customers');
+                    }}
+                    className="w-full"
+                  >
                   View All Customers
                 </Button>
               </div>
@@ -217,12 +335,16 @@ export function SalesDashboard() {
                 type="text"
                 placeholder="Search by sale number or customer..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                  }}
                 className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value as 'all' | SaleStatus);
+                  }}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
@@ -230,46 +352,24 @@ export function SalesDashboard() {
                 <option value="approved">Management Approved</option>
                 <option value="customer_approved">Customer Approved</option>
                 <option value="payment_received">Payment Received</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSales.map((sale) => {
-                const statusConfig = {
-                  pending: {
-                    label: 'Pending Approval',
-                    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-                    icon: Clock
-                  },
-                  approved: {
-                    label: 'Management Approved',
-                    color: 'bg-blue-100 text-blue-800 border-blue-300',
-                    icon: CheckCircle
-                  },
-                  customer_approved: {
-                    label: 'Customer Approved',
-                    color: 'bg-green-100 text-green-800 border-green-300',
-                    icon: CheckCircle
-                  },
-                  payment_received: {
-                    label: 'Payment Received',
-                    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-                    icon: DollarSign
-                  },
-                  completed: {
-                    label: 'Completed',
-                    color: 'bg-gray-100 text-gray-800 border-gray-300',
-                    icon: CheckCircle
-                  },
-                };
-
-                const status = statusConfig[sale.status] || statusConfig.pending;
+                {filteredSales.map((sale) => {
+                  const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                 const StatusIcon = status.icon;
 
+                const unitPrice =
+                  sale.quantity > 0 ? formatCurrency(sale.amount / sale.quantity) : 'N/A';
+
                 return (
-                  <div
-                    key={sale.id}
-                    onClick={() => navigate(`/sales/${sale.id}`)}
+                    <div
+                      key={sale.id}
+                      onClick={() => {
+                        void navigate(`/sales/${sale.id}`);
+                      }}
                     className="group relative p-5 border-2 border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-lg transition-all cursor-pointer bg-white"
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -310,7 +410,7 @@ export function SalesDashboard() {
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Price per oz</p>
                         <p className="text-base font-semibold text-gray-900">
-                          {formatCurrency(sale.amount / sale.quantity)}
+                          {unitPrice}
                         </p>
                       </div>
                     </div>
@@ -325,7 +425,7 @@ export function SalesDashboard() {
                 );
               })}
 
-              {filteredSales.length === 0 && (
+              {filteredSales.length === 0 && !pageError && (
                 <div className="text-center py-12">
                   <p className="text-gray-500">No sales found matching your criteria</p>
                 </div>

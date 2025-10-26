@@ -64,7 +64,7 @@ describe('ProfileGuard', () => {
     expect(screen.getByText(/Loading profile/i)).toBeInTheDocument();
   });
 
-  it('renders error state when profile fails to load', () => {
+  it('renders error state when profile fails to load and user is missing', () => {
     const refreshProfile = vi.fn().mockResolvedValue(undefined);
     mockedUseAuth.mockReturnValue(
       createAuthValue({ profileError: 'Unable to load user profile.', refreshProfile })
@@ -81,6 +81,20 @@ describe('ProfileGuard', () => {
     renderGuard();
 
     expect(screen.getByText(/could not load your profile/i)).toBeInTheDocument();
+  });
+
+  it('renders children with warning when profileError exists but user is present', () => {
+    const refreshProfile = vi.fn().mockResolvedValue(undefined);
+    mockedUseAuth.mockReturnValue(
+      createAuthValue({ user: baseUser, profileError: 'Using limited profile information.', refreshProfile })
+    );
+
+    renderGuard();
+
+    expect(screen.getByTestId('guard-content')).toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(/Limited profile information/i);
+    expect(alert).toHaveTextContent(/Using limited profile information/i);
   });
 
   it('renders children when profile is available', () => {

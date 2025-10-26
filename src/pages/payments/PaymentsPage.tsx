@@ -70,11 +70,11 @@ export function PaymentsPage() {
             london_am_rate,
             customer_id,
             customers:customer_id (
-              customer_name,
+              name,
               email,
               phone,
-              company_name,
-              country
+              country,
+              contact_person
             )
           )
         `)
@@ -110,9 +110,9 @@ export function PaymentsPage() {
           payment_method: payment.payment_method,
           status: payment.status,
           sale_number: sale.sale_number,
-          customer_name: customer.customer_name,
-          customer_email: customer.email,
-          company_name: customer.company_name,
+          customer_name: customer.name || 'N/A',
+          customer_email: customer.email || 'N/A',
+          company_name: customer.contact_person || customer.name || 'N/A',
           payment_status_category: paymentStatusCategory,
           days_overdue: daysOverdue,
           document_count: 0,

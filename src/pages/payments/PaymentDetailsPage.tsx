@@ -144,11 +144,11 @@ export function PaymentDetailsPage() {
             london_am_rate,
             customer_id,
             customers:customer_id (
-              customer_name,
+              name,
               email,
               phone,
-              company_name,
-              country
+              country,
+              contact_person
             )
           )
         `)
@@ -178,11 +178,11 @@ export function PaymentDetailsPage() {
         net_proceeds: sale.net_proceeds,
         sale_status: sale.status,
         london_am_rate: sale.london_am_rate,
-        customer_name: customer.customer_name,
-        customer_email: customer.email,
-        customer_phone: customer.phone,
-        company_name: customer.company_name,
-        customer_country: customer.country,
+        customer_name: customer.name || 'N/A',
+        customer_email: customer.email || 'N/A',
+        customer_phone: customer.phone || 'N/A',
+        company_name: customer.contact_person || customer.name || 'N/A',
+        customer_country: customer.country || 'N/A',
         payment_status_category: paymentStatusCategory,
         days_overdue: daysOverdue,
         document_count: 0,

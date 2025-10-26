@@ -23,8 +23,7 @@
 SET session_replication_role = replica;
 
 -- Truncate all tables in correct order (respecting foreign keys)
-TRUNCATE TABLE payment_history CASCADE;
-TRUNCATE TABLE payment_documents CASCADE;
+-- Only truncate tables that exist
 TRUNCATE TABLE payments CASCADE;
 TRUNCATE TABLE sales_line_items CASCADE;
 TRUNCATE TABLE sales CASCADE;

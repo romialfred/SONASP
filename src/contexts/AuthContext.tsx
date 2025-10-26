@@ -24,8 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sessionManagerRef = useRef<SessionManager | null>(null);
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-    const MAX_RETRIES = 2;
-    const FETCH_TIMEOUT = 5000;
+    const MAX_RETRIES = 3;
+    const FETCH_TIMEOUT = 10000;
 
     const fetchWithTimeout = async (promise: Promise<any>, timeoutMs: number) => {
       return Promise.race([
@@ -123,14 +123,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isRetryable =
         error?.message?.includes('500') ||
         error?.message?.includes('timeout') ||
-        error?.message?.includes('network');
+        error?.message?.includes('network') ||
+        error?.message?.includes('fetch');
 
       if (retryCount < MAX_RETRIES && isRetryable) {
-        console.log(`Retrying profile fetch (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        console.log(`Retrying profile fetch (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
         return fetchUserProfile(userId, retryCount + 1);
       }
 
+      console.error('Profile fetch failed after all retries. User will have limited access.');
       return null;
     }
   };

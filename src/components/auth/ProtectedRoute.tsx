@@ -18,7 +18,7 @@ export function ProtectedRoute({
   requiredPermission,
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
-  const { user, loading, initialized } = useAuth();
+  const { user, session, loading, initialized } = useAuth();
   const location = useLocation();
 
   if (loading || !initialized) {
@@ -29,8 +29,19 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
+  if (!session) {
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <Loading size="lg" />
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user.is_active) {

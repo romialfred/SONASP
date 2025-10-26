@@ -87,30 +87,50 @@ export default function UserManagementPage() {
         return;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const responseData = await response.json();
+        console.log('[UserManagement] Received response:', responseData);
+
+        // Defensive: ensure users is always an array
+        const fetchedUsers = ensureArray(responseData?.users);
+        console.log('[UserManagement] Processed users:', fetchedUsers.length, 'users');
+
+        setUsers(fetchedUsers);
+        setError(null);
+      } catch (edgeFunctionError: any) {
+        console.warn('[UserManagement] Edge function failed, trying direct query:', edgeFunctionError);
+
+        // Fallback: Query directly from user_profiles
+        // This will work if the user has management role and RLS policies are set up correctly
+        const { data: directUsers, error: directError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (directError) {
+          throw new Error(`Both edge function and direct query failed: ${directError.message}`);
+        }
+
+        const fetchedUsers = ensureArray(directUsers);
+        console.log('[UserManagement] Loaded users via direct query:', fetchedUsers.length, 'users');
+        setUsers(fetchedUsers);
+        setError(null);
       }
-
-      const responseData = await response.json();
-      console.log('[UserManagement] Received response:', responseData);
-
-      // Defensive: ensure users is always an array
-      const fetchedUsers = ensureArray(responseData?.users);
-      console.log('[UserManagement] Processed users:', fetchedUsers.length, 'users');
-
-      setUsers(fetchedUsers);
-      setError(null);
     } catch (error: any) {
       console.error('Error loading users:', error);
       setError(`Failed to load users: ${error?.message || 'Unknown error'}`);

@@ -91,10 +91,15 @@ export function PaymentsPage() {
           : null;
 
         let paymentStatusCategory = 'unknown';
-        if (payment.status === 'approved') paymentStatusCategory = 'paid';
-        else if (payment.status === 'pending' && daysOverdue && daysOverdue > 0) paymentStatusCategory = 'overdue';
-        else if (payment.status === 'pending') paymentStatusCategory = 'pending';
-        else if (payment.status === 'rejected') paymentStatusCategory = 'rejected';
+        if (payment.status === 'completed' || payment.status === 'verified' || payment.status === 'approved') {
+          paymentStatusCategory = 'paid';
+        } else if ((payment.status === 'pending' || payment.status === 'submitted') && daysOverdue && daysOverdue > 0) {
+          paymentStatusCategory = 'overdue';
+        } else if (payment.status === 'pending' || payment.status === 'submitted' || payment.status === 'under_review') {
+          paymentStatusCategory = 'pending';
+        } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+          paymentStatusCategory = 'rejected';
+        }
 
         return {
           id: payment.id,

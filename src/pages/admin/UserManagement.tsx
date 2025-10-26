@@ -370,9 +370,52 @@ export function UserManagement() {
         });
       }
 
-      // TODO: Load user permissions from database
-      // For now, initialize with default permissions
-      initializePermissions();
+      // Load user permissions from database
+      const { data: userPermissions } = await supabase
+        .from('user_permissions')
+        .select(`
+          *,
+          modules:module_id (
+            id,
+            name,
+            display_name
+          )
+        `)
+        .eq('user_id', userId);
+
+      if (userPermissions && userPermissions.length > 0) {
+        const loadedPermissions: Record<string, ModulePermissions> = {};
+
+        userPermissions.forEach((perm: any) => {
+          const moduleName = perm.modules?.name;
+          if (moduleName) {
+            // Parse field_permissions from jsonb
+            let fieldPerms: FieldPermission[] = [];
+            if (perm.field_permissions && typeof perm.field_permissions === 'object') {
+              fieldPerms = Object.entries(perm.field_permissions).map(([fieldName, fieldPerm]: [string, any]) => ({
+                field_name: fieldName,
+                can_view: fieldPerm.can_view || false,
+                can_edit: fieldPerm.can_edit || false,
+              }));
+            }
+
+            loadedPermissions[moduleName] = {
+              module_name: moduleName,
+              can_view: perm.can_read || false,
+              can_create: false,
+              can_edit: perm.can_write || false,
+              can_delete: perm.can_delete || false,
+              can_approve: false,
+              field_permissions: fieldPerms,
+            };
+          }
+        });
+
+        setPermissions(loadedPermissions);
+      } else {
+        // No permissions found, initialize with default
+        initializePermissions();
+      }
     } catch (error: any) {
       addToast('Failed to load user data', 'error');
     } finally {
@@ -436,7 +479,62 @@ export function UserManagement() {
 
         if (profileError) throw profileError;
 
-        // TODO: Save permissions to database
+        // Save permissions to database
+        if (permissions && Object.keys(permissions).length > 0) {
+          // First, get all module IDs
+          const { data: modules } = await supabase
+            .from('modules')
+            .select('id, name');
+
+          if (modules) {
+            // Delete existing permissions
+            await supabase
+              .from('user_permissions')
+              .delete()
+              .eq('user_id', selectedUserId);
+
+            // Prepare new permissions with module IDs
+            const permissionsToInsert = Object.entries(permissions)
+              .filter(([_, perm]) => perm.can_view || perm.can_create || perm.can_edit || perm.can_delete || perm.can_approve)
+              .map(([moduleName, perm]) => {
+                const module = modules.find(m => m.name === moduleName);
+                if (!module) return null;
+
+                // Convert field permissions to proper format
+                const fieldPermsObject: Record<string, { can_view: boolean; can_edit: boolean }> = {};
+                if (perm.field_permissions && Array.isArray(perm.field_permissions)) {
+                  perm.field_permissions.forEach(fp => {
+                    fieldPermsObject[fp.field_name] = {
+                      can_view: fp.can_view,
+                      can_edit: fp.can_edit
+                    };
+                  });
+                }
+
+                return {
+                  user_id: selectedUserId,
+                  module_id: module.id,
+                  can_read: perm.can_view || false,
+                  can_write: perm.can_edit || false,
+                  can_delete: perm.can_delete || false,
+                  field_permissions: fieldPermsObject,
+                  granted_by: currentUser.id,
+                };
+              })
+              .filter(p => p !== null);
+
+            if (permissionsToInsert.length > 0) {
+              const { error: permError } = await supabase
+                .from('user_permissions')
+                .insert(permissionsToInsert);
+
+              if (permError) {
+                console.error('Error saving permissions:', permError);
+                addToast('User updated but permissions may not have been saved', 'warning');
+              }
+            }
+          }
+        }
 
         await logUserAction(
           currentUser.id,

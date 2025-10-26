@@ -82,8 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-    const MAX_RETRIES = 3;
-    const FETCH_TIMEOUT = 10000;
+    const MAX_RETRIES = 2; // Reduced retries
+    const FETCH_TIMEOUT = 30000; // Increased to 30 seconds
 
     const fetchWithTimeout = async (promise: Promise<any>, timeoutMs: number) => {
       return Promise.race([
@@ -177,20 +177,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Error fetching user profile:', error);
 
-      // If we still have retries and it's a timeout or 500 error, retry
+      // For timeout errors, don't retry - just fall back immediately
+      if (error?.message?.includes('timeout')) {
+        console.warn('Profile fetch timed out, using fallback profile');
+        return null;
+      }
+
+      // If we still have retries and it's a 500 error or network issue, retry
       const isRetryable =
         error?.message?.includes('500') ||
-        error?.message?.includes('timeout') ||
         error?.message?.includes('network') ||
         error?.message?.includes('fetch');
 
       if (retryCount < MAX_RETRIES && isRetryable) {
         console.log(`Retrying profile fetch (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
+        await new Promise(resolve => setTimeout(resolve, 3000 * (retryCount + 1)));
         return fetchUserProfile(userId, retryCount + 1);
       }
 
-      console.error('Profile fetch failed after all retries. User will have limited access.');
+      console.warn('Profile fetch failed. Using fallback profile.');
       return null;
     }
   };

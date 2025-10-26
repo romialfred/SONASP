@@ -57,34 +57,43 @@ export function PaymentsPage() {
     try {
       setLoading(true);
 
+      // First fetch payments
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
-        .select(`
-          *,
-          sales:sale_id (
-            sale_number,
-            sale_date,
-            total_amount,
-            net_proceeds,
-            status,
-            london_am_rate,
-            customer_id,
-            customers:customer_id (
-              name,
-              email,
-              phone,
-              country,
-              contact_person
-            )
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (paymentsError) throw paymentsError;
 
-      const processedPayments = (paymentsData || []).map((payment: any) => {
-        const sale = payment.sales || {};
-        const customer = sale.customers || {};
+      if (!paymentsData || paymentsData.length === 0) {
+        setPayments([]);
+        return;
+      }
+
+      // Then fetch related sales data
+      const saleIds = [...new Set(paymentsData.map(p => p.sale_id).filter(Boolean))];
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
+        .in('id', saleIds);
+
+      // Then fetch related customers data
+      const customerIds = [...new Set([
+        ...(paymentsData.map(p => p.customer_id).filter(Boolean)),
+        ...(salesData?.map(s => s.customer_id).filter(Boolean) || [])
+      ])];
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, name, email, phone, country, contact_person')
+        .in('id', customerIds);
+
+      // Create lookup maps
+      const salesMap = new Map(salesData?.map(s => [s.id, s]) || []);
+      const customersMap = new Map(customersData?.map(c => [c.id, c]) || []);
+
+      const processedPayments = paymentsData.map((payment: any) => {
+        const sale = salesMap.get(payment.sale_id) || {};
+        const customer = customersMap.get(payment.customer_id || sale.customer_id) || {};
 
         const daysOverdue = payment.due_date
           ? Math.floor((new Date().getTime() - new Date(payment.due_date).getTime()) / (1000 * 60 * 60 * 24))

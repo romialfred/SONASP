@@ -131,34 +131,41 @@ export function PaymentDetailsPage() {
     try {
       setLoading(true);
 
+      // First fetch payment
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
-        .select(`
-          *,
-          sales:sale_id (
-            sale_number,
-            sale_date,
-            total_amount,
-            net_proceeds,
-            status,
-            london_am_rate,
-            customer_id,
-            customers:customer_id (
-              name,
-              email,
-              phone,
-              country,
-              contact_person
-            )
-          )
-        `)
+        .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (paymentError) throw paymentError;
+      if (!paymentData) {
+        setLoading(false);
+        return;
+      }
 
-      const sale = paymentData.sales || {};
-      const customer = sale.customers || {};
+      // Then fetch related sale
+      let sale: any = {};
+      if (paymentData.sale_id) {
+        const { data: saleData } = await supabase
+          .from('sales')
+          .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
+          .eq('id', paymentData.sale_id)
+          .maybeSingle();
+        sale = saleData || {};
+      }
+
+      // Then fetch related customer
+      let customer: any = {};
+      const customerId = paymentData.customer_id || sale.customer_id;
+      if (customerId) {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('id, name, email, phone, country, contact_person')
+          .eq('id', customerId)
+          .maybeSingle();
+        customer = customerData || {};
+      }
 
       const daysOverdue = paymentData.due_date
         ? Math.floor((new Date().getTime() - new Date(paymentData.due_date).getTime()) / (1000 * 60 * 60 * 24))

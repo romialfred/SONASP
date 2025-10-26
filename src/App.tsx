@@ -35,6 +35,8 @@ import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
 import { PaymentProcessing } from './pages/customers/PaymentProcessing';
+import { PaymentsPage } from './pages/payments/PaymentsPage';
+import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
 import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
 import { ReportGeneration } from './pages/reports/ReportGeneration';
 import { UserManagement } from './pages/admin/UserManagement';
@@ -317,6 +319,23 @@ function AppRoutes() {
                   <ProfileGuard>
                     <PaymentProcessing />
                   </ProfileGuard>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/payments"
+              element={
+                <ProtectedRoute>
+                  <PaymentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments/:id"
+              element={
+                <ProtectedRoute>
+                  <PaymentDetailsPage />
                 </ProtectedRoute>
               }
             />

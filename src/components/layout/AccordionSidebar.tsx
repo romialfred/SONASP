@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -61,6 +62,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-purple-500' },
       { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-500' },
+      { label: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-green-500' },
       { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-yellow-500' },
       { label: 'FX Rates', path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-500' },
     ],

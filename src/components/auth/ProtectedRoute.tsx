@@ -41,43 +41,17 @@ export function ProtectedRoute({
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <Loading size="lg" />
-          <p className="mt-4 text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (profileError && !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Unable to load user profile</h2>
-          <p className="text-gray-600">{profileError}</p>
-          <div className="flex justify-center">
-            <button
-              onClick={refreshProfile}
-              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-            >
-              Retry loading profile
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Don't block on profileLoading - app should proceed with fallback profile
+  // Profile errors are shown as a non-blocking banner instead
 
   if (!user) {
+    // Only block if no user at all (should not happen with fallback)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
           <h2 className="text-2xl font-bold text-gray-900">Profile not available</h2>
           <p className="text-gray-600">
-            We could not load the information required for this page. Please try refreshing your profile.
+            Unable to load user profile. Please try refreshing.
           </p>
           <div className="flex justify-center">
             <button

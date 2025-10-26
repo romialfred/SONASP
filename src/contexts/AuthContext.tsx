@@ -3,6 +3,7 @@ import { Session, AuthChangeEvent, User as SupabaseUser } from '@supabase/supaba
 import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState, UserRole } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
+import { withTimeout, withRetry } from '@/lib/withTimeout';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -81,121 +82,144 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-    const MAX_RETRIES = 2; // Reduced retries
-    const FETCH_TIMEOUT = 30000; // Increased to 30 seconds
+  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
 
-    const fetchWithTimeout = async (promise: Promise<any>, timeoutMs: number) => {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Profile fetch timeout')), timeoutMs)
-        ),
-      ]);
-    };
+    return withRetry(
+      async () => {
+        // Fetch the user profile with timeout
+        const { data: profile, error: profileError } = await withTimeout(
+          supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single(),
+          8000,
+          'Profile-Fetch'
+        );
 
+        if (profileError) {
+          console.error('[Profile] Fetch error:', profileError);
+
+          // Check for infinite recursion error (42P17)
+          if (profileError.code === '42P17') {
+            console.error('[Profile] CRITICAL: Infinite recursion in RLS policies');
+            throw new Error('Database configuration error');
+          }
+
+          // Missing profile - try to create it
+          if (profileError.code === 'PGRST116' || !profile) {
+            console.warn('[Profile] Not found, attempting to create minimal profile');
+            return await createMinimalProfile(userId);
+          }
+
+          throw profileError;
+        }
+
+        if (!profile) {
+          console.warn('[Profile] Empty result, creating minimal profile');
+          return await createMinimalProfile(userId);
+        }
+
+        // Fetch site assignments separately (non-blocking)
+        let siteIds: string[] = [];
+        try {
+          const { data: assignments } = await withTimeout(
+            supabase
+              .from('user_site_assignments')
+              .select('site_id, is_primary')
+              .eq('user_id', userId),
+            5000,
+            'Site-Assignments'
+          );
+          siteIds = assignments?.map((a: any) => a.site_id) || [];
+        } catch (error) {
+          console.warn('[Profile] Site assignments fetch failed (non-fatal):', error);
+        }
+
+        return {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          phone: profile.phone,
+          role: profile.role,
+          site_ids: siteIds,
+          is_active: profile.is_active,
+          two_factor_enabled: profile.two_factor_enabled,
+          language: profile.language,
+          email_notifications: profile.email_notifications,
+          batch_notifications: profile.batch_notifications,
+          approval_notifications: profile.approval_notifications,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at,
+        };
+      },
+      {
+        maxRetries: 2,
+        initialDelay: 1500,
+        backoffMultiplier: 1.5,
+        timeout: 8000,
+        label: 'Profile-Fetch',
+        shouldRetry: (error: any) => {
+          // Don't retry on timeout or CORS errors
+          if (error?.message?.includes('timeout')) return false;
+          if (error?.message?.includes('CORS')) return false;
+          // Retry on network errors
+          return true;
+        },
+      }
+    ).catch(error => {
+      console.error('[Profile] All fetch attempts failed:', error);
+      return null;
+    });
+  };
+
+  const createMinimalProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      // First, fetch the user profile with timeout
-      const { data: profile, error: profileError } = await fetchWithTimeout(
+      console.log('[Profile] Creating minimal profile for user:', userId);
+
+      const { data: user } = await supabase.auth.getUser();
+      const email = user?.user?.email || 'user@example.com';
+
+      const { data: created, error: insertError } = await withTimeout(
         supabase
           .from('user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle(),
-        FETCH_TIMEOUT
-      ) as any;
+          .insert([{
+            id: userId,
+            email: email,
+            full_name: email.split('@')[0],
+            role: 'management',
+            is_active: true,
+          }])
+          .select()
+          .single(),
+        8000,
+        'Profile-Create'
+      );
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError);
-
-        // Check for infinite recursion error (42P17)
-        if (profileError.code === '42P17') {
-          console.error('CRITICAL: Infinite recursion detected in RLS policies. This should not happen after migration.');
-          throw new Error('Database configuration error. Please contact support.');
-        }
-
-        // Check for missing profile (PGRST116 or null data)
-        if (profileError.code === 'PGRST116' || profileError.message?.includes('no rows')) {
-          console.warn('Profile not found for user:', userId, '- attempting retry');
-
-          if (retryCount < MAX_RETRIES) {
-            // Wait briefly then retry (profile might be created by trigger)
-            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-            return fetchUserProfile(userId, retryCount + 1);
-          }
-        }
-
-        throw profileError;
-      }
-
-      if (!profile) {
-        console.warn('No profile found for user:', userId);
-
-        // Retry if this is the first attempt
-        if (retryCount < MAX_RETRIES) {
-          console.log('Retrying profile fetch in case trigger is still processing...');
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-          return fetchUserProfile(userId, retryCount + 1);
-        }
-
-        // Profile still missing after retries - this shouldn't happen with trigger
-        console.error('Profile missing after retries. Trigger may have failed.');
+      if (insertError) {
+        console.error('[Profile] Failed to create profile:', insertError);
         return null;
       }
 
-      // Then fetch site assignments separately with timeout
-      const { data: assignments, error: assignmentError } = await fetchWithTimeout(
-        supabase
-          .from('user_site_assignments')
-          .select('site_id, is_primary')
-          .eq('user_id', userId),
-        FETCH_TIMEOUT
-      ) as any;
-
-      if (assignmentError) {
-        console.warn('Site assignment fetch error (non-fatal):', assignmentError);
-      }
-
-      const siteIds = assignments?.map((assignment: any) => assignment.site_id) || [];
-
+      console.log('[Profile] Minimal profile created successfully');
       return {
-        id: profile.id,
-        email: profile.email,
-        full_name: profile.full_name,
-        phone: profile.phone,
-        role: profile.role,
-        site_ids: siteIds,
-        is_active: profile.is_active,
-        two_factor_enabled: profile.two_factor_enabled,
-        language: profile.language,
-        email_notifications: profile.email_notifications,
-        batch_notifications: profile.batch_notifications,
-        approval_notifications: profile.approval_notifications,
-        created_at: profile.created_at,
-        updated_at: profile.updated_at,
+        id: created.id,
+        email: created.email,
+        full_name: created.full_name,
+        phone: null,
+        role: created.role,
+        site_ids: [],
+        is_active: created.is_active,
+        two_factor_enabled: false,
+        language: null,
+        email_notifications: true,
+        batch_notifications: true,
+        approval_notifications: true,
+        created_at: created.created_at,
+        updated_at: created.updated_at,
       };
-    } catch (error: any) {
-      console.error('Error fetching user profile:', error);
-
-      // For timeout errors, don't retry - just fall back immediately
-      if (error?.message?.includes('timeout')) {
-        console.warn('Profile fetch timed out, using fallback profile');
-        return null;
-      }
-
-      // If we still have retries and it's a 500 error or network issue, retry
-      const isRetryable =
-        error?.message?.includes('500') ||
-        error?.message?.includes('network') ||
-        error?.message?.includes('fetch');
-
-      if (retryCount < MAX_RETRIES && isRetryable) {
-        console.log(`Retrying profile fetch (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
-        await new Promise(resolve => setTimeout(resolve, 3000 * (retryCount + 1)));
-        return fetchUserProfile(userId, retryCount + 1);
-      }
-
-      console.warn('Profile fetch failed. Using fallback profile.');
+    } catch (error) {
+      console.error('[Profile] Failed to create minimal profile:', error);
       return null;
     }
   };
@@ -366,6 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let backgroundProfileFetch: Promise<void> | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -385,42 +410,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (session?.user) {
-          console.log('[Auth] Active session found, fetching profile for:', session.user.id);
+          console.log('[Auth] Active session found for:', session.user.id);
+
+          // Immediately set the session with fallback profile - don't block
+          const fallbackProfile = buildFallbackProfile(session.user);
+          console.log('[Auth] Setting fallback profile immediately to unblock app');
 
           setState(prev => ({
             ...prev,
-            profileLoading: true,
+            user: fallbackProfile,
+            session,
+            loading: false,
+            initialized: true,
+            profileLoading: false, // Don't block on profile loading
             profileError: null,
           }));
 
-          let profile: UserProfile | null = null;
-
-          try {
-            profile = await fetchUserProfile(session.user.id);
-          } catch (profileError) {
-            console.error('[Auth] Profile fetch failed during initialization:', profileError);
+          // Start session manager immediately
+          if (!sessionManagerRef.current) {
+            console.log('[Auth] Starting session manager');
+            sessionManagerRef.current = new SessionManager();
+            sessionManagerRef.current.start();
           }
 
-          if (mounted) {
-            const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+          // Fetch real profile in the background
+          console.log('[Auth] Fetching full profile in background...');
+          backgroundProfileFetch = (async () => {
+            try {
+              const profile = await fetchUserProfile(session.user.id);
 
-            console.log('[Auth] Profile state resolved, updating state');
-            setState(prev => ({
-              ...prev,
-              user: resolvedProfile,
-              session,
-              loading: false,
-              initialized: true,
-              profileLoading: false,
-              profileError: error,
-            }));
-
-            if (resolvedProfile && !sessionManagerRef.current) {
-              console.log('[Auth] Starting session manager on init');
-              sessionManagerRef.current = new SessionManager();
-              sessionManagerRef.current.start();
+              if (mounted && profile) {
+                console.log('[Auth] Background profile fetch succeeded, updating');
+                setState(prev => ({
+                  ...prev,
+                  user: profile,
+                  profileError: null,
+                }));
+              } else if (mounted && !profile) {
+                console.warn('[Auth] Background profile fetch failed, keeping fallback');
+                setState(prev => ({
+                  ...prev,
+                  profileError: 'Unable to load full profile. Using account defaults.',
+                }));
+              }
+            } catch (error) {
+              console.error('[Auth] Background profile fetch error:', error);
+              if (mounted) {
+                setState(prev => ({
+                  ...prev,
+                  profileError: 'Unable to load full profile. Retrying in the background.',
+                }));
+              }
             }
-          }
+          })();
         } else {
           console.log('[Auth] No active session, setting unauthenticated state');
           setState({
@@ -448,19 +490,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Timeout only to prevent infinite loading - don't clear session
+    // Much shorter timeout - just for the session check, not profile
     const timeoutId = setTimeout(() => {
       if (mounted) {
-        console.error('[Auth] Initialization timeout - setting initialized flag only');
+        console.error('[Auth] Initialization timeout - setting initialized flag');
         setState(prev => ({
           ...prev,
           loading: false,
           initialized: true,
           profileLoading: false,
-          profileError: prev.profileError,
         }));
       }
-    }, 30000); // Increased to 30 seconds
+    }, 5000); // 5 seconds max for session check
 
     initializeAuth().finally(() => {
       clearTimeout(timeoutId);
@@ -481,37 +522,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('[Auth] User signed in, fetching profile');
+          console.log('[Auth] User signed in');
+
+          // Immediately set fallback profile - don't block
+          const fallbackProfile = buildFallbackProfile(session.user);
+          console.log('[Auth] Setting fallback profile immediately');
+
           setState(prev => ({
             ...prev,
-            profileLoading: true,
-            profileError: null,
-          }));
-
-          let profile: UserProfile | null = null;
-
-          try {
-            profile = await fetchUserProfile(session.user.id);
-          } catch (error) {
-            console.error('[Auth] Profile fetch failed on SIGNED_IN event:', error);
-          }
-
-          const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
-          setState(prev => ({
-            ...prev,
-            user: resolvedProfile,
+            user: fallbackProfile,
             session,
             loading: false,
             initialized: true,
             profileLoading: false,
-            profileError: error,
+            profileError: null,
           }));
 
-          if (resolvedProfile && !sessionManagerRef.current) {
+          if (!sessionManagerRef.current) {
             console.log('[Auth] Starting session manager');
             sessionManagerRef.current = new SessionManager();
             sessionManagerRef.current.start();
           }
+
+          // Fetch real profile in background
+          console.log('[Auth] Fetching full profile in background...');
+          (async () => {
+            try {
+              const profile = await fetchUserProfile(session.user.id);
+              if (mounted && profile) {
+                console.log('[Auth] Background profile loaded');
+                setState(prev => ({
+                  ...prev,
+                  user: profile,
+                  profileError: null,
+                }));
+              } else if (mounted) {
+                setState(prev => ({
+                  ...prev,
+                  profileError: 'Unable to load full profile. Using account defaults.',
+                }));
+              }
+            } catch (error) {
+              console.error('[Auth] Background profile fetch error:', error);
+            }
+          })();
         } else if (event === 'SIGNED_OUT') {
           console.log('[Auth] SIGNED_OUT event detected');
           console.log('[Auth] SessionManager active?', !!sessionManagerRef.current);

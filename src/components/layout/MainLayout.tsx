@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Header } from './Header';
 import { AccordionSidebar } from './AccordionSidebar';
+import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 
 export interface MainLayoutProps {
   children: ReactNode;
@@ -9,6 +10,7 @@ export interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      <ProfileErrorBanner />
       <AccordionSidebar />
 
       <div className="flex-1 flex flex-col">

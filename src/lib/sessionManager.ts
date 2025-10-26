@@ -48,9 +48,8 @@ export class SessionManager {
 
   public start() {
     console.log('[SessionManager] Starting session management - NO AUTO LOGOUT');
-    console.log('[SessionManager] Relying on Supabase autoRefreshToken for token maintenance');
     this.updateActivity();
-    // Removed manual token refresh - Supabase handles this automatically with autoRefreshToken: true
+    this.startTokenRefresh();
   }
 
   public stop() {
@@ -64,8 +63,84 @@ export class SessionManager {
     this.lastActivityTime = Date.now();
   }
 
-  // Token refresh is handled automatically by Supabase with autoRefreshToken: true
-  // No manual refresh needed - this prevents conflicts and spurious SIGNED_OUT events
+  private startTokenRefresh() {
+    // Periodically refresh the auth token to keep session alive indefinitely
+    this.tokenRefreshTimer = setInterval(async () => {
+      if (!this.isActive || this.isRefreshing) return;
+
+      this.isRefreshing = true;
+
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('[SessionManager] Error getting session:', error);
+          this.isRefreshing = false;
+          // Don't logout on error, just log and retry on next interval
+          return;
+        }
+
+        if (!session) {
+          console.warn('[SessionManager] No active session found');
+          this.isRefreshing = false;
+          return;
+        }
+
+        // Check if token is still valid (has more than 5 minutes left)
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiresInSeconds = expiresAt - Math.floor(Date.now() / 1000);
+          console.log('[SessionManager] Token expires in', Math.floor(expiresInSeconds / 60), 'minutes');
+
+          // If token expires in less than 10 minutes, refresh immediately
+          if (expiresInSeconds < 600) {
+            console.warn('[SessionManager] Token expiring soon, refreshing immediately');
+          }
+        }
+
+        // Refresh the session token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          console.error('[SessionManager] Error refreshing session:', refreshError);
+          // Don't logout on refresh error, Supabase will retry automatically
+          // The autoRefreshToken setting in supabase.ts handles this
+        } else if (refreshData.session) {
+          console.log('[SessionManager] Session token refreshed successfully');
+          const newExpiresAt = refreshData.session.expires_at;
+          if (newExpiresAt) {
+            const newExpiresInSeconds = newExpiresAt - Math.floor(Date.now() / 1000);
+            console.log('[SessionManager] New token expires in', Math.floor(newExpiresInSeconds / 60), 'minutes');
+          }
+        }
+      } catch (error) {
+        console.error('[SessionManager] Token refresh error:', error);
+        // Don't logout on error, just log and continue
+      } finally {
+        this.isRefreshing = false;
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+
+    // Also do an immediate refresh on start to ensure token is fresh
+    setTimeout(async () => {
+      if (!this.isActive || this.isRefreshing) return;
+      this.isRefreshing = true;
+
+      try {
+        console.log('[SessionManager] Performing initial token refresh');
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('[SessionManager] Initial refresh error:', error);
+        } else {
+          console.log('[SessionManager] Initial token refresh successful');
+        }
+      } catch (error) {
+        console.error('[SessionManager] Initial refresh exception:', error);
+      } finally {
+        this.isRefreshing = false;
+      }
+    }, 5000); // Wait 5 seconds after start before first refresh
+  }
 
   public getInactivityDuration(): number {
     return Date.now() - this.lastActivityTime;
@@ -74,7 +149,11 @@ export class SessionManager {
   public extendSession() {
     console.log('[SessionManager] Session extended by user action');
     this.updateActivity();
-    // Token refresh handled automatically by Supabase
+
+    // Also refresh the token when user explicitly extends
+    supabase.auth.refreshSession().catch(error => {
+      console.error('[SessionManager] Error refreshing on extend:', error);
+    });
   }
 }
 

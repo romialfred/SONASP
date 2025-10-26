@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, AlertTriangle, CheckCircle, Upload } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, Upload, HelpCircle, Scale, FileText, Camera } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import TextArea from '@/components/ui/TextArea';
 import { FormField } from '@/components/ui/FormField';
 import { AlertBox } from '@/components/dashboard/AlertBox';
 import { FileUpload } from '@/components/ui/FileUpload';
-import { calculateVariance, formatWeight } from '@/utils/batchUtils';
+import { calculateVariance, formatWeight, convertGramsToOunces } from '@/utils/batchUtils';
 
 export function ReceivingConfirm() {
   const { id } = useParams();
@@ -185,7 +185,11 @@ export function ReceivingConfirm() {
                               }`}
                             >
                               {variance.difference > 0 ? '+' : ''}
-                              {variance.difference}g
+                              {variance.difference.toFixed(2)}g
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              ({variance.difference > 0 ? '+' : ''}
+                              {convertGramsToOunces(variance.difference).toFixed(3)} oz)
                             </p>
                           </div>
                           <div>
@@ -203,7 +207,7 @@ export function ReceivingConfirm() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-600">Threshold</p>
-                            <p className="text-base font-bold text-gray-700">±2%</p>
+                            <p className="text-base font-bold text-gray-700">±{variance.threshold}%</p>
                           </div>
                         </div>
                       </div>
@@ -261,34 +265,59 @@ export function ReceivingConfirm() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Expected:</span>
-                    <span className="font-semibold">
-                      {formatWeight(batch.expected_weight_grams)}
-                    </span>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Expected:</span>
+                      <span className="font-semibold">
+                        {formatWeight(batch.expected_weight_grams)}
+                      </span>
+                    </div>
+                    <div className="flex justify-end text-xs text-gray-500">
+                      ({convertGramsToOunces(batch.expected_weight_grams).toFixed(3)} oz)
+                    </div>
                   </div>
                   {actualWeight && (
                     <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Actual:</span>
-                        <span className="font-semibold">
-                          {formatWeight(parseFloat(actualWeight))}
-                        </span>
-                      </div>
-                      {variance && (
-                        <div className="flex justify-between text-sm pt-3 border-t">
-                          <span className="text-gray-600">Variance:</span>
-                          <span
-                            className={`font-bold ${
-                              variance.isSignificant
-                                ? 'text-red-600'
-                                : 'text-accent-600'
-                            }`}
-                          >
-                            {variance.percentage > 0 ? '+' : ''}
-                            {variance.percentage}%
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Actual:</span>
+                          <span className="font-semibold">
+                            {formatWeight(parseFloat(actualWeight))}
                           </span>
                         </div>
+                        <div className="flex justify-end text-xs text-gray-500">
+                          ({convertGramsToOunces(parseFloat(actualWeight)).toFixed(3)} oz)
+                        </div>
+                      </div>
+                      {variance && (
+                        <>
+                          <div className="flex justify-between text-sm pt-3 border-t">
+                            <span className="text-gray-600">Difference:</span>
+                            <span
+                              className={`font-bold ${
+                                variance.isSignificant
+                                  ? 'text-red-600'
+                                  : 'text-accent-600'
+                              }`}
+                            >
+                              {variance.difference > 0 ? '+' : ''}
+                              {variance.difference.toFixed(2)} g
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Variance:</span>
+                            <span
+                              className={`font-bold ${
+                                variance.isSignificant
+                                  ? 'text-red-600'
+                                  : 'text-accent-600'
+                              }`}
+                            >
+                              {variance.percentage > 0 ? '+' : ''}
+                              {variance.percentage}%
+                            </span>
+                          </div>
+                        </>
                       )}
                     </>
                   )}
@@ -322,6 +351,66 @@ export function ReceivingConfirm() {
                     Reconciliation comments are required for significant variances
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HelpCircle className="h-5 w-5 text-primary-500" />
+                  Field Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Scale className="h-4 w-4 text-primary-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">Weight Verification</h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Use calibrated scales to measure the actual weight received. Record weight in grams with decimal precision.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">Variance Threshold</h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Acceptable variance is ±{variance?.threshold || 2}%. Variances exceeding this require reconciliation and supervisor approval.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">Documentation</h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          For significant variances, provide detailed justification explaining the cause and any corrective actions taken.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Camera className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">Supporting Evidence</h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Upload photos of packaging condition, scale readings, or any relevant documentation (max 5MB per file).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

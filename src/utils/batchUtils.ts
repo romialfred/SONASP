@@ -7,9 +7,37 @@ export function generateBatchNumber(site: string, date: Date = new Date()): stri
   return `${site.toUpperCase()}-${year}${month}${day}-${random}`;
 }
 
-export function calculateVariance(expected: number, actual: number): number {
-  if (expected === 0) return 0;
-  return ((actual - expected) / expected) * 100;
+export interface VarianceResult {
+  difference: number;
+  percentage: number;
+  isSignificant: boolean;
+  threshold: number;
+}
+
+export function calculateVariance(
+  expected: number,
+  actual: number,
+  threshold: number = 2
+): VarianceResult {
+  if (expected === 0) {
+    return {
+      difference: actual,
+      percentage: 0,
+      isSignificant: actual !== 0,
+      threshold,
+    };
+  }
+
+  const difference = actual - expected;
+  const percentage = (difference / expected) * 100;
+  const isSignificant = Math.abs(percentage) > threshold;
+
+  return {
+    difference: parseFloat(difference.toFixed(2)),
+    percentage: parseFloat(percentage.toFixed(2)),
+    isSignificant,
+    threshold,
+  };
 }
 
 export function isVarianceWithinThreshold(variance: number, threshold: number = 2): boolean {

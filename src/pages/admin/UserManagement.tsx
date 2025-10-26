@@ -263,15 +263,46 @@ export function UserManagement() {
       );
 
       if (!result.ok) {
-        console.error('[UserManagement] Edge Function error:', result.error);
-        addToast(result.error.message || 'Failed to fetch users', 'error');
-        setUsers([]);
+        console.warn('[UserManagement] Edge Function error, falling back to direct query:', result.error);
+
+        const { data: usersData, error: dbError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbError) {
+          console.error('[UserManagement] Database query error:', dbError);
+          addToast('Failed to fetch users', 'error');
+          setUsers([]);
+          return;
+        }
+
+        if (usersData && Array.isArray(usersData)) {
+          const processedUsers: User[] = usersData
+            .filter((profile: any) => profile && profile.id && profile.email)
+            .map((profile: any) => ({
+              id: profile.id,
+              full_name: profile.full_name,
+              email: profile.email,
+              role: profile.role,
+              phone: profile.phone,
+              site_ids: [],
+              is_active: profile.is_active !== false,
+              last_login_at: profile.last_login_at,
+              created_at: profile.created_at,
+            }));
+
+          console.log('[UserManagement] Fetched users via fallback:', processedUsers.length);
+          setUsers(processedUsers);
+        } else {
+          setUsers([]);
+        }
         return;
       }
 
       console.log('[UserManagement] Edge Function response status:', result.status);
 
-      const fetchedUsers = result.data.users;
+      const fetchedUsers = result.data?.users;
 
       console.log('[UserManagement] Fetched users:', fetchedUsers);
 

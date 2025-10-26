@@ -40,6 +40,37 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'mock-user-id',
+      email: 'mock@example.com',
+      full_name: 'Mock User',
+      phone: null,
+      role: 'management',
+      site_ids: [],
+      is_active: true,
+      two_factor_enabled: false,
+      language: null,
+      email_notifications: true,
+      batch_notifications: true,
+      approval_notifications: true,
+      created_at: '2024-01-01T00:00:00.000Z',
+      updated_at: '2024-01-01T00:00:00.000Z',
+    },
+    session: {} as any,
+    loading: false,
+    initialized: true,
+    profileLoading: false,
+    profileError: null,
+    signIn: vi.fn().mockResolvedValue({}),
+    signOut: vi.fn().mockResolvedValue(undefined),
+    resetPassword: vi.fn().mockResolvedValue({}),
+    updatePassword: vi.fn().mockResolvedValue({}),
+    refreshProfile: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // Mock fetch for Edge Function
 global.fetch = vi.fn();
 
@@ -227,10 +258,10 @@ describe('UserManagementPage - Defensive Handling', () => {
     renderWithRouter(<UserManagementPage />);
 
     await waitFor(() => {
-      // Total users
-      expect(screen.getByText('2')).toBeInTheDocument();
-      // Active users (1)
-      expect(screen.getByText('1')).toBeInTheDocument();
+      const totalUsers = screen.getAllByText('2')[0];
+      expect(totalUsers).toBeInTheDocument();
+      const activeUsers = screen.getAllByText('1')[0];
+      expect(activeUsers).toBeInTheDocument();
     });
   });
 
@@ -296,7 +327,8 @@ describe('UserManagementPage - Defensive Handling', () => {
       expect(screen.getByText('User Management')).toBeInTheDocument();
     });
 
-    // Should render without crashing
-    expect(screen.queryByText('N/A')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
+    });
   });
 });

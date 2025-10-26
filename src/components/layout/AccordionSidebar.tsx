@@ -199,8 +199,9 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         {menuGroups.map((group) => {
+          const groupItems = Array.isArray(group.items) ? group.items : [];
           const isOpen = openGroups.has(group.id);
-          const hasActiveItem = group.items.some(item => isActive(item.path));
+          const hasActiveItem = groupItems.some(item => isActive(item.path));
 
           return (
             <div key={group.id} className="space-y-1">
@@ -221,7 +222,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 {collapsed ? (
                   <span className="w-full flex justify-center">
                     {(() => {
-                      const Icon = group.items[0].icon;
+                      const Icon = groupItems[0]?.icon ?? LayoutDashboard;
                       return <Icon className={cn('w-5 h-5', group.groupIconColor)} />;
                     })()}
                   </span>
@@ -247,8 +248,11 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   role="group"
                   aria-label={group.label}
                 >
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
+                  {groupItems.map((item) => {
+                    if (!item) {
+                      return null;
+                    }
+                    const Icon = item.icon ?? LayoutDashboard;
                     const active = isActive(item.path);
 
                     return (
@@ -267,7 +271,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                         <Icon
                           className={cn(
                             'w-5 h-5 flex-shrink-0',
-                            active ? 'text-white' : item.iconColor
+                            active ? 'text-white' : item.iconColor || 'text-primary-500'
                           )}
                         />
                         <span>{item.label}</span>
@@ -286,8 +290,11 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                         {group.label}
                       </p>
                     </div>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
+                    {groupItems.map((item) => {
+                      if (!item) {
+                        return null;
+                      }
+                      const Icon = item.icon ?? LayoutDashboard;
                       const active = isActive(item.path);
                       return (
                         <Link
@@ -300,7 +307,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                               : 'hover:bg-gray-100/50'
                           )}
                         >
-                          <Icon className={cn('w-4 h-4', active ? 'text-white' : item.iconColor)} />
+                          <Icon className={cn('w-4 h-4', active ? 'text-white' : item.iconColor || 'text-primary-500')} />
                           <span>{item.label}</span>
                         </Link>
                       );

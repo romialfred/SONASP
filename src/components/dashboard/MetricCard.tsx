@@ -1,4 +1,4 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/utils/cn';
 
@@ -7,7 +7,7 @@ export interface MetricCardProps {
   value: string | number;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
-  icon: LucideIcon;
+  icon?: LucideIcon;
   iconColor?: string;
 }
 
@@ -16,7 +16,7 @@ export function MetricCard({
   value,
   change,
   changeType = 'neutral',
-  icon: Icon,
+  icon: Icon = HelpCircle,
   iconColor = 'text-primary-500'
 }: MetricCardProps) {
   const changeColors = {

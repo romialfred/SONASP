@@ -1,4 +1,4 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, HelpCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface ActivityItem {
@@ -25,13 +25,16 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
 
   return (
     <div className="space-y-4">
-      {items.map((item, index) => {
-        const Icon = item.icon;
+      {items.map((item) => {
+        if (!item) {
+          return null;
+        }
+        const Icon = item.icon ?? HelpCircle;
         return (
           <div key={item.id} className="flex items-start gap-3">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center',
-              item.iconColor
+              item.iconColor || 'bg-primary-500'
             )}>
               <Icon className="h-5 w-5 text-white" />
             </div>

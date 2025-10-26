@@ -75,11 +75,33 @@ Deno.serve(async (req: Request) => {
       .order('created_at', { ascending: false });
 
     if (usersError) {
+      console.error('Error fetching users from database:', usersError);
       throw usersError;
     }
 
+    console.log('Successfully fetched users:', users?.length || 0);
+
+    // Ensure we return valid user data
+    const validUsers = (users || []).map(user => ({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      phone: user.phone,
+      role: user.role,
+      site_ids: user.site_ids || [],
+      is_active: user.is_active !== false,
+      two_factor_enabled: user.two_factor_enabled || false,
+      last_login_at: user.last_login_at,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    }));
+
     return new Response(
-      JSON.stringify({ users }),
+      JSON.stringify({
+        success: true,
+        users: validUsers,
+        count: validUsers.length
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

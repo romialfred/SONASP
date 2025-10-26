@@ -546,8 +546,10 @@ export function UserManagement() {
         if (!user) return 'N/A';
         return (
           <div>
-            <div className="font-medium text-gray-900">{user.full_name || user.email.split('@')[0]}</div>
-            <div className="text-sm text-gray-500">{user.email}</div>
+            <div className="font-medium text-gray-900">
+              {user.full_name || (user.email ? user.email.split('@')[0] : 'N/A')}
+            </div>
+            <div className="text-sm text-gray-500">{user.email || 'No email'}</div>
           </div>
         );
       },

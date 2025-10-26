@@ -33,6 +33,7 @@ import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
+import { CustomerForm } from './pages/customers/CustomerForm';
 import { PaymentProcessing } from './pages/customers/PaymentProcessing';
 import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
 import { ReportGeneration } from './pages/reports/ReportGeneration';
@@ -275,6 +276,26 @@ function AppRoutes() {
                 <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
                   <ProfileGuard>
                     <CustomerListing />
+                  </ProfileGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers/new"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_CREATE}>
+                  <ProfileGuard>
+                    <CustomerForm />
+                  </ProfileGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers/:id/edit"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_EDIT}>
+                  <ProfileGuard>
+                    <CustomerForm />
                   </ProfileGuard>
                 </ProtectedRoute>
               }

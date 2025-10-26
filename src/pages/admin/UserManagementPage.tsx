@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { supabase } from '@/lib/supabase';
+import { ensureArray } from '@/utils/arrayUtils';
 import {
   Users,
   Plus,
@@ -101,8 +102,14 @@ export default function UserManagementPage() {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      const { users: fetchedUsers } = await response.json();
-      setUsers(fetchedUsers || []);
+      const responseData = await response.json();
+      console.log('[UserManagement] Received response:', responseData);
+
+      // Defensive: ensure users is always an array
+      const fetchedUsers = ensureArray(responseData?.users);
+      console.log('[UserManagement] Processed users:', fetchedUsers.length, 'users');
+
+      setUsers(fetchedUsers);
       setError(null);
     } catch (error: any) {
       console.error('Error loading users:', error);
@@ -246,6 +253,9 @@ export default function UserManagementPage() {
         .delete()
         .eq('user_id', selectedUser.id);
 
+      // Get current user for granted_by
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
       // Insert new permissions
       const permsToInsert = Object.entries(permissions)
         .filter(([_, perm]) => perm.can_read || perm.can_write || perm.can_delete)
@@ -255,7 +265,7 @@ export default function UserManagementPage() {
           can_read: perm.can_read,
           can_write: perm.can_write,
           can_delete: perm.can_delete,
-          granted_by: (await supabase.auth.getUser()).data.user?.id,
+          granted_by: currentUser?.id,
         }));
 
       if (permsToInsert.length > 0) {
@@ -288,10 +298,12 @@ export default function UserManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(
+  // Defensive: ensure users is an array and handle missing properties
+  const safeUsers = ensureArray(users);
+  const filteredUsers = safeUsers.filter(
     (user) =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -352,7 +364,7 @@ export default function UserManagementPage() {
                 <Users className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
+                  <p className="text-2xl font-bold">{safeUsers.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -364,7 +376,7 @@ export default function UserManagementPage() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Active Users</p>
                   <p className="text-2xl font-bold">
-                    {users.filter((u) => u.is_active).length}
+                    {safeUsers.filter((u) => u?.is_active).length}
                   </p>
                 </div>
               </div>
@@ -377,7 +389,7 @@ export default function UserManagementPage() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">2FA Enabled</p>
                   <p className="text-2xl font-bold">
-                    {users.filter((u) => u.two_factor_enabled).length}
+                    {safeUsers.filter((u) => u?.two_factor_enabled).length}
                   </p>
                 </div>
               </div>
@@ -390,7 +402,7 @@ export default function UserManagementPage() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Must Change Password</p>
                   <p className="text-2xl font-bold">
-                    {users.filter((u) => u.password_must_change).length}
+                    {safeUsers.filter((u) => u?.password_must_change).length}
                   </p>
                 </div>
               </div>
@@ -451,12 +463,15 @@ export default function UserManagementPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user) => (
+                    {filteredUsers.map((user) => {
+                      if (!user || !user.id) return null;
+
+                      return (
                       <tr key={user.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div>
-                          <p className="font-medium text-gray-900">{user.full_name}</p>
-                          <p className="text-sm text-gray-600">{user.email}</p>
+                          <p className="font-medium text-gray-900">{user.full_name || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">{user.email || 'N/A'}</p>
                           {user.phone && (
                             <p className="text-xs text-gray-500 flex items-center mt-1">
                               <Phone className="h-3 w-3 mr-1" />
@@ -467,7 +482,7 @@ export default function UserManagementPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
-                          {user.role}
+                          {user.role || 'unknown'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -522,7 +537,8 @@ export default function UserManagementPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

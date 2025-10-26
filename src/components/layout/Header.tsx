@@ -52,13 +52,8 @@ export function Header() {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         <div className="flex items-center gap-4">
-          <img
-            src="/image.png"
-            alt="Mansa Logo"
-            className="h-10 w-auto object-contain"
-          />
           <h1 className="text-xl font-bold text-gray-900">
-            Mansa Resources <span className="text-gray-500 font-normal hidden md:inline">Gold Sales Management Solution</span>
+            Gold Sales Management Solutions
           </h1>
         </div>
 

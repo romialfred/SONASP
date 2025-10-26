@@ -146,3 +146,27 @@ BEGIN
     RAISE NOTICE 'User % not found in auth.users', 'romuald.tiegnan@gmail.com';
   END IF;
 END $$;
+
+-- Create profiles for ALL auth.users that don't have a profile yet
+-- This ensures that all authenticated users have a corresponding profile
+INSERT INTO user_profiles (
+  id,
+  email,
+  full_name,
+  role,
+  is_active
+)
+SELECT
+  au.id,
+  au.email,
+  COALESCE(au.raw_user_meta_data->>'full_name', split_part(au.email, '@', 1)),
+  COALESCE((au.raw_app_meta_data->>'role')::text, 'factory'),
+  true
+FROM auth.users au
+WHERE NOT EXISTS (
+  SELECT 1 FROM user_profiles up WHERE up.id = au.id
+)
+ON CONFLICT (id) DO UPDATE
+SET
+  email = EXCLUDED.email,
+  updated_at = now();

@@ -222,12 +222,10 @@ BEGIN
       can_read,
       can_write,
       can_delete,
-      can_approve,
       field_permissions
     ) VALUES (
       v_user_id,
       v_module_id,
-      true,
       true,
       true,
       true,
@@ -238,7 +236,6 @@ BEGIN
       can_read = true,
       can_write = true,
       can_delete = true,
-      can_approve = true,
       field_permissions = '{}'::jsonb,
       updated_at = now();
 

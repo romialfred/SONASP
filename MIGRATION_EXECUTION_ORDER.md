@@ -112,6 +112,7 @@
 - ✅ Fixed country codes ('Guinea' → 'GN', 'Côte d'Ivoire' → 'CI')
 - ✅ Fixed RAISE NOTICE syntax (wrapped in DO $$ block)
 - ✅ Fixed ON CONFLICT error on sites (changed to IF NOT EXISTS pattern)
+- ✅ Fixed gold_prices_daily column names (`london_am_usd` → `london_am_rate`, etc.)
 
 **Status:** ✅ FULLY FIXED - Ready to execute
 

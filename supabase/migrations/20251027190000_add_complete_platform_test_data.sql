@@ -81,10 +81,10 @@ BEGIN
 
       INSERT INTO gold_prices_daily (
         price_date,
-        london_am_usd,
-        london_pm_usd,
-        opening_price,
-        closing_price,
+        london_am_rate,
+        london_pm_rate,
+        spot_price,
+        average_price,
         high_price,
         low_price,
         source
@@ -92,8 +92,8 @@ BEGIN
         v_date,
         v_london_am,
         v_london_pm,
-        v_base_price - 2,
-        v_base_price + 3,
+        v_base_price,
+        (v_london_am + v_london_pm) / 2,
         v_london_pm + 5,
         v_base_price - 8,
         'Manual Test Data'

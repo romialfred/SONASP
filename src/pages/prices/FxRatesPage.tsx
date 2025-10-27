@@ -8,12 +8,13 @@ import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import {
   TrendingUp, TrendingDown, Download, RefreshCw, Plus,
-  Calendar, DollarSign, Search, Filter
+  Calendar, DollarSign, Search, Filter, BarChart
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
+import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 
-type TabType = 'daily' | 'monthly' | 'customer';
+type TabType = 'daily' | 'monthly' | 'customer' | 'analysis';
 
 interface FxRateSource {
   id: string;
@@ -459,13 +460,25 @@ export function FxRatesPage() {
               <DollarSign className="w-4 h-4 inline mr-2" />
               Customer Rates
             </button>
+            <button
+              onClick={() => setActiveTab('analysis')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'analysis'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <BarChart className="w-4 h-4 inline mr-2" />
+              FX Rate Analysis
+            </button>
           </nav>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Filters - Hide for Analysis tab */}
+        {activeTab !== 'analysis' && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField label="Currency Pair">
                 <Select
                   value={currencyFilter}
@@ -528,16 +541,20 @@ export function FxRatesPage() {
             </div>
           </CardContent>
         </Card>
+        )}
 
-        {/* Content */}
-        {loading ? (
+        {/* Analysis Tab Content */}
+        {activeTab === 'analysis' && <FxAnalysisTab />}
+
+        {/* Content - Hide for Analysis tab */}
+        {activeTab !== 'analysis' && loading ? (
           <Card>
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading rates...</p>
             </CardContent>
           </Card>
-        ) : (
+        ) : activeTab !== 'analysis' ? (
           <>
             {/* Daily Rates Tab */}
             {activeTab === 'daily' && (
@@ -714,7 +731,7 @@ export function FxRatesPage() {
               </Card>
             )}
           </>
-        )}
+        ) : null}
       </div>
 
       {/* Add Daily Rate Modal */}

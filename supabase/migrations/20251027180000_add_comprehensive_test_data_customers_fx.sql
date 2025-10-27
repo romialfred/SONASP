@@ -137,9 +137,15 @@ BEGIN
   SELECT id INTO v_london_id FROM customers WHERE email = 'trading@londonbullion.co.uk';
   SELECT id INTO v_hongkong_id FROM customers WHERE email = 'sales@hkmetals.hk';
 
-  -- Get source IDs
+  -- Get source IDs (if FX system is configured)
   SELECT id INTO v_ecb_source_id FROM fx_rate_sources WHERE code = 'ECB';
   SELECT id INTO v_revolut_source_id FROM fx_rate_sources WHERE code = 'REVOLUT';
+
+  -- Check if FX rates exist
+  IF v_ecb_source_id IS NULL THEN
+    RAISE NOTICE 'FX rate sources not found. Customer FX data will use default rates.';
+    RAISE NOTICE 'To use actual FX rates, run migration 20251027140000 first.';
+  END IF;
 
   -- Delete existing customer FX rates to avoid duplicates
   DELETE FROM customer_fx_rates WHERE transaction_date >= '2024-08-01';
@@ -149,6 +155,7 @@ BEGIN
   -- Aug 6: Auramet (worse than market - as per original example)
   v_date := '2024-08-06';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   SELECT rate INTO v_revolut_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_revolut_source_id LIMIT 1;
 
   INSERT INTO customer_fx_rates (customer_id, transaction_date, currency_pair, rate_paid, amount, market_rate, spread_percentage, reference_number, transaction_type, notes)
@@ -162,6 +169,7 @@ BEGIN
   -- Aug 8: Emirates (good rate)
   v_date := '2024-08-08';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0002;
   v_amount := 2250000.00;
 
@@ -175,6 +183,7 @@ BEGIN
   -- Aug 12: Swiss (excellent rate)
   v_date := '2024-08-12';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate + 0.0005;
   v_amount := 1890000.00;
 
@@ -188,6 +197,7 @@ BEGIN
   -- Aug 15: London (slightly worse)
   v_date := '2024-08-15';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0025;
   v_amount := 3100000.00;
 
@@ -201,6 +211,7 @@ BEGIN
   -- Aug 20: Hong Kong (moderate rate)
   v_date := '2024-08-20';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0012;
   v_amount := 1750000.00;
 
@@ -214,6 +225,7 @@ BEGIN
   -- Aug 27: African PM (competitive rate)
   v_date := '2024-08-27';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0006;
   v_amount := 980000.00;
 
@@ -229,6 +241,7 @@ BEGIN
   -- Sept 3: Auramet (very bad rate - loss scenario)
   v_date := '2024-09-03';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0068;
   v_amount := 3120000.00;
 
@@ -242,6 +255,7 @@ BEGIN
   -- Sept 6: Swiss (excellent rate again)
   v_date := '2024-09-06';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate + 0.0008;
   v_amount := 2890000.00;
 
@@ -255,6 +269,7 @@ BEGIN
   -- Sept 10: Emirates (good rate)
   v_date := '2024-09-10';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0003;
   v_amount := 2100000.00;
 
@@ -268,6 +283,7 @@ BEGIN
   -- Sept 13: London (bad rate)
   v_date := '2024-09-13';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0042;
   v_amount := 4200000.00;
 
@@ -281,6 +297,7 @@ BEGIN
   -- Sept 17: Hong Kong (moderate)
   v_date := '2024-09-17';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0015;
   v_amount := 2450000.00;
 
@@ -294,6 +311,7 @@ BEGIN
   -- Sept 24: African PM (good rate)
   v_date := '2024-09-24';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate + 0.0004;
   v_amount := 1350000.00;
 
@@ -309,6 +327,7 @@ BEGIN
   -- Oct 2: Swiss (best rate of the month)
   v_date := '2024-10-02';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate + 0.0010;
   v_amount := 3500000.00;
 
@@ -322,6 +341,7 @@ BEGIN
   -- Oct 6: Auramet (as per original example)
   v_date := '2024-10-06';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
 
   INSERT INTO customer_fx_rates (customer_id, transaction_date, currency_pair, rate_paid, amount, market_rate, spread_percentage, reference_number, transaction_type, notes)
   VALUES (
@@ -334,6 +354,7 @@ BEGIN
   -- Oct 10: Emirates (average rate)
   v_date := '2024-10-10';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0008;
   v_amount := 1980000.00;
 
@@ -347,6 +368,7 @@ BEGIN
   -- Oct 14: London (poor rate - warning scenario)
   v_date := '2024-10-14';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0055;
   v_amount := 5200000.00;
 
@@ -360,6 +382,7 @@ BEGIN
   -- Oct 18: Hong Kong (good rate)
   v_date := '2024-10-18';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0004;
   v_amount := 2800000.00;
 
@@ -373,6 +396,7 @@ BEGIN
   -- Oct 20: Auramet (as per original example - better rate)
   v_date := '2024-10-20';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
 
   INSERT INTO customer_fx_rates (customer_id, transaction_date, currency_pair, rate_paid, amount, market_rate, spread_percentage, reference_number, transaction_type, notes)
   VALUES (
@@ -385,6 +409,7 @@ BEGIN
   -- Oct 23: African PM (excellent rate)
   v_date := '2024-10-23';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate + 0.0007;
   v_amount := 1620000.00;
 
@@ -398,6 +423,7 @@ BEGIN
   -- Oct 28: Emirates (final transaction)
   v_date := '2024-10-28';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
+  v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
   v_customer_rate := v_ecb_rate - 0.0011;
   v_amount := 2340000.00;
 

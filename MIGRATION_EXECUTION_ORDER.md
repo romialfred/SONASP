@@ -116,6 +116,7 @@
 - ✅ Fixed batch status constraint violation ('shipped' → 'validated_for_transport')
 - ✅ Fixed NULL customer_id violation (added existence checks before sales insertion)
 - ✅ Fixed SQL quote escaping (`Côte d\'Ivoire` → `Côte d''Ivoire`)
+- ✅ Fixed NULL rate_paid violation in Migration 3 (added COALESCE for all FX rates)
 
 **Status:** ✅ FULLY FIXED - Ready to execute
 

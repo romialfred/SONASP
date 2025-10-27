@@ -611,20 +611,34 @@ export function UserManagement() {
   };
 
   const toggleFieldPermission = (moduleName: string, fieldName: string, permission: 'can_view' | 'can_edit') => {
+    console.log(`[Permissions] Toggling ${permission} for ${fieldName} in ${moduleName}`);
+
     setPermissions(prev => {
       const module = prev[moduleName];
+      if (!module) {
+        console.error(`[Permissions] Module ${moduleName} not found`);
+        return prev;
+      }
+
       const fieldPerms = module.field_permissions.map(fp =>
         fp.field_name === fieldName
           ? { ...fp, [permission]: !fp[permission] }
           : fp
       );
-      return {
+
+      const updated = {
         ...prev,
         [moduleName]: {
           ...module,
           field_permissions: fieldPerms
         }
       };
+
+      console.log(`[Permissions] Updated field permissions for ${fieldName}:`,
+        updated[moduleName].field_permissions.find(f => f.field_name === fieldName)
+      );
+
+      return updated;
     });
   };
 
@@ -742,13 +756,21 @@ export function UserManagement() {
   const ToggleSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
     <button
       type="button"
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-accent-600' : 'bg-gray-200'
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange();
+      }}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+        enabled
+          ? 'bg-emerald-600 focus:ring-emerald-500 hover:bg-emerald-700'
+          : 'bg-gray-300 focus:ring-gray-400 hover:bg-gray-400'
       }`}
+      aria-pressed={enabled}
+      aria-label={enabled ? 'Enabled' : 'Disabled'}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
           enabled ? 'translate-x-6' : 'translate-x-1'
         }`}
       />

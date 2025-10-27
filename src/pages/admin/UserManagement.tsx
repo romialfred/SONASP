@@ -653,8 +653,8 @@ export function UserManagement() {
   const columns = [
     {
       key: 'full_name',
-      label: 'Name',
-      render: (user: User) => {
+      label: 'NAME',
+      render: (_value: any, user: User) => {
         if (!user) return 'N/A';
         return (
           <div>
@@ -668,8 +668,8 @@ export function UserManagement() {
     },
     {
       key: 'role',
-      label: 'Role',
-      render: (user: User) => {
+      label: 'ROLE',
+      render: (_value: any, user: User) => {
         if (!user || !user.role) return 'N/A';
         return (
           <StatusBadge
@@ -681,13 +681,13 @@ export function UserManagement() {
     },
     {
       key: 'phone',
-      label: 'Phone',
-      render: (user: User) => (user && user.phone) ? user.phone : 'Not set',
+      label: 'PHONE',
+      render: (_value: any, user: User) => (user && user.phone) ? user.phone : 'Not set',
     },
     {
       key: 'is_active',
-      label: 'Status',
-      render: (user: User) => {
+      label: 'STATUS',
+      render: (_value: any, user: User) => {
         if (!user) return 'N/A';
         return (
           <StatusBadge
@@ -699,8 +699,8 @@ export function UserManagement() {
     },
     {
       key: 'last_login_at',
-      label: 'Last Login',
-      render: (user: User) => {
+      label: 'LAST LOGIN',
+      render: (_value: any, user: User) => {
         if (!user) return 'Never';
         return user.last_login_at
           ? new Date(user.last_login_at).toLocaleString()
@@ -709,8 +709,8 @@ export function UserManagement() {
     },
     {
       key: 'actions',
-      label: 'Actions',
-      render: (user: User) => {
+      label: 'ACTIONS',
+      render: (_value: any, user: User) => {
         if (!user) return null;
         return (
           <div className="flex gap-2">

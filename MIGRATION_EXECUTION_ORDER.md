@@ -24,7 +24,10 @@
 - FX Analysis dropdown requires `is_active` column
 - Customer listings use `company` field
 
-**Status:** ✅ Syntax error FIXED
+**Fixes applied:**
+- ✅ Fixed RAISE NOTICE syntax (wrapped in DO $$ block)
+
+**Status:** ✅ FULLY FIXED - Ready to execute
 
 ---
 
@@ -38,15 +41,20 @@
 - Adds `destination_refinery_id` foreign key
 - Adds `documents` JSONB column
 - Adds `updated_by` user reference
-- Creates `batch_details_enhanced` view
+- Creates `batch_details_enhanced` view with correct column mappings
 - Creates performance indexes
 
 **Why it's needed:**
 - Batch creation form sends these fields
 - Complete workflow tracking requires all transport stages
 - Document attachments support
+- Enhanced view for complete batch details with all relationships
 
-**Status:** ✅ Syntax error FIXED
+**Fixes applied:**
+- ✅ Fixed sites table column references (`location` → `address`, `type` → `site_type`)
+- ✅ Fixed RAISE NOTICE syntax (wrapped in DO $$ block)
+
+**Status:** ✅ FULLY FIXED - Ready to execute
 
 ---
 
@@ -99,7 +107,12 @@
 - Dashboard displays real metrics
 - All modules have working data
 
-**Status:** ✅ Syntax error FIXED
+**Fixes applied:**
+- ✅ Fixed sites table column references (`location` → `address`, `type` → `site_type`)
+- ✅ Fixed country codes ('Guinea' → 'GN', 'Côte d'Ivoire' → 'CI')
+- ✅ Fixed RAISE NOTICE syntax (wrapped in DO $$ block)
+
+**Status:** ✅ FULLY FIXED - Ready to execute
 
 ---
 

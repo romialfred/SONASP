@@ -22,14 +22,14 @@
 
 -- ============= SITES =============
 -- Ensure sites exist for batch tracking
-INSERT INTO sites (name, type, location, country, is_active) VALUES
-  ('Conakry Mine', 'mine', 'Conakry', 'Guinea', true),
-  ('Siguiri Mine', 'mine', 'Siguiri', 'Guinea', true),
-  ('Conakry International Airport', 'airport', 'Conakry', 'Guinea', true),
-  ('Abidjan Airport', 'airport', 'Abidjan', 'Côte d''Ivoire', true)
+INSERT INTO sites (name, site_type, address, country, is_active) VALUES
+  ('Conakry Mine', 'factory', 'Conakry', 'GN', true),
+  ('Siguiri Mine', 'factory', 'Siguiri', 'GN', true),
+  ('Conakry International Airport', 'airport', 'Conakry', 'GN', true),
+  ('Abidjan Airport', 'airport', 'Abidjan', 'CI', true)
 ON CONFLICT (name) DO UPDATE SET
-  type = EXCLUDED.type,
-  location = EXCLUDED.location,
+  site_type = EXCLUDED.site_type,
+  address = EXCLUDED.address,
   country = EXCLUDED.country,
   is_active = EXCLUDED.is_active;
 

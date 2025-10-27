@@ -127,12 +127,12 @@ SELECT
 
   -- Origin site details
   os.name as origin_site_name,
-  os.location as origin_site_location,
+  os.address as origin_site_location,
   os.country as origin_site_country,
 
   -- Current site details
   cs.name as current_site_name,
-  cs.location as current_site_location,
+  cs.address as current_site_location,
 
   -- Mine to airport transport
   mt.id as mine_transport_id,

@@ -188,23 +188,25 @@ BEGIN
   RAISE NOTICE 'Deleted existing permissions';
 
   -- Ensure all standard modules exist
-  INSERT INTO modules (name, category, is_active)
+  INSERT INTO modules (name, display_name, description, category, is_active)
   VALUES
-    ('batches', 'operations', true),
-    ('shipping', 'operations', true),
-    ('receiving', 'operations', true),
-    ('refining', 'operations', true),
-    ('sales', 'sales', true),
-    ('customers', 'sales', true),
-    ('payments', 'finance', true),
-    ('gold_prices', 'analytics', true),
-    ('fx_rates', 'analytics', true),
-    ('reports', 'analytics', true),
-    ('analytics', 'analytics', true),
-    ('users', 'admin', true),
-    ('settings', 'admin', true),
-    ('audit_trail', 'admin', true)
+    ('batches', 'Batches', 'Batch management and tracking', 'operations', true),
+    ('shipping', 'Shipping', 'Shipping operations', 'operations', true),
+    ('receiving', 'Receiving', 'Receiving operations', 'operations', true),
+    ('refining', 'Refining', 'Refining processes', 'operations', true),
+    ('sales', 'Sales', 'Sales management', 'sales', true),
+    ('customers', 'Customers', 'Customer management', 'sales', true),
+    ('payments', 'Payments', 'Payment processing', 'finance', true),
+    ('gold_prices', 'Gold Prices', 'Gold price tracking', 'analytics', true),
+    ('fx_rates', 'FX Rates', 'Foreign exchange rates', 'analytics', true),
+    ('reports', 'Reports', 'Report generation', 'analytics', true),
+    ('analytics', 'Analytics', 'Analytics dashboard', 'analytics', true),
+    ('users', 'Users', 'User management', 'admin', true),
+    ('settings', 'Settings', 'System settings', 'admin', true),
+    ('audit_trail', 'Audit Trail', 'Audit trail and logs', 'admin', true)
   ON CONFLICT (name) DO UPDATE SET
+    display_name = EXCLUDED.display_name,
+    description = EXCLUDED.description,
     is_active = true,
     updated_at = now();
 

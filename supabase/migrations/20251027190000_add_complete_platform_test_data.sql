@@ -269,6 +269,18 @@ BEGIN
   SELECT id INTO v_batch_id FROM batches WHERE batch_number = 'GN-20240925-001';
   SELECT id INTO v_user_id FROM user_profiles LIMIT 1;
 
+  -- Check if we have required data before proceeding
+  IF v_customer_id IS NULL THEN
+    RAISE NOTICE 'Skipping sales creation: Customer not found (trading@auramet.com)';
+    RAISE NOTICE 'Please ensure migration 20251027180000 has been executed first';
+    RETURN;
+  END IF;
+
+  IF v_batch_id IS NULL THEN
+    RAISE NOTICE 'Skipping sales creation: Batch GN-20240925-001 not found';
+    RETURN;
+  END IF;
+
   -- Get a recent gold price
   SELECT london_am_rate INTO v_london_am FROM gold_prices_daily
   WHERE price_date <= '2024-09-30' ORDER BY price_date DESC LIMIT 1;
@@ -315,15 +327,17 @@ BEGIN
   SELECT id INTO v_customer_id FROM customers WHERE email = 'contact@swissgold.ch';
   SELECT id INTO v_batch_id FROM batches WHERE batch_number = 'GN-20241005-001';
 
-  v_quantity := 1000.00;
-  v_freight := 4500.00;
-  v_other_costs := 2000.00;
-  v_gross := v_quantity * v_london_am;
-  v_net := v_gross - v_freight - v_other_costs;
-  v_royalties := v_net * 0.03;
-  v_final := v_net - v_royalties;
+  -- Check if customer exists for sale 2
+  IF v_customer_id IS NOT NULL AND v_batch_id IS NOT NULL THEN
+    v_quantity := 1000.00;
+    v_freight := 4500.00;
+    v_other_costs := 2000.00;
+    v_gross := v_quantity * v_london_am;
+    v_net := v_gross - v_freight - v_other_costs;
+    v_royalties := v_net * 0.03;
+    v_final := v_net - v_royalties;
 
-  INSERT INTO sales (
+    INSERT INTO sales (
     sale_number, customer_id, batch_id, quantity_oz, london_am_rate,
     freight_cost, other_costs, gross_proceeds, net_proceeds,
     royalties, final_proceeds, status, created_by, created_at
@@ -332,8 +346,11 @@ BEGIN
     v_freight, v_other_costs, v_gross, v_net, v_royalties, v_final,
     'pending', v_user_id, NOW()
   ) ON CONFLICT (sale_number) DO NOTHING;
+  ELSE
+    RAISE NOTICE 'Skipping sale 2: Customer or batch not found';
+  END IF;
 
-  RAISE NOTICE 'Added 2 sales transactions';
+  RAISE NOTICE 'Sales transactions processing completed';
 END $$;
 
 -- ============= NOTIFICATIONS =============

@@ -395,8 +395,8 @@ export function UserManagement() {
             if (perm.field_permissions && typeof perm.field_permissions === 'object') {
               fieldPerms = Object.entries(perm.field_permissions).map(([fieldName, fieldPerm]: [string, any]) => ({
                 field_name: fieldName,
-                can_view: fieldPerm.can_view || false,
-                can_edit: fieldPerm.can_edit || false,
+                can_view: fieldPerm.can_view || fieldPerm.read || false,
+                can_edit: fieldPerm.can_edit || fieldPerm.write || false,
               }));
             }
 

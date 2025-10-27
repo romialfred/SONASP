@@ -8,16 +8,17 @@ export async function withTimeout<T>(
   ms = 8000,
   label = 'operation'
 ): Promise<T> {
+  let timer: NodeJS.Timeout;
+
   const timeoutPromise = new Promise<T>((_, reject) => {
-    const timer = setTimeout(() => {
+    timer = setTimeout(() => {
       reject(new Error(`${label} timed out after ${ms}ms`));
     }, ms);
-
-    // Ensure timer is cleared if main promise resolves first
-    promise.finally(() => clearTimeout(timer));
   });
 
-  return Promise.race([promise, timeoutPromise]);
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
 /**

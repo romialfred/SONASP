@@ -115,6 +115,7 @@
 - ✅ Fixed gold_prices_daily column names (`london_am_usd` → `london_am_rate`, etc.)
 - ✅ Fixed batch status constraint violation ('shipped' → 'validated_for_transport')
 - ✅ Fixed NULL customer_id violation (added existence checks before sales insertion)
+- ✅ Fixed SQL quote escaping (`Côte d\'Ivoire` → `Côte d''Ivoire`)
 
 **Status:** ✅ FULLY FIXED - Ready to execute
 

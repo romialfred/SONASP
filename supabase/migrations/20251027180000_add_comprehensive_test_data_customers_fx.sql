@@ -66,7 +66,7 @@ INSERT INTO customers (name, email, phone, company, country, address, contact_pe
     'info@africanpm.ci',
     '+225-27-555-0400',
     'APM Group CI',
-    'Côte d\'Ivoire',
+    'Côte d''Ivoire',
     'Boulevard Latrille, Abidjan',
     'Kofi Mensah',
     'Net 30 days',

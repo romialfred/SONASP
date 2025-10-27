@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grant Admin Access</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .container {
+      background: #f5f5f5;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .log {
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+    }
+    .success {
+      color: #4CAF50;
+    }
+    .error {
+      color: #f44336;
+    }
+    .info {
+      color: #2196F3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Grant Admin Access</h1>
+    <p>This script will grant full administrative access to <strong>romuald.tiegnan@gmail.com</strong></p>
+
+    <div>
+      <p><strong>What this will do:</strong></p>
+      <ol>
+        <li>Update user role to "management"</li>
+        <li>Set user as active</li>
+        <li>Grant full permissions (read, write, delete, approve) to all modules</li>
+      </ol>
+    </div>
+
+    <button id="grantBtn" onclick="grantAccess()">Grant Full Access</button>
+
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://boolqagzdqbahqnpawpb.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvb2xxYWd6ZHFiYWhxbnBhd3BiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDMwMTAsImV4cCI6MjA3NjkxOTAxMH0.Dpxbwxfovgs9mghh55eVNhS0NNuJ4GiAO857jVxnstE';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      logDiv.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+
+    async function grantAccess() {
+      const btn = document.getElementById('grantBtn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      document.getElementById('log').innerHTML = '';
+      log('Starting admin access grant process...', 'info');
+
+      try {
+        const email = 'romuald.tiegnan@gmail.com';
+
+        // Step 1: Find the user
+        log(`Looking for user: ${email}`, 'info');
+        const { data: user, error: userError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (userError) {
+          throw new Error(`User not found: ${userError.message}`);
+        }
+
+        if (!user) {
+          throw new Error('User not found. Please ensure the user has logged in at least once.');
+        }
+
+        log(`✓ Found user: ${user.id}`, 'success');
+        log(`  Current role: ${user.role}`, 'info');
+        log(`  Current status: ${user.is_active ? 'Active' : 'Inactive'}`, 'info');
+
+        // Step 2: Update user to management role
+        log('Updating user to management role...', 'info');
+        const { data: updatedUser, error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            role: 'management',
+            is_active: true,
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          throw new Error(`Failed to update user: ${updateError.message}`);
+        }
+
+        log('✓ User updated successfully', 'success');
+        log(`  New role: ${updatedUser.role}`, 'info');
+
+        // Step 3: Get all modules
+        log('Fetching all modules...', 'info');
+        const { data: modules, error: modulesError } = await supabase
+          .from('modules')
+          .select('id, name, display_name')
+          .eq('is_active', true);
+
+        if (modulesError) {
+          throw new Error(`Failed to fetch modules: ${modulesError.message}`);
+        }
+
+        log(`✓ Found ${modules.length} active modules`, 'success');
+
+        // Step 4: Delete existing permissions
+        log('Removing existing permissions...', 'info');
+        const { error: deleteError } = await supabase
+          .from('user_permissions')
+          .delete()
+          .eq('user_id', user.id);
+
+        if (deleteError && deleteError.code !== 'PGRST116') { // PGRST116 = no rows found (ok)
+          log(`Warning: ${deleteError.message}`, 'error');
+        } else {
+          log('✓ Existing permissions cleared', 'success');
+        }
+
+        // Step 5: Grant full permissions to all modules
+        log('Granting full permissions to all modules...', 'info');
+
+        const permissions = modules.map(module => ({
+          user_id: user.id,
+          module_id: module.id,
+          can_read: true,
+          can_write: true,
+          can_delete: true,
+          can_approve: true,
+          field_permissions: {},
+        }));
+
+        const { data: insertedPerms, error: permError } = await supabase
+          .from('user_permissions')
+          .insert(permissions)
+          .select();
+
+        if (permError) {
+          throw new Error(`Failed to grant permissions: ${permError.message}`);
+        }
+
+        log(`✓ Granted full access to ${insertedPerms.length} modules`, 'success');
+
+        // List granted modules
+        modules.forEach(module => {
+          log(`  ✓ ${module.display_name || module.name}`, 'info');
+        });
+
+        log('\n========================================', 'success');
+        log('SUCCESS! Full admin access granted', 'success');
+        log('========================================', 'success');
+        log('Please refresh the page and log in again.', 'info');
+
+        btn.textContent = 'Completed!';
+        btn.style.background = '#4CAF50';
+
+      } catch (error) {
+        log(`\n✗ ERROR: ${error.message}`, 'error');
+        btn.textContent = 'Grant Full Access';
+        btn.disabled = false;
+        btn.style.background = '#f44336';
+      }
+    }
+  </script>
+</body>
+</html>

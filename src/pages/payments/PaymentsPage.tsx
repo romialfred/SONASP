@@ -72,17 +72,25 @@ export function PaymentsPage() {
 
       // Then fetch related sales data
       const saleIds = [...new Set(paymentsData.map(p => p.sale_id).filter(Boolean))];
-      const { data: salesData } = await supabase
-        .from('sales')
-        .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
-        .in('id', saleIds);
+      let salesData = null;
+      if (saleIds.length > 0) {
+        const { data } = await supabase
+          .from('sales')
+          .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
+          .in('id', saleIds);
+        salesData = data;
+      }
 
       // Then fetch related customers data from sales
       const customerIds = [...new Set(salesData?.map(s => s.customer_id).filter(Boolean) || [])];
-      const { data: customersData } = await supabase
-        .from('customers')
-        .select('id, name, email, phone, country, contact_person')
-        .in('id', customerIds);
+      let customersData = null;
+      if (customerIds.length > 0) {
+        const { data } = await supabase
+          .from('customers')
+          .select('id, name, email, phone, country, contact_person')
+          .in('id', customerIds);
+        customersData = data;
+      }
 
       // Create lookup maps
       const salesMap = new Map(salesData?.map(s => [s.id, s]) || []);
@@ -91,8 +99,8 @@ export function PaymentsPage() {
       const processedPayments = paymentsData
         .filter((payment: any) => payment && payment.id) // Filter out invalid payments
         .map((payment: any) => {
-        const sale = salesMap.get(payment.sale_id) || {} as any;
-        const customer = customersMap.get(sale.customer_id) || {} as any;
+        const sale = salesMap.get(payment.sale_id) || null;
+        const customer = sale ? customersMap.get(sale.customer_id) || null : null;
 
         // Calculate due date (expected date + 30 days grace period)
         const dueDate = payment.expected_date
@@ -117,20 +125,20 @@ export function PaymentsPage() {
         return {
           id: payment.id,
           sale_id: payment.sale_id,
-          customer_id: sale.customer_id || '',
+          customer_id: sale?.customer_id || '',
           invoice_number: `INV-${payment.id.slice(0, 8).toUpperCase()}`,
           expected_date: payment.expected_date,
           actual_date: payment.actual_date,
           due_date: dueDate,
-          amount: payment.amount,
-          currency: payment.currency,
+          amount: payment.amount || 0,
+          currency: payment.currency || 'USD',
           fx_rate: payment.fx_rate || 1,
           payment_method: payment.bank_name || 'Bank Transfer',
-          status: payment.status,
-          sale_number: sale.sale_number || 'N/A',
-          customer_name: customer.name || 'N/A',
-          customer_email: customer.email || 'N/A',
-          company_name: customer.contact_person || customer.name || 'N/A',
+          status: payment.status || 'pending',
+          sale_number: sale?.sale_number || 'N/A',
+          customer_name: customer?.name || 'Unknown Customer',
+          customer_email: customer?.email || 'N/A',
+          company_name: customer?.contact_person || customer?.name || 'N/A',
           payment_status_category: paymentStatusCategory,
           days_overdue: daysOverdue && daysOverdue > 0 ? daysOverdue : null,
           document_count: 0,
@@ -142,7 +150,9 @@ export function PaymentsPage() {
       setPayments(processedPayments);
     } catch (error: any) {
       console.error('Error fetching payments:', error);
-      addToast('Failed to load payments', 'error');
+      const errorMessage = error?.message || 'Unknown error occurred';
+      addToast(`Failed to load payments: ${errorMessage}`, 'error');
+      setPayments([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

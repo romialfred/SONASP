@@ -17,20 +17,20 @@ import { useToast } from '@/components/ui/Toast';
 interface Payment {
   id: string;
   sale_id: string;
-  customer_id: string;
-  invoice_number: string;
+  customer_id: string; // Derived from sale
+  invoice_number: string; // Derived/generated
   expected_date: string;
   actual_date: string | null;
-  due_date: string | null;
+  due_date: string | null; // Calculated from expected_date
   amount: number;
   currency: string;
   fx_rate: number;
-  payment_method: string;
+  payment_method: string; // Derived from bank_name or reference
   status: string;
-  sale_number: string;
-  customer_name: string;
-  customer_email: string;
-  company_name: string;
+  sale_number: string; // From sale
+  customer_name: string; // From customer
+  customer_email: string; // From customer
+  company_name: string; // From customer
   payment_status_category: string;
   days_overdue: number | null;
   document_count: number;
@@ -77,11 +77,8 @@ export function PaymentsPage() {
         .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
         .in('id', saleIds);
 
-      // Then fetch related customers data
-      const customerIds = [...new Set([
-        ...(paymentsData.map(p => p.customer_id).filter(Boolean)),
-        ...(salesData?.map(s => s.customer_id).filter(Boolean) || [])
-      ])];
+      // Then fetch related customers data from sales
+      const customerIds = [...new Set(salesData?.map(s => s.customer_id).filter(Boolean) || [])];
       const { data: customersData } = await supabase
         .from('customers')
         .select('id, name, email, phone, country, contact_person')
@@ -92,43 +89,48 @@ export function PaymentsPage() {
       const customersMap = new Map(customersData?.map(c => [c.id, c]) || []);
 
       const processedPayments = paymentsData.map((payment: any) => {
-        const sale = salesMap.get(payment.sale_id) || {};
-        const customer = customersMap.get(payment.customer_id || sale.customer_id) || {};
+        const sale = salesMap.get(payment.sale_id) || {} as any;
+        const customer = customersMap.get(sale.customer_id) || {} as any;
 
-        const daysOverdue = payment.due_date
-          ? Math.floor((new Date().getTime() - new Date(payment.due_date).getTime()) / (1000 * 60 * 60 * 24))
+        // Calculate due date (expected date + 30 days grace period)
+        const dueDate = payment.expected_date
+          ? new Date(new Date(payment.expected_date).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          : null;
+
+        const daysOverdue = dueDate
+          ? Math.floor((new Date().getTime() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24))
           : null;
 
         let paymentStatusCategory = 'unknown';
-        if (payment.status === 'completed' || payment.status === 'verified' || payment.status === 'approved') {
+        if (payment.status === 'approved') {
           paymentStatusCategory = 'paid';
-        } else if ((payment.status === 'pending' || payment.status === 'submitted') && daysOverdue && daysOverdue > 0) {
+        } else if (payment.status === 'pending' && daysOverdue && daysOverdue > 0) {
           paymentStatusCategory = 'overdue';
-        } else if (payment.status === 'pending' || payment.status === 'submitted' || payment.status === 'under_review') {
+        } else if (payment.status === 'pending') {
           paymentStatusCategory = 'pending';
-        } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+        } else if (payment.status === 'rejected') {
           paymentStatusCategory = 'rejected';
         }
 
         return {
           id: payment.id,
           sale_id: payment.sale_id,
-          customer_id: payment.customer_id || sale.customer_id,
-          invoice_number: payment.invoice_number || `INV-${payment.id.slice(0, 8)}`,
+          customer_id: sale.customer_id || '',
+          invoice_number: `INV-${payment.id.slice(0, 8).toUpperCase()}`,
           expected_date: payment.expected_date,
           actual_date: payment.actual_date,
-          due_date: payment.due_date,
+          due_date: dueDate,
           amount: payment.amount,
           currency: payment.currency,
-          fx_rate: payment.fx_rate,
-          payment_method: payment.payment_method,
+          fx_rate: payment.fx_rate || 1,
+          payment_method: payment.bank_name || 'Bank Transfer',
           status: payment.status,
-          sale_number: sale.sale_number,
+          sale_number: sale.sale_number || 'N/A',
           customer_name: customer.name || 'N/A',
           customer_email: customer.email || 'N/A',
           company_name: customer.contact_person || customer.name || 'N/A',
           payment_status_category: paymentStatusCategory,
-          days_overdue: daysOverdue,
+          days_overdue: daysOverdue && daysOverdue > 0 ? daysOverdue : null,
           document_count: 0,
           proof_count: payment.proof_url ? 1 : 0,
           created_at: payment.created_at,

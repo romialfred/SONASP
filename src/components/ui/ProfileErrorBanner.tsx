@@ -19,16 +19,17 @@ export function ProfileErrorBanner() {
     }
   }, [profileError]);
 
-  // Don't show if no error, dismissed, or if we have full profile data
-  if (!profileError || dismissed) {
+  // Don't show if no error or dismissed
+  if (!profileError || dismissed || !user) {
     return null;
   }
 
-  // Check if we're using fallback profile (missing certain fields that should exist in full profile)
-  const isUsingFallback = user && (!user.created_at || user.email === 'user@example.com');
+  // Only show if the error explicitly indicates we're using fallback
+  // Check if the profile error is about using defaults (not just any error)
+  const isFallbackError = profileError.includes('account defaults') || profileError.includes('full profile');
 
-  if (!isUsingFallback) {
-    // We have a full profile, don't show banner
+  if (!isFallbackError) {
+    // Not a fallback error, don't show banner
     return null;
   }
 

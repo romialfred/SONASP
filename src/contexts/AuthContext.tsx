@@ -423,7 +423,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading: false,
             initialized: true,
             profileLoading: false, // Don't block on profile loading
-            profileError: null,
+            profileError: null, // Clear any previous errors
           }));
 
           // Start session manager immediately

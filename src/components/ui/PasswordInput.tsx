@@ -7,13 +7,13 @@ const PasswordInput = forwardRef<HTMLInputElement, InputProps>(
   ({ className, error, success, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
 
-    const baseStyles = 'flex w-full rounded-lg border px-3 py-2 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10';
+    const baseStyles = 'flex w-full rounded-lg border px-3 py-2 text-sm transition-all placeholder:text-gray-500 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10 bg-gray-800/40 backdrop-blur-sm text-white';
 
     const stateStyles = error
-      ? 'border-red-500 focus:ring-red-500'
+      ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-400'
       : success
-      ? 'border-accent-500 focus:ring-accent-500'
-      : 'border-gray-300 focus:ring-primary-500';
+      ? 'border-green-500/50 focus:ring-green-500/50 focus:border-green-400'
+      : 'border-gray-600/50 focus:ring-amber-500/50 focus:border-amber-400/50 hover:border-gray-500/70';
 
     return (
       <div className="relative">
@@ -26,7 +26,7 @@ const PasswordInput = forwardRef<HTMLInputElement, InputProps>(
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-400 transition-colors"
           tabIndex={-1}
         >
           {showPassword ? (

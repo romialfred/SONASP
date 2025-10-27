@@ -72,11 +72,36 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Granite texture background */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900"
+        style={{
+          backgroundImage: `
+            url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.25'/%3E%3C/svg%3E"),
+            radial-gradient(circle at 20% 30%, rgba(139, 116, 96, 0.15), transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(120, 100, 80, 0.1), transparent 40%)
+          `,
+          backgroundBlendMode: 'overlay, normal, normal',
+        }}
+      />
+
+      {/* Subtle golden veins pattern */}
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `
+            repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(184, 134, 11, 0.3) 35px, rgba(184, 134, 11, 0.3) 36px),
+            repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(184, 134, 11, 0.2) 35px, rgba(184, 134, 11, 0.2) 36px)
+          `,
+        }}
+      />
+
+      {/* Language toggle with glass effect */}
+      <div className="absolute top-4 right-4 z-20">
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg hover:bg-white/20 transition-all text-white"
         >
           <Globe className="h-4 w-4" />
           <span className="text-sm font-medium">
@@ -85,24 +110,47 @@ export function Login() {
         </button>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center">
+      {/* Engraved card with glass morphism */}
+      <div className="w-full max-w-md relative z-10">
+        {/* Outer shadow for depth */}
+        <div className="absolute inset-0 bg-black/40 rounded-2xl blur-2xl transform translate-y-4"></div>
+
+        {/* Engraved effect container */}
+        <div className="relative bg-gradient-to-br from-gray-800/60 via-gray-900/60 to-gray-800/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+          {/* Inner shadow for engraved effect */}
+          <div className="absolute inset-0 rounded-2xl shadow-inner pointer-events-none" style={{
+            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6), inset 0 -2px 8px rgba(255,255,255,0.05)'
+          }}></div>
+
+          {/* Gold accent top border */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
+
+          <Card className="bg-transparent border-0 shadow-none">
+        <CardHeader className="text-center relative">
           <div className="flex justify-center mb-4">
-            <img
-              src="/image.png"
-              alt="Mansa Logo"
-              className="h-24 w-auto object-contain"
-            />
+            <div className="relative">
+              {/* Glow effect around logo */}
+              <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full"></div>
+              <img
+                src="/image.png"
+                alt="Mansa Logo"
+                className="h-24 w-auto object-contain relative z-10 drop-shadow-2xl"
+              />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Mansa Gold Tracker</CardTitle>
-          <CardDescription>Gold Sales Management Solution - {t('auth.login')}</CardDescription>
+          <CardTitle className="text-2xl text-white font-bold tracking-wide drop-shadow-lg">
+            Mansa Gold Tracker
+          </CardTitle>
+          <CardDescription className="text-gray-300 mt-2 font-medium">
+            Gold Sales Management Solution - {t('auth.login')}
+          </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="relative">
           <form onSubmit={handleSubmit} className="space-y-4">
             {errors.general && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-800">{errors.general}</p>
+              <div className="p-3 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-lg">
+                <p className="text-sm text-red-200 font-medium">{errors.general}</p>
               </div>
             )}
 
@@ -151,19 +199,19 @@ export function Login() {
             )}
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-gray-500 bg-gray-800/50 text-amber-500 focus:ring-amber-500 focus:ring-offset-gray-800"
                 />
-                <span className="text-sm text-gray-700">{t('auth.rememberMe')}</span>
+                <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{t('auth.rememberMe')}</span>
               </label>
 
               <a
                 href="/forgot-password"
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                className="text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
               >
                 {t('auth.forgotPassword')}
               </a>
@@ -182,7 +230,7 @@ export function Login() {
               <button
                 type="button"
                 onClick={() => setShowTwoFactor(true)}
-                className="w-full text-sm text-gray-600 hover:text-gray-800"
+                className="w-full text-sm text-gray-400 hover:text-amber-400 transition-colors"
               >
                 Enable 2FA for this login
               </button>
@@ -190,6 +238,8 @@ export function Login() {
           </form>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }

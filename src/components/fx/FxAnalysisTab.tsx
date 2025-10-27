@@ -13,6 +13,7 @@ export function FxAnalysisTab() {
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [startDate, setStartDate] = useState('2024-08-01');
   const [endDate, setEndDate] = useState('2024-10-31');
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<FxAnalysisResult[]>([]);
   const [summary, setSummary] = useState<{
@@ -28,6 +29,14 @@ export function FxAnalysisTab() {
   useEffect(() => {
     loadCustomers();
   }, []);
+
+  useEffect(() => {
+    // Auto-load analysis when customer is selected (only on initial load)
+    if (selectedCustomer && startDate && endDate && !initialLoadDone) {
+      setInitialLoadDone(true);
+      runAnalysis();
+    }
+  }, [selectedCustomer, initialLoadDone]);
 
   const loadCustomers = async () => {
     const { data, error } = await supabase
@@ -384,7 +393,7 @@ export function FxAnalysisTab() {
       )}
 
       {/* No Results Message */}
-      {!loading && analysisResults.length === 0 && selectedCustomer && (
+      {!loading && analysisResults.length === 0 && initialLoadDone && (
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-gray-500">
@@ -392,6 +401,18 @@ export function FxAnalysisTab() {
               <br />
               Try selecting a different customer or adjusting the date range.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Initial Loading State */}
+      {loading && !initialLoadDone && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+              <p className="text-gray-500">Loading FX analysis data...</p>
+            </div>
           </CardContent>
         </Card>
       )}

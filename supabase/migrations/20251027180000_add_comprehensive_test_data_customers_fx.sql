@@ -9,7 +9,7 @@
 
   2. Data Added
     - 6 active customers with complete profiles
-    - 25+ customer FX transactions spanning Aug-Oct 2024
+    - 18 customer FX transactions spanning Aug-Oct 2024
     - Realistic amounts and rates
     - Mix of good and bad rates for analysis
 
@@ -152,11 +152,10 @@ BEGIN
 
   -- ============= AUGUST 2024 TRANSACTIONS =============
 
-  -- Aug 6: Auramet (worse than market - as per original example)
+  -- Aug 6: Auramet (worse than market)
   v_date := '2024-08-06';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
   v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);
-  SELECT rate INTO v_revolut_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_revolut_source_id LIMIT 1;
 
   INSERT INTO customer_fx_rates (customer_id, transaction_date, currency_pair, rate_paid, amount, market_rate, spread_percentage, reference_number, transaction_type, notes)
   VALUES (
@@ -393,7 +392,7 @@ BEGIN
     'HKM-2024-10-001', 'payment', 'Competitive rate achieved'
   );
 
-  -- Oct 20: Auramet (as per original example - better rate)
+  -- Oct 20: Auramet (better rate)
   v_date := '2024-10-20';
   SELECT rate INTO v_ecb_rate FROM fx_rates_daily WHERE rate_date = v_date AND currency_pair = 'EUR/USD' AND source_id = v_ecb_source_id LIMIT 1;
   v_ecb_rate := COALESCE(v_ecb_rate, 0.9200);

@@ -22,15 +22,15 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     children,
     ...props
   }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg';
+    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variantStyles = {
-      primary: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 focus:ring-amber-500/50 shadow-amber-500/20',
-      secondary: 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 focus:ring-gray-500/50',
-      success: 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 focus:ring-green-500/50',
-      danger: 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus:ring-red-500/50',
-      ghost: 'bg-transparent hover:bg-white/10 text-gray-300 focus:ring-gray-500/50 shadow-none',
-      outline: 'bg-transparent border-2 border-gray-600/50 text-gray-300 hover:bg-white/5 hover:border-amber-500/50 focus:ring-amber-500/50',
+      primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500',
+      secondary: 'bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500',
+      success: 'bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-500',
+      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+      ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
+      outline: 'bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
     };
 
     const sizeStyles = {

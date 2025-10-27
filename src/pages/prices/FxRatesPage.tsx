@@ -1,92 +1,902 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Loading } from '@/components/ui/Loading';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import { FormField } from '@/components/ui/FormField';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import {
+  TrendingUp, TrendingDown, Download, RefreshCw, Plus,
+  Calendar, DollarSign, Search, Filter
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { LineChartWidget } from '@/components/charts/LineChartWidget';
 
-interface FxRate {
+type TabType = 'daily' | 'monthly' | 'customer';
+
+interface FxRateSource {
   id: string;
-  date: string;
-  currency_code: string;
-  rate_to_usd: number;
+  name: string;
+  code: string;
+  is_active: boolean;
 }
 
+interface DailyRate {
+  id: string;
+  rate_date: string;
+  currency_pair: string;
+  source_id: string;
+  source_name?: string;
+  rate: number;
+  bid_rate: number | null;
+  ask_rate: number | null;
+  spread: number | null;
+  notes: string | null;
+}
+
+interface MonthlyRate {
+  id: string;
+  year: number;
+  month: number;
+  currency_pair: string;
+  source_id: string;
+  source_name?: string;
+  avg_rate: number;
+  min_rate: number;
+  max_rate: number;
+  opening_rate: number;
+  closing_rate: number;
+  data_points: number;
+}
+
+interface CustomerRate {
+  id: string;
+  customer_id: string;
+  customer_name?: string;
+  transaction_date: string;
+  currency_pair: string;
+  rate_paid: number;
+  amount: number;
+  market_rate: number | null;
+  spread_percentage: number | null;
+  reference_number: string | null;
+}
+
+const CURRENCY_PAIRS = [
+  { value: 'EUR/USD', label: 'EUR/USD - Euro to US Dollar' },
+  { value: 'USD/XOF', label: 'USD/XOF - US Dollar to West African CFA' },
+  { value: 'USD/GNF', label: 'USD/GNF - US Dollar to Guinean Franc' },
+  { value: 'EUR/GNF', label: 'EUR/GNF - Euro to Guinean Franc' },
+  { value: 'XOF/GNF', label: 'XOF/GNF - West African CFA to Guinean Franc' },
+];
+
 export function FxRatesPage() {
-  const [fxRates, setFxRates] = useState<FxRate[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [sources, setSources] = useState<FxRateSource[]>([]);
+  const [dailyRates, setDailyRates] = useState<DailyRate[]>([]);
+  const [monthlyRates, setMonthlyRates] = useState<MonthlyRate[]>([]);
+  const [customerRates, setCustomerRates] = useState<CustomerRate[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showCustomerRateModal, setShowCustomerRateModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Filters
+  const [currencyFilter, setCurrencyFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [customerFilter, setCustomerFilter] = useState<string>('all');
+
+  // Form data for adding rates
+  const [dailyFormData, setDailyFormData] = useState({
+    rate_date: new Date().toISOString().split('T')[0],
+    currency_pair: 'EUR/USD',
+    source_id: '',
+    rate: '',
+    bid_rate: '',
+    ask_rate: '',
+    notes: '',
+  });
+
+  const [customerFormData, setCustomerFormData] = useState({
+    customer_id: '',
+    transaction_date: new Date().toISOString().split('T')[0],
+    currency_pair: 'EUR/USD',
+    rate_paid: '',
+    amount: '',
+    market_rate: '',
+    reference_number: '',
+    notes: '',
+  });
 
   useEffect(() => {
-    async function fetchFxRates() {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('fx_rates')
-          .select('id, date, currency_code, rate_to_usd')
-          .order('date', { ascending: false })
-          .limit(100);
+    loadData();
+  }, [activeTab]);
 
-        if (!error && data) {
-          setFxRates(data);
-        }
-      } catch (error) {
-        console.error('Error fetching FX rates:', error);
-      } finally {
-        setLoading(false);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadSources(),
+        activeTab === 'daily' && loadDailyRates(),
+        activeTab === 'monthly' && loadMonthlyRates(),
+        activeTab === 'customer' && loadCustomerRates(),
+        activeTab === 'customer' && loadCustomers(),
+      ].filter(Boolean));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSources = async () => {
+    const { data, error } = await supabase
+      .from('fx_rate_sources')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+
+    if (!error && data) {
+      setSources(data);
+      if (data.length > 0 && !dailyFormData.source_id) {
+        setDailyFormData(prev => ({ ...prev, source_id: data[0].id }));
       }
     }
+  };
 
-    fetchFxRates();
-  }, []);
+  const loadDailyRates = async () => {
+    let query = supabase
+      .from('fx_rates_daily')
+      .select(`
+        *,
+        fx_rate_sources!inner(name, code)
+      `)
+      .order('rate_date', { ascending: false })
+      .limit(100);
+
+    if (currencyFilter !== 'all') {
+      query = query.eq('currency_pair', currencyFilter);
+    }
+    if (sourceFilter !== 'all') {
+      query = query.eq('source_id', sourceFilter);
+    }
+    if (dateFilter) {
+      query = query.eq('rate_date', dateFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setDailyRates(data.map(rate => ({
+        ...rate,
+        source_name: rate.fx_rate_sources?.name || 'Unknown',
+      })));
+    }
+  };
+
+  const loadMonthlyRates = async () => {
+    let query = supabase
+      .from('fx_rates_monthly_aggregated')
+      .select(`
+        *,
+        fx_rate_sources!inner(name, code)
+      `)
+      .order('year', { ascending: false })
+      .order('month', { ascending: false })
+      .limit(100);
+
+    if (currencyFilter !== 'all') {
+      query = query.eq('currency_pair', currencyFilter);
+    }
+    if (sourceFilter !== 'all') {
+      query = query.eq('source_id', sourceFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setMonthlyRates(data.map(rate => ({
+        ...rate,
+        source_name: rate.fx_rate_sources?.name || 'Unknown',
+      })));
+    }
+  };
+
+  const loadCustomerRates = async () => {
+    let query = supabase
+      .from('customer_fx_rates')
+      .select(`
+        *,
+        customers!inner(name, email)
+      `)
+      .order('transaction_date', { ascending: false })
+      .limit(100);
+
+    if (customerFilter !== 'all') {
+      query = query.eq('customer_id', customerFilter);
+    }
+    if (currencyFilter !== 'all') {
+      query = query.eq('currency_pair', currencyFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setCustomerRates(data.map(rate => ({
+        ...rate,
+        customer_name: rate.customers?.name || 'Unknown',
+      })));
+    }
+  };
+
+  const loadCustomers = async () => {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, name, email')
+      .eq('is_active', true)
+      .order('name');
+
+    if (!error && data) {
+      setCustomers(data);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const handleAddDailyRate = async () => {
+    try {
+      const spread = dailyFormData.bid_rate && dailyFormData.ask_rate
+        ? parseFloat(dailyFormData.ask_rate) - parseFloat(dailyFormData.bid_rate)
+        : null;
+
+      const { error } = await supabase.from('fx_rates_daily').insert({
+        rate_date: dailyFormData.rate_date,
+        currency_pair: dailyFormData.currency_pair,
+        source_id: dailyFormData.source_id,
+        rate: parseFloat(dailyFormData.rate),
+        bid_rate: dailyFormData.bid_rate ? parseFloat(dailyFormData.bid_rate) : null,
+        ask_rate: dailyFormData.ask_rate ? parseFloat(dailyFormData.ask_rate) : null,
+        spread: spread,
+        notes: dailyFormData.notes || null,
+      });
+
+      if (error) throw error;
+
+      setShowAddModal(false);
+      await loadDailyRates();
+      resetDailyForm();
+    } catch (error: any) {
+      console.error('Error adding daily rate:', error);
+      alert('Error adding rate: ' + error.message);
+    }
+  };
+
+  const handleAddCustomerRate = async () => {
+    try {
+      const marketRate = parseFloat(customerFormData.market_rate);
+      const ratePaid = parseFloat(customerFormData.rate_paid);
+      const spreadPercentage = marketRate > 0
+        ? ((ratePaid - marketRate) / marketRate) * 100
+        : null;
+
+      const { data: userData } = await supabase.auth.getUser();
+
+      const { error } = await supabase.from('customer_fx_rates').insert({
+        customer_id: customerFormData.customer_id,
+        transaction_date: customerFormData.transaction_date,
+        currency_pair: customerFormData.currency_pair,
+        rate_paid: ratePaid,
+        amount: parseFloat(customerFormData.amount),
+        market_rate: marketRate || null,
+        spread_percentage: spreadPercentage,
+        reference_number: customerFormData.reference_number || null,
+        notes: customerFormData.notes || null,
+        created_by: userData.user?.id,
+      });
+
+      if (error) throw error;
+
+      setShowCustomerRateModal(false);
+      await loadCustomerRates();
+      resetCustomerForm();
+    } catch (error: any) {
+      console.error('Error adding customer rate:', error);
+      alert('Error adding customer rate: ' + error.message);
+    }
+  };
+
+  const resetDailyForm = () => {
+    setDailyFormData({
+      rate_date: new Date().toISOString().split('T')[0],
+      currency_pair: 'EUR/USD',
+      source_id: sources[0]?.id || '',
+      rate: '',
+      bid_rate: '',
+      ask_rate: '',
+      notes: '',
+    });
+  };
+
+  const resetCustomerForm = () => {
+    setCustomerFormData({
+      customer_id: '',
+      transaction_date: new Date().toISOString().split('T')[0],
+      currency_pair: 'EUR/USD',
+      rate_paid: '',
+      amount: '',
+      market_rate: '',
+      reference_number: '',
+      notes: '',
+    });
+  };
+
+  const formatRate = (rate: number, pair: string) => {
+    if (pair === 'XOF/GNF') return rate.toFixed(4);
+    if (pair === 'EUR/USD') return rate.toFixed(5);
+    return rate.toFixed(2);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getMonthName = (month: number) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
+  };
+
+  const exportToCSV = () => {
+    let data: any[] = [];
+    let filename = '';
+
+    if (activeTab === 'daily') {
+      data = dailyRates;
+      filename = 'daily_fx_rates.csv';
+    } else if (activeTab === 'monthly') {
+      data = monthlyRates;
+      filename = 'monthly_fx_rates.csv';
+    } else {
+      data = customerRates;
+      filename = 'customer_fx_rates.csv';
+    }
+
+    const csv = [
+      Object.keys(data[0] || {}).join(','),
+      ...data.map(row => Object.values(row).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+  };
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">FX Rates</h1>
-          <p className="text-gray-600 mt-1">Currency exchange rates tracking</p>
-        </div>
-
-        <Card>
-          <div className="p-6">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loading size="lg" />
-              </div>
-            ) : fxRates.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate to USD</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {fxRates.map((rate) => (
-                      <tr key={rate.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(rate.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {rate.currency_code}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
-                          {rate.rate_to_usd.toFixed(4)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No FX rates data available.</p>
-              </div>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">FX Rates Management</h1>
+            <p className="text-gray-600 mt-1">Track and manage exchange rates from multiple sources</p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              onClick={exportToCSV}
+              disabled={loading}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            {activeTab === 'daily' && (
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Daily Rate
+              </Button>
+            )}
+            {activeTab === 'customer' && (
+              <Button onClick={() => setShowCustomerRateModal(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Customer Rate
+              </Button>
             )}
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('daily')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'daily'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Calendar className="w-4 h-4 inline mr-2" />
+              Daily Rates
+            </button>
+            <button
+              onClick={() => setActiveTab('monthly')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'monthly'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 inline mr-2" />
+              Monthly Aggregated
+            </button>
+            <button
+              onClick={() => setActiveTab('customer')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'customer'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <DollarSign className="w-4 h-4 inline mr-2" />
+              Customer Rates
+            </button>
+          </nav>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <FormField label="Currency Pair">
+                <Select
+                  value={currencyFilter}
+                  onChange={(e) => {
+                    setCurrencyFilter(e.target.value);
+                    setTimeout(() => loadData(), 100);
+                  }}
+                >
+                  <option value="all">All Currency Pairs</option>
+                  {CURRENCY_PAIRS.map(pair => (
+                    <option key={pair.value} value={pair.value}>{pair.label}</option>
+                  ))}
+                </Select>
+              </FormField>
+
+              <FormField label="Source">
+                <Select
+                  value={sourceFilter}
+                  onChange={(e) => {
+                    setSourceFilter(e.target.value);
+                    setTimeout(() => loadData(), 100);
+                  }}
+                >
+                  <option value="all">All Sources</option>
+                  {sources.map(source => (
+                    <option key={source.id} value={source.id}>{source.name}</option>
+                  ))}
+                </Select>
+              </FormField>
+
+              {activeTab === 'daily' && (
+                <FormField label="Date">
+                  <Input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => {
+                      setDateFilter(e.target.value);
+                      setTimeout(() => loadDailyRates(), 100);
+                    }}
+                  />
+                </FormField>
+              )}
+
+              {activeTab === 'customer' && (
+                <FormField label="Customer">
+                  <Select
+                    value={customerFilter}
+                    onChange={(e) => {
+                      setCustomerFilter(e.target.value);
+                      setTimeout(() => loadCustomerRates(), 100);
+                    }}
+                  >
+                    <option value="all">All Customers</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </Select>
+                </FormField>
+              )}
+            </div>
+          </CardContent>
         </Card>
+
+        {/* Content */}
+        {loading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading rates...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Daily Rates Tab */}
+            {activeTab === 'daily' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Daily Exchange Rates ({dailyRates.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bid</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ask</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spread</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {dailyRates.map((rate) => (
+                          <tr key={rate.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {formatDate(rate.rate_date)}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {rate.source_name}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                              {formatRate(rate.rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {rate.bid_rate ? formatRate(rate.bid_rate, rate.currency_pair) : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {rate.ask_rate ? formatRate(rate.ask_rate, rate.currency_pair) : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {rate.spread ? formatRate(rate.spread, rate.currency_pair) : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Monthly Rates Tab */}
+            {activeTab === 'monthly' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Aggregated Rates ({monthlyRates.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Rate</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Min</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Max</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Opening</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Closing</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Data Points</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {monthlyRates.map((rate) => (
+                          <tr key={rate.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                              {getMonthName(rate.month)} {rate.year}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {rate.source_name}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                              {formatRate(rate.avg_rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-red-600">
+                              {formatRate(rate.min_rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-green-600">
+                              {formatRate(rate.max_rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {formatRate(rate.opening_rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {formatRate(rate.closing_rate, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-center text-gray-600">
+                              {rate.data_points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Customer Rates Tab */}
+            {activeTab === 'customer' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Exchange Rates ({customerRates.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate Paid</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Market Rate</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spread %</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {customerRates.map((rate) => (
+                          <tr key={rate.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {formatDate(rate.transaction_date)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                              {rate.customer_name}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                              {formatRate(rate.rate_paid, rate.currency_pair)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {rate.market_rate ? formatRate(rate.market_rate, rate.currency_pair) : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right">
+                              {rate.spread_percentage !== null ? (
+                                <span className={rate.spread_percentage > 0 ? 'text-green-600' : 'text-red-600'}>
+                                  {rate.spread_percentage > 0 ? '+' : ''}{rate.spread_percentage.toFixed(2)}%
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900">
+                              {rate.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {rate.reference_number || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Add Daily Rate Modal */}
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)}>
+        <ModalHeader>Add Daily Exchange Rate</ModalHeader>
+        <ModalBody>
+          <div className="space-y-4">
+            <FormField label="Date" required>
+              <Input
+                type="date"
+                value={dailyFormData.rate_date}
+                onChange={(e) => setDailyFormData({ ...dailyFormData, rate_date: e.target.value })}
+              />
+            </FormField>
+
+            <FormField label="Currency Pair" required>
+              <Select
+                value={dailyFormData.currency_pair}
+                onChange={(e) => setDailyFormData({ ...dailyFormData, currency_pair: e.target.value })}
+              >
+                {CURRENCY_PAIRS.map(pair => (
+                  <option key={pair.value} value={pair.value}>{pair.label}</option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Source" required>
+              <Select
+                value={dailyFormData.source_id}
+                onChange={(e) => setDailyFormData({ ...dailyFormData, source_id: e.target.value })}
+              >
+                {sources.map(source => (
+                  <option key={source.id} value={source.id}>{source.name}</option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Exchange Rate" required>
+              <Input
+                type="number"
+                step="0.000001"
+                value={dailyFormData.rate}
+                onChange={(e) => setDailyFormData({ ...dailyFormData, rate: e.target.value })}
+                placeholder="e.g., 1.09 or 8600"
+              />
+            </FormField>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Bid Rate">
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={dailyFormData.bid_rate}
+                  onChange={(e) => setDailyFormData({ ...dailyFormData, bid_rate: e.target.value })}
+                  placeholder="Optional"
+                />
+              </FormField>
+
+              <FormField label="Ask Rate">
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={dailyFormData.ask_rate}
+                  onChange={(e) => setDailyFormData({ ...dailyFormData, ask_rate: e.target.value })}
+                  placeholder="Optional"
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Notes">
+              <Input
+                value={dailyFormData.notes}
+                onChange={(e) => setDailyFormData({ ...dailyFormData, notes: e.target.value })}
+                placeholder="Additional notes..."
+              />
+            </FormField>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setShowAddModal(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleAddDailyRate}>
+            Add Rate
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Add Customer Rate Modal */}
+      <Modal isOpen={showCustomerRateModal} onClose={() => setShowCustomerRateModal(false)}>
+        <ModalHeader>Add Customer Exchange Rate</ModalHeader>
+        <ModalBody>
+          <div className="space-y-4">
+            <FormField label="Customer" required>
+              <Select
+                value={customerFormData.customer_id}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, customer_id: e.target.value })}
+              >
+                <option value="">Select Customer</option>
+                {customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>{customer.name}</option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Transaction Date" required>
+              <Input
+                type="date"
+                value={customerFormData.transaction_date}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, transaction_date: e.target.value })}
+              />
+            </FormField>
+
+            <FormField label="Currency Pair" required>
+              <Select
+                value={customerFormData.currency_pair}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, currency_pair: e.target.value })}
+              >
+                {CURRENCY_PAIRS.map(pair => (
+                  <option key={pair.value} value={pair.value}>{pair.label}</option>
+                ))}
+              </Select>
+            </FormField>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Rate Paid" required>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={customerFormData.rate_paid}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, rate_paid: e.target.value })}
+                  placeholder="Rate customer paid"
+                />
+              </FormField>
+
+              <FormField label="Market Rate">
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={customerFormData.market_rate}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, market_rate: e.target.value })}
+                  placeholder="Market rate at time"
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Amount" required>
+              <Input
+                type="number"
+                step="0.01"
+                value={customerFormData.amount}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, amount: e.target.value })}
+                placeholder="Transaction amount"
+              />
+            </FormField>
+
+            <FormField label="Reference Number">
+              <Input
+                value={customerFormData.reference_number}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, reference_number: e.target.value })}
+                placeholder="Transaction reference"
+              />
+            </FormField>
+
+            <FormField label="Notes">
+              <Input
+                value={customerFormData.notes}
+                onChange={(e) => setCustomerFormData({ ...customerFormData, notes: e.target.value })}
+                placeholder="Additional notes..."
+              />
+            </FormField>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setShowCustomerRateModal(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleAddCustomerRate}>
+            Add Customer Rate
+          </Button>
+        </ModalFooter>
+      </Modal>
     </MainLayout>
   );
 }

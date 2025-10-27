@@ -13,7 +13,8 @@ The error happens because FX tables haven't been created yet.
 3. Open Supabase Dashboard → SQL Editor
 4. Paste and click "Run"
 5. Wait for: "✅ FX ANALYSIS SETUP COMPLETE"
-6. Done! Refresh your FX Rate Analysis tab
+6. (Optional) Run verify-fx-setup.sql to confirm it worked
+7. Done! Refresh your FX Rate Analysis tab
 
 ┌─────────────────────────────────────────────────────────────┐
 │  OR: Run 2 Migration Files Separately                       │

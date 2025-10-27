@@ -93,17 +93,21 @@ ALTER TABLE fx_rates_daily ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fx_rates_monthly_aggregated ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_fx_rates ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
-CREATE POLICY IF NOT EXISTS "All authenticated users can view FX rate sources"
+-- RLS Policies (drop if exists, then create)
+DROP POLICY IF EXISTS "All authenticated users can view FX rate sources" ON fx_rate_sources;
+CREATE POLICY "All authenticated users can view FX rate sources"
   ON fx_rate_sources FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "All authenticated users can view daily FX rates"
+DROP POLICY IF EXISTS "All authenticated users can view daily FX rates" ON fx_rates_daily;
+CREATE POLICY "All authenticated users can view daily FX rates"
   ON fx_rates_daily FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "All authenticated users can view monthly FX rates"
+DROP POLICY IF EXISTS "All authenticated users can view monthly FX rates" ON fx_rates_monthly_aggregated;
+CREATE POLICY "All authenticated users can view monthly FX rates"
   ON fx_rates_monthly_aggregated FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "All authenticated users can view customer FX rates"
+DROP POLICY IF EXISTS "All authenticated users can view customer FX rates" ON customer_fx_rates;
+CREATE POLICY "All authenticated users can view customer FX rates"
   ON customer_fx_rates FOR SELECT TO authenticated USING (true);
 
 -- Insert FX rate sources

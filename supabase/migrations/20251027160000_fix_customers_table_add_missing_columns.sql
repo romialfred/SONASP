@@ -43,16 +43,19 @@ BEGIN
 END $$;
 
 -- Update is_active based on status for existing records
-UPDATE customers
-SET is_active = (status = 'active')
-WHERE is_active IS NULL;
+DO $$
+BEGIN
+  UPDATE customers
+  SET is_active = (status = 'active')
+  WHERE is_active IS NULL;
 
--- Set company to name if not set
-UPDATE customers
-SET company = name
-WHERE company IS NULL;
+  -- Set company to name if not set
+  UPDATE customers
+  SET company = name
+  WHERE company IS NULL;
 
--- Create index on is_active for performance
-CREATE INDEX IF NOT EXISTS idx_customers_is_active ON customers(is_active);
+  -- Create index on is_active for performance
+  CREATE INDEX IF NOT EXISTS idx_customers_is_active ON customers(is_active);
 
-RAISE NOTICE 'Customers table schema updated successfully';
+  RAISE NOTICE 'Customers table schema updated successfully';
+END $$;

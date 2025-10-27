@@ -338,17 +338,21 @@ BEGIN
   END IF;
 END $$;
 
-RAISE NOTICE '========================================';
-RAISE NOTICE 'COMPLETE PLATFORM TEST DATA ADDED';
-RAISE NOTICE '========================================';
-RAISE NOTICE 'Summary:';
-RAISE NOTICE '- 6 active customers';
-RAISE NOTICE '- 18 FX transactions (Aug-Oct 2024)';
-RAISE NOTICE '- 65+ days of gold prices';
-RAISE NOTICE '- 4 sites (mines + airports)';
-RAISE NOTICE '- 7 batches at various stages';
-RAISE NOTICE '- 2 sales transactions';
-RAISE NOTICE '- Sample notifications';
-RAISE NOTICE '';
-RAISE NOTICE 'Platform is ready for complete testing!';
-RAISE NOTICE '========================================';
+-- Final summary message
+DO $$
+BEGIN
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'COMPLETE PLATFORM TEST DATA ADDED';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'Summary:';
+  RAISE NOTICE '- 6 active customers';
+  RAISE NOTICE '- 18 FX transactions (Aug-Oct 2024)';
+  RAISE NOTICE '- 65+ days of gold prices';
+  RAISE NOTICE '- 4 sites (mines + airports)';
+  RAISE NOTICE '- 7 batches at various stages';
+  RAISE NOTICE '- 2 sales transactions';
+  RAISE NOTICE '- Sample notifications';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Platform is ready for complete testing!';
+  RAISE NOTICE '========================================';
+END $$;

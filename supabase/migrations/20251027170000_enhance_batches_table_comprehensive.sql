@@ -174,4 +174,8 @@ LEFT JOIN user_profiles up_updater ON b.updated_by = up_updater.id;
 -- Grant access to the view
 GRANT SELECT ON batch_details_enhanced TO authenticated;
 
-RAISE NOTICE 'Batches table enhanced successfully with all required columns';
+-- Final message
+DO $$
+BEGIN
+  RAISE NOTICE 'Batches table enhanced successfully with all required columns';
+END $$;

@@ -95,4 +95,8 @@ FROM payments p
 INNER JOIN sales s ON p.sale_id = s.id
 INNER JOIN customers c ON s.customer_id = c.id;
 
-RAISE NOTICE 'Sales table columns fixed and payments view recreated successfully';
+-- Success message
+DO $$
+BEGIN
+  RAISE NOTICE 'Sales table columns fixed and payments view recreated successfully';
+END $$;

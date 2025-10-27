@@ -5,7 +5,6 @@
      - Remove all existing data from all tables
      - Keep table structures and RLS policies intact
      - Preserve user accounts and permissions
-     - Reset sequences and auto-increment values
      - Allow user to create their own data from scratch
 
   2. Tables Cleaned
@@ -26,192 +25,146 @@
      - Table structures
 */
 
--- ============================================================================
--- IMPORTANT: Delete data in correct order to respect foreign key constraints
--- ============================================================================
+-- Delete data in correct order to respect foreign key constraints
 
 DO $$
+DECLARE
+  v_count INT;
 BEGIN
   RAISE NOTICE 'Starting data cleanup...';
 
-  -- ============================================================================
-  -- STEP 1: Clean transaction and financial data
-  -- ============================================================================
+  -- Sales and payment data
+  RAISE NOTICE 'Cleaning sales and payment data...';
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sales_line_items') THEN
+    DELETE FROM sales_line_items;
+    RAISE NOTICE '  Deleted sales_line_items';
+  END IF;
 
-  RAISE NOTICE 'Cleaning payment and financial data...';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sales') THEN
+    DELETE FROM sales;
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RAISE NOTICE '  Deleted % sales records', v_count;
+  END IF;
 
-  -- Payment line items (references payments and batches)
-  DELETE FROM payment_line_items;
-  RAISE NOTICE 'Deleted payment_line_items';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'payments') THEN
+    DELETE FROM payments;
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RAISE NOTICE '  Deleted % payment records', v_count;
+  END IF;
 
-  -- Payments (references sales, customers)
-  DELETE FROM payments;
-  RAISE NOTICE 'Deleted payments';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
+    DELETE FROM customers;
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RAISE NOTICE '  Deleted % customer records', v_count;
+  END IF;
 
-  -- Sale line items (references sales and batches)
-  DELETE FROM sale_line_items;
-  RAISE NOTICE 'Deleted sale_line_items';
-
-  -- Sales (references customers, batches)
-  DELETE FROM sales;
-  RAISE NOTICE 'Deleted sales';
-
-  -- Customer contacts
-  DELETE FROM customer_contacts;
-  RAISE NOTICE 'Deleted customer_contacts';
-
-  -- Customers
-  DELETE FROM customers;
-  RAISE NOTICE 'Deleted customers';
-
-  -- ============================================================================
-  -- STEP 2: Clean batch and process data
-  -- ============================================================================
-
+  -- Batch and process data
   RAISE NOTICE 'Cleaning batch and processing data...';
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'batch_documents') THEN
+    DELETE FROM batch_documents;
+    RAISE NOTICE '  Deleted batch_documents';
+  END IF;
 
-  -- Batch documents
-  DELETE FROM batch_documents;
-  RAISE NOTICE 'Deleted batch_documents';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'refining_records') THEN
+    DELETE FROM refining_records;
+    RAISE NOTICE '  Deleted refining_records';
+  END IF;
 
-  -- Quality checks
-  DELETE FROM quality_checks;
-  RAISE NOTICE 'Deleted quality_checks';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'receiving_records') THEN
+    DELETE FROM receiving_records;
+    RAISE NOTICE '  Deleted receiving_records';
+  END IF;
 
-  -- Refining records (references batches)
-  DELETE FROM refining;
-  RAISE NOTICE 'Deleted refining';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'batch_status_history') THEN
+    DELETE FROM batch_status_history;
+    RAISE NOTICE '  Deleted batch_status_history';
+  END IF;
 
-  -- Airport receiving records
-  DELETE FROM airport_receiving;
-  RAISE NOTICE 'Deleted airport_receiving';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'batches') THEN
+    DELETE FROM batches;
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RAISE NOTICE '  Deleted % batch records', v_count;
+  END IF;
 
-  -- Batch status history
-  DELETE FROM batch_status_history;
-  RAISE NOTICE 'Deleted batch_status_history';
-
-  -- Batch details (child table)
-  DELETE FROM batch_details;
-  RAISE NOTICE 'Deleted batch_details';
-
-  -- Batches (parent table)
-  DELETE FROM batches;
-  RAISE NOTICE 'Deleted batches';
-
-  -- ============================================================================
-  -- STEP 3: Clean workflow and approval data
-  -- ============================================================================
-
+  -- Workflow and approval data
   RAISE NOTICE 'Cleaning workflow and approval data...';
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'workflow_instances') THEN
+    DELETE FROM workflow_instances;
+    RAISE NOTICE '  Deleted workflow_instances';
+  END IF;
 
-  -- Approval request participants
-  DELETE FROM approval_request_participants;
-  RAISE NOTICE 'Deleted approval_request_participants';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'approval_requests') THEN
+    DELETE FROM approval_requests;
+    RAISE NOTICE '  Deleted approval_requests';
+  END IF;
 
-  -- Approval requests
-  DELETE FROM approval_requests;
-  RAISE NOTICE 'Deleted approval_requests';
+  -- Pricing data
+  RAISE NOTICE 'Cleaning pricing data...';
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'gold_prices') THEN
+    DELETE FROM gold_prices;
+    RAISE NOTICE '  Deleted gold_prices';
+  END IF;
 
-  -- Workflow state history
-  DELETE FROM workflow_state_history;
-  RAISE NOTICE 'Deleted workflow_state_history';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'exchange_rates') THEN
+    DELETE FROM exchange_rates;
+    RAISE NOTICE '  Deleted exchange_rates';
+  END IF;
 
-  -- Workflow states
-  DELETE FROM workflow_states;
-  RAISE NOTICE 'Deleted workflow_states';
+  -- Notifications and logs
+  RAISE NOTICE 'Cleaning notifications and logs...';
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+    DELETE FROM notifications;
+    RAISE NOTICE '  Deleted notifications';
+  END IF;
 
-  -- Workflow instances
-  DELETE FROM workflow_instances;
-  RAISE NOTICE 'Deleted workflow_instances';
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'audit_logs') THEN
+    DELETE FROM audit_logs WHERE action NOT LIKE 'user_%' AND action NOT LIKE 'role_%';
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RAISE NOTICE '  Deleted % operational audit_logs', v_count;
+  END IF;
 
-  -- ============================================================================
-  -- STEP 4: Clean reference and pricing data
-  -- ============================================================================
-
-  RAISE NOTICE 'Cleaning pricing and reference data...';
-
-  -- Gold prices
-  DELETE FROM gold_prices;
-  RAISE NOTICE 'Deleted gold_prices';
-
-  -- FX rates
-  DELETE FROM fx_rates;
-  RAISE NOTICE 'Deleted fx_rates';
-
-  -- Transport companies (if any data exists)
-  DELETE FROM transport_companies WHERE id IS NOT NULL;
-  RAISE NOTICE 'Deleted transport_companies data';
-
-  -- Refineries (if any data exists)
-  DELETE FROM refineries WHERE id IS NOT NULL;
-  RAISE NOTICE 'Deleted refineries data';
-
-  -- ============================================================================
-  -- STEP 5: Clean analytics and reporting data
-  -- ============================================================================
-
-  RAISE NOTICE 'Cleaning analytics data...';
-
-  -- Saved searches
-  DELETE FROM saved_searches;
-  RAISE NOTICE 'Deleted saved_searches';
-
-  -- Business rules
-  DELETE FROM business_rules;
-  RAISE NOTICE 'Deleted business_rules';
-
-  -- ============================================================================
-  -- STEP 6: Clean audit and notification data
-  -- ============================================================================
-
-  RAISE NOTICE 'Cleaning audit logs and notifications...';
-
-  -- Audit logs (keep user management audits, delete operational audits)
-  DELETE FROM audit_logs WHERE action NOT IN ('user_created', 'user_updated', 'role_assigned');
-  RAISE NOTICE 'Deleted operational audit_logs';
-
-  -- Notifications
-  DELETE FROM notifications;
-  RAISE NOTICE 'Deleted notifications';
-
-  -- ============================================================================
-  -- STEP 7: Reset sequences (if any)
-  -- ============================================================================
-
-  RAISE NOTICE 'Resetting any sequences...';
-
-  -- Note: Most tables use UUID, but if any use sequences, they would be reset here
-  -- Example: ALTER SEQUENCE some_sequence RESTART WITH 1;
-
-  -- ============================================================================
-  -- VERIFICATION
-  -- ============================================================================
-
-  RAISE NOTICE '======================================';
-  RAISE NOTICE 'Data cleanup completed successfully!';
-  RAISE NOTICE '======================================';
-  RAISE NOTICE 'Preserved:';
-  RAISE NOTICE '  - User accounts: % users', (SELECT COUNT(*) FROM user_profiles);
-  RAISE NOTICE '  - User permissions: % permission records', (SELECT COUNT(*) FROM user_permissions);
-  RAISE NOTICE '  - Modules: % modules', (SELECT COUNT(*) FROM modules);
-  RAISE NOTICE '  - Sites: % sites', (SELECT COUNT(*) FROM sites);
+  -- Verification
   RAISE NOTICE '';
-  RAISE NOTICE 'Cleaned (now empty):';
-  RAISE NOTICE '  - Batches: % records', (SELECT COUNT(*) FROM batches);
-  RAISE NOTICE '  - Sales: % records', (SELECT COUNT(*) FROM sales);
-  RAISE NOTICE '  - Payments: % records', (SELECT COUNT(*) FROM payments);
-  RAISE NOTICE '  - Customers: % records', (SELECT COUNT(*) FROM customers);
+  RAISE NOTICE '======================================';
+  RAISE NOTICE 'Data cleanup completed!';
+  RAISE NOTICE '======================================';
   RAISE NOTICE '';
-  RAISE NOTICE 'You can now create your own data!';
+  RAISE NOTICE 'PRESERVED:';
+
+  SELECT COUNT(*) INTO v_count FROM user_profiles;
+  RAISE NOTICE '  User accounts: % users', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM user_permissions;
+  RAISE NOTICE '  User permissions: % records', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM modules;
+  RAISE NOTICE '  Modules: % modules', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM sites;
+  RAISE NOTICE '  Sites: % sites', v_count;
+
+  RAISE NOTICE '';
+  RAISE NOTICE 'CLEANED (now empty):';
+
+  SELECT COUNT(*) INTO v_count FROM batches;
+  RAISE NOTICE '  Batches: % records', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM sales;
+  RAISE NOTICE '  Sales: % records', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM payments;
+  RAISE NOTICE '  Payments: % records', v_count;
+
+  SELECT COUNT(*) INTO v_count FROM customers;
+  RAISE NOTICE '  Customers: % records', v_count;
+
+  RAISE NOTICE '';
+  RAISE NOTICE 'Ready for your own data!';
   RAISE NOTICE '======================================';
 
 END $$;
-
--- ============================================================================
--- Optional: Add helpful comment
--- ============================================================================
-
-COMMENT ON TABLE batches IS 'Empty - Ready for user data. Create batches through the application.';
-COMMENT ON TABLE customers IS 'Empty - Ready for user data. Add customers through the application.';
-COMMENT ON TABLE sales IS 'Empty - Ready for user data. Create sales through the application.';
-COMMENT ON TABLE payments IS 'Empty - Ready for user data. Process payments through the application.';

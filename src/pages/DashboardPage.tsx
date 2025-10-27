@@ -1,48 +1,133 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
+import { Loading } from '@/components/ui/Loading';
 import { TrendingUp, TrendingDown, DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
-import { demoBatches, demoSales, demoCustomers, demoGoldPrices } from '@/lib/demoSeed';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+interface Batch {
+  id: string;
+  batch_number: string;
+  status: string;
+  weight_grams: number;
+  created_at: string;
+}
+
+interface Sale {
+  id: string;
+  sale_number: string;
+  customer_id: string;
+  quantity_oz: number;
+  london_am_rate: number;
+  final_proceeds: number;
+  created_at: string;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  segment?: string;
+}
+
+interface GoldPrice {
+  id: string;
+  date: string;
+  london_am_usd: number;
+}
 
 export function DashboardPage() {
-  // Calculate metrics
-  const totalBatches = demoBatches.length;
-  const totalSales = demoSales.length;
-  const totalCustomers = demoCustomers.length;
-  const totalRevenue = demoSales.reduce((sum, sale) => sum + sale.amount_usd, 0);
-  const totalWeight = demoSales.reduce((sum, sale) => sum + sale.fine_weight_oz, 0);
+  const [loading, setLoading] = useState(true);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [goldPrices, setGoldPrices] = useState<GoldPrice[]>([]);
 
-  const latestPrice = demoGoldPrices[demoGoldPrices.length - 1];
-  const previousPrice = demoGoldPrices[demoGoldPrices.length - 2];
-  const priceChange = latestPrice.price_per_oz_usd - previousPrice.price_per_oz_usd;
-  const priceChangePercent = (priceChange / previousPrice.price_per_oz_usd) * 100;
+  useEffect(() => {
+    async function fetchDashboardData() {
+      setLoading(true);
 
-  // Status distribution
+      try {
+        const [batchesRes, salesRes, customersRes, pricesRes] = await Promise.all([
+          supabase.from('batches').select('id, batch_number, status, weight_grams, created_at').order('created_at', { ascending: false }),
+          supabase.from('sales').select('id, sale_number, customer_id, quantity_oz, london_am_rate, final_proceeds, created_at').order('created_at', { ascending: false }),
+          supabase.from('customers').select('id, name, segment'),
+          supabase.from('gold_prices').select('id, date, london_am_usd').order('date', { ascending: false }).limit(30),
+        ]);
+
+        if (!batchesRes.error && batchesRes.data) {
+          setBatches(batchesRes.data);
+        }
+
+        if (!salesRes.error && salesRes.data) {
+          setSales(salesRes.data);
+        }
+
+        if (!customersRes.error && customersRes.data) {
+          setCustomers(customersRes.data);
+        }
+
+        if (!pricesRes.error && pricesRes.data) {
+          setGoldPrices(pricesRes.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loading size="lg" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const totalBatches = batches.length;
+  const totalSales = sales.length;
+  const totalCustomers = customers.length;
+  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.final_proceeds || 0), 0);
+  const totalWeight = sales.reduce((sum, sale) => sum + (sale.quantity_oz || 0), 0);
+
+  const latestPrice = goldPrices[0];
+  const previousPrice = goldPrices[1];
+  const priceChange = latestPrice && previousPrice ? latestPrice.london_am_usd - previousPrice.london_am_usd : 0;
+  const priceChangePercent = latestPrice && previousPrice ? (priceChange / previousPrice.london_am_usd) * 100 : 0;
+
   const statusData = [
-    { name: 'Received', value: demoBatches.filter(b => b.status === 'Received').length, color: '#3b82f6' },
-    { name: 'In Process', value: demoBatches.filter(b => b.status === 'In Process').length, color: '#f59e0b' },
-    { name: 'Shipped', value: demoBatches.filter(b => b.status === 'Shipped').length, color: '#8b5cf6' },
-    { name: 'Refined', value: demoBatches.filter(b => b.status === 'Refined').length, color: '#10b981' },
-  ];
+    { name: 'Shipped', value: batches.filter(b => b.status === 'shipped').length, color: '#3b82f6' },
+    { name: 'Airport Received', value: batches.filter(b => b.status === 'airport_received').length, color: '#f59e0b' },
+    { name: 'Refinery Received', value: batches.filter(b => b.status === 'refinery_received').length, color: '#8b5cf6' },
+    { name: 'Refined', value: batches.filter(b => b.status === 'refined').length, color: '#10b981' },
+    { name: 'Sold', value: batches.filter(b => b.status === 'sold').length, color: '#059669' },
+  ].filter(item => item.value > 0);
 
-  // Sales by customer segment
-  const segmentSales = demoCustomers.reduce((acc, customer) => {
-    const customerSales = demoSales.filter(s => s.customer_id === customer.customer_id);
-    const revenue = customerSales.reduce((sum, sale) => sum + sale.amount_usd, 0);
+  const segmentSales = customers.reduce((acc, customer) => {
+    const customerSales = sales.filter(s => s.customer_id === customer.id);
+    const revenue = customerSales.reduce((sum, sale) => sum + (sale.final_proceeds || 0), 0);
 
-    const existing = acc.find(item => item.segment === customer.segment);
-    if (existing) {
-      existing.revenue += revenue;
-    } else {
-      acc.push({ segment: customer.segment, revenue });
+    if (revenue > 0) {
+      const segment = customer.segment || 'Other';
+      const existing = acc.find(item => item.segment === segment);
+      if (existing) {
+        existing.revenue += revenue;
+      } else {
+        acc.push({ segment, revenue });
+      }
     }
     return acc;
   }, [] as { segment: string; revenue: number }[]);
 
-  // Recent sales trend
-  const salesTrend = demoSales.slice(-7).map(sale => ({
-    date: new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    revenue: sale.amount_usd,
+  const salesTrend = sales.slice(0, 7).reverse().map(sale => ({
+    date: new Date(sale.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    revenue: sale.final_proceeds || 0,
   }));
 
   return (
@@ -61,12 +146,9 @@ export function DashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600">Total Revenue</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    ${(totalRevenue / 1000).toFixed(0)}K
+                    ${totalRevenue > 0 ? (totalRevenue / 1000).toFixed(0) + 'K' : '0'}
                   </p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    +12.5% vs last month
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">From {totalSales} sales</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
@@ -81,12 +163,14 @@ export function DashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600">Gold Price</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    ${latestPrice.price_per_oz_usd.toFixed(0)}
+                    {latestPrice ? `$${latestPrice.london_am_usd.toFixed(0)}` : 'N/A'}
                   </p>
-                  <p className={`text-xs mt-1 flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {priceChange >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}% today
-                  </p>
+                  {latestPrice && previousPrice && (
+                    <p className={`text-xs mt-1 flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {priceChange >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%
+                    </p>
+                  )}
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-yellow-600" />
@@ -132,17 +216,23 @@ export function DashboardPage() {
           <Card>
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Sales Trend</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']} />
-                    <Bar dataKey="revenue" fill="#f59e0b" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {salesTrend.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']} />
+                      <Bar dataKey="revenue" fill="#f59e0b" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500">
+                  No sales data available
+                </div>
+              )}
             </div>
           </Card>
 
@@ -150,27 +240,33 @@ export function DashboardPage() {
           <Card>
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Batch Status Distribution</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              {statusData.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {statusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500">
+                  No batch data available
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -179,18 +275,24 @@ export function DashboardPage() {
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Revenue by Customer Segment</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={segmentSales} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="category" dataKey="segment" />
-                  <YAxis type="number" />
-                  <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']} />
-                  <Legend />
-                  <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue (USD)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {segmentSales.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={segmentSales} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="category" dataKey="segment" />
+                    <YAxis type="number" />
+                    <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']} />
+                    <Legend />
+                    <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue (USD)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                No revenue data available
+              </div>
+            )}
           </div>
         </Card>
 
@@ -198,28 +300,36 @@ export function DashboardPage() {
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Recent Sales Activity</h3>
-            <div className="space-y-3">
-              {demoSales.slice(-5).reverse().map(sale => {
-                const customer = demoCustomers.find(c => c.customer_id === sale.customer_id);
-                return (
-                  <div key={sale.sale_id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <ShoppingCart className="w-5 h-5 text-amber-600" />
+            {sales.length > 0 ? (
+              <div className="space-y-3">
+                {sales.slice(0, 5).map(sale => {
+                  const customer = customers.find(c => c.id === sale.customer_id);
+                  return (
+                    <div key={sale.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                          <ShoppingCart className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{customer?.name || 'Unknown Customer'}</p>
+                          <p className="text-sm text-gray-500">
+                            {sale.quantity_oz.toFixed(2)} oz @ ${sale.london_am_rate.toFixed(2)}/oz
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{customer?.name}</p>
-                        <p className="text-sm text-gray-500">{sale.fine_weight_oz.toFixed(2)} oz @ ${sale.price_per_oz_usd.toFixed(2)}/oz</p>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">${sale.final_proceeds.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">{new Date(sale.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">${sale.amount_usd.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">{new Date(sale.date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-gray-500">
+                No recent sales activity
+              </div>
+            )}
           </div>
         </Card>
       </div>

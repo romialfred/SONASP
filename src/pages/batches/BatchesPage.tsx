@@ -1,37 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Loading } from '@/components/ui/Loading';
 import { Search, Download } from 'lucide-react';
-import { demoBatches, type Batch } from '@/lib/demoSeed';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { supabase } from '@/lib/supabase';
+
+interface Batch {
+  id: string;
+  batch_number: string;
+  created_at: string;
+  weight_grams: number;
+  fineness_percentage?: number;
+  status: string;
+  created_by?: string;
+}
 
 export function BatchesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredBatches = demoBatches.filter((batch) => {
+  useEffect(() => {
+    async function fetchBatches() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('batches')
+          .select('id, batch_number, created_at, weight_grams, fineness_percentage, status, created_by')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          setBatches(data);
+        } else if (error) {
+          console.error('Error fetching batches:', error);
+        }
+      } catch (error) {
+        console.error('Error fetching batches:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBatches();
+  }, []);
+
+  const filteredBatches = batches.filter((batch) => {
     const matchesSearch =
-      batch.batch_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      batch.supplier.toLowerCase().includes(searchQuery.toLowerCase());
+      batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusVariant = (status: Batch['status']) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'Received':
+      case 'shipped':
         return 'info';
-      case 'In Process':
+      case 'airport_received':
         return 'warning';
-      case 'Shipped':
+      case 'refinery_received':
         return 'pending';
-      case 'Refined':
+      case 'refined':
+        return 'success';
+      case 'sold':
         return 'success';
       default:
         return 'default';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'shipped':
+        return 'Shipped';
+      case 'airport_received':
+        return 'Airport Received';
+      case 'refinery_received':
+        return 'Refinery Received';
+      case 'refined':
+        return 'Refined';
+      case 'sold':
+        return 'Sold';
+      default:
+        return status;
     }
   };
 
@@ -56,7 +111,7 @@ export function BatchesPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search by batch ID or supplier..."
+                  placeholder="Search by batch number..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -68,68 +123,73 @@ export function BatchesPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="all">All Statuses</option>
-                <option value="Received">Received</option>
-                <option value="In Process">In Process</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Refined">Refined</option>
+                <option value="shipped">Shipped</option>
+                <option value="airport_received">Airport Received</option>
+                <option value="refinery_received">Refinery Received</option>
+                <option value="refined">Refined</option>
+                <option value="sold">Sold</option>
               </select>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Batch ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date Received
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Supplier
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Gross Weight (g)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Purity (%)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBatches.map((batch) => (
-                    <tr key={batch.batch_id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {batch.batch_id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(batch.date_received).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {batch.supplier}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {batch.gross_weight_g.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {batch.purity_pct.toFixed(1)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <StatusBadge status={batch.status} variant={getStatusVariant(batch.status)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredBatches.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No batches found matching your criteria.</p>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loading size="lg" />
               </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Batch Number
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date Created
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Weight (g)
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Fineness (%)
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredBatches.map((batch) => (
+                        <tr key={batch.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {batch.batch_number}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {new Date(batch.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {batch.weight_grams.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {batch.fineness_percentage ? `${batch.fineness_percentage.toFixed(1)}%` : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <StatusBadge status={getStatusLabel(batch.status)} variant={getStatusVariant(batch.status)} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredBatches.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">
+                      {batches.length === 0 ? 'No batches created yet.' : 'No batches found matching your criteria.'}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </Card>

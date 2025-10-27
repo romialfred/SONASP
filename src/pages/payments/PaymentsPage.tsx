@@ -88,7 +88,9 @@ export function PaymentsPage() {
       const salesMap = new Map(salesData?.map(s => [s.id, s]) || []);
       const customersMap = new Map(customersData?.map(c => [c.id, c]) || []);
 
-      const processedPayments = paymentsData.map((payment: any) => {
+      const processedPayments = paymentsData
+        .filter((payment: any) => payment && payment.id) // Filter out invalid payments
+        .map((payment: any) => {
         const sale = salesMap.get(payment.sale_id) || {} as any;
         const customer = customersMap.get(sale.customer_id) || {} as any;
 
@@ -178,38 +180,41 @@ export function PaymentsPage() {
     });
   };
 
-  const filteredPayments = payments.filter((payment) => {
-    const matchesSearch =
-      payment.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.sale_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.company_name?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredPayments = payments
+    .filter((payment) => payment && payment.id) // Ensure payment is valid
+    .filter((payment) => {
+      const matchesSearch =
+        payment.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.sale_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.company_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all' || payment.payment_status_category === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' || payment.payment_status_category === statusFilter;
 
-    const matchesDate = (() => {
-      if (dateFilter === 'all') return true;
-      const today = new Date();
-      const paymentDate = new Date(payment.created_at);
-      const daysDiff = Math.floor((today.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24));
+      const matchesDate = (() => {
+        if (dateFilter === 'all') return true;
+        if (!payment.created_at) return false;
+        const today = new Date();
+        const paymentDate = new Date(payment.created_at);
+        const daysDiff = Math.floor((today.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      switch (dateFilter) {
-        case 'today':
-          return daysDiff === 0;
-        case 'week':
-          return daysDiff <= 7;
-        case 'month':
-          return daysDiff <= 30;
-        case 'quarter':
-          return daysDiff <= 90;
-        default:
-          return true;
-      }
-    })();
+        switch (dateFilter) {
+          case 'today':
+            return daysDiff === 0;
+          case 'week':
+            return daysDiff <= 7;
+          case 'month':
+            return daysDiff <= 30;
+          case 'quarter':
+            return daysDiff <= 90;
+          default:
+            return true;
+        }
+      })();
 
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+      return matchesSearch && matchesStatus && matchesDate;
+    });
 
   const totalAmount = filteredPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const paidAmount = filteredPayments
@@ -224,96 +229,120 @@ export function PaymentsPage() {
     {
       key: 'invoice_number',
       label: 'Invoice',
-      render: (payment: Payment) => (
-        <div>
-          <div className="font-medium text-gray-900">{payment.invoice_number || 'N/A'}</div>
-          <div className="text-sm text-gray-500">{payment.sale_number}</div>
-        </div>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <div>
+            <div className="font-medium text-gray-900">{payment.invoice_number || 'N/A'}</div>
+            <div className="text-sm text-gray-500">{payment.sale_number || 'N/A'}</div>
+          </div>
+        );
+      },
     },
     {
       key: 'customer',
       label: 'Customer',
-      render: (payment: Payment) => (
-        <div>
-          <div className="font-medium text-gray-900">{payment.customer_name || 'N/A'}</div>
-          <div className="text-sm text-gray-500">{payment.company_name || payment.customer_email}</div>
-        </div>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <div>
+            <div className="font-medium text-gray-900">{payment.customer_name || 'N/A'}</div>
+            <div className="text-sm text-gray-500">{payment.company_name || payment.customer_email || 'N/A'}</div>
+          </div>
+        );
+      },
     },
     {
       key: 'amount',
       label: 'Amount',
-      render: (payment: Payment) => (
-        <div>
-          <div className="font-semibold text-gray-900">
-            {formatCurrency(payment.amount, payment.currency)}
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <div>
+            <div className="font-semibold text-gray-900">
+              {formatCurrency(payment.amount || 0, payment.currency || 'USD')}
+            </div>
+            <div className="text-xs text-gray-500">{payment.currency || 'USD'}</div>
           </div>
-          <div className="text-xs text-gray-500">{payment.currency}</div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'due_date',
       label: 'Due Date',
-      render: (payment: Payment) => (
-        <div>
-          <div className="text-sm text-gray-900">{formatDate(payment.due_date)}</div>
-          {payment.days_overdue && payment.days_overdue > 0 && (
-            <div className="text-xs text-red-600 font-medium">
-              {payment.days_overdue} days overdue
-            </div>
-          )}
-        </div>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <div>
+            <div className="text-sm text-gray-900">{formatDate(payment.due_date)}</div>
+            {payment.days_overdue && payment.days_overdue > 0 && (
+              <div className="text-xs text-red-600 font-medium">
+                {payment.days_overdue} days overdue
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'payment_method',
       label: 'Method',
-      render: (payment: Payment) => (
-        <div className="text-sm text-gray-700">
-          {payment.payment_method ? payment.payment_method.replace(/_/g, ' ').toUpperCase() : 'N/A'}
-        </div>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <div className="text-sm text-gray-700">
+            {payment.payment_method ? payment.payment_method.replace(/_/g, ' ').toUpperCase() : 'N/A'}
+          </div>
+        );
+      },
     },
     {
       key: 'status',
       label: 'Status',
-      render: (payment: Payment) => (
-        <StatusBadge
-          label={payment.payment_status_category}
-          variant={getStatusVariant(payment.payment_status_category)}
-        />
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>N/A</div>;
+        return (
+          <StatusBadge
+            label={payment.payment_status_category || 'unknown'}
+            variant={getStatusVariant(payment.payment_status_category || 'unknown')}
+          />
+        );
+      },
     },
     {
       key: 'documents',
       label: 'Docs',
-      render: (payment: Payment) => (
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">{payment.document_count || 0}</span>
-          {payment.proof_count > 0 && (
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          )}
-        </div>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>0</div>;
+        return (
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{payment.document_count || 0}</span>
+            {payment.proof_count > 0 && (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'actions',
       label: 'Actions',
-      render: (payment: Payment) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/payments/${payment.id}`);
-          }}
-        >
-          <ArrowUpRight className="h-4 w-4" />
-        </Button>
-      ),
+      render: (_value: any, payment: Payment) => {
+        if (!payment) return <div>-</div>;
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/payments/${payment.id}`);
+            }}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+          </Button>
+        );
+      },
     },
   ];
 

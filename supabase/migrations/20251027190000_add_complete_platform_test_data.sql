@@ -146,7 +146,7 @@ BEGIN
   ) ON CONFLICT (batch_number) DO NOTHING
   RETURNING id INTO v_batch_id;
 
-  -- Batch 2: In transit to airport
+  -- Batch 2: In transit to airport (validated for transport)
   v_batch_number := 'GN-20241020-001';
   INSERT INTO batches (
     batch_number, status, origin_site_id, current_site_id,
@@ -154,10 +154,10 @@ BEGIN
     mine_to_airport_transport_id, airport_to_refinery_transport_id,
     destination_refinery_id, comments, created_by, created_at
   ) VALUES (
-    v_batch_number, 'shipped', v_conakry_site_id, v_conakry_site_id,
+    v_batch_number, 'validated_for_transport', v_conakry_site_id, v_conakry_site_id,
     38500, 1237.69, 'gold', '2024-10-20',
     v_transport1_id, v_transport2_id, v_refinery_id,
-    'Standard shipment', v_user_id, '2024-10-20 08:00:00'
+    'Standard shipment - validated for transport', v_user_id, '2024-10-20 08:00:00'
   ) ON CONFLICT (batch_number) DO NOTHING;
 
   -- Batch 3: At airport
@@ -270,7 +270,7 @@ BEGIN
   SELECT id INTO v_user_id FROM user_profiles LIMIT 1;
 
   -- Get a recent gold price
-  SELECT london_am_usd INTO v_london_am FROM gold_prices_daily
+  SELECT london_am_rate INTO v_london_am FROM gold_prices_daily
   WHERE price_date <= '2024-09-30' ORDER BY price_date DESC LIMIT 1;
 
   IF v_london_am IS NULL THEN

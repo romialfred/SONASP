@@ -1,7 +1,8 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
-import { TrendingUp, TrendingDown, DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
+import { GoldPriceLive } from '@/components/dashboard/GoldPriceLive';
+import { DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -30,29 +31,22 @@ interface Customer {
   segment?: string;
 }
 
-interface GoldPrice {
-  id: string;
-  date: string;
-  london_am_usd: number;
-}
 
 export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [goldPrices, setGoldPrices] = useState<GoldPrice[]>([]);
 
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
 
       try {
-        const [batchesRes, salesRes, customersRes, pricesRes] = await Promise.all([
+        const [batchesRes, salesRes, customersRes] = await Promise.all([
           supabase.from('batches').select('id, batch_number, status, weight_grams, created_at').order('created_at', { ascending: false }),
           supabase.from('sales').select('id, sale_number, customer_id, quantity_oz, london_am_rate, final_proceeds, created_at').order('created_at', { ascending: false }),
           supabase.from('customers').select('id, name, segment'),
-          supabase.from('gold_prices').select('id, date, london_am_usd').order('date', { ascending: false }).limit(30),
         ]);
 
         if (!batchesRes.error && batchesRes.data) {
@@ -65,10 +59,6 @@ export function DashboardPage() {
 
         if (!customersRes.error && customersRes.data) {
           setCustomers(customersRes.data);
-        }
-
-        if (!pricesRes.error && pricesRes.data) {
-          setGoldPrices(pricesRes.data);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -95,11 +85,6 @@ export function DashboardPage() {
   const totalCustomers = customers.length;
   const totalRevenue = sales.reduce((sum, sale) => sum + (sale.final_proceeds || 0), 0);
   const totalWeight = sales.reduce((sum, sale) => sum + (sale.quantity_oz || 0), 0);
-
-  const latestPrice = goldPrices[0];
-  const previousPrice = goldPrices[1];
-  const priceChange = latestPrice && previousPrice ? latestPrice.london_am_usd - previousPrice.london_am_usd : 0;
-  const priceChangePercent = latestPrice && previousPrice ? (priceChange / previousPrice.london_am_usd) * 100 : 0;
 
   const statusData = [
     { name: 'Shipped', value: batches.filter(b => b.status === 'shipped').length, color: '#3b82f6' },
@@ -157,27 +142,7 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Gold Price</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {latestPrice ? `$${latestPrice.london_am_usd.toFixed(0)}` : 'N/A'}
-                  </p>
-                  {latestPrice && previousPrice && (
-                    <p className={`text-xs mt-1 flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {priceChange >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%
-                    </p>
-                  )}
-                </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </div>
-          </Card>
+          <GoldPriceLive />
 
           <Card>
             <div className="p-6">

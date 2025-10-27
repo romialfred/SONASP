@@ -122,11 +122,15 @@ export function PaymentsPage() {
           paymentStatusCategory = 'rejected';
         }
 
+        // Use payment.customer_id if available, otherwise fall back to sale.customer_id
+        const effectiveCustomerId = payment.customer_id || sale?.customer_id;
+        const effectiveCustomer = effectiveCustomerId ? customersMap.get(effectiveCustomerId) : null;
+
         return {
           id: payment.id,
           sale_id: payment.sale_id,
-          customer_id: sale?.customer_id || '',
-          invoice_number: `INV-${payment.id.slice(0, 8).toUpperCase()}`,
+          customer_id: effectiveCustomerId || '',
+          invoice_number: payment.invoice_number || `INV-${payment.id.slice(0, 8).toUpperCase()}`,
           expected_date: payment.expected_date,
           actual_date: payment.actual_date,
           due_date: dueDate,
@@ -136,9 +140,9 @@ export function PaymentsPage() {
           payment_method: payment.bank_name || 'Bank Transfer',
           status: payment.status || 'pending',
           sale_number: sale?.sale_number || 'N/A',
-          customer_name: customer?.name || 'Unknown Customer',
-          customer_email: customer?.email || 'N/A',
-          company_name: customer?.contact_person || customer?.name || 'N/A',
+          customer_name: effectiveCustomer?.name || 'Unknown Customer',
+          customer_email: effectiveCustomer?.email || 'N/A',
+          company_name: effectiveCustomer?.contact_person || effectiveCustomer?.name || 'N/A',
           payment_status_category: paymentStatusCategory,
           days_overdue: daysOverdue && daysOverdue > 0 ? daysOverdue : null,
           document_count: 0,

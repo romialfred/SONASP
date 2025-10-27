@@ -157,14 +157,19 @@ export function PaymentDetailsPage() {
 
       // Then fetch related customer
       let customer: any = {};
-      const customerId = paymentData.customer_id || sale.customer_id;
+      const customerId = paymentData.customer_id || sale?.customer_id;
       if (customerId) {
-        const { data: customerData } = await supabase
+        const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .select('id, name, email, phone, country, contact_person')
           .eq('id', customerId)
           .maybeSingle();
-        customer = customerData || {};
+
+        if (!customerError && customerData) {
+          customer = customerData;
+        } else if (customerError) {
+          console.error('Error fetching customer:', customerError);
+        }
       }
 
       const daysOverdue = paymentData.due_date

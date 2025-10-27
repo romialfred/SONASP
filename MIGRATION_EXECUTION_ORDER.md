@@ -111,6 +111,7 @@
 - ✅ Fixed sites table column references (`location` → `address`, `type` → `site_type`)
 - ✅ Fixed country codes ('Guinea' → 'GN', 'Côte d'Ivoire' → 'CI')
 - ✅ Fixed RAISE NOTICE syntax (wrapped in DO $$ block)
+- ✅ Fixed ON CONFLICT error on sites (changed to IF NOT EXISTS pattern)
 
 **Status:** ✅ FULLY FIXED - Ready to execute
 

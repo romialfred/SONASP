@@ -22,16 +22,31 @@
 
 -- ============= SITES =============
 -- Ensure sites exist for batch tracking
-INSERT INTO sites (name, site_type, address, country, is_active) VALUES
-  ('Conakry Mine', 'factory', 'Conakry', 'GN', true),
-  ('Siguiri Mine', 'factory', 'Siguiri', 'GN', true),
-  ('Conakry International Airport', 'airport', 'Conakry', 'GN', true),
-  ('Abidjan Airport', 'airport', 'Abidjan', 'CI', true)
-ON CONFLICT (name) DO UPDATE SET
-  site_type = EXCLUDED.site_type,
-  address = EXCLUDED.address,
-  country = EXCLUDED.country,
-  is_active = EXCLUDED.is_active;
+DO $$
+BEGIN
+  -- Insert sites if they don't exist
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Conakry Mine') THEN
+    INSERT INTO sites (name, site_type, address, country, is_active)
+    VALUES ('Conakry Mine', 'factory', 'Conakry', 'GN', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Siguiri Mine') THEN
+    INSERT INTO sites (name, site_type, address, country, is_active)
+    VALUES ('Siguiri Mine', 'factory', 'Siguiri', 'GN', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Conakry International Airport') THEN
+    INSERT INTO sites (name, site_type, address, country, is_active)
+    VALUES ('Conakry International Airport', 'airport', 'Conakry', 'GN', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Abidjan Airport') THEN
+    INSERT INTO sites (name, site_type, address, country, is_active)
+    VALUES ('Abidjan Airport', 'airport', 'Abidjan', 'CI', true);
+  END IF;
+
+  RAISE NOTICE 'Sites ensured to exist';
+END $$;
 
 -- ============= TRANSPORT COMPANIES =============
 -- Already created in previous migration, ensure they're active

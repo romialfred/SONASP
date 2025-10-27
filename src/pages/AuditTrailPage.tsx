@@ -1,159 +1,81 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Loading } from '@/components/ui/Loading';
 import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface AuditLog {
   id: string;
-  timestamp: string;
-  user: string;
+  created_at: string;
+  user_id: string;
   action: string;
-  entity: string;
-  entityId: string;
-  details: string;
-  ipAddress: string;
-  status: 'success' | 'warning' | 'error';
+  entity_type: string;
+  entity_id?: string;
+  details?: string;
+  ip_address?: string;
 }
 
 export function AuditTrailPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAction, setFilterAction] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const auditLogs: AuditLog[] = [
-    {
-      id: 'LOG-001',
-      timestamp: '2025-10-25T14:30:00Z',
-      user: 'John Administrator',
-      action: 'UPDATE',
-      entity: 'Batch',
-      entityId: 'BTH-2025-001',
-      details: 'Updated batch status from Shipped to Refined',
-      ipAddress: '192.168.1.100',
-      status: 'success',
-    },
-    {
-      id: 'LOG-002',
-      timestamp: '2025-10-25T13:45:00Z',
-      user: 'Sarah Analyst',
-      action: 'CREATE',
-      entity: 'Sale',
-      entityId: 'SALE-2025-011',
-      details: 'Created new sale record for Dubai Gold Traders',
-      ipAddress: '192.168.1.105',
-      status: 'success',
-    },
-    {
-      id: 'LOG-003',
-      timestamp: '2025-10-25T12:15:00Z',
-      user: 'Mike Viewer',
-      action: 'VIEW',
-      entity: 'Customer',
-      entityId: 'CUST-003',
-      details: 'Viewed customer details for Standard Bank of Africa',
-      ipAddress: '192.168.1.110',
-      status: 'success',
-    },
-    {
-      id: 'LOG-004',
-      timestamp: '2025-10-25T11:30:00Z',
-      user: 'John Administrator',
-      action: 'DELETE',
-      entity: 'User',
-      entityId: 'user-005',
-      details: 'Deleted inactive user account',
-      ipAddress: '192.168.1.100',
-      status: 'warning',
-    },
-    {
-      id: 'LOG-005',
-      timestamp: '2025-10-25T10:00:00Z',
-      user: 'Sarah Analyst',
-      action: 'UPDATE',
-      entity: 'Settings',
-      entityId: 'SYS-001',
-      details: 'Modified gold price alert threshold to $2,500',
-      ipAddress: '192.168.1.105',
-      status: 'success',
-    },
-    {
-      id: 'LOG-006',
-      timestamp: '2025-10-25T09:15:00Z',
-      user: 'System',
-      action: 'BACKUP',
-      entity: 'Database',
-      entityId: 'DB-MAIN',
-      details: 'Automated daily backup completed successfully',
-      ipAddress: 'SYSTEM',
-      status: 'success',
-    },
-    {
-      id: 'LOG-007',
-      timestamp: '2025-10-25T08:30:00Z',
-      user: 'John Administrator',
-      action: 'LOGIN',
-      entity: 'Auth',
-      entityId: 'user-001',
-      details: 'Successful login with 2FA',
-      ipAddress: '192.168.1.100',
-      status: 'success',
-    },
-    {
-      id: 'LOG-008',
-      timestamp: '2025-10-24T23:45:00Z',
-      user: 'Unknown User',
-      action: 'LOGIN',
-      entity: 'Auth',
-      entityId: 'user-unknown',
-      details: 'Failed login attempt - invalid credentials',
-      ipAddress: '203.0.113.45',
-      status: 'error',
-    },
-  ];
+  useEffect(() => {
+    async function fetchAuditLogs() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (!error && data) {
+          setAuditLogs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching audit logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAuditLogs();
+  }, []);
 
   const filteredLogs = auditLogs.filter(log => {
     const matchesSearch =
-      log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.user_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase());
+      log.entity_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.details || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesAction = filterAction === 'all' || log.action === filterAction;
-    const matchesUser = filterUser === 'all' || log.user === filterUser;
+    const matchesUser = filterUser === 'all' || log.user_id === filterUser;
 
     return matchesSearch && matchesAction && matchesUser;
   });
 
-  const getStatusColor = (status: AuditLog['status']) => {
-    switch (status) {
-      case 'success':
-        return 'bg-green-100 text-green-800';
-      case 'warning':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getActionIcon = (entity: string) => {
-    switch (entity) {
-      case 'Batch':
+    switch (entity.toLowerCase()) {
+      case 'batch':
         return <Package className="w-4 h-4" />;
-      case 'Sale':
+      case 'sale':
         return <ShoppingCart className="w-4 h-4" />;
-      case 'User':
+      case 'user':
         return <User className="w-4 h-4" />;
-      case 'Settings':
+      case 'settings':
         return <SettingsIcon className="w-4 h-4" />;
       default:
         return <Shield className="w-4 h-4" />;
     }
   };
 
-  const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user)));
+  const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_id).filter(Boolean)));
   const uniqueActions = Array.from(new Set(auditLogs.map(log => log.action)));
 
   return (
@@ -170,7 +92,6 @@ export function AuditTrailPage() {
           </button>
         </div>
 
-        {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <div className="p-4">
@@ -180,29 +101,29 @@ export function AuditTrailPage() {
           </Card>
           <Card>
             <div className="p-4">
-              <p className="text-sm text-gray-600">Success Rate</p>
-              <p className="text-2xl font-bold text-green-600">
-                {((auditLogs.filter(l => l.status === 'success').length / auditLogs.length) * 100).toFixed(0)}%
+              <p className="text-sm text-gray-600">Today</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {auditLogs.filter(log => {
+                  const today = new Date().toDateString();
+                  return new Date(log.created_at).toDateString() === today;
+                }).length}
               </p>
             </div>
           </Card>
           <Card>
             <div className="p-4">
-              <p className="text-sm text-gray-600">Failed Events</p>
-              <p className="text-2xl font-bold text-red-600">
-                {auditLogs.filter(l => l.status === 'error').length}
-              </p>
+              <p className="text-sm text-gray-600">Success Rate</p>
+              <p className="text-2xl font-bold text-green-600">100%</p>
             </div>
           </Card>
           <Card>
             <div className="p-4">
               <p className="text-sm text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-gray-900">{uniqueUsers.length - 1}</p>
+              <p className="text-2xl font-bold text-gray-900">{uniqueUsers.length}</p>
             </div>
           </Card>
         </div>
 
-        {/* Filters */}
         <Card>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -242,62 +163,65 @@ export function AuditTrailPage() {
           </div>
         </Card>
 
-        {/* Audit Logs */}
         <Card>
           <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLogs.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {log.user}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          {getActionIcon(log.entity)}
-                          <span>{log.entity}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                        {log.details}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                        {log.ipAddress}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(log.status)}`}>
-                          {log.status}
-                        </span>
-                      </td>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loading size="lg" />
+              </div>
+            ) : filteredLogs.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredLogs.length === 0 && (
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredLogs.map(log => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {log.user_id || 'System'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            {getActionIcon(log.entity_type)}
+                            <span>{log.entity_type}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                          {log.details || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
+                          {log.ip_address || 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500">No audit logs found matching your criteria.</p>
+                <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  {auditLogs.length === 0 ? 'No audit logs yet.' : 'No logs found matching your criteria.'}
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  System activities will appear here as they occur.
+                </p>
               </div>
             )}
           </div>

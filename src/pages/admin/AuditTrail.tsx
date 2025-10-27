@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Download, Search, Filter } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -9,6 +9,8 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
+import { Loading } from '@/components/ui/Loading';
+import { supabase } from '@/lib/supabase';
 
 interface AuditLog {
   id: string;
@@ -30,89 +32,41 @@ export function AuditTrail() {
   const [actionFilter, setActionFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const auditLogs: AuditLog[] = [
-    {
-      id: '1',
-      timestamp: '2024-10-24T09:45:23',
-      user: 'john.doe@mansa.com',
-      action: 'CREATE',
-      module: 'Sales',
-      details: 'Created sale SL-2024-042 for Premium Gold Ltd.',
-      ipAddress: '192.168.1.101',
-      status: 'success',
-    },
-    {
-      id: '2',
-      timestamp: '2024-10-24T09:42:15',
-      user: 'marie.kone@mansa.com',
-      action: 'UPDATE',
-      module: 'Batches',
-      details: 'Updated batch BT-2024-018 status to "Shipped"',
-      ipAddress: '192.168.1.105',
-      status: 'success',
-    },
-    {
-      id: '3',
-      timestamp: '2024-10-24T09:38:47',
-      user: 'ahmed.traore@mansa.com',
-      action: 'CREATE',
-      module: 'Receiving',
-      details: 'Confirmed receipt of batch BT-2024-016 at airport',
-      ipAddress: '192.168.1.112',
-      status: 'success',
-    },
-    {
-      id: '4',
-      timestamp: '2024-10-24T09:35:12',
-      user: 'john.doe@mansa.com',
-      action: 'LOGIN',
-      module: 'Authentication',
-      details: 'User logged in with 2FA',
-      ipAddress: '192.168.1.101',
-      status: 'success',
-    },
-    {
-      id: '5',
-      timestamp: '2024-10-24T09:30:58',
-      user: 'unknown@example.com',
-      action: 'LOGIN',
-      module: 'Authentication',
-      details: 'Failed login attempt - invalid credentials',
-      ipAddress: '203.0.113.45',
-      status: 'failed',
-    },
-    {
-      id: '6',
-      timestamp: '2024-10-24T09:28:34',
-      user: 'sarah.johnson@mansa.com',
-      action: 'UPDATE',
-      module: 'Settings',
-      details: 'Changed weight variance threshold from 1.5% to 2.0%',
-      ipAddress: '192.168.1.108',
-      status: 'warning',
-    },
-    {
-      id: '7',
-      timestamp: '2024-10-24T09:25:19',
-      user: 'john.doe@mansa.com',
-      action: 'DELETE',
-      module: 'Users',
-      details: 'Deactivated user account: test.user@mansa.com',
-      ipAddress: '192.168.1.101',
-      status: 'success',
-    },
-    {
-      id: '8',
-      timestamp: '2024-10-24T09:20:45',
-      user: 'marie.kone@mansa.com',
-      action: 'EXPORT',
-      module: 'Reports',
-      details: 'Exported monthly sales report (PDF)',
-      ipAddress: '192.168.1.105',
-      status: 'success',
-    },
-  ];
+  useEffect(() => {
+    async function fetchAuditLogs() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (!error && data) {
+          const mappedLogs: AuditLog[] = data.map(log => ({
+            id: log.id,
+            timestamp: log.created_at,
+            user: log.user_id || 'System',
+            action: log.action || 'UNKNOWN',
+            module: log.entity_type || 'System',
+            details: log.details || '',
+            ipAddress: log.ip_address || 'N/A',
+            status: 'success',
+          }));
+          setAuditLogs(mappedLogs);
+        }
+      } catch (error) {
+        console.error('Error fetching audit logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAuditLogs();
+  }, []);
 
   const columns = [
     {
@@ -277,23 +231,42 @@ export function AuditTrail() {
             <CardTitle>Audit Log Entries</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by user or details..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loading size="lg" />
               </div>
-            </div>
-            <Table
-              columns={columns}
-              data={filteredLogs}
-              onRowClick={(log) => console.log('View log details:', log.id)}
-            />
+            ) : (
+              <>
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by user or details..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                {filteredLogs.length > 0 ? (
+                  <Table
+                    columns={columns}
+                    data={filteredLogs}
+                    onRowClick={(log) => console.log('View log details:', log.id)}
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">
+                      {auditLogs.length === 0 ? 'No audit logs yet.' : 'No logs found matching your criteria.'}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      System activities will appear here as they occur.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 

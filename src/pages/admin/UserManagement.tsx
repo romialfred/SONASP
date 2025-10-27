@@ -79,6 +79,7 @@ const MENU_STRUCTURE = {
     features: [
       { name: 'customers', label: 'Customers', path: '/customers', sensitiveFields: ['credit_limit', 'total_purchases'] },
       { name: 'sales', label: 'Sales', path: '/sales', sensitiveFields: ['sale_price_per_oz', 'total_amount', 'net_proceeds', 'commission_amount'] },
+      { name: 'payments', label: 'Payments', path: '/payments', sensitiveFields: ['amount', 'fx_rate', 'bank_name', 'account_number', 'reference_number', 'transaction_id'] },
       { name: 'gold_prices', label: 'Gold Prices', path: '/gold-prices', sensitiveFields: ['london_am_rate', 'london_pm_rate', 'spot_price'] },
       { name: 'fx_rates', label: 'FX Rates', path: '/fx-rates', sensitiveFields: ['usd_cfa_rate', 'usd_gnf_rate', 'exchange_spread'] }
     ]

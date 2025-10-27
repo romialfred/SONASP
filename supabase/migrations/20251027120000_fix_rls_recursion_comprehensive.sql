@@ -46,7 +46,7 @@ GRANT ALL ON user_profiles TO service_role;
 -- ============================================================================
 
 -- Function to check if current user has a specific role
-CREATE OR REPLACE FUNCTION auth.user_has_role(required_role text)
+CREATE OR REPLACE FUNCTION public.user_has_role(required_role text)
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
@@ -62,7 +62,7 @@ AS $$
 $$;
 
 -- Function to check if current user is management
-CREATE OR REPLACE FUNCTION auth.is_management()
+CREATE OR REPLACE FUNCTION public.is_management()
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
@@ -78,7 +78,7 @@ AS $$
 $$;
 
 -- Function to get current user's role
-CREATE OR REPLACE FUNCTION auth.current_user_role()
+CREATE OR REPLACE FUNCTION public.current_user_role()
 RETURNS text
 LANGUAGE sql
 SECURITY DEFINER
@@ -90,9 +90,9 @@ AS $$
 $$;
 
 -- Grant execute permissions
-GRANT EXECUTE ON FUNCTION auth.user_has_role(text) TO authenticated;
-GRANT EXECUTE ON FUNCTION auth.is_management() TO authenticated;
-GRANT EXECUTE ON FUNCTION auth.current_user_role() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.user_has_role(text) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.is_management() TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.current_user_role() TO authenticated, anon;
 
 -- ============================================================================
 -- PART 3: Ensure user profile exists for romuald.tiegnan@gmail.com

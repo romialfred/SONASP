@@ -33,10 +33,10 @@
 DO $$
 BEGIN
   RAISE NOTICE 'STEP 1: Fixing SALES table structure...';
-  
+
   -- Add sale_date column
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'sales' AND column_name = 'sale_date'
   ) THEN
     ALTER TABLE sales ADD COLUMN sale_date DATE DEFAULT CURRENT_DATE;
@@ -45,7 +45,7 @@ BEGIN
 
   -- Add currency column
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'sales' AND column_name = 'currency'
   ) THEN
     ALTER TABLE sales ADD COLUMN currency TEXT DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'CHF', 'XOF', 'GNF'));
@@ -54,7 +54,7 @@ BEGIN
 
   -- Add total_amount column
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'sales' AND column_name = 'total_amount'
   ) THEN
     ALTER TABLE sales ADD COLUMN total_amount NUMERIC(15, 2);
@@ -66,7 +66,7 @@ BEGIN
 
   -- Add metal_type column
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'sales' AND column_name = 'metal_type'
   ) THEN
     ALTER TABLE sales ADD COLUMN metal_type TEXT DEFAULT 'gold' CHECK (metal_type IN ('gold', 'silver', 'zinc', 'diamond', 'other'));
@@ -85,10 +85,10 @@ BEGIN
 
   -- Add payment_proof_url if proof_url doesn't exist
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'payment_proof_url'
   ) AND NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'proof_url'
   ) THEN
     ALTER TABLE payments ADD COLUMN payment_proof_url TEXT;
@@ -97,10 +97,10 @@ BEGIN
 
   -- If proof_url exists, add payment_proof_url as alias
   IF EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'proof_url'
   ) AND NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'payment_proof_url'
   ) THEN
     ALTER TABLE payments ADD COLUMN payment_proof_url TEXT;
@@ -119,7 +119,7 @@ BEGIN
   RAISE NOTICE 'STEP 3: Ensuring PAYMENT_REMINDERS table exists...';
 
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.tables 
+    SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'payment_reminders'
   ) THEN
     CREATE TABLE payment_reminders (
@@ -186,7 +186,7 @@ BEGIN
   RAISE NOTICE 'STEP 4: Ensuring PAYMENT_DOCUMENTS table exists...';
 
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.tables 
+    SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'payment_documents'
   ) THEN
     CREATE TABLE payment_documents (
@@ -254,7 +254,7 @@ BEGIN
   RAISE NOTICE 'STEP 5: Ensuring PAYMENT_HISTORY table exists...';
 
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.tables 
+    SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'payment_history'
   ) THEN
     CREATE TABLE payment_history (
@@ -302,8 +302,11 @@ END $$;
 -- ============================================================================
 -- STEP 6: Recreate PAYMENTS_WITH_DETAILS view with correct columns
 -- ============================================================================
-RAISE NOTICE '';
-RAISE NOTICE 'STEP 6: Recreating PAYMENTS_WITH_DETAILS view...';
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE 'STEP 6: Recreating PAYMENTS_WITH_DETAILS view...';
+END $$;
 
 DROP VIEW IF EXISTS payments_with_details CASCADE;
 
@@ -323,7 +326,7 @@ SELECT
   p.approved_by as payment_approved_by,
   p.approved_at as payment_approved_at,
   p.created_at as payment_created_at,
-  
+
   -- Sale information (with safe column access)
   s.sale_number,
   COALESCE(s.sale_date, s.created_at::date) as sale_date,
@@ -333,7 +336,7 @@ SELECT
   s.status as sale_status,
   s.quantity_oz,
   s.london_am_rate,
-  
+
   -- Customer information (using correct column names from customers table)
   c.id as customer_id,
   c.name as customer_name,
@@ -341,18 +344,24 @@ SELECT
   c.phone as customer_phone,
   c.country as customer_country,
   c.contact_person as customer_contact
-  
+
 FROM payments p
 LEFT JOIN sales s ON p.sale_id = s.id
 LEFT JOIN customers c ON s.customer_id = c.id;
 
-RAISE NOTICE '  ✓ Recreated payments_with_details view';
+DO $$
+BEGIN
+  RAISE NOTICE '  ✓ Recreated payments_with_details view';
+END $$;
 
 -- ============================================================================
 -- STEP 7: Recreate PAYMENT_ANALYTICS view safely
 -- ============================================================================
-RAISE NOTICE '';
-RAISE NOTICE 'STEP 7: Recreating PAYMENT_ANALYTICS view...';
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE 'STEP 7: Recreating PAYMENT_ANALYTICS view...';
+END $$;
 
 DROP VIEW IF EXISTS payment_analytics CASCADE;
 
@@ -375,26 +384,31 @@ LEFT JOIN sales s ON p.sale_id = s.id
 GROUP BY DATE_TRUNC('month', p.created_at)
 ORDER BY month DESC;
 
-RAISE NOTICE '  ✓ Recreated payment_analytics view';
+DO $$
+BEGIN
+  RAISE NOTICE '  ✓ Recreated payment_analytics view';
+END $$;
 
 -- ============================================================================
 -- FINAL SUMMARY
 -- ============================================================================
-RAISE NOTICE '';
-RAISE NOTICE '========================================';
-RAISE NOTICE 'DATABASE SCHEMA FIX COMPLETED!';
-RAISE NOTICE '========================================';
-RAISE NOTICE '';
-RAISE NOTICE 'Summary of changes:';
-RAISE NOTICE '-------------------';
-RAISE NOTICE '✓ Sales table: Added sale_date, currency, total_amount, metal_type columns';
-RAISE NOTICE '✓ Payments table: Added payment_proof_url column';
-RAISE NOTICE '✓ Payment_reminders table: Created with full structure';
-RAISE NOTICE '✓ Payment_documents table: Ensured exists with RLS';
-RAISE NOTICE '✓ Payment_history table: Ensured exists with RLS';
-RAISE NOTICE '✓ Payments_with_details view: Recreated with correct column names';
-RAISE NOTICE '✓ Payment_analytics view: Recreated safely';
-RAISE NOTICE '';
-RAISE NOTICE 'The database schema is now consistent and all views should work correctly!';
-RAISE NOTICE '========================================';
-
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'DATABASE SCHEMA FIX COMPLETED!';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Summary of changes:';
+  RAISE NOTICE '-------------------';
+  RAISE NOTICE '✓ Sales table: Added sale_date, currency, total_amount, metal_type columns';
+  RAISE NOTICE '✓ Payments table: Added payment_proof_url column';
+  RAISE NOTICE '✓ Payment_reminders table: Created with full structure';
+  RAISE NOTICE '✓ Payment_documents table: Ensured exists with RLS';
+  RAISE NOTICE '✓ Payment_history table: Ensured exists with RLS';
+  RAISE NOTICE '✓ Payments_with_details view: Recreated with correct column names';
+  RAISE NOTICE '✓ Payment_analytics view: Recreated safely';
+  RAISE NOTICE '';
+  RAISE NOTICE 'The database schema is now consistent and all views should work correctly!';
+  RAISE NOTICE '========================================';
+END $$;

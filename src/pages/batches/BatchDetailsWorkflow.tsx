@@ -95,6 +95,7 @@ export function BatchDetailsWorkflow() {
   const loadBatchData = async () => {
     try {
       setLoading(true);
+      console.log('Loading batch with ID:', id);
 
       // Load batch with all related data
       const { data: batchData, error: batchError } = await supabase
@@ -108,11 +109,18 @@ export function BatchDetailsWorkflow() {
         .eq('id', id)
         .maybeSingle();
 
-      if (batchError) throw batchError;
+      if (batchError) {
+        console.error('Error loading batch:', batchError);
+        throw batchError;
+      }
+
       if (!batchData) {
-        console.warn('Batch not found');
+        console.warn('Batch not found with ID:', id);
+        console.warn('Make sure you are navigating from the Batches list page, not from demo/mock data');
         return;
       }
+
+      console.log('Batch loaded successfully:', batchData.batch_number);
 
       setBatch({
         ...batchData,

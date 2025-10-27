@@ -9,14 +9,35 @@ export interface BatchData {
   created_by?: string;
 }
 
-export interface CreateBatchData extends BatchData {
-  transport_company_id?: string;
-  refinery_id?: string;
+export interface CreateBatchData {
+  origin_site_id: string;
+  weight_grams: number;
+  metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
+  shipping_date: string;
+  mine_to_airport_transport_id: string;
+  airport_to_refinery_transport_id: string;
+  destination_refinery_id: string;
+  documents?: Array<{
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploaded_at: string;
+  }>;
+  comments?: string;
 }
 
-export async function createBatch(data: BatchData) {
+export async function createBatch(data: CreateBatchData) {
   try {
-    const batchNumber = generateBatchNumber(data.site_id || 'SITE', new Date(data.shipping_date));
+    // Get current user
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+
+    // Generate batch number
+    const batchNumber = generateBatchNumber(data.origin_site_id || 'GN', new Date(data.shipping_date));
+
+    // Calculate weight in ounces
+    const weightOunces = data.weight_grams / 31.1035;
 
     const { data: batch, error } = await supabase
       .from('batches')
@@ -24,11 +45,17 @@ export async function createBatch(data: BatchData) {
         batch_number: batchNumber,
         shipping_date: data.shipping_date,
         weight_grams: data.weight_grams,
-        weight_oz: data.weight_grams / 31.1035,
-        site_id: data.site_id,
+        weight_ounces: weightOunces,
+        metal_type: data.metal_type,
+        origin_site_id: data.origin_site_id,
+        current_site_id: data.origin_site_id,
+        mine_to_airport_transport_id: data.mine_to_airport_transport_id,
+        airport_to_refinery_transport_id: data.airport_to_refinery_transport_id,
+        destination_refinery_id: data.destination_refinery_id,
+        documents: data.documents || [],
         comments: data.comments,
         status: 'created',
-        created_by: data.created_by,
+        created_by: userData.user?.id,
       })
       .select()
       .single();

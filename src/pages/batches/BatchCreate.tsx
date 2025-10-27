@@ -11,6 +11,7 @@ import TextArea from '@/components/ui/TextArea';
 import DatePicker from '@/components/ui/DatePicker';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel';
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
 import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
@@ -69,6 +70,120 @@ export function BatchCreate() {
   const [batchNumber, setBatchNumber] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<string>('');
+
+  const fieldGuides: FieldGuideItem[] = [
+    {
+      field: 'shipping_date',
+      label: 'Shipping Date',
+      description: 'The date when the batch will be shipped from the mine to the airport. This date is used to generate the batch number.',
+      example: '27/10/2025',
+      required: true,
+      rules: [
+        'Must be today or a future date',
+        'Used in batch number generation format: GN-YYYYMMDD-XXX'
+      ]
+    },
+    {
+      field: 'metal_type',
+      label: 'Metal Type',
+      description: 'Select the type of precious metal or mineral being shipped in this batch.',
+      example: 'Gold',
+      required: true,
+      rules: [
+        'Options: Gold, Silver, Zinc, Diamond, Other',
+        'Gold is the default selection',
+        'Affects pricing and refining processes'
+      ]
+    },
+    {
+      field: 'weight_grams',
+      label: 'Weight (grams)',
+      description: 'Enter the gross weight of the precious metal in grams. The system will automatically convert this to troy ounces for display and calculations.',
+      example: '34000g (converts to 1093.12 oz)',
+      required: true,
+      rules: [
+        'Must be a positive number',
+        'Decimal values allowed (e.g., 34000.50)',
+        'Auto-converts to ounces: 1 oz = 31.1035 grams',
+        'Minimum weight: 0.01 grams'
+      ]
+    },
+    {
+      field: 'site_id',
+      label: 'Origin Site',
+      description: 'Select the mine or production site where this batch originates. This determines the origin location for tracking.',
+      example: 'Conakry Mine - Guinea',
+      required: true,
+      rules: [
+        'Only active sites are shown',
+        'Used for tracking and reporting',
+        'Appears on all documentation'
+      ]
+    },
+    {
+      field: 'mine_to_airport_transport_id',
+      label: 'Mine to Airport Transport',
+      description: 'Select the transport company responsible for moving the batch from the mine to the airport (first leg of journey).',
+      example: 'Guinea Express Transport',
+      required: true,
+      rules: [
+        'Only active transport companies shown',
+        'Must have Mine to Airport service type',
+        'Contact info included in shipping documents'
+      ]
+    },
+    {
+      field: 'airport_to_refinery_transport_id',
+      label: 'Airport to Refinery Transport',
+      description: 'Select the transport company responsible for international shipping from the airport to the refinery (second leg).',
+      example: 'International Cargo Services',
+      required: true,
+      rules: [
+        'Only active transport companies shown',
+        'Must have Airport to Refinery service type',
+        'Handles customs and international logistics'
+      ]
+    },
+    {
+      field: 'destination_refinery_id',
+      label: 'Destination Refinery',
+      description: 'Select the refinery where this batch will be processed and purified. The refinery will receive and process the metal.',
+      example: 'Kaloti Precious Metals - Dubai, UAE',
+      required: true,
+      rules: [
+        'Only active refineries shown',
+        'Determines final processing location',
+        'Affects processing timelines and rates'
+      ]
+    },
+    {
+      field: 'documents',
+      label: 'Documents',
+      description: 'Upload supporting documents such as export permits, certificates of origin, shipping manifests, photos, or insurance documents.',
+      example: 'export_permit.pdf, shipping_manifest.pdf',
+      required: false,
+      rules: [
+        'Multiple files can be uploaded',
+        'Supported formats: PDF, JPG, PNG, DOC, XLS',
+        'Maximum file size: 10MB per file',
+        'Files stored securely in cloud storage'
+      ]
+    },
+    {
+      field: 'comments',
+      label: 'Comments',
+      description: 'Add any additional notes, special instructions, or observations about this batch. This field is optional but recommended for important details.',
+      example: 'High-grade ore from new section, requires special handling',
+      required: false,
+      rules: [
+        'Maximum 500 characters',
+        'Optional but recommended',
+        'Visible to all stakeholders',
+        'Cannot include sensitive information'
+      ]
+    }
+  ];
 
   useEffect(() => {
     const number = generateBatchNumber('GN', new Date(formData.shipping_date));
@@ -303,6 +418,8 @@ export function BatchCreate() {
                     <DatePicker
                       value={formData.shipping_date}
                       onChange={(e) => handleInputChange('shipping_date', e.target.value)}
+                      onFocus={() => setFocusedField('shipping_date')}
+                      onBlur={() => setFocusedField('')}
                       error={!!errors.shipping_date}
                     />
                   </FormField>
@@ -316,6 +433,8 @@ export function BatchCreate() {
                     <Select
                       value={formData.metal_type}
                       onChange={(e) => handleInputChange('metal_type', e.target.value as any)}
+                      onFocus={() => setFocusedField('metal_type')}
+                      onBlur={() => setFocusedField('')}
                       error={!!errors.metal_type}
                     >
                       <option value="gold">Gold</option>
@@ -341,6 +460,8 @@ export function BatchCreate() {
                       placeholder="0.00"
                       value={formData.weight_grams}
                       onChange={(e) => handleInputChange('weight_grams', e.target.value)}
+                      onFocus={() => setFocusedField('weight_grams')}
+                      onBlur={() => setFocusedField('')}
                       error={!!errors.weight_grams}
                     />
                     {formData.weight_grams && (
@@ -354,6 +475,8 @@ export function BatchCreate() {
                     <Select
                       value={formData.site_id}
                       onChange={(e) => handleInputChange('site_id', e.target.value)}
+                      onFocus={() => setFocusedField('site_id')}
+                      onBlur={() => setFocusedField('')}
                       error={!!errors.site_id}
                     >
                       <option value="">Select origin site</option>
@@ -380,6 +503,8 @@ export function BatchCreate() {
                       <Select
                         value={formData.mine_to_airport_transport_id}
                         onChange={(e) => handleInputChange('mine_to_airport_transport_id', e.target.value)}
+                        onFocus={() => setFocusedField('mine_to_airport_transport_id')}
+                        onBlur={() => setFocusedField('')}
                         error={!!errors.mine_to_airport_transport_id}
                       >
                         <option value="">Select transport company</option>
@@ -400,6 +525,8 @@ export function BatchCreate() {
                       <Select
                         value={formData.airport_to_refinery_transport_id}
                         onChange={(e) => handleInputChange('airport_to_refinery_transport_id', e.target.value)}
+                        onFocus={() => setFocusedField('airport_to_refinery_transport_id')}
+                        onBlur={() => setFocusedField('')}
                         error={!!errors.airport_to_refinery_transport_id}
                       >
                         <option value="">Select transport company</option>
@@ -422,6 +549,8 @@ export function BatchCreate() {
                     <Select
                       value={formData.destination_refinery_id}
                       onChange={(e) => handleInputChange('destination_refinery_id', e.target.value)}
+                      onFocus={() => setFocusedField('destination_refinery_id')}
+                      onBlur={() => setFocusedField('')}
                       error={!!errors.destination_refinery_id}
                     >
                       <option value="">Select refinery</option>
@@ -495,6 +624,8 @@ export function BatchCreate() {
                         handleInputChange('comments', e.target.value);
                       }
                     }}
+                    onFocus={() => setFocusedField('comments')}
+                    onBlur={() => setFocusedField('')}
                     rows={4}
                   />
                 </FormField>
@@ -503,6 +634,13 @@ export function BatchCreate() {
           </div>
 
           <div className="space-y-6">
+            {/* Field Guide Panel */}
+            <FieldGuidePanel
+              title="Batch Creation Guide"
+              guides={fieldGuides}
+              currentField={focusedField}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Actions</CardTitle>

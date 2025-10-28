@@ -85,13 +85,15 @@ INSERT INTO customers (
   email,
   phone,
   country,
-  segment,
-  is_active,
+  address,
+  contact_person,
   credit_limit,
-  notes
+  status,
+  is_active,
+  company
 ) VALUES
-  ('Emirates Gold Trading LLC', 'contact@emiratesgold.ae', '+971-4-555-0001', 'UAE', 'corporate', true, 10000000, 'Large corporate buyer based in Dubai'),
-  ('Swiss Precious Metals AG', 'info@swissmetals.ch', '+41-44-555-0002', 'Switzerland', 'corporate', true, 15000000, 'Premium Swiss refinery and trading company')
+  ('Emirates Gold Trading LLC', 'contact@emiratesgold.ae', '+971-4-555-0001', 'UAE', 'Dubai International Financial Centre', 'Ahmed Al-Mansouri', 10000000, 'active', true, 'Emirates Gold Trading LLC'),
+  ('Swiss Precious Metals AG', 'info@swissmetals.ch', '+41-44-555-0002', 'Switzerland', 'Bahnhofstrasse 45, Zurich', 'Hans Mueller', 15000000, 'active', true, 'Swiss Precious Metals AG')
 ON CONFLICT (email) DO NOTHING;
 
 -- ================================================================

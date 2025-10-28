@@ -11,6 +11,7 @@ import {
   Building2,
   FileText,
   Truck,
+  CheckCircle,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -20,22 +21,71 @@ import { StatusFlow, BatchStatus } from '@/components/batch/StatusFlow';
 import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
-import { getBatchStatusLabel, getBatchStatusVariant } from '@/constants/batchStatuses';
+import { getBatchStatusLabel, getBatchStatusVariant, BATCH_STATUSES } from '@/constants/batchStatuses';
+import { approveBatchForTransport } from '@/services/batchApprovalService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function BatchDetails() {
   const { id } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [batch, setBatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [approving, setApproving] = useState(false);
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadBatch();
       loadTimeline();
+      checkManagerRole();
     }
   }, [id]);
+
+  const checkManagerRole = async () => {
+    if (!user) return;
+    try {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const managerRoles = ['factory_manager', 'manager', 'admin', 'management'];
+      setIsManager(managerRoles.some(role =>
+        profile?.role?.toLowerCase().includes(role)
+      ));
+    } catch (error) {
+      console.error('Error checking manager role:', error);
+    }
+  };
+
+  const handleApproveBatch = async () => {
+    if (!window.confirm('Are you sure you want to approve this batch for transportation?')) {
+      return;
+    }
+
+    setApproving(true);
+    try {
+      const result = await approveBatchForTransport(id!, 'Approved by Factory Manager');
+
+      if (result.success) {
+        alert('Batch approved for transportation successfully!');
+        // Reload batch
+        await loadBatch();
+        await loadTimeline();
+      } else {
+        alert(`Failed to approve batch: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error('Error approving batch:', error);
+      alert(`Error approving batch: ${error.message}`);
+    } finally {
+      setApproving(false);
+    }
+  };
 
   const loadBatch = async () => {
     try {
@@ -212,10 +262,23 @@ export function BatchDetails() {
             </div>
           </div>
 
-          <Button variant="outline" className="gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Batch
-          </Button>
+          <div className="flex gap-2">
+            {batch.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && isManager && (
+              <Button
+                variant="primary"
+                onClick={handleApproveBatch}
+                disabled={approving}
+                className="gap-2"
+              >
+                <CheckCircle className="h-4 w-4" />
+                {approving ? 'Approving...' : 'Validate for Transportation'}
+              </Button>
+            )}
+            <Button variant="outline" className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit Batch
+            </Button>
+          </div>
         </div>
 
         <Card>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, Download, Filter } from 'lucide-react';
+import { Plus, Search, Download, Filter, CheckCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, Column } from '@/components/ui/Table';
@@ -11,7 +11,9 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
-import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions } from '@/constants/batchStatuses';
+import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions, BATCH_STATUSES } from '@/constants/batchStatuses';
+import { approveBatchForTransport } from '@/services/batchApprovalService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Batch {
   id: string;
@@ -28,15 +30,37 @@ interface Batch {
 export function BatchListing() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [siteFilter, setSiteFilter] = useState('all');
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [approvingBatch, setApprovingBatch] = useState<string | null>(null);
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     loadBatches();
+    checkManagerRole();
   }, []);
+
+  const checkManagerRole = async () => {
+    if (!user) return;
+    try {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const managerRoles = ['factory_manager', 'manager', 'admin', 'management'];
+      setIsManager(managerRoles.some(role =>
+        profile?.role?.toLowerCase().includes(role)
+      ));
+    } catch (error) {
+      console.error('Error checking manager role:', error);
+    }
+  };
 
   const loadBatches = async () => {
     try {
@@ -143,7 +167,62 @@ export function BatchListing() {
       label: 'Mining Company',
       sortable: true,
     },
+    {
+      key: 'id',
+      label: 'Actions',
+      sortable: false,
+      render: (value, row) => {
+        if (row.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && isManager) {
+          return (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApproveBatch(row.id);
+              }}
+              disabled={approvingBatch === row.id}
+              className="gap-1"
+            >
+              {approvingBatch === row.id ? (
+                'Approving...'
+              ) : (
+                <>
+                  <CheckCircle className="h-3 w-3" />
+                  Validate for Transport
+                </>
+              )}
+            </Button>
+          );
+        }
+        return null;
+      },
+    },
   ];
+
+  const handleApproveBatch = async (batchId: string) => {
+    if (!window.confirm('Are you sure you want to approve this batch for transportation?')) {
+      return;
+    }
+
+    setApprovingBatch(batchId);
+    try {
+      const result = await approveBatchForTransport(batchId, 'Approved by Factory Manager');
+
+      if (result.success) {
+        alert('Batch approved for transportation successfully!');
+        // Reload batches
+        await loadBatches();
+      } else {
+        alert(`Failed to approve batch: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error('Error approving batch:', error);
+      alert(`Error approving batch: ${error.message}`);
+    } finally {
+      setApprovingBatch(null);
+    }
+  };
 
   const handleExport = () => {
     console.log('Exporting batches...');
@@ -191,12 +270,11 @@ export function BatchListing() {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="all">All Statuses</option>
-                <option value="created">Created</option>
-                <option value="shipped">Shipped</option>
-                <option value="received_airport">Received at Airport</option>
-                <option value="processing">Processing</option>
-                <option value="processed">Processed</option>
-                <option value="approved">Approved</option>
+                {getBatchStatusOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </Select>
 
               <Select

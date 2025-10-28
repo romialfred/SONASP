@@ -8,6 +8,7 @@ import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { BATCH_STATUSES, getBatchStatusLabel } from '@/constants/batchStatuses';
 
 interface Site {
   name: string;
@@ -24,7 +25,10 @@ interface Batch {
   shipping_date: string;
   comments?: string;
   created_at: string;
-  current_site?: Site;
+  mining_company?: {
+    name: string;
+    country: string;
+  };
 }
 
 export function ReceivingDashboard() {
@@ -40,27 +44,26 @@ export function ReceivingDashboard() {
   async function fetchBatches() {
     setLoading(true);
     try {
-      // Fetch ALL batches with their current site information
+      // Fetch batches that are approved for transport (ready to ship from mine to airport)
+      // Also include batches that are waiting at airport or received at airport
       const { data, error } = await supabase
         .from('batches')
         .select(`
           *,
-          current_site:current_site_id(name, site_type)
+          mining_company:mining_companies(name, country)
         `)
+        .in('status', [
+          BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
+          BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
+          BATCH_STATUSES.RECEIVED_AT_AIRPORT
+        ])
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching batches:', error);
       } else {
-        // Filter batches that are at AIRPORT locations
-        // Based on current_site containing "Airport" in the name
-        const airportBatches = (data || []).filter(batch => {
-          const siteName = batch.current_site?.name || '';
-          return siteName.toLowerCase().includes('airport');
-        });
-
-        setBatches(airportBatches);
-        console.log(`Found ${airportBatches.length} batches at airport locations`);
+        setBatches(data || []);
+        console.log(`Found ${data?.length || 0} batches ready for/at airport`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -70,26 +73,34 @@ export function ReceivingDashboard() {
   }
 
   // Count batches by status
-  // In Transit: Pending status at airport (waiting to arrive)
+  // Ready to Ship: Approved by factory, ready to ship to airport
+  const readyToShipCount = batches.filter(
+    b => b.status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT
+  ).length;
+
+  // In Transit: Currently being transported to airport
   const inTransitCount = batches.filter(
-    b => b.status?.toLowerCase() === 'pending'
+    b => b.status === BATCH_STATUSES.WAITING_AIRPORT_RECEIPT
   ).length;
 
-  // At Airport: Received status (needs validation/confirmation)
+  // At Airport: Received and needs validation/confirmation
   const atAirportCount = batches.filter(
-    b => b.status?.toLowerCase() === 'received'
-  ).length;
-
-  // Processing: Currently being processed at airport
-  const processingCount = batches.filter(
-    b => b.status?.toLowerCase() === 'processing'
+    b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT
   ).length;
 
   const totalWeight = batches.reduce((sum, b) => sum + (b.weight_ounces || 0), 0);
 
   const metrics = [
     {
-      title: 'Pending Arrival',
+      title: 'Ready to Ship',
+      value: readyToShipCount.toString(),
+      change: 'Approved by factory',
+      changeType: 'positive' as const,
+      icon: CheckCircle,
+      iconColor: 'text-green-500',
+    },
+    {
+      title: 'In Transit',
       value: inTransitCount.toString(),
       change: 'En route to airport',
       changeType: 'neutral' as const,

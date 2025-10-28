@@ -7,8 +7,8 @@ import Select from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import {
-  TrendingUp, TrendingDown, Download, RefreshCw, Plus,
-  Calendar, DollarSign, Search, Filter, BarChart, FileDown
+  TrendingUp, RefreshCw, Plus,
+  Calendar, DollarSign, Filter, BarChart, FileDown
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
@@ -724,8 +724,10 @@ export function FxRatesPage() {
                 <CardContent>
                   <BarChartWidget
                     data={getDailyChartData()}
-                    dataKeys={['Rate Count', 'Avg Rate']}
-                    colors={['#3b82f6', '#10b981']}
+                    bars={[
+                      { dataKey: 'Rate Count', color: '#3b82f6', name: 'Rate Count' },
+                      { dataKey: 'Avg Rate', color: '#10b981', name: 'Avg Rate' }
+                    ]}
                     height={300}
                   />
                 </CardContent>
@@ -740,10 +742,13 @@ export function FxRatesPage() {
                 <CardContent>
                   <BarChartWidget
                     data={getMonthlyChartData()}
-                    dataKeys={CURRENCY_PAIRS.map(p => p.value).filter(pair =>
-                      monthlyRates.some(r => r.currency_pair === pair)
+                    bars={CURRENCY_PAIRS.map((p, idx) => ({
+                      dataKey: p.value,
+                      color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][idx % 5],
+                      name: p.value
+                    })).filter(bar =>
+                      monthlyRates.some(r => r.currency_pair === bar.dataKey)
                     )}
-                    colors={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']}
                     height={300}
                   />
                 </CardContent>
@@ -758,8 +763,9 @@ export function FxRatesPage() {
                 <CardContent>
                   <BarChartWidget
                     data={getCustomerChartData()}
-                    dataKeys={['Transaction Count']}
-                    colors={['#3b82f6']}
+                    bars={[
+                      { dataKey: 'Transaction Count', color: '#3b82f6', name: 'Transaction Count' }
+                    ]}
                     height={300}
                   />
                 </CardContent>
@@ -996,7 +1002,7 @@ export function FxRatesPage() {
 
         {/* Add Daily Rate Modal */}
         {showAddModal && (
-          <Modal onClose={() => setShowAddModal(false)} size="lg">
+          <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} size="lg">
             <ModalHeader>Add Daily Exchange Rate</ModalHeader>
             <ModalBody>
               <div className="space-y-4">
@@ -1084,7 +1090,7 @@ export function FxRatesPage() {
 
         {/* Add Customer Rate Modal */}
         {showCustomerRateModal && (
-          <Modal onClose={() => setShowCustomerRateModal(false)} size="lg">
+          <Modal isOpen={showCustomerRateModal} onClose={() => setShowCustomerRateModal(false)} size="lg">
             <ModalHeader>Add Customer Exchange Rate</ModalHeader>
             <ModalBody>
               <div className="space-y-4">

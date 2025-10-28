@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import {
-  TrendingUp, TrendingDown, Download, Calendar, DollarSign,
+  TrendingUp, Download, Calendar, DollarSign,
   BarChart3, ArrowUpRight, ArrowDownRight, AlertCircle
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
+import { Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
 

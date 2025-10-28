@@ -48,6 +48,9 @@ import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
+import { BatchApprovalFactory } from './pages/batches/BatchApprovalFactory';
+import { InventoryManagement } from './pages/inventory/InventoryManagement';
+import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -199,6 +202,31 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <BatchDetailsWorkflow />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/batches/approvals"
+              element={
+                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                  <BatchApprovalFactory />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <InventoryManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/add"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <AddInventoryEntry />
                 </ProtectedRoute>
               }
             />

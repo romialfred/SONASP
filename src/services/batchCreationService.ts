@@ -72,7 +72,7 @@ export async function createBatch(data: CreateBatchData) {
         destination_refinery_id: data.destination_refinery_id,
         documents: data.documents || [],
         comments: data.comments,
-        status: 'created',
+        status: 'pending_factory_approval',
         created_by: userData.user?.id,
       })
       .select()

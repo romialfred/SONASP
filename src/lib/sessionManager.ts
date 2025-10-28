@@ -1,9 +1,9 @@
 import { supabase } from './supabase';
 
 // Session timeout configuration
-const INACTIVITY_TIMEOUT = 1 * 60 * 1000; // 1 minute
-const WARNING_BEFORE_TIMEOUT = 30 * 1000; // Show warning 30 seconds before timeout
-const TOKEN_REFRESH_INTERVAL = 45 * 1000; // Refresh token every 45 seconds
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const WARNING_BEFORE_TIMEOUT = 60 * 1000; // Show warning 60 seconds before timeout
+const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes
 
 export type SessionWarningCallback = () => void;
 export type SessionTimeoutCallback = () => void;
@@ -52,7 +52,7 @@ export class SessionManager {
   }
 
   public start() {
-    console.log('[SessionManager] Starting with 1-minute inactivity timeout');
+    console.log('[SessionManager] Starting with 10-minute inactivity timeout');
     this.updateActivity();
     this.startTokenRefresh();
     this.startInactivityCheck();
@@ -106,18 +106,18 @@ export class SessionManager {
 
       const inactivityDuration = this.getInactivityDuration();
 
-      // Check if we should show warning (30 seconds before timeout)
-      if (inactivityDuration >= WARNING_BEFORE_TIMEOUT && !this.warningShown) {
-        console.log('[SessionManager] Showing inactivity warning (30 seconds)');
+      // Check if we should show warning (60 seconds before timeout)
+      if (inactivityDuration >= INACTIVITY_TIMEOUT - WARNING_BEFORE_TIMEOUT && !this.warningShown) {
+        console.log('[SessionManager] Showing inactivity warning (60 seconds before timeout)');
         this.warningShown = true;
         if (this.onWarning) {
           this.onWarning();
         }
       }
 
-      // Check if session should timeout (1 minute)
+      // Check if session should timeout (10 minutes)
       if (inactivityDuration >= INACTIVITY_TIMEOUT) {
-        console.log('[SessionManager] Session timeout due to inactivity (1 minute)');
+        console.log('[SessionManager] Session timeout due to inactivity (10 minutes)');
         this.handleTimeout();
       }
     }, 1000); // Check every second for accuracy

@@ -23,7 +23,6 @@ interface FormData {
   weight_grams: string;
   metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
   mining_company_id: string;
-  site_id: string;
   mine_to_airport_transport_id: string;
   airport_to_refinery_transport_id: string;
   destination_refinery_id: string;
@@ -34,7 +33,7 @@ interface FormErrors {
   shipping_date?: string;
   weight_grams?: string;
   metal_type?: string;
-  site_id?: string;
+  mining_company_id?: string;
   mine_to_airport_transport_id?: string;
   airport_to_refinery_transport_id?: string;
   destination_refinery_id?: string;
@@ -56,14 +55,12 @@ export function BatchCreate() {
     weight_grams: '',
     metal_type: 'gold',
     mining_company_id: '',
-    site_id: '',
     mine_to_airport_transport_id: '',
     airport_to_refinery_transport_id: '',
     destination_refinery_id: '',
     comments: '',
   });
   const [miningCompanies, setMiningCompanies] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
   const [mineToAirportTransports, setMineToAirportTransports] = useState<any[]>([]);
   const [airportToRefineryTransports, setAirportToRefineryTransports] = useState<any[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
@@ -110,18 +107,6 @@ export function BatchCreate() {
         'Decimal values allowed (e.g., 34000.50)',
         'Auto-converts to ounces: 1 oz = 31.1035 grams',
         'Minimum weight: 0.01 grams'
-      ]
-    },
-    {
-      field: 'site_id',
-      label: 'Origin Site',
-      description: 'Select the mine or production site where this batch originates. This determines the origin location for tracking.',
-      example: 'Conakry Mine - Guinea',
-      required: true,
-      rules: [
-        'Only active sites are shown',
-        'Used for tracking and reporting',
-        'Appears on all documentation'
       ]
     },
     {
@@ -195,7 +180,6 @@ export function BatchCreate() {
 
   useEffect(() => {
     loadMiningCompanies();
-    loadSites();
     loadTransportCompanies();
     loadRefineries();
   }, []);
@@ -215,15 +199,6 @@ export function BatchCreate() {
     }
   };
 
-  const loadSites = async () => {
-    try {
-      const sitesData = await getSites();
-      setSites(extractArrayData(sitesData));
-    } catch (error) {
-      console.error('Error loading sites:', error);
-      setSites([]);
-    }
-  };
 
   const loadTransportCompanies = async () => {
     try {
@@ -269,8 +244,8 @@ export function BatchCreate() {
       newErrors.metal_type = 'Metal type is required';
     }
 
-    if (!formData.site_id) {
-      newErrors.site_id = 'Origin site is required';
+    if (!formData.mining_company_id) {
+      newErrors.mining_company_id = 'Mining company is required';
     }
 
     if (!formData.mine_to_airport_transport_id) {
@@ -360,7 +335,7 @@ export function BatchCreate() {
 
     try {
       const batchData: CreateBatchData = {
-        origin_site_id: formData.site_id,
+        mining_company_id: formData.mining_company_id,
         weight_grams: parseFloat(formData.weight_grams),
         metal_type: formData.metal_type,
         shipping_date: formData.shipping_date,
@@ -511,22 +486,6 @@ export function BatchCreate() {
                     )}
                   </FormField>
 
-                  <FormField label="Origin Site" required error={errors.site_id}>
-                    <Select
-                      value={formData.site_id}
-                      onChange={(e) => handleInputChange('site_id', e.target.value)}
-                      onFocus={() => setFocusedField('site_id')}
-                      onBlur={() => setFocusedField('')}
-                      error={!!errors.site_id}
-                    >
-                      <option value="">Select origin site</option>
-                      {Array.isArray(sites) && sites.map((site) => (
-                        <option key={site.id} value={site.id}>
-                          {site.name} - {site.country}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormField>
                 </div>
 
                 <div className="border-t pt-6 mt-6">
@@ -727,7 +686,7 @@ export function BatchCreate() {
                         formData.shipping_date,
                         formData.weight_grams,
                         formData.metal_type,
-                        formData.site_id,
+                        formData.mining_company_id,
                         formData.mine_to_airport_transport_id,
                         formData.airport_to_refinery_transport_id,
                         formData.destination_refinery_id,
@@ -744,7 +703,7 @@ export function BatchCreate() {
                             formData.shipping_date,
                             formData.weight_grams,
                             formData.metal_type,
-                            formData.site_id,
+                            formData.mining_company_id,
                             formData.mine_to_airport_transport_id,
                             formData.airport_to_refinery_transport_id,
                             formData.destination_refinery_id,

@@ -10,7 +10,7 @@ export interface BatchData {
 }
 
 export interface CreateBatchData {
-  origin_site_id: string;
+  mining_company_id: string;
   weight_grams: number;
   metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
   shipping_date: string;
@@ -33,18 +33,18 @@ export async function createBatch(data: CreateBatchData) {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
 
-    // Get site/country information to determine country code
+    // Get mining company information to determine country code
     let countryCode: 'GN' | 'ML' | 'LB' = 'GN'; // Default
-    if (data.origin_site_id) {
-      // Fetch site to get country
-      const { data: siteData } = await supabase
-        .from('sites')
+    if (data.mining_company_id) {
+      // Fetch mining company to get country
+      const { data: companyData } = await supabase
+        .from('mining_companies')
         .select('country')
-        .eq('id', data.origin_site_id)
+        .eq('id', data.mining_company_id)
         .single();
 
-      if (siteData?.country) {
-        countryCode = getCountryCode(siteData.country);
+      if (companyData?.country) {
+        countryCode = getCountryCode(companyData.country);
       }
     }
 
@@ -65,8 +65,7 @@ export async function createBatch(data: CreateBatchData) {
         weight_grams: data.weight_grams,
         weight_ounces: weightOunces,
         metal_type: data.metal_type,
-        origin_site_id: data.origin_site_id,
-        current_site_id: data.origin_site_id,
+        mining_company_id: data.mining_company_id,
         mine_to_airport_transport_id: data.mine_to_airport_transport_id,
         airport_to_refinery_transport_id: data.airport_to_refinery_transport_id,
         destination_refinery_id: data.destination_refinery_id,

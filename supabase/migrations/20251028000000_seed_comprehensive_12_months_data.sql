@@ -308,7 +308,10 @@ BEGIN
         royalties,
         net_proceeds,
         final_proceeds,
+        total_amount,
         status,
+        sale_date,
+        currency,
         created_at,
         updated_at
       ) VALUES (
@@ -321,7 +324,10 @@ BEGIN
         ROUND(v_royalty, 2),
         ROUND(v_net_proceeds, 2),
         ROUND(v_net_proceeds, 2),
+        ROUND(v_net_proceeds, 2),
         (ARRAY['approved', 'completed', 'payment_received'])[1 + floor(random()::numeric * 3)::int],
+        v_sale_date,
+        'USD',
         v_sale_date,
         v_sale_date + ((random()::numeric * 5)::int * INTERVAL '1 day')
       )

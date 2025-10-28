@@ -51,6 +51,7 @@ import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import { BatchApprovalFactory } from './pages/batches/BatchApprovalFactory';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
+import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -227,6 +228,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['refinery', 'management']}>
                   <AddInventoryEntry />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/silver"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <SilverInventoryManagement />
                 </ProtectedRoute>
               }
             />

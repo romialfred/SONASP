@@ -21,6 +21,8 @@ import {
   CreditCard,
   Warehouse,
   PackagePlus,
+  Sparkles,
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -36,6 +38,7 @@ interface MenuGroup {
   label: string;
   items: MenuItem[];
   groupIconColor: string;
+  groupIcon?: React.ComponentType<{ className?: string }>;
 }
 
 const menuGroups: MenuGroup[] = [
@@ -43,6 +46,7 @@ const menuGroups: MenuGroup[] = [
     id: 'overview',
     label: 'Overview',
     groupIconColor: 'text-blue-500',
+    groupIcon: LayoutDashboard,
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-blue-500' },
     ],
@@ -50,52 +54,57 @@ const menuGroups: MenuGroup[] = [
   {
     id: 'batches',
     label: 'Batches Management',
-    groupIconColor: 'text-green-500',
+    groupIconColor: 'text-emerald-600',
+    groupIcon: Package,
     items: [
-      { label: 'Batches', path: '/batches', icon: Package, iconColor: 'text-green-500' },
-      { label: 'Shipping', path: '/shipping', icon: Truck, iconColor: 'text-cyan-500' },
-      { label: 'Refining', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-500' },
+      { label: 'Batches', path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
+      { label: 'Shipping', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
+      { label: 'Refining', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
     ],
   },
   {
     id: 'inventory',
     label: 'Inventory Management',
-    groupIconColor: 'text-orange-500',
+    groupIconColor: 'text-amber-600',
+    groupIcon: Warehouse,
     items: [
-      { label: 'Gold Inventory', path: '/inventory', icon: Warehouse, iconColor: 'text-orange-500' },
-      { label: 'Silver Inventory', path: '/inventory/silver', icon: Warehouse, iconColor: 'text-gray-400' },
+      { label: 'Gold Inventory', path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
+      { label: 'Silver Inventory', path: '/inventory/silver', icon: Sparkles, iconColor: 'text-slate-500' },
     ],
   },
   {
     id: 'sales',
     label: 'Sales Management',
-    groupIconColor: 'text-amber-500',
+    groupIconColor: 'text-pink-600',
+    groupIcon: ShoppingCart,
     items: [
-      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-purple-500' },
-      { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-500' },
-      { label: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-green-500' },
-      { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-yellow-500' },
-      { label: 'FX Rates', path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-500' },
+      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-violet-600' },
+      { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
+      { label: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
+      { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
+      { label: 'FX Rates', path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
     ],
   },
   {
     id: 'insights',
     label: 'Insights & Reports',
-    groupIconColor: 'text-indigo-500',
+    groupIconColor: 'text-blue-600',
+    groupIcon: BarChart3,
     items: [
-      { label: 'Analytics', path: '/analytics', icon: BarChart3, iconColor: 'text-indigo-500' },
-      { label: 'Reports', path: '/reports', icon: FileText, iconColor: 'text-violet-500' },
+      { label: 'Analytics', path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
+      { label: 'Reports', path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
     ],
   },
   {
     id: 'administration',
     label: 'Administration',
-    groupIconColor: 'text-red-500',
+    groupIconColor: 'text-red-600',
+    groupIcon: Shield,
     items: [
-      { label: 'Users Management', path: '/users', icon: Users, iconColor: 'text-slate-500' },
-      { label: 'Parameters', path: '/parameters', icon: Settings, iconColor: 'text-orange-500' },
-      { label: 'Workflow', path: '/admin/workflow', icon: GitBranch, iconColor: 'text-blue-500' },
-      { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-500' },
+      { label: 'Users Management', path: '/users', icon: Users, iconColor: 'text-slate-600' },
+      { label: 'Parameters', path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
+      { label: 'Workflow', path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
+      { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-600' },
     ],
   },
 ];
@@ -235,13 +244,16 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 {collapsed ? (
                   <span className="w-full flex justify-center">
                     {(() => {
-                      const Icon = groupItems[0]?.icon ?? LayoutDashboard;
+                      const Icon = group.groupIcon ?? LayoutDashboard;
                       return <Icon className={cn('w-5 h-5', group.groupIconColor)} />;
                     })()}
                   </span>
                 ) : (
                   <>
-                    <span className="text-sm">
+                    <span className="flex items-center gap-2 text-sm">
+                      {group.groupIcon && (
+                        <group.groupIcon className={cn('w-4 h-4', group.groupIconColor)} />
+                      )}
                       {group.label}
                     </span>
                     {isOpen ? (

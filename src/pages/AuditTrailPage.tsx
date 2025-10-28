@@ -4,18 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import { Loading } from '@/components/ui/Loading';
 import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface AuditLog {
   id: string;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
+  user_email: string | null;
   action: string;
-  entity_type: string;
-  entity_id?: string;
-  details?: string;
-  ip_address?: string;
+  module: string;
+  details: string;
+  ip_address: string | null;
+  status: 'success' | 'failed' | 'warning';
 }
 
 export function AuditTrailPage() {
@@ -50,24 +52,27 @@ export function AuditTrailPage() {
 
   const filteredLogs = auditLogs.filter(log => {
     const matchesSearch =
-      (log.user_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.user_email || log.user_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.entity_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (log.details || '').toLowerCase().includes(searchQuery.toLowerCase());
+      log.module.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.details.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesAction = filterAction === 'all' || log.action === filterAction;
-    const matchesUser = filterUser === 'all' || log.user_id === filterUser;
+    const matchesUser = filterUser === 'all' || log.user_email === filterUser;
 
     return matchesSearch && matchesAction && matchesUser;
   });
 
-  const getActionIcon = (entity: string) => {
-    switch (entity.toLowerCase()) {
+  const getModuleIcon = (module: string) => {
+    switch (module.toLowerCase()) {
       case 'batch':
+      case 'batches':
         return <Package className="w-4 h-4" />;
       case 'sale':
+      case 'sales':
         return <ShoppingCart className="w-4 h-4" />;
       case 'user':
+      case 'users':
         return <User className="w-4 h-4" />;
       case 'settings':
         return <SettingsIcon className="w-4 h-4" />;
@@ -76,7 +81,20 @@ export function AuditTrailPage() {
     }
   };
 
-  const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_id).filter(Boolean)));
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'bg-green-100 text-green-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_email).filter(Boolean)));
   const uniqueActions = Array.from(new Set(auditLogs.map(log => log.action)));
 
   return (
@@ -188,7 +206,8 @@ export function AuditTrailPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Module</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
                     </tr>
@@ -199,8 +218,13 @@ export function AuditTrailPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {new Date(log.created_at).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {log.user_id || 'System'}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="font-medium text-gray-900">
+                            {log.user_email || 'System'}
+                          </div>
+                          {log.user_id && (
+                            <div className="text-xs text-gray-500 font-mono">{log.user_id.substring(0, 8)}...</div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
@@ -209,12 +233,17 @@ export function AuditTrailPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
-                            {getActionIcon(log.entity_type)}
-                            <span>{log.entity_type}</span>
+                            {getModuleIcon(log.module)}
+                            <span className="capitalize">{log.module}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                          {log.details || '-'}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={log.details}>
+                          {log.details}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
                           {log.ip_address || 'N/A'}

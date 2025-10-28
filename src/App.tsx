@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { DialogProvider } from './contexts/DialogContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
@@ -522,11 +523,13 @@ function App() {
     <ToastProvider>
       <BrowserRouter>
         <AuthProvider>
-          <DialogProvider>
-            <AppErrorBoundary>
-              <AppRoutes />
-            </AppErrorBoundary>
-          </DialogProvider>
+          <NotificationProvider>
+            <DialogProvider>
+              <AppErrorBoundary>
+                <AppRoutes />
+              </AppErrorBoundary>
+            </DialogProvider>
+          </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
     </ToastProvider>

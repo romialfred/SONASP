@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useNotification } from '@/contexts/NotificationContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -44,6 +45,7 @@ export function MiningCompanyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
+  const { showError, showSuccess } = useNotification();
 
   const [currentField, setCurrentField] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -184,7 +186,7 @@ export function MiningCompanyForm() {
       navigate('/stakeholders/mining-companies');
     } catch (error: any) {
       console.error('Error saving company:', error);
-      alert('Error: ' + error.message);
+      showError('Error Saving Company', error.message || 'An unexpected error occurred while saving the mining company.');
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '@/contexts/NotificationContext';
 import { ArrowLeft, Save, Send, Upload, X } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -50,6 +51,7 @@ interface UploadedDocument {
 export function BatchCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showError, showSuccess, showInfo } = useNotification();
   const [formData, setFormData] = useState<FormData>({
     shipping_date: new Date().toISOString().split('T')[0],
     weight_grams: '',
@@ -309,7 +311,7 @@ export function BatchCreate() {
       }
     } catch (error: any) {
       console.error('Error uploading file:', error);
-      alert('Error uploading file: ' + error.message);
+      showError('Upload Failed', `Error uploading file: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -321,7 +323,7 @@ export function BatchCreate() {
 
   const handleSaveDraft = () => {
     localStorage.setItem('batch_draft', JSON.stringify({ ...formData, documents }));
-    alert('Draft saved');
+    showSuccess('Draft Saved', 'Your batch draft has been saved successfully.');
   };
 
   const handleSubmit = () => {
@@ -354,12 +356,12 @@ export function BatchCreate() {
           state: { message: 'Batch created successfully!' }
         });
       } else {
-        alert('Error creating batch: ' + result.error);
+        showError('Creation Failed', `Error creating batch: ${result.error}`);
         setIsSubmitting(false);
       }
     } catch (error: any) {
       console.error('Error creating batch:', error);
-      alert('Error: ' + error.message);
+      showError('Error', error.message || 'An unexpected error occurred');
       setIsSubmitting(false);
     } finally {
       setShowConfirmModal(false);

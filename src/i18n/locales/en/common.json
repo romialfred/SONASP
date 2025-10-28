@@ -35,7 +35,10 @@
     "no": "No",
     "optional": "Optional",
     "required": "Required",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "information": "Information",
+    "confirmation": "Confirmation",
+    "ok": "OK"
   },
   "auth": {
     "login": "Login",

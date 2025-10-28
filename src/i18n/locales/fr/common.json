@@ -35,7 +35,10 @@
     "no": "Non",
     "optional": "Optionnel",
     "required": "Obligatoire",
-    "tryAgain": "Réessayer"
+    "tryAgain": "Réessayer",
+    "information": "Information",
+    "confirmation": "Confirmation",
+    "ok": "OK"
   },
   "auth": {
     "login": "Connexion",

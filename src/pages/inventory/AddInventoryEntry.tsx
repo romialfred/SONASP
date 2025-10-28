@@ -12,6 +12,7 @@ import { FormField } from '@/components/ui/FormField';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { supabase } from '@/lib/supabase';
 import { addInventoryEntry, type GoldInventoryEntry } from '@/services/inventoryService';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Batch {
   id: string;
@@ -70,6 +71,7 @@ interface CalculatedValues {
 
 export function AddInventoryEntry() {
   const navigate = useNavigate();
+  const alert = useAlert();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
   const [selectedBatchDetails, setSelectedBatchDetails] = useState<BatchDetails | null>(null);
@@ -345,14 +347,14 @@ export function AddInventoryEntry() {
       const result = await addInventoryEntry(entry);
 
       if (result.success) {
-        alert('Inventory entry added successfully!');
+        alert.success('Inventory entry added successfully!');
         navigate('/inventory');
       } else {
-        alert('Error adding inventory entry: ' + (result.error as any)?.message);
+        alert.error('Error adding inventory entry: ' + (result.error as any)?.message);
       }
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }

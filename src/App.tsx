@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { DialogProvider } from './contexts/DialogContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
@@ -511,11 +512,13 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AppErrorBoundary>
-            <AppRoutes />
-          </AppErrorBoundary>
-        </BrowserRouter>
+        <DialogProvider>
+          <BrowserRouter>
+            <AppErrorBoundary>
+              <AppRoutes />
+            </AppErrorBoundary>
+          </BrowserRouter>
+        </DialogProvider>
       </AuthProvider>
     </ToastProvider>
   );

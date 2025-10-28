@@ -63,6 +63,9 @@ interface CalculatedValues {
   final_fine_oz: number;
   monthly_total_oz: number;
   yield_percentage: number;
+  variance_grams: number;
+  variance_oz: number;
+  variance_percentage: number;
 }
 
 export function AddInventoryEntry() {
@@ -89,7 +92,10 @@ export function AddInventoryEntry() {
     final_fine_grams: 0,
     final_fine_oz: 0,
     monthly_total_oz: 0,
-    yield_percentage: 0
+    yield_percentage: 0,
+    variance_grams: 0,
+    variance_oz: 0,
+    variance_percentage: 0
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +113,8 @@ export function AddInventoryEntry() {
     formData.weight_after_melting_grams,
     formData.fineness_percentage,
     formData.metal_retained_percentage,
-    formData.weight_before_melting_grams
+    formData.weight_before_melting_grams,
+    selectedBatchDetails
   ]);
 
   useEffect(() => {
@@ -236,13 +243,17 @@ export function AddInventoryEntry() {
     const fineness = parseFloat(formData.fineness_percentage);
     const metalRetained = parseFloat(formData.metal_retained_percentage);
     const weightBefore = parseFloat(formData.weight_before_melting_grams);
+    const batchQuantity = selectedBatchDetails?.quantity_shipped || 0;
 
     if (!weightAfter || !fineness || !metalRetained) {
       setCalculated((prev) => ({
         ...prev,
         final_fine_grams: 0,
         final_fine_oz: 0,
-        yield_percentage: 0
+        yield_percentage: 0,
+        variance_grams: 0,
+        variance_oz: 0,
+        variance_percentage: 0
       }));
       return;
     }
@@ -251,11 +262,19 @@ export function AddInventoryEntry() {
     const finalFineOz = finalFineGrams / 28.3495;
     const yieldPercentage = weightBefore > 0 ? (weightAfter / weightBefore) * 100 : 0;
 
+    // Calculate variance: Batch Quantity (validated by mining company) - Final Fine
+    const varianceGrams = batchQuantity - finalFineGrams;
+    const varianceOz = varianceGrams / 28.3495;
+    const variancePercentage = batchQuantity > 0 ? (varianceGrams / batchQuantity) * 100 : 0;
+
     setCalculated((prev) => ({
       ...prev,
       final_fine_grams: finalFineGrams,
       final_fine_oz: finalFineOz,
-      yield_percentage: yieldPercentage
+      yield_percentage: yieldPercentage,
+      variance_grams: varianceGrams,
+      variance_oz: varianceOz,
+      variance_percentage: variancePercentage
     }));
   }
 
@@ -316,9 +335,7 @@ export function AddInventoryEntry() {
         weight_after_melting_grams: parseFloat(formData.weight_after_melting_grams),
         fineness_percentage: parseFloat(formData.fineness_percentage),
         metal_retained_percentage: parseFloat(formData.metal_retained_percentage),
-        variance_with_export_invoice_oz: formData.variance_with_export_invoice_oz
-          ? parseFloat(formData.variance_with_export_invoice_oz)
-          : undefined,
+        variance_with_export_invoice_oz: calculated.variance_oz,
         notes: formData.notes || undefined,
         processing_location: formData.processing_location || undefined,
         certificate_number: formData.certificate_number || undefined,
@@ -550,7 +567,7 @@ export function AddInventoryEntry() {
                     <h3 className="text-sm font-semibold text-gray-900">Automatic Calculations</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <p className="text-xs text-gray-600 mb-1">Final Fine (g)</p>
                       <p className="text-xl font-bold text-gray-900">
@@ -571,12 +588,48 @@ export function AddInventoryEntry() {
                         {calculated.yield_percentage.toFixed(2)}%
                       </p>
                     </div>
+                  </div>
 
+                  {/* Variance Section */}
+                  <div className="border-t border-blue-300 pt-4">
+                    <h4 className="text-xs font-semibold text-gray-700 mb-3">
+                      Variance with Export Invoice
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Variance (g)</p>
+                        <p className={`text-lg font-bold ${calculated.variance_grams >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {calculated.variance_grams >= 0 ? '+' : ''}{calculated.variance_grams.toFixed(4)}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Variance (oz)</p>
+                        <p className={`text-lg font-bold ${calculated.variance_oz >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {calculated.variance_oz >= 0 ? '+' : ''}{calculated.variance_oz.toFixed(4)}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Variance %</p>
+                        <p className={`text-lg font-bold ${calculated.variance_percentage >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {calculated.variance_percentage >= 0 ? '+' : ''}{calculated.variance_percentage.toFixed(2)}%
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Variance = Batch Quantity (validated by mining company) - Final Fine
+                    </p>
+                  </div>
+
+                  {/* Monthly Total */}
+                  <div className="border-t border-blue-300 pt-4 mt-4">
                     <div>
                       <p className="text-xs text-gray-600 mb-1">Monthly Total (oz)</p>
-                      <p className="text-xl font-semibold text-green-600">
+                      <p className="text-2xl font-semibold text-green-600">
                         {(calculated.monthly_total_oz + calculated.final_fine_oz).toFixed(4)}
                       </p>
+                      <p className="text-xs text-gray-500 mt-1">Including this entry</p>
                     </div>
                   </div>
                 </div>
@@ -612,18 +665,6 @@ export function AddInventoryEntry() {
                       />
                     </FormField>
                   </div>
-
-                  <FormField label="Variance with Export Invoice (oz)" hint="Optional">
-                    <Input
-                      type="number"
-                      step="0.0001"
-                      placeholder="0.0000"
-                      value={formData.variance_with_export_invoice_oz}
-                      onChange={(e) =>
-                        handleInputChange('variance_with_export_invoice_oz', e.target.value)
-                      }
-                    />
-                  </FormField>
 
                   <FormField label="Notes" hint="Optional">
                     <TextArea

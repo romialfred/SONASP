@@ -189,7 +189,36 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   };
 
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    const currentPath = location.pathname;
+
+    // Exact match first
+    if (currentPath === path) {
+      return true;
+    }
+
+    // For paths with sub-routes, check if it starts with path + '/'
+    // But exclude cases where a more specific path exists in the same group
+    if (currentPath.startsWith(path + '/')) {
+      // Find the current group
+      const currentGroup = menuGroups.find(group =>
+        group.items.some(item => item.path === path)
+      );
+
+      // Check if there's a more specific match in the same group
+      if (currentGroup) {
+        const hasMoreSpecificMatch = currentGroup.items.some(item =>
+          item.path !== path &&
+          (currentPath === item.path || currentPath.startsWith(item.path + '/'))
+        );
+
+        // Only return true if there's no more specific match
+        return !hasMoreSpecificMatch;
+      }
+
+      return true;
+    }
+
+    return false;
   };
 
   return (

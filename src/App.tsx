@@ -52,6 +52,9 @@ import { BatchApprovalFactory } from './pages/batches/BatchApprovalFactory';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
+import { MiningCompaniesPage } from './pages/stakeholders/MiningCompaniesPage';
+import { MiningCompanyForm } from './pages/stakeholders/MiningCompanyForm';
+import { MiningCompanyDetails } from './pages/stakeholders/MiningCompanyDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -390,6 +393,39 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
                   <ReportGeneration />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/mining-companies"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <MiningCompaniesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stakeholders/mining-companies/new"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <MiningCompanyForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stakeholders/mining-companies/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <MiningCompanyDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stakeholders/mining-companies/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <MiningCompanyForm />
                 </ProtectedRoute>
               }
             />

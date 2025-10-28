@@ -23,6 +23,9 @@ import {
   PackagePlus,
   Sparkles,
   Coins,
+  Building2,
+  Factory,
+  Handshake,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -93,6 +96,18 @@ const menuGroups: MenuGroup[] = [
     items: [
       { label: 'Analytics', path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
       { label: 'Reports', path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
+    ],
+  },
+  {
+    id: 'stakeholders',
+    label: 'Stakeholders Management',
+    groupIconColor: 'text-teal-600',
+    groupIcon: Handshake,
+    items: [
+      { label: 'Mining Companies', path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
+      { label: 'Freight Companies', path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
+      { label: 'Refinery Plants', path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
+      { label: 'Customers', path: '/stakeholders/customers', icon: Users, iconColor: 'text-teal-700' },
     ],
   },
   {

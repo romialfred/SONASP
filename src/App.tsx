@@ -32,6 +32,7 @@ import { RefiningProcess } from './pages/refining/RefiningProcess';
 import { SalesDashboard } from './pages/sales/SalesDashboard';
 import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
+import { GoldTradeSpace } from './pages/sales/GoldTradeSpace';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
@@ -271,6 +272,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
                   <SaleCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales/trade-space"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                  <GoldTradeSpace />
                 </ProtectedRoute>
               }
             />

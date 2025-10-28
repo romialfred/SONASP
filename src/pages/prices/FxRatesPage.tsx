@@ -13,8 +13,9 @@ import {
 import { supabase } from '@/lib/supabase';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
+import { FxRateComparison } from '@/components/fx/FxRateComparison';
 
-type TabType = 'daily' | 'monthly' | 'customer' | 'analysis';
+type TabType = 'daily' | 'monthly' | 'customer' | 'analysis' | 'comparison';
 
 interface FxRateSource {
   id: string;
@@ -461,6 +462,17 @@ export function FxRatesPage() {
               Customer Rates
             </button>
             <button
+              onClick={() => setActiveTab('comparison')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'comparison'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Filter className="w-4 h-4 inline mr-2" />
+              Compare Sources
+            </button>
+            <button
               onClick={() => setActiveTab('analysis')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'analysis'
@@ -474,8 +486,8 @@ export function FxRatesPage() {
           </nav>
         </div>
 
-        {/* Filters - Hide for Analysis tab */}
-        {activeTab !== 'analysis' && (
+        {/* Filters - Hide for Analysis and Comparison tabs */}
+        {activeTab !== 'analysis' && activeTab !== 'comparison' && (
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -543,18 +555,21 @@ export function FxRatesPage() {
         </Card>
         )}
 
+        {/* Comparison Tab Content */}
+        {activeTab === 'comparison' && <FxRateComparison />}
+
         {/* Analysis Tab Content */}
         {activeTab === 'analysis' && <FxAnalysisTab />}
 
-        {/* Content - Hide for Analysis tab */}
-        {activeTab !== 'analysis' && loading ? (
+        {/* Content - Hide for Analysis and Comparison tabs */}
+        {activeTab !== 'analysis' && activeTab !== 'comparison' && loading ? (
           <Card>
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading rates...</p>
             </CardContent>
           </Card>
-        ) : activeTab !== 'analysis' ? (
+        ) : activeTab !== 'analysis' && activeTab !== 'comparison' ? (
           <>
             {/* Daily Rates Tab */}
             {activeTab === 'daily' && (

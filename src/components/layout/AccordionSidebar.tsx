@@ -19,6 +19,8 @@ import {
   Menu,
   X,
   CreditCard,
+  Warehouse,
+  PackagePlus,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -53,6 +55,15 @@ const menuGroups: MenuGroup[] = [
       { label: 'Batches', path: '/batches', icon: Package, iconColor: 'text-green-500' },
       { label: 'Shipping', path: '/shipping', icon: Truck, iconColor: 'text-cyan-500' },
       { label: 'Refining', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-500' },
+    ],
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory Management',
+    groupIconColor: 'text-orange-500',
+    items: [
+      { label: 'Gold Inventory', path: '/inventory', icon: Warehouse, iconColor: 'text-orange-500' },
+      { label: 'Add Stock Entry', path: '/inventory/add', icon: PackagePlus, iconColor: 'text-orange-600' },
     ],
   },
   {

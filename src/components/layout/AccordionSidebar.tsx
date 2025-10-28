@@ -81,7 +81,6 @@ const menuGroups: MenuGroup[] = [
     groupIconColor: 'text-pink-600',
     groupIcon: ShoppingCart,
     items: [
-      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-violet-600' },
       { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
       { label: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
       { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
@@ -107,7 +106,7 @@ const menuGroups: MenuGroup[] = [
       { label: 'Mining Companies', path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
       { label: 'Freight Companies', path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
       { label: 'Refinery Plants', path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
-      { label: 'Customers', path: '/stakeholders/customers', icon: Users, iconColor: 'text-teal-700' },
+      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-teal-700' },
     ],
   },
   {

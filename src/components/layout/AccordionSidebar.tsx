@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -46,9 +46,9 @@ interface MenuGroup {
 }
 
 const useMenuGroups = (): MenuGroup[] => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  return [
+  return useMemo(() => [
     {
       id: 'overview',
       label: t('nav.dashboard'),
@@ -125,7 +125,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('audit.title'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],
     },
-  ];
+  ], [i18n.language]);
 };
 
 const STORAGE_KEY = 'sidebar:lastGroup';
@@ -163,7 +163,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         break;
       }
     }
-  }, [location.pathname, menuGroups]);
+  }, [location.pathname]);
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups(prev => {

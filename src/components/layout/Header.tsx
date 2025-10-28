@@ -43,8 +43,13 @@ export function Header() {
   const unreadCount = mockNotifications.filter(n => !n.read).length;
 
   const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'fr' : 'en';
-    i18n.changeLanguage(newLang);
+    const currentLang = i18n.language || 'en';
+    const newLang = currentLang.startsWith('en') ? 'fr' : 'en';
+    console.log('Changing language from', currentLang, 'to', newLang);
+    i18n.changeLanguage(newLang).then(() => {
+      console.log('Language changed successfully to:', i18n.language);
+      localStorage.setItem('i18nextLng', newLang);
+    });
     setShowLanguageMenu(false);
   };
 
@@ -66,18 +71,28 @@ export function Header() {
             >
               <Globe className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                {i18n.language === 'en' ? 'EN' : 'FR'}
+                {(i18n.language || 'en').startsWith('en') ? 'EN' : 'FR'}
               </span>
             </button>
             {showLanguageMenu && (
-              <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                <button
-                  onClick={toggleLanguage}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
-                >
-                  {i18n.language === 'en' ? 'Français' : 'English'}
-                </button>
-              </div>
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowLanguageMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                  <button
+                    onClick={toggleLanguage}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Globe className="h-4 w-4" />
+                    <span>{(i18n.language || 'en').startsWith('en') ? 'Français' : 'English'}</span>
+                  </button>
+                  <div className="px-4 py-2 text-xs text-gray-500 border-t border-gray-100 mt-1">
+                    {(i18n.language || 'en').startsWith('en') ? 'Current: English' : 'Actuel: Français'}
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

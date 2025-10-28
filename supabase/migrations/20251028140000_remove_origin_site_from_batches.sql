@@ -128,7 +128,8 @@ SELECT
   rr.metal_retained_percentage,
   rr.final_fine_grams,
   rr.final_fine_ounces,
-  rr.processing_date,
+  rr.processing_notes,
+  rr.processed_at,
   rr.approved_at as refining_approved_at,
   rr.approved_by as refining_approved_by
 

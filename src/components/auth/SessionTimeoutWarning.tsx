@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Clock, AlertTriangle } from 'lucide-react';
 
@@ -45,8 +44,13 @@ export function SessionTimeoutWarning({
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {}} title="">
-      <div className="relative overflow-hidden rounded-lg">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Full-screen backdrop with transparency */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+      {/* Modal Content */}
+      <div className="relative w-full max-w-lg mx-4 rounded-xl shadow-2xl overflow-hidden">
+        <div className="relative overflow-hidden rounded-lg">
         {/* Animated Background - Ocean, Gold, Stars */}
         <div className="absolute inset-0 -z-10">
           {/* Stars Layer */}
@@ -274,6 +278,7 @@ export function SessionTimeoutWarning({
           50% { transform: translateY(-10px); }
         }
       `}</style>
-    </Modal>
+      </div>
+    </div>
   );
 }

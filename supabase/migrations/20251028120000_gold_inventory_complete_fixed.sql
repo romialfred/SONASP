@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS batch_approvals (
       'refinery_receipt', 'refinery_validation', 'processing_completion'
     )
   ),
-  approver_id UUID NOT NULL REFERENCES auth.users(id),
+  approver_id UUID NOT NULL,
   approver_name TEXT NOT NULL,
   approver_role TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'approved' CHECK (status IN ('approved', 'rejected', 'conditional')),
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS system_parameters (
   description TEXT,
   display_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  updated_by UUID REFERENCES auth.users(id),
+  updated_by UUID,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS gold_inventory (
   processing_location TEXT,
   certificate_number TEXT,
 
-  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_by UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
 
@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
   transaction_reference TEXT,
   notes TEXT,
 
-  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_by UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
 
   CONSTRAINT positive_quantity CHECK (quantity_oz > 0),

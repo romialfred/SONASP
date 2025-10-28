@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -21,6 +22,7 @@ interface AuditLog {
 }
 
 export function AuditTrailPage() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAction, setFilterAction] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
@@ -102,25 +104,25 @@ export function AuditTrailPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Audit Trail</h1>
-            <p className="text-gray-600 mt-1">Complete system activity and security logs</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('audit.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('audit.description')}</p>
           </div>
           <Button className="flex items-center gap-2">
             <Download className="w-4 h-4" />
-            Export Logs
+            {t('audit.exportLogs')}
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Total Events</p>
+              <p className="text-sm text-gray-600">{t('audit.totalEvents')}</p>
               <p className="text-2xl font-bold text-gray-900">{auditLogs.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Today</p>
+              <p className="text-sm text-gray-600">{t('audit.today')}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {auditLogs.filter(log => {
                   const today = new Date().toDateString();
@@ -131,13 +133,13 @@ export function AuditTrailPage() {
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Success Rate</p>
+              <p className="text-sm text-gray-600">{t('audit.successRate')}</p>
               <p className="text-2xl font-bold text-green-600">100%</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Active Users</p>
+              <p className="text-sm text-gray-600">{t('audit.activeUsers')}</p>
               <p className="text-2xl font-bold text-gray-900">{uniqueUsers.length}</p>
             </CardContent>
           </Card>
@@ -147,7 +149,7 @@ export function AuditTrailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="w-5 h-5" />
-              Filters & Search
+              {t('audit.filtersAndSearch')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -156,7 +158,7 @@ export function AuditTrailPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search logs..."
+                  placeholder={t('audit.searchLogs')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -167,7 +169,7 @@ export function AuditTrailPage() {
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
               >
-                <option value="all">All Actions</option>
+                <option value="all">{t('audit.allActions')}</option>
                 {uniqueActions.map(action => (
                   <option key={action} value={action}>{action}</option>
                 ))}
@@ -177,7 +179,7 @@ export function AuditTrailPage() {
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
               >
-                <option value="all">All Users</option>
+                <option value="all">{t('audit.allUsers')}</option>
                 {uniqueUsers.map(user => (
                   <option key={user} value={user}>{user}</option>
                 ))}
@@ -190,7 +192,7 @@ export function AuditTrailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              Audit Logs ({filteredLogs.length})
+              {t('audit.title')} ({filteredLogs.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -203,13 +205,13 @@ export function AuditTrailPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Module</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.timestamp')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.user')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.action')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.module')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.status')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.details')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('audit.ipAddress')}</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -257,10 +259,10 @@ export function AuditTrailPage() {
               <div className="text-center py-12">
                 <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">
-                  {auditLogs.length === 0 ? 'No audit logs yet.' : 'No logs found matching your criteria.'}
+                  {auditLogs.length === 0 ? t('audit.noLogsYet') : t('audit.noLogsFound')}
                 </p>
                 <p className="text-sm text-gray-400 mt-2">
-                  System activities will appear here as they occur.
+                  {t('audit.systemActivities')}
                 </p>
               </div>
             )}

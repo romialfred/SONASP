@@ -107,7 +107,7 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gray-900">
-              ${goldPrice.london_am.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${goldPrice.london_am_rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className="text-sm text-gray-500">/oz</span>
           </div>
@@ -188,8 +188,8 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
               {stats.trend === 'up' ? 'Bullish' : stats.trend === 'down' ? 'Bearish' : 'Neutral'}
               {' • '}
               Current price is{' '}
-              {((goldPrice.london_am - stats.avg_30_days) / stats.avg_30_days * 100).toFixed(1)}%
-              {' '}{goldPrice.london_am > stats.avg_30_days ? 'above' : 'below'} 30-day average
+              {((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100).toFixed(1)}%
+              {' '}{goldPrice.london_am_rate > stats.avg_30_days ? 'above' : 'below'} 30-day average
             </div>
           </>
         )}

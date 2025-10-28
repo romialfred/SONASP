@@ -7,8 +7,8 @@ export interface GoldPrice {
   closing_price: number;
   high_price: number;
   low_price: number;
-  london_am: number;
-  london_pm: number;
+  london_am_rate: number;
+  london_pm_rate: number;
   source: string;
   currency: string;
 }
@@ -70,8 +70,8 @@ export async function updateDailyGoldPrice(): Promise<{ success: boolean; error?
         closing_price: price,
         high_price: price * 1.005,
         low_price: price * 0.995,
-        london_am: price * 0.998,
-        london_pm: price * 1.002,
+        london_am_rate: price * 0.998,
+        london_pm_rate: price * 1.002,
         source: 'API',
         currency: 'USD',
         updated_at: new Date().toISOString(),
@@ -271,7 +271,7 @@ export async function compareSalesVsMarketPrices(
       sales.map(async (sale) => {
         const { data: goldPrice } = await supabase
           .from('gold_prices_daily')
-          .select('london_am')
+          .select('london_am_rate')
           .eq('price_date', sale.sale_date)
           .single();
 
@@ -280,7 +280,7 @@ export async function compareSalesVsMarketPrices(
         }
 
         const salePrice = sale.london_am_rate;
-        const marketPrice = goldPrice.london_am;
+        const marketPrice = goldPrice.london_am_rate;
         const variance = salePrice - marketPrice;
         const variancePercentage = (variance / marketPrice) * 100;
 

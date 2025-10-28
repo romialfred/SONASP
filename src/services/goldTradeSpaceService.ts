@@ -85,7 +85,7 @@ export async function calculatePricingComparison(
       return { success: false, error: 'Unable to fetch forward rates' };
     }
 
-    const spotPrice = goldPriceResult.data.london_am;
+    const spotPrice = goldPriceResult.data.london_am_rate;
     const forwardRates = forwardRatesResult.data;
     const trend = trendResult.data?.trend || 'neutral';
     const volatility = trendResult.data?.volatility || 10;
@@ -254,7 +254,7 @@ export async function getQuantityRecommendation(
     }
 
     const { trend, volatility, avg_price } = trendResult.data!;
-    const currentPrice = goldPriceResult.data!.london_am;
+    const currentPrice = goldPriceResult.data!.london_am_rate;
 
     let recommendedPercentage = 50;
     let reasoning = '';

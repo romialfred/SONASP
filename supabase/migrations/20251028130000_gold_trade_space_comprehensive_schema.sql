@@ -369,16 +369,16 @@ COMMENT ON FUNCTION get_recommended_mechanism IS 'Get recommended pricing mechan
 
 CREATE OR REPLACE VIEW live_pricing_comparison AS
 SELECT
-  gp.london_am as current_spot_price,
+  gp.london_am_rate as current_spot_price,
   gp.price_date,
 
-  calculate_forward_price(gp.london_am, 7) as forward_7d_price,
-  calculate_forward_price(gp.london_am, 14) as forward_14d_price,
-  calculate_forward_price(gp.london_am, 30) as forward_30d_price,
+  calculate_forward_price(gp.london_am_rate, 7) as forward_7d_price,
+  calculate_forward_price(gp.london_am_rate, 14) as forward_14d_price,
+  calculate_forward_price(gp.london_am_rate, 30) as forward_30d_price,
 
-  (calculate_forward_price(gp.london_am, 7) - gp.london_am) as forward_7d_benefit_per_oz,
-  (calculate_forward_price(gp.london_am, 14) - gp.london_am) as forward_14d_benefit_per_oz,
-  (calculate_forward_price(gp.london_am, 30) - gp.london_am) as forward_30d_benefit_per_oz,
+  (calculate_forward_price(gp.london_am_rate, 7) - gp.london_am_rate) as forward_7d_benefit_per_oz,
+  (calculate_forward_price(gp.london_am_rate, 14) - gp.london_am_rate) as forward_14d_benefit_per_oz,
+  (calculate_forward_price(gp.london_am_rate, 30) - gp.london_am_rate) as forward_30d_benefit_per_oz,
 
   fr7.adjustment_rate_percentage as forward_7d_rate,
   fr14.adjustment_rate_percentage as forward_14d_rate,

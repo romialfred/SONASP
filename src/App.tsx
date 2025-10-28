@@ -79,7 +79,7 @@ function AppRoutes() {
               }
             />
 
-            {/* New main pages with demo data */}
+            {/* Main dashboard */}
             <Route
               path="/dashboard"
               element={
@@ -101,38 +101,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <FxRatesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <AnalyticsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <ReportsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/audit"
-              element={
-                <ProtectedRoute>
-                  <AuditTrailPage />
                 </ProtectedRoute>
               }
             />
@@ -385,7 +353,7 @@ function AppRoutes() {
             <Route
               path="/analytics"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute>
                   <AnalyticsDashboard />
                 </ProtectedRoute>
               }
@@ -494,7 +462,7 @@ function AppRoutes() {
               path="/audit"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
-                  <AuditTrail />
+                  <AuditTrailPage />
                 </ProtectedRoute>
               }
             />

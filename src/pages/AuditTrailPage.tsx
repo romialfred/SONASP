@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Loading } from '@/components/ui/Loading';
-import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
+import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface AuditLog {
@@ -86,21 +87,21 @@ export function AuditTrailPage() {
             <h1 className="text-3xl font-bold text-gray-900">Audit Trail</h1>
             <p className="text-gray-600 mt-1">Complete system activity and security logs</p>
           </div>
-          <button className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+          <Button className="flex items-center gap-2">
             <Download className="w-4 h-4" />
             Export Logs
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
-            <div className="p-4">
+            <CardContent className="pt-6">
               <p className="text-sm text-gray-600">Total Events</p>
               <p className="text-2xl font-bold text-gray-900">{auditLogs.length}</p>
-            </div>
+            </CardContent>
           </Card>
           <Card>
-            <div className="p-4">
+            <CardContent className="pt-6">
               <p className="text-sm text-gray-600">Today</p>
               <p className="text-2xl font-bold text-gray-900">
                 {auditLogs.filter(log => {
@@ -108,24 +109,30 @@ export function AuditTrailPage() {
                   return new Date(log.created_at).toDateString() === today;
                 }).length}
               </p>
-            </div>
+            </CardContent>
           </Card>
           <Card>
-            <div className="p-4">
+            <CardContent className="pt-6">
               <p className="text-sm text-gray-600">Success Rate</p>
               <p className="text-2xl font-bold text-green-600">100%</p>
-            </div>
+            </CardContent>
           </Card>
           <Card>
-            <div className="p-4">
+            <CardContent className="pt-6">
               <p className="text-sm text-gray-600">Active Users</p>
               <p className="text-2xl font-bold text-gray-900">{uniqueUsers.length}</p>
-            </div>
+            </CardContent>
           </Card>
         </div>
 
         <Card>
-          <div className="p-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filters & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -138,33 +145,37 @@ export function AuditTrailPage() {
                 />
               </div>
 
-              <select
+              <Select
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="all">All Actions</option>
                 {uniqueActions.map(action => (
                   <option key={action} value={action}>{action}</option>
                 ))}
-              </select>
+              </Select>
 
-              <select
+              <Select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="all">All Users</option>
                 {uniqueUsers.map(user => (
                   <option key={user} value={user}>{user}</option>
                 ))}
-              </select>
+              </Select>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
         <Card>
-          <div className="p-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Audit Logs ({filteredLogs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loading size="lg" />
@@ -224,7 +235,7 @@ export function AuditTrailPage() {
                 </p>
               </div>
             )}
-          </div>
+          </CardContent>
         </Card>
       </div>
     </MainLayout>

@@ -63,7 +63,7 @@ const menuGroups: MenuGroup[] = [
     groupIconColor: 'text-orange-500',
     items: [
       { label: 'Gold Inventory', path: '/inventory', icon: Warehouse, iconColor: 'text-orange-500' },
-      { label: 'Add Stock Entry', path: '/inventory/add', icon: PackagePlus, iconColor: 'text-orange-600' },
+      { label: 'Silver Inventory', path: '/inventory/silver', icon: Warehouse, iconColor: 'text-gray-400' },
     ],
   },
   {

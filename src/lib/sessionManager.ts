@@ -1,23 +1,29 @@
 import { supabase } from './supabase';
 
-// Session only expires on explicit logout - no automatic timeout
-// Keep token refresh active to maintain connection
-// Supabase JWT tokens expire after 1 hour by default
-// Refresh every 50 minutes to ensure token never expires (well before the 60 min expiry)
-const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // Refresh token every 50 minutes
+// Session timeout configuration
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const WARNING_BEFORE_TIMEOUT = 5 * 60 * 1000; // Show warning 5 minutes before timeout
+const TOKEN_REFRESH_INTERVAL = 8 * 60 * 1000; // Refresh token every 8 minutes
+
+export type SessionWarningCallback = () => void;
+export type SessionTimeoutCallback = () => void;
 
 export class SessionManager {
   private lastActivityTime: number = Date.now();
   private tokenRefreshTimer: NodeJS.Timeout | null = null;
+  private inactivityCheckTimer: NodeJS.Timeout | null = null;
   private isActive: boolean = true;
   private isRefreshing: boolean = false;
+  private warningShown: boolean = false;
+
+  private onWarning: SessionWarningCallback | null = null;
+  private onTimeout: SessionTimeoutCallback | null = null;
 
   constructor() {
     this.setupActivityListeners();
   }
 
   private setupActivityListeners() {
-    // Listen to user activity to update last activity time
     const events = [
       'mousedown',
       'keydown',
@@ -26,62 +32,150 @@ export class SessionManager {
       'click',
       'mousemove',
       'keypress',
-      'touchmove'
+      'touchmove',
+      'touchend',
     ];
 
     events.forEach(event => {
       document.addEventListener(event, () => this.updateActivity(), { passive: true });
     });
 
-    // Listen to visibility changes
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.updateActivity();
       }
     });
 
-    // Listen to window focus
     window.addEventListener('focus', () => {
       this.updateActivity();
     });
   }
 
   public start() {
-    console.log('[SessionManager] Starting session management - NO AUTO LOGOUT');
-    console.log('[SessionManager] Relying on Supabase autoRefreshToken for token maintenance');
+    console.log('[SessionManager] Starting with 10-minute inactivity timeout');
     this.updateActivity();
-    // Removed manual token refresh - Supabase handles this automatically with autoRefreshToken: true
+    this.startTokenRefresh();
+    this.startInactivityCheck();
   }
 
   public stop() {
     console.log('[SessionManager] Stopping session management');
     this.isActive = false;
     if (this.tokenRefreshTimer) clearInterval(this.tokenRefreshTimer);
+    if (this.inactivityCheckTimer) clearInterval(this.inactivityCheckTimer);
   }
 
   private updateActivity() {
     if (!this.isActive) return;
+
+    const previousActivityTime = this.lastActivityTime;
     this.lastActivityTime = Date.now();
+
+    // Reset warning if user becomes active again
+    if (this.warningShown) {
+      console.log('[SessionManager] User activity detected - hiding warning');
+      this.warningShown = false;
+    }
   }
 
-  // Token refresh is handled automatically by Supabase with autoRefreshToken: true
-  // No manual refresh needed - this prevents conflicts and spurious SIGNED_OUT events
+  private startTokenRefresh() {
+    this.tokenRefreshTimer = setInterval(async () => {
+      if (!this.isActive || this.isRefreshing) return;
+
+      try {
+        this.isRefreshing = true;
+        const { data: { session }, error } = await supabase.auth.refreshSession();
+
+        if (error) {
+          console.error('[SessionManager] Token refresh failed:', error);
+          this.handleTimeout();
+        } else {
+          console.log('[SessionManager] Token refreshed successfully');
+        }
+      } catch (error) {
+        console.error('[SessionManager] Token refresh error:', error);
+      } finally {
+        this.isRefreshing = false;
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+  }
+
+  private startInactivityCheck() {
+    this.inactivityCheckTimer = setInterval(() => {
+      if (!this.isActive) return;
+
+      const inactivityDuration = this.getInactivityDuration();
+
+      // Check if we should show warning (5 minutes before timeout)
+      if (inactivityDuration >= WARNING_BEFORE_TIMEOUT && !this.warningShown) {
+        console.log('[SessionManager] Showing inactivity warning (5 minutes)');
+        this.warningShown = true;
+        if (this.onWarning) {
+          this.onWarning();
+        }
+      }
+
+      // Check if session should timeout (10 minutes)
+      if (inactivityDuration >= INACTIVITY_TIMEOUT) {
+        console.log('[SessionManager] Session timeout due to inactivity (10 minutes)');
+        this.handleTimeout();
+      }
+    }, 1000); // Check every second for accuracy
+  }
+
+  private async handleTimeout() {
+    this.stop();
+    if (this.onTimeout) {
+      this.onTimeout();
+    }
+    await this.logout();
+  }
+
+  private async logout() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await invalidateSession(session.access_token);
+      }
+      await supabase.auth.signOut();
+      console.log('[SessionManager] User logged out due to timeout');
+    } catch (error) {
+      console.error('[SessionManager] Logout error:', error);
+    }
+  }
 
   public getInactivityDuration(): number {
     return Date.now() - this.lastActivityTime;
   }
 
+  public getRemainingTime(): number {
+    const remaining = INACTIVITY_TIMEOUT - this.getInactivityDuration();
+    return Math.max(0, remaining);
+  }
+
+  public getTimeUntilWarning(): number {
+    const remaining = WARNING_BEFORE_TIMEOUT - this.getInactivityDuration();
+    return Math.max(0, remaining);
+  }
+
   public extendSession() {
     console.log('[SessionManager] Session extended by user action');
     this.updateActivity();
-    // Token refresh handled automatically by Supabase
+    this.warningShown = false;
+  }
+
+  public setOnWarning(callback: SessionWarningCallback) {
+    this.onWarning = callback;
+  }
+
+  public setOnTimeout(callback: SessionTimeoutCallback) {
+    this.onTimeout = callback;
   }
 }
 
 export async function createSessionRecord(userId: string, sessionToken: string) {
   try {
-    // Session records are maintained but don't enforce timeout
-    const expiresAt = new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)); // 1 year
+    const expiresAt = new Date(Date.now() + INACTIVITY_TIMEOUT);
 
     await supabase.from('user_sessions').insert({
       user_id: userId,
@@ -114,5 +208,15 @@ export async function cleanupExpiredSessions() {
       .lt('expires_at', new Date().toISOString());
   } catch (error) {
     console.error('Failed to cleanup expired sessions:', error);
+  }
+}
+
+export async function invalidateAllSessions() {
+  try {
+    console.log('[SessionManager] Invalidating all sessions (deployment cleanup)');
+    await supabase.from('user_sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    console.log('[SessionManager] All sessions invalidated');
+  } catch (error) {
+    console.error('Failed to invalidate all sessions:', error);
   }
 }

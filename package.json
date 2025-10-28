@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "deploy:cleanup": "tsx scripts/deployment-cleanup.ts",
+    "deploy:full": "npm run deploy:cleanup && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

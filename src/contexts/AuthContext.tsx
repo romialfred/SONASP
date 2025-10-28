@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile, AuthState, UserRole } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
+import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -25,6 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profileError: null,
   });
   const sessionManagerRef = useRef<SessionManager | null>(null);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(300);
 
   const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
     const metadata = authUser.user_metadata || {};
@@ -430,6 +433,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!sessionManagerRef.current) {
             console.log('[Auth] Starting session manager');
             sessionManagerRef.current = new SessionManager();
+            sessionManagerRef.current.setOnWarning(() => {
+              console.log('[Auth] Session timeout warning triggered');
+              setShowTimeoutWarning(true);
+              setWarningRemainingSeconds(300); // 5 minutes remaining
+            });
+            sessionManagerRef.current.setOnTimeout(() => {
+              console.log('[Auth] Session timeout - forcing logout');
+              setShowTimeoutWarning(false);
+            });
             sessionManagerRef.current.start();
           }
 
@@ -541,6 +553,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!sessionManagerRef.current) {
             console.log('[Auth] Starting session manager');
             sessionManagerRef.current = new SessionManager();
+            sessionManagerRef.current.setOnWarning(() => {
+              console.log('[Auth] Session timeout warning triggered');
+              setShowTimeoutWarning(true);
+              setWarningRemainingSeconds(300); // 5 minutes remaining
+            });
+            sessionManagerRef.current.setOnTimeout(() => {
+              console.log('[Auth] Session timeout - forcing logout');
+              setShowTimeoutWarning(false);
+            });
             sessionManagerRef.current.start();
           }
 
@@ -636,6 +657,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const handleExtendSession = () => {
+    console.log('[Auth] User extended session');
+    if (sessionManagerRef.current) {
+      sessionManagerRef.current.extendSession();
+    }
+    setShowTimeoutWarning(false);
+  };
+
+  const handleLogoutNow = async () => {
+    console.log('[Auth] User chose to logout');
+    setShowTimeoutWarning(false);
+    await signOut();
+  };
+
   const value: AuthContextType = {
     ...state,
     signIn,
@@ -648,6 +683,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <SessionTimeoutWarning
+        isOpen={showTimeoutWarning}
+        remainingSeconds={warningRemainingSeconds}
+        onExtend={handleExtendSession}
+        onLogout={handleLogoutNow}
+      />
     </AuthContext.Provider>
   );
 }

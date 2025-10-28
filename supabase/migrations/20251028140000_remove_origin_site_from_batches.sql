@@ -14,9 +14,10 @@
     - Simplifies data model and removes duplicate information
 */
 
--- Step 1: Drop dependent views
+-- Step 1: Drop ALL dependent views that reference origin_site_id or current_site_id
 DROP VIEW IF EXISTS v_batch_summary CASCADE;
 DROP VIEW IF EXISTS batch_details_enhanced CASCADE;
+DROP VIEW IF EXISTS v_inventory_status CASCADE;
 
 -- Step 2: Remove the origin_site_id column from batches table
 DO $$
@@ -138,6 +139,25 @@ LEFT JOIN transport_companies at ON b.airport_to_refinery_transport_id = at.id
 LEFT JOIN refineries r ON b.destination_refinery_id = r.id
 LEFT JOIN refining_records rr ON b.id = rr.batch_id;
 
--- Add comments to document the change
+-- Step 7: Recreate v_inventory_status view using status-based tracking instead of site
+-- Note: The concept of "current_site" is removed. Inventory is now tracked by status and mining company.
+CREATE OR REPLACE VIEW v_inventory_status AS
+SELECT
+  b.status,
+  mc.id as mining_company_id,
+  mc.name as mining_company_name,
+  mc.country as country,
+  COUNT(DISTINCT b.id) as total_batches,
+  SUM(b.weight_ounces) as total_weight_oz,
+  COUNT(DISTINCT b.id) FILTER (WHERE b.status = 'ready_for_sale') as ready_for_sale_count,
+  SUM(COALESCE(rr.final_fine_ounces, b.weight_ounces)) FILTER (WHERE b.status = 'ready_for_sale') as available_inventory_oz
+FROM batches b
+LEFT JOIN mining_companies mc ON b.mining_company_id = mc.id
+LEFT JOIN refining_records rr ON b.id = rr.batch_id
+WHERE mc.is_active = true OR mc.is_active IS NULL
+GROUP BY b.status, mc.id, mc.name, mc.country;
+
+-- Add comments to document the changes
 COMMENT ON VIEW v_batch_summary IS 'Batch summary view using mining_company as origin instead of origin_site (updated 2025-10-28)';
 COMMENT ON VIEW batch_details_enhanced IS 'Enhanced batch details using mining_company as origin instead of origin_site (updated 2025-10-28)';
+COMMENT ON VIEW v_inventory_status IS 'Inventory status by mining company and batch status instead of by site (updated 2025-10-28)';

@@ -352,16 +352,36 @@ export function BatchCreate() {
 
       if (result.success) {
         localStorage.removeItem('batch_draft');
-        navigate('/batches', {
-          state: { message: 'Batch created successfully!' }
-        });
+        showSuccess('Batch Created', `Batch ${result.data.batch_number} has been created successfully!`);
+        setTimeout(() => {
+          navigate('/batches');
+        }, 1500);
       } else {
-        showError('Creation Failed', `Error creating batch: ${result.error}`);
+        const errorMessage = typeof result.error === 'string'
+          ? result.error
+          : result.error?.message || 'An unexpected error occurred';
+
+        showError(
+          'Creation Failed',
+          <div className="space-y-2">
+            <p className="font-semibold">Unable to create batch</p>
+            <p className="text-sm text-gray-600">{errorMessage}</p>
+            <p className="text-xs text-gray-500 mt-2">Please check all required fields and try again.</p>
+          </div>
+        );
         setIsSubmitting(false);
       }
     } catch (error: any) {
       console.error('Error creating batch:', error);
-      showError('Error', error.message || 'An unexpected error occurred');
+      const errorMessage = error?.message || error?.error_description || 'An unexpected error occurred';
+
+      showError(
+        'Unexpected Error',
+        <div className="space-y-2">
+          <p className="font-semibold">An error occurred</p>
+          <p className="text-sm text-gray-600">{errorMessage}</p>
+        </div>
+      );
       setIsSubmitting(false);
     } finally {
       setShowConfirmModal(false);

@@ -80,9 +80,10 @@ export async function createBatch(data: CreateBatchData) {
     if (error) throw error;
 
     return { success: true, data: batch };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating batch:', error);
-    return { success: false, error };
+    const errorMessage = error?.message || error?.error_description || error?.hint || 'An unexpected error occurred';
+    return { success: false, error: errorMessage };
   }
 }
 

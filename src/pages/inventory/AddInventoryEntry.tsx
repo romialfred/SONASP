@@ -18,6 +18,11 @@ interface Batch {
   weight_grams: number;
   metal_type: string;
   status: string;
+  shipping_date: string;
+  origin_site?: {
+    name: string;
+    country: string;
+  };
 }
 
 interface FormData {
@@ -88,9 +93,20 @@ export function AddInventoryEntry() {
     try {
       const { data, error } = await supabase
         .from('batches')
-        .select('id, batch_number, weight_grams, metal_type, status')
-        .eq('status', 'validated_for_processing')
-        .order('batch_number', { ascending: false });
+        .select(`
+          id,
+          batch_number,
+          weight_grams,
+          metal_type,
+          status,
+          shipping_date,
+          origin_site:origin_site_id (
+            name,
+            country
+          )
+        `)
+        .in('status', ['processed', 'approved', 'ready_for_sale'])
+        .order('shipping_date', { ascending: false });
 
       if (error) throw error;
 
@@ -290,11 +306,21 @@ export function AddInventoryEntry() {
                       error={!!errors.batch_id}
                     >
                       <option value="">Select batch</option>
-                      {batches.map((batch) => (
-                        <option key={batch.id} value={batch.id}>
-                          {batch.batch_number} - {batch.weight_grams}g ({batch.metal_type})
-                        </option>
-                      ))}
+                      {batches.map((batch) => {
+                        const shippingDate = batch.shipping_date
+                          ? new Date(batch.shipping_date).toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit'
+                            })
+                          : 'N/A';
+                        const origin = batch.origin_site?.name || 'Unknown';
+                        return (
+                          <option key={batch.id} value={batch.id}>
+                            {batch.batch_number} - {shippingDate} - {origin}
+                          </option>
+                        );
+                      })}
                     </Select>
                   </FormField>
                 </div>

@@ -511,15 +511,15 @@ function AppRoutes() {
 function App() {
   return (
     <ToastProvider>
-      <AuthProvider>
-        <DialogProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <DialogProvider>
             <AppErrorBoundary>
               <AppRoutes />
             </AppErrorBoundary>
-          </BrowserRouter>
-        </DialogProvider>
-      </AuthProvider>
+          </DialogProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ToastProvider>
   );
 }

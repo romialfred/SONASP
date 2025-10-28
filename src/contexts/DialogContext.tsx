@@ -31,7 +31,22 @@ const DialogContext = createContext<DialogContextType | undefined>(undefined);
 export function useDialog() {
   const context = useContext(DialogContext);
   if (!context) {
-    throw new Error('useDialog must be used within DialogProvider');
+    // Fallback to console for development - prevents app crash
+    console.error('useDialog must be used within DialogProvider');
+    return {
+      showDialog: () => console.warn('Dialog not available'),
+      showInfo: (title: string, message: string) => console.info(`[INFO] ${title}: ${message}`),
+      showSuccess: (title: string, message: string) => console.log(`[SUCCESS] ${title}: ${message}`),
+      showWarning: (title: string, message: string) => console.warn(`[WARNING] ${title}: ${message}`),
+      showError: (title: string, message: string) => console.error(`[ERROR] ${title}: ${message}`),
+      showConfirm: (title: string, message: string, onConfirm: () => void | Promise<void>) => {
+        console.warn(`[CONFIRM] ${title}: ${message}`);
+        if (window.confirm(`${title}\n\n${message}`)) {
+          onConfirm();
+        }
+      },
+      closeDialog: () => console.warn('Dialog not available')
+    };
   }
   return context;
 }

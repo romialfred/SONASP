@@ -19,16 +19,16 @@ export function GoldPriceLive() {
   const fetchGoldPrice = async () => {
     try {
       const { data, error } = await supabase
-        .from('gold_prices')
-        .select('date, london_am_usd')
-        .order('date', { ascending: false })
+        .from('gold_prices_daily')
+        .select('price_date, london_am_rate')
+        .order('price_date', { ascending: false })
         .limit(2);
 
       if (error) throw error;
 
       if (data && data.length >= 2) {
-        const current = data[0].london_am_usd;
-        const previous = data[1].london_am_usd;
+        const current = data[0].london_am_rate;
+        const previous = data[1].london_am_rate;
         const change = current - previous;
         const changePercent = (change / previous) * 100;
 
@@ -37,16 +37,16 @@ export function GoldPriceLive() {
           previous,
           change,
           changePercent,
-          lastUpdate: data[0].date,
+          lastUpdate: data[0].price_date,
         });
       } else if (data && data.length === 1) {
-        const current = data[0].london_am_usd;
+        const current = data[0].london_am_rate;
         setPriceData({
           current,
           previous: current,
           change: 0,
           changePercent: 0,
-          lastUpdate: data[0].date,
+          lastUpdate: data[0].price_date,
         });
       }
     } catch (error) {

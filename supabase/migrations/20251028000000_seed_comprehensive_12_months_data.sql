@@ -40,12 +40,12 @@ BEGIN
       v_counter := v_counter + 1;
 
       -- Create price variation (+/- 5% with trends)
-      v_variation := (random() - 0.5) * 100 + (v_counter * 0.5); -- Slight upward trend
+      v_variation := ((random() - 0.5)::numeric * 100) + (v_counter * 0.5); -- Slight upward trend
       v_price := v_base_price + v_variation;
 
       -- Ensure price is positive
       IF v_price < 2000 THEN
-        v_price := 2000 + random() * 100;
+        v_price := 2000 + (random()::numeric * 100);
       END IF;
 
       INSERT INTO gold_prices_daily (
@@ -61,11 +61,11 @@ BEGIN
       ) VALUES (
         v_date,
         ROUND(v_price, 2),
-        ROUND(v_price + (random() - 0.5) * 20, 2),
-        ROUND(v_price + (random() - 0.5) * 10, 2),
-        ROUND(v_price + (random() - 0.5) * 5, 2),
-        ROUND(v_price + random() * 30, 2),
-        ROUND(v_price - random() * 30, 2),
+        ROUND(v_price + ((random() - 0.5)::numeric * 20), 2),
+        ROUND(v_price + ((random() - 0.5)::numeric * 10), 2),
+        ROUND(v_price + ((random() - 0.5)::numeric * 5), 2),
+        ROUND(v_price + (random()::numeric * 30), 2),
+        ROUND(v_price - (random()::numeric * 30), 2),
         'seeded',
         'USD'
       )
@@ -129,23 +129,23 @@ BEGIN
       v_batch_counter := v_batch_counter + 1;
 
       -- Random date within the month
-      v_batch_date := CURRENT_DATE - (v_month_offset * INTERVAL '1 month') - (random() * 25)::int * INTERVAL '1 day';
+      v_batch_date := CURRENT_DATE - (v_month_offset * INTERVAL '1 month') - ((random()::numeric * 25)::int * INTERVAL '1 day');
 
       -- Random weight between 30kg and 150kg
-      v_weight_grams := 30000 + (random() * 120000);
+      v_weight_grams := 30000 + (random()::numeric * 120000);
       v_weight_ounces := v_weight_grams / 31.1035;
 
       -- Select status based on age (older batches more likely to be completed)
       IF v_month_offset > 6 THEN
-        v_status := v_statuses[5 + floor(random() * 3)::int]; -- refined, ready_for_sale, or sold
+        v_status := v_statuses[5 + floor(random()::numeric * 3)::int]; -- refined, ready_for_sale, or sold
       ELSIF v_month_offset > 3 THEN
-        v_status := v_statuses[3 + floor(random() * 3)::int]; -- refinery_received to ready_for_sale
+        v_status := v_statuses[3 + floor(random()::numeric * 3)::int]; -- refinery_received to ready_for_sale
       ELSE
-        v_status := v_statuses[1 + floor(random() * 5)::int]; -- Any status
+        v_status := v_statuses[1 + floor(random()::numeric * 5)::int]; -- Any status
       END IF;
 
       -- Random country code
-      v_country_code := (ARRAY['GN', 'ML', 'LB'])[1 + floor(random() * 3)::int];
+      v_country_code := (ARRAY['GN', 'ML', 'LB'])[1 + floor(random()::numeric * 3)::int];
 
       -- Generate batch number: CC-YYYY-MM-XXX
       v_batch_number := v_country_code || '-' ||
@@ -173,7 +173,7 @@ BEGIN
         (SELECT id FROM user_profiles LIMIT 1), -- Placeholder site
         (SELECT id FROM user_profiles LIMIT 1), -- Placeholder site
         v_batch_date,
-        v_batch_date + (random() * 10)::int * INTERVAL '1 day'
+        v_batch_date + ((random()::numeric * 10)::int * INTERVAL '1 day')
       )
       ON CONFLICT (batch_number) DO NOTHING;
     END LOOP;
@@ -209,24 +209,24 @@ BEGIN
 
   -- Generate sales for last 12 months (3-4 per month)
   FOR v_month_offset IN 0..11 LOOP
-    FOR i IN 1..(3 + floor(random() * 2)::int) LOOP
+    FOR i IN 1..(3 + floor(random()::numeric * 2)::int) LOOP
       v_sale_counter := v_sale_counter + 1;
 
       -- Random date within the month
-      v_sale_date := CURRENT_DATE - (v_month_offset * INTERVAL '1 month') - (random() * 25)::int * INTERVAL '1 day';
+      v_sale_date := CURRENT_DATE - (v_month_offset * INTERVAL '1 month') - ((random()::numeric * 25)::int * INTERVAL '1 day');
 
       -- Random customer
-      v_customer_id := v_customer_ids[1 + floor(random() * array_length(v_customer_ids, 1))::int];
+      v_customer_id := v_customer_ids[1 + floor(random()::numeric * array_length(v_customer_ids, 1))::int];
 
       -- Random batch (if available)
       IF array_length(v_batch_ids, 1) > 0 THEN
-        v_batch_id := v_batch_ids[1 + floor(random() * array_length(v_batch_ids, 1))::int];
+        v_batch_id := v_batch_ids[1 + floor(random()::numeric * array_length(v_batch_ids, 1))::int];
       ELSE
         v_batch_id := NULL;
       END IF;
 
       -- Random quantity between 50 and 500 oz
-      v_quantity_oz := 50 + (random() * 450);
+      v_quantity_oz := 50 + (random()::numeric * 450);
 
       -- Get gold price for that date
       SELECT london_am_rate INTO v_gold_price
@@ -237,11 +237,11 @@ BEGIN
 
       -- If no price found, use base price
       IF v_gold_price IS NULL THEN
-        v_gold_price := 2400 + (random() - 0.5) * 200;
+        v_gold_price := 2400 + ((random()::numeric - 0.5) * 200);
       END IF;
 
       -- Add premium (0-3%)
-      v_sale_price := v_gold_price * (1 + random() * 0.03);
+      v_sale_price := v_gold_price * (1 + (random()::numeric * 0.03));
 
       -- Calculate proceeds
       v_gross_proceeds := v_quantity_oz * v_sale_price;
@@ -277,10 +277,10 @@ BEGIN
         ROUND(v_royalty, 2),
         ROUND(v_net_proceeds, 2),
         ROUND(v_net_proceeds, 2),
-        (ARRAY['approved', 'completed', 'paid'])[1 + floor(random() * 3)::int],
+        (ARRAY['approved', 'completed', 'paid'])[1 + floor(random()::numeric * 3)::int],
         v_sale_date,
         v_sale_date,
-        v_sale_date + (random() * 5)::int * INTERVAL '1 day'
+        v_sale_date + ((random()::numeric * 5)::int * INTERVAL '1 day')
       )
       ON CONFLICT (sale_number) DO NOTHING;
     END LOOP;

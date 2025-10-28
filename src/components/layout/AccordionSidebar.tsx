@@ -312,13 +312,14 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                       if (item.iconColor.includes('teal')) return 'bg-teal-600';
                       if (item.iconColor.includes('violet')) return 'bg-violet-600';
                       if (item.iconColor.includes('pink')) return 'bg-pink-600';
+                      if (item.iconColor.includes('amber')) return 'bg-amber-600';
                       if (item.iconColor.includes('green')) return 'bg-green-600';
                       if (item.iconColor.includes('orange')) return 'bg-orange-600';
                       if (item.iconColor.includes('blue')) return 'bg-blue-600';
                       if (item.iconColor.includes('indigo')) return 'bg-indigo-600';
                       if (item.iconColor.includes('red')) return 'bg-red-600';
                       if (item.iconColor.includes('sky')) return 'bg-sky-600';
-                      return 'bg-amber-500';
+                      return 'bg-gray-500';
                     };
 
                     return (
@@ -368,6 +369,25 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                       }
                       const Icon = item.icon ?? LayoutDashboard;
                       const active = isActive(item.path);
+
+                      const getActiveBgColor = () => {
+                        if (item.iconColor.includes('yellow')) return 'bg-yellow-500';
+                        if (item.iconColor.includes('slate')) return 'bg-slate-400';
+                        if (item.iconColor.includes('emerald')) return 'bg-emerald-600';
+                        if (item.iconColor.includes('cyan')) return 'bg-cyan-600';
+                        if (item.iconColor.includes('teal')) return 'bg-teal-600';
+                        if (item.iconColor.includes('violet')) return 'bg-violet-600';
+                        if (item.iconColor.includes('pink')) return 'bg-pink-600';
+                        if (item.iconColor.includes('amber')) return 'bg-amber-600';
+                        if (item.iconColor.includes('green')) return 'bg-green-600';
+                        if (item.iconColor.includes('orange')) return 'bg-orange-600';
+                        if (item.iconColor.includes('blue')) return 'bg-blue-600';
+                        if (item.iconColor.includes('indigo')) return 'bg-indigo-600';
+                        if (item.iconColor.includes('red')) return 'bg-red-600';
+                        if (item.iconColor.includes('sky')) return 'bg-sky-600';
+                        return 'bg-gray-500';
+                      };
+
                       return (
                         <Link
                           key={item.path}
@@ -375,7 +395,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                           className={cn(
                             'flex items-center gap-3 px-3 py-2 text-sm transition-colors text-gray-900',
                             active
-                              ? 'bg-amber-500 text-white font-medium'
+                              ? `${getActiveBgColor()} text-white font-medium`
                               : 'hover:bg-gray-100/50'
                           )}
                         >

@@ -1,10 +1,32 @@
+/**
+ * Generate batch number with format: CC-YYYY-MM-XXX
+ * CC = Country Code (GN=Guinea, ML=Mali, LB=Liberia)
+ * YYYY = Year
+ * MM = Month
+ * XXX = Sequential number (001, 002, etc.)
+ *
+ * @deprecated Use generateBatchNumber from batchNumberGenerator.ts instead
+ */
 export function generateBatchNumber(site: string, date: Date = new Date()): string {
+  // Map site/country to country code
+  const normalized = site.toLowerCase().trim();
+  let countryCode = 'GN'; // Default to Guinea
+
+  if (normalized.includes('guin') || normalized === 'guinea' || normalized === 'gn') {
+    countryCode = 'GN';
+  } else if (normalized.includes('mali') || normalized === 'mali' || normalized === 'ml') {
+    countryCode = 'ML';
+  } else if (normalized.includes('liber') || normalized === 'liberia' || normalized === 'lb') {
+    countryCode = 'LB';
+  }
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
-  return `${site.toUpperCase()}-${year}${month}${day}-${random}`;
+  // Generate a random sequence for now (will be replaced by database lookup)
+  const sequence = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+
+  return `${countryCode}-${year}-${month}-${sequence}`;
 }
 
 export interface VarianceResult {

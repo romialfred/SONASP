@@ -153,7 +153,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-white/30 backdrop-blur-md min-h-screen border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300',
+        'bg-white/30 backdrop-blur-md h-screen border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300 flex-shrink-0',
         collapsed ? 'w-[70px]' : 'w-[280px]'
       )}
     >

@@ -9,15 +9,15 @@ export interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen h-screen bg-gray-50 flex overflow-hidden">
       <ProfileErrorBanner />
       <AccordionSidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header />
 
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="min-h-[calc(100vh-64px)]">
+        <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden">
+          <div className="max-w-full">
             {children}
           </div>
         </main>

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { generateBatchNumber } from '@/utils/batchUtils';
+import { generateBatchNumber as generateBatchNumberNew, getCountryCode } from '@/utils/batchNumberGenerator';
 
 export interface BatchData {
   shipping_date: string;
@@ -33,8 +33,26 @@ export async function createBatch(data: CreateBatchData) {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
 
-    // Generate batch number
-    const batchNumber = generateBatchNumber(data.origin_site_id || 'GN', new Date(data.shipping_date));
+    // Get site/country information to determine country code
+    let countryCode: 'GN' | 'ML' | 'LB' = 'GN'; // Default
+    if (data.origin_site_id) {
+      // Fetch site to get country
+      const { data: siteData } = await supabase
+        .from('sites')
+        .select('country')
+        .eq('id', data.origin_site_id)
+        .single();
+
+      if (siteData?.country) {
+        countryCode = getCountryCode(siteData.country);
+      }
+    }
+
+    // Generate batch number with new format: CC-YYYY-MM-XXX
+    const batchNumber = await generateBatchNumberNew({
+      country: countryCode,
+      date: new Date(data.shipping_date)
+    });
 
     // Calculate weight in ounces
     const weightOunces = data.weight_grams / 31.1035;

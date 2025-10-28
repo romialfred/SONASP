@@ -11,7 +11,6 @@ import { Profile } from './pages/Profile';
 import { DashboardPage } from './pages/DashboardPage';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
-import { LiveMarketPage } from './pages/prices/LiveMarketPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -104,14 +103,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <FxRatesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/live-market"
-              element={
-                <ProtectedRoute>
-                  <LiveMarketPage />
                 </ProtectedRoute>
               }
             />

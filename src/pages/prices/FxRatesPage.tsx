@@ -8,12 +8,13 @@ import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import {
   TrendingUp, TrendingDown, Download, RefreshCw, Plus,
-  Calendar, DollarSign, Search, Filter, BarChart
+  Calendar, DollarSign, Search, Filter, BarChart, FileDown
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { LineChartWidget } from '@/components/charts/LineChartWidget';
+import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 import { FxRateComparison } from '@/components/fx/FxRateComparison';
+import * as XLSX from 'xlsx';
 
 type TabType = 'daily' | 'monthly' | 'customer' | 'analysis' | 'comparison';
 
@@ -90,6 +91,8 @@ export function FxRatesPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   const [customerFilter, setCustomerFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('');
+  const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
 
   // Form data for adding rates
   const [dailyFormData, setDailyFormData] = useState({
@@ -114,23 +117,15 @@ export function FxRatesPage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([
-        loadSources(),
-        activeTab === 'daily' && loadDailyRates(),
-        activeTab === 'monthly' && loadMonthlyRates(),
-        activeTab === 'customer' && loadCustomerRates(),
-        activeTab === 'customer' && loadCustomers(),
-      ].filter(Boolean));
-    } finally {
-      setLoading(false);
+    loadSources();
+    if (activeTab === 'customer') {
+      loadCustomers();
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadTabData();
+  }, [activeTab, currencyFilter, sourceFilter, dateFilter, customerFilter, monthFilter, yearFilter]);
 
   const loadSources = async () => {
     const { data, error } = await supabase
@@ -147,6 +142,21 @@ export function FxRatesPage() {
     }
   };
 
+  const loadTabData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'daily') {
+        await loadDailyRates();
+      } else if (activeTab === 'monthly') {
+        await loadMonthlyRates();
+      } else if (activeTab === 'customer') {
+        await loadCustomerRates();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadDailyRates = async () => {
     let query = supabase
       .from('fx_rates_daily')
@@ -155,7 +165,7 @@ export function FxRatesPage() {
         fx_rate_sources!inner(name, code)
       `)
       .order('rate_date', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (currencyFilter !== 'all') {
       query = query.eq('currency_pair', currencyFilter);
@@ -186,13 +196,19 @@ export function FxRatesPage() {
       `)
       .order('year', { ascending: false })
       .order('month', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (currencyFilter !== 'all') {
       query = query.eq('currency_pair', currencyFilter);
     }
     if (sourceFilter !== 'all') {
       query = query.eq('source_id', sourceFilter);
+    }
+    if (yearFilter) {
+      query = query.eq('year', parseInt(yearFilter));
+    }
+    if (monthFilter) {
+      query = query.eq('month', parseInt(monthFilter));
     }
 
     const { data, error } = await query;
@@ -213,13 +229,16 @@ export function FxRatesPage() {
         customers!inner(name, email)
       `)
       .order('transaction_date', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (customerFilter !== 'all') {
       query = query.eq('customer_id', customerFilter);
     }
     if (currencyFilter !== 'all') {
       query = query.eq('currency_pair', currencyFilter);
+    }
+    if (dateFilter) {
+      query = query.eq('transaction_date', dateFilter);
     }
 
     const { data, error } = await query;
@@ -246,7 +265,7 @@ export function FxRatesPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    await loadTabData();
     setRefreshing(false);
   };
 
@@ -337,6 +356,15 @@ export function FxRatesPage() {
     });
   };
 
+  const clearFilters = () => {
+    setCurrencyFilter('all');
+    setSourceFilter('all');
+    setDateFilter('');
+    setCustomerFilter('all');
+    setMonthFilter('');
+    setYearFilter(new Date().getFullYear().toString());
+  };
+
   const formatRate = (rate: number, pair: string) => {
     if (pair === 'XOF/GNF') return rate.toFixed(4);
     if (pair === 'EUR/USD') return rate.toFixed(5);
@@ -356,32 +384,104 @@ export function FxRatesPage() {
     return months[month - 1];
   };
 
-  const exportToCSV = () => {
+  const exportToExcel = () => {
     let data: any[] = [];
     let filename = '';
+    let sheetName = '';
 
     if (activeTab === 'daily') {
-      data = dailyRates;
-      filename = 'daily_fx_rates.csv';
+      data = dailyRates.map(rate => ({
+        Date: rate.rate_date,
+        'Currency Pair': rate.currency_pair,
+        Source: rate.source_name,
+        Rate: rate.rate,
+        Bid: rate.bid_rate || '-',
+        Ask: rate.ask_rate || '-',
+        Spread: rate.spread || '-',
+        Notes: rate.notes || '-',
+      }));
+      filename = 'Daily_FX_Rates.xlsx';
+      sheetName = 'Daily Rates';
     } else if (activeTab === 'monthly') {
-      data = monthlyRates;
-      filename = 'monthly_fx_rates.csv';
-    } else {
-      data = customerRates;
-      filename = 'customer_fx_rates.csv';
+      data = monthlyRates.map(rate => ({
+        Period: `${getMonthName(rate.month)} ${rate.year}`,
+        'Currency Pair': rate.currency_pair,
+        Source: rate.source_name,
+        'Avg Rate': rate.avg_rate,
+        'Min Rate': rate.min_rate,
+        'Max Rate': rate.max_rate,
+        'Opening': rate.opening_rate,
+        'Closing': rate.closing_rate,
+        'Data Points': rate.data_points,
+      }));
+      filename = 'Monthly_FX_Rates.xlsx';
+      sheetName = 'Monthly Rates';
+    } else if (activeTab === 'customer') {
+      data = customerRates.map(rate => ({
+        Date: rate.transaction_date,
+        Customer: rate.customer_name,
+        'Currency Pair': rate.currency_pair,
+        'Rate Paid': rate.rate_paid,
+        'Market Rate': rate.market_rate || '-',
+        'Spread %': rate.spread_percentage ? `${rate.spread_percentage.toFixed(2)}%` : '-',
+        Amount: rate.amount,
+        Reference: rate.reference_number || '-',
+      }));
+      filename = 'Customer_FX_Rates.xlsx';
+      sheetName = 'Customer Rates';
     }
 
-    const csv = [
-      Object.keys(data[0] || {}).join(','),
-      ...data.map(row => Object.values(row).join(',')),
-    ].join('\n');
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    // Set column widths
+    const colWidths = Object.keys(data[0] || {}).map(() => ({ wch: 15 }));
+    worksheet['!cols'] = colWidths;
+
+    XLSX.writeFile(workbook, filename);
+  };
+
+  // Prepare chart data
+  const getDailyChartData = () => {
+    const grouped = dailyRates.reduce((acc, rate) => {
+      if (!acc[rate.currency_pair]) {
+        acc[rate.currency_pair] = { name: rate.currency_pair, count: 0, avgRate: 0, total: 0 };
+      }
+      acc[rate.currency_pair].count++;
+      acc[rate.currency_pair].total += rate.rate;
+      return acc;
+    }, {} as Record<string, { name: string; count: number; avgRate: number; total: number }>);
+
+    return Object.values(grouped).map(item => ({
+      name: item.name,
+      'Rate Count': item.count,
+      'Avg Rate': item.total / item.count,
+    }));
+  };
+
+  const getMonthlyChartData = () => {
+    return monthlyRates.slice(0, 10).map(rate => ({
+      name: `${getMonthName(rate.month)} ${rate.year}`,
+      [rate.currency_pair]: rate.avg_rate,
+    }));
+  };
+
+  const getCustomerChartData = () => {
+    const grouped = customerRates.reduce((acc, rate) => {
+      if (!acc[rate.customer_name || 'Unknown']) {
+        acc[rate.customer_name || 'Unknown'] = { name: rate.customer_name || 'Unknown', count: 0, totalAmount: 0 };
+      }
+      acc[rate.customer_name || 'Unknown'].count++;
+      acc[rate.customer_name || 'Unknown'].totalAmount += rate.amount;
+      return acc;
+    }, {} as Record<string, { name: string; count: number; totalAmount: number }>);
+
+    return Object.values(grouped).slice(0, 10).map(item => ({
+      name: item.name,
+      'Transaction Count': item.count,
+      'Total Amount': item.totalAmount,
+    }));
   };
 
   return (
@@ -402,14 +502,16 @@ export function FxRatesPage() {
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button
-              variant="outline"
-              onClick={exportToCSV}
-              disabled={loading}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
+            {activeTab !== 'analysis' && activeTab !== 'comparison' && (
+              <Button
+                variant="outline"
+                onClick={exportToExcel}
+                disabled={loading}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
+            )}
             {activeTab === 'daily' && (
               <Button onClick={() => setShowAddModal(true)}>
                 <Plus className="w-4 h-4 mr-2" />
@@ -486,73 +588,115 @@ export function FxRatesPage() {
           </nav>
         </div>
 
-        {/* Filters - Hide for Analysis and Comparison tabs */}
+        {/* Filters */}
         {activeTab !== 'analysis' && activeTab !== 'comparison' && (
           <Card>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField label="Currency Pair">
-                <Select
-                  value={currencyFilter}
-                  onChange={(e) => {
-                    setCurrencyFilter(e.target.value);
-                    setTimeout(() => loadData(), 100);
-                  }}
-                >
-                  <option value="all">All Currency Pairs</option>
-                  {CURRENCY_PAIRS.map(pair => (
-                    <option key={pair.value} value={pair.value}>{pair.label}</option>
-                  ))}
-                </Select>
-              </FormField>
-
-              <FormField label="Source">
-                <Select
-                  value={sourceFilter}
-                  onChange={(e) => {
-                    setSourceFilter(e.target.value);
-                    setTimeout(() => loadData(), 100);
-                  }}
-                >
-                  <option value="all">All Sources</option>
-                  {sources.map(source => (
-                    <option key={source.id} value={source.id}>{source.name}</option>
-                  ))}
-                </Select>
-              </FormField>
-
-              {activeTab === 'daily' && (
-                <FormField label="Date">
-                  <Input
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => {
-                      setDateFilter(e.target.value);
-                      setTimeout(() => loadDailyRates(), 100);
-                    }}
-                  />
-                </FormField>
-              )}
-
-              {activeTab === 'customer' && (
-                <FormField label="Customer">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <FormField label="Currency Pair">
                   <Select
-                    value={customerFilter}
-                    onChange={(e) => {
-                      setCustomerFilter(e.target.value);
-                      setTimeout(() => loadCustomerRates(), 100);
-                    }}
+                    value={currencyFilter}
+                    onChange={(e) => setCurrencyFilter(e.target.value)}
                   >
-                    <option value="all">All Customers</option>
-                    {customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    <option value="all">All Currency Pairs</option>
+                    {CURRENCY_PAIRS.map(pair => (
+                      <option key={pair.value} value={pair.value}>{pair.label}</option>
                     ))}
                   </Select>
                 </FormField>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                <FormField label="Source">
+                  <Select
+                    value={sourceFilter}
+                    onChange={(e) => setSourceFilter(e.target.value)}
+                  >
+                    <option value="all">All Sources</option>
+                    {sources.map(source => (
+                      <option key={source.id} value={source.id}>{source.name}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                {activeTab === 'daily' && (
+                  <FormField label="Date">
+                    <Input
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                    />
+                  </FormField>
+                )}
+
+                {activeTab === 'monthly' && (
+                  <>
+                    <FormField label="Year">
+                      <Input
+                        type="number"
+                        value={yearFilter}
+                        onChange={(e) => setYearFilter(e.target.value)}
+                        placeholder="YYYY"
+                        min="2020"
+                        max="2030"
+                      />
+                    </FormField>
+                    <FormField label="Month">
+                      <Select
+                        value={monthFilter}
+                        onChange={(e) => setMonthFilter(e.target.value)}
+                      >
+                        <option value="">All Months</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </Select>
+                    </FormField>
+                  </>
+                )}
+
+                {activeTab === 'customer' && (
+                  <>
+                    <FormField label="Customer">
+                      <Select
+                        value={customerFilter}
+                        onChange={(e) => setCustomerFilter(e.target.value)}
+                      >
+                        <option value="all">All Customers</option>
+                        {customers.map(customer => (
+                          <option key={customer.id} value={customer.id}>{customer.name}</option>
+                        ))}
+                      </Select>
+                    </FormField>
+                    <FormField label="Date">
+                      <Input
+                        type="date"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                      />
+                    </FormField>
+                  </>
+                )}
+
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="w-full"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Comparison Tab Content */}
@@ -561,7 +705,7 @@ export function FxRatesPage() {
         {/* Analysis Tab Content */}
         {activeTab === 'analysis' && <FxAnalysisTab />}
 
-        {/* Content - Hide for Analysis and Comparison tabs */}
+        {/* Content for other tabs */}
         {activeTab !== 'analysis' && activeTab !== 'comparison' && loading ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -571,11 +715,72 @@ export function FxRatesPage() {
           </Card>
         ) : activeTab !== 'analysis' && activeTab !== 'comparison' ? (
           <>
+            {/* Chart Section */}
+            {activeTab === 'daily' && dailyRates.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rate Distribution by Currency Pair</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BarChartWidget
+                    data={getDailyChartData()}
+                    dataKeys={['Rate Count', 'Avg Rate']}
+                    colors={['#3b82f6', '#10b981']}
+                    height={300}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'monthly' && monthlyRates.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Rate Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BarChartWidget
+                    data={getMonthlyChartData()}
+                    dataKeys={CURRENCY_PAIRS.map(p => p.value).filter(pair =>
+                      monthlyRates.some(r => r.currency_pair === pair)
+                    )}
+                    colors={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']}
+                    height={300}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'customer' && customerRates.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Transaction Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BarChartWidget
+                    data={getCustomerChartData()}
+                    dataKeys={['Transaction Count']}
+                    colors={['#3b82f6']}
+                    height={300}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Daily Rates Tab */}
             {activeTab === 'daily' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Daily Exchange Rates ({dailyRates.length})</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Daily Exchange Rates ({dailyRates.length})</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportToExcel}
+                    >
+                      <FileDown className="w-4 h-4 mr-2" />
+                      Export to Excel
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -597,8 +802,8 @@ export function FxRatesPage() {
                             <td className="px-4 py-3 text-sm text-gray-900">
                               {formatDate(rate.rate_date)}
                             </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                              {rate.currency_pair}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
                               {rate.source_name}
@@ -613,10 +818,17 @@ export function FxRatesPage() {
                               {rate.ask_rate ? formatRate(rate.ask_rate, rate.currency_pair) : '-'}
                             </td>
                             <td className="px-4 py-3 text-sm text-right text-gray-600">
-                              {rate.spread ? formatRate(rate.spread, rate.currency_pair) : '-'}
+                              {rate.spread ? rate.spread.toFixed(4) : '-'}
                             </td>
                           </tr>
                         ))}
+                        {dailyRates.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                              No daily rates found. Try adjusting your filters.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -628,7 +840,17 @@ export function FxRatesPage() {
             {activeTab === 'monthly' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Aggregated Rates ({monthlyRates.length})</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Monthly Aggregated Rates ({monthlyRates.length})</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportToExcel}
+                    >
+                      <FileDown className="w-4 h-4 mr-2" />
+                      Export to Excel
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -643,7 +865,7 @@ export function FxRatesPage() {
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Max</th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Opening</th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Closing</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Data Points</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Data Points</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -652,8 +874,8 @@ export function FxRatesPage() {
                             <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                               {getMonthName(rate.month)} {rate.year}
                             </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                              {rate.currency_pair}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
                               {rate.source_name}
@@ -673,11 +895,18 @@ export function FxRatesPage() {
                             <td className="px-4 py-3 text-sm text-right text-gray-600">
                               {formatRate(rate.closing_rate, rate.currency_pair)}
                             </td>
-                            <td className="px-4 py-3 text-sm text-center text-gray-600">
+                            <td className="px-4 py-3 text-sm text-right text-gray-500">
                               {rate.data_points}
                             </td>
                           </tr>
                         ))}
+                        {monthlyRates.length === 0 && (
+                          <tr>
+                            <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                              No monthly rates found. Try adjusting your filters.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -689,7 +918,17 @@ export function FxRatesPage() {
             {activeTab === 'customer' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Customer Exchange Rates ({customerRates.length})</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Customer Exchange Rates ({customerRates.length})</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportToExcel}
+                    >
+                      <FileDown className="w-4 h-4 mr-2" />
+                      Export to Excel
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -715,8 +954,8 @@ export function FxRatesPage() {
                             <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                               {rate.customer_name}
                             </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className="font-medium text-blue-600">{rate.currency_pair}</span>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                              {rate.currency_pair}
                             </td>
                             <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
                               {formatRate(rate.rate_paid, rate.currency_pair)}
@@ -724,12 +963,12 @@ export function FxRatesPage() {
                             <td className="px-4 py-3 text-sm text-right text-gray-600">
                               {rate.market_rate ? formatRate(rate.market_rate, rate.currency_pair) : '-'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-right">
-                              {rate.spread_percentage !== null ? (
-                                <span className={rate.spread_percentage > 0 ? 'text-green-600' : 'text-red-600'}>
-                                  {rate.spread_percentage > 0 ? '+' : ''}{rate.spread_percentage.toFixed(2)}%
-                                </span>
-                              ) : '-'}
+                            <td className={`px-4 py-3 text-sm text-right font-medium ${
+                              rate.spread_percentage && rate.spread_percentage > 0 ? 'text-red-600' :
+                              rate.spread_percentage && rate.spread_percentage < 0 ? 'text-green-600' :
+                              'text-gray-600'
+                            }`}>
+                              {rate.spread_percentage ? `${rate.spread_percentage.toFixed(2)}%` : '-'}
                             </td>
                             <td className="px-4 py-3 text-sm text-right text-gray-900">
                               {rate.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -739,6 +978,13 @@ export function FxRatesPage() {
                             </td>
                           </tr>
                         ))}
+                        {customerRates.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                              No customer rates found. Try adjusting your filters.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -747,188 +993,192 @@ export function FxRatesPage() {
             )}
           </>
         ) : null}
+
+        {/* Add Daily Rate Modal */}
+        {showAddModal && (
+          <Modal onClose={() => setShowAddModal(false)} size="lg">
+            <ModalHeader>Add Daily Exchange Rate</ModalHeader>
+            <ModalBody>
+              <div className="space-y-4">
+                <FormField label="Date" required>
+                  <Input
+                    type="date"
+                    value={dailyFormData.rate_date}
+                    onChange={(e) => setDailyFormData({ ...dailyFormData, rate_date: e.target.value })}
+                  />
+                </FormField>
+
+                <FormField label="Currency Pair" required>
+                  <Select
+                    value={dailyFormData.currency_pair}
+                    onChange={(e) => setDailyFormData({ ...dailyFormData, currency_pair: e.target.value })}
+                  >
+                    {CURRENCY_PAIRS.map(pair => (
+                      <option key={pair.value} value={pair.value}>{pair.label}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Source" required>
+                  <Select
+                    value={dailyFormData.source_id}
+                    onChange={(e) => setDailyFormData({ ...dailyFormData, source_id: e.target.value })}
+                  >
+                    {sources.map(source => (
+                      <option key={source.id} value={source.id}>{source.name}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Rate" required>
+                  <Input
+                    type="number"
+                    step="0.00001"
+                    value={dailyFormData.rate}
+                    onChange={(e) => setDailyFormData({ ...dailyFormData, rate: e.target.value })}
+                    placeholder="0.00000"
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Bid Rate">
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      value={dailyFormData.bid_rate}
+                      onChange={(e) => setDailyFormData({ ...dailyFormData, bid_rate: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </FormField>
+
+                  <FormField label="Ask Rate">
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      value={dailyFormData.ask_rate}
+                      onChange={(e) => setDailyFormData({ ...dailyFormData, ask_rate: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label="Notes">
+                  <Input
+                    value={dailyFormData.notes}
+                    onChange={(e) => setDailyFormData({ ...dailyFormData, notes: e.target.value })}
+                    placeholder="Optional notes"
+                  />
+                </FormField>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="outline" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddDailyRate}>
+                Add Rate
+              </Button>
+            </ModalFooter>
+          </Modal>
+        )}
+
+        {/* Add Customer Rate Modal */}
+        {showCustomerRateModal && (
+          <Modal onClose={() => setShowCustomerRateModal(false)} size="lg">
+            <ModalHeader>Add Customer Exchange Rate</ModalHeader>
+            <ModalBody>
+              <div className="space-y-4">
+                <FormField label="Customer" required>
+                  <Select
+                    value={customerFormData.customer_id}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, customer_id: e.target.value })}
+                  >
+                    <option value="">Select Customer</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Transaction Date" required>
+                  <Input
+                    type="date"
+                    value={customerFormData.transaction_date}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, transaction_date: e.target.value })}
+                  />
+                </FormField>
+
+                <FormField label="Currency Pair" required>
+                  <Select
+                    value={customerFormData.currency_pair}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, currency_pair: e.target.value })}
+                  >
+                    {CURRENCY_PAIRS.map(pair => (
+                      <option key={pair.value} value={pair.value}>{pair.label}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Rate Paid" required>
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      value={customerFormData.rate_paid}
+                      onChange={(e) => setCustomerFormData({ ...customerFormData, rate_paid: e.target.value })}
+                      placeholder="0.00000"
+                    />
+                  </FormField>
+
+                  <FormField label="Market Rate">
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      value={customerFormData.market_rate}
+                      onChange={(e) => setCustomerFormData({ ...customerFormData, market_rate: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label="Amount" required>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={customerFormData.amount}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, amount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </FormField>
+
+                <FormField label="Reference Number">
+                  <Input
+                    value={customerFormData.reference_number}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, reference_number: e.target.value })}
+                    placeholder="Optional"
+                  />
+                </FormField>
+
+                <FormField label="Notes">
+                  <Input
+                    value={customerFormData.notes}
+                    onChange={(e) => setCustomerFormData({ ...customerFormData, notes: e.target.value })}
+                    placeholder="Optional notes"
+                  />
+                </FormField>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="outline" onClick={() => setShowCustomerRateModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddCustomerRate}>
+                Add Rate
+              </Button>
+            </ModalFooter>
+          </Modal>
+        )}
       </div>
-
-      {/* Add Daily Rate Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)}>
-        <ModalHeader>Add Daily Exchange Rate</ModalHeader>
-        <ModalBody>
-          <div className="space-y-4">
-            <FormField label="Date" required>
-              <Input
-                type="date"
-                value={dailyFormData.rate_date}
-                onChange={(e) => setDailyFormData({ ...dailyFormData, rate_date: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="Currency Pair" required>
-              <Select
-                value={dailyFormData.currency_pair}
-                onChange={(e) => setDailyFormData({ ...dailyFormData, currency_pair: e.target.value })}
-              >
-                {CURRENCY_PAIRS.map(pair => (
-                  <option key={pair.value} value={pair.value}>{pair.label}</option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Source" required>
-              <Select
-                value={dailyFormData.source_id}
-                onChange={(e) => setDailyFormData({ ...dailyFormData, source_id: e.target.value })}
-              >
-                {sources.map(source => (
-                  <option key={source.id} value={source.id}>{source.name}</option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Exchange Rate" required>
-              <Input
-                type="number"
-                step="0.000001"
-                value={dailyFormData.rate}
-                onChange={(e) => setDailyFormData({ ...dailyFormData, rate: e.target.value })}
-                placeholder="e.g., 1.09 or 8600"
-              />
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Bid Rate">
-                <Input
-                  type="number"
-                  step="0.000001"
-                  value={dailyFormData.bid_rate}
-                  onChange={(e) => setDailyFormData({ ...dailyFormData, bid_rate: e.target.value })}
-                  placeholder="Optional"
-                />
-              </FormField>
-
-              <FormField label="Ask Rate">
-                <Input
-                  type="number"
-                  step="0.000001"
-                  value={dailyFormData.ask_rate}
-                  onChange={(e) => setDailyFormData({ ...dailyFormData, ask_rate: e.target.value })}
-                  placeholder="Optional"
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Notes">
-              <Input
-                value={dailyFormData.notes}
-                onChange={(e) => setDailyFormData({ ...dailyFormData, notes: e.target.value })}
-                placeholder="Additional notes..."
-              />
-            </FormField>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setShowAddModal(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAddDailyRate}>
-            Add Rate
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* Add Customer Rate Modal */}
-      <Modal isOpen={showCustomerRateModal} onClose={() => setShowCustomerRateModal(false)}>
-        <ModalHeader>Add Customer Exchange Rate</ModalHeader>
-        <ModalBody>
-          <div className="space-y-4">
-            <FormField label="Customer" required>
-              <Select
-                value={customerFormData.customer_id}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, customer_id: e.target.value })}
-              >
-                <option value="">Select Customer</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Transaction Date" required>
-              <Input
-                type="date"
-                value={customerFormData.transaction_date}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, transaction_date: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="Currency Pair" required>
-              <Select
-                value={customerFormData.currency_pair}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, currency_pair: e.target.value })}
-              >
-                {CURRENCY_PAIRS.map(pair => (
-                  <option key={pair.value} value={pair.value}>{pair.label}</option>
-                ))}
-              </Select>
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Rate Paid" required>
-                <Input
-                  type="number"
-                  step="0.000001"
-                  value={customerFormData.rate_paid}
-                  onChange={(e) => setCustomerFormData({ ...customerFormData, rate_paid: e.target.value })}
-                  placeholder="Rate customer paid"
-                />
-              </FormField>
-
-              <FormField label="Market Rate">
-                <Input
-                  type="number"
-                  step="0.000001"
-                  value={customerFormData.market_rate}
-                  onChange={(e) => setCustomerFormData({ ...customerFormData, market_rate: e.target.value })}
-                  placeholder="Market rate at time"
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Amount" required>
-              <Input
-                type="number"
-                step="0.01"
-                value={customerFormData.amount}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, amount: e.target.value })}
-                placeholder="Transaction amount"
-              />
-            </FormField>
-
-            <FormField label="Reference Number">
-              <Input
-                value={customerFormData.reference_number}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, reference_number: e.target.value })}
-                placeholder="Transaction reference"
-              />
-            </FormField>
-
-            <FormField label="Notes">
-              <Input
-                value={customerFormData.notes}
-                onChange={(e) => setCustomerFormData({ ...customerFormData, notes: e.target.value })}
-                placeholder="Additional notes..."
-              />
-            </FormField>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setShowCustomerRateModal(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAddCustomerRate}>
-            Add Customer Rate
-          </Button>
-        </ModalFooter>
-      </Modal>
     </MainLayout>
   );
 }

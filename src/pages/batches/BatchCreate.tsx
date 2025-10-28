@@ -22,6 +22,7 @@ interface FormData {
   shipping_date: string;
   weight_grams: string;
   metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
+  mining_company_id: string;
   site_id: string;
   mine_to_airport_transport_id: string;
   airport_to_refinery_transport_id: string;
@@ -54,12 +55,14 @@ export function BatchCreate() {
     shipping_date: new Date().toISOString().split('T')[0],
     weight_grams: '',
     metal_type: 'gold',
+    mining_company_id: '',
     site_id: '',
     mine_to_airport_transport_id: '',
     airport_to_refinery_transport_id: '',
     destination_refinery_id: '',
     comments: '',
   });
+  const [miningCompanies, setMiningCompanies] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [mineToAirportTransports, setMineToAirportTransports] = useState<any[]>([]);
   const [airportToRefineryTransports, setAirportToRefineryTransports] = useState<any[]>([]);
@@ -191,10 +194,26 @@ export function BatchCreate() {
   }, [formData.shipping_date]);
 
   useEffect(() => {
+    loadMiningCompanies();
     loadSites();
     loadTransportCompanies();
     loadRefineries();
   }, []);
+
+  const loadMiningCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mining_companies')
+        .select('id, name, code, country')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setMiningCompanies(data || []);
+    } catch (error) {
+      console.error('Error loading mining companies:', error);
+    }
+  };
 
   const loadSites = async () => {
     try {
@@ -446,7 +465,28 @@ export function BatchCreate() {
                   </FormField>
                 </div>
 
-                {/* Row 2: Weight and Site */}
+                {/* Row 2: Mining Company */}
+                <FormField
+                  label="Mining Company"
+                  required
+                  hint="Select the mining company providing this batch"
+                >
+                  <Select
+                    value={formData.mining_company_id}
+                    onChange={(e) => handleInputChange('mining_company_id', e.target.value)}
+                    onFocus={() => setFocusedField('mining_company_id')}
+                    onBlur={() => setFocusedField('')}
+                  >
+                    <option value="">Select Mining Company</option>
+                    {miningCompanies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name} ({company.code}) - {company.country}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                {/* Row 3: Weight and Site */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     label="Weight (grams)"

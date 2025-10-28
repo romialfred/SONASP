@@ -55,6 +55,8 @@ import { SilverInventoryManagement } from './pages/inventory/SilverInventoryMana
 import { MiningCompaniesPage } from './pages/stakeholders/MiningCompaniesPage';
 import { MiningCompanyForm } from './pages/stakeholders/MiningCompanyForm';
 import { MiningCompanyDetails } from './pages/stakeholders/MiningCompanyDetails';
+import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage';
+import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -426,6 +428,24 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'admin']}>
                   <MiningCompanyForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/freight-companies"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <FreightCompaniesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/refinery-plants"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <RefineryPlantsPage />
                 </ProtectedRoute>
               }
             />

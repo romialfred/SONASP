@@ -4,7 +4,7 @@
   ## Overview
   This migration seeds the database with 12 months of realistic data for:
   - Gold prices (daily for 12 months)
-  - Customers (10 customers)
+  - Customers (2 customers)
   - Batches (60 batches with various statuses)
   - Sales (40 sales transactions)
 
@@ -12,7 +12,7 @@
   - Gold prices: Daily prices from Nov 2024 to Oct 2025
   - Batches: Various statuses from created to sold
   - Sales: Distributed across 12 months with realistic pricing
-  - Customers: Mix of individual and corporate customers
+  - Customers: 2 corporate customers
 */
 
 -- ================================================================
@@ -91,15 +91,7 @@ INSERT INTO customers (
   notes
 ) VALUES
   ('Emirates Gold Trading LLC', 'contact@emiratesgold.ae', '+971-4-555-0001', 'UAE', 'corporate', true, 10000000, 'Large corporate buyer based in Dubai'),
-  ('Swiss Precious Metals AG', 'info@swissmetals.ch', '+41-44-555-0002', 'Switzerland', 'corporate', true, 15000000, 'Premium Swiss refinery and trading company'),
-  ('Gold International SA', 'sales@goldintl.com', '+33-1-555-0003', 'France', 'corporate', true, 8000000, 'European trading house'),
-  ('Asian Gold Merchants', 'contact@asiangold.hk', '+852-2555-0004', 'Hong Kong', 'corporate', true, 12000000, 'Major Asian gold trader'),
-  ('London Bullion Associates', 'trade@londonbullion.uk', '+44-20-555-0005', 'UK', 'corporate', true, 20000000, 'London-based precious metals dealer'),
-  ('Manhattan Gold Exchange', 'info@manhattangold.com', '+1-212-555-0006', 'USA', 'retail', true, 5000000, 'New York precious metals dealer'),
-  ('Dubai Gold Souk Trading', 'sales@dubaigold.ae', '+971-4-555-0007', 'UAE', 'retail', true, 6000000, 'Dubai gold souk merchant'),
-  ('Singapore Bullion Market', 'trade@sgbullion.sg', '+65-6555-0008', 'Singapore', 'corporate', true, 9000000, 'Singapore precious metals exchange'),
-  ('Paris Metals Trading', 'contact@parismetals.fr', '+33-1-555-0009', 'France', 'retail', true, 4000000, 'Paris-based gold dealer'),
-  ('Global Precious Solutions', 'info@globalprecious.com', '+1-305-555-0010', 'USA', 'corporate', true, 11000000, 'International precious metals broker')
+  ('Swiss Precious Metals AG', 'info@swissmetals.ch', '+41-44-555-0002', 'Switzerland', 'corporate', true, 15000000, 'Premium Swiss refinery and trading company')
 ON CONFLICT (email) DO NOTHING;
 
 -- ================================================================
@@ -121,7 +113,7 @@ DECLARE
   v_status_weights integer[] := ARRAY[5, 10, 15, 20, 25, 15, 10]; -- Distribution weights
 BEGIN
   -- Get customer IDs
-  SELECT ARRAY_AGG(id) INTO v_customer_ids FROM customers LIMIT 10;
+  SELECT ARRAY_AGG(id) INTO v_customer_ids FROM customers LIMIT 2;
 
   -- Generate batches for last 12 months
   FOR v_month_offset IN 0..11 LOOP

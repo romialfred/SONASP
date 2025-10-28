@@ -5,14 +5,16 @@
   This migration seeds the database with 12 months of realistic data for:
   - Gold prices (daily for 12 months)
   - Customers (2 customers)
+  - Sites (6 sites: factories, airports, refineries)
   - Batches (60 batches with various statuses)
   - Sales (40 sales transactions)
 
   ## Data Generation
   - Gold prices: Daily prices from Nov 2024 to Oct 2025
+  - Customers: 2 corporate customers
+  - Sites: Conakry, Siguiri, Yanfollia mines + airports + refinery
   - Batches: Various statuses from created to sold
   - Sales: Distributed across 12 months with realistic pricing
-  - Customers: 2 corporate customers
 */
 
 -- ================================================================
@@ -97,12 +99,57 @@ INSERT INTO customers (
 ON CONFLICT (email) DO NOTHING;
 
 -- ================================================================
--- 3. SEED BATCHES (60 batches with various statuses)
+-- 3. SEED SITES (Factories, Airports, Refineries)
+-- ================================================================
+
+-- Ensure we have sites for batch processing
+DO $$
+BEGIN
+  -- Factory sites
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Conakry Mine') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Conakry Mine', 'factory', 'GN', 'Conakry, Guinea', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Siguiri Mine') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Siguiri Mine', 'factory', 'GN', 'Siguiri, Guinea', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Yanfollia Mine') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Yanfollia Mine', 'factory', 'ML', 'Yanfollia, Mali', true);
+  END IF;
+
+  -- Airport sites
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Conakry International Airport') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Conakry International Airport', 'airport', 'GN', 'Conakry, Guinea', true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Bamako Airport') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Bamako Airport', 'airport', 'ML', 'Bamako, Mali', true);
+  END IF;
+
+  -- Refinery sites
+  IF NOT EXISTS (SELECT 1 FROM sites WHERE name = 'Dubai Refinery') THEN
+    INSERT INTO sites (name, site_type, country, address, is_active)
+    VALUES ('Dubai Refinery', 'refinery', 'GN', 'Dubai (via Guinea)', true);
+  END IF;
+
+  RAISE NOTICE 'Sites configured';
+END $$;
+
+-- ================================================================
+-- 4. SEED BATCHES (60 batches with various statuses)
 -- ================================================================
 
 DO $$
 DECLARE
   v_customer_ids uuid[];
+  v_site_ids uuid[];
+  v_factory_site_id uuid;
   v_batch_counter integer := 0;
   v_month_offset integer;
   v_batch_date date;
@@ -116,6 +163,12 @@ DECLARE
 BEGIN
   -- Get customer IDs
   SELECT ARRAY_AGG(id) INTO v_customer_ids FROM customers LIMIT 2;
+
+  -- Get site IDs (factories for origin)
+  SELECT ARRAY_AGG(id) INTO v_site_ids FROM sites WHERE site_type = 'factory';
+
+  -- Get a factory site ID for origin
+  SELECT id INTO v_factory_site_id FROM sites WHERE site_type = 'factory' LIMIT 1;
 
   -- Generate batches for last 12 months
   FOR v_month_offset IN 0..11 LOOP
@@ -164,8 +217,8 @@ BEGIN
         ROUND(v_weight_ounces, 2),
         'gold',
         v_status,
-        (SELECT id FROM user_profiles LIMIT 1), -- Placeholder site
-        (SELECT id FROM user_profiles LIMIT 1), -- Placeholder site
+        v_factory_site_id, -- Factory site as origin
+        v_factory_site_id, -- Current site (will vary based on status in real app)
         v_batch_date,
         v_batch_date + ((random()::numeric * 10)::int * INTERVAL '1 day')
       )
@@ -177,7 +230,7 @@ BEGIN
 END $$;
 
 -- ================================================================
--- 4. SEED SALES (40 sales distributed over 12 months)
+-- 5. SEED SALES (40 sales distributed over 12 months)
 -- ================================================================
 
 DO $$
@@ -280,7 +333,7 @@ BEGIN
 END $$;
 
 -- ================================================================
--- 5. UPDATE BATCH STATUSES BASED ON SALES
+-- 6. UPDATE BATCH STATUSES BASED ON SALES
 -- ================================================================
 
 UPDATE batches
@@ -289,22 +342,24 @@ WHERE id IN (
   SELECT DISTINCT batch_id
   FROM sales
   WHERE batch_id IS NOT NULL
-  AND status = 'paid'
+  AND status IN ('completed', 'payment_received')
 );
 
 -- ================================================================
--- 6. VERIFY SEEDED DATA
+-- 7. VERIFY SEEDED DATA
 -- ================================================================
 
 DO $$
 DECLARE
   v_gold_prices_count integer;
   v_customers_count integer;
+  v_sites_count integer;
   v_batches_count integer;
   v_sales_count integer;
 BEGIN
   SELECT COUNT(*) INTO v_gold_prices_count FROM gold_prices_daily;
   SELECT COUNT(*) INTO v_customers_count FROM customers;
+  SELECT COUNT(*) INTO v_sites_count FROM sites;
   SELECT COUNT(*) INTO v_batches_count FROM batches;
   SELECT COUNT(*) INTO v_sales_count FROM sales;
 
@@ -313,6 +368,7 @@ BEGIN
   RAISE NOTICE '================================';
   RAISE NOTICE 'Gold Prices (Daily): %', v_gold_prices_count;
   RAISE NOTICE 'Customers: %', v_customers_count;
+  RAISE NOTICE 'Sites: %', v_sites_count;
   RAISE NOTICE 'Batches: %', v_batches_count;
   RAISE NOTICE 'Sales: %', v_sales_count;
   RAISE NOTICE '================================';

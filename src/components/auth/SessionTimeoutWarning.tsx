@@ -156,7 +156,7 @@ export function SessionTimeoutWarning({
           <div className="w-full bg-blue-900/50 rounded-full h-3 overflow-hidden shadow-inner">
             <div
               className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 transition-all duration-1000 ease-linear relative overflow-hidden"
-              style={{ width: `${(timeLeft / 300) * 100}%` }}
+              style={{ width: `${(timeLeft / 30) * 100}%` }}
             >
               <div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
@@ -197,7 +197,7 @@ export function SessionTimeoutWarning({
           {/* Footer Note */}
           <div className="pt-4 border-t border-blue-400/20">
             <p className="text-blue-300/80 text-xs">
-              Session timeout is set to <strong>10 minutes</strong> of inactivity for security
+              Session timeout is set to <strong>1 minute</strong> of inactivity for security
             </p>
           </div>
         </div>

@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const sessionManagerRef = useRef<SessionManager | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(300);
+  const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(30);
 
   const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
     const metadata = authUser.user_metadata || {};
@@ -436,7 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current.setOnWarning(() => {
               console.log('[Auth] Session timeout warning triggered');
               setShowTimeoutWarning(true);
-              setWarningRemainingSeconds(300); // 5 minutes remaining
+              setWarningRemainingSeconds(30); // 30 seconds remaining
             });
             sessionManagerRef.current.setOnTimeout(() => {
               console.log('[Auth] Session timeout - forcing logout');
@@ -556,7 +556,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current.setOnWarning(() => {
               console.log('[Auth] Session timeout warning triggered');
               setShowTimeoutWarning(true);
-              setWarningRemainingSeconds(300); // 5 minutes remaining
+              setWarningRemainingSeconds(30); // 30 seconds remaining
             });
             sessionManagerRef.current.setOnTimeout(() => {
               console.log('[Auth] Session timeout - forcing logout');

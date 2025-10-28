@@ -28,6 +28,7 @@ import {
   Factory,
   Handshake,
   Store,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -89,6 +90,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.sales'), path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
         { label: 'Gold Trade Space', path: '/sales/trade-space', icon: Store, iconColor: 'text-amber-600' },
         { label: t('payments.title'), path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
+        { label: 'Live Market', path: '/live-market', icon: Activity, iconColor: 'text-blue-600' },
         { label: t('prices.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
         { label: t('prices.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
       ],

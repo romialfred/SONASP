@@ -6,6 +6,7 @@ import { Loading } from '@/components/ui/Loading';
 import { Search, Download } from 'lucide-react';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { supabase } from '@/lib/supabase';
+import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions } from '@/constants/batchStatuses';
 
 interface Batch {
   id: string;
@@ -56,39 +57,6 @@ export function BatchesPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'shipped':
-        return 'info';
-      case 'airport_received':
-        return 'warning';
-      case 'refinery_received':
-        return 'pending';
-      case 'refined':
-        return 'success';
-      case 'sold':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'shipped':
-        return 'Shipped';
-      case 'airport_received':
-        return 'Airport Received';
-      case 'refinery_received':
-        return 'Refinery Received';
-      case 'refined':
-        return 'Refined';
-      case 'sold':
-        return 'Sold';
-      default:
-        return status;
-    }
-  };
 
   return (
     <MainLayout>
@@ -123,11 +91,11 @@ export function BatchesPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="all">All Statuses</option>
-                <option value="shipped">Shipped</option>
-                <option value="airport_received">Airport Received</option>
-                <option value="refinery_received">Refinery Received</option>
-                <option value="refined">Refined</option>
-                <option value="sold">Sold</option>
+                {getBatchStatusOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -174,7 +142,7 @@ export function BatchesPage() {
                             {batch.fineness_percentage ? `${batch.fineness_percentage.toFixed(1)}%` : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <StatusBadge status={getStatusLabel(batch.status)} variant={getStatusVariant(batch.status)} />
+                            <StatusBadge label={getBatchStatusLabel(batch.status)} variant={getBatchStatusVariant(batch.status)} />
                           </td>
                         </tr>
                       ))}

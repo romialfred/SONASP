@@ -11,15 +11,17 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
+import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions } from '@/constants/batchStatuses';
 
 interface Batch {
   id: string;
   batch_number: string;
   status: string;
   weight_grams: number;
+  weight_ounces: number;
   shipping_date: string;
-  origin_site: string;
-  current_site: string;
+  metal_type: string;
+  mining_company_name?: string;
   created_at: string;
 }
 
@@ -41,22 +43,32 @@ export function BatchListing() {
       const { data, error } = await supabase
         .from('batches')
         .select(`
-          *,
-          origin_site:sites!batches_origin_site_id_fkey(name),
-          current_site:sites!batches_current_site_id_fkey(name)
+          id,
+          batch_number,
+          status,
+          weight_grams,
+          weight_ounces,
+          shipping_date,
+          metal_type,
+          created_at,
+          mining_company:mining_companies(name)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading batches:', error);
+        throw error;
+      }
 
       const formattedBatches = (data || []).map((batch: any) => ({
         id: batch.id,
         batch_number: batch.batch_number,
         status: batch.status,
-        weight_grams: parseFloat(batch.weight_grams),
+        weight_grams: parseFloat(batch.weight_grams || 0),
+        weight_ounces: parseFloat(batch.weight_ounces || 0),
         shipping_date: batch.shipping_date,
-        origin_site: batch.origin_site?.name || 'Unknown',
-        current_site: batch.current_site?.name || 'Unknown',
+        metal_type: batch.metal_type || 'gold',
+        mining_company_name: batch.mining_company?.name || 'Unknown',
         created_at: batch.created_at,
       }));
 
@@ -71,10 +83,10 @@ export function BatchListing() {
   const filteredBatches = batches.filter((batch) => {
     const matchesSearch =
       batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      batch.origin_site.toLowerCase().includes(searchQuery.toLowerCase());
+      (batch.mining_company_name || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
-    const matchesSite = siteFilter === 'all' || batch.origin_site.includes(siteFilter);
+    const matchesSite = siteFilter === 'all' || (batch.mining_company_name || '').includes(siteFilter);
 
     return matchesSearch && matchesStatus && matchesSite;
   });
@@ -97,19 +109,12 @@ export function BatchListing() {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (value) => {
-        const statusMap: Record<string, any> = {
-          created: 'pending',
-          shipped: 'shipped',
-          received_airport: 'received',
-          shipped_refinery: 'shipped',
-          received_refinery: 'received',
-          processing: 'processing',
-          processed: 'completed',
-          approved: 'approved',
-        };
-        return <StatusBadge status={statusMap[value] || 'pending'} />;
-      },
+      render: (value) => (
+        <StatusBadge
+          label={getBatchStatusLabel(value)}
+          variant={getBatchStatusVariant(value)}
+        />
+      ),
     },
     {
       key: 'weight_grams',
@@ -124,13 +129,18 @@ export function BatchListing() {
       render: (value) => new Date(value).toLocaleDateString(),
     },
     {
-      key: 'origin_site',
-      label: 'Origin',
+      key: 'metal_type',
+      label: 'Metal Type',
       sortable: true,
+      render: (value) => (
+        <span className="capitalize">
+          {value}
+        </span>
+      ),
     },
     {
-      key: 'current_site',
-      label: 'Current Location',
+      key: 'mining_company_name',
+      label: 'Mining Company',
       sortable: true,
     },
   ];

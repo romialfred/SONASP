@@ -102,8 +102,8 @@ export function BatchDetailsWorkflow() {
         .from('batches')
         .select(`
           *,
-          origin_site:sites!batches_origin_site_id_fkey(name, country),
-          current_site:sites!batches_current_site_id_fkey(name, site_type),
+          mining_company:mining_companies(name, country),
+          refinery:refineries(name, location),
           created_by_user:user_profiles!batches_created_by_fkey(full_name)
         `)
         .eq('id', id)
@@ -124,9 +124,10 @@ export function BatchDetailsWorkflow() {
 
       setBatch({
         ...batchData,
-        origin_site_name: batchData.origin_site?.name || 'Unknown',
-        origin_site_country: batchData.origin_site?.country || 'Unknown',
-        current_site_name: batchData.current_site?.name || 'Unknown',
+        mining_company_name: batchData.mining_company?.name || 'Unknown',
+        mining_company_country: batchData.mining_company?.country || 'Unknown',
+        refinery_name: batchData.refinery?.name || 'Not assigned',
+        refinery_location: batchData.refinery?.location || 'Unknown',
         created_by_name: batchData.created_by_user?.full_name || 'Unknown',
         created_by: batchData.created_by,
       });

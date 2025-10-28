@@ -20,6 +20,7 @@ import { StatusFlow, BatchStatus } from '@/components/batch/StatusFlow';
 import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
+import { getBatchStatusLabel, getBatchStatusVariant } from '@/constants/batchStatuses';
 
 export function BatchDetails() {
   const { id } = useParams();
@@ -44,8 +45,10 @@ export function BatchDetails() {
         .from('batches')
         .select(`
           *,
-          origin_site:sites!batches_origin_site_id_fkey(name),
-          current_site:sites!batches_current_site_id_fkey(name),
+          mining_company:mining_companies(name, country),
+          mine_transport:transport_companies!batches_mine_to_airport_transport_id_fkey(name),
+          airport_transport:transport_companies!batches_airport_to_refinery_transport_id_fkey(name),
+          refinery:refineries(name, location),
           created_by_user:user_profiles!batches_created_by_fkey(full_name)
         `)
         .eq('id', id)
@@ -66,8 +69,12 @@ export function BatchDetails() {
 
       setBatch({
         ...data,
-        origin_site: data.origin_site?.name || 'Unknown',
-        current_site: data.current_site?.name || 'Unknown',
+        mining_company_name: data.mining_company?.name || 'Unknown',
+        mining_company_country: data.mining_company?.country || 'Unknown',
+        mine_transport_name: data.mine_transport?.name || 'Not assigned',
+        airport_transport_name: data.airport_transport?.name || 'Not assigned',
+        refinery_name: data.refinery?.name || 'Not assigned',
+        refinery_location: data.refinery?.location || 'Unknown',
         created_by: data.created_by_user?.full_name || 'Unknown',
       });
     } catch (error) {
@@ -270,7 +277,10 @@ export function BatchDetails() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Current Status</p>
-                      <StatusBadge status="shipped" />
+                      <StatusBadge
+                        label={getBatchStatusLabel(batch.status)}
+                        variant={getBatchStatusVariant(batch.status)}
+                      />
                     </div>
                   </div>
 
@@ -279,21 +289,27 @@ export function BatchDetails() {
                       <MapPin className="h-5 w-5 text-orange-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Origin Site</p>
+                      <p className="text-sm text-gray-600">Mining Company</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.origin_site}
+                        {batch.mining_company_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {batch.mining_company_country}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-green-100 rounded-lg">
-                      <MapPin className="h-5 w-5 text-green-600" />
+                      <Building2 className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Current Location</p>
+                      <p className="text-sm text-gray-600">Refinery</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.current_site}
+                        {batch.refinery_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {batch.refinery_location}
                       </p>
                     </div>
                   </div>
@@ -303,9 +319,33 @@ export function BatchDetails() {
                       <Truck className="h-5 w-5 text-yellow-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Transportation</p>
+                      <p className="text-sm text-gray-600">Mine → Airport Transport</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.transportation_company}
+                        {batch.mine_transport_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-indigo-100 rounded-lg">
+                      <Truck className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Airport → Refinery Transport</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {batch.airport_transport_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <Package className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Metal Type</p>
+                      <p className="text-base font-semibold text-gray-900 capitalize">
+                        {batch.metal_type || 'Gold'}
                       </p>
                     </div>
                   </div>

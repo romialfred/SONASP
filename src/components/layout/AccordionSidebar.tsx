@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -44,84 +45,88 @@ interface MenuGroup {
   groupIcon?: React.ComponentType<{ className?: string }>;
 }
 
-const menuGroups: MenuGroup[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    groupIconColor: 'text-blue-500',
-    groupIcon: LayoutDashboard,
-    items: [
-      { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-blue-500' },
-    ],
-  },
-  {
-    id: 'batches',
-    label: 'Batches Management',
-    groupIconColor: 'text-emerald-600',
-    groupIcon: Package,
-    items: [
-      { label: 'Batches', path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
-      { label: 'Shipping', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
-      { label: 'Refining', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
-    ],
-  },
-  {
-    id: 'inventory',
-    label: 'Inventory Management',
-    groupIconColor: 'text-amber-600',
-    groupIcon: Warehouse,
-    items: [
-      { label: 'Gold Inventory', path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
-      { label: 'Silver Inventory', path: '/inventory/silver', icon: Sparkles, iconColor: 'text-slate-500' },
-    ],
-  },
-  {
-    id: 'sales',
-    label: 'Sales Management',
-    groupIconColor: 'text-pink-600',
-    groupIcon: ShoppingCart,
-    items: [
-      { label: 'Sales', path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
-      { label: 'Payments', path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
-      { label: 'Gold Price', path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
-      { label: 'FX Rates', path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
-    ],
-  },
-  {
-    id: 'insights',
-    label: 'Insights & Reports',
-    groupIconColor: 'text-blue-600',
-    groupIcon: BarChart3,
-    items: [
-      { label: 'Analytics', path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
-      { label: 'Reports', path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
-    ],
-  },
-  {
-    id: 'stakeholders',
-    label: 'Stakeholders Management',
-    groupIconColor: 'text-teal-600',
-    groupIcon: Handshake,
-    items: [
-      { label: 'Mining Companies', path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
-      { label: 'Freight Companies', path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
-      { label: 'Refinery Plants', path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
-      { label: 'Customers', path: '/customers', icon: Users, iconColor: 'text-teal-700' },
-    ],
-  },
-  {
-    id: 'administration',
-    label: 'Administration',
-    groupIconColor: 'text-red-600',
-    groupIcon: Shield,
-    items: [
-      { label: 'Users Management', path: '/users', icon: Users, iconColor: 'text-slate-600' },
-      { label: 'Parameters', path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
-      { label: 'Workflow', path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
-      { label: 'Audit Trail', path: '/audit', icon: Shield, iconColor: 'text-red-600' },
-    ],
-  },
-];
+const useMenuGroups = (): MenuGroup[] => {
+  const { t } = useTranslation();
+
+  return [
+    {
+      id: 'overview',
+      label: t('nav.dashboard'),
+      groupIconColor: 'text-blue-500',
+      groupIcon: LayoutDashboard,
+      items: [
+        { label: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-blue-500' },
+      ],
+    },
+    {
+      id: 'batches',
+      label: t('batch.title'),
+      groupIconColor: 'text-emerald-600',
+      groupIcon: Package,
+      items: [
+        { label: t('nav.batches'), path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
+        { label: t('shipping.title'), path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
+        { label: t('refining.title'), path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
+      ],
+    },
+    {
+      id: 'inventory',
+      label: t('inventory.title'),
+      groupIconColor: 'text-amber-600',
+      groupIcon: Warehouse,
+      items: [
+        { label: t('inventory.goldInventory'), path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
+        { label: t('inventory.silverInventory'), path: '/inventory/silver', icon: Sparkles, iconColor: 'text-slate-500' },
+      ],
+    },
+    {
+      id: 'sales',
+      label: t('sales.title'),
+      groupIconColor: 'text-pink-600',
+      groupIcon: ShoppingCart,
+      items: [
+        { label: t('nav.sales'), path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
+        { label: t('payments.title'), path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
+        { label: t('prices.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
+        { label: t('prices.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
+      ],
+    },
+    {
+      id: 'insights',
+      label: t('nav.reports'),
+      groupIconColor: 'text-blue-600',
+      groupIcon: BarChart3,
+      items: [
+        { label: t('nav.analytics'), path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
+        { label: t('nav.reports'), path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
+      ],
+    },
+    {
+      id: 'stakeholders',
+      label: t('stakeholders.title'),
+      groupIconColor: 'text-teal-600',
+      groupIcon: Handshake,
+      items: [
+        { label: t('stakeholders.miningCompanies'), path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
+        { label: t('stakeholders.freightCompanies'), path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
+        { label: t('stakeholders.refineryPlants'), path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
+        { label: t('nav.customers'), path: '/customers', icon: Users, iconColor: 'text-teal-700' },
+      ],
+    },
+    {
+      id: 'administration',
+      label: t('nav.administration'),
+      groupIconColor: 'text-red-600',
+      groupIcon: Shield,
+      items: [
+        { label: t('admin.userManagement'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
+        { label: t('admin.parameters'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
+        { label: t('workflow.title'), path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
+        { label: t('audit.title'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
+      ],
+    },
+  ];
+};
 
 const STORAGE_KEY = 'sidebar:lastGroup';
 const COLLAPSED_KEY = 'sidebar:collapsed';
@@ -132,6 +137,7 @@ interface AccordionSidebarProps {
 
 export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   const location = useLocation();
+  const menuGroups = useMenuGroups();
   const [collapsed, setCollapsed] = useState(() => {
     const stored = localStorage.getItem(COLLAPSED_KEY);
     return stored === 'true';
@@ -157,7 +163,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         break;
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, menuGroups]);
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups(prev => {

@@ -5,6 +5,7 @@ import { GoldPriceLive } from '@/components/dashboard/GoldPriceLive';
 import { DollarSign, Package, TrendingUp, ShoppingCart } from 'lucide-react';
 import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 
 interface Batch {
@@ -40,6 +41,7 @@ interface MonthlySale {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -211,8 +213,8 @@ export function DashboardPage() {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Overview of gold sales operations</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('nav.dashboard')}</h1>
+          <p className="text-gray-600 mt-1">{t('dashboard.managementOverview')}</p>
         </div>
 
         {/* Key Metrics */}
@@ -221,11 +223,11 @@ export function DashboardPage() {
             <div className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Revenue</p>
+                  <p className="text-sm text-gray-600">{t('dashboard.totalRevenue')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
                     ${totalRevenue > 0 ? (totalRevenue / 1000000).toFixed(2) + 'M' : '0'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">From {sales.length} sales</p>
+                  <p className="text-xs text-gray-500 mt-1">{sales.length} {t('sales.completedSales')}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
@@ -240,9 +242,9 @@ export function DashboardPage() {
             <div className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Active Batches</p>
+                  <p className="text-sm text-gray-600">{t('dashboard.activeBatches')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{totalBatches}</p>
-                  <p className="text-xs text-gray-500 mt-1">In process</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('dashboard.processingInProgress')}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Package className="w-6 h-6 text-blue-600" />
@@ -255,11 +257,11 @@ export function DashboardPage() {
             <div className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Stock Available</p>
+                  <p className="text-sm text-gray-600">{t('inventory.availableForSale')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
                     {availableStock.toFixed(2)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Ounces (oz)</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('batch.weightOunces')}</p>
                 </div>
                 <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-amber-600" />
@@ -274,7 +276,7 @@ export function DashboardPage() {
           {/* Last 12 Months Sales */}
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Last 12 Months Sales</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('dashboard.salesPerformance')}</h3>
               {twelveMonthChartData.some(d => d.revenue > 0) ? (
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">

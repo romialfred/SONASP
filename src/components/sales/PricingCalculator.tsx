@@ -13,19 +13,32 @@ interface PricingCalculatorProps {
 
 export function PricingCalculator({ availableStockOz, onMechanismSelect }: PricingCalculatorProps) {
   const [quantityOz, setQuantityOz] = useState<string>('');
+  const [unit, setUnit] = useState<'oz' | 'g'>('oz');
   const [comparison, setComparison] = useState<PricingComparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedMechanism, setSelectedMechanism] = useState<string | null>(null);
 
-  const handleCalculate = async () => {
+  const GRAMS_PER_OZ = 31.1035;
+
+  const getQuantityInOz = (): number => {
     const qty = parseFloat(quantityOz);
-    if (isNaN(qty) || qty <= 0 || qty > availableStockOz) {
+    if (isNaN(qty)) return 0;
+    return unit === 'oz' ? qty : qty / GRAMS_PER_OZ;
+  };
+
+  const getDisplayQuantity = (oz: number): string => {
+    return unit === 'oz' ? oz.toFixed(2) : (oz * GRAMS_PER_OZ).toFixed(2);
+  };
+
+  const handleCalculate = async () => {
+    const qtyInOz = getQuantityInOz();
+    if (isNaN(qtyInOz) || qtyInOz <= 0 || qtyInOz > availableStockOz) {
       return;
     }
 
     setLoading(true);
     try {
-      const result = await calculatePricingComparison(qty);
+      const result = await calculatePricingComparison(qtyInOz);
       if (result.success && result.data) {
         setComparison(result.data);
         setSelectedMechanism(result.data.recommendedMechanism);
@@ -70,32 +83,56 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
             <h3 className="text-lg font-semibold text-gray-900">Pricing Calculator</h3>
             <div className="text-sm text-gray-500">
               Available: <span className="font-semibold text-gray-900">{availableStockOz.toFixed(2)} oz</span>
+              <span className="text-gray-400"> ({(availableStockOz * GRAMS_PER_OZ).toFixed(2)} g)</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity to Sell (oz)
+                Quantity to Sell ({unit === 'oz' ? 'oz' : 'grams'})
               </label>
-              <Input
-                type="number"
-                value={quantityOz}
-                onChange={(e) => setQuantityOz(e.target.value)}
-                placeholder="Enter quantity"
-                min="0"
-                max={availableStockOz}
-                step="0.01"
-              />
-              {parseFloat(quantityOz) > availableStockOz && (
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={quantityOz}
+                  onChange={(e) => setQuantityOz(e.target.value)}
+                  placeholder={`Enter quantity in ${unit}`}
+                  min="0"
+                  max={unit === 'oz' ? availableStockOz : availableStockOz * GRAMS_PER_OZ}
+                  step={unit === 'oz' ? '0.01' : '1'}
+                  className="flex-1"
+                />
+                <Select
+                  value={unit}
+                  onChange={(e) => {
+                    const newUnit = e.target.value as 'oz' | 'g';
+                    const currentOz = getQuantityInOz();
+                    setUnit(newUnit);
+                    if (currentOz > 0) {
+                      setQuantityOz(newUnit === 'oz' ? currentOz.toFixed(2) : (currentOz * GRAMS_PER_OZ).toFixed(2));
+                    }
+                  }}
+                  className="w-20"
+                >
+                  <option value="oz">oz</option>
+                  <option value="g">g</option>
+                </Select>
+              </div>
+              {getQuantityInOz() > availableStockOz && (
                 <p className="text-xs text-red-600 mt-1">Quantity exceeds available stock</p>
+              )}
+              {quantityOz && getQuantityInOz() > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  = {unit === 'oz' ? `${(getQuantityInOz() * GRAMS_PER_OZ).toFixed(2)} grams` : `${getQuantityInOz().toFixed(2)} oz`}
+                </p>
               )}
             </div>
 
             <div className="flex items-end">
               <Button
                 onClick={handleCalculate}
-                disabled={loading || !quantityOz || parseFloat(quantityOz) <= 0 || parseFloat(quantityOz) > availableStockOz}
+                disabled={loading || !quantityOz || getQuantityInOz() <= 0 || getQuantityInOz() > availableStockOz}
                 className="w-full"
               >
                 {loading ? 'Calculating...' : 'Calculate Pricing Options'}

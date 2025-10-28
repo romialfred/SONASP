@@ -87,13 +87,22 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
     return 'bg-gray-50 border-gray-200';
   };
 
+  const calculateVariance = () => {
+    if (!goldPrice) return { value: 0, percentage: 0 };
+    const variance = goldPrice.closing_price - goldPrice.opening_price;
+    const percentage = (variance / goldPrice.opening_price) * 100;
+    return { value: variance, percentage };
+  };
+
+  const variance = calculateVariance();
+
   return (
     <Card className={`${getBgColor()} transition-colors duration-300`}>
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <h3 className="text-sm font-semibold text-gray-700">Live Gold Price</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Live Gold Price (London Spot)</h3>
           </div>
           <button
             onClick={fetchGoldData}
@@ -126,30 +135,44 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
 
         {showDetailed && (
           <>
-            <div className="border-t border-gray-200 pt-3 space-y-2">
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-xs font-semibold text-gray-700 mb-3">Today's Statistics</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-gray-500 text-xs">Opening</div>
+                <div className="bg-white/60 p-2 rounded">
+                  <div className="text-gray-500 text-xs">Open Price</div>
                   <div className="font-semibold text-gray-900">
                     ${goldPrice.opening_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
-                <div>
-                  <div className="text-gray-500 text-xs">Closing</div>
+                <div className="bg-white/60 p-2 rounded">
+                  <div className="text-gray-500 text-xs">Close Price</div>
                   <div className="font-semibold text-gray-900">
                     ${goldPrice.closing_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
-                <div>
+                <div className="bg-green-50 p-2 rounded border border-green-200">
                   <div className="text-gray-500 text-xs">High (24h)</div>
                   <div className="font-semibold text-green-700">
                     ${goldPrice.high_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
-                <div>
+                <div className="bg-red-50 p-2 rounded border border-red-200">
                   <div className="text-gray-500 text-xs">Low (24h)</div>
                   <div className="font-semibold text-red-700">
                     ${goldPrice.low_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div className={`col-span-2 p-2 rounded border ${
+                  variance.value >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="text-gray-500 text-xs">Day Variance</div>
+                  <div className="flex items-center justify-between">
+                    <div className={`font-bold ${variance.value >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      {variance.value >= 0 ? '+' : ''}${variance.value.toFixed(2)}
+                    </div>
+                    <div className={`text-sm font-semibold ${variance.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {variance.percentage >= 0 ? '+' : ''}{variance.percentage.toFixed(2)}%
+                    </div>
                   </div>
                 </div>
               </div>

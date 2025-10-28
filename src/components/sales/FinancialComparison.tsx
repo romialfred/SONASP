@@ -51,7 +51,7 @@ export function FinancialComparison({ mechanisms, recommendedMechanism }: Financ
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 transition-all duration-300 hover:scale-125 hover:shadow-xl hover:bg-gradient-to-br hover:from-blue-100 hover:to-blue-200 hover:z-10 cursor-pointer">
           <div className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-blue-700">
               <DollarSign className="w-5 h-5" />
@@ -66,7 +66,7 @@ export function FinancialComparison({ mechanisms, recommendedMechanism }: Financ
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 transition-all duration-300 hover:scale-125 hover:shadow-xl hover:bg-gradient-to-br hover:from-emerald-100 hover:to-emerald-200 hover:z-10 cursor-pointer">
           <div className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-emerald-700">
               <Award className="w-5 h-5" />
@@ -81,7 +81,7 @@ export function FinancialComparison({ mechanisms, recommendedMechanism }: Financ
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 transition-all duration-300 hover:scale-125 hover:shadow-xl hover:bg-gradient-to-br hover:from-amber-100 hover:to-amber-200 hover:z-10 cursor-pointer">
           <div className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-amber-700">
               <TrendingUp className="w-5 h-5" />

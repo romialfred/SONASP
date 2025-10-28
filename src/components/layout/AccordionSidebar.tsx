@@ -231,8 +231,9 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
               <button
                 onClick={() => !collapsed && toggleGroup(group.id)}
                 className={cn(
-                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all text-gray-900',
+                  'group w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-900',
                   'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
+                  'transform hover:scale-[1.02] hover:shadow-md',
                   isOpen || hasActiveItem
                     ? 'bg-gray-100/70 font-semibold'
                     : 'hover:bg-gray-100/50'
@@ -245,21 +246,21 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   <span className="w-full flex justify-center">
                     {(() => {
                       const Icon = group.groupIcon ?? LayoutDashboard;
-                      return <Icon className={cn('w-5 h-5', group.groupIconColor)} />;
+                      return <Icon className={cn('w-5 h-5 transition-transform duration-200 hover:scale-110', group.groupIconColor)} />;
                     })()}
                   </span>
                 ) : (
                   <>
                     <span className="flex items-center gap-2 text-sm">
                       {group.groupIcon && (
-                        <group.groupIcon className={cn('w-4 h-4', group.groupIconColor)} />
+                        <group.groupIcon className={cn('w-4 h-4 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
                       )}
                       {group.label}
                     </span>
                     {isOpen ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                      <ChevronDown className="w-4 h-4 text-gray-500 transition-transform duration-200" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                      <ChevronRight className="w-4 h-4 text-gray-500 transition-transform duration-200" />
                     )}
                   </>
                 )}
@@ -280,26 +281,50 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                     const Icon = item.icon ?? LayoutDashboard;
                     const active = isActive(item.path);
 
+                    // Déterminer la couleur de fond active basée sur l'icône
+                    const getActiveBgColor = () => {
+                      if (item.iconColor.includes('yellow')) return 'bg-yellow-500';
+                      if (item.iconColor.includes('slate')) return 'bg-slate-400';
+                      if (item.iconColor.includes('emerald')) return 'bg-emerald-600';
+                      if (item.iconColor.includes('cyan')) return 'bg-cyan-600';
+                      if (item.iconColor.includes('teal')) return 'bg-teal-600';
+                      if (item.iconColor.includes('violet')) return 'bg-violet-600';
+                      if (item.iconColor.includes('pink')) return 'bg-pink-600';
+                      if (item.iconColor.includes('green')) return 'bg-green-600';
+                      if (item.iconColor.includes('orange')) return 'bg-orange-600';
+                      if (item.iconColor.includes('blue')) return 'bg-blue-600';
+                      if (item.iconColor.includes('indigo')) return 'bg-indigo-600';
+                      if (item.iconColor.includes('red')) return 'bg-red-600';
+                      if (item.iconColor.includes('sky')) return 'bg-sky-600';
+                      return 'bg-amber-500';
+                    };
+
                     return (
                       <Link
                         key={item.path}
                         to={item.path}
+                        onClick={(e) => {
+                          if (active) {
+                            e.preventDefault();
+                          }
+                        }}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm text-gray-900',
+                          'flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm text-gray-900',
                           'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
+                          'transform hover:scale-105 hover:shadow-lg',
                           active
-                            ? 'bg-amber-500 text-white font-medium shadow-md'
-                            : 'hover:bg-gray-100/50'
+                            ? `${getActiveBgColor()} text-white font-medium shadow-md cursor-default`
+                            : 'hover:bg-gray-100/70 hover:translate-x-1 cursor-pointer'
                         )}
                         aria-current={active ? 'page' : undefined}
                       >
                         <Icon
                           className={cn(
-                            'w-5 h-5 flex-shrink-0',
+                            'w-5 h-5 flex-shrink-0 transition-transform duration-200',
                             active ? 'text-white' : item.iconColor || 'text-primary-500'
                           )}
                         />
-                        <span>{item.label}</span>
+                        <span className="transition-all duration-200">{item.label}</span>
                       </Link>
                     );
                   })}

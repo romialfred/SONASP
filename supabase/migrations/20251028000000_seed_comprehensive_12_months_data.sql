@@ -111,7 +111,7 @@ DECLARE
   v_status text;
   v_country_code text;
   v_batch_number text;
-  v_statuses text[] := ARRAY['created', 'shipped', 'airport_received', 'refinery_received', 'refined', 'ready_for_sale', 'sold'];
+  v_statuses text[] := ARRAY['created', 'validated_for_transport', 'received_airport', 'received_refinery', 'processed', 'ready_for_sale', 'sold'];
   v_status_weights integer[] := ARRAY[5, 10, 15, 20, 25, 15, 10]; -- Distribution weights
 BEGIN
   -- Get customer IDs
@@ -251,13 +251,11 @@ BEGIN
         batch_id,
         quantity_oz,
         london_am_rate,
-        sale_price_per_oz,
         gross_proceeds,
-        royalty_amount,
+        royalties,
         net_proceeds,
         final_proceeds,
         status,
-        sale_date,
         created_at,
         updated_at
       ) VALUES (
@@ -266,13 +264,11 @@ BEGIN
         v_batch_id,
         ROUND(v_quantity_oz, 2),
         ROUND(v_gold_price, 2),
-        ROUND(v_sale_price, 2),
         ROUND(v_gross_proceeds, 2),
         ROUND(v_royalty, 2),
         ROUND(v_net_proceeds, 2),
         ROUND(v_net_proceeds, 2),
-        (ARRAY['approved', 'completed', 'paid'])[1 + floor(random()::numeric * 3)::int],
-        v_sale_date,
+        (ARRAY['approved', 'completed', 'payment_received'])[1 + floor(random()::numeric * 3)::int],
         v_sale_date,
         v_sale_date + ((random()::numeric * 5)::int * INTERVAL '1 day')
       )

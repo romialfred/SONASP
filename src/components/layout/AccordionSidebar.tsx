@@ -18,7 +18,6 @@ import {
   ChevronDown,
   ChevronRight,
   Menu,
-  X,
   CreditCard,
   Warehouse,
   PackagePlus,
@@ -51,15 +50,6 @@ const useMenuGroups = (): MenuGroup[] => {
   const { t, i18n } = useTranslation();
 
   return useMemo(() => [
-    {
-      id: 'overview',
-      label: t('nav.dashboard'),
-      groupIconColor: 'text-blue-500',
-      groupIcon: LayoutDashboard,
-      items: [
-        { label: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard, iconColor: 'text-blue-500' },
-      ],
-    },
     {
       id: 'batches',
       label: t('batch.title'),
@@ -148,6 +138,7 @@ interface AccordionSidebarProps {
 
 export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   const location = useLocation();
+  const { t } = useTranslation();
   const menuGroups = useMenuGroups();
   const [collapsed, setCollapsed] = useState(() => {
     const stored = localStorage.getItem(COLLAPSED_KEY);
@@ -206,7 +197,6 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
     }
 
     // For paths with sub-routes, check if it starts with path + '/'
-    // But exclude cases where a more specific path exists in the same group
     if (currentPath.startsWith(path + '/')) {
       // Find the current group
       const currentGroup = menuGroups.find(group =>
@@ -229,6 +219,8 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
 
     return false;
   };
+
+  const isDashboardActive = isActive('/dashboard');
 
   return (
     <aside
@@ -267,19 +259,42 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         </div>
       </div>
 
-      {/* Toggle Button */}
-      <div className="p-2 border-b border-gray-200">
+      {/* Toggle Button with "My Applications" */}
+      <div className="p-3 border-b border-gray-200">
         <button
           onClick={toggleCollapse}
-          className="w-full flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors"
+          className="w-full flex items-center justify-between p-2 text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors group"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
+          {!collapsed && (
+            <span className="text-base font-bold">My Applications</span>
+          )}
+          <Menu className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
         </button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+        {/* Dashboard - Direct Link (Not in Group) */}
+        <Link
+          to="/dashboard"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+            isDashboardActive
+              ? 'bg-blue-500 text-white font-semibold shadow-md'
+              : 'text-gray-700 hover:bg-gray-100/70'
+          )}
+        >
+          <LayoutDashboard className={cn('w-5 h-5', isDashboardActive ? 'text-white' : 'text-blue-500')} />
+          {!collapsed && (
+            <span className="text-sm">
+              {t('nav.dashboard')}
+            </span>
+          )}
+        </Link>
+
+        {/* Menu Groups */}
         {menuGroups.map((group) => {
           const groupItems = Array.isArray(group.items) ? group.items : [];
           const isOpen = openGroups.has(group.id);
@@ -292,157 +307,49 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 onClick={() => !collapsed && toggleGroup(group.id)}
                 className={cn(
                   'group w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-900',
-                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
-                  'transform hover:scale-[1.02] hover:shadow-md',
+                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
                   isOpen || hasActiveItem
                     ? 'bg-gray-100/70 font-semibold'
                     : 'hover:bg-gray-100/50'
                 )}
-                aria-expanded={isOpen}
-                aria-controls={`group-${group.id}`}
-                title={collapsed ? group.label : ''}
               >
-                {collapsed ? (
-                  <span className="w-full flex justify-center">
-                    {(() => {
-                      const Icon = group.groupIcon ?? LayoutDashboard;
-                      return <Icon className={cn('w-5 h-5 transition-transform duration-200 hover:scale-110', group.groupIconColor)} />;
-                    })()}
-                  </span>
-                ) : (
-                  <>
-                    <span className="flex items-center gap-2 text-sm">
-                      {group.groupIcon && (
-                        <group.groupIcon className={cn('w-4 h-4 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
-                      )}
-                      {group.label}
-                    </span>
-                    {isOpen ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500 transition-transform duration-200" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-500 transition-transform duration-200" />
-                    )}
-                  </>
+                <div className="flex items-center gap-3">
+                  {group.groupIcon && (
+                    <group.groupIcon className={cn('w-5 h-5', group.groupIconColor)} />
+                  )}
+                  {!collapsed && <span className="text-sm">{group.label}</span>}
+                </div>
+                {!collapsed && (
+                  isOpen ? (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  )
                 )}
               </button>
 
               {/* Group Items */}
-              {!collapsed && isOpen && (
-                <div
-                  id={`group-${group.id}`}
-                  className="space-y-1 pl-6 pt-1"
-                  role="group"
-                  aria-label={group.label}
-                >
+              {isOpen && !collapsed && (
+                <div className="ml-3 space-y-1 border-l-2 border-gray-200 pl-3">
                   {groupItems.map((item) => {
-                    if (!item) {
-                      return null;
-                    }
-                    const Icon = item.icon ?? LayoutDashboard;
                     const active = isActive(item.path);
-
-                    // Déterminer la couleur de fond active basée sur l'icône
-                    const getActiveBgColor = () => {
-                      if (item.iconColor.includes('yellow')) return 'bg-yellow-500';
-                      if (item.iconColor.includes('slate')) return 'bg-slate-400';
-                      if (item.iconColor.includes('emerald')) return 'bg-emerald-600';
-                      if (item.iconColor.includes('cyan')) return 'bg-cyan-600';
-                      if (item.iconColor.includes('teal')) return 'bg-teal-600';
-                      if (item.iconColor.includes('violet')) return 'bg-violet-600';
-                      if (item.iconColor.includes('pink')) return 'bg-pink-600';
-                      if (item.iconColor.includes('amber')) return 'bg-amber-600';
-                      if (item.iconColor.includes('green')) return 'bg-green-600';
-                      if (item.iconColor.includes('orange')) return 'bg-orange-600';
-                      if (item.iconColor.includes('blue')) return 'bg-blue-600';
-                      if (item.iconColor.includes('indigo')) return 'bg-indigo-600';
-                      if (item.iconColor.includes('red')) return 'bg-red-600';
-                      if (item.iconColor.includes('sky')) return 'bg-sky-600';
-                      return 'bg-gray-500';
-                    };
-
                     return (
                       <Link
                         key={item.path}
                         to={item.path}
-                        onClick={(e) => {
-                          if (active) {
-                            e.preventDefault();
-                          }
-                        }}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm text-gray-900',
-                          'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
-                          'transform hover:scale-105 hover:shadow-lg',
+                          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm',
+                          'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
                           active
-                            ? `${getActiveBgColor()} text-white font-medium shadow-md cursor-default`
-                            : 'hover:bg-gray-100/70 hover:translate-x-1 cursor-pointer'
+                            ? 'bg-white text-gray-900 font-semibold shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-100/50'
                         )}
-                        aria-current={active ? 'page' : undefined}
                       >
-                        <Icon
-                          className={cn(
-                            'w-5 h-5 flex-shrink-0 transition-transform duration-200',
-                            active ? 'text-white' : item.iconColor || 'text-primary-500'
-                          )}
-                        />
-                        <span className="transition-all duration-200">{item.label}</span>
+                        <item.icon className={cn('w-4 h-4', item.iconColor)} />
+                        <span>{item.label}</span>
                       </Link>
                     );
                   })}
-                </div>
-              )}
-
-              {/* Collapsed state - show items as icons on hover */}
-              {collapsed && (
-                <div className="relative group">
-                  <div className="hidden group-hover:block absolute left-full top-0 ml-2 w-48 bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg shadow-xl z-50 py-2">
-                    <div className="px-3 py-2 border-b border-gray-200">
-                      <p className="text-xs font-semibold text-gray-900">
-                        {group.label}
-                      </p>
-                    </div>
-                    {groupItems.map((item) => {
-                      if (!item) {
-                        return null;
-                      }
-                      const Icon = item.icon ?? LayoutDashboard;
-                      const active = isActive(item.path);
-
-                      const getActiveBgColor = () => {
-                        if (item.iconColor.includes('yellow')) return 'bg-yellow-500';
-                        if (item.iconColor.includes('slate')) return 'bg-slate-400';
-                        if (item.iconColor.includes('emerald')) return 'bg-emerald-600';
-                        if (item.iconColor.includes('cyan')) return 'bg-cyan-600';
-                        if (item.iconColor.includes('teal')) return 'bg-teal-600';
-                        if (item.iconColor.includes('violet')) return 'bg-violet-600';
-                        if (item.iconColor.includes('pink')) return 'bg-pink-600';
-                        if (item.iconColor.includes('amber')) return 'bg-amber-600';
-                        if (item.iconColor.includes('green')) return 'bg-green-600';
-                        if (item.iconColor.includes('orange')) return 'bg-orange-600';
-                        if (item.iconColor.includes('blue')) return 'bg-blue-600';
-                        if (item.iconColor.includes('indigo')) return 'bg-indigo-600';
-                        if (item.iconColor.includes('red')) return 'bg-red-600';
-                        if (item.iconColor.includes('sky')) return 'bg-sky-600';
-                        return 'bg-gray-500';
-                      };
-
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 text-sm transition-colors text-gray-900',
-                            active
-                              ? `${getActiveBgColor()} text-white font-medium`
-                              : 'hover:bg-gray-100/50'
-                          )}
-                        >
-                          <Icon className={cn('w-4 h-4', active ? 'text-white' : item.iconColor || 'text-primary-500')} />
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
                 </div>
               )}
             </div>
@@ -450,11 +357,13 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         })}
       </nav>
 
-      {/* Sidebar Footer */}
-      <div className="p-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 text-center">
-          {collapsed ? '© 2025' : '© 2025 Mansa Resources'}
-        </p>
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200">
+        {!collapsed && (
+          <p className="text-xs text-gray-500 text-center">
+            © 2025 Mansa Resources
+          </p>
+        )}
       </div>
     </aside>
   );

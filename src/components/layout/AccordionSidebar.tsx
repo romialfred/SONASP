@@ -291,12 +291,12 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
               <button
                 onClick={() => !collapsed && toggleGroup(group.id)}
                 className={cn(
-                  'group w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200',
+                  'group w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-900',
                   'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
                   'transform hover:scale-[1.02] hover:shadow-md',
                   isOpen || hasActiveItem
-                    ? 'bg-gradient-to-r from-gray-200/90 to-gray-100/90 font-semibold text-gray-900 shadow-sm border-l-4 border-amber-600'
-                    : 'hover:bg-gradient-to-r hover:from-gray-200/80 hover:to-gray-100/80 font-medium text-gray-800 hover:border-l-4 hover:border-gray-400'
+                    ? 'bg-gray-100/70 font-semibold'
+                    : 'hover:bg-gray-100/50'
                 )}
                 aria-expanded={isOpen}
                 aria-controls={`group-${group.id}`}
@@ -311,16 +311,16 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   </span>
                 ) : (
                   <>
-                    <span className="flex items-center gap-3 text-sm font-medium uppercase tracking-wide flex-1 min-w-0">
+                    <span className="flex items-center gap-2 text-sm">
                       {group.groupIcon && (
-                        <group.groupIcon className={cn('w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
+                        <group.groupIcon className={cn('w-4 h-4 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
                       )}
-                      <span className="truncate">{group.label}</span>
+                      {group.label}
                     </span>
                     {isOpen ? (
-                      <ChevronDown className="w-5 h-5 flex-shrink-0 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
+                      <ChevronDown className="w-4 h-4 text-gray-500 transition-transform duration-200" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 flex-shrink-0 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
+                      <ChevronRight className="w-4 h-4 text-gray-500 transition-transform duration-200" />
                     )}
                   </>
                 )}
@@ -330,7 +330,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
               {!collapsed && isOpen && (
                 <div
                   id={`group-${group.id}`}
-                  className="space-y-1 pl-4 pt-2 pb-2 ml-3 border-l-2 border-gray-200"
+                  className="space-y-1 pl-6 pt-1"
                   role="group"
                   aria-label={group.label}
                 >
@@ -370,19 +370,19 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                           }
                         }}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-normal',
+                          'flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm text-gray-900',
                           'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
-                          'transform hover:scale-[1.02] hover:shadow-md relative',
+                          'transform hover:scale-105 hover:shadow-lg',
                           active
-                            ? `${getActiveBgColor()} text-white font-semibold shadow-md cursor-default`
-                            : 'text-gray-700 hover:bg-gray-200/90 hover:text-gray-900 hover:translate-x-1 cursor-pointer hover:font-medium'
+                            ? `${getActiveBgColor()} text-white font-medium shadow-md cursor-default`
+                            : 'hover:bg-gray-100/70 hover:translate-x-1 cursor-pointer'
                         )}
                         aria-current={active ? 'page' : undefined}
                       >
                         <Icon
                           className={cn(
-                            'w-4 h-4 flex-shrink-0 transition-transform duration-200',
-                            active ? 'text-white scale-110' : item.iconColor || 'text-primary-500'
+                            'w-5 h-5 flex-shrink-0 transition-transform duration-200',
+                            active ? 'text-white' : item.iconColor || 'text-primary-500'
                           )}
                         />
                         <span className="transition-all duration-200">{item.label}</span>

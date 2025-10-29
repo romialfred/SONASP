@@ -215,8 +215,12 @@ export function SaleCreate() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
+      alert.success('Sale created successfully!');
       navigate('/sales');
     } catch (error) {
       console.error('Error creating sale:', error);
@@ -504,8 +508,8 @@ export function SaleCreate() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                <div className="space-y-0.5">
+                  <div className="group relative flex justify-between items-center py-2 px-4 hover:bg-gray-50 rounded transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-700">Quantity</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -517,7 +521,7 @@ export function SaleCreate() {
                     </span>
                   </div>
 
-                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                  <div className="group relative flex justify-between items-center py-2 px-4 hover:bg-gray-50 rounded transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-700">London AM Rate</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -529,9 +533,9 @@ export function SaleCreate() {
                     </span>
                   </div>
 
-                  <div className="h-px bg-gray-200 my-2"></div>
+                  <div className="h-px bg-gray-200 my-1.5"></div>
 
-                  <div className="group relative flex justify-between items-center py-3 px-4 bg-green-50 hover:bg-green-100 rounded transition-colors">
+                  <div className="group relative flex justify-between items-center py-2.5 px-4 bg-green-50 hover:bg-green-100 rounded transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-green-900">Gross Proceeds</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-32 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
@@ -545,7 +549,7 @@ export function SaleCreate() {
                   </div>
 
                   {calculations.freight > 0 && (
-                    <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                    <div className="group relative flex justify-between items-center py-2 px-4 hover:bg-gray-50 rounded transition-colors">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-700">Freight Cost</span>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -559,7 +563,7 @@ export function SaleCreate() {
                   )}
 
                   {calculations.otherCosts > 0 && (
-                    <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                    <div className="group relative flex justify-between items-center py-2 px-4 hover:bg-gray-50 rounded transition-colors">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-700">Other Costs</span>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -572,9 +576,9 @@ export function SaleCreate() {
                     </div>
                   )}
 
-                  <div className="h-px bg-gray-300 my-2"></div>
+                  <div className="h-px bg-gray-300 my-1.5"></div>
 
-                  <div className="group relative flex justify-between items-center py-3 px-4 bg-blue-50 hover:bg-blue-100 rounded transition-colors">
+                  <div className="group relative flex justify-between items-center py-2.5 px-4 bg-blue-50 hover:bg-blue-100 rounded transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-blue-900">Net Proceeds</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-32 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
@@ -587,7 +591,7 @@ export function SaleCreate() {
                     </span>
                   </div>
 
-                  <div className="group relative flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                  <div className="group relative flex justify-between items-center py-2 px-4 hover:bg-gray-50 rounded transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-700">Net Smelted Royalties (3%)</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-56 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">
@@ -600,9 +604,9 @@ export function SaleCreate() {
                     </span>
                   </div>
 
-                  <div className="h-1 bg-gradient-to-r from-primary-200 to-blue-200 my-3 rounded-full"></div>
+                  <div className="h-1 bg-gradient-to-r from-primary-200 to-blue-200 my-2 rounded-full"></div>
 
-                  <div className="group relative flex justify-between items-center py-4 px-4 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg shadow-md">
+                  <div className="group relative flex justify-between items-center py-3 px-4 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg shadow-md">
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-gray-900">Final Proceeds</span>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-40 bg-gray-900 text-white text-xs px-3 py-2 rounded shadow-lg z-10 whitespace-nowrap">

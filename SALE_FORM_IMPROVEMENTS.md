@@ -1,8 +1,8 @@
-# Améliorations du Formulaire de Création de Vente
+# Sale Creation Form - Design & Functionality Improvements (Updated)
 
-## Modifications Apportées
+## Latest Improvements - October 29, 2025
 
-### 1. Extension de la Largeur du Formulaire
+### 1. Sale Calculations Report - Reduced Line Spacing
 - **Changement:** Suppression de `max-w-4xl` sur le conteneur principal
 - **Résultat:** Le formulaire occupe maintenant toute la largeur disponible à gauche du Field Guide
 

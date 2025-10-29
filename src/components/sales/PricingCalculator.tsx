@@ -135,7 +135,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                 disabled={loading || !quantityOz || getQuantityInOz() <= 0 || getQuantityInOz() > availableStockOz}
                 className="w-full"
               >
-                {loading ? 'Calculating...' : 'Calculate Pricing Options'}
+                {loading ? 'Simulating...' : 'Simulate'}
               </Button>
             </div>
           </div>

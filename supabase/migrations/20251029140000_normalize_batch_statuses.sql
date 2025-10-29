@@ -232,19 +232,36 @@ BEGIN
 END $$;
 
 -- ========================================
--- STEP 6: Save audit log permanently (optional)
+-- STEP 6: Show and save audit log
 -- ========================================
 
--- If you want to keep the audit trail, uncomment this:
--- CREATE TABLE IF NOT EXISTS batch_status_normalization_audit (LIKE batch_status_updates INCLUDING ALL);
--- INSERT INTO batch_status_normalization_audit SELECT * FROM batch_status_updates;
+DO $$
+DECLARE
+  update_record RECORD;
+  update_count INTEGER := 0;
+BEGIN
+  -- Count updates
+  SELECT COUNT(*) INTO update_count FROM batch_status_updates;
 
--- Show any updates that were made
-SELECT 
-  batch_number,
-  old_status,
-  new_status,
-  reason,
-  updated_at
-FROM batch_status_updates
-ORDER BY updated_at;
+  IF update_count > 0 THEN
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Batch Updates Log';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+
+    FOR update_record IN
+      SELECT batch_number, old_status, new_status, reason
+      FROM batch_status_updates
+      ORDER BY updated_at
+    LOOP
+      RAISE NOTICE '  % : % → %',
+        RPAD(update_record.batch_number, 15),
+        RPAD(update_record.old_status, 25),
+        update_record.new_status;
+    END LOOP;
+
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================';
+  END IF;
+END $$;

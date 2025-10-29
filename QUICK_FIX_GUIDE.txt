@@ -1,0 +1,53 @@
+╔══════════════════════════════════════════════════════════════╗
+║  CORRECTION STATUTS BATCHES - GUIDE RAPIDE                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────┐
+│ PROBLÈME CORRIGÉ                                             │
+├──────────────────────────────────────────────────────────────┤
+│ ❌ Transition processed → in_inventory avait rôle 'system'  │
+│ ✅ Maintenant: rôle 'refinery_staff' (correct)              │
+│ ✅ Flow visuel optimisé (8 étapes au lieu de 13)            │
+│ ✅ Tous les statuts normalisés automatiquement              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ EXÉCUTER CES 4 MIGRATIONS DANS L'ORDRE                      │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ 1️⃣  20251029110000_add_missing_status_transitions.sql       │
+│     → Ajoute transitions manquantes                          │
+│                                                              │
+│ 2️⃣  20251029120000_add_processed_status_and_fix_workflow.sql│
+│     → Ajoute statut 'processed' + workflow complet           │
+│                                                              │
+│ 3️⃣  20251029130000_fix_processed_inventory_transition_role  │
+│     → Corrige rôle: system → refinery_staff ⭐               │
+│                                                              │
+│ 4️⃣  20251029140000_normalize_batch_statuses.sql             │
+│     → Normalise TOUS les batches existants ⭐                │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ VÉRIFICATION APRÈS                                           │
+├──────────────────────────────────────────────────────────────┤
+│ Exécutez: VERIFY_BATCH_STATUSES.sql                         │
+│                                                              │
+│ ✅ Aucun statut orphelin                                    │
+│ ✅ Transition processed → in_inventory = refinery_staff     │
+│ ✅ Tous les batches ont des statuts valides                 │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ DOCUMENTATION COMPLÈTE                                       │
+├──────────────────────────────────────────────────────────────┤
+│ • FINAL_BATCH_STATUS_FIX_SUMMARY.md     (Vue d'ensemble)    │
+│ • BATCH_STATUS_NORMALIZATION_GUIDE.md   (Guide détaillé)    │
+│ • CORRECTION_TRANSITION_PROCESSED_INVENTORY.md              │
+│ • BATCH_STATUS_FLOW_UPDATED.md          (Flow visuel)       │
+└──────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════╗
+║  RÉSULTAT: Workflow complet et cohérent de factory à sold   ║
+╚══════════════════════════════════════════════════════════════╝

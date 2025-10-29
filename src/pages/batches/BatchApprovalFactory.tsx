@@ -10,6 +10,7 @@ import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { supabase } from '@/lib/supabase';
 import { approveBatchForTransport } from '@/services/batchApprovalService';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Batch {
   id: string;
@@ -27,6 +28,7 @@ interface Batch {
 
 export function BatchApprovalFactory() {
   const navigate = useNavigate();
+  const alert = useAlert();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
@@ -85,13 +87,13 @@ export function BatchApprovalFactory() {
         setApprovalComments('');
         await fetchPendingBatches();
 
-        alert(`Batch ${selectedBatch.batch_number} approved successfully!`);
+        alert.success(`Batch ${selectedBatch.batch_number} approved successfully!`);
       } else {
-        alert('Error approving batch: ' + (result.error as any)?.message);
+        alert.error('Error approving batch: ' + (result.error as any)?.message);
       }
     } catch (error: any) {
       console.error('Error approving batch:', error);
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setIsApproving(false);
     }

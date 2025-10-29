@@ -6,6 +6,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Moda
 import TextArea from '@/components/ui/TextArea';
 import { approveVariance } from '@/services/receivingValidationService';
 import { approveRefining } from '@/services/refiningValidationService';
+import { useAlert } from '@/hooks/useAlert';
 
 interface ApprovalRequestCardProps {
   approval: any;
@@ -18,6 +19,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const alert = useAlert();
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -56,10 +58,10 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
       if (result.success) {
         onApproved?.();
       } else {
-        alert('Error approving: ' + result.error);
+        alert.error('Error approving: ' + result.error);
       }
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setProcessing(false);
       setShowApproveModal(false);
@@ -68,17 +70,17 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a reason for rejection');
+      alert.warning('Please provide a reason for rejection');
       return;
     }
 
     setProcessing(true);
 
     try {
-      alert('Rejection functionality will be implemented');
+      alert.info('Rejection functionality will be implemented');
       onRejected?.();
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setProcessing(false);
       setShowRejectModal(false);

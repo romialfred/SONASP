@@ -15,6 +15,7 @@ import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 import { FxRateComparison } from '@/components/fx/FxRateComparison';
 import * as XLSX from 'xlsx';
+import { useAlert } from '@/hooks/useAlert';
 
 type TabType = 'daily' | 'monthly' | 'customer' | 'analysis' | 'comparison';
 
@@ -75,6 +76,7 @@ const CURRENCY_PAIRS = [
 ];
 
 export function FxRatesPage() {
+  const alert = useAlert();
   const [activeTab, setActiveTab] = useState<TabType>('daily');
   const [sources, setSources] = useState<FxRateSource[]>([]);
   const [dailyRates, setDailyRates] = useState<DailyRate[]>([]);
@@ -293,7 +295,7 @@ export function FxRatesPage() {
       resetDailyForm();
     } catch (error: any) {
       console.error('Error adding daily rate:', error);
-      alert('Error adding rate: ' + error.message);
+      alert.error('Error adding rate: ' + error.message);
     }
   };
 
@@ -327,7 +329,7 @@ export function FxRatesPage() {
       resetCustomerForm();
     } catch (error: any) {
       console.error('Error adding customer rate:', error);
-      alert('Error adding customer rate: ' + error.message);
+      alert.error('Error adding customer rate: ' + error.message);
     }
   };
 

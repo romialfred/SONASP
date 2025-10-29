@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions, BATCH_STATUSES } from '@/constants/batchStatuses';
 import { approveBatchForTransport } from '@/services/batchApprovalService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Batch {
   id: string;
@@ -31,6 +32,7 @@ export function BatchListing() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const alert = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [siteFilter, setSiteFilter] = useState('all');
@@ -210,7 +212,7 @@ export function BatchListing() {
       const result = await approveBatchForTransport(batchId, 'Approved by Factory Manager');
 
       if (result.success) {
-        alert('Batch approved for transportation successfully!');
+        alert.success('Batch approved for transportation successfully!');
         await loadBatches();
       } else {
         const errorMessage = result.error instanceof Error
@@ -218,12 +220,12 @@ export function BatchListing() {
           : typeof result.error === 'object' && result.error !== null
             ? (result.error as any).message || JSON.stringify(result.error)
             : String(result.error || 'Unknown error');
-        alert(`Failed to approve batch: ${errorMessage}`);
+        alert.error(`Failed to approve batch: ${errorMessage}`);
       }
     } catch (error: any) {
       console.error('Error approving batch:', error);
       const errorMessage = error?.message || String(error);
-      alert(`Error approving batch: ${errorMessage}`);
+      alert.error(`Error approving batch: ${errorMessage}`);
     } finally {
       setApprovingBatch(null);
     }

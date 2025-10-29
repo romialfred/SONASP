@@ -13,6 +13,7 @@ import { Loading } from '@/components/ui/Loading';
 import { calculateSaleProceeds, formatCurrency, formatWeight } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Customer {
   id: string;
@@ -29,6 +30,7 @@ export function SaleCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const alert = useAlert();
 
   const [formData, setFormData] = useState({
     customerId: '',
@@ -195,7 +197,7 @@ export function SaleCreate() {
       navigate('/sales');
     } catch (error) {
       console.error('Error creating sale:', error);
-      alert('Failed to create sale. Please try again.');
+      alert.error('Failed to create sale. Please try again.');
     } finally {
       setSubmitting(false);
     }

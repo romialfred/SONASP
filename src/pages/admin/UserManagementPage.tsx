@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { supabase } from '@/lib/supabase';
 import { ensureArray } from '@/utils/arrayUtils';
+import { useAlert } from '@/hooks/useAlert';
 import {
   Users,
   Plus,
@@ -56,6 +57,7 @@ interface MiningCompany {
 }
 
 export default function UserManagementPage() {
+  const alert = useAlert();
   const [users, setUsers] = useState<User[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
@@ -271,7 +273,7 @@ export default function UserManagementPage() {
       if (profileError) throw profileError;
 
       // TODO: Send welcome email via Edge Function
-      alert(`User created successfully!\n\nEmail: ${formData.email}\nDefault Password: ${defaultPassword}\n\nA welcome email will be sent to the user.`);
+      alert.success(`User created successfully!\n\nEmail: ${formData.email}\nDefault Password: ${defaultPassword}\n\nA welcome email will be sent to the user.`);
 
       setShowCreateModal(false);
       setFormData({
@@ -284,7 +286,7 @@ export default function UserManagementPage() {
       loadUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
-      alert(`Failed to create user: ${error.message}`);
+      alert.error(`Failed to create user: ${error.message}`);
     }
   };
 
@@ -321,11 +323,11 @@ export default function UserManagementPage() {
         if (error) throw error;
       }
 
-      alert('Permissions updated successfully!');
+      alert.success('Permissions updated successfully!');
       setShowPermissionsModal(false);
     } catch (error: any) {
       console.error('Error updating permissions:', error);
-      alert(`Failed to update permissions: ${error.message}`);
+      alert.error(`Failed to update permissions: ${error.message}`);
     }
   };
 

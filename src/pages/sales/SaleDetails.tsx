@@ -29,6 +29,7 @@ import {
   extractCustomerName,
   SaleStatus,
 } from '@/lib/schemas/sales';
+import { useAlert } from '@/hooks/useAlert';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -67,6 +68,7 @@ interface SaleDetailsView {
 export function SaleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const alert = useAlert();
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -247,7 +249,7 @@ export function SaleDetails() {
 
   const handleReject = () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a reason for rejection');
+      alert.warning('Please provide a reason for rejection');
       return;
     }
     console.log('Rejecting sale with reason:', rejectionReason);

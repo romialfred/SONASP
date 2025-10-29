@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Settings, Bell, Lock, Globe, Mail, Database, Save } from 'lucide-react';
+import { useAlert } from '@/hooks/useAlert';
 
 export function SettingsPage() {
+  const alert = useAlert();
   const [settings, setSettings] = useState({
     companyName: 'Mansa Resources',
     email: 'admin@mansaresources.com',
@@ -19,7 +21,7 @@ export function SettingsPage() {
   });
 
   const handleSave = () => {
-    alert('Settings saved successfully!');
+    alert.success('Settings saved successfully!');
   };
 
   return (

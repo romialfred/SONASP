@@ -8,6 +8,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { Plus, Edit, Search, Loader } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAlert } from '@/hooks/useAlert';
 
 interface TransportCompany {
   id: string;
@@ -32,6 +33,7 @@ interface FormData {
 }
 
 export function TransportCompaniesPage() {
+  const alert = useAlert();
   const [companies, setCompanies] = useState<TransportCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,7 +146,7 @@ export function TransportCompaniesPage() {
       setShowModal(false);
     } catch (error: any) {
       console.error('Error saving company:', error);
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setSubmitting(false);
     }

@@ -7,8 +7,10 @@ import { FormField } from '@/components/ui/FormField';
 import { BarChart, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { analyzeFxTransaction, FxAnalysisResult } from '@/services/fxAnalysisService';
+import { useAlert } from '@/hooks/useAlert';
 
 export function FxAnalysisTab() {
+  const alert = useAlert();
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [startDate, setStartDate] = useState('2024-08-01');
@@ -55,7 +57,7 @@ export function FxAnalysisTab() {
 
   const runAnalysis = async () => {
     if (!selectedCustomer || !startDate || !endDate) {
-      alert('Please select a customer and date range');
+      alert.warning('Please select a customer and date range');
       return;
     }
 
@@ -67,11 +69,11 @@ export function FxAnalysisTab() {
         setAnalysisResults(result.data);
         calculateSummary(result.data);
       } else {
-        alert('Error analyzing transactions: ' + (result.error?.message || 'Unknown error'));
+        alert.error('Error analyzing transactions: ' + (result.error?.message || 'Unknown error'));
       }
     } catch (error: any) {
       console.error('Analysis error:', error);
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setLoading(false);
     }

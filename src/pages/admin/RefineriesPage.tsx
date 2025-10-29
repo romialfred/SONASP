@@ -8,6 +8,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { Plus, Edit, Search, Loader } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Refinery {
   id: string;
@@ -34,6 +35,7 @@ interface FormData {
 }
 
 export function RefineriesPage() {
+  const alert = useAlert();
   const [refineries, setRefineries] = useState<Refinery[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,7 +157,7 @@ export function RefineriesPage() {
       setShowModal(false);
     } catch (error: any) {
       console.error('Error saving refinery:', error);
-      alert('Error: ' + error.message);
+      alert.error('Error: ' + error.message);
     } finally {
       setSubmitting(false);
     }

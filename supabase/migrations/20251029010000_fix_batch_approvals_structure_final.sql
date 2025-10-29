@@ -111,14 +111,14 @@ CREATE POLICY "Authorized users can approve requests"
       -- User has the required role
       EXISTS (
         SELECT 1 FROM user_profiles
-        WHERE user_id = auth.uid()
+        WHERE id = auth.uid()
         AND role = batch_approvals.required_role
       )
       OR
       -- Or user is a manager
       EXISTS (
         SELECT 1 FROM user_profiles
-        WHERE user_id = auth.uid()
+        WHERE id = auth.uid()
         AND role IN ('management', 'admin')
       )
     )

@@ -62,13 +62,23 @@ export function SaleCreate() {
 
   const fetchCustomers = async () => {
     try {
+      // Fetch all customers (or filter by status if available)
       const { data: customersData, error: customersError } = await supabase
         .from('customers')
-        .select('*')
-        .eq('status', 'active')
+        .select('id, name, email, phone, country, address, contact_person, status')
         .order('name');
 
-      if (customersError) throw customersError;
+      if (customersError) {
+        console.error('Error fetching customers:', customersError);
+        throw customersError;
+      }
+
+      console.log('Fetched customers:', customersData);
+
+      // Filter active customers if status field exists
+      const activeCustomers = (customersData || []).filter(c =>
+        !c.status || c.status === 'active'
+      );
 
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
@@ -77,7 +87,7 @@ export function SaleCreate() {
 
       if (salesError) throw salesError;
 
-      const customerStats = (customersData || []).map(customer => {
+      const customerStats = activeCustomers.map(customer => {
         const customerSales = (salesData || []).filter(s => s.customer_id === customer.id);
         const ytdGoldSold = customerSales.reduce((sum, s) => sum + parseFloat(s.quantity_oz || 0), 0);
         const ytdAmount = customerSales.reduce((sum, s) => sum + parseFloat(s.final_proceeds || 0), 0);
@@ -105,8 +115,10 @@ export function SaleCreate() {
       }
 
       setCustomers(customerStats);
+      console.log('Customer stats processed:', customerStats);
     } catch (error) {
       console.error('Error fetching customers:', error);
+      alert.error('Failed to load customers. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -238,7 +250,7 @@ export function SaleCreate() {
   return (
     <MainLayout>
       <div className="flex gap-6">
-        <div className="flex-1 space-y-6 max-w-4xl">
+        <div className="flex-1 space-y-6">
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
@@ -264,22 +276,37 @@ export function SaleCreate() {
           {mechanismData && (
             <Card className="border-2 border-emerald-200 bg-emerald-50/50">
               <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-900 mb-1">Selected Pricing Mechanism</p>
-                    <p className="text-lg font-bold text-emerald-700">{mechanismData.displayName}</p>
-                    <p className="text-xs text-emerald-600 mt-1">{mechanismData.description}</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-900 mb-1">Selected Pricing Mechanism</p>
+                      <p className="text-lg font-bold text-emerald-700">{mechanismData.displayName}</p>
+                      <p className="text-xs text-emerald-600 mt-1">{mechanismData.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-600 mb-1">Price per oz</p>
+                      <p className="text-2xl font-bold text-gray-900">${mechanismData.pricePerOz.toFixed(2)}</p>
+                      {mechanismData.adjustmentPercentage !== 0 && (
+                        <p className={`text-xs font-semibold mt-1 ${
+                          mechanismData.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {mechanismData.adjustmentPercentage > 0 ? '+' : ''}{mechanismData.adjustmentPercentage.toFixed(3)}% adjustment
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600 mb-1">Price per oz</p>
-                    <p className="text-2xl font-bold text-gray-900">${mechanismData.pricePerOz.toFixed(2)}</p>
-                    {mechanismData.adjustmentPercentage !== 0 && (
-                      <p className={`text-xs font-semibold mt-1 ${
-                        mechanismData.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {mechanismData.adjustmentPercentage > 0 ? '+' : ''}{mechanismData.adjustmentPercentage.toFixed(3)}% adjustment
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-emerald-200">
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-600 mb-1">Quantity from Simulation</p>
+                      <p className="text-lg font-bold text-gray-900">{initialQuantity || 0} oz</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-600 mb-1">Gross Amount</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        ${((parseFloat(initialQuantity) || 0) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
-                    )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -386,7 +413,7 @@ export function SaleCreate() {
                     label="Sale Price (USD/oz)"
                     required
                     error={errors.londonAMRate}
-                    hint={mechanismData ? `From ${mechanismData.displayName}` : 'Current market rate'}
+                    hint={mechanismData ? `From ${mechanismData.displayName} - Price is locked` : 'Current market rate'}
                   >
                     <Input
                       type="number"
@@ -397,6 +424,7 @@ export function SaleCreate() {
                       placeholder="0.00"
                       onFocus={() => setActiveField('price')}
                       className={mechanismData ? 'bg-emerald-50' : ''}
+                      disabled={!!mechanismData}
                     />
                   </FormField>
                 </div>

@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { BatchTransportApprovalModal } from '@/components/batch/BatchTransportApprovalModal';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
 import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions, BATCH_STATUSES } from '@/constants/batchStatuses';
@@ -40,6 +41,8 @@ export function BatchListing() {
   const [loading, setLoading] = useState(true);
   const [approvingBatch, setApprovingBatch] = useState<string | null>(null);
   const [isManager, setIsManager] = useState(false);
+  const [selectedBatchForApproval, setSelectedBatchForApproval] = useState<Batch | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadBatches();
@@ -181,19 +184,14 @@ export function BatchListing() {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                handleApproveBatch(row.id);
+                setSelectedBatchForApproval(row);
+                setIsModalOpen(true);
               }}
               disabled={approvingBatch === row.id}
               className="gap-1"
             >
-              {approvingBatch === row.id ? (
-                'Approving...'
-              ) : (
-                <>
-                  <CheckCircle className="h-3 w-3" />
-                  Validate for Transport
-                </>
-              )}
+              <CheckCircle className="h-3 w-3" />
+              Validate for Transport
             </Button>
           );
         }
@@ -202,17 +200,17 @@ export function BatchListing() {
     },
   ];
 
-  const handleApproveBatch = async (batchId: string) => {
-    if (!window.confirm('Are you sure you want to approve this batch for transportation?')) {
-      return;
-    }
+  const handleApproveBatch = async () => {
+    if (!selectedBatchForApproval) return;
 
-    setApprovingBatch(batchId);
+    setApprovingBatch(selectedBatchForApproval.id);
     try {
-      const result = await approveBatchForTransport(batchId, 'Approved by Factory Manager');
+      const result = await approveBatchForTransport(selectedBatchForApproval.id, 'Approved by Factory Manager');
 
       if (result.success) {
         alert.success('Batch approved for transportation successfully!');
+        setIsModalOpen(false);
+        setSelectedBatchForApproval(null);
         await loadBatches();
       } else {
         const errorMessage = result.error instanceof Error
@@ -231,12 +229,27 @@ export function BatchListing() {
     }
   };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedBatchForApproval(null);
+  };
+
   const handleExport = () => {
     console.log('Exporting batches...');
   };
 
   return (
     <MainLayout>
+      {selectedBatchForApproval && (
+        <BatchTransportApprovalModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onConfirm={handleApproveBatch}
+          batch={selectedBatchForApproval}
+          isLoading={approvingBatch === selectedBatchForApproval.id}
+        />
+      )}
+
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

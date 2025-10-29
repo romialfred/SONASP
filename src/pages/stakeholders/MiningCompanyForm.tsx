@@ -11,7 +11,7 @@ import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel
 import { Factory, ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-const COUNTRIES = ['Guinea', 'Mali', 'Côte d\'Ivoire', 'France', 'UAE', 'South Africa', 'Ghana', 'Burkina Faso'];
+const COUNTRIES = ['Guinea', 'Mali', 'Côte d\'Ivoire', 'Liberia', 'Senegal', 'Ghana', 'France', 'UAE', 'South Africa', 'Burkina Faso'];
 const CURRENCIES = ['USD', 'EUR', 'GNF', 'XOF', 'AED', 'ZAR', 'GHS'];
 
 const fieldGuides: FieldGuideItem[] = [
@@ -47,7 +47,7 @@ export function MiningCompanyForm() {
   const isEdit = !!id;
   const { showError, showSuccess } = useNotification();
 
-  const [currentField, setCurrentField] = useState<string>('');
+  // Removed currentField state - Field Guide now shows all fields
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -219,7 +219,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        onFocus={() => setCurrentField('name')}
                         required
                       />
                     </FormField>
@@ -228,7 +227,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                        onFocus={() => setCurrentField('code')}
                         required
                       />
                     </FormField>
@@ -238,7 +236,6 @@ export function MiningCompanyForm() {
                     <Select
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      onFocus={() => setCurrentField('country')}
                     >
                       {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </Select>
@@ -248,7 +245,6 @@ export function MiningCompanyForm() {
                     <Input
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      onFocus={() => setCurrentField('address')}
                     />
                   </FormField>
 
@@ -257,7 +253,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        onFocus={() => setCurrentField('city')}
                       />
                     </FormField>
 
@@ -265,7 +260,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.postal_code}
                         onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                        onFocus={() => setCurrentField('postal_code')}
                       />
                     </FormField>
                   </div>
@@ -281,7 +275,6 @@ export function MiningCompanyForm() {
                     <Input
                       value={formData.contact_person_name}
                       onChange={(e) => setFormData({ ...formData, contact_person_name: e.target.value })}
-                      onFocus={() => setCurrentField('contact_person_name')}
                       required
                     />
                   </FormField>
@@ -292,7 +285,6 @@ export function MiningCompanyForm() {
                         type="email"
                         value={formData.contact_person_email}
                         onChange={(e) => setFormData({ ...formData, contact_person_email: e.target.value })}
-                        onFocus={() => setCurrentField('contact_person_email')}
                         required
                       />
                     </FormField>
@@ -301,7 +293,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.contact_person_phone}
                         onChange={(e) => setFormData({ ...formData, contact_person_phone: e.target.value })}
-                        onFocus={() => setCurrentField('contact_person_phone')}
                       />
                     </FormField>
                   </div>
@@ -311,7 +302,6 @@ export function MiningCompanyForm() {
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      onFocus={() => setCurrentField('website')}
                       placeholder="https://"
                     />
                   </FormField>
@@ -429,7 +419,6 @@ export function MiningCompanyForm() {
                       <Select
                         value={formData.default_currency}
                         onChange={(e) => setFormData({ ...formData, default_currency: e.target.value })}
-                        onFocus={() => setCurrentField('default_currency')}
                       >
                         {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </Select>
@@ -439,7 +428,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.tax_id}
                         onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                        onFocus={() => setCurrentField('tax_id')}
                       />
                     </FormField>
 
@@ -447,7 +435,6 @@ export function MiningCompanyForm() {
                       <Input
                         value={formData.registration_number}
                         onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
-                        onFocus={() => setCurrentField('registration_number')}
                       />
                     </FormField>
                   </div>
@@ -484,7 +471,7 @@ export function MiningCompanyForm() {
             <FieldGuidePanel
               title="Field Guide"
               guides={fieldGuides}
-              currentField={currentField}
+              currentField={undefined}
             />
           </div>
         </div>

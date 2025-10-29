@@ -44,14 +44,17 @@
 -- ========================================
 
 -- Enable RLS (if not already enabled)
-ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE gold_inventory ENABLE ROW LEVEL SECURITY;
-ALTER TABLE batch_status_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE gold_inventory ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE batch_status_history ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
-RAISE NOTICE 'Row Level Security enabled on all sensitive tables';
+  RAISE NOTICE 'Row Level Security enabled on all sensitive tables';
+END $$;
 
 -- ========================================
 -- STEP 2: Batches Access Policies

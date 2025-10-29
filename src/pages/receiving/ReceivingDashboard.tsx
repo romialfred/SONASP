@@ -102,7 +102,7 @@ export function ReceivingDashboard() {
   };
 
   const handleActionClick = (actionId: string, batchId: string) => {
-    if (actionId === 'confirm_receipt' || actionId === 'validate_receipt' || actionId === 'receive_batch') {
+    if (actionId === 'confirm_receipt' || actionId === 'validate_for_refinery' || actionId === 'receive_batch') {
       handleConfirmReceipt(batchId);
     } else if (actionId === 'view_details') {
       handleViewDetails(batchId);

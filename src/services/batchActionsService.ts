@@ -138,12 +138,13 @@ export function getAvailableBatchActions(
 
     if (status === BATCH_STATUSES.RECEIVED_AT_AIRPORT && isAirportStaff) {
       actions.push({
-        id: 'validate_receipt',
-        label: 'Validate Weight & Quality',
+        id: 'validate_for_refinery',
+        label: 'Validate for Refinery',
         icon: CheckCircle,
         variant: 'success',
         handler: handlers.onConfirmReceipt || (() => {}),
-        requiresConfirmation: false,
+        requiresConfirmation: true,
+        confirmationMessage: 'Validate this batch for refinery transport?',
         visible: true,
       });
     }

@@ -112,16 +112,28 @@ export function ReceivingConfirm() {
 
       // Check current status to determine correct next status
       if (batch.status === 'approved_for_transport' || batch.status === 'waiting_airport_receipt') {
-        // Airport receiving: after confirmation, ship to refinery
+        // Airport receiving: batch just arrived, mark as received
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+        isAirportReceipt = true;
+      } else if (batch.status === 'received_at_airport') {
+        // Airport validation: batch validated, ready for refinery
+        newStatus = BATCH_STATUSES.VALIDATED_FOR_REFINERY;
+        isAirportReceipt = true;
+      } else if (batch.status === 'validated_for_refinery') {
+        // Shipping to refinery after validation
         newStatus = BATCH_STATUSES.WAITING_REFINERY_RECEIPT;
         isAirportReceipt = true;
       } else if (batch.status === 'waiting_refinery_receipt') {
-        // Refinery receiving: after confirmation, ready for processing
+        // Refinery receiving: after confirmation, mark as received
+        newStatus = BATCH_STATUSES.RECEIVED_AT_REFINERY;
+        isRefineryReceipt = true;
+      } else if (batch.status === 'received_at_refinery') {
+        // Refinery validation: ready for processing
         newStatus = BATCH_STATUSES.VALIDATED_FOR_PROCESSING;
         isRefineryReceipt = true;
       } else {
-        // Default: waiting for refinery
-        newStatus = BATCH_STATUSES.WAITING_REFINERY_RECEIPT;
+        // Default: received at airport
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
         isAirportReceipt = true;
       }
 
@@ -163,10 +175,14 @@ export function ReceivingConfirm() {
         console.warn('Could not log to batch_history:', historyError);
       }
 
-      if (isAirportReceipt) {
-        alert.success('Airport receipt confirmed. Batch shipped to refinery.');
+      if (batch.status === 'received_at_airport') {
+        alert.success('Batch validated for refinery transport.');
+      } else if (batch.status === 'validated_for_refinery') {
+        alert.success('Batch shipped to refinery.');
+      } else if (isAirportReceipt) {
+        alert.success('Airport receipt confirmed.');
       } else if (isRefineryReceipt) {
-        alert.success('Refinery receipt confirmed. Batch ready for processing.');
+        alert.success('Refinery receipt confirmed.');
       } else {
         alert.success('Receipt confirmed successfully.');
       }

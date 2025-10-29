@@ -88,6 +88,11 @@ export function ReceivingDashboard() {
     b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT
   ).length;
 
+  // Processing: Being validated at airport (if we add this status later)
+  const processingCount = batches.filter(
+    b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY
+  ).length;
+
   const totalWeight = batches.reduce((sum, b) => sum + (b.weight_ounces || 0), 0);
 
   const metrics = [

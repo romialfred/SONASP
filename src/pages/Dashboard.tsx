@@ -7,6 +7,7 @@ import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
 interface DashboardStats {
   ytdRevenue: number;
@@ -73,7 +74,15 @@ export function Dashboard() {
       const { count: batchesCount, error: batchesError } = await supabase
         .from('batches')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['created', 'validated_for_transport', 'received_airport', 'received_refinery', 'processing']);
+        .in('status', [
+          BATCH_STATUSES.PENDING_FACTORY_APPROVAL,
+          BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
+          BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
+          BATCH_STATUSES.RECEIVED_AT_AIRPORT,
+          BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+          BATCH_STATUSES.RECEIVED_AT_REFINERY,
+          BATCH_STATUSES.PROCESSING
+        ]);
 
       if (batchesError) throw batchesError;
 

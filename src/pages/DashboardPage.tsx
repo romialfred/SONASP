@@ -7,6 +7,7 @@ import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAx
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
 interface Batch {
   id: string;
@@ -93,7 +94,10 @@ export function DashboardPage() {
         const { data: stockData, error: stockError } = await supabase
           .from('batches')
           .select('weight_ounces, status')
-          .in('status', ['refined', 'ready_for_sale']);
+          .in('status', [
+            BATCH_STATUSES.IN_INVENTORY,
+            BATCH_STATUSES.READY_FOR_SALE
+          ]);
 
         if (!stockError && stockData) {
           const totalStock = stockData.reduce((sum, batch) => sum + (batch.weight_ounces || 0), 0);

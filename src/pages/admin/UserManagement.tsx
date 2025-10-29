@@ -147,60 +147,69 @@ const MENU_STRUCTURE = {
 const FIELD_GUIDANCE = {
   fullName: {
     title: 'Full Name',
-    description: 'Enter the complete legal name of the user as it appears on official documents.',
+    description: 'Legal name for official records',
     example: 'John Smith',
-    required: true
+    required: true,
+    color: 'blue'
   },
   email: {
     title: 'Email Address',
-    description: 'Primary email address for login and notifications. Must be unique.',
+    description: 'Primary login and notifications',
     example: 'john.smith@company.com',
-    required: true
+    required: true,
+    color: 'blue'
   },
   phone: {
     title: 'Phone Number',
-    description: 'Contact phone number with country code for emergency communications.',
-    example: '+1 234 567 8900',
-    required: false
+    description: 'Contact with country code',
+    example: '+224 234 567 8900',
+    required: false,
+    color: 'blue'
   },
   role: {
     title: 'User Role',
-    description: 'Defines the user\'s primary responsibility and default permissions.',
+    description: 'Primary responsibility and permissions',
     options: {
-      management: 'Full access to all features and settings',
-      factory: 'Create batches, manage shipping',
-      airport: 'Receive shipments, confirm batches',
-      refinery: 'Process refining, quality control',
-      customer: 'View sales, make payments'
+      management: 'Full access',
+      factory: 'Create batches',
+      airport: 'Receive shipments',
+      refinery: 'Process refining',
+      customer: 'View sales'
     },
-    required: true
+    required: true,
+    color: 'amber'
   },
   site: {
-    title: 'Mining Companies Assignment',
-    description: 'Mining companies the user has access to. Users can view and manage data only from their assigned companies. Select multiple companies or use "Select All" for full access.',
-    required: true
+    title: 'Mining Companies',
+    description: 'Companies user can access and manage',
+    example: 'Select one or multiple companies',
+    required: true,
+    color: 'green'
   },
   password: {
     title: 'Initial Password',
-    description: 'Temporary password for first login. User will be required to change it.',
-    requirements: ['Minimum 8 characters', 'At least one uppercase letter', 'At least one number'],
-    required: true
+    description: 'Temporary password for first login',
+    requirements: ['Min 8 chars', 'One uppercase', 'One number'],
+    required: true,
+    color: 'amber'
   },
   permissions: {
     title: 'Module Permissions',
-    description: 'Control what the user can view and do in each module.',
+    description: 'Control access per module',
     levels: {
-      view: 'Read-only access to view data',
-      create: 'Add new records',
-      edit: 'Modify existing records',
-      delete: 'Remove records permanently',
-      approve: 'Authorize workflows and transactions'
-    }
+      view: 'View only',
+      create: 'Add new',
+      edit: 'Modify',
+      delete: 'Remove',
+      approve: 'Authorize'
+    },
+    color: 'green'
   },
   fieldPermissions: {
-    title: 'Sensitive Field Access',
-    description: 'Control access to confidential financial and operational data.',
-    examples: ['Gold prices', 'Purity percentages', 'Financial amounts', 'Customer credit limits']
+    title: 'Sensitive Fields',
+    description: 'Access to confidential data',
+    examples: ['Prices', 'Purity %', 'Amounts', 'Credit limits'],
+    color: 'green'
   }
 };
 
@@ -820,92 +829,109 @@ export function UserManagement() {
   );
 
   const GuidancePanel = ({ field }: { field: string | null }) => {
-    // If a specific field is focused, highlight it
     const focusedField = field;
 
+    // Color schemes with transparency
+    const colorSchemes: Record<string, { bg: string; bgFocused: string; border: string; borderFocused: string; title: string; titleFocused: string; icon: string; iconFocused: string }> = {
+      blue: {
+        bg: 'bg-blue-50/30',
+        bgFocused: 'bg-blue-100/60',
+        border: 'border-blue-200/50',
+        borderFocused: 'border-blue-500',
+        title: 'text-blue-800',
+        titleFocused: 'text-blue-900',
+        icon: 'text-blue-400',
+        iconFocused: 'text-blue-600'
+      },
+      amber: {
+        bg: 'bg-amber-50/30',
+        bgFocused: 'bg-amber-100/60',
+        border: 'border-amber-200/50',
+        borderFocused: 'border-amber-500',
+        title: 'text-amber-800',
+        titleFocused: 'text-amber-900',
+        icon: 'text-amber-400',
+        iconFocused: 'text-amber-600'
+      },
+      green: {
+        bg: 'bg-emerald-50/30',
+        bgFocused: 'bg-emerald-100/60',
+        border: 'border-emerald-200/50',
+        borderFocused: 'border-emerald-500',
+        title: 'text-emerald-800',
+        titleFocused: 'text-emerald-900',
+        icon: 'text-emerald-400',
+        iconFocused: 'text-emerald-600'
+      }
+    };
+
     return (
-      <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+      <div className="space-y-2.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         {Object.entries(FIELD_GUIDANCE).map(([fieldKey, guidance]) => {
           const isFocused = focusedField === fieldKey;
+          const colors = colorSchemes[guidance.color as keyof typeof colorSchemes] || colorSchemes.blue;
 
           return (
             <div
               key={fieldKey}
-              className={`border rounded-lg p-4 transition-all ${
+              className={`border rounded-lg p-3 transition-all ${
                 isFocused
-                  ? 'bg-blue-50 border-blue-500 border-l-4 shadow-md'
-                  : 'bg-white border-gray-200 hover:border-gray-300'
+                  ? `${colors.bgFocused} ${colors.borderFocused} border-l-4 shadow-lg`
+                  : `${colors.bg} ${colors.border} hover:shadow-sm`
               }`}
             >
-              <div className="flex items-start gap-3">
-                <Info className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                  isFocused ? 'text-blue-500' : 'text-gray-400'
+              <div className="flex items-start gap-2.5">
+                <Info className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                  isFocused ? colors.iconFocused : colors.icon
                 }`} />
-                <div className="flex-1">
-                  <h4 className={`font-semibold mb-1 ${
-                    isFocused ? 'text-blue-900' : 'text-gray-900'
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-bold text-sm mb-1 ${
+                    isFocused ? colors.titleFocused : colors.title
                   }`}>
                     {guidance.title}
-                    {guidance.required && <span className="text-red-500 ml-1">*</span>}
+                    {guidance.required && <span className="text-red-600 ml-1">*</span>}
                   </h4>
-                  <p className={`text-sm mb-2 ${
-                    isFocused ? 'text-blue-800' : 'text-gray-700'
-                  }`}>
+                  <p className="text-xs text-gray-600 mb-1.5 leading-relaxed">
                     {guidance.description}
                   </p>
                   {guidance.example && (
-                    <p className={`text-sm ${
-                      isFocused ? 'text-blue-700' : 'text-gray-600'
-                    }`}>
-                      <span className="font-medium">Example:</span> {guidance.example}
+                    <p className="text-xs text-gray-500 italic">
+                      Ex: {guidance.example}
                     </p>
                   )}
                   {guidance.options && (
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-1.5 space-y-0.5">
                       {Object.entries(guidance.options).map(([key, desc]) => (
-                        <li key={key} className={`text-sm ${
-                          isFocused ? 'text-blue-800' : 'text-gray-700'
-                        }`}>
-                          <span className="font-medium capitalize">{key}:</span> {desc}
+                        <li key={key} className="text-xs text-gray-600">
+                          <span className="font-semibold capitalize text-gray-700">{key}:</span> {desc}
                         </li>
                       ))}
                     </ul>
                   )}
                   {guidance.requirements && (
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-1.5 space-y-0.5">
                       {guidance.requirements.map((req, idx) => (
-                        <li key={idx} className={`text-sm flex items-center gap-2 ${
-                          isFocused ? 'text-blue-800' : 'text-gray-700'
-                        }`}>
-                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                        <li key={idx} className="text-xs text-gray-600 flex items-center gap-1.5">
+                          <AlertCircle className="h-3 w-3 flex-shrink-0 text-amber-500" />
                           {req}
                         </li>
                       ))}
                     </ul>
                   )}
                   {guidance.levels && (
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-1.5 space-y-0.5">
                       {Object.entries(guidance.levels).map(([level, desc]) => (
-                        <li key={level} className={`text-sm ${
-                          isFocused ? 'text-blue-800' : 'text-gray-700'
-                        }`}>
-                          <span className="font-medium capitalize">{level}:</span> {desc}
+                        <li key={level} className="text-xs text-gray-600">
+                          <span className="font-semibold capitalize text-gray-700">{level}:</span> {desc}
                         </li>
                       ))}
                     </ul>
                   )}
                   {guidance.examples && (
-                    <div className="mt-2">
-                      <p className={`text-sm font-medium ${
-                        isFocused ? 'text-blue-900' : 'text-gray-900'
-                      }`}>
-                        Examples:
-                      </p>
-                      <ul className="mt-1 space-y-1">
+                    <div className="mt-1.5">
+                      <ul className="space-y-0.5">
                         {guidance.examples.map((ex, idx) => (
-                          <li key={idx} className={`text-sm ${
-                            isFocused ? 'text-blue-800' : 'text-gray-700'
-                          }`}>
+                          <li key={idx} className="text-xs text-gray-600">
                             • {ex}
                           </li>
                         ))}

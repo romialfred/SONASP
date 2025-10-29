@@ -1,0 +1,97 @@
+╔══════════════════════════════════════════════════════════════════╗
+║         NETTOYAGE: Transitions en Double (allowed_status)        ║
+╚══════════════════════════════════════════════════════════════════╝
+
+🐛 PROBLÈME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Table: allowed_status_transitions
+  - Beaucoup de doublons (exécutions multiples de migrations)
+  - Transitions inutilisées ou incorrectes
+  - Confusion sur le workflow réel
+
+
+✅ SOLUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Script: CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql
+
+Actions:
+  1. Backup temporaire des transitions actuelles
+  2. Suppression de TOUTES les transitions
+  3. Insertion des 21 transitions VALIDES uniquement
+  4. Vérification (0 doublon)
+
+
+📊 WORKFLOW OFFICIEL (21 TRANSITIONS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACTORY (5):
+  created → approved_for_transport → waiting_airport_receipt
+  pending_factory_approval → approved_for_transport
+  approved_for_transport/pending_factory_approval → cancelled
+
+AIRPORT (4):
+  waiting_airport_receipt → received_at_airport
+  received_at_airport → validated_for_refinery → waiting_refinery_receipt
+  waiting_airport_receipt → cancelled
+
+REFINERY (7):
+  waiting_refinery_receipt → received_at_refinery
+  received_at_refinery → validated_for_processing
+  validated_for_processing → processing
+  processing → processed ⭐ (CRITIQUE!)
+  processed → in_inventory ⭐
+  waiting_refinery_receipt → cancelled
+
+SALES (5):
+  in_inventory → ready_for_sale → allocated_to_sale → sold
+  ready_for_sale ↔ in_inventory (retour)
+  allocated_to_sale → ready_for_sale (annulation)
+
+
+📋 EXÉCUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Ouvrir Supabase Dashboard → SQL Editor
+2. Copier CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql
+3. Exécuter
+4. Vérifier messages:
+   ✓ BEFORE: ~47 transitions, ~24 doublons
+   ✓ AFTER: 21 transitions, 0 doublon
+   ✓ CLEANUP COMPLETED SUCCESSFULLY
+
+
+🔍 VÉRIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SELECT COUNT(*) FROM allowed_status_transitions;
+-- Résultat: 21
+
+SELECT from_status, to_status, COUNT(*) 
+FROM allowed_status_transitions
+GROUP BY from_status, to_status
+HAVING COUNT(*) > 1;
+-- Résultat: 0 lignes (aucun doublon)
+
+
+⚠️ SÉCURITÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Backup automatique (TEMP TABLE) dans la même session
+✓ Si problème, restaurez:
+    DELETE FROM allowed_status_transitions;
+    INSERT INTO allowed_status_transitions 
+    SELECT * FROM transitions_backup;
+
+
+🎯 RÉSULTAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Avant:  ~47 transitions avec doublons
+Après:  21 transitions sans doublon
+        
+✓ processing → processed fonctionne
+✓ Workflow clair et cohérent
+✓ Aucune confusion
+
+
+📁 FICHIERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql - Script principal
+2. ANALYZE_TRANSITIONS.sql - Analyse des doublons
+3. BATCH_STATUS_WORKFLOW_FIX.md - Documentation complète
+4. QUICK_CLEANUP_GUIDE.txt - Ce résumé

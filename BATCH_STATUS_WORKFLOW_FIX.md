@@ -1,373 +1,240 @@
-# Correction du Workflow de Statuts des Lots - DÉFINITIF
+# NETTOYAGE: Transitions de Statut - Suppression des Doublons
 
-## 🔴 Problème Identifié
+## 🐛 Problème
 
-Lors de la confirmation de réception à l'aéroport, l'erreur suivante apparaissait:
+**Dans la table `allowed_status_transitions`:**
+- ❌ Multiples doublons à cause d'exécutions répétées de migrations
+- ❌ Beaucoup de transitions inutilisées ou incorrectes
+- ❌ Confusion sur le workflow réel
 
-```
-Invalid status transition: 
-approved_for_transport cannot transition to received_at_airport
+**Exemple visible dans le screenshot:**
+Vous voyez dans l'image plusieurs transitions en double avec des rôles différents.
 
-Error: "PAWN" is null
-Hint: 'Check allowed_status_transitions table for valid transitions'
-```
+## 🎯 Objectif
 
-### Analyse de l'Erreur
+Nettoyer la table et garder UNIQUEMENT les transitions valides selon le workflow officiel.
 
-**Statut actuel:** `approved_for_transport`  
-**Statut voulu:** `received_at_airport`  
-**Problème:** Cette transition n'existait pas dans `allowed_status_transitions`
-
-## 📊 Workflow Complet des Statuts
-
-### Flux Normal (Théorique)
+## 📊 Workflow Officiel de Référence
 
 ```
-1. pending_factory_approval
-   ↓ (Factory Manager approves)
-2. approved_for_transport
-   ↓ (Factory marks as shipped)
-3. waiting_airport_receipt
-   ↓ (Airport confirms receipt)
-4. received_at_airport
-   ↓ (Airport manager validates)
-5. validated_for_refinery
-   ↓ (Airport ships to refinery)
-6. waiting_refinery_receipt
-   ↓ (Refinery confirms receipt)
-7. received_at_refinery
-   ↓ (Refinery manager validates)
-8. validated_for_processing
-   ↓ (Processing starts)
-9. processing
-   ↓ (System adds to inventory)
-10. in_inventory
-    ↓ (Management approves for sale)
-11. ready_for_sale
-    ↓ (Sales allocates)
-12. allocated_to_sale
-    ↓ (Sale completed)
-13. sold
+┌─────────────────────────────────────────────────────────────────────┐
+│                        WORKFLOW PRINCIPAL                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. FACTORY (Création et Approbation)
+   created
+      ↓ [factory_manager approves]
+   approved_for_transport
+      ↓ [factory_staff ships]
+   waiting_airport_receipt
+
+   Alternative:
+   pending_factory_approval
+      ↓ [factory_manager approves]
+   approved_for_transport
+      ↓ [OR cancelled by factory_manager]
+   cancelled
+
+2. AIRPORT (Réception et Validation)
+   waiting_airport_receipt
+      ↓ [airport_staff confirms receipt]
+   received_at_airport
+      ↓ [airport_manager validates]
+   validated_for_refinery
+      ↓ [airport_staff ships to refinery]
+   waiting_refinery_receipt
+
+   Alternative:
+   waiting_airport_receipt → cancelled [by management]
+
+3. REFINERY (Réception et Traitement)
+   waiting_refinery_receipt
+      ↓ [refinery_staff confirms receipt]
+   received_at_refinery
+      ↓ [refinery_manager validates]
+   validated_for_processing
+      ↓ [refinery_staff starts processing]
+   processing
+      ↓ [refinery_staff completes] ⭐ CRITIQUE!
+   processed
+      ↓ [refinery_staff adds to inventory]
+   in_inventory
+
+   Alternative:
+   waiting_refinery_receipt → cancelled [by management]
+
+4. SALES (Vente)
+   in_inventory
+      ↓ [management approves for sale]
+   ready_for_sale
+      ↓ [sales_staff allocates to sale]
+   allocated_to_sale
+      ↓ [sales_manager finalizes]
+   sold
+
+   Alternatives:
+   ready_for_sale → in_inventory [management removes from sale]
+   allocated_to_sale → ready_for_sale [sales_staff cancels allocation]
 ```
 
-### Flux Réel (Pratique)
+## 🗑️ Script de Nettoyage
 
-Dans la pratique, l'étape `waiting_airport_receipt` est parfois sautée car:
-- Le batch arrive à l'aéroport avant la mise à jour système
-- L'usine oublie de marquer comme "expédié"
-- L'aéroport confirme directement la réception
+**Fichier:** `CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql`
 
-**Solution:** Ajouter une transition directe `approved_for_transport → received_at_airport`
+### Ce que fait le script:
 
-## 🔧 Corrections Appliquées
+1. ✅ **Backup temporaire** des transitions actuelles (sécurité)
+2. ✅ **Compte les doublons** avant nettoyage
+3. ✅ **Supprime TOUTES** les transitions existantes
+4. ✅ **Insère UNIQUEMENT** les 21 transitions valides du workflow officiel
+5. ✅ **Vérifie** qu'il n'y a plus de doublons
+6. ✅ **Affiche** toutes les transitions dans l'ordre du workflow
 
-### 1. Migration SQL - Ajout de Transition Manquante
+### Transitions Valides (21 au total):
 
-**Fichier:** `supabase/migrations/20251029110000_add_missing_status_transitions.sql`
+**FACTORY (5):**
+- created → approved_for_transport
+- approved_for_transport → waiting_airport_receipt
+- approved_for_transport → cancelled
+- pending_factory_approval → approved_for_transport
+- pending_factory_approval → cancelled
+
+**AIRPORT (4):**
+- waiting_airport_receipt → received_at_airport
+- waiting_airport_receipt → cancelled
+- received_at_airport → waiting_refinery_receipt
+- received_at_airport → validated_for_refinery
+
+**REFINERY (7):**
+- waiting_refinery_receipt → received_at_refinery
+- waiting_refinery_receipt → cancelled
+- received_at_refinery → validated_for_processing
+- validated_for_processing → processing
+- validated_for_refinery → waiting_refinery_receipt
+- **processing → processed** ⭐ (La transition critique!)
+- **processed → in_inventory** ⭐
+
+**SALES (5):**
+- in_inventory → ready_for_sale
+- ready_for_sale → allocated_to_sale
+- ready_for_sale → in_inventory
+- allocated_to_sale → sold
+- allocated_to_sale → ready_for_sale
+
+## 📋 Étapes d'Exécution
+
+### 1. Analyser l'État Actuel (OPTIONNEL)
+
+Exécutez d'abord `ANALYZE_TRANSITIONS.sql` pour voir les doublons:
 
 ```sql
--- Transition directe de approved_for_transport à received_at_airport
-INSERT INTO allowed_status_transitions 
-  (from_status, to_status, requires_role, description, is_system_transition)
-VALUES
-  ('approved_for_transport', 'received_at_airport', 'airport_staff',
-   'Batch directly received at airport (when not marked as shipped)', false)
-ON CONFLICT (from_status, to_status) DO UPDATE SET
-  requires_role = EXCLUDED.requires_role,
-  description = EXCLUDED.description,
-  updated_at = now();
-```
-
-**Effet:**
-- ✅ Permet à l'aéroport de confirmer réception directement
-- ✅ Pas besoin d'étape intermédiaire `waiting_airport_receipt`
-- ✅ Rôle requis: `airport_staff` (ou `management`)
-
-### 2. Code Frontend - Logique Intelligente
-
-**Fichier:** `src/pages/receiving/ReceivingConfirm.tsx`
-
-```typescript
-// AVANT (Logique rigide)
-const newStatus = variance?.isSignificant
-  ? BATCH_STATUSES.RECEIVED_AT_AIRPORT
-  : BATCH_STATUSES.VALIDATED_FOR_REFINERY;
-
-// APRÈS (Logique flexible basée sur le statut actuel)
-let newStatus: string;
-
-if (batch.status === 'approved_for_transport') {
-  // Direct depuis l'usine (pas marqué comme expédié)
-  newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
-} else if (batch.status === 'waiting_airport_receipt') {
-  // Flux normal
-  newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
-} else if (batch.status === 'waiting_refinery_receipt') {
-  // À la raffinerie
-  newStatus = BATCH_STATUSES.RECEIVED_AT_REFINERY;
-} else {
-  // Par défaut
-  newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
-}
-```
-
-**Avantages:**
-- ✅ S'adapte au statut actuel du batch
-- ✅ Gère plusieurs scénarios (aéroport, raffinerie)
-- ✅ Logique claire et maintenable
-- ✅ Pas d'erreur de transition
-
-## 📋 Table des Transitions Complète
-
-### Transitions Principales
-
-| De | Vers | Rôle Requis | Description |
-|---|---|---|---|
-| `pending_factory_approval` | `approved_for_transport` | `factory_manager` | Approbation usine |
-| `approved_for_transport` | `waiting_airport_receipt` | `factory_staff` | Expédition vers aéroport |
-| **`approved_for_transport`** | **`received_at_airport`** | **`airport_staff`** | **✨ NOUVEAU: Réception directe** |
-| `waiting_airport_receipt` | `received_at_airport` | `airport_staff` | Confirmation aéroport |
-| `received_at_airport` | `validated_for_refinery` | `airport_manager` | Validation pour raffinerie |
-| `validated_for_refinery` | `waiting_refinery_receipt` | `airport_staff` | Expédition vers raffinerie |
-| `waiting_refinery_receipt` | `received_at_refinery` | `refinery_staff` | Confirmation raffinerie |
-| `received_at_refinery` | `validated_for_processing` | `refinery_manager` | Validation pour traitement |
-| `validated_for_processing` | `processing` | `refinery_staff` | Début traitement |
-| `processing` | `in_inventory` | `system` | Ajout inventaire (automatique) |
-| `in_inventory` | `ready_for_sale` | `management` | Approbation pour vente |
-| `ready_for_sale` | `allocated_to_sale` | `sales_staff` | Allocation vente |
-| `allocated_to_sale` | `sold` | `sales_manager` | Vente finalisée |
-
-### Transitions Inverses
-
-| De | Vers | Rôle Requis | Description |
-|---|---|---|---|
-| `allocated_to_sale` | `ready_for_sale` | `sales_staff` | Annulation allocation |
-| `ready_for_sale` | `in_inventory` | `management` | Retrait disponibilité vente |
-
-### Transitions d'Annulation
-
-| De | Vers | Rôle Requis | Description |
-|---|---|---|---|
-| `pending_factory_approval` | `cancelled` | `factory_manager` | Annulation avant approbation |
-| `approved_for_transport` | `cancelled` | `factory_manager` | Annulation transport |
-| `waiting_airport_receipt` | `cancelled` | `management` | Annulation transit aéroport |
-| `waiting_refinery_receipt` | `cancelled` | `management` | Annulation transit raffinerie |
-
-## 🎯 Scénarios d'Utilisation
-
-### Scénario 1: Flux Normal Complet
-```
-1. Usine crée le lot
-   Status: pending_factory_approval
-
-2. Manager usine approuve
-   Status: approved_for_transport
-
-3. Usine marque comme expédié
-   Status: waiting_airport_receipt
-
-4. Aéroport confirme réception
-   Status: received_at_airport
-   
-5. Manager aéroport valide
-   Status: validated_for_refinery
-
-6. Aéroport expédie vers raffinerie
-   Status: waiting_refinery_receipt
-
-7. Raffinerie confirme réception
-   Status: received_at_refinery
-
-... suite du processus
-```
-
-### Scénario 2: Réception Directe (CORRIGÉ)
-```
-1. Usine crée le lot
-   Status: pending_factory_approval
-
-2. Manager usine approuve
-   Status: approved_for_transport
-
-3. Batch arrive à l'aéroport
-   (L'usine oublie de marquer comme expédié)
-
-4. Aéroport confirme réception DIRECTEMENT ✨
-   Status: approved_for_transport → received_at_airport
-   ✅ MAINTENANT FONCTIONNE!
-
-5. Manager aéroport valide
-   Status: validated_for_refinery
-
-... suite du processus
-```
-
-### Scénario 3: Réception à la Raffinerie
-```
-1. Batch expédié de l'aéroport
-   Status: waiting_refinery_receipt
-
-2. Raffinerie confirme réception
-   Status: received_at_refinery
-   ✅ Fonctionne (même code ReceivingConfirm)
-
-3. Manager raffinerie valide
-   Status: validated_for_processing
-
-... suite du processus
-```
-
-## 🧪 Tests de Validation
-
-### Test 1: Réception Directe à l'Aéroport
-```
-Statut initial: approved_for_transport
-Action: Confirmer réception avec poids
-Résultat attendu: ✅ Status → received_at_airport
-```
-
-**Étapes:**
-1. Créer un batch et l'approuver (status: `approved_for_transport`)
-2. Aller sur "Expédition" → "Confirmer Réception"
-3. Entrer le poids reçu
-4. Cliquer "Confirm Receipt"
-5. ✅ Devrait passer à `received_at_airport` sans erreur
-
-### Test 2: Flux Normal avec Waiting
-```
-Statut initial: waiting_airport_receipt
-Action: Confirmer réception avec poids
-Résultat attendu: ✅ Status → received_at_airport
-```
-
-### Test 3: Réception à la Raffinerie
-```
-Statut initial: waiting_refinery_receipt
-Action: Confirmer réception avec poids
-Résultat attendu: ✅ Status → received_at_refinery
-```
-
-### Test 4: Transition Invalide (Devrait Échouer)
-```
-Statut initial: sold
-Action: Essayer de confirmer réception
-Résultat attendu: ❌ Erreur "Invalid status transition"
-```
-
-## 🔍 Vérification de la Migration
-
-### Commande SQL pour Vérifier
-```sql
--- Vérifier que la transition existe
-SELECT * FROM allowed_status_transitions
-WHERE from_status = 'approved_for_transport'
-  AND to_status = 'received_at_airport';
-
--- Résultat attendu:
--- from_status: approved_for_transport
--- to_status: received_at_airport
--- requires_role: airport_staff
--- description: Batch directly received at airport (when not marked as shipped)
-```
-
-### Commande pour Voir Toutes les Transitions depuis approved_for_transport
-```sql
+-- Voir les doublons
 SELECT 
   from_status,
   to_status,
-  requires_role,
-  description
+  COUNT(*) as duplicate_count
 FROM allowed_status_transitions
-WHERE from_status = 'approved_for_transport'
-ORDER BY to_status;
-
--- Devrait montrer 3 transitions:
--- 1. → cancelled
--- 2. → received_at_airport (NOUVEAU)
--- 3. → waiting_airport_receipt
+GROUP BY from_status, to_status
+HAVING COUNT(*) > 1
+ORDER BY duplicate_count DESC;
 ```
 
-## 📝 Logs de Débogage
+### 2. Exécuter le Nettoyage
 
-### Erreur AVANT la Correction
-```javascript
-[ERROR] Erreur: Error confirming receipt
-▸ Object
-  code: "PAWN"
-  details: null
-  hint: "Check allowed_status_transitions table for valid transitions"
-  message: "Invalid status transition: approved_for_transport cannot transition to received_at_airport"
+**Dans Supabase SQL Editor:**
+
+1. Copier tout le contenu de `CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql`
+2. Exécuter
+3. Observer les messages de progression
+
+**Messages attendus:**
+```
+NOTICE: ═══════════════════════════════════════════════
+NOTICE: BEFORE CLEANUP
+NOTICE: ═══════════════════════════════════════════════
+NOTICE: Total transitions: 47
+NOTICE: Unique transitions: 23
+NOTICE: Duplicates to remove: 24
+...
+NOTICE: ═══════════════════════════════════════════════
+NOTICE: AFTER CLEANUP
+NOTICE: ═══════════════════════════════════════════════
+NOTICE: Total transitions: 21
+NOTICE: Unique transitions: 21
+NOTICE: Duplicates: 0
+...
+NOTICE: ✓✓✓ CLEANUP COMPLETED SUCCESSFULLY ✓✓✓
 ```
 
-### Succès APRÈS la Correction
-```javascript
-[Auth] User signed in
-[Batch] Loading batch: abc-123-def
-[Batch] Current status: approved_for_transport
-[Batch] Confirming receipt with weight: 48890g
-[Batch] New status determined: received_at_airport
-[Batch] Update successful
-[Success] Receipt confirmed successfully!
+### 3. Vérifier le Résultat
+
+```sql
+-- Compter les transitions
+SELECT COUNT(*) as total FROM allowed_status_transitions;
+-- Résultat attendu: 21
+
+-- Voir toutes les transitions
+SELECT from_status, to_status, requires_role, description
+FROM allowed_status_transitions
+ORDER BY from_status, to_status;
+
+-- Vérifier qu'il n'y a AUCUN doublon
+SELECT from_status, to_status, COUNT(*) 
+FROM allowed_status_transitions
+GROUP BY from_status, to_status
+HAVING COUNT(*) > 1;
+-- Résultat attendu: 0 lignes
 ```
 
-## 🎓 Leçons Apprises
+### 4. Tester le Workflow
 
-### 1. Importance des Transitions Complètes
-- ❌ Ne pas assumer que tous les flux suivent le chemin "idéal"
-- ✅ Prévoir des transitions alternatives pour la réalité opérationnelle
+**Test de la transition critique:**
 
-### 2. Validation Stricte vs Flexibilité
-- ✅ La validation stricte (allowed_status_transitions) est bonne
-- ✅ Mais elle doit couvrir TOUS les cas d'usage réels
-- ✅ Consulter les utilisateurs pour comprendre leurs workflows
+1. Créer un batch avec status = 'processing'
+2. Aller sur `/refining`
+3. Cliquer "Process Completed"
+4. ✅ Devrait fonctionner: processing → processed
+5. Aller sur `/inventory`
+6. Cliquer "Add Inventory Entry"
+7. ✅ Devrait fonctionner: processed → in_inventory
 
-### 3. Code Défensif
-- ✅ Toujours gérer plusieurs scénarios dans le code
-- ✅ Utiliser des conditions basées sur le statut actuel
-- ✅ Fournir des valeurs par défaut raisonnables
+## ⚠️ IMPORTANT: Sécurité
 
-### 4. Documentation
-- ✅ Documenter les transitions dans les migrations SQL
-- ✅ Inclure des commentaires expliquant le "pourquoi"
-- ✅ Maintenir un schéma visuel du workflow
+**Le script crée un backup temporaire:**
+```sql
+CREATE TEMP TABLE transitions_backup AS
+SELECT * FROM allowed_status_transitions;
+```
 
-## ✅ Checklist de Déploiement
+**Si vous avez besoin de restaurer:**
+```sql
+-- Restaurer depuis le backup (DANS LA MÊME SESSION seulement!)
+DELETE FROM allowed_status_transitions;
+INSERT INTO allowed_status_transitions 
+SELECT * FROM transitions_backup;
+```
 
-Avant de déployer en production:
+**Note:** Le backup TEMP disparaît quand vous fermez la session SQL Editor.
 
-- [ ] Migration SQL appliquée: `20251029110000_add_missing_status_transitions.sql`
-- [ ] Code frontend mis à jour: `ReceivingConfirm.tsx`
-- [ ] Build réussi: `npm run build`
-- [ ] Tests manuels effectués pour les 3 scénarios
-- [ ] Vérification en base de données de la transition
-- [ ] Formation des utilisateurs sur le nouveau flux
-- [ ] Documentation mise à jour
+## 🎯 Résultats Attendus
 
-## 📚 Références
+**Avant le nettoyage:**
+- Total: ~47+ transitions
+- Doublons: ~24+
+- Confusion sur le workflow
 
-### Fichiers Modifiés
-1. **Migration:** `supabase/migrations/20251029110000_add_missing_status_transitions.sql`
-2. **Frontend:** `src/pages/receiving/ReceivingConfirm.tsx`
-3. **Documentation:** Ce fichier
+**Après le nettoyage:**
+- Total: **21 transitions exactement**
+- Doublons: **0**
+- Workflow clair et cohérent
+- Toutes les fonctionnalités marchent
 
-### Fichiers de Référence
-1. **Définition des statuts:** `src/constants/batchStatuses.ts`
-2. **Transitions de base:** `supabase/migrations/20251029050000_status_transition_validation.sql`
-3. **Service d'approbation:** `src/services/batchApprovalService.ts`
+## 📁 Fichiers
 
-## 🚀 Conclusion
-
-Le problème de transition de statut a été **CORRIGÉ DÉFINITIVEMENT** par:
-
-1. ✅ Ajout de la transition manquante dans la base de données
-2. ✅ Mise à jour de la logique frontend pour gérer plusieurs scénarios
-3. ✅ Documentation complète du workflow
-4. ✅ Tests de validation pour assurer la stabilité
-
-**Résultat:** La confirmation de réception fonctionne maintenant pour tous les statuts valides!
+1. ✅ `CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql` - Script de nettoyage principal
+2. ✅ `ANALYZE_TRANSITIONS.sql` - Analyse des doublons
+3. ✅ `BATCH_STATUS_WORKFLOW_FIX.md` - Ce document
 
 ---
 
-**Date de correction:** 29 octobre 2025  
-**Version:** 1.0 - Définitif  
-**Statut:** ✅ RÉSOLU
+**Exécutez le nettoyage pour avoir un workflow propre et sans doublons!** 🎉

@@ -1,135 +1,119 @@
 /*
-  # Add Processing to Processed Transition - CRITICAL FIX
+  # Add Processing to Processed Transition - CORRECTED
 
   1. Problem
     - Error: "Transition from processing to processed is not allowed"
-    - The transition is missing from the transitions table
-    - This blocks the "Process Completed" button workflow
+    - The transition might be missing or inactive in batch_status_transitions
 
   2. Solution
-    - Add the transition: processing → processed
-    - Works with both table names: batch_status_transitions OR allowed_status_transitions
-    - Manual action by refinery_staff
+    - Ensure the transition exists with correct columns
+    - Table structure: from_status, to_status, requires_approval, approval_roles, 
+      min_approval_count, conditions, is_active
 
-  3. Security
-    - requires_role: refinery_staff
-    - is_system_transition: false (manual via UI button)
+  3. Note
+    - The migration file 20251025120001 already inserts this transition
+    - This migration ensures it exists and is active
 */
 
--- First, check which table exists and add to the correct one
+-- First check if the transition exists
 DO $$
 DECLARE
-  v_table_name TEXT;
   v_count INTEGER;
 BEGIN
-  -- Check if batch_status_transitions exists
-  SELECT table_name INTO v_table_name
-  FROM information_schema.tables
-  WHERE table_name = 'batch_status_transitions'
-    AND table_schema = 'public';
+  SELECT COUNT(*) INTO v_count
+  FROM batch_status_transitions
+  WHERE from_status = 'processing' AND to_status = 'processed';
   
-  IF v_table_name IS NULL THEN
-    -- Check if allowed_status_transitions exists
-    SELECT table_name INTO v_table_name
-    FROM information_schema.tables
-    WHERE table_name = 'allowed_status_transitions'
-      AND table_schema = 'public';
-  END IF;
-  
-  IF v_table_name IS NULL THEN
-    RAISE EXCEPTION 'Neither batch_status_transitions nor allowed_status_transitions table exists!';
-  END IF;
-  
-  RAISE NOTICE 'Using table: %', v_table_name;
-  
-  -- Insert into the correct table
-  IF v_table_name = 'batch_status_transitions' THEN
+  IF v_count > 0 THEN
+    RAISE NOTICE 'Transition processing → processed already exists. Ensuring it is active...';
+    
+    -- Make sure it's active
+    UPDATE batch_status_transitions
+    SET 
+      is_active = true,
+      requires_approval = false,
+      approval_roles = NULL,
+      updated_at = now()
+    WHERE from_status = 'processing' AND to_status = 'processed';
+    
+    RAISE NOTICE '✓ Transition processing → processed is now ACTIVE';
+  ELSE
+    RAISE NOTICE 'Transition processing → processed does NOT exist. Creating it...';
+    
+    -- Insert the missing transition using correct columns
     INSERT INTO batch_status_transitions (
       from_status,
       to_status,
-      requires_role,
-      is_system_transition,
-      is_active,
-      description
+      requires_approval,
+      approval_roles,
+      min_approval_count,
+      conditions,
+      auto_trigger_on,
+      is_reversible,
+      notification_template,
+      is_active
     )
     VALUES (
       'processing',
       'processed',
-      'refinery_staff',
-      false,
-      true,
-      'Refinery staff marks processing as completed. Batch ready for inventory entry.'
-    )
-    ON CONFLICT (from_status, to_status) 
-    DO UPDATE SET
-      requires_role = EXCLUDED.requires_role,
-      is_system_transition = EXCLUDED.is_system_transition,
-      is_active = EXCLUDED.is_active,
-      description = EXCLUDED.description,
-      updated_at = now();
+      false,  -- No approval required
+      NULL,   -- No specific roles needed
+      1,      -- Min approval count
+      NULL,   -- No conditions
+      NULL,   -- No auto trigger
+      false,  -- Not reversible
+      NULL,   -- No notification template
+      true    -- Active
+    );
     
-    SELECT COUNT(*) INTO v_count
-    FROM batch_status_transitions
-    WHERE from_status = 'processing' AND to_status = 'processed';
-    
-  ELSIF v_table_name = 'allowed_status_transitions' THEN
-    INSERT INTO allowed_status_transitions (
-      from_status,
-      to_status,
-      requires_role,
-      is_system_transition,
-      is_active,
-      description
-    )
-    VALUES (
-      'processing',
-      'processed',
-      'refinery_staff',
-      false,
-      true,
-      'Refinery staff marks processing as completed. Batch ready for inventory entry.'
-    )
-    ON CONFLICT (from_status, to_status) 
-    DO UPDATE SET
-      requires_role = EXCLUDED.requires_role,
-      is_system_transition = EXCLUDED.is_system_transition,
-      is_active = EXCLUDED.is_active,
-      description = EXCLUDED.description,
-      updated_at = now();
-    
-    SELECT COUNT(*) INTO v_count
-    FROM allowed_status_transitions
-    WHERE from_status = 'processing' AND to_status = 'processed';
-  END IF;
-  
-  IF v_count = 0 THEN
-    RAISE EXCEPTION 'Failed to add processing → processed transition';
-  ELSE
-    RAISE NOTICE '✓ SUCCESS: Transition processing → processed added to %', v_table_name;
+    RAISE NOTICE '✓ Transition processing → processed CREATED successfully';
   END IF;
 END $$;
 
--- Verify all transitions from 'processing' status
+-- Verify the result
 DO $$
 DECLARE
-  v_table_name TEXT;
-  v_transitions TEXT;
+  v_from_status TEXT;
+  v_to_status TEXT;
+  v_is_active BOOLEAN;
+  v_requires_approval BOOLEAN;
 BEGIN
-  SELECT table_name INTO v_table_name
-  FROM information_schema.tables
-  WHERE table_name IN ('batch_status_transitions', 'allowed_status_transitions')
-    AND table_schema = 'public'
-  LIMIT 1;
+  SELECT from_status, to_status, is_active, requires_approval
+  INTO v_from_status, v_to_status, v_is_active, v_requires_approval
+  FROM batch_status_transitions
+  WHERE from_status = 'processing' AND to_status = 'processed';
   
-  IF v_table_name = 'batch_status_transitions' THEN
-    SELECT string_agg(to_status, ', ') INTO v_transitions
-    FROM batch_status_transitions
-    WHERE from_status = 'processing' AND is_active = true;
-  ELSE
-    SELECT string_agg(to_status, ', ') INTO v_transitions
-    FROM allowed_status_transitions
-    WHERE from_status = 'processing' AND is_active = true;
+  IF v_from_status IS NULL THEN
+    RAISE EXCEPTION '❌ FAILED: Transition processing → processed still does not exist!';
   END IF;
   
-  RAISE NOTICE 'Available transitions from processing: %', v_transitions;
+  IF NOT v_is_active THEN
+    RAISE EXCEPTION '❌ FAILED: Transition exists but is NOT ACTIVE!';
+  END IF;
+  
+  RAISE NOTICE '✓✓✓ SUCCESS ✓✓✓';
+  RAISE NOTICE 'Transition: % → %', v_from_status, v_to_status;
+  RAISE NOTICE 'Is Active: %', v_is_active;
+  RAISE NOTICE 'Requires Approval: %', v_requires_approval;
+END $$;
+
+-- Show all transitions from 'processing'
+DO $$
+DECLARE
+  rec RECORD;
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '════════════════════════════════════════';
+  RAISE NOTICE 'All transitions from PROCESSING status:';
+  RAISE NOTICE '════════════════════════════════════════';
+  
+  FOR rec IN 
+    SELECT from_status, to_status, is_active, requires_approval
+    FROM batch_status_transitions
+    WHERE from_status = 'processing'
+    ORDER BY to_status
+  LOOP
+    RAISE NOTICE '  % → % (active: %, approval: %)', 
+      rec.from_status, rec.to_status, rec.is_active, rec.requires_approval;
+  END LOOP;
 END $$;

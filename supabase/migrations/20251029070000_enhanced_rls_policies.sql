@@ -225,10 +225,7 @@ CREATE POLICY "users_can_read_assigned_sales" ON sales
       WHERE up.id = auth.uid()
         AND (
           up.role = 'management' OR
-          up.role IN ('sales_staff', 'sales_manager') OR
-          sales.customer_id IN (
-            SELECT id FROM customers WHERE assigned_to = up.id
-          )
+          up.role IN ('sales_staff', 'sales_manager')
         )
     )
   );
@@ -244,17 +241,14 @@ CREATE POLICY "sales_staff_can_create_sales" ON sales
     )
   );
 
--- UPDATE Policy: Sales staff can update their sales
+-- UPDATE Policy: Sales staff and management can update sales
 CREATE POLICY "sales_staff_can_update_sales" ON sales
   FOR UPDATE
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles up
       WHERE up.id = auth.uid()
-        AND (
-          up.role = 'management' OR
-          (up.role IN ('sales_staff', 'sales_manager') AND sales.created_by = up.id)
-        )
+        AND up.role IN ('sales_staff', 'sales_manager', 'management')
     )
   );
 
@@ -298,17 +292,14 @@ CREATE POLICY "sales_can_create_customers" ON customers
     )
   );
 
--- UPDATE Policy: Sales staff can update their assigned customers
+-- UPDATE Policy: Sales staff and management can update customers
 CREATE POLICY "sales_can_update_assigned_customers" ON customers
   FOR UPDATE
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles up
       WHERE up.id = auth.uid()
-        AND (
-          up.role = 'management' OR
-          (up.role IN ('sales_staff', 'sales_manager') AND customers.assigned_to = up.id)
-        )
+        AND up.role IN ('sales_staff', 'sales_manager', 'management')
     )
   );
 

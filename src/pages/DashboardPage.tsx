@@ -194,20 +194,20 @@ export function DashboardPage() {
   };
 
   const statusColors: Record<string, string> = {
-    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#64748b',
-    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#1e40af',
-    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#1d4ed8',
-    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#b45309',
-    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#6d28d9',
-    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#7c3aed',
-    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#be185d',
-    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#0d9488',
-    [BATCH_STATUSES.PROCESSING]: '#c2410c',
-    [BATCH_STATUSES.IN_INVENTORY]: '#065f46',
-    [BATCH_STATUSES.READY_FOR_SALE]: '#166534',
-    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#4d7c0f',
-    [BATCH_STATUSES.SOLD]: '#047857',
-    [BATCH_STATUSES.CANCELLED]: '#991b1b',
+    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#94a3b8',
+    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#3b82f6',
+    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#2563eb',
+    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#f59e0b',
+    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#8b5cf6',
+    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#a855f7',
+    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#ec4899',
+    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#14b8a6',
+    [BATCH_STATUSES.PROCESSING]: '#f97316',
+    [BATCH_STATUSES.IN_INVENTORY]: '#22c55e',
+    [BATCH_STATUSES.READY_FOR_SALE]: '#10b981',
+    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#84cc16',
+    [BATCH_STATUSES.SOLD]: '#16a34a',
+    [BATCH_STATUSES.CANCELLED]: '#ef4444',
   };
 
   const totalBatchesForChart = batches.length;
@@ -364,21 +364,40 @@ export function DashboardPage() {
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Batch Status Distribution</h3>
               {statusData.length > 0 ? (
-                <div className="h-80">
+                <div className="h-80 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="45%"
-                        labelLine={false}
-                        label={false}
-                        outerRadius={90}
-                        fill="#8884d8"
+                        cy="50%"
+                        innerRadius={80}
+                        outerRadius={110}
+                        paddingAngle={2}
                         dataKey="value"
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
+                          const RADIAN = Math.PI / 180;
+                          const radius = outerRadius + 30;
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                          const percentage = totalBatchesForChart > 0 ? ((value / totalBatchesForChart) * 100).toFixed(0) : '0';
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill="#374151"
+                              textAnchor={x > cx ? 'start' : 'end'}
+                              dominantBaseline="central"
+                              fontSize="13"
+                              fontWeight="600"
+                            >
+                              {`${value} (${percentage}%)`}
+                            </text>
+                          );
+                        }}
                       >
                         {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -388,15 +407,20 @@ export function DashboardPage() {
                         }}
                       />
                       <Legend
-                        verticalAlign="bottom"
-                        height={60}
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
                         formatter={(value: string, entry: any) => {
-                          return entry.payload.displayName;
+                          return entry.payload.name.toUpperCase();
                         }}
-                        wrapperStyle={{ fontSize: '12px' }}
+                        wrapperStyle={{ fontSize: '11px', fontWeight: '600' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                    <div className="text-5xl font-bold text-gray-900">{totalBatchesForChart}</div>
+                    <div className="text-sm font-medium text-gray-500 mt-1">Total Batches</div>
+                  </div>
                 </div>
               ) : (
                 <div className="h-80 flex items-center justify-center text-gray-500">

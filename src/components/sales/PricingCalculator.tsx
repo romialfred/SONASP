@@ -85,15 +85,8 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
       // Best option - light green
       return 'bg-emerald-50/80';
     }
-    // Calculate opacity from 30% to 80% for remaining cards
-    const step = (80 - 30) / Math.max(totalMechanisms - 2, 1);
-    const opacity = 30 + (index - 1) * step;
-
-    // Use Tailwind's opacity utilities
-    if (opacity <= 35) return 'bg-red-50/30';
-    if (opacity <= 50) return 'bg-red-50/40';
-    if (opacity <= 65) return 'bg-red-50/60';
-    return 'bg-red-50/80';
+    // No background color for other cards
+    return '';
   };
 
   return (
@@ -196,7 +189,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
               return (
                 <Card
                   key={mechanism.mechanism}
-                  className={`cursor-pointer transition-all ${
+                  className={`cursor-pointer transition-all duration-300 ease-in-out hover:scale-125 ${
                     isSelected
                       ? 'ring-2 ring-blue-500 shadow-lg'
                       : isBestOption

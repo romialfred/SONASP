@@ -7,14 +7,14 @@
 📊 RÉSUMÉ FINAL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Erreurs trouvées:    4
-Erreurs corrigées:   4 (100%)
+Erreurs trouvées:    5
+Erreurs corrigées:   5 (100%)
 Build:               ✅ Réussi
 Validation:          ✅ Complète
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔧 LES 4 ERREURS CORRIGÉES
+🔧 LES 5 ERREURS CORRIGÉES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. ✅ Window functions dans agrégats
@@ -32,6 +32,10 @@ Validation:          ✅ Complète
 4. ✅ Colonnes assigned_to & created_by
    Fichier: enhanced_rls_policies.sql
    Solution: Simplification policies
+
+5. ✅ Fonction get_user_permissions() en doublon
+   Fichier: enhanced_rls_policies.sql
+   Solution: Renommée en get_user_table_permissions()
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

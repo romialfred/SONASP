@@ -369,7 +369,7 @@ CREATE POLICY "only_management_can_delete_payments" ON payments
 -- STEP 8: Policy Summary Function
 -- ========================================
 
-CREATE OR REPLACE FUNCTION get_user_permissions()
+CREATE OR REPLACE FUNCTION get_user_table_permissions()
 RETURNS TABLE (
   table_name text,
   can_select boolean,
@@ -424,9 +424,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION get_user_permissions IS
+COMMENT ON FUNCTION get_user_table_permissions IS
   'Returns a summary of current user permissions across all major tables.
-   Usage: SELECT * FROM get_user_permissions();';
+   Usage: SELECT * FROM get_user_table_permissions();';
 
 -- ========================================
 -- STEP 9: Validation Summary
@@ -467,7 +467,7 @@ BEGIN
   RAISE NOTICE '  • customers - Sales staff access';
   RAISE NOTICE '  • payments - Finance and management';
   RAISE NOTICE '';
-  RAISE NOTICE 'Use get_user_permissions() to see your access rights';
+  RAISE NOTICE 'Use get_user_table_permissions() to see your access rights';
   RAISE NOTICE '';
   RAISE NOTICE '========================================';
 END $$;

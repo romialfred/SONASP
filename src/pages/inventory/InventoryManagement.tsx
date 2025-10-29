@@ -91,34 +91,42 @@ export function InventoryManagement() {
     {
       title: 'Total Stock',
       value: `${metrics.totalStock.toFixed(2)} oz`,
-      change: 'All refined gold',
+      valueInGrams: metrics.totalStock * 31.1035,
+      subtitle: 'All refined gold',
       changeType: 'neutral' as const,
       icon: Package,
-      iconColor: 'text-primary-500'
+      iconColor: 'text-primary-600',
+      iconBgColor: 'bg-primary-100'
     },
     {
       title: 'Available for Sale',
       value: `${metrics.availableStock.toFixed(2)} oz`,
-      change: stockStatus.label,
+      valueInGrams: metrics.availableStock * 31.1035,
+      subtitle: stockStatus.label,
       changeType: stockLevel < 100 ? ('negative' as const) : ('positive' as const),
       icon: TrendingUp,
-      iconColor: stockStatus.color
+      iconColor: stockLevel < 100 ? 'text-orange-600' : 'text-emerald-600',
+      iconBgColor: stockLevel < 100 ? 'bg-orange-100' : 'bg-emerald-100'
     },
     {
       title: 'Allocated to Sales',
       value: `${metrics.allocatedStock.toFixed(2)} oz`,
-      change: 'Reserved quantities',
+      valueInGrams: metrics.allocatedStock * 31.1035,
+      subtitle: 'Reserved quantities',
       changeType: 'neutral' as const,
       icon: AlertCircle,
-      iconColor: 'text-blue-500'
+      iconColor: 'text-blue-600',
+      iconBgColor: 'bg-blue-100'
     },
     {
       title: 'Total Sold',
       value: `${metrics.soldStock.toFixed(2)} oz`,
-      change: 'Completed sales',
+      valueInGrams: metrics.soldStock * 31.1035,
+      subtitle: 'Completed sales',
       changeType: 'positive' as const,
       icon: TrendingUp,
-      iconColor: 'text-green-500'
+      iconColor: 'text-emerald-600',
+      iconBgColor: 'bg-emerald-100'
     }
   ];
 

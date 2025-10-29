@@ -91,17 +91,17 @@ export function DashboardPage() {
           setSales(salesData as any);
         }
 
-        // Calculate available stock
-        const { data: stockData, error: stockError } = await supabase
-          .from('batches')
-          .select('weight_ounces, status')
-          .in('status', [
-            BATCH_STATUSES.IN_INVENTORY,
-            BATCH_STATUSES.READY_FOR_SALE
-          ]);
+        // Calculate available stock from gold_inventory
+        const { data: inventoryData, error: inventoryError } = await supabase
+          .from('gold_inventory')
+          .select('final_fine_oz, allocated_oz, sold_oz')
+          .eq('status', 'active');
 
-        if (!stockError && stockData) {
-          const totalStock = stockData.reduce((sum, batch) => sum + (batch.weight_ounces || 0), 0);
+        if (!inventoryError && inventoryData) {
+          const totalStock = inventoryData.reduce((sum, item) => {
+            const available = (item.final_fine_oz || 0) - (item.allocated_oz || 0) - (item.sold_oz || 0);
+            return sum + available;
+          }, 0);
           setAvailableStock(totalStock);
         }
 
@@ -244,56 +244,67 @@ export function DashboardPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{t('dashboard.totalRevenue')}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    ${totalRevenue > 0 ? (totalRevenue / 1000000).toFixed(2) + 'M' : '0'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">{sales.length} {t('sales.completedSales')}</p>
+          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="absolute top-4 left-4 w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div className="pl-16">
+              <p className="text-sm font-medium text-gray-600 mb-2">
+                {t('dashboard.totalRevenue')}
+              </p>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-gray-900">
+                  ${totalRevenue > 0 ? (totalRevenue / 1000).toFixed(1) + 'K' : '0'}
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
+                <p className="text-xs text-gray-500">
+                  {sales.length} {t('sales.completedSales')}
+                </p>
               </div>
             </div>
-          </Card>
+          </div>
 
           <GoldPriceLive />
 
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{t('dashboard.activeBatches')}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{totalBatches}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('dashboard.processingInProgress')}</p>
+          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="absolute top-4 left-4 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Package className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="pl-16">
+              <p className="text-sm font-medium text-gray-600 mb-2">
+                {t('dashboard.activeBatches')}
+              </p>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-gray-900">
+                  {totalBatches}
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
+                <p className="text-xs text-gray-500">
+                  {t('dashboard.processingInProgress')}
+                </p>
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{t('inventory.availableForSale')}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {availableStock.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">{t('batch.weightOunces')}</p>
+          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="absolute top-4 left-4 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="pl-16">
+              <p className="text-sm font-medium text-gray-600 mb-2">
+                {t('inventory.availableForSale')}
+              </p>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-gray-900">
+                  {availableStock.toFixed(2)} oz
+                  <span className="text-base font-normal text-gray-500 ml-2">
+                    ({(availableStock * 31.1035).toFixed(2)}g)
+                  </span>
                 </div>
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-amber-600" />
-                </div>
+                <p className="text-xs text-gray-500">
+                  {t('inventory.readyToSell')}
+                </p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Charts Row */}

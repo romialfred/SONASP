@@ -1,46 +1,74 @@
 import { LucideIcon, HelpCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/utils/cn';
 
 export interface MetricCardProps {
   title: string;
   value: string | number;
+  valueInGrams?: number;
+  subtitle?: string;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
   icon?: LucideIcon;
   iconColor?: string;
+  iconBgColor?: string;
 }
 
 export function MetricCard({
   title,
   value,
+  valueInGrams,
+  subtitle,
   change,
   changeType = 'neutral',
   icon: Icon = HelpCircle,
-  iconColor = 'text-primary-500'
+  iconColor = 'text-primary-600',
+  iconBgColor = 'bg-primary-100'
 }: MetricCardProps) {
   const changeColors = {
-    positive: 'text-accent-600',
+    positive: 'text-emerald-600',
     negative: 'text-red-600',
     neutral: 'text-gray-600'
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-xs font-medium text-gray-600">
+    <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+      {/* Icon in top-left corner */}
+      <div className={cn(
+        'absolute top-4 left-4 w-10 h-10 rounded-lg flex items-center justify-center',
+        iconBgColor
+      )}>
+        <Icon className={cn('w-5 h-5', iconColor)} />
+      </div>
+
+      {/* Content with left padding to avoid icon overlap */}
+      <div className="pl-16">
+        <p className="text-sm font-medium text-gray-600 mb-2">
           {title}
-        </CardTitle>
-        <Icon className={cn('h-4 w-4', iconColor)} />
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="text-xl font-bold text-gray-900">{value}</div>
-        {change && (
-          <p className={cn('text-xs mt-0.5 font-medium', changeColors[changeType])}>
-            {change}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        </p>
+
+        <div className="space-y-1">
+          <div className="text-2xl font-bold text-gray-900">
+            {value}
+            {valueInGrams && (
+              <span className="text-base font-normal text-gray-500 ml-2">
+                ({valueInGrams.toLocaleString('en-US', { maximumFractionDigits: 2 })}g)
+              </span>
+            )}
+          </div>
+
+          {subtitle && (
+            <p className="text-xs text-gray-500">
+              {subtitle}
+            </p>
+          )}
+
+          {change && (
+            <p className={cn('text-xs font-medium', changeColors[changeType])}>
+              {change}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

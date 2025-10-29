@@ -27,34 +27,38 @@ export function ManagementDashboard() {
     {
       title: 'Total Revenue (MTD)',
       value: '$2.4M',
-      change: '+12% from last month',
+      subtitle: '+12% from last month',
       changeType: 'positive' as const,
       icon: DollarSign,
-      iconColor: 'text-accent-500'
+      iconColor: 'text-emerald-600',
+      iconBgColor: 'bg-emerald-100'
     },
     {
       title: 'Active Batches',
       value: '24',
-      change: '8 pending approval',
+      subtitle: '8 pending approval',
       changeType: 'neutral' as const,
       icon: Package,
-      iconColor: 'text-primary-500'
+      iconColor: 'text-primary-600',
+      iconBgColor: 'bg-primary-100'
     },
     {
       title: 'Active Customers',
       value: '18',
-      change: '+3 this quarter',
+      subtitle: '+3 this quarter',
       changeType: 'positive' as const,
       icon: Users,
-      iconColor: 'text-blue-500'
+      iconColor: 'text-blue-600',
+      iconBgColor: 'bg-blue-100'
     },
     {
       title: 'System Alerts',
       value: '5',
-      change: '2 critical',
+      subtitle: '2 critical',
       changeType: 'negative' as const,
       icon: AlertCircle,
-      iconColor: 'text-red-500'
+      iconColor: 'text-red-600',
+      iconBgColor: 'bg-red-100'
     }
   ];
 

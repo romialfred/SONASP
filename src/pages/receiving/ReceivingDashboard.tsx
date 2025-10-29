@@ -1,95 +1,45 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Package, AlertCircle, CheckCircle, Clock, Plane, TrendingUp } from 'lucide-react';
+import { Package, AlertCircle, CheckCircle, Plane, TrendingUp } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase';
-import { BATCH_STATUSES, getBatchStatusLabel } from '@/constants/batchStatuses';
-
-interface Site {
-  name: string;
-  site_type: string;
-}
-
-interface Batch {
-  id: string;
-  batch_number: string;
-  status: string;
-  weight_grams: number;
-  weight_ounces: number;
-  metal_type: string;
-  shipping_date: string;
-  comments?: string;
-  created_at: string;
-  mining_company?: {
-    name: string;
-    country: string;
-  };
-}
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
+import { useBatchRealtime } from '@/hooks/useBatchRealtime';
+import { BatchCard } from '@/components/batch/BatchCard';
+import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function ReceivingDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [batches, setBatches] = useState<Batch[]>([]);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchBatches();
-  }, []);
+  // Use Realtime hook to fetch batches with relevant statuses for airport
+  const { batches, loading } = useBatchRealtime({
+    statuses: [
+      BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
+      BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
+      BATCH_STATUSES.RECEIVED_AT_AIRPORT,
+      BATCH_STATUSES.VALIDATED_FOR_REFINERY,
+    ],
+  });
 
-  async function fetchBatches() {
-    setLoading(true);
-    try {
-      // Fetch batches that are approved for transport (ready to ship from mine to airport)
-      // Also include batches that are waiting at airport or received at airport
-      const { data, error } = await supabase
-        .from('batches')
-        .select(`
-          *,
-          mining_company:mining_companies(name, country)
-        `)
-        .in('status', [
-          BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
-          BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
-          BATCH_STATUSES.RECEIVED_AT_AIRPORT
-        ])
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching batches:', error);
-      } else {
-        setBatches(data || []);
-        console.log(`Found ${data?.length || 0} batches ready for/at airport`);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Count batches by status
-  // Ready to Ship: Approved by factory, ready to ship to airport
+  // Count batches by status using correct constants
   const readyToShipCount = batches.filter(
     b => b.status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT
   ).length;
 
-  // In Transit: Currently being transported to airport
   const inTransitCount = batches.filter(
     b => b.status === BATCH_STATUSES.WAITING_AIRPORT_RECEIPT
   ).length;
 
-  // At Airport: Received and needs validation/confirmation
   const atAirportCount = batches.filter(
     b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT
   ).length;
 
-  // Processing: Being validated at airport (if we add this status later)
-  const processingCount = batches.filter(
+  const validatedCount = batches.filter(
     b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY
   ).length;
 
@@ -121,9 +71,9 @@ export function ReceivingDashboard() {
       iconColor: 'text-orange-500',
     },
     {
-      title: 'Processing',
-      value: processingCount.toString(),
-      change: 'Being processed',
+      title: 'Validated',
+      value: validatedCount.toString(),
+      change: 'Ready for refinery',
       changeType: 'positive' as const,
       icon: CheckCircle,
       iconColor: 'text-green-500',
@@ -138,25 +88,25 @@ export function ReceivingDashboard() {
     },
   ];
 
-  const getStatusBadge = (status: string) => {
-    const statusLower = status?.toLowerCase() || '';
-    const statusConfig: Record<string, { label: string; color: string }> = {
-      pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-      received: { label: 'Received', color: 'bg-orange-100 text-orange-800' },
-      processing: { label: 'Processing', color: 'bg-blue-100 text-blue-800' },
-      validated: { label: 'Validated', color: 'bg-green-100 text-green-800' },
-    };
-
-    const config = statusConfig[statusLower] || { label: status, color: 'bg-gray-100 text-gray-800' };
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-        {config.label}
-      </span>
-    );
+  // Get user role for actions
+  const getUserRole = () => {
+    return user?.user_metadata?.role || 'airport';
   };
 
   const handleConfirmReceipt = (batchId: string) => {
-    navigate(`/receiving/confirm/${batchId}`);
+    navigate(`/receiving/${batchId}/confirm`);
+  };
+
+  const handleViewDetails = (batchId: string) => {
+    navigate(`/batches/${batchId}`);
+  };
+
+  const handleActionClick = (actionId: string, batchId: string) => {
+    if (actionId === 'confirm_receipt' || actionId === 'validate_receipt') {
+      handleConfirmReceipt(batchId);
+    } else if (actionId === 'view_details') {
+      handleViewDetails(batchId);
+    }
   };
 
   return (
@@ -199,47 +149,78 @@ export function ReceivingDashboard() {
               </Card>
             ) : (
               <>
-                {/* Pending Arrival - In Transit */}
-                {inTransitCount > 0 && (
+                {/* Ready to Ship - Approved for Transport */}
+                {readyToShipCount > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Plane className="w-5 h-5 text-blue-500" />
-                        Pending Arrival ({inTransitCount})
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        Ready to Ship ({readyToShipCount})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status?.toLowerCase() === 'pending')
-                          .map((batch) => (
-                            <div
-                              key={batch.id}
-                              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                  <h3 className="font-semibold text-gray-900">
-                                    {batch.batch_number}
-                                  </h3>
-                                  {getStatusBadge(batch.status)}
-                                </div>
-                                <div className="mt-2 text-sm text-gray-600">
-                                  <p>
-                                    Weight: {batch.weight_grams.toLocaleString()}g (
-                                    {batch.weight_ounces.toFixed(2)} oz)
-                                  </p>
-                                  <p>Metal: {batch.metal_type}</p>
-                                  <p>Location: {batch.current_site?.name}</p>
-                                  <p>Shipped: {new Date(batch.shipping_date).toLocaleDateString()}</p>
-                                </div>
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                <Clock className="w-5 h-5 inline mr-1" />
-                                En route
-                              </div>
-                            </div>
-                          ))}
+                          .filter(b => b.status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'shipping',
+                              {
+                                onViewDetails: handleViewDetails,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* In Transit - Waiting Airport Receipt */}
+                {inTransitCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Plane className="w-5 h-5 text-blue-500" />
+                        In Transit ({inTransitCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {batches
+                          .filter(b => b.status === BATCH_STATUSES.WAITING_AIRPORT_RECEIPT)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'shipping',
+                              {
+                                onConfirmReceipt: handleConfirmReceipt,
+                                onViewDetails: handleViewDetails,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
                       </div>
                     </CardContent>
                   </Card>
@@ -251,88 +232,72 @@ export function ReceivingDashboard() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-orange-500" />
-                        Received - Need Validation ({atAirportCount})
+                        Need Validation ({atAirportCount})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status?.toLowerCase() === 'received')
-                          .map((batch) => (
-                            <div
-                              key={batch.id}
-                              className="flex items-center justify-between p-4 border border-orange-200 rounded-lg bg-orange-50"
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                  <h3 className="font-semibold text-gray-900">
-                                    {batch.batch_number}
-                                  </h3>
-                                  {getStatusBadge(batch.status)}
-                                </div>
-                                <div className="mt-2 text-sm text-gray-600">
-                                  <p>
-                                    Weight: {batch.weight_grams.toLocaleString()}g (
-                                    {batch.weight_ounces.toFixed(2)} oz)
-                                  </p>
-                                  <p>Metal: {batch.metal_type}</p>
-                                  <p>Location: {batch.current_site?.name}</p>
-                                  {batch.comments && <p className="text-xs mt-1">{batch.comments}</p>}
-                                </div>
-                              </div>
-                              <Button
-                                variant="primary"
-                                onClick={() => handleConfirmReceipt(batch.id)}
-                              >
-                                Validate Receipt
-                              </Button>
-                            </div>
-                          ))}
+                          .filter(b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'shipping',
+                              {
+                                onConfirmReceipt: handleConfirmReceipt,
+                                onViewDetails: handleViewDetails,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
                       </div>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Processing at Airport */}
-                {processingCount > 0 && (
+                {/* Validated - Ready for Refinery */}
+                {validatedCount > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-green-500" />
-                        Processing ({processingCount})
+                        Validated ({validatedCount})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status?.toLowerCase() === 'processing')
-                          .map((batch) => (
-                            <div
-                              key={batch.id}
-                              className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50"
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                  <h3 className="font-semibold text-gray-900">
-                                    {batch.batch_number}
-                                  </h3>
-                                  {getStatusBadge(batch.status)}
-                                </div>
-                                <div className="mt-2 text-sm text-gray-600">
-                                  <p>
-                                    Weight: {batch.weight_grams.toLocaleString()}g (
-                                    {batch.weight_ounces.toFixed(2)} oz)
-                                  </p>
-                                  <p>Metal: {batch.metal_type}</p>
-                                  <p>Location: {batch.current_site?.name}</p>
-                                </div>
-                              </div>
-                              <div className="text-sm text-green-600 font-medium">
-                                <CheckCircle className="w-5 h-5 inline mr-1" />
-                                Processing
-                              </div>
-                            </div>
-                          ))}
+                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'shipping',
+                              {
+                                onViewDetails: handleViewDetails,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
                       </div>
                     </CardContent>
                   </Card>

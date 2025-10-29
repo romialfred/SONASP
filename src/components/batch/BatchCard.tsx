@@ -1,0 +1,233 @@
+import { Package, Calendar, Weight, MapPin, Building2, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/Card';
+import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import Button from '@/components/ui/Button';
+import { getBatchStatusLabel, getBatchStatusVariant } from '@/constants/batchStatuses';
+import { formatWeight } from '@/utils/batchUtils';
+import { BatchAction } from '@/services/batchActionsService';
+import { cn } from '@/utils/cn';
+
+export interface BatchCardProps {
+  batch: {
+    id: string;
+    batch_number: string;
+    status: string;
+    weight_grams: number;
+    weight_ounces?: number;
+    metal_type?: string;
+    shipping_date: string;
+    mining_company?: { name: string; country?: string };
+    comments?: string;
+    created_at: string;
+    [key: string]: any;
+  };
+  actions: BatchAction[];
+  variant?: 'compact' | 'expanded';
+  showStatus?: boolean;
+  showWeight?: boolean;
+  showMiningCompany?: boolean;
+  onActionClick?: (actionId: string, batchId: string) => void;
+  className?: string;
+  statusInfo?: {
+    message: string;
+    type: 'info' | 'warning' | 'success' | 'error';
+  };
+}
+
+export function BatchCard({
+  batch,
+  actions,
+  variant = 'compact',
+  showStatus = true,
+  showWeight = true,
+  showMiningCompany = true,
+  onActionClick,
+  className,
+  statusInfo,
+}: BatchCardProps) {
+  const hasActions = actions.length > 0;
+  const statusVariant = getBatchStatusVariant(batch.status);
+
+  // Border color based on status variant
+  const borderColorClass = {
+    default: 'border-gray-200',
+    pending: 'border-yellow-300',
+    info: 'border-blue-300',
+    warning: 'border-orange-300',
+    success: 'border-green-300',
+    error: 'border-red-300',
+  }[statusVariant];
+
+  // Background color for status info
+  const statusInfoBgClass = {
+    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    warning: 'bg-orange-50 border-orange-200 text-orange-800',
+    success: 'bg-green-50 border-green-200 text-green-800',
+    error: 'bg-red-50 border-red-200 text-red-800',
+  }[statusInfo?.type || 'info'];
+
+  const handleActionClick = (actionId: string) => {
+    const action = actions.find(a => a.id === actionId);
+    if (!action) return;
+
+    if (action.requiresConfirmation) {
+      const confirmed = window.confirm(
+        action.confirmationMessage || 'Are you sure you want to perform this action?'
+      );
+      if (!confirmed) return;
+    }
+
+    if (onActionClick) {
+      onActionClick(actionId, batch.id);
+    } else {
+      action.handler(batch.id);
+    }
+  };
+
+  return (
+    <Card
+      className={cn(
+        'transition-all duration-200 hover:shadow-md border-2',
+        borderColorClass,
+        hasActions && 'hover:border-primary-400',
+        className
+      )}
+    >
+      <CardContent className="p-4">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Package className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">{batch.batch_number}</h3>
+              {showStatus && (
+                <div className="mt-1">
+                  <StatusBadge
+                    label={getBatchStatusLabel(batch.status)}
+                    variant={statusVariant}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Required Badge */}
+          {hasActions && (
+            <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+              Action Required
+            </span>
+          )}
+        </div>
+
+        {/* Status Info Message */}
+        {statusInfo && (
+          <div className={cn('mb-3 p-2 rounded-lg border text-sm flex items-start gap-2', statusInfoBgClass)}>
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <span>{statusInfo.message}</span>
+          </div>
+        )}
+
+        {/* Details */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {showWeight && (
+            <div className="flex items-start gap-2">
+              <Weight className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-gray-600">Weight</p>
+                <p className="font-medium text-gray-900">
+                  {formatWeight(batch.weight_grams)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2">
+            <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="text-gray-600">Shipping Date</p>
+              <p className="font-medium text-gray-900">
+                {new Date(batch.shipping_date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {showMiningCompany && batch.mining_company && (
+            <div className="flex items-start gap-2 col-span-2">
+              <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-gray-600">Mining Company</p>
+                <p className="font-medium text-gray-900">
+                  {batch.mining_company.name}
+                  {batch.mining_company.country && (
+                    <span className="text-gray-500 ml-1">
+                      ({batch.mining_company.country})
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {variant === 'expanded' && batch.metal_type && (
+            <div className="flex items-start gap-2">
+              <Building2 className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-gray-600">Metal Type</p>
+                <p className="font-medium text-gray-900 capitalize">
+                  {batch.metal_type}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Comments */}
+        {variant === 'expanded' && batch.comments && (
+          <div className="mb-3 p-2 bg-gray-50 rounded text-sm text-gray-700">
+            <p className="text-gray-600 text-xs mb-1">Comments:</p>
+            <p>{batch.comments}</p>
+          </div>
+        )}
+
+        {/* Actions */}
+        {hasActions && (
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+            {actions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Button
+                  key={action.id}
+                  variant={action.variant}
+                  size="sm"
+                  onClick={() => handleActionClick(action.id)}
+                  disabled={action.disabled}
+                  className="gap-2"
+                  title={action.disabledReason}
+                >
+                  <Icon className="h-4 w-4" />
+                  {action.label}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Compact version of BatchCard for list views
+ */
+export function BatchCardCompact(props: BatchCardProps) {
+  return <BatchCard {...props} variant="compact" />;
+}
+
+/**
+ * Expanded version of BatchCard for detailed views
+ */
+export function BatchCardExpanded(props: BatchCardProps) {
+  return <BatchCard {...props} variant="expanded" />;
+}

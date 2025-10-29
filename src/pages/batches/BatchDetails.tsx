@@ -22,7 +22,9 @@ import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
 import { getBatchStatusLabel, getBatchStatusVariant, BATCH_STATUSES } from '@/constants/batchStatuses';
-import { approveBatchForTransport } from '@/services/batchApprovalService';
+import { approveBatchForTransport as legacyApproveBatchForTransport } from '@/services/batchApprovalService';
+import { approveBatchForTransport, getBatchStatusHistory } from '@/services/batchTransitionService';
+import { useSingleBatchRealtime } from '@/hooks/useBatchRealtime';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 
@@ -32,19 +34,27 @@ export function BatchDetails() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const alert = useAlert();
-  const [batch, setBatch] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
   const [approving, setApproving] = useState(false);
   const [isManager, setIsManager] = useState(false);
 
+  // Use Realtime hook for automatic batch updates
+  const { batch, loading, refetch } = useSingleBatchRealtime(id);
+
   useEffect(() => {
     if (id) {
-      loadBatch();
       loadTimeline();
       checkManagerRole();
     }
   }, [id]);
+
+  // Reload timeline when batch status changes
+  useEffect(() => {
+    if (batch?.status) {
+      console.log('📡 Batch status changed to:', batch.status);
+      loadTimeline();
+    }
+  }, [batch?.status]);
 
   const checkManagerRole = async () => {
     if (!user) return;
@@ -75,94 +85,54 @@ export function BatchDetails() {
 
       if (result.success) {
         alert.success('Batch approved for transportation successfully!');
-        await loadBatch();
-        await loadTimeline();
+        // Wait a bit for DB sync, then refetch
+        setTimeout(async () => {
+          await Promise.all([
+            refetch(),
+            loadTimeline()
+          ]);
+        }, 500);
       } else {
-        const errorMessage = result.error instanceof Error
-          ? result.error.message
-          : typeof result.error === 'object' && result.error !== null
-            ? (result.error as any).message || JSON.stringify(result.error)
-            : String(result.error || 'Unknown error');
-        alert.error(`Failed to approve batch: ${errorMessage}`);
+        alert.error(`Failed to approve batch: ${result.error}`);
       }
     } catch (error: any) {
       console.error('Error approving batch:', error);
-      const errorMessage = error?.message || String(error);
-      alert.error(`Error approving batch: ${errorMessage}`);
+      alert.error(`Error approving batch: ${error?.message || String(error)}`);
     } finally {
       setApproving(false);
     }
   };
 
-  const loadBatch = async () => {
-    try {
-      console.log('[BatchDetails] Loading batch with ID:', id);
-
-      const { data, error } = await supabase
-        .from('batches')
-        .select(`
-          *,
-          mining_company:mining_companies(name, country),
-          mine_transport:transport_companies!batches_mine_to_airport_transport_id_fkey(name),
-          airport_transport:transport_companies!batches_airport_to_refinery_transport_id_fkey(name),
-          refinery:refineries(name, location),
-          created_by_user:user_profiles!batches_created_by_fkey(full_name)
-        `)
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('[BatchDetails] Query error:', error);
-        throw error;
-      }
-
-      if (!data) {
-        console.warn('[BatchDetails] No batch found with ID:', id);
-        setBatch(null);
-        return;
-      }
-
-      console.log('[BatchDetails] Batch loaded successfully:', data);
-
-      setBatch({
-        ...data,
-        mining_company_name: data.mining_company?.name || 'Unknown',
-        mining_company_country: data.mining_company?.country || 'Unknown',
-        mine_transport_name: data.mine_transport?.name || 'Not assigned',
-        airport_transport_name: data.airport_transport?.name || 'Not assigned',
-        refinery_name: data.refinery?.name || 'Not assigned',
-        refinery_location: data.refinery?.location || 'Unknown',
-        created_by: data.created_by_user?.full_name || 'Unknown',
-      });
-    } catch (error) {
-      console.error('[BatchDetails] Error loading batch:', error);
-      setBatch(null);
-    } finally {
-      setLoading(false);
-    }
+  // Helper function to get formatted batch data
+  const getFormattedBatch = () => {
+    if (!batch) return null;
+    return {
+      ...batch,
+      mining_company_name: batch.mining_company?.name || 'Unknown',
+      mining_company_country: batch.mining_company?.country || 'Unknown',
+      mine_transport_name: batch.mine_transport?.name || 'Not assigned',
+      airport_transport_name: batch.airport_transport?.name || 'Not assigned',
+      refinery_name: batch.refinery?.name || 'Not assigned',
+      refinery_location: batch.refinery?.location || 'Unknown',
+      created_by: batch.created_by_user?.full_name || 'Unknown',
+    };
   };
 
   const loadTimeline = async () => {
     try {
       console.log('[BatchDetails] Loading timeline for batch:', id);
 
-      const { data, error } = await supabase
-        .from('batch_status_history')
-        .select(`
-          *,
-          user:user_profiles!batch_status_history_changed_by_fkey(full_name)
-        `)
-        .eq('batch_id', id)
-        .order('changed_at', { ascending: true });
+      const result = await getBatchStatusHistory(id!);
 
-      if (error) {
-        console.error('[BatchDetails] Timeline query error:', error);
-        throw error;
+      if (!result.success) {
+        console.error('[BatchDetails] Timeline error:', result.error);
+        setTimelineEvents([]);
+        return;
       }
 
-      console.log('[BatchDetails] Timeline data loaded:', data?.length || 0, 'events');
+      console.log('[BatchDetails] Timeline data loaded:', result.data?.length || 0, 'events');
 
-      const events: TimelineEvent[] = (data || []).map((item: any, index: number) => ({
+      const events: TimelineEvent[] = (result.data || []).map((item: any, index: number) => ({
         id: item.id,
         title: getStatusTitle(item.status),
         description: item.comments || `Batch status changed to ${item.status}`,
@@ -234,7 +204,9 @@ export function BatchDetails() {
     );
   }
 
-  if (!batch) {
+  const formattedBatch = getFormattedBatch();
+
+  if (!batch || !formattedBatch) {
     return (
       <MainLayout>
         <div className="text-center py-12">
@@ -263,14 +235,14 @@ export function BatchDetails() {
 
             <div>
               <h1 className="font-heading text-3xl font-bold text-gray-900">
-                {batch.batch_number}
+                {formattedBatch.batch_number}
               </h1>
               <p className="text-gray-600 mt-1">Batch Details and Tracking</p>
             </div>
           </div>
 
           <div className="flex gap-2">
-            {batch.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && isManager && (
+            {formattedBatch.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && isManager && (
               <Button
                 variant="primary"
                 onClick={handleApproveBatch}
@@ -293,7 +265,7 @@ export function BatchDetails() {
             <CardTitle>Batch Status Flow</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusFlow currentStatus={batch.status} />
+            <StatusFlow currentStatus={formattedBatch.status} />
           </CardContent>
         </Card>
 
@@ -312,7 +284,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Batch Number</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.batch_number}
+                        {formattedBatch.batch_number}
                       </p>
                     </div>
                   </div>
@@ -324,7 +296,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Weight</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {formatWeight(batch.weight_grams)}
+                        {formatWeight(formattedBatch.weight_grams)}
                       </p>
                     </div>
                   </div>
@@ -336,7 +308,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Shipping Date</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {new Date(batch.shipping_date).toLocaleDateString()}
+                        {new Date(formattedBatch.shipping_date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -348,8 +320,8 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Current Status</p>
                       <StatusBadge
-                        label={getBatchStatusLabel(batch.status)}
-                        variant={getBatchStatusVariant(batch.status)}
+                        label={getBatchStatusLabel(formattedBatch.status)}
+                        variant={getBatchStatusVariant(formattedBatch.status)}
                       />
                     </div>
                   </div>
@@ -361,10 +333,10 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Mining Company</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.mining_company_name}
+                        {formattedBatch.mining_company_name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {batch.mining_company_country}
+                        {formattedBatch.mining_company_country}
                       </p>
                     </div>
                   </div>
@@ -376,10 +348,10 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Refinery</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.refinery_name}
+                        {formattedBatch.refinery_name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {batch.refinery_location}
+                        {formattedBatch.refinery_location}
                       </p>
                     </div>
                   </div>
@@ -391,7 +363,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Mine → Airport Transport</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.mine_transport_name}
+                        {formattedBatch.mine_transport_name}
                       </p>
                     </div>
                   </div>
@@ -403,7 +375,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Airport → Refinery Transport</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.airport_transport_name}
+                        {formattedBatch.airport_transport_name}
                       </p>
                     </div>
                   </div>
@@ -415,7 +387,7 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Metal Type</p>
                       <p className="text-base font-semibold text-gray-900 capitalize">
-                        {batch.metal_type || 'Gold'}
+                        {formattedBatch.metal_type || 'Gold'}
                       </p>
                     </div>
                   </div>
@@ -427,16 +399,16 @@ export function BatchDetails() {
                     <div>
                       <p className="text-sm text-gray-600">Created By</p>
                       <p className="text-base font-semibold text-gray-900">
-                        {batch.created_by}
+                        {formattedBatch.created_by}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {batch.comments && (
+                {formattedBatch.comments && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <p className="text-sm text-gray-600 mb-2">Comments</p>
-                    <p className="text-base text-gray-900">{batch.comments}</p>
+                    <p className="text-base text-gray-900">{formattedBatch.comments}</p>
                   </div>
                 )}
               </CardContent>

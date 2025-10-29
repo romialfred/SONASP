@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase';
 export interface BatchApproval {
   id: string;
   batch_id: string;
-  approval_type: 'factory_transport' | 'airport_receipt' | 'airport_validation' | 'refinery_receipt' | 'refinery_validation' | 'processing_completion';
+  approval_type: 'status_change' | 'variance' | 'quality' | 'sale' | 'split' | 'merge' | 'hold_release' | 'custom';
   approver_id: string;
   approver_name: string;
   approver_role: string;
-  status: 'approved' | 'rejected' | 'conditional';
+  status: 'pending' | 'approved' | 'rejected' | 'escalated' | 'cancelled';
   previous_status?: string;
   new_status: string;
   comments?: string;
@@ -47,14 +47,19 @@ export async function approveBatchForTransport(batchId: string, comments?: strin
 
     const approvalData = {
       batch_id: batchId,
-      approval_type: 'factory_transport',
-      approver_id: user.id,
-      approver_name: profile?.full_name || 'Unknown',
-      approver_role: profile?.role || 'factory',
+      approval_type: 'status_change',
+      required_role: 'factory_manager',
+      request_description: 'Factory approval for transport',
+      requested_by: user.id,
+      approved_by: user.id,
       status: 'approved',
-      previous_status: batch.status,
-      new_status: 'approved_for_transport',
-      comments: comments || 'Approved for transport by factory'
+      comments: comments || 'Approved for transport by factory',
+      request_data: {
+        previous_status: batch.status,
+        new_status: 'approved_for_transport',
+        approver_name: profile?.full_name || 'Unknown',
+        approver_role: profile?.role || 'factory'
+      }
     };
 
     const { data: approval, error: approvalError } = await supabase
@@ -146,17 +151,22 @@ export async function validateAirportReceipt(
 
     const approvalData = {
       batch_id: batchId,
-      approval_type: 'airport_validation',
-      approver_id: user.id,
-      approver_name: profile?.full_name || 'Unknown',
-      approver_role: profile?.role || 'airport',
+      approval_type: withinThreshold ? 'status_change' : 'variance',
+      required_role: 'airport_manager',
+      request_description: 'Airport receipt validation',
+      requested_by: user.id,
+      approved_by: user.id,
       status: 'approved',
-      previous_status: batch.status,
-      new_status: 'validated_for_refinery',
       comments,
-      variance_grams: varianceGrams,
-      variance_percentage: variancePercentage,
-      variance_within_threshold: withinThreshold
+      request_data: {
+        previous_status: batch.status,
+        new_status: 'validated_for_refinery',
+        approver_name: profile?.full_name || 'Unknown',
+        approver_role: profile?.role || 'airport',
+        variance_grams: varianceGrams,
+        variance_percentage: variancePercentage,
+        variance_within_threshold: withinThreshold
+      }
     };
 
     const { data: approval, error: approvalError } = await supabase
@@ -250,17 +260,22 @@ export async function validateRefineryReceipt(
 
     const approvalData = {
       batch_id: batchId,
-      approval_type: 'refinery_validation',
-      approver_id: user.id,
-      approver_name: profile?.full_name || 'Unknown',
-      approver_role: profile?.role || 'refinery',
+      approval_type: withinThreshold ? 'status_change' : 'variance',
+      required_role: 'refinery_manager',
+      request_description: 'Refinery receipt validation',
+      requested_by: user.id,
+      approved_by: user.id,
       status: 'approved',
-      previous_status: batch.status,
-      new_status: 'validated_for_processing',
       comments,
-      variance_grams: varianceGrams,
-      variance_percentage: variancePercentage,
-      variance_within_threshold: withinThreshold
+      request_data: {
+        previous_status: batch.status,
+        new_status: 'validated_for_processing',
+        approver_name: profile?.full_name || 'Unknown',
+        approver_role: profile?.role || 'refinery',
+        variance_grams: varianceGrams,
+        variance_percentage: variancePercentage,
+        variance_within_threshold: withinThreshold
+      }
     };
 
     const { data: approval, error: approvalError } = await supabase

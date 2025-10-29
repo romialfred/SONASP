@@ -120,30 +120,36 @@ export function GoldPriceLive() {
     return 'bg-gray-50';
   };
 
+  const getCardBgColor = () => {
+    if (priceData.change > 0) return 'bg-green-50/60';
+    if (priceData.change < 0) return 'bg-red-50/60';
+    return 'bg-gray-50/60';
+  };
+
   return (
-    <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+    <div className={`relative backdrop-blur-sm rounded-xl border p-4 hover:shadow-lg transition-all duration-200 ${getCardBgColor()} ${priceData.change > 0 ? 'border-green-200' : priceData.change < 0 ? 'border-red-200' : 'border-gray-200'}`}>
       {/* Icon in top-left corner */}
       <div className={`absolute top-4 left-4 w-10 h-10 rounded-lg flex items-center justify-center ${getIconBgColor()}`}>
         {getTrendIcon()}
       </div>
 
       {/* Content with left padding to avoid icon overlap */}
-      <div className="pl-16">
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-medium text-gray-600">Gold Price (London AM)</p>
+      <div className="pl-14">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-xs font-medium text-gray-600">Gold Price (London AM)</p>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
             title="Refresh price"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {/* Current Price */}
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-xl font-bold text-gray-900">
             ${priceData.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             <span className="text-sm font-normal text-gray-500 ml-1">/oz</span>
           </div>

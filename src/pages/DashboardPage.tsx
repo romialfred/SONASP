@@ -244,16 +244,16 @@ export function DashboardPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+          <div className="relative bg-emerald-50/60 backdrop-blur-sm rounded-xl border border-emerald-200 p-4 hover:shadow-lg transition-all duration-200">
             <div className="absolute top-4 left-4 w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-emerald-600" />
             </div>
-            <div className="pl-16">
-              <p className="text-sm font-medium text-gray-600 mb-2">
+            <div className="pl-14">
+              <p className="text-xs font-medium text-gray-600 mb-1">
                 {t('dashboard.totalRevenue')}
               </p>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="space-y-0.5">
+                <div className="text-xl font-bold text-gray-900">
                   ${totalRevenue > 0 ? (totalRevenue / 1000).toFixed(1) + 'K' : '0'}
                 </div>
                 <p className="text-xs text-gray-500">
@@ -265,16 +265,16 @@ export function DashboardPage() {
 
           <GoldPriceLive />
 
-          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+          <div className="relative bg-blue-50/60 backdrop-blur-sm rounded-xl border border-blue-200 p-4 hover:shadow-lg transition-all duration-200">
             <div className="absolute top-4 left-4 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-blue-600" />
             </div>
-            <div className="pl-16">
-              <p className="text-sm font-medium text-gray-600 mb-2">
+            <div className="pl-14">
+              <p className="text-xs font-medium text-gray-600 mb-1">
                 {t('dashboard.activeBatches')}
               </p>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="space-y-0.5">
+                <div className="text-xl font-bold text-gray-900">
                   {totalBatches}
                 </div>
                 <p className="text-xs text-gray-500">
@@ -284,18 +284,18 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+          <div className="relative bg-amber-50/60 backdrop-blur-sm rounded-xl border border-amber-200 p-4 hover:shadow-lg transition-all duration-200">
             <div className="absolute top-4 left-4 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-amber-600" />
             </div>
-            <div className="pl-16">
-              <p className="text-sm font-medium text-gray-600 mb-2">
+            <div className="pl-14">
+              <p className="text-xs font-medium text-gray-600 mb-1">
                 {t('inventory.availableForSale')}
               </p>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="space-y-0.5">
+                <div className="text-xl font-bold text-gray-900">
                   {availableStock.toFixed(2)} oz
-                  <span className="text-base font-normal text-gray-500 ml-2">
+                  <span className="text-sm font-normal text-gray-500 ml-1">
                     ({(availableStock * 31.1035).toFixed(2)}g)
                   </span>
                 </div>

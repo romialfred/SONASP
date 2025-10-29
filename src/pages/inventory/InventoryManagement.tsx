@@ -96,7 +96,8 @@ export function InventoryManagement() {
       changeType: 'neutral' as const,
       icon: Package,
       iconColor: 'text-primary-600',
-      iconBgColor: 'bg-primary-100'
+      iconBgColor: 'bg-primary-100',
+      cardBgColor: 'bg-primary-50/60'
     },
     {
       title: 'Available for Sale',
@@ -106,7 +107,8 @@ export function InventoryManagement() {
       changeType: stockLevel < 100 ? ('negative' as const) : ('positive' as const),
       icon: TrendingUp,
       iconColor: stockLevel < 100 ? 'text-orange-600' : 'text-emerald-600',
-      iconBgColor: stockLevel < 100 ? 'bg-orange-100' : 'bg-emerald-100'
+      iconBgColor: stockLevel < 100 ? 'bg-orange-100' : 'bg-emerald-100',
+      cardBgColor: stockLevel < 100 ? 'bg-orange-50/60' : 'bg-emerald-50/60'
     },
     {
       title: 'Allocated to Sales',
@@ -116,7 +118,8 @@ export function InventoryManagement() {
       changeType: 'neutral' as const,
       icon: AlertCircle,
       iconColor: 'text-blue-600',
-      iconBgColor: 'bg-blue-100'
+      iconBgColor: 'bg-blue-100',
+      cardBgColor: 'bg-blue-50/60'
     },
     {
       title: 'Total Sold',
@@ -126,7 +129,8 @@ export function InventoryManagement() {
       changeType: 'positive' as const,
       icon: TrendingUp,
       iconColor: 'text-emerald-600',
-      iconBgColor: 'bg-emerald-100'
+      iconBgColor: 'bg-emerald-100',
+      cardBgColor: 'bg-emerald-50/60'
     }
   ];
 

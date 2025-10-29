@@ -11,6 +11,7 @@ export interface MetricCardProps {
   icon?: LucideIcon;
   iconColor?: string;
   iconBgColor?: string;
+  cardBgColor?: string;
 }
 
 export function MetricCard({
@@ -22,7 +23,8 @@ export function MetricCard({
   changeType = 'neutral',
   icon: Icon = HelpCircle,
   iconColor = 'text-primary-600',
-  iconBgColor = 'bg-primary-100'
+  iconBgColor = 'bg-primary-100',
+  cardBgColor = 'bg-white/40'
 }: MetricCardProps) {
   const changeColors = {
     positive: 'text-emerald-600',
@@ -31,7 +33,10 @@ export function MetricCard({
   };
 
   return (
-    <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+    <div className={cn(
+      "relative backdrop-blur-sm rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-200",
+      cardBgColor
+    )}>
       {/* Icon in top-left corner */}
       <div className={cn(
         'absolute top-4 left-4 w-10 h-10 rounded-lg flex items-center justify-center',
@@ -41,16 +46,16 @@ export function MetricCard({
       </div>
 
       {/* Content with left padding to avoid icon overlap */}
-      <div className="pl-16">
-        <p className="text-sm font-medium text-gray-600 mb-2">
+      <div className="pl-14">
+        <p className="text-xs font-medium text-gray-600 mb-1">
           {title}
         </p>
 
-        <div className="space-y-1">
-          <div className="text-2xl font-bold text-gray-900">
+        <div className="space-y-0.5">
+          <div className="text-xl font-bold text-gray-900">
             {value}
             {valueInGrams && (
-              <span className="text-base font-normal text-gray-500 ml-2">
+              <span className="text-sm font-normal text-gray-500 ml-1">
                 ({valueInGrams.toLocaleString('en-US', { maximumFractionDigits: 2 })}g)
               </span>
             )}

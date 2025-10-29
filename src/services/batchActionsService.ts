@@ -111,13 +111,14 @@ export function getAvailableBatchActions(
       role?.toLowerCase().includes(r)
     );
 
-    if (status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT) {
+    // Receive Batch action for APPROVED_FOR_TRANSPORT status
+    if (status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT && isAirportStaff) {
       actions.push({
-        id: 'view_details',
-        label: 'View Details',
-        icon: Eye,
-        variant: 'outline',
-        handler: handlers.onViewDetails || (() => {}),
+        id: 'receive_batch',
+        label: 'Receive Batch',
+        icon: Package,
+        variant: 'primary',
+        handler: handlers.onConfirmReceipt || (() => {}),
         requiresConfirmation: false,
         visible: true,
       });
@@ -147,6 +148,7 @@ export function getAvailableBatchActions(
       });
     }
 
+    // View Details action - always available
     if (handlers.onViewDetails) {
       actions.push({
         id: 'view_details',

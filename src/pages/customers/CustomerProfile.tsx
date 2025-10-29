@@ -49,6 +49,7 @@ export function CustomerProfile() {
 
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'communications'>('overview');
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [activeSales, setActiveSales] = useState<Array<{ id: string; saleNumber: string; status: string; amount: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,6 +112,27 @@ export function CustomerProfile() {
       // Payment rate (placeholder - would need payment data to calculate)
       const paymentRate = 0;
 
+      // Fetch active sales for this customer
+      const { data: activeSalesData, error: activeSalesError } = await supabase
+        .from('sales')
+        .select('id, sale_number, status, final_proceeds')
+        .eq('customer_id', id)
+        .in('status', ['pending', 'customer_pending', 'approved', 'customer_approved'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (activeSalesError) {
+        console.error('Error fetching active sales:', activeSalesError);
+      }
+
+      // Map active sales data
+      const mappedActiveSales = (activeSalesData || []).map(sale => ({
+        id: sale.id,
+        saleNumber: sale.sale_number,
+        status: sale.status,
+        amount: parseFloat(sale.final_proceeds || '0')
+      }));
+
       setCustomer({
         id: customerData.id,
         name: customerData.name,
@@ -130,6 +152,8 @@ export function CustomerProfile() {
         paymentRate,
         lastPurchaseDate,
       });
+
+      setActiveSales(mappedActiveSales);
     } catch (err) {
       console.error('Error loading customer:', err);
       setError(err instanceof Error ? err.message : 'Failed to load customer details');
@@ -207,10 +231,7 @@ export function CustomerProfile() {
     },
   ];
 
-  const activeSales = [
-    { saleNumber: 'SL-2024-044', status: 'pending', amount: 178900 },
-    { saleNumber: 'SL-2024-045', status: 'approved', amount: 156200 },
-  ];
+  // Active sales now fetched from database in useEffect
 
   if (loading) {
     return (
@@ -412,24 +433,40 @@ export function CustomerProfile() {
                 <CardTitle>Active Sales</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {activeSales.map((sale) => (
-                    <div
-                      key={sale.saleNumber}
-                      className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => navigate(`/sales/${sale.saleNumber}`)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-sm font-semibold text-gray-900">{sale.saleNumber}</p>
-                        <StatusBadge
-                          label={sale.status}
-                          variant={sale.status === 'approved' ? 'success' : 'warning'}
-                        />
-                      </div>
-                      <p className="text-sm text-gray-600">{formatCurrency(sale.amount)}</p>
-                    </div>
-                  ))}
-                </div>
+                {activeSales.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-gray-500">No active sales for this customer</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activeSales.map((sale) => {
+                      const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }> = {
+                        pending: { label: 'Pending', variant: 'warning' },
+                        customer_pending: { label: 'Customer Pending', variant: 'info' },
+                        approved: { label: 'Approved', variant: 'success' },
+                        customer_approved: { label: 'Customer Approved', variant: 'success' },
+                      };
+                      const statusInfo = statusMap[sale.status] || { label: sale.status, variant: 'neutral' as const };
+
+                      return (
+                        <div
+                          key={sale.id}
+                          className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                          onClick={() => navigate(`/sales/${sale.id}`)}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="text-sm font-semibold text-gray-900">{sale.saleNumber}</p>
+                            <StatusBadge
+                              label={statusInfo.label}
+                              variant={statusInfo.variant}
+                            />
+                          </div>
+                          <p className="text-sm text-gray-600">{formatCurrency(sale.amount)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Users, Plus, Download, TrendingUp, DollarSign } from 'lucide-react';
@@ -9,6 +9,8 @@ import { Table } from '@/components/ui/Table';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { formatCurrency } from '@/utils/salesUtils';
+import { supabase } from '@/lib/supabase';
+import { Loading } from '@/components/ui/Loading';
 
 interface Customer {
   id: string;
@@ -30,62 +32,86 @@ export function CustomerListing() {
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const customers: Customer[] = [
-    {
-      id: '1',
-      name: 'Premium Gold Ltd.',
-      email: 'contact@premiumgold.com',
-      country: 'Switzerland',
-      phone: '+41 44 123 4567',
-      totalPurchases: 45,
-      totalSpent: 6780450,
-      lastPurchaseDate: '2024-10-20',
-      status: 'active',
-      paymentRate: 98.5,
-    },
-    {
-      id: '2',
-      name: 'Global Metals Inc.',
-      email: 'sales@globalmetals.com',
-      country: 'UAE',
-      phone: '+971 4 567 8901',
-      totalPurchases: 38,
-      totalSpent: 5432100,
-      lastPurchaseDate: '2024-10-18',
-      status: 'active',
-      paymentRate: 95.2,
-    },
-    {
-      id: '3',
-      name: 'Swiss Refineries SA',
-      email: 'info@swissref.ch',
-      country: 'Switzerland',
-      phone: '+41 22 987 6543',
-      totalPurchases: 52,
-      totalSpent: 8901230,
-      lastPurchaseDate: '2024-10-22',
-      status: 'active',
-      paymentRate: 99.1,
-    },
-    {
-      id: '4',
-      name: 'Asian Gold Trading',
-      email: 'trading@asiangold.com',
-      country: 'Singapore',
-      phone: '+65 6789 1234',
-      totalPurchases: 29,
-      totalSpent: 4123890,
-      lastPurchaseDate: '2024-09-15',
-      status: 'inactive',
-      paymentRate: 92.8,
-    },
-  ];
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch customers from database
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('id, name, email, phone, country, address, status')
+        .order('name');
+
+      if (customersError) {
+        console.error('Error fetching customers:', customersError);
+        throw customersError;
+      }
+
+      // Fetch sales data to calculate metrics
+      const { data: salesData, error: salesError } = await supabase
+        .from('sales')
+        .select('customer_id, quantity_oz, final_proceeds, created_at, status')
+        .in('status', ['approved', 'customer_approved', 'payment_received', 'completed']);
+
+      if (salesError) {
+        console.error('Error fetching sales:', salesError);
+      }
+
+      // Calculate customer metrics
+      const customersWithMetrics = (customersData || []).map(customer => {
+        const customerSales = (salesData || []).filter(s => s.customer_id === customer.id);
+        const totalPurchases = customerSales.length;
+        const totalSpent = customerSales.reduce((sum, s) => sum + parseFloat(s.final_proceeds || '0'), 0);
+
+        // Find last purchase date
+        const sortedSales = customerSales.sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        const lastPurchaseDate = sortedSales.length > 0 ? sortedSales[0].created_at : '';
+
+        // Calculate payment rate (for now, set to 0 as we need payment data)
+        const paymentRate = 0;
+
+        return {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          country: customer.country,
+          phone: customer.phone || 'N/A',
+          totalPurchases,
+          totalSpent,
+          lastPurchaseDate,
+          status: customer.status || 'active',
+          paymentRate,
+        } as Customer;
+      });
+
+      setCustomers(customersWithMetrics);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate metrics from real data
+  const totalCustomers = customers.length;
+  const activeCustomers = customers.filter(c => c.status === 'active').length;
+  const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+  const avgOrderValue = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+  const activePercentage = totalCustomers > 0 ? Math.round((activeCustomers / totalCustomers) * 100) : 0;
 
   const metrics = [
     {
       title: 'Total Customers',
-      value: '18',
+      value: totalCustomers.toString(),
       change: '+3 this quarter',
       changeType: 'positive' as const,
       icon: Users,
@@ -93,15 +119,15 @@ export function CustomerListing() {
     },
     {
       title: 'Active Customers',
-      value: '15',
-      change: '83% of total',
+      value: activeCustomers.toString(),
+      change: `${activePercentage}% of total`,
       changeType: 'positive' as const,
       icon: TrendingUp,
       iconColor: 'text-accent-500',
     },
     {
       title: 'Total Revenue (YTD)',
-      value: formatCurrency(25237670),
+      value: formatCurrency(totalRevenue),
       change: '+24% from last year',
       changeType: 'positive' as const,
       icon: DollarSign,
@@ -109,7 +135,7 @@ export function CustomerListing() {
     },
     {
       title: 'Avg Order Value',
-      value: formatCurrency(158450),
+      value: formatCurrency(avgOrderValue),
       change: '+8% this quarter',
       changeType: 'positive' as const,
       icon: DollarSign,
@@ -174,6 +200,16 @@ export function CustomerListing() {
   const handleExport = () => {
     console.log('Exporting customer data...');
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

@@ -27,16 +27,16 @@ export function MetricCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <CardTitle className="text-xs font-medium text-gray-600">
           {title}
         </CardTitle>
-        <Icon className={cn('h-5 w-5', iconColor)} />
+        <Icon className={cn('h-4 w-4', iconColor)} />
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
+      <CardContent className="pt-0">
+        <div className="text-xl font-bold text-gray-900">{value}</div>
         {change && (
-          <p className={cn('text-xs mt-1 font-medium', changeColors[changeType])}>
+          <p className={cn('text-xs mt-0.5 font-medium', changeColors[changeType])}>
             {change}
           </p>
         )}

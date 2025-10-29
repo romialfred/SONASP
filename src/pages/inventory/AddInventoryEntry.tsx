@@ -81,7 +81,7 @@ interface FieldGuidance {
 const fieldGuidance: FieldGuidance = {
   batch_id: {
     title: 'Batch Selection',
-    description: 'Select a batch that has completed processing. Only batches with "processing" status are available.',
+    description: 'Select a batch that has completed processing. Only batches with "processed" status are available for inventory entry.',
     icon: Package,
     color: 'blue',
   },
@@ -192,7 +192,7 @@ export function AddInventoryEntry() {
           refinery_received_weight_grams,
           refinery_received_at
         `)
-        .eq('status', 'processing')
+        .eq('status', 'processed')
         .order('shipping_date', { ascending: false });
 
       if (error) throw error;

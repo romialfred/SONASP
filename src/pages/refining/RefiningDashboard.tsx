@@ -76,7 +76,8 @@ export function RefiningDashboard() {
           BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
           BATCH_STATUSES.RECEIVED_AT_REFINERY,
           BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-          BATCH_STATUSES.PROCESSING
+          BATCH_STATUSES.PROCESSING,
+          BATCH_STATUSES.PROCESSED
         ])
         .order('created_at', { ascending: false });
 
@@ -131,6 +132,10 @@ export function RefiningDashboard() {
     b => b.status === BATCH_STATUSES.PROCESSING
   ).length;
 
+  const processedCount = batches.filter(
+    b => b.status === BATCH_STATUSES.PROCESSED
+  ).length;
+
   const totalProcessed = refiningRecords.length;
 
   const totalOutput = refiningRecords.reduce(
@@ -142,28 +147,28 @@ export function RefiningDashboard() {
 
   const metrics = [
     {
-      title: 'Awaiting Receipt',
-      value: waitingReceiptCount.toString(),
-      change: 'Ready to receive',
+      title: 'Ready for Processing',
+      value: validatedCount.toString(),
+      change: 'Validated, ready to process',
       changeType: 'neutral' as const,
       icon: Package,
       iconColor: 'text-blue-500',
     },
     {
-      title: 'Need Validation',
-      value: receivedCount.toString(),
-      change: 'Received, not validated',
-      changeType: 'warning' as const,
-      icon: AlertCircle,
-      iconColor: 'text-orange-500',
-    },
-    {
       title: 'Processing',
       value: processingCount.toString(),
       change: 'Currently refining',
-      changeType: 'positive' as const,
+      changeType: 'warning' as const,
       icon: Flame,
-      iconColor: 'text-red-500',
+      iconColor: 'text-orange-500',
+    },
+    {
+      title: 'Processed',
+      value: processedCount.toString(),
+      change: 'Ready for inventory',
+      changeType: 'positive' as const,
+      icon: CheckCircle,
+      iconColor: 'text-green-500',
     },
     {
       title: 'Total Output',
@@ -228,7 +233,7 @@ export function RefiningDashboard() {
     try {
       const result = await completeProcessing(batchId, user.id, 'Processing completed by refinery staff');
       if (result.success) {
-        alert.success('Processing completed! Batch moved to inventory.');
+        alert.success('Processing completed! Batch ready for inventory entry.');
         fetchData(); // Reload data
       } else {
         alert.error(result.error || 'Error completing processing');

@@ -262,7 +262,7 @@ export async function startProcessing(
 }
 
 /**
- * Specific transition: Complete processing and move to inventory
+ * Specific transition: Complete processing and mark as processed
  */
 export async function completeProcessing(
   batchId: string,
@@ -271,9 +271,9 @@ export async function completeProcessing(
 ): Promise<TransitionResult> {
   return transitionBatchStatus(
     batchId,
-    BATCH_STATUSES.IN_INVENTORY,
+    BATCH_STATUSES.PROCESSED,
     {
-      comments: comments || 'Processing completed, batch moved to inventory',
+      comments: comments || 'Processing completed, batch ready for inventory entry',
       completedBy,
     }
   );

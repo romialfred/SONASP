@@ -105,24 +105,24 @@ export function ReceivingConfirm() {
       const actualWeightGrams = parseFloat(actualWeight);
       const actualWeightOunces = convertGramsToOunces(actualWeightGrams);
 
-      // Determine new status based on current status and variance
+      // Determine new status based on current status
       let newStatus: string;
+      let isAirportReceipt = false;
+      let isRefineryReceipt = false;
 
       // Check current status to determine correct next status
-      if (batch.status === 'approved_for_transport') {
-        // If batch comes directly from factory without waiting_airport_receipt step
-        // First move to waiting_airport_receipt, then to received_at_airport
-        // For simplicity, we'll move to received_at_airport directly but this should ideally be two steps
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
-      } else if (batch.status === 'waiting_airport_receipt') {
-        // Normal flow: from waiting to received
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+      if (batch.status === 'approved_for_transport' || batch.status === 'waiting_airport_receipt') {
+        // Airport receiving: after confirmation, ship to refinery
+        newStatus = BATCH_STATUSES.WAITING_REFINERY_RECEIPT;
+        isAirportReceipt = true;
       } else if (batch.status === 'waiting_refinery_receipt') {
-        // At refinery
-        newStatus = BATCH_STATUSES.RECEIVED_AT_REFINERY;
+        // Refinery receiving: after confirmation, ready for processing
+        newStatus = BATCH_STATUSES.VALIDATED_FOR_PROCESSING;
+        isRefineryReceipt = true;
       } else {
-        // Default: use received_at_airport
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+        // Default: waiting for refinery
+        newStatus = BATCH_STATUSES.WAITING_REFINERY_RECEIPT;
+        isAirportReceipt = true;
       }
 
       // Update batch with received weight and new status
@@ -163,11 +163,13 @@ export function ReceivingConfirm() {
         console.warn('Could not log to batch_history:', historyError);
       }
 
-      alert.success(
-        variance?.isSignificant
-          ? 'Receipt confirmed. Batch requires validation due to significant variance.'
-          : 'Receipt confirmed successfully. Batch validated and ready for refinery.'
-      );
+      if (isAirportReceipt) {
+        alert.success('Airport receipt confirmed. Batch shipped to refinery.');
+      } else if (isRefineryReceipt) {
+        alert.success('Refinery receipt confirmed. Batch ready for processing.');
+      } else {
+        alert.success('Receipt confirmed successfully.');
+      }
 
       // Navigate after a short delay to show the success message
       setTimeout(() => {

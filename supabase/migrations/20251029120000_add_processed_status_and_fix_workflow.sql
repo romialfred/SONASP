@@ -73,9 +73,9 @@ VALUES
   ('processing', 'processed', 'refinery_staff',
    'Batch processing completed at refinery', false),
 
-  -- Processed batch added to inventory (SYSTEM)
-  ('processed', 'in_inventory', 'system',
-   'Processed batch added to inventory via Add Inventory Entry form', true)
+  -- Processed batch added to inventory (REFINERY STAFF)
+  ('processed', 'in_inventory', 'refinery_staff',
+   'Processed batch added to inventory via Add Inventory Entry form', false)
 
 ON CONFLICT (from_status, to_status) DO UPDATE SET
   requires_role = EXCLUDED.requires_role,

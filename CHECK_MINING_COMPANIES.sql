@@ -1,123 +1,49 @@
--- ============================================================================
--- CHECK MINING COMPANIES - Verify Data for User Assignment
--- ============================================================================
---
--- PURPOSE: Check if mining companies exist for user site assignment
---
--- This script will:
--- 1. Count total mining companies
--- 2. List all active mining companies
--- 3. Show which companies are assigned to users
--- 4. Provide recommendations if no companies exist
---
--- ============================================================================
+-- Vérifier la structure des tables mining_companies et sites
+-- Pour comprendre la relation correcte
 
-DO $$
-DECLARE
-  total_companies INTEGER;
-  active_companies INTEGER;
-  users_with_sites INTEGER;
-  rec RECORD;
-BEGIN
-  -- Count companies
-  SELECT COUNT(*) INTO total_companies FROM mining_companies;
-  SELECT COUNT(*) INTO active_companies FROM mining_companies WHERE is_active = true;
+-- 1. Vérifier si mining_companies existe
+SELECT 
+  'mining_companies table exists' as check_name,
+  COUNT(*) as count
+FROM mining_companies
+LIMIT 5;
 
-  -- Count users with site assignments
-  SELECT COUNT(*) INTO users_with_sites
-  FROM user_profiles
-  WHERE site_ids IS NOT NULL AND array_length(site_ids, 1) > 0;
+-- 2. Vérifier si sites existe
+SELECT 
+  'sites table check' as check_name,
+  CASE 
+    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sites')
+    THEN 'exists'
+    ELSE 'does not exist'
+  END as status;
 
-  RAISE NOTICE '';
-  RAISE NOTICE '=============================================================================';
-  RAISE NOTICE 'MINING COMPANIES STATUS';
-  RAISE NOTICE '=============================================================================';
-  RAISE NOTICE '';
-  RAISE NOTICE 'Total mining companies: %', total_companies;
-  RAISE NOTICE 'Active mining companies: %', active_companies;
-  RAISE NOTICE 'Users with site assignments: %', users_with_sites;
-  RAISE NOTICE '';
+-- 3. Voir les colonnes de user_site_assignments
+SELECT 
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_name = 'user_site_assignments'
+ORDER BY ordinal_position;
 
-  IF active_companies = 0 THEN
-    RAISE NOTICE '⚠ WARNING: No active mining companies found!';
-    RAISE NOTICE '';
-    RAISE NOTICE 'The user assignment dropdown will be empty.';
-    RAISE NOTICE 'You need to create mining companies first.';
-    RAISE NOTICE '';
-    RAISE NOTICE 'To create mining companies, you can:';
-    RAISE NOTICE '1. Use the Mining Companies page in the app';
-    RAISE NOTICE '2. Or run this SQL:';
-    RAISE NOTICE '';
-    RAISE NOTICE 'INSERT INTO mining_companies (name, code, country, is_active)';
-    RAISE NOTICE 'VALUES';
-    RAISE NOTICE '  (''Société Minière de Dinguiraye'', ''SMD'', ''Guinea'', true),';
-    RAISE NOTICE '  (''African Gold Group'', ''AGG'', ''Mali'', true),';
-    RAISE NOTICE '  (''Golden Mining Corporation'', ''GMC'', ''Côte d''''Ivoire'', true);';
-    RAISE NOTICE '';
-  ELSE
-    RAISE NOTICE '✓ Active mining companies found!';
-    RAISE NOTICE '';
-    RAISE NOTICE 'LIST OF ACTIVE COMPANIES:';
-    RAISE NOTICE '─────────────────────────────────────────────────────────────────────────';
-
-    FOR rec IN
-      SELECT name, code, country, created_at
-      FROM mining_companies
-      WHERE is_active = true
-      ORDER BY name
-    LOOP
-      RAISE NOTICE '  • % (%) - %', rec.name, rec.code, rec.country;
-    END LOOP;
-
-    RAISE NOTICE '';
-
-    IF users_with_sites > 0 THEN
-      RAISE NOTICE 'USERS WITH SITE ASSIGNMENTS:';
-      RAISE NOTICE '─────────────────────────────────────────────────────────────────────────';
-
-      FOR rec IN
-        SELECT
-          up.full_name,
-          up.email,
-          up.role,
-          array_length(up.site_ids, 1) as company_count
-        FROM user_profiles up
-        WHERE up.site_ids IS NOT NULL
-          AND array_length(up.site_ids, 1) > 0
-        ORDER BY up.full_name
-      LOOP
-        RAISE NOTICE '  • % (%) - % assigned to % compan%',
-          rec.full_name,
-          rec.email,
-          rec.role,
-          rec.company_count,
-          CASE WHEN rec.company_count = 1 THEN 'y' ELSE 'ies' END;
-      END LOOP;
-    ELSE
-      RAISE NOTICE 'ℹ No users have been assigned to mining companies yet.';
-    END IF;
-  END IF;
-
-  RAISE NOTICE '';
-  RAISE NOTICE '=============================================================================';
-  RAISE NOTICE '';
-
-END $$;
-
--- ============================================================================
--- DETAILED COMPANY INFORMATION
--- ============================================================================
-
+-- 4. Voir les foreign keys
 SELECT
-  mc.name as "Company Name",
-  mc.code as "Code",
-  mc.country as "Country",
-  mc.is_active as "Active",
-  mc.created_at as "Created At",
-  (
-    SELECT COUNT(*)
-    FROM user_profiles up
-    WHERE mc.id = ANY(up.site_ids)
-  ) as "Users Assigned"
-FROM mining_companies mc
-ORDER BY mc.name;
+  tc.constraint_name,
+  tc.table_name,
+  kcu.column_name,
+  ccu.table_name AS foreign_table_name,
+  ccu.column_name AS foreign_column_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.table_name = 'user_site_assignments'
+  AND tc.constraint_type = 'FOREIGN KEY';
+
+-- 5. Lister quelques mining companies
+SELECT id, name, code, country, is_active
+FROM mining_companies
+WHERE is_active = true
+ORDER BY name
+LIMIT 5;

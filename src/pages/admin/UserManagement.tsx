@@ -330,7 +330,11 @@ export function UserManagement() {
         if (usersData && Array.isArray(usersData)) {
           const { data: assignments } = await supabase
             .from('user_site_assignments')
-            .select('user_id, site_id, mining_companies(name)');
+            .select(`
+              user_id,
+              site_id,
+              sites:site_id(name)
+            `);
 
           const assignmentMap = new Map<string, { site_ids: string[]; company_names: string[] }>();
           if (assignments) {
@@ -340,8 +344,8 @@ export function UserManagement() {
               }
               const userAssignments = assignmentMap.get(assignment.user_id)!;
               userAssignments.site_ids.push(assignment.site_id);
-              if (assignment.mining_companies?.name) {
-                userAssignments.company_names.push(assignment.mining_companies.name);
+              if (assignment.sites?.name) {
+                userAssignments.company_names.push(assignment.sites.name);
               }
             });
           }
@@ -387,7 +391,11 @@ export function UserManagement() {
 
       const { data: assignments } = await supabase
         .from('user_site_assignments')
-        .select('user_id, site_id, mining_companies(name)');
+        .select(`
+          user_id,
+          site_id,
+          sites:site_id(name)
+        `);
 
       const assignmentMap = new Map<string, { site_ids: string[]; company_names: string[] }>();
       if (assignments) {
@@ -397,8 +405,8 @@ export function UserManagement() {
           }
           const userAssignments = assignmentMap.get(assignment.user_id)!;
           userAssignments.site_ids.push(assignment.site_id);
-          if (assignment.mining_companies?.name) {
-            userAssignments.company_names.push(assignment.mining_companies.name);
+          if (assignment.sites?.name) {
+            userAssignments.company_names.push(assignment.sites.name);
           }
         });
       }

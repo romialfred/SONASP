@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Mail, Phone, MapPin, TrendingUp } from 'lucide-react';
@@ -9,6 +9,9 @@ import { Table } from '@/components/ui/Table';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { formatCurrency } from '@/utils/salesUtils';
+import { supabase } from '@/lib/supabase';
+import { Loading } from '@/components/ui/Loading';
+import { Alert } from '@/components/ui/Alert';
 
 interface Transaction {
   id: string;
@@ -19,93 +22,121 @@ interface Transaction {
   status: 'completed' | 'pending' | 'payment_pending';
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  contactPerson?: string;
+  taxId?: string;
+  registeredDate?: string;
+  status: string;
+  paymentTerms?: string;
+  creditLimit?: number;
+  totalPurchases: number;
+  totalSpent: number;
+  averageOrderValue: number;
+  paymentRate: number;
+  lastPurchaseDate?: string;
+}
+
 export function CustomerProfile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'communications'>('overview');
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const mockCustomers = [
-    {
-      id: '1',
-      name: 'Premium Gold Ltd.',
-      email: 'contact@premiumgold.com',
-      phone: '+41 44 123 4567',
-      country: 'Switzerland',
-      address: 'Bahnhofstrasse 45, 8001 Zurich',
-      contactPerson: 'Hans Mueller',
-      taxId: 'CHE-123.456.789',
-      registeredDate: '2022-03-15',
-      status: 'active',
-      paymentTerms: 'Net 30 days',
-      creditLimit: 500000,
-      totalPurchases: 45,
-      totalSpent: 6780450,
-      averageOrderValue: 150676,
-      paymentRate: 98.5,
-      lastPurchaseDate: '2024-10-20',
-    },
-    {
-      id: '2',
-      name: 'Global Metals Inc.',
-      email: 'sales@globalmetals.com',
-      phone: '+971 4 567 8901',
-      country: 'UAE',
-      address: 'Sheikh Zayed Road, Dubai',
-      contactPerson: 'Ahmed Al-Maktoum',
-      taxId: 'TRN-987654321',
-      registeredDate: '2022-06-10',
-      status: 'active',
-      paymentTerms: 'Net 45 days',
-      creditLimit: 750000,
-      totalPurchases: 38,
-      totalSpent: 5432100,
-      averageOrderValue: 142950,
-      paymentRate: 95.2,
-      lastPurchaseDate: '2024-10-18',
-    },
-    {
-      id: '3',
-      name: 'Swiss Refineries SA',
-      email: 'info@swissref.ch',
-      phone: '+41 22 987 6543',
-      country: 'Switzerland',
-      address: 'Rue du Rhone 100, 1204 Geneva',
-      contactPerson: 'Pierre Dubois',
-      taxId: 'CHE-987.654.321',
-      registeredDate: '2021-11-20',
-      status: 'active',
-      paymentTerms: 'Net 30 days',
-      creditLimit: 1000000,
-      totalPurchases: 52,
-      totalSpent: 8901230,
-      averageOrderValue: 171178,
-      paymentRate: 99.1,
-      lastPurchaseDate: '2024-10-22',
-    },
-    {
-      id: '4',
-      name: 'Asian Gold Trading',
-      email: 'trading@asiangold.com',
-      phone: '+65 6789 1234',
-      country: 'Singapore',
-      address: 'Marina Bay Financial Centre',
-      contactPerson: 'Li Wei',
-      taxId: 'GST-456789123',
-      registeredDate: '2023-01-12',
-      status: 'inactive',
-      paymentTerms: 'Net 60 days',
-      creditLimit: 600000,
-      totalPurchases: 29,
-      totalSpent: 4123890,
-      averageOrderValue: 142203,
-      paymentRate: 92.8,
-      lastPurchaseDate: '2024-09-15',
-    },
-  ];
+  useEffect(() => {
+    fetchCustomerDetails();
+  }, [id]);
 
-  const customer = mockCustomers.find((c) => c.id === id) || mockCustomers[0];
+  const fetchCustomerDetails = async () => {
+    if (!id) {
+      setError('No customer ID provided');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch customer data
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (customerError) {
+        console.error('Error fetching customer:', customerError);
+        throw customerError;
+      }
+
+      if (!customerData) {
+        setError('Customer not found');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch sales data for this customer
+      const { data: salesData, error: salesError } = await supabase
+        .from('sales')
+        .select('quantity_oz, final_proceeds, created_at, status')
+        .eq('customer_id', id)
+        .in('status', ['approved', 'customer_approved', 'payment_received', 'completed']);
+
+      if (salesError) {
+        console.error('Error fetching sales:', salesError);
+      }
+
+      // Calculate metrics
+      const sales = salesData || [];
+      const totalPurchases = sales.length;
+      const totalSpent = sales.reduce((sum, sale) => sum + parseFloat(sale.final_proceeds || '0'), 0);
+      const averageOrderValue = totalPurchases > 0 ? totalSpent / totalPurchases : 0;
+
+      // Find last purchase date
+      const sortedSales = sales.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const lastPurchaseDate = sortedSales.length > 0 ? sortedSales[0].created_at : undefined;
+
+      // Payment rate (placeholder - would need payment data to calculate)
+      const paymentRate = 0;
+
+      setCustomer({
+        id: customerData.id,
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone || 'N/A',
+        country: customerData.country,
+        address: customerData.address || 'N/A',
+        contactPerson: customerData.contact_person || 'N/A',
+        taxId: customerData.tax_id || 'N/A',
+        registeredDate: customerData.created_at,
+        status: customerData.status || 'active',
+        paymentTerms: customerData.payment_terms || 'Net 30 days',
+        creditLimit: customerData.credit_limit || 0,
+        totalPurchases,
+        totalSpent,
+        averageOrderValue,
+        paymentRate,
+        lastPurchaseDate,
+      });
+    } catch (err) {
+      console.error('Error loading customer:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load customer details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const transactions: Transaction[] = [
     {
@@ -180,6 +211,33 @@ export function CustomerProfile() {
     { saleNumber: 'SL-2024-044', status: 'pending', amount: 178900 },
     { saleNumber: 'SL-2024-045', status: 'approved', amount: 156200 },
   ];
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loading size="lg" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !customer) {
+    return (
+      <MainLayout>
+        <div className="max-w-xl mx-auto py-12 space-y-6">
+          <Alert variant="error" title="Unable to load customer">
+            {error || 'Customer not found'}
+          </Alert>
+          <div className="flex justify-center">
+            <Button onClick={() => navigate('/customers')}>
+              Back to Customers
+            </Button>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

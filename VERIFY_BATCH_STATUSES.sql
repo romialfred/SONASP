@@ -25,16 +25,16 @@ WHERE b.status NOT IN ('sold', 'cancelled')
   )
 GROUP BY b.status;
 
--- 3. Vérifier les 15 statuts valides dans la contrainte
-SELECT 
-  '3. Valid Statuses in Constraint' as check_name,
-  unnest(enum_range(NULL::text)) as valid_status
+-- 3. Vérifier les statuts valides disponibles dans allowed_status_transitions
+SELECT
+  '3. Valid Statuses Available' as check_name,
+  status as valid_status
 FROM (
-  SELECT constraint_name 
-  FROM information_schema.table_constraints 
-  WHERE table_name = 'batches' 
-    AND constraint_name = 'batches_status_check'
-) c;
+  SELECT DISTINCT from_status as status FROM allowed_status_transitions
+  UNION
+  SELECT DISTINCT to_status as status FROM allowed_status_transitions
+) all_statuses
+ORDER BY valid_status;
 
 -- 4. Vérifier la transition processed → in_inventory
 SELECT 

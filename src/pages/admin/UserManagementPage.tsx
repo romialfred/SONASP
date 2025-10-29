@@ -47,9 +47,18 @@ interface UserPermission {
   can_delete: boolean;
 }
 
+interface MiningCompany {
+  id: string;
+  name: string;
+  code: string;
+  country: string;
+  is_active: boolean;
+}
+
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
@@ -71,6 +80,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     loadUsers();
     loadModules();
+    loadMiningCompanies();
   }, []);
 
   const loadUsers = async () => {
@@ -152,6 +162,21 @@ export default function UserManagementPage() {
       setModules(data || []);
     } catch (error) {
       console.error('Error loading modules:', error);
+    }
+  };
+
+  const loadMiningCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mining_companies')
+        .select('id, name, code, country, is_active')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setMiningCompanies(data || []);
+    } catch (error) {
+      console.error('Error loading mining companies:', error);
     }
   };
 
@@ -628,6 +653,69 @@ export default function UserManagementPage() {
                 <option value="customer">Customer</option>
                 <option value="management">Management</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mining Companies Assignment <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
+                <label className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.site_ids.length === miningCompanies.length && miningCompanies.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, site_ids: miningCompanies.map(mc => mc.id) });
+                      } else {
+                        setFormData({ ...formData, site_ids: [] });
+                      }
+                    }}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-semibold text-primary-700">Select All</span>
+                </label>
+                <div className="border-t border-gray-200 pt-2">
+                  {miningCompanies.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-2">No mining companies available</p>
+                  ) : (
+                    miningCompanies.map((company) => (
+                      <label
+                        key={company.id}
+                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.site_ids.includes(company.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                site_ids: [...formData.site_ids, company.id]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                site_ids: formData.site_ids.filter(id => id !== company.id)
+                              });
+                            }
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-900">{company.name}</span>
+                          <span className="text-xs text-gray-500 ml-2">({company.code} - {company.country})</span>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+              {formData.site_ids.length > 0 && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {formData.site_ids.length} compan{formData.site_ids.length === 1 ? 'y' : 'ies'} selected
+                </p>
+              )}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

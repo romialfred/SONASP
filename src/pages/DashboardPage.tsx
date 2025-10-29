@@ -194,28 +194,34 @@ export function DashboardPage() {
   };
 
   const statusColors: Record<string, string> = {
-    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#9ca3af',
-    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#60a5fa',
-    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#3b82f6',
-    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#f59e0b',
-    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#8b5cf6',
-    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#a855f7',
-    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#ec4899',
-    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#14b8a6',
-    [BATCH_STATUSES.PROCESSING]: '#f97316',
-    [BATCH_STATUSES.IN_INVENTORY]: '#10b981',
-    [BATCH_STATUSES.READY_FOR_SALE]: '#22c55e',
-    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#84cc16',
-    [BATCH_STATUSES.SOLD]: '#059669',
-    [BATCH_STATUSES.CANCELLED]: '#ef4444',
+    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#64748b',
+    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#1e40af',
+    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#1d4ed8',
+    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#b45309',
+    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#6d28d9',
+    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#7c3aed',
+    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#be185d',
+    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#0d9488',
+    [BATCH_STATUSES.PROCESSING]: '#c2410c',
+    [BATCH_STATUSES.IN_INVENTORY]: '#065f46',
+    [BATCH_STATUSES.READY_FOR_SALE]: '#166534',
+    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#4d7c0f',
+    [BATCH_STATUSES.SOLD]: '#047857',
+    [BATCH_STATUSES.CANCELLED]: '#991b1b',
   };
 
+  const totalBatchesForChart = batches.length;
   const statusData = Object.keys(statusMapping)
-    .map(status => ({
-      name: statusMapping[status],
-      value: batches.filter(b => b.status === status).length,
-      color: statusColors[status],
-    }))
+    .map(status => {
+      const count = batches.filter(b => b.status === status).length;
+      const percentage = totalBatchesForChart > 0 ? ((count / totalBatchesForChart) * 100).toFixed(1) : '0.0';
+      return {
+        name: statusMapping[status],
+        value: count,
+        color: statusColors[status],
+        displayName: `${statusMapping[status]} - ${count} (${percentage}%)`,
+      };
+    })
     .filter(item => item.value > 0);
 
   // Revenue by customer table data (monthly breakdown)
@@ -364,10 +370,10 @@ export function DashboardPage() {
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={100}
+                        cy="45%"
+                        labelLine={false}
+                        label={false}
+                        outerRadius={90}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -375,7 +381,20 @@ export function DashboardPage() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip
+                        formatter={(value: number, name: string, props: any) => {
+                          const percentage = totalBatchesForChart > 0 ? ((value / totalBatchesForChart) * 100).toFixed(1) : '0.0';
+                          return [`${value} batches (${percentage}%)`, props.payload.name];
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        height={60}
+                        formatter={(value: string, entry: any) => {
+                          return entry.payload.displayName;
+                        }}
+                        wrapperStyle={{ fontSize: '12px' }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>

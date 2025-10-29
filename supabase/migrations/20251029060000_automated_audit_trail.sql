@@ -220,6 +220,22 @@ COMMENT ON VIEW user_action_history IS
 
 -- Complete batch history with all details
 CREATE OR REPLACE VIEW batch_complete_history AS
+WITH history_with_timing AS (
+  SELECT
+    bsh.batch_id,
+    bsh.status,
+    bsh.previous_status,
+    bsh.changed_at,
+    bsh.changed_by,
+    bsh.comments,
+    up.full_name as changed_by_name,
+    up.role as changed_by_role,
+    EXTRACT(EPOCH FROM (
+      LEAD(bsh.changed_at) OVER (PARTITION BY bsh.batch_id ORDER BY bsh.changed_at) - bsh.changed_at
+    )) / 3600 as hours_in_status
+  FROM batch_status_history bsh
+  LEFT JOIN user_profiles up ON up.id = bsh.changed_by
+)
 SELECT
   b.id as batch_id,
   b.batch_number,
@@ -231,24 +247,21 @@ SELECT
   mc.country,
   json_agg(
     json_build_object(
-      'status', bsh.status,
-      'previous_status', bsh.previous_status,
-      'changed_at', bsh.changed_at,
-      'changed_by', up.full_name,
-      'changed_by_role', up.role,
-      'comments', bsh.comments,
-      'hours_in_status', EXTRACT(EPOCH FROM (
-        LEAD(bsh.changed_at) OVER (PARTITION BY bsh.batch_id ORDER BY bsh.changed_at) - bsh.changed_at
-      )) / 3600
+      'status', hwt.status,
+      'previous_status', hwt.previous_status,
+      'changed_at', hwt.changed_at,
+      'changed_by', hwt.changed_by_name,
+      'changed_by_role', hwt.changed_by_role,
+      'comments', hwt.comments,
+      'hours_in_status', hwt.hours_in_status
     )
-    ORDER BY bsh.changed_at
+    ORDER BY hwt.changed_at
   ) as status_history,
-  COUNT(bsh.id) as total_status_changes,
-  MAX(bsh.changed_at) as last_status_change,
-  EXTRACT(EPOCH FROM (NOW() - MAX(bsh.changed_at))) / 86400 as days_since_last_change
+  COUNT(hwt.batch_id) as total_status_changes,
+  MAX(hwt.changed_at) as last_status_change,
+  EXTRACT(EPOCH FROM (NOW() - MAX(hwt.changed_at))) / 86400 as days_since_last_change
 FROM batches b
-LEFT JOIN batch_status_history bsh ON bsh.batch_id = b.id
-LEFT JOIN user_profiles up ON up.id = bsh.changed_by
+LEFT JOIN history_with_timing hwt ON hwt.batch_id = b.id
 LEFT JOIN mining_companies mc ON mc.id = b.mining_company_id
 GROUP BY b.id, b.batch_number, b.metal_type, b.weight_grams, b.status, b.created_at, mc.name, mc.country;
 
@@ -309,23 +322,32 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
+  WITH history_ordered AS (
+    SELECT
+      bsh.status,
+      bsh.previous_status,
+      bsh.changed_at,
+      up.full_name as changed_by_name,
+      up.role as changed_by_role,
+      bsh.comments,
+      LEAD(bsh.changed_at) OVER (ORDER BY bsh.changed_at) as next_changed_at
+    FROM batch_status_history bsh
+    LEFT JOIN user_profiles up ON up.id = bsh.changed_by
+    WHERE bsh.batch_id = batch_id_param
+  )
   SELECT
-    bsh.status,
-    bsh.previous_status,
-    bsh.changed_at,
-    up.full_name as changed_by_name,
-    up.role as changed_by_role,
-    bsh.comments,
+    ho.status,
+    ho.previous_status,
+    ho.changed_at,
+    ho.changed_by_name,
+    ho.changed_by_role,
+    ho.comments,
     ROUND(
-      EXTRACT(EPOCH FROM (
-        LEAD(bsh.changed_at) OVER (ORDER BY bsh.changed_at) - bsh.changed_at
-      )) / 3600,
+      EXTRACT(EPOCH FROM (ho.next_changed_at - ho.changed_at)) / 3600,
       2
     ) as hours_in_status
-  FROM batch_status_history bsh
-  LEFT JOIN user_profiles up ON up.id = bsh.changed_by
-  WHERE bsh.batch_id = batch_id_param
-  ORDER BY bsh.changed_at ASC;
+  FROM history_ordered ho
+  ORDER BY ho.changed_at ASC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

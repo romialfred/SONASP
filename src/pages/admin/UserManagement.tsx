@@ -138,9 +138,9 @@ const FIELD_GUIDANCE = {
     required: true
   },
   site: {
-    title: 'Site Assignment',
-    description: 'Primary location where the user operates. Users can only access data from assigned sites.',
-    required: false
+    title: 'Mining Companies Assignment',
+    description: 'Mining companies the user has access to. Users can view and manage data only from their assigned companies. Select multiple companies or use "Select All" for full access.',
+    required: true
   },
   password: {
     title: 'Initial Password',
@@ -174,7 +174,7 @@ export function UserManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [users, setUsers] = useState<User[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,7 +201,7 @@ export function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-    fetchSites();
+    fetchMiningCompanies();
     initializePermissions();
 
     const mode = searchParams.get('mode');
@@ -339,18 +339,20 @@ export function UserManagement() {
     }
   };
 
-  const fetchSites = async () => {
+  const fetchMiningCompanies = async () => {
     try {
       const { data, error } = await supabase
-        .from('sites')
-        .select('*')
+        .from('mining_companies')
+        .select('id, name, code, country, is_active')
         .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
-      setSites(data || []);
+      setMiningCompanies(data || []);
+      console.log('[UserManagement] Loaded mining companies:', data?.length || 0);
     } catch (error: any) {
-      console.error('Failed to fetch sites:', error);
+      console.error('Failed to fetch mining companies:', error);
+      addToast('Failed to load mining companies', 'error');
     }
   };
 
@@ -1073,19 +1075,63 @@ export function UserManagement() {
                       </Select>
                     </FormField>
 
-                    <FormField label="Site Assignment">
-                      <Select
-                        value={formData.siteIds[0] || ''}
-                        onChange={(e) => setFormData({ ...formData, siteIds: e.target.value ? [e.target.value] : [] })}
-                        onFocus={() => setActiveGuidanceField('site')}
-                      >
-                        <option value="">Select site</option>
-                        {sites.map((site) => (
-                          <option key={site.id} value={site.id}>
-                            {site.name} ({site.country})
-                          </option>
-                        ))}
-                      </Select>
+                    <FormField label="Mining Companies Assignment" required>
+                      <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
+                        <label className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer border-b border-gray-200 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.siteIds.length === miningCompanies.length && miningCompanies.length > 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({ ...formData, siteIds: miningCompanies.map(mc => mc.id) });
+                              } else {
+                                setFormData({ ...formData, siteIds: [] });
+                              }
+                            }}
+                            onFocus={() => setActiveGuidanceField('site')}
+                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm font-bold text-primary-700">Select All</span>
+                        </label>
+                        {miningCompanies.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-2">No mining companies available. Please create one first.</p>
+                        ) : (
+                          miningCompanies.map((company) => (
+                            <label
+                              key={company.id}
+                              className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.siteIds.includes(company.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData({
+                                      ...formData,
+                                      siteIds: [...formData.siteIds, company.id]
+                                    });
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      siteIds: formData.siteIds.filter(id => id !== company.id)
+                                    });
+                                  }
+                                }}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <div className="flex-1">
+                                <span className="text-sm font-medium text-gray-900">{company.name}</span>
+                                <span className="text-xs text-gray-500 ml-2">({company.code} - {company.country})</span>
+                              </div>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      {formData.siteIds.length > 0 && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {formData.siteIds.length} compan{formData.siteIds.length === 1 ? 'y' : 'ies'} selected
+                        </p>
+                      )}
                     </FormField>
 
                     {viewMode === 'create' && (

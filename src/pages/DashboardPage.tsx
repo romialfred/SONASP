@@ -2,7 +2,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { GoldPriceLive } from '@/components/dashboard/GoldPriceLive';
-import { DollarSign, Package, TrendingUp, ShoppingCart } from 'lucide-react';
+import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { DollarSign, Package, TrendingUp, ShoppingCart, Activity } from 'lucide-react';
 import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -174,25 +175,39 @@ export function DashboardPage() {
     goldPrice: m.goldPrice,
   }));
 
-  // Batch status distribution
+  // Batch status distribution - Using actual BATCH_STATUSES
   const statusMapping: Record<string, string> = {
-    'created': 'Created',
-    'shipped': 'Shipped',
-    'airport_received': 'Airport Received',
-    'refinery_received': 'Refinery Received',
-    'refined': 'Refined',
-    'ready_for_sale': 'Ready for Sale',
-    'sold': 'Sold',
+    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: 'Created',
+    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: 'Approved for Transport',
+    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: 'In Transit to Airport',
+    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: 'At Airport',
+    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: 'Validated for Refinery',
+    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: 'In Transit to Refinery',
+    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: 'At Refinery',
+    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: 'Ready for Processing',
+    [BATCH_STATUSES.PROCESSING]: 'Processing',
+    [BATCH_STATUSES.IN_INVENTORY]: 'In Inventory',
+    [BATCH_STATUSES.READY_FOR_SALE]: 'Ready for Sale',
+    [BATCH_STATUSES.ALLOCATED_TO_SALE]: 'Allocated',
+    [BATCH_STATUSES.SOLD]: 'Sold',
+    [BATCH_STATUSES.CANCELLED]: 'Cancelled',
   };
 
   const statusColors: Record<string, string> = {
-    'created': '#9ca3af',
-    'shipped': '#3b82f6',
-    'airport_received': '#f59e0b',
-    'refinery_received': '#8b5cf6',
-    'refined': '#10b981',
-    'ready_for_sale': '#22c55e',
-    'sold': '#059669',
+    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#9ca3af',
+    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#60a5fa',
+    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#3b82f6',
+    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#f59e0b',
+    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#8b5cf6',
+    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#a855f7',
+    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#ec4899',
+    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#14b8a6',
+    [BATCH_STATUSES.PROCESSING]: '#f97316',
+    [BATCH_STATUSES.IN_INVENTORY]: '#10b981',
+    [BATCH_STATUSES.READY_FOR_SALE]: '#22c55e',
+    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#84cc16',
+    [BATCH_STATUSES.SOLD]: '#059669',
+    [BATCH_STATUSES.CANCELLED]: '#ef4444',
   };
 
   const statusData = Object.keys(statusMapping)
@@ -440,46 +455,94 @@ export function DashboardPage() {
           </div>
         </Card>
 
-        {/* Recent Activity */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Sales Activity</h3>
-            {sales.length > 0 ? (
-              <div className="space-y-3">
-                {sales.slice(0, 5).map(sale => {
-                  const customerName = sale.customers?.name || 'No Customer Name';
-                  return (
-                    <div key={sale.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                          <ShoppingCart className="w-5 h-5 text-amber-600" />
+        {/* Recent Activity Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Batch Activity */}
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-600" />
+                Recent Batch Activity
+              </h3>
+              {batches.length > 0 ? (
+                <div className="space-y-3">
+                  {batches.slice(0, 5).map(batch => {
+                    const statusLabel = statusMapping[batch.status] || batch.status;
+                    return (
+                      <div key={batch.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Package className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{batch.batch_number}</p>
+                            <p className="text-sm text-gray-500">
+                              {batch.weight_grams?.toFixed(0) || '0'} g ({batch.weight_ounces?.toFixed(2) || '0.00'} oz)
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{customerName}</p>
-                          <p className="text-sm text-gray-500">
-                            {sale.quantity_oz?.toFixed(2) || '0.00'} oz @ ${sale.london_am_rate?.toFixed(2) || '0.00'}/oz
+                        <div className="text-right">
+                          <StatusBadge status={batch.status} label={statusLabel} />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(batch.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">
-                          ${(sale.final_proceeds || 0).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(sale.created_at).toLocaleDateString()}
-                        </p>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  No recent batch activity
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Recent Sales Activity */}
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-amber-600" />
+                Recent Sales Activity
+              </h3>
+              {sales.length > 0 ? (
+                <div className="space-y-3">
+                  {sales.slice(0, 5).map(sale => {
+                    const customerName = sale.customers?.name || 'No Customer Name';
+                    return (
+                      <div key={sale.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <ShoppingCart className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{customerName}</p>
+                            <p className="text-sm text-gray-500">
+                              {sale.quantity_oz?.toFixed(2) || '0.00'} oz @ ${sale.london_am_rate?.toFixed(2) || '0.00'}/oz
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">
+                            ${(sale.final_proceeds || 0).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(sale.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-gray-500">
-                No recent sales activity
-              </div>
-            )}
-          </div>
-        </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  No recent sales activity
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     </MainLayout>
   );

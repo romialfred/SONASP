@@ -82,26 +82,24 @@ const useMenuGroups = (): MenuGroup[] => {
       ],
     },
     {
+      id: 'marketplace',
+      label: t('marketplace.title'),
+      groupIconColor: 'text-orange-600',
+      groupIcon: Store,
+      items: [
+        { label: t('marketplace.tradeSpace'), path: '/sales/trade-space', icon: Store, iconColor: 'text-amber-600' },
+        { label: t('prices.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
+        { label: t('prices.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
+      ],
+    },
+    {
       id: 'sales',
       label: t('sales.title'),
       groupIconColor: 'text-pink-600',
       groupIcon: ShoppingCart,
       items: [
         { label: t('nav.sales'), path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
-        { label: 'Gold Trade Space', path: '/sales/trade-space', icon: Store, iconColor: 'text-amber-600' },
         { label: t('payments.title'), path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
-        { label: t('prices.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
-        { label: t('prices.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
-      ],
-    },
-    {
-      id: 'insights',
-      label: t('nav.reports'),
-      groupIconColor: 'text-blue-600',
-      groupIcon: BarChart3,
-      items: [
-        { label: t('nav.analytics'), path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
-        { label: t('nav.reports'), path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
       ],
     },
     {
@@ -114,6 +112,16 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('stakeholders.freightCompanies'), path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
         { label: t('stakeholders.refineryPlants'), path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
         { label: t('nav.customers'), path: '/customers', icon: Users, iconColor: 'text-teal-700' },
+      ],
+    },
+    {
+      id: 'insights',
+      label: t('reportsAnalytics.title'),
+      groupIconColor: 'text-blue-600',
+      groupIcon: BarChart3,
+      items: [
+        { label: t('nav.analytics'), path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
+        { label: t('nav.reports'), path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
       ],
     },
     {

@@ -353,6 +353,13 @@
     "certifications": "Certifications",
     "contractDetails": "Détails du contrat"
   },
+  "marketplace": {
+    "title": "Place de Marché de l'Or",
+    "tradeSpace": "Espace de Trading de l'Or"
+  },
+  "reportsAnalytics": {
+    "title": "Centre de Rapports & Analyses"
+  },
   "prices": {
     "goldPrices": "Prix de l'or",
     "fxRates": "Taux de change",

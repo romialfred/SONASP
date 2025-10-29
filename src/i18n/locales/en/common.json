@@ -353,6 +353,13 @@
     "certifications": "Certifications",
     "contractDetails": "Contract Details"
   },
+  "marketplace": {
+    "title": "Gold Market Place",
+    "tradeSpace": "Gold Trade Space"
+  },
+  "reportsAnalytics": {
+    "title": "Reports & Analytics Center"
+  },
   "prices": {
     "goldPrices": "Gold Prices",
     "fxRates": "FX Rates",

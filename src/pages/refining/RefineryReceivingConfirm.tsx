@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, AlertTriangle, CheckCircle, Upload, HelpCircle, Scale, FileText, Camera } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, HelpCircle, Scale, FileText, Camera } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useAlert } from '@/hooks/useAlert';
 
-export function ReceivingConfirm() {
+export function RefineryReceivingConfirm() {
   const { id } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -76,13 +76,12 @@ export function ReceivingConfirm() {
     );
   }
 
-  const variance = actualWeight
-    ? calculateVariance(batch.weight_grams, parseFloat(actualWeight))
-    : null;
+  // Use airport validated weight as expected weight for refinery
+  const expectedWeight = batch.airport_received_weight_grams || batch.weight_grams;
 
-  const canConfirmWithoutReconciliation = variance
-    ? !variance.isSignificant
-    : false;
+  const variance = actualWeight
+    ? calculateVariance(expectedWeight, parseFloat(actualWeight))
+    : null;
 
   const handleFileSelect = (files: File[]) => {
     setUploadedFiles((prev) => [...prev, ...files]);
@@ -105,22 +104,17 @@ export function ReceivingConfirm() {
       const actualWeightGrams = parseFloat(actualWeight);
       const actualWeightOunces = convertGramsToOunces(actualWeightGrams);
 
-      // Determine new status based on variance
-      const newStatus = variance?.isSignificant
-        ? BATCH_STATUSES.RECEIVED_AT_AIRPORT // Needs validation
-        : BATCH_STATUSES.VALIDATED_FOR_REFINERY; // Auto-validated
-
-      // Update batch with received weight and new status
+      // Update batch with received weight at refinery
       const { error: updateError } = await supabase
         .from('batches')
         .update({
-          status: newStatus,
-          airport_received_weight_grams: actualWeightGrams,
-          airport_received_weight_ounces: actualWeightOunces,
-          airport_received_at: new Date().toISOString(),
-          airport_received_by: user?.id,
-          airport_variance_percentage: variance?.percentage,
-          airport_reconciliation_comments: reconciliationComments || null,
+          status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
+          refinery_received_weight_grams: actualWeightGrams,
+          refinery_received_weight_ounces: actualWeightOunces,
+          refinery_received_at: new Date().toISOString(),
+          refinery_received_by: user?.id,
+          refinery_variance_percentage: variance?.percentage,
+          refinery_reconciliation_comments: reconciliationComments || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', batch.id);
@@ -132,11 +126,11 @@ export function ReceivingConfirm() {
         .from('batch_history')
         .insert({
           batch_id: batch.id,
-          status: newStatus,
+          status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
           changed_by: user?.id,
-          comments: `Airport reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
+          comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
           metadata: {
-            expected_weight: batch.weight_grams,
+            expected_weight: expectedWeight,
             actual_weight: actualWeightGrams,
             variance_percentage: variance?.percentage,
             variance_significant: variance?.isSignificant,
@@ -145,14 +139,8 @@ export function ReceivingConfirm() {
 
       if (historyError) console.error('Error logging history:', historyError);
 
-      showAlert(
-        variance?.isSignificant
-          ? 'Receipt confirmed. Batch requires validation due to significant variance.'
-          : 'Receipt confirmed successfully. Batch validated and ready for refinery.',
-        'success'
-      );
-
-      navigate('/receiving');
+      showAlert('Receipt confirmed successfully at refinery', 'success');
+      navigate('/refining');
     } catch (error) {
       console.error('Error confirming receipt:', error);
       showAlert('Error confirming receipt. Please try again.', 'error');
@@ -167,7 +155,7 @@ export function ReceivingConfirm() {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/receiving')}
+            onClick={() => navigate('/refining')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -176,10 +164,10 @@ export function ReceivingConfirm() {
 
           <div className="flex-1">
             <h1 className="font-heading text-3xl font-bold text-gray-900">
-              Confirm Receipt
+              Confirm Refinery Receipt
             </h1>
             <p className="text-gray-600 mt-1">
-              Verify and confirm batch receipt at airport
+              Verify and confirm batch receipt at refinery
             </p>
           </div>
         </div>
@@ -199,15 +187,15 @@ export function ReceivingConfirm() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Origin Site</p>
+                    <p className="text-sm text-gray-600">Mining Company</p>
                     <p className="text-base font-semibold text-gray-900">
                       {batch.mining_company?.name || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Expected Weight</p>
+                    <p className="text-sm text-gray-600">Expected Weight (from Airport)</p>
                     <p className="text-base font-semibold text-gray-900">
-                      {formatWeight(batch.weight_grams)}
+                      {formatWeight(expectedWeight)}
                     </p>
                   </div>
                   <div>
@@ -358,11 +346,11 @@ export function ReceivingConfirm() {
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Expected:</span>
                       <span className="font-semibold">
-                        {formatWeight(batch.weight_grams)}
+                        {formatWeight(expectedWeight)}
                       </span>
                     </div>
                     <div className="flex justify-end text-xs text-gray-500">
-                      ({convertGramsToOunces(batch.weight_grams).toFixed(3)} oz)
+                      ({convertGramsToOunces(expectedWeight).toFixed(3)} oz)
                     </div>
                   </div>
                   {actualWeight && (
@@ -428,7 +416,7 @@ export function ReceivingConfirm() {
 
                   <Button
                     variant="outline"
-                    onClick={() => navigate('/receiving')}
+                    onClick={() => navigate('/refining')}
                     className="w-full"
                   >
                     Cancel
@@ -487,49 +475,9 @@ export function ReceivingConfirm() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      <Camera className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">Supporting Evidence</h4>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Upload photos of packaging condition, scale readings, or any relevant documentation (max 5MB per file).
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            {variance?.isSignificant && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Next Steps</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-500 font-bold">1.</span>
-                      <span>Provide detailed justification</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-500 font-bold">2.</span>
-                      <span>Upload supporting documents</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-500 font-bold">3.</span>
-                      <span>Supervisor approval will be required</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary-500 font-bold">4.</span>
-                      <span>Batch will be held pending review</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

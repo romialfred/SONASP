@@ -27,6 +27,7 @@ import { approveBatchForTransport, getBatchStatusHistory } from '@/services/batc
 import { useSingleBatchRealtime } from '@/hooks/useBatchRealtime';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
+import { canEditBatch, getEditRestrictionReason } from '@/utils/batchPermissions';
 
 export function BatchDetails() {
   const { id } = useParams();
@@ -253,7 +254,12 @@ export function BatchDetails() {
                 {approving ? 'Approving...' : 'Validate for Transportation'}
               </Button>
             )}
-            <Button variant="outline" className="gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={!canEditBatch(formattedBatch.status, user?.user_metadata?.role)}
+              title={!canEditBatch(formattedBatch.status, user?.user_metadata?.role) ? getEditRestrictionReason(formattedBatch.status) : 'Edit batch details'}
+            >
               <Edit className="h-4 w-4" />
               Edit Batch
             </Button>

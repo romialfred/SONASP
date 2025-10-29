@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Flame, CheckCircle, Clock, TrendingUp, Package } from 'lucide-react';
+import { Flame, CheckCircle, Clock, TrendingUp, Package, AlertCircle, Eye } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Button } from '@/components/ui/Button';
+import { BatchCard } from '@/components/batch/BatchCard';
 import { supabase } from '@/lib/supabase';
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
+import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
+import { validateRefineryReceipt, startBatchProcessing } from '@/services/refineryValidationService';
 
 interface Site {
   name: string;
@@ -43,9 +49,12 @@ interface RefiningRecord {
 export function RefiningDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showAlert } = useAlert();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -54,21 +63,26 @@ export function RefiningDashboard() {
   async function fetchData() {
     setLoading(true);
     try {
-      // Fetch batches with status "Processing" - these are at refinery
+      // Fetch batches that are validated for refinery or already at refinery
       const { data: batchData, error: batchError } = await supabase
         .from('batches')
         .select(`
           *,
-          current_site:current_site_id(name, site_type)
+          mining_company:mining_companies(name, country)
         `)
-        .eq('status', 'Processing')
+        .in('status', [
+          BATCH_STATUSES.VALIDATED_FOR_REFINERY,
+          BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+          BATCH_STATUSES.RECEIVED_AT_REFINERY,
+          BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
+          BATCH_STATUSES.PROCESSING
+        ])
         .order('created_at', { ascending: false });
 
       if (batchError) {
         console.error('Error fetching batches:', batchError);
       } else {
         setBatches(batchData || []);
-        console.log(`Found ${batchData?.length || 0} batches with Processing status`);
       }
 
       // Fetch refining records
@@ -99,7 +113,23 @@ export function RefiningDashboard() {
     }
   }
 
-  const processingCount = batches.length;
+  // Count batches by status
+  const waitingReceiptCount = batches.filter(
+    b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT
+  ).length;
+
+  const receivedCount = batches.filter(
+    b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY
+  ).length;
+
+  const validatedCount = batches.filter(
+    b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING
+  ).length;
+
+  const processingCount = batches.filter(
+    b => b.status === BATCH_STATUSES.PROCESSING
+  ).length;
+
   const totalProcessed = refiningRecords.length;
 
   const totalOutput = refiningRecords.reduce(
@@ -111,41 +141,103 @@ export function RefiningDashboard() {
 
   const metrics = [
     {
-      title: 'Currently Processing',
-      value: processingCount.toString(),
-      change: 'At refinery now',
-      changeType: 'positive' as const,
-      icon: Flame,
-      iconColor: 'text-red-500',
-    },
-    {
-      title: 'Total Weight Processing',
-      value: `${totalWeight.toFixed(1)} oz`,
-      change: 'Being refined',
+      title: 'Awaiting Receipt',
+      value: waitingReceiptCount.toString(),
+      change: 'Ready to receive',
       changeType: 'neutral' as const,
       icon: Package,
       iconColor: 'text-blue-500',
     },
     {
-      title: 'Batches Processed',
-      value: totalProcessed.toString(),
-      change: 'All time',
-      changeType: 'positive' as const,
-      icon: CheckCircle,
-      iconColor: 'text-accent-500',
+      title: 'Need Validation',
+      value: receivedCount.toString(),
+      change: 'Received, not validated',
+      changeType: 'warning' as const,
+      icon: AlertCircle,
+      iconColor: 'text-orange-500',
     },
     {
-      title: 'Total Refined Output',
+      title: 'Processing',
+      value: processingCount.toString(),
+      change: 'Currently refining',
+      changeType: 'positive' as const,
+      icon: Flame,
+      iconColor: 'text-red-500',
+    },
+    {
+      title: 'Total Output',
       value: `${totalOutput.toFixed(0)} oz`,
-      change: 'Final fine ounces',
+      change: 'Refined to date',
       changeType: 'positive' as const,
       icon: TrendingUp,
-      iconColor: 'text-primary-500',
+      iconColor: 'text-accent-500',
     },
   ];
 
+  const getUserRole = () => {
+    return user?.user_metadata?.role || 'refinery';
+  };
+
+  const handleReceiveBatch = (batchId: string) => {
+    navigate(`/refining/${batchId}/receive`);
+  };
+
+  const handleValidateAndProcess = async (batchId: string) => {
+    if (!user?.id) return;
+
+    setActionLoading(batchId);
+    try {
+      const result = await validateRefineryReceipt(batchId, user.id);
+      if (result.success) {
+        showAlert('Receipt validated. Batch moved to processing.', 'success');
+        fetchData(); // Reload data
+      } else {
+        showAlert(result.error || 'Error validating receipt', 'error');
+      }
+    } catch (error) {
+      showAlert('Error validating receipt', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStartProcessing = async (batchId: string) => {
+    if (!user?.id) return;
+
+    setActionLoading(batchId);
+    try {
+      const result = await startBatchProcessing(batchId, user.id);
+      if (result.success) {
+        showAlert('Processing started successfully', 'success');
+        fetchData(); // Reload data
+      } else {
+        showAlert(result.error || 'Error starting processing', 'error');
+      }
+    } catch (error) {
+      showAlert('Error starting processing', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleProcessBatch = (batchId: string) => {
     navigate(`/refining/process/${batchId}`);
+  };
+
+  const handleViewDetails = (batchId: string) => {
+    navigate(`/batches/${batchId}`);
+  };
+
+  const handleActionClick = (actionId: string, batchId: string) => {
+    if (actionId === 'confirm_refinery_receipt' || actionId === 'receive_refinery') {
+      handleReceiveBatch(batchId);
+    } else if (actionId === 'validate_refinery_receipt') {
+      handleValidateAndProcess(batchId);
+    } else if (actionId === 'start_processing') {
+      handleStartProcessing(batchId);
+    } else if (actionId === 'view_details') {
+      handleViewDetails(batchId);
+    }
   };
 
   return (
@@ -166,79 +258,190 @@ export function RefiningDashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {metrics.map((metric) => (
                 <MetricCard key={metric.title} {...metric} />
               ))}
             </div>
 
-            {batches.length === 0 && refiningRecords.length === 0 ? (
+            {batches.length === 0 ? (
               <Card>
                 <CardContent>
                   <div className="text-center py-12">
                     <Flame className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 font-medium">No batches at refinery</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      Batches with "Processing" status will appear here
+                      Validated batches from airport will appear here
                     </p>
                   </div>
                 </CardContent>
               </Card>
             ) : (
               <>
-                {/* Currently Processing at Refinery */}
-                {processingCount > 0 && (
+                {/* Awaiting Receipt at Refinery */}
+                {waitingReceiptCount > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Flame className="w-5 h-5 text-orange-500 animate-pulse" />
-                        Processing at Refinery ({processingCount})
+                        <Package className="w-5 h-5 text-blue-500" />
+                        Awaiting Receipt ({waitingReceiptCount})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {batches.map((batch) => (
-                          <div
-                            key={batch.id}
-                            className="flex items-center justify-between p-4 border border-orange-200 rounded-lg bg-orange-50"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3">
-                                <h3 className="font-semibold text-gray-900">
-                                  {batch.batch_number}
-                                </h3>
-                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                  Processing
-                                </span>
-                              </div>
-                              <div className="mt-2 text-sm text-gray-600">
-                                <p>
-                                  Weight: {batch.weight_grams.toLocaleString()}g (
-                                  {batch.weight_ounces.toFixed(2)} oz)
-                                </p>
-                                <p>Metal: {batch.metal_type}</p>
-                                <p>Location: {batch.current_site?.name || 'Refinery'}</p>
-                                <p>Started: {new Date(batch.created_at).toLocaleDateString()}</p>
-                                {batch.comments && (
-                                  <p className="text-xs mt-1 text-gray-500">{batch.comments}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <div className="text-sm text-orange-600 font-medium">
-                                <Flame className="w-5 h-5 inline mr-1 animate-pulse" />
-                                In Progress
-                              </div>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleProcessBatch(batch.id)}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                        {batches
+                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'refining',
+                              {
+                                onViewDetails: handleViewDetails,
+                                onConfirmReceipt: handleReceiveBatch,
+                              }
+                            );
+                            // Add custom Receive action
+                            actions.unshift({
+                              id: 'receive_refinery',
+                              label: 'Receive Batch',
+                              icon: Package,
+                              variant: 'primary',
+                              handler: () => handleReceiveBatch(batch.id),
+                              requiresConfirmation: false,
+                              visible: true,
+                            });
+                            const statusInfo = getBatchStatusInfo(batch.status, 'refining');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Received - Need Validation */}
+                {receivedCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-orange-500" />
+                        Received - Need Validation ({receivedCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {batches
+                          .filter(b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'refining',
+                              {
+                                onViewDetails: handleViewDetails,
+                                onConfirmReceipt: handleReceiveBatch,
+                                onStartProcessing: handleValidateAndProcess,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'refining');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Ready for Processing */}
+                {validatedCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        Ready for Processing ({validatedCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {batches
+                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'refining',
+                              {
+                                onViewDetails: handleViewDetails,
+                                onStartProcessing: handleStartProcessing,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'refining');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Currently Processing */}
+                {processingCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-red-500" />
+                        Currently Processing ({processingCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {batches
+                          .filter(b => b.status === BATCH_STATUSES.PROCESSING)
+                          .map((batch) => {
+                            const actions = [
+                              {
+                                id: 'view_details',
+                                label: 'View Details',
+                                icon: Eye,
+                                variant: 'ghost' as const,
+                                handler: () => handleViewDetails(batch.id),
+                                requiresConfirmation: false,
+                                visible: true,
+                              }
+                            ];
+                            const statusInfo = { message: 'Batch is being processed', type: 'info' as const };
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
                       </div>
                     </CardContent>
                   </Card>

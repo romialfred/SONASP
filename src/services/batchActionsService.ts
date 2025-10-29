@@ -183,11 +183,12 @@ export function getAvailableBatchActions(
     if (status === BATCH_STATUSES.RECEIVED_AT_REFINERY && isRefineryStaff) {
       actions.push({
         id: 'validate_refinery_receipt',
-        label: 'Validate Receipt',
+        label: 'Validate & Start Processing',
         icon: CheckCircle,
         variant: 'success',
-        handler: handlers.onConfirmReceipt || (() => {}),
-        requiresConfirmation: false,
+        handler: handlers.onStartProcessing || (() => {}),
+        requiresConfirmation: true,
+        confirmationMessage: 'Validate receipt and move batch to processing status?',
         visible: true,
       });
     }

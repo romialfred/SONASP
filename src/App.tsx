@@ -30,6 +30,7 @@ import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
 import { RefiningDashboard } from './pages/refining/RefiningDashboard';
 import { RefiningProcess } from './pages/refining/RefiningProcess';
+import { RefineryReceivingConfirm } from './pages/refining/RefineryReceivingConfirm';
 import { SalesDashboard } from './pages/sales/SalesDashboard';
 import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
@@ -248,6 +249,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['refinery', 'management']}>
                   <RefiningDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/refining/:id/receive"
+              element={
+                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                  <RefineryReceivingConfirm />
                 </ProtectedRoute>
               }
             />

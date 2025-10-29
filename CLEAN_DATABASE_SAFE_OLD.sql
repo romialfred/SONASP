@@ -1,9 +1,8 @@
 -- ============================================================================
--- GOLD SHIPPER - DATABASE CLEANUP SCRIPT (SAFE VERSION - No Permissions Required)
+-- GOLD SHIPPER - DATABASE CLEANUP SCRIPT (SAFE VERSION)
 -- ============================================================================
 --
--- This version works with standard Supabase permissions
--- No session_replication_role changes required
+-- This version checks if tables exist before deleting to avoid errors
 --
 -- PURPOSE: Clean all transactional data for fresh registration
 --
@@ -36,7 +35,7 @@
 DO $$
 DECLARE
   table_list TEXT[] := ARRAY[
-    -- Sales related (in dependency order)
+    -- Sales related
     'sales_notifications_log',
     'sales_audit_trail',
     'sales_documents',
@@ -57,7 +56,7 @@ DECLARE
     'customer_contracts',
     'customer_fx_rates',
     'customers',
-    -- Batch related (in dependency order)
+    -- Batch related
     'batch_alerts',
     'batch_analytics_snapshots',
     'batch_approvals',
@@ -92,6 +91,9 @@ DECLARE
   rows_deleted INTEGER;
   total_rows_deleted INTEGER := 0;
 BEGIN
+  -- Disable triggers for faster deletion
+  PERFORM set_config('session_replication_role', 'replica', false);
+
   RAISE NOTICE '';
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Starting Database Cleanup...';
@@ -102,21 +104,19 @@ BEGIN
   FOREACH table_name IN ARRAY table_list
   LOOP
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = table_name AND table_schema = 'public') THEN
-      BEGIN
-        EXECUTE format('DELETE FROM %I', table_name);
-        GET DIAGNOSTICS rows_deleted = ROW_COUNT;
-        total_rows_deleted := total_rows_deleted + rows_deleted;
-        tables_deleted := tables_deleted + 1;
+      EXECUTE format('DELETE FROM %I', table_name);
+      GET DIAGNOSTICS rows_deleted = ROW_COUNT;
+      total_rows_deleted := total_rows_deleted + rows_deleted;
+      tables_deleted := tables_deleted + 1;
 
-        IF rows_deleted > 0 THEN
-          RAISE NOTICE '  ✓ Deleted % rows from %', rows_deleted, table_name;
-        END IF;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE NOTICE '  ⚠ Error deleting from %: %', table_name, SQLERRM;
-      END;
+      IF rows_deleted > 0 THEN
+        RAISE NOTICE '  ✓ Deleted % rows from %', rows_deleted, table_name;
+      END IF;
     END IF;
   END LOOP;
+
+  -- Re-enable triggers
+  PERFORM set_config('session_replication_role', 'default', false);
 
   RAISE NOTICE '';
   RAISE NOTICE '✓ Deleted % total rows from % tables', total_rows_deleted, tables_deleted;
@@ -140,18 +140,25 @@ BEGIN
     FROM pg_sequences
     WHERE schemaname = 'public'
   LOOP
-    BEGIN
-      EXECUTE format('ALTER SEQUENCE %I.%I RESTART WITH 1', seq_record.schemaname, seq_record.sequencename);
-      reset_count := reset_count + 1;
-    EXCEPTION
-      WHEN OTHERS THEN
-        RAISE NOTICE '  ⚠ Could not reset sequence %: %', seq_record.sequencename, SQLERRM;
-    END;
+    EXECUTE format('ALTER SEQUENCE %I.%I RESTART WITH 1', seq_record.schemaname, seq_record.sequencename);
+    reset_count := reset_count + 1;
   END LOOP;
 
   RAISE NOTICE '✓ Reset % sequences', reset_count;
   RAISE NOTICE '';
 END $$;
+
+-- ============================================================================
+-- OPTIMIZE DATABASE
+-- ============================================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Optimizing database...';
+  PERFORM pg_catalog.pg_sleep(0.1);
+END $$;
+
+VACUUM ANALYZE;
 
 -- ============================================================================
 -- VERIFICATION AND SUMMARY

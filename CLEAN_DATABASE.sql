@@ -36,9 +36,6 @@
 
 DO $$
 BEGIN
-  -- Disable triggers for faster deletion
-  SET session_replication_role = 'replica';
-
   RAISE NOTICE '';
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE 'Starting Database Cleanup...';
@@ -151,9 +148,6 @@ BEGIN
 
   RAISE NOTICE '✓ Other transactional data cleaned';
 
-  -- Re-enable triggers
-  SET session_replication_role = 'default';
-
   RAISE NOTICE '';
   RAISE NOTICE 'Resetting Auto-Increment Sequences...';
 
@@ -180,12 +174,6 @@ BEGIN
   RAISE NOTICE '✓ Reset % sequences', reset_count;
   RAISE NOTICE '';
 END $$;
-
--- ============================================================================
--- OPTIMIZE DATABASE
--- ============================================================================
-
-VACUUM ANALYZE;
 
 -- ============================================================================
 -- VERIFICATION AND SUMMARY

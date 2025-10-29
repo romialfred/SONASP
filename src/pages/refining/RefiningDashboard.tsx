@@ -14,6 +14,7 @@ import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchAc
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { validateRefineryReceipt, startBatchProcessing } from '@/services/refineryValidationService';
+import { completeProcessing } from '@/services/batchTransitionService';
 
 interface Site {
   name: string;
@@ -215,6 +216,25 @@ export function RefiningDashboard() {
       }
     } catch (error) {
       alert.error('Error starting processing');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCompleteProcessing = async (batchId: string) => {
+    if (!user?.id) return;
+
+    setActionLoading(batchId);
+    try {
+      const result = await completeProcessing(batchId, user.id, 'Processing completed by refinery staff');
+      if (result.success) {
+        alert.success('Processing completed! Batch moved to inventory.');
+        fetchData(); // Reload data
+      } else {
+        alert.error(result.error || 'Error completing processing');
+      }
+    } catch (error) {
+      alert.error('Error completing processing');
     } finally {
       setActionLoading(null);
     }
@@ -422,6 +442,17 @@ export function RefiningDashboard() {
                           .map((batch) => {
                             const actions = [
                               {
+                                id: 'complete_processing',
+                                label: 'Process Completed',
+                                icon: CheckCircle,
+                                variant: 'success' as const,
+                                handler: () => handleCompleteProcessing(batch.id),
+                                requiresConfirmation: true,
+                                confirmationMessage: 'Mark this batch as processed and move to inventory?',
+                                visible: true,
+                                disabled: actionLoading === batch.id,
+                              },
+                              {
                                 id: 'view_details',
                                 label: 'View Details',
                                 icon: Eye,
@@ -431,7 +462,7 @@ export function RefiningDashboard() {
                                 visible: true,
                               }
                             ];
-                            const statusInfo = { message: 'Batch is being processed', type: 'info' as const };
+                            const statusInfo = { message: 'Batch is being processed - click Process Completed when done', type: 'warning' as const };
                             return (
                               <BatchCard
                                 key={batch.id}

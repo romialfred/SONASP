@@ -147,7 +147,7 @@ export function AddInventoryEntry() {
             country
           )
         `)
-        .eq('status', 'processed')
+        .eq('status', 'in_inventory')
         .order('shipping_date', { ascending: false });
 
       if (error) throw error;

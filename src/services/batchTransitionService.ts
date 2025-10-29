@@ -262,6 +262,24 @@ export async function startProcessing(
 }
 
 /**
+ * Specific transition: Complete processing and move to inventory
+ */
+export async function completeProcessing(
+  batchId: string,
+  completedBy: string,
+  comments?: string
+): Promise<TransitionResult> {
+  return transitionBatchStatus(
+    batchId,
+    BATCH_STATUSES.IN_INVENTORY,
+    {
+      comments: comments || 'Processing completed, batch moved to inventory',
+      completedBy,
+    }
+  );
+}
+
+/**
  * Specific transition: Cancel batch
  */
 export async function cancelBatch(

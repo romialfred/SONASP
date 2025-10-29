@@ -127,6 +127,13 @@ export function BatchCard({
         confirmButtonText: 'Start Processing',
         confirmButtonVariant: 'primary' as const,
       },
+      complete_processing: {
+        title: 'Mark Processing as Completed',
+        description: 'This will mark the refining process as completed and move the batch to inventory. The batch will be available for sale once in inventory.',
+        confirmButtonText: 'Process Completed',
+        confirmButtonVariant: 'success' as const,
+        warningMessage: 'Once completed, the batch will be moved to inventory and ready for sale transactions.',
+      },
       approve_transport: {
         title: 'Approve for Transport',
         description: 'This will approve the batch for transportation. Please verify all details are correct.',

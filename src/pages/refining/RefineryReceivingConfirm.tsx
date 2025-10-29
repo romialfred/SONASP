@@ -22,7 +22,7 @@ export function RefineryReceivingConfirm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showAlert } = useAlert();
+  const alert = useAlert();
 
   const [batch, setBatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export function RefineryReceivingConfirm() {
       setBatch(data);
     } catch (error) {
       console.error('Error loading batch:', error);
-      showAlert('Error loading batch data', 'error');
+      alert.error('Error loading batch data');
     } finally {
       setLoading(false);
     }
@@ -89,12 +89,12 @@ export function RefineryReceivingConfirm() {
 
   const handleConfirm = async () => {
     if (!actualWeight) {
-      showAlert('Please enter the actual weight', 'error');
+      alert.error('Please enter the actual weight');
       return;
     }
 
     if (variance?.isSignificant && !reconciliationComments) {
-      showAlert('Reconciliation comments are required for significant variances', 'error');
+      alert.error('Reconciliation comments are required for significant variances');
       return;
     }
 
@@ -121,29 +121,36 @@ export function RefineryReceivingConfirm() {
 
       if (updateError) throw updateError;
 
-      // Log the reception in batch_history
-      const { error: historyError } = await supabase
-        .from('batch_history')
-        .insert({
-          batch_id: batch.id,
-          status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
-          changed_by: user?.id,
-          comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
-          metadata: {
-            expected_weight: expectedWeight,
-            actual_weight: actualWeightGrams,
-            variance_percentage: variance?.percentage,
-            variance_significant: variance?.isSignificant,
-          },
-        });
+      // Log the reception in batch_history (optional - ignore errors)
+      try {
+        await supabase
+          .from('batch_history')
+          .insert({
+            batch_id: batch.id,
+            status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
+            changed_by: user?.id,
+            comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
+            metadata: {
+              expected_weight: expectedWeight,
+              actual_weight: actualWeightGrams,
+              variance_percentage: variance?.percentage,
+              variance_significant: variance?.isSignificant,
+            },
+          });
+      } catch (historyError) {
+        // Ignore history errors - not critical
+        console.warn('Could not log to batch_history:', historyError);
+      }
 
-      if (historyError) console.error('Error logging history:', historyError);
+      alert.success('Receipt confirmed successfully at refinery');
 
-      showAlert('Receipt confirmed successfully at refinery', 'success');
-      navigate('/refining');
+      // Navigate after a short delay to show the success message
+      setTimeout(() => {
+        navigate('/refining');
+      }, 1000);
     } catch (error) {
       console.error('Error confirming receipt:', error);
-      showAlert('Error confirming receipt. Please try again.', 'error');
+      alert.error('Error confirming receipt. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -50,7 +50,7 @@ export function RefiningDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showAlert } = useAlert();
+  const alert = useAlert();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
@@ -189,13 +189,13 @@ export function RefiningDashboard() {
     try {
       const result = await validateRefineryReceipt(batchId, user.id);
       if (result.success) {
-        showAlert('Receipt validated. Batch moved to processing.', 'success');
+        alert.success('Receipt validated. Batch moved to processing.');
         fetchData(); // Reload data
       } else {
-        showAlert(result.error || 'Error validating receipt', 'error');
+        alert.error(result.error || 'Error validating receipt');
       }
     } catch (error) {
-      showAlert('Error validating receipt', 'error');
+      alert.error('Error validating receipt');
     } finally {
       setActionLoading(null);
     }
@@ -208,13 +208,13 @@ export function RefiningDashboard() {
     try {
       const result = await startBatchProcessing(batchId, user.id);
       if (result.success) {
-        showAlert('Processing started successfully', 'success');
+        alert.success('Processing started successfully');
         fetchData(); // Reload data
       } else {
-        showAlert(result.error || 'Error starting processing', 'error');
+        alert.error(result.error || 'Error starting processing');
       }
     } catch (error) {
-      showAlert('Error starting processing', 'error');
+      alert.error('Error starting processing');
     } finally {
       setActionLoading(null);
     }

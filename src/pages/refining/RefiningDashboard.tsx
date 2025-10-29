@@ -255,6 +255,8 @@ export function RefiningDashboard() {
       handleValidateAndProcess(batchId);
     } else if (actionId === 'start_processing') {
       handleStartProcessing(batchId);
+    } else if (actionId === 'complete_processing') {
+      handleCompleteProcessing(batchId);
     } else if (actionId === 'view_details') {
       handleViewDetails(batchId);
     }

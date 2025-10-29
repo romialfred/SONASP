@@ -7,11 +7,12 @@ export interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  maxWidth?: string;
   className?: string;
 }
 
-export function Modal({ isOpen, onClose, children, title, size = 'md', className }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth, className }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -47,20 +48,21 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', className
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
+    '2xl': 'max-w-3xl',
     full: 'max-w-full mx-4',
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         className={cn(
-          'relative z-50 w-full bg-white rounded-lg shadow-xl',
-          sizeStyles[size],
+          'relative z-50 w-full bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto',
+          maxWidth || sizeStyles[size as keyof typeof sizeStyles] || sizeStyles.md,
           className
         )}
         role="dialog"

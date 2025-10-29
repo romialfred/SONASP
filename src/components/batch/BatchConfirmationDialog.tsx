@@ -48,11 +48,11 @@ export function BatchConfirmationDialog({
       isOpen={isOpen}
       onClose={onClose}
       title={action.title}
-      maxWidth="2xl"
+      maxWidth="max-w-3xl"
     >
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Description */}
-        <p className="text-gray-600">{action.description}</p>
+        <p className="text-gray-700 text-base leading-relaxed">{action.description}</p>
 
         {/* Warning Message */}
         {action.warningMessage && (

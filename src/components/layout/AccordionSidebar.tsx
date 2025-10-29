@@ -295,8 +295,8 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-transparent',
                   'transform hover:scale-[1.02] hover:shadow-md',
                   isOpen || hasActiveItem
-                    ? 'bg-gradient-to-r from-gray-200/90 to-gray-100/90 font-bold text-gray-900 shadow-sm border-l-4 border-amber-600'
-                    : 'hover:bg-gradient-to-r hover:from-gray-200/80 hover:to-gray-100/80 font-semibold text-gray-800 hover:border-l-4 hover:border-gray-400'
+                    ? 'bg-gradient-to-r from-gray-200/90 to-gray-100/90 font-semibold text-gray-900 shadow-sm border-l-4 border-amber-600'
+                    : 'hover:bg-gradient-to-r hover:from-gray-200/80 hover:to-gray-100/80 font-medium text-gray-800 hover:border-l-4 hover:border-gray-400'
                 )}
                 aria-expanded={isOpen}
                 aria-controls={`group-${group.id}`}
@@ -311,16 +311,16 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   </span>
                 ) : (
                   <>
-                    <span className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
+                    <span className="flex items-center gap-3 text-sm font-medium uppercase tracking-wide flex-1 min-w-0">
                       {group.groupIcon && (
-                        <group.groupIcon className={cn('w-5 h-5 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
+                        <group.groupIcon className={cn('w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110', group.groupIconColor)} />
                       )}
-                      {group.label}
+                      <span className="truncate">{group.label}</span>
                     </span>
                     {isOpen ? (
-                      <ChevronDown className="w-5 h-5 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
+                      <ChevronDown className="w-5 h-5 flex-shrink-0 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
+                      <ChevronRight className="w-5 h-5 flex-shrink-0 text-gray-600 transition-transform duration-200 group-hover:text-gray-900" />
                     )}
                   </>
                 )}

@@ -26,6 +26,7 @@ interface FlowStep {
   group: 'factory' | 'transport' | 'airport' | 'refinery' | 'sales' | 'completed';
 }
 
+// Only show key validation checkpoints in the flow
 const flowSteps: FlowStep[] = [
   {
     dbStatus: BATCH_STATUSES.PENDING_FACTORY_APPROVAL,
@@ -42,80 +43,45 @@ const flowSteps: FlowStep[] = [
     group: 'factory',
   },
   {
-    dbStatus: BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
-    label: 'In Transit',
-    shortLabel: 'To Airport',
-    description: 'En route to airport',
-    group: 'transport',
-  },
-  {
-    dbStatus: BATCH_STATUSES.RECEIVED_AT_AIRPORT,
+    dbStatus: BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
     label: 'Airport',
     shortLabel: 'Airport',
     description: 'Received at airport',
     group: 'airport',
   },
   {
-    dbStatus: BATCH_STATUSES.VALIDATED_FOR_REFINERY,
-    label: 'Airport OK',
-    shortLabel: 'Validated',
-    description: 'Airport validated',
-    group: 'airport',
-  },
-  {
-    dbStatus: BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
-    label: 'In Transit',
-    shortLabel: 'To Refinery',
-    description: 'En route to refinery',
-    group: 'transport',
-  },
-  {
-    dbStatus: BATCH_STATUSES.RECEIVED_AT_REFINERY,
+    dbStatus: BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
     label: 'Refinery',
     shortLabel: 'Refinery',
     description: 'Received at refinery',
     group: 'refinery',
   },
   {
-    dbStatus: BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-    label: 'Refinery OK',
-    shortLabel: 'Validated',
-    description: 'Ready for processing',
-    group: 'refinery',
-  },
-  {
-    dbStatus: BATCH_STATUSES.PROCESSING,
-    label: 'Processing',
-    shortLabel: 'Processing',
-    description: 'Refining in progress',
-    group: 'refinery',
-  },
-  {
-    dbStatus: BATCH_STATUSES.IN_INVENTORY,
-    label: 'Inventory',
-    shortLabel: 'Inventory',
-    description: 'In inventory',
+    dbStatus: BATCH_STATUSES.PROCESSED,
+    label: 'Processed',
+    shortLabel: 'Processed',
+    description: 'Refining completed',
     group: 'refinery',
   },
   {
     dbStatus: BATCH_STATUSES.READY_FOR_SALE,
-    label: 'Ready',
-    shortLabel: 'Ready',
+    label: 'Approved',
+    shortLabel: 'Approved',
     description: 'Ready for sale',
     group: 'sales',
   },
   {
     dbStatus: BATCH_STATUSES.ALLOCATED_TO_SALE,
-    label: 'Allocated',
-    shortLabel: 'Allocated',
-    description: 'Sale allocated',
+    label: 'Sell',
+    shortLabel: 'Sell',
+    description: 'Sale completed',
     group: 'sales',
   },
   {
     dbStatus: BATCH_STATUSES.SOLD,
-    label: 'Sold',
-    shortLabel: 'Sold',
-    description: 'Sale completed',
+    label: 'Paid',
+    shortLabel: 'Paid',
+    description: 'Payment received',
     group: 'completed',
   },
 ];
@@ -129,10 +95,31 @@ const groupColors = {
   completed: '#16a34a',
 };
 
+// Mapping of all statuses to their equivalent flow step
+const statusToFlowStepMap: Record<string, string> = {
+  [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: BATCH_STATUSES.PENDING_FACTORY_APPROVAL,
+  [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
+  [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: BATCH_STATUSES.APPROVED_FOR_TRANSPORT, // Same as validated
+  [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: BATCH_STATUSES.WAITING_REFINERY_RECEIPT, // Maps to Airport checkpoint
+  [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: BATCH_STATUSES.WAITING_REFINERY_RECEIPT, // Maps to Airport checkpoint
+  [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+  [BATCH_STATUSES.RECEIVED_AT_REFINERY]: BATCH_STATUSES.VALIDATED_FOR_PROCESSING, // Maps to Refinery checkpoint
+  [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
+  [BATCH_STATUSES.PROCESSING]: BATCH_STATUSES.VALIDATED_FOR_PROCESSING, // Still at Refinery checkpoint
+  [BATCH_STATUSES.PROCESSED]: BATCH_STATUSES.PROCESSED,
+  [BATCH_STATUSES.IN_INVENTORY]: BATCH_STATUSES.PROCESSED, // Still at Processed checkpoint
+  [BATCH_STATUSES.READY_FOR_SALE]: BATCH_STATUSES.READY_FOR_SALE,
+  [BATCH_STATUSES.ALLOCATED_TO_SALE]: BATCH_STATUSES.ALLOCATED_TO_SALE,
+  [BATCH_STATUSES.SOLD]: BATCH_STATUSES.SOLD,
+  [BATCH_STATUSES.CANCELLED]: BATCH_STATUSES.CANCELLED,
+};
+
 export function StatusFlow({ currentStatus, statusHistory = [], className }: StatusFlowProps) {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
-  const currentIndex = flowSteps.findIndex((step) => step.dbStatus === currentStatus);
+  // Map current status to its display checkpoint
+  const mappedStatus = statusToFlowStepMap[currentStatus] || currentStatus;
+  const currentIndex = flowSteps.findIndex((step) => step.dbStatus === mappedStatus);
 
   const getStepHistory = (dbStatus: string): StatusHistoryItem | undefined => {
     return statusHistory.find((item) => item.status === dbStatus);

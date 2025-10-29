@@ -364,35 +364,55 @@ export function DashboardPage() {
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Batch Status Distribution</h3>
               {statusData.length > 0 ? (
-                <div className="h-80 relative">
+                <div className="h-96 relative flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={80}
-                        outerRadius={110}
+                        innerRadius={60}
+                        outerRadius={90}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index, name }) => {
                           const RADIAN = Math.PI / 180;
-                          const radius = outerRadius + 30;
+                          const radius = outerRadius + 45;
                           const x = cx + radius * Math.cos(-midAngle * RADIAN);
                           const y = cy + radius * Math.sin(-midAngle * RADIAN);
                           const percentage = totalBatchesForChart > 0 ? ((value / totalBatchesForChart) * 100).toFixed(0) : '0';
+
                           return (
-                            <text
-                              x={x}
-                              y={y}
-                              fill="#374151"
-                              textAnchor={x > cx ? 'start' : 'end'}
-                              dominantBaseline="central"
-                              fontSize="13"
-                              fontWeight="600"
-                            >
-                              {`${value} (${percentage}%)`}
-                            </text>
+                            <g>
+                              <circle
+                                cx={cx + (outerRadius + 20) * Math.cos(-midAngle * RADIAN)}
+                                cy={cy + (outerRadius + 20) * Math.sin(-midAngle * RADIAN)}
+                                r="4"
+                                fill={statusData[index].color}
+                              />
+                              <text
+                                x={x}
+                                y={y - 10}
+                                fill={statusData[index].color}
+                                textAnchor={x > cx ? 'start' : 'end'}
+                                dominantBaseline="central"
+                                fontSize="11"
+                                fontWeight="700"
+                              >
+                                {name.toUpperCase()}
+                              </text>
+                              <text
+                                x={x}
+                                y={y + 5}
+                                fill="#374151"
+                                textAnchor={x > cx ? 'start' : 'end'}
+                                dominantBaseline="central"
+                                fontSize="13"
+                                fontWeight="600"
+                              >
+                                {`${value} (${percentage}%)`}
+                              </text>
+                            </g>
                           );
                         }}
                       >
@@ -406,20 +426,11 @@ export function DashboardPage() {
                           return [`${value} batches (${percentage}%)`, props.payload.name];
                         }}
                       />
-                      <Legend
-                        verticalAlign="top"
-                        height={36}
-                        iconType="circle"
-                        formatter={(value: string, entry: any) => {
-                          return entry.payload.name.toUpperCase();
-                        }}
-                        wrapperStyle={{ fontSize: '11px', fontWeight: '600' }}
-                      />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
                     <div className="text-5xl font-bold text-gray-900">{totalBatchesForChart}</div>
-                    <div className="text-sm font-medium text-gray-500 mt-1">Total Batches</div>
+                    <div className="text-xs font-medium text-gray-500 mt-1">Total Batches</div>
                   </div>
                 </div>
               ) : (

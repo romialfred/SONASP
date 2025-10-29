@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Package, Calendar, Weight, MapPin, Building2, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
@@ -5,6 +6,7 @@ import Button from '@/components/ui/Button';
 import { getBatchStatusLabel, getBatchStatusVariant } from '@/constants/batchStatuses';
 import { formatWeight } from '@/utils/batchUtils';
 import { BatchAction } from '@/services/batchActionsService';
+import { BatchConfirmationDialog } from './BatchConfirmationDialog';
 import { cn } from '@/utils/cn';
 
 export interface BatchCardProps {
@@ -45,6 +47,12 @@ export function BatchCard({
   className,
   statusInfo,
 }: BatchCardProps) {
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    action: BatchAction | null;
+  }>({ isOpen: false, action: null });
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
   const hasActions = actions.length > 0;
   const statusVariant = getBatchStatusVariant(batch.status);
 
@@ -71,17 +79,68 @@ export function BatchCard({
     if (!action) return;
 
     if (action.requiresConfirmation) {
-      const confirmed = window.confirm(
-        action.confirmationMessage || 'Are you sure you want to perform this action?'
-      );
-      if (!confirmed) return;
-    }
-
-    if (onActionClick) {
-      onActionClick(actionId, batch.id);
+      // Open custom confirmation dialog
+      setConfirmDialog({ isOpen: true, action });
     } else {
-      action.handler(batch.id);
+      // Execute action immediately if no confirmation needed
+      executeAction(action);
     }
+  };
+
+  const executeAction = async (action: BatchAction) => {
+    setIsActionLoading(true);
+    try {
+      if (onActionClick) {
+        onActionClick(action.id, batch.id);
+      } else {
+        action.handler(batch.id);
+      }
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmDialog.action) return;
+
+    await executeAction(confirmDialog.action);
+    setConfirmDialog({ isOpen: false, action: null });
+  };
+
+  const handleCloseDialog = () => {
+    setConfirmDialog({ isOpen: false, action: null });
+  };
+
+  // Generate action config for confirmation dialog
+  const getActionConfig = (action: BatchAction) => {
+    const configs: Record<string, any> = {
+      validate_refinery: {
+        title: 'Validate Receipt and Start Processing',
+        description: 'This will validate the refinery receipt and move the batch to processing status. Please review the batch details before confirming.',
+        confirmButtonText: 'Validate & Start Processing',
+        confirmButtonVariant: 'success' as const,
+        warningMessage: 'Once validated, the batch will be ready for refining operations.',
+      },
+      start_processing: {
+        title: 'Start Processing',
+        description: 'This will start the refining process for this batch. Make sure all preparations are complete.',
+        confirmButtonText: 'Start Processing',
+        confirmButtonVariant: 'primary' as const,
+      },
+      approve_transport: {
+        title: 'Approve for Transport',
+        description: 'This will approve the batch for transportation. Please verify all details are correct.',
+        confirmButtonText: 'Approve Transport',
+        confirmButtonVariant: 'success' as const,
+      },
+    };
+
+    return configs[action.id] || {
+      title: action.label,
+      description: action.confirmationMessage || 'Please review the batch details and confirm this action.',
+      confirmButtonText: 'Confirm',
+      confirmButtonVariant: 'primary' as const,
+    };
   };
 
   return (
@@ -202,7 +261,8 @@ export function BatchCard({
                   variant={action.variant}
                   size="sm"
                   onClick={() => handleActionClick(action.id)}
-                  disabled={action.disabled}
+                  disabled={action.disabled || isActionLoading}
+                  loading={isActionLoading}
                   className="gap-2"
                   title={action.disabledReason}
                 >
@@ -214,6 +274,18 @@ export function BatchCard({
           </div>
         )}
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      {confirmDialog.isOpen && confirmDialog.action && (
+        <BatchConfirmationDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          batch={batch}
+          action={getActionConfig(confirmDialog.action)}
+          isLoading={isActionLoading}
+        />
+      )}
     </Card>
   );
 }

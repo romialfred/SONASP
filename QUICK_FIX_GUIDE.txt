@@ -1,53 +1,90 @@
-╔══════════════════════════════════════════════════════════════╗
-║  CORRECTION STATUTS BATCHES - GUIDE RAPIDE                   ║
-╚══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════╗
+║       ✅ CORRECTION: Script de Nettoyage des Transitions         ║
+╚══════════════════════════════════════════════════════════════════╝
 
-┌──────────────────────────────────────────────────────────────┐
-│ PROBLÈME CORRIGÉ                                             │
-├──────────────────────────────────────────────────────────────┤
-│ ❌ Transition processed → in_inventory avait rôle 'system'  │
-│ ✅ Maintenant: rôle 'refinery_staff' (correct)              │
-│ ✅ Flow visuel optimisé (8 étapes au lieu de 13)            │
-│ ✅ Tous les statuts normalisés automatiquement              │
-└──────────────────────────────────────────────────────────────┘
+🐛 ERREUR RENCONTRÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ERROR: column "is_active" of relation "allowed_status_transitions" does not exist
+LINE 64: is_active,
 
-┌──────────────────────────────────────────────────────────────┐
-│ EXÉCUTER CES 4 MIGRATIONS DANS L'ORDRE                      │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│ 1️⃣  20251029110000_add_missing_status_transitions.sql       │
-│     → Ajoute transitions manquantes                          │
-│                                                              │
-│ 2️⃣  20251029120000_add_processed_status_and_fix_workflow.sql│
-│     → Ajoute statut 'processed' + workflow complet           │
-│                                                              │
-│ 3️⃣  20251029130000_fix_processed_inventory_transition_role  │
-│     → Corrige rôle: system → refinery_staff ⭐               │
-│                                                              │
-│ 4️⃣  20251029140000_normalize_batch_statuses.sql             │
-│     → Normalise TOUS les batches existants ⭐                │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────────────────────┐
-│ VÉRIFICATION APRÈS                                           │
-├──────────────────────────────────────────────────────────────┤
-│ Exécutez: VERIFY_BATCH_STATUSES.sql                         │
-│                                                              │
-│ ✅ Aucun statut orphelin                                    │
-│ ✅ Transition processed → in_inventory = refinery_staff     │
-│ ✅ Tous les batches ont des statuts valides                 │
-└──────────────────────────────────────────────────────────────┘
+✅ CORRECTION APPLIQUÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Le script CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql a été corrigé:
 
-┌──────────────────────────────────────────────────────────────┐
-│ DOCUMENTATION COMPLÈTE                                       │
-├──────────────────────────────────────────────────────────────┤
-│ • FINAL_BATCH_STATUS_FIX_SUMMARY.md     (Vue d'ensemble)    │
-│ • BATCH_STATUS_NORMALIZATION_GUIDE.md   (Guide détaillé)    │
-│ • CORRECTION_TRANSITION_PROCESSED_INVENTORY.md              │
-│ • BATCH_STATUS_FLOW_UPDATED.md          (Flow visuel)       │
-└──────────────────────────────────────────────────────────────┘
+AVANT (INCORRECT):
+  INSERT INTO allowed_status_transitions (
+    from_status,
+    to_status,
+    requires_role,
+    is_system_transition,
+    is_active,              ❌ Cette colonne n'existe PAS!
+    description
+  ) VALUES
+  (..., false, true, '...')  ❌ 3 paramètres au lieu de 2
 
-╔══════════════════════════════════════════════════════════════╗
-║  RÉSULTAT: Workflow complet et cohérent de factory à sold   ║
-╚══════════════════════════════════════════════════════════════╝
+APRÈS (CORRECT):
+  INSERT INTO allowed_status_transitions (
+    from_status,
+    to_status,
+    requires_role,
+    is_system_transition,   ✅ Colonne existante
+    description
+  ) VALUES
+  (..., false, '...')         ✅ 2 paramètres seulement
+
+
+📊 STRUCTURE RÉELLE DE LA TABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE TABLE allowed_status_transitions (
+  id uuid PRIMARY KEY,
+  from_status text NOT NULL,
+  to_status text NOT NULL,
+  requires_role text,
+  description text NOT NULL,
+  is_system_transition boolean DEFAULT false,  ✅ Existe
+  created_at timestamptz,
+  updated_at timestamptz,
+  UNIQUE(from_status, to_status)
+);
+
+Note: Pas de colonne "is_active"!
+
+
+✅ FICHIER CORRIGÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql
+
+Le script est maintenant prêt à être exécuté dans Supabase!
+
+
+📋 EXÉCUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Ouvrir Supabase Dashboard → SQL Editor
+2. Copier CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql
+3. Exécuter (devrait fonctionner sans erreur!)
+4. Résultat attendu:
+   ✓ BEFORE: ~47 transitions, ~24 doublons
+   ✓ AFTER: 21 transitions, 0 doublon
+   ✓ CLEANUP COMPLETED SUCCESSFULLY
+
+
+🎯 RÉSUMÉ DES CORRECTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ✅ Bouton Airport: "Validate for Refinery" (au lieu de "Validate Weight & Quality")
+2. ✅ Workflow Airport complet: received_at_airport → validated_for_refinery
+3. ✅ Script SQL corrigé: Sans colonne is_active
+4. ✅ 21 transitions propres sans doublon
+
+
+📁 FICHIERS PRÊTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ✅ CLEAN_TRANSITIONS_REFERENCE_WORKFLOW.sql - Script corrigé
+2. ✅ ANALYZE_TRANSITIONS.sql - Analyse
+3. ✅ BATCH_STATUS_WORKFLOW_FIX.md - Documentation
+4. ✅ BATCH_STATUS_FLOW_UPDATED.md - Workflow Airport
+5. ✅ QUICK_FIX_GUIDE.txt - Ce guide
+
+---
+
+Le script est opérationnel! Vous pouvez l'exécuter maintenant. 🎉

@@ -61,86 +61,85 @@ INSERT INTO allowed_status_transitions (
   to_status,
   requires_role,
   is_system_transition,
-  is_active,
   description
 ) VALUES
 
 -- ═══════════════════════════════════════════════
 -- FACTORY WORKFLOW
 -- ═══════════════════════════════════════════════
-('created', 'approved_for_transport', 'factory_manager', false, true,
+('created', 'approved_for_transport', 'factory_manager', false,
   'Factory manager approves batch for transport'),
   
-('approved_for_transport', 'waiting_airport_receipt', 'factory_staff', false, true,
+('approved_for_transport', 'waiting_airport_receipt', 'factory_staff', false,
   'Batch shipped from factory to airport'),
   
-('approved_for_transport', 'cancelled', 'factory_manager', false, true,
+('approved_for_transport', 'cancelled', 'factory_manager', false,
   'Transport cancelled before shipment'),
   
-('pending_factory_approval', 'approved_for_transport', 'factory_manager', false, true,
+('pending_factory_approval', 'approved_for_transport', 'factory_manager', false,
   'Factory manager approves batch for transport'),
   
-('pending_factory_approval', 'cancelled', 'factory_manager', false, true,
+('pending_factory_approval', 'cancelled', 'factory_manager', false,
   'Batch cancelled before approval'),
 
 -- ═══════════════════════════════════════════════
 -- AIRPORT WORKFLOW
 -- ═══════════════════════════════════════════════
-('waiting_airport_receipt', 'received_at_airport', 'airport_staff', false, true,
+('waiting_airport_receipt', 'received_at_airport', 'airport_staff', false,
   'Batch received and confirmed at airport'),
   
-('waiting_airport_receipt', 'cancelled', 'management', false, true,
+('waiting_airport_receipt', 'cancelled', 'management', false,
   'Batch cancelled during transit to airport'),
   
-('received_at_airport', 'waiting_refinery_receipt', 'airport_staff', false, true,
+('received_at_airport', 'waiting_refinery_receipt', 'airport_staff', false,
   'Batch shipped from airport to refinery after confirmation'),
   
-('received_at_airport', 'validated_for_refinery', 'airport_manager', false, true,
+('received_at_airport', 'validated_for_refinery', 'airport_manager', false,
   'Airport manager validates batch for refinery transport'),
 
 -- ═══════════════════════════════════════════════
 -- REFINERY WORKFLOW
 -- ═══════════════════════════════════════════════
-('waiting_refinery_receipt', 'received_at_refinery', 'refinery_staff', false, true,
+('waiting_refinery_receipt', 'received_at_refinery', 'refinery_staff', false,
   'Batch received and confirmed at refinery'),
   
-('waiting_refinery_receipt', 'cancelled', 'management', false, true,
+('waiting_refinery_receipt', 'cancelled', 'management', false,
   'Batch cancelled during transit to refinery'),
   
-('received_at_refinery', 'validated_for_processing', 'refinery_manager', false, true,
+('received_at_refinery', 'validated_for_processing', 'refinery_manager', false,
   'Refinery manager validates batch for processing'),
   
-('validated_for_processing', 'processing', 'refinery_staff', false, true,
+('validated_for_processing', 'processing', 'refinery_staff', false,
   'Batch processing started at refinery'),
   
-('validated_for_refinery', 'waiting_refinery_receipt', 'airport_staff', false, true,
+('validated_for_refinery', 'waiting_refinery_receipt', 'airport_staff', false,
   'Batch shipped to refinery'),
 
 -- ═══════════════════════════════════════════════
 -- PROCESSING WORKFLOW (THE CRITICAL ONE!)
 -- ═══════════════════════════════════════════════
-('processing', 'processed', 'refinery_staff', false, true,
+('processing', 'processed', 'refinery_staff', false,
   'Batch processing completed at refinery'),
   
-('processed', 'in_inventory', 'refinery_staff', false, true,
+('processed', 'in_inventory', 'refinery_staff', false,
   'Processed batch added to inventory via Add Inventory Entry'),
 
 -- ═══════════════════════════════════════════════
 -- SALES WORKFLOW
 -- ═══════════════════════════════════════════════
-('in_inventory', 'ready_for_sale', 'management', false, true,
+('in_inventory', 'ready_for_sale', 'management', false,
   'Management approves batch for sale'),
   
-('ready_for_sale', 'allocated_to_sale', 'sales_staff', false, true,
+('ready_for_sale', 'allocated_to_sale', 'sales_staff', false,
   'Batch allocated to a specific sale'),
   
-('ready_for_sale', 'in_inventory', 'management', false, true,
+('ready_for_sale', 'in_inventory', 'management', false,
   'Batch removed from sale availability'),
   
-('allocated_to_sale', 'sold', 'sales_manager', false, true,
+('allocated_to_sale', 'sold', 'sales_manager', false,
   'Sale completed and finalized'),
   
-('allocated_to_sale', 'ready_for_sale', 'sales_staff', false, true,
+('allocated_to_sale', 'ready_for_sale', 'sales_staff', false,
   'Sale allocation removed, batch back to available')
 
 ON CONFLICT (from_status, to_status) DO NOTHING;

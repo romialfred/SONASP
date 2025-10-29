@@ -15,19 +15,103 @@ const COUNTRIES = ['Guinea', 'Mali', 'Côte d\'Ivoire', 'Liberia', 'Senegal', 'G
 const CURRENCIES = ['USD', 'EUR', 'GNF', 'XOF', 'AED', 'ZAR', 'GHS'];
 
 const fieldGuides: FieldGuideItem[] = [
-  { field: 'name', label: 'Company Name', description: 'Full legal name of the mining company', example: 'Acme Gold Mining Ltd', required: true },
-  { field: 'code', label: 'Company Code', description: 'Unique identifier code for the company', example: 'ACME_GN', required: true, rules: ['Must be unique', 'No spaces allowed', 'Use uppercase'] },
-  { field: 'country', label: 'Country', description: 'Country where the company is registered', required: true },
-  { field: 'address', label: 'Address', description: 'Physical address of company headquarters', example: '123 Mining Street' },
-  { field: 'city', label: 'City', description: 'City where company is located', example: 'Conakry' },
-  { field: 'postal_code', label: 'Postal Code', description: 'Postal or ZIP code', example: 'BP 1234' },
-  { field: 'contact_person_name', label: 'Contact Person', description: 'Primary contact person name', example: 'John Doe', required: true },
-  { field: 'contact_person_email', label: 'Contact Email', description: 'Primary contact email address', example: 'john@company.com', required: true },
-  { field: 'contact_person_phone', label: 'Contact Phone', description: 'Primary contact phone number', example: '+224 123 456 789' },
-  { field: 'website', label: 'Website', description: 'Company website URL (optional)', example: 'https://company.com' },
-  { field: 'default_currency', label: 'Default Currency', description: 'Preferred currency for transactions', example: 'USD' },
-  { field: 'tax_id', label: 'Tax ID', description: 'Tax identification number', example: 'TAX123456' },
-  { field: 'registration_number', label: 'Registration Number', description: 'Company registration number', example: 'REG987654' },
+  {
+    field: 'name',
+    label: 'Company Name / Nom de la Société',
+    description: 'Nom officiel complet de la société minière tel qu\'enregistré légalement',
+    example: 'Essakane Mine Site SA',
+    required: true,
+    section: 'Company Information'
+  },
+  {
+    field: 'code',
+    label: 'Company Code / Code Société',
+    description: 'Code d\'identification unique pour la société (utilisé dans les rapports et transactions)',
+    example: 'ESSAKANE_BF',
+    required: true,
+    rules: ['Doit être unique', 'Pas d\'espaces', 'Utiliser majuscules'],
+    section: 'Company Information'
+  },
+  {
+    field: 'country',
+    label: 'Country / Pays',
+    description: 'Pays où la société est enregistrée et opère',
+    example: 'Guinea, Mali, Burkina Faso',
+    required: true,
+    section: 'Company Information'
+  },
+  {
+    field: 'address',
+    label: 'Address / Adresse',
+    description: 'Adresse physique complète du siège social ou du site minier',
+    example: 'Zone industrielle de Kaloum, Rue KA-028',
+    section: 'Company Information'
+  },
+  {
+    field: 'city',
+    label: 'City / Ville',
+    description: 'Ville où se trouve le siège social ou le site principal',
+    example: 'Conakry, Bamako, Ouagadougou',
+    section: 'Company Information'
+  },
+  {
+    field: 'postal_code',
+    label: 'Postal Code / Code Postal',
+    description: 'Code postal ou boîte postale de la société',
+    example: 'BP 1234',
+    section: 'Company Information'
+  },
+  {
+    field: 'contact_person_name',
+    label: 'Contact Person / Personne de Contact',
+    description: 'Nom complet de la personne responsable principale (directeur, responsable des opérations)',
+    example: 'Mamadou Diallo',
+    required: true,
+    section: 'Contact Information'
+  },
+  {
+    field: 'contact_person_email',
+    label: 'Contact Email / Email de Contact',
+    description: 'Adresse email professionnelle de la personne de contact',
+    example: 'm.diallo@essakane.com',
+    required: true,
+    section: 'Contact Information'
+  },
+  {
+    field: 'contact_person_phone',
+    label: 'Contact Phone / Téléphone',
+    description: 'Numéro de téléphone direct de la personne de contact (avec indicatif pays)',
+    example: '+224 622 123 456',
+    section: 'Contact Information'
+  },
+  {
+    field: 'website',
+    label: 'Website / Site Web',
+    description: 'Site web officiel de la société (optionnel)',
+    example: 'https://www.miningcompany.com',
+    section: 'Contact Information'
+  },
+  {
+    field: 'default_currency',
+    label: 'Default Currency / Devise par Défaut',
+    description: 'Devise préférée pour les transactions commerciales avec cette société',
+    example: 'USD (Dollar américain), EUR (Euro), GNF (Franc guinéen)',
+    section: 'Additional Information'
+  },
+  {
+    field: 'tax_id',
+    label: 'Tax ID / Numéro Fiscal',
+    description: 'Numéro d\'identification fiscale attribué par les autorités locales',
+    example: 'NIF-123456789',
+    section: 'Additional Information'
+  },
+  {
+    field: 'registration_number',
+    label: 'Registration Number / Numéro d\'Enregistrement',
+    description: 'Numéro d\'enregistrement commercial de la société',
+    example: 'RCCM-GN-2023-A-12345',
+    section: 'Additional Information'
+  },
 ];
 
 interface BankAccount {

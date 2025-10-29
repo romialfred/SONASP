@@ -405,7 +405,7 @@ export function SaleCreate() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-xl">Sale Calculations Report</CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">Prepared for Management Review</p>
+                    <p className="text-sm text-gray-600 mt-1">Review and Submit to Customer</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-500">Sale Date</p>
@@ -562,89 +562,200 @@ export function SaleCreate() {
               onClick={handleSubmit}
               disabled={!showCalculations || submitting}
             >
-              {submitting ? 'Submitting...' : 'Submit to Management'}
+              {submitting ? 'Submitting...' : 'Submit to Customer for Approval'}
             </Button>
           </div>
         </div>
 
-        {/* Right Pane - Sales Information Guide */}
-        <div className="hidden xl:block w-80 space-y-4">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Info className="h-5 w-5 text-blue-600" />
-                Sales Information Guide
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-sm text-gray-900 mb-2">Creating a Sale</h4>
-                <ol className="text-xs text-gray-600 space-y-2 list-decimal list-inside">
-                  <li>Select a customer from the dropdown</li>
-                  <li>Review customer YTD statistics</li>
-                  <li>Enter quantity in troy ounces (max: available inventory)</li>
-                  <li>Confirm or adjust London AM rate</li>
-                  <li>Add freight and other costs if applicable</li>
-                  <li>Click "Calculate Proceeds" to preview</li>
-                  <li>Submit to management for approval</li>
-                </ol>
-              </div>
+        {/* Right Pane - Field Guide Panel */}
+        <div className="hidden xl:block xl:w-96">
+          <div className="sticky top-6">
+            <Card className="overflow-hidden border-2 border-blue-200 shadow-lg">
+              <CardHeader className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <Package className="h-6 w-6 text-white" />
+                  </div>
+                  <CardTitle className="text-white">Field Guide</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* Currently Editing Section */}
+                  {activeField && (
+                    <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                      <h3 className="text-sm font-bold text-blue-900 mb-1 uppercase tracking-wide">
+                        Currently Editing
+                      </h3>
+                      <p className="text-sm font-semibold text-blue-700">
+                        {activeField === 'customer' && 'Customer Selection'}
+                        {activeField === 'quantity' && 'Quantity (Troy Ounces)'}
+                        {activeField === 'price' && 'Sale Price'}
+                        {activeField === 'freight' && 'Freight Cost'}
+                        {activeField === 'costs' && 'Other Costs'}
+                      </p>
+                    </div>
+                  )}
 
-              <div className="pt-3 border-t border-gray-200">
-                <h4 className="font-semibold text-sm text-gray-900 mb-2">Key Information</h4>
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p><strong>YTD Statistics:</strong> Shows customer's year-to-date gold purchases, average price, and total amount</p>
+                  {/* Quick Tips */}
+                  <div>
+                    <h4 className="font-bold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      QUICK TIPS
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-700">Click or focus on any field to see its guidance</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-700">Required fields are marked with an asterisk (*)</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-700">Calculations update automatically as you type</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p><strong>Best Customer:</strong> Badge indicates the customer with highest purchase volume</p>
+
+                  {/* Creating a Sale Steps */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="font-bold text-sm text-gray-900 mb-3">Creating a Sale</h4>
+                    <div className="space-y-3 text-xs text-gray-600">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">1</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Select Customer</p>
+                          <p className="text-gray-600">Choose from active customers dropdown</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">2</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Review Statistics</p>
+                          <p className="text-gray-600">Check customer's YTD performance</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">3</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Enter Quantity</p>
+                          <p className="text-gray-600">Max: {availableInventoryOz.toFixed(2)} oz available</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">4</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Confirm Price</p>
+                          <p className="text-gray-600">{mechanismData ? 'Pre-filled from simulation' : 'Enter sale price per oz'}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">5</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Add Costs</p>
+                          <p className="text-gray-600">Include freight and other expenses</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">6</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Calculate Proceeds</p>
+                          <p className="text-gray-600">Click "Calculate" to preview</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">7</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Submit to Customer</p>
+                          <p className="text-gray-600">Send directly for customer approval</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p><strong>Max Quantity:</strong> Cannot exceed available inventory ({availableInventoryOz.toFixed(2)} oz)</p>
+
+                  {/* Calculation Formula */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="font-bold text-sm text-gray-900 mb-3">Calculation Formula</h4>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg text-xs space-y-2 text-gray-700 font-mono">
+                      <div className="flex justify-between">
+                        <span>Gross Proceeds</span>
+                        <span className="text-gray-500">=</span>
+                        <span>Qty × Price</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Net Proceeds</span>
+                        <span className="text-gray-500">=</span>
+                        <span>Gross - Costs</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Royalties (3%)</span>
+                        <span className="text-gray-500">=</span>
+                        <span>Net × 0.03</span>
+                      </div>
+                      <div className="border-t border-gray-300 pt-2 mt-2 font-bold text-blue-700 flex justify-between">
+                        <span>Final Amount</span>
+                        <span className="text-gray-500">=</span>
+                        <span>Net - Royalties</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p><strong>Royalties:</strong> 3% net smelted royalties automatically deducted from net proceeds</p>
+
+                  {/* Approval Process */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="font-bold text-sm text-gray-900 mb-3">Approval Process</h4>
+                    <div className="space-y-3 text-xs">
+                      <div className="flex items-start gap-2">
+                        <Mail className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Direct to Customer</p>
+                          <p className="text-gray-600">Sale sent directly to customer for approval</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Customer Confirms</p>
+                          <p className="text-gray-600">Customer receives email and approves</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <DollarSign className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Payment Processing</p>
+                          <p className="text-gray-600">Track payment and complete sale</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Information */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="font-bold text-sm text-gray-900 mb-3">Key Information</h4>
+                    <div className="space-y-2 text-xs text-gray-600">
+                      <div className="flex items-start gap-2">
+                        <Award className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <p><strong className="text-gray-900">Best Customer:</strong> Highest purchase volume badge</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <TrendingUp className="h-3.5 w-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p><strong className="text-gray-900">YTD Stats:</strong> Year-to-date customer performance</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Package className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <p><strong className="text-gray-900">Max Quantity:</strong> {availableInventoryOz.toFixed(2)} oz available</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <DollarSign className="h-3.5 w-3.5 text-purple-600 flex-shrink-0 mt-0.5" />
+                        <p><strong className="text-gray-900">Royalties:</strong> 3% automatically deducted</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="pt-3 border-t border-gray-200">
-                <h4 className="font-semibold text-sm text-gray-900 mb-2">Calculation Formula</h4>
-                <div className="bg-gray-50 p-3 rounded text-xs space-y-1 text-gray-700">
-                  <p>Gross Proceeds = Quantity × Price</p>
-                  <p>Net Proceeds = Gross - Costs</p>
-                  <p>Royalties = Net × 3%</p>
-                  <p className="font-semibold pt-1 border-t border-gray-300">Final = Net - Royalties</p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-gray-200">
-                <h4 className="font-semibold text-sm text-gray-900 mb-2">Approval Process</h4>
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold flex-shrink-0">1</div>
-                    <p>Management review and approval</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold flex-shrink-0">2</div>
-                    <p>Email sent to customer for confirmation</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold flex-shrink-0">3</div>
-                    <p>Customer approves via email link</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold flex-shrink-0">4</div>
-                    <p>Payment processing and tracking</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </MainLayout>

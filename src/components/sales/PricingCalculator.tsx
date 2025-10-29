@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +13,7 @@ interface PricingCalculatorProps {
 }
 
 export function PricingCalculator({ availableStockOz, onMechanismSelect }: PricingCalculatorProps) {
+  const navigate = useNavigate();
   const [quantityOz, setQuantityOz] = useState<string>('');
   const [unit, setUnit] = useState<'oz' | 'g'>('oz');
   const [comparison, setComparison] = useState<PricingComparison | null>(null);
@@ -60,6 +62,17 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     if (onMechanismSelect) {
       onMechanismSelect(mechanism);
     }
+  };
+
+  const handleContinueWithMechanism = (mechanism: PricingMechanism) => {
+    // Navigate to sale creation with mechanism data
+    navigate('/sales/new', {
+      state: {
+        mechanismData: mechanism,
+        quantityOz: getQuantityInOz(),
+        availableStockOz
+      }
+    });
   };
 
   const getMechanismIcon = (mechanism: string) => {
@@ -262,7 +275,14 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
                     {isSelected && (
                       <div className="pt-2">
-                        <Button className="w-full" size="sm">
+                        <Button
+                          className="w-full"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleContinueWithMechanism(mechanism);
+                          }}
+                        >
                           Continue with {mechanism.displayName}
                         </Button>
                       </div>

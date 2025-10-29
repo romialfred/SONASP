@@ -17,7 +17,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { StatusFlow, BatchStatus } from '@/components/batch/StatusFlow';
+import { StatusFlow, StatusHistoryItem } from '@/components/batch/StatusFlow';
 import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +36,7 @@ export function BatchDetails() {
   const { user } = useAuth();
   const alert = useAlert();
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
   const [approving, setApproving] = useState(false);
   const [isManager, setIsManager] = useState(false);
 
@@ -143,7 +144,18 @@ export function BatchDetails() {
         iconColor: getStatusColor(index),
       }));
 
+      // Map to StatusHistoryItem for StatusFlow component
+      const history: StatusHistoryItem[] = (result.data || []).map((item: any) => ({
+        status: item.status,
+        changed_at: item.changed_at,
+        changed_by: item.changed_by,
+        user_name: item.user?.full_name || 'System',
+        user_role: item.user?.role || 'Unknown',
+        comments: item.comments || '',
+      }));
+
       setTimelineEvents(events);
+      setStatusHistory(history);
     } catch (error) {
       console.error('[BatchDetails] Error loading timeline:', error);
       setTimelineEvents([]);
@@ -271,7 +283,10 @@ export function BatchDetails() {
             <CardTitle>Batch Status Flow</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusFlow currentStatus={formattedBatch.status} />
+            <StatusFlow
+              currentStatus={formattedBatch.status}
+              statusHistory={statusHistory}
+            />
           </CardContent>
         </Card>
 

@@ -80,6 +80,142 @@ export function SalesDashboard() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const mountedRef = useRef(false);
+  const [metrics, setMetrics] = useState({
+    availableInventory: 0,
+    pendingSales: 0,
+    monthlyRevenue: 0,
+    completedSales: 0,
+    pendingPayment: 0,
+  });
+  const [monthlySalesData, setMonthlySalesData] = useState<Array<{ name: string; sales: number; revenue: number }>>([]);
+  const [customerPerformance, setCustomerPerformance] = useState({
+    topCustomer: 'N/A',
+    avgOrderValue: 0,
+    paymentSuccessRate: 0,
+  });
+
+  const loadMetrics = useCallback(async () => {
+    try {
+      // Load inventory
+      const { data: inventoryData } = await supabase
+        .from('gold_inventory')
+        .select('available_for_sale_oz')
+        .eq('is_active', true);
+
+      const totalInventory = inventoryData?.reduce((sum, item) => sum + (item.available_for_sale_oz || 0), 0) || 0;
+
+      // Load sales metrics
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select('status, final_proceeds, created_at');
+
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const pending = salesData?.filter(s => s.status === 'pending')?.length || 0;
+      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && s.status === 'completed')?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+      const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === 'completed' || s.status === 'payment_received'))?.length || 0;
+      const pendingPayment = salesData?.filter(s => s.status === 'customer_approved')?.length || 0;
+
+      setMetrics({
+        availableInventory: totalInventory,
+        pendingSales: pending,
+        monthlyRevenue,
+        completedSales: completedThisMonth,
+        pendingPayment,
+      });
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    }
+  }, []);
+
+  const loadMonthlySalesData = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('sales')
+        .select('created_at, final_proceeds, status')
+        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString());
+
+      if (!data) {
+        setMonthlySalesData([]);
+        return;
+      }
+
+      const monthlyData: Record<string, { sales: number; revenue: number }> = {};
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      months.forEach((month, index) => {
+        monthlyData[month] = { sales: 0, revenue: 0 };
+      });
+
+      data.forEach(sale => {
+        const date = new Date(sale.created_at);
+        const monthName = months[date.getMonth()];
+        if (monthlyData[monthName]) {
+          monthlyData[monthName].sales += 1;
+          if (sale.status === 'completed' || sale.status === 'payment_received') {
+            monthlyData[monthName].revenue += sale.final_proceeds || 0;
+          }
+        }
+      });
+
+      const chartData = months.map(month => ({
+        name: month,
+        sales: monthlyData[month].sales,
+        revenue: Math.round(monthlyData[month].revenue / 1000),
+      }));
+
+      setMonthlySalesData(chartData);
+    } catch (error) {
+      console.error('Error loading monthly sales data:', error);
+      setMonthlySalesData([]);
+    }
+  }, []);
+
+  const loadCustomerPerformance = useCallback(async () => {
+    try {
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select(`
+          final_proceeds,
+          customer:customers(name),
+          status
+        `);
+
+      if (!salesData || salesData.length === 0) {
+        return;
+      }
+
+      const customerTotals: Record<string, number> = {};
+      let totalCompleted = 0;
+      let totalSales = 0;
+
+      salesData.forEach(sale => {
+        const customerName = (sale.customer as any)?.name || 'Unknown';
+        if (!customerTotals[customerName]) {
+          customerTotals[customerName] = 0;
+        }
+        customerTotals[customerName] += sale.final_proceeds || 0;
+        totalSales += sale.final_proceeds || 0;
+
+        if (sale.status === 'completed' || sale.status === 'payment_received') {
+          totalCompleted++;
+        }
+      });
+
+      const topCustomer = Object.entries(customerTotals).sort((a, b) => b[1] - a[1])[0];
+      const avgOrderValue = salesData.length > 0 ? totalSales / salesData.length : 0;
+      const paymentSuccessRate = salesData.length > 0 ? (totalCompleted / salesData.length) * 100 : 0;
+
+      setCustomerPerformance({
+        topCustomer: topCustomer ? topCustomer[0] : 'N/A',
+        avgOrderValue,
+        paymentSuccessRate,
+      });
+    } catch (error) {
+      console.error('Error loading customer performance:', error);
+    }
+  }, []);
 
   const loadSales = useCallback(async () => {
     setLoading(true);
@@ -127,6 +263,12 @@ export function SalesDashboard() {
       }));
 
       setSales(salesData);
+
+      await Promise.all([
+        loadMetrics(),
+        loadMonthlySalesData(),
+        loadCustomerPerformance(),
+      ]);
     } catch (error) {
       console.error('Error fetching sales:', error);
       if (!mountedRef.current) {
@@ -141,7 +283,7 @@ export function SalesDashboard() {
         setLoading(false);
       }
     }
-  }, []);
+  }, [loadMetrics, loadMonthlySalesData, loadCustomerPerformance]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -159,23 +301,18 @@ export function SalesDashboard() {
       void loadSales();
   };
 
-  const availableInventory = {
-    gold: 1250.5,
-    silver: 450.2,
-  };
-
-  const metrics = [
+  const metricsDisplay = [
     {
       title: 'Available Inventory',
-      value: formatWeight(availableInventory.gold * 31.1035, 'oz'),
-      change: '145.2g fine gold ready',
+      value: formatWeight(metrics.availableInventory, 'oz'),
+      change: 'Fine gold ready for sale',
       changeType: 'neutral' as const,
       icon: DollarSign,
       iconColor: 'text-primary-500',
     },
     {
       title: 'Pending Sales',
-      value: '8',
+      value: String(metrics.pendingSales),
       change: 'Awaiting approval',
       changeType: 'neutral' as const,
       icon: Clock,
@@ -183,34 +320,20 @@ export function SalesDashboard() {
     },
     {
       title: 'Monthly Revenue',
-      value: formatCurrency(456780),
-      change: '+18% from last month',
+      value: formatCurrency(metrics.monthlyRevenue),
+      change: 'Current month total',
       changeType: 'positive' as const,
       icon: TrendingUp,
       iconColor: 'text-accent-500',
     },
     {
       title: 'Completed Sales (MTD)',
-      value: '23',
-      change: '12 pending payment',
+      value: String(metrics.completedSales),
+      change: `${metrics.pendingPayment} pending payment`,
       changeType: 'neutral' as const,
       icon: CheckCircle,
       iconColor: 'text-accent-500',
     },
-  ];
-
-
-  const monthlySalesData = [
-    { name: 'Jan', sales: 12, revenue: 420 },
-    { name: 'Feb', sales: 14, revenue: 485 },
-    { name: 'Mar', sales: 16, revenue: 532 },
-    { name: 'Apr', sales: 18, revenue: 612 },
-    { name: 'May', sales: 15, revenue: 521 },
-    { name: 'Jun', sales: 20, revenue: 698 },
-    { name: 'Jul', sales: 19, revenue: 654 },
-    { name: 'Aug', sales: 21, revenue: 735 },
-    { name: 'Sep', sales: 22, revenue: 768 },
-    { name: 'Oct', sales: 23, revenue: 812 },
   ];
 
   const filteredSales = sales.filter((sale) => {
@@ -272,7 +395,7 @@ export function SalesDashboard() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((metric) => (
+          {metricsDisplay.map((metric) => (
             <MetricCard key={metric.title} {...metric} />
           ))}
         </div>
@@ -301,15 +424,15 @@ export function SalesDashboard() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Top Customer</span>
-                  <span className="text-sm font-semibold text-gray-900">Premium Gold Ltd.</span>
+                  <span className="text-sm font-semibold text-gray-900">{customerPerformance.topCustomer}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Avg Order Value</span>
-                  <span className="text-sm font-semibold text-gray-900">{formatCurrency(158450)}</span>
+                  <span className="text-sm font-semibold text-gray-900">{formatCurrency(customerPerformance.avgOrderValue)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Payment Success Rate</span>
-                  <span className="text-sm font-semibold text-accent-600">98.5%</span>
+                  <span className="text-sm font-semibold text-accent-600">{customerPerformance.paymentSuccessRate.toFixed(1)}%</span>
                 </div>
                   <Button
                     variant="outline"

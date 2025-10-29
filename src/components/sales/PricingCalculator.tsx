@@ -40,7 +40,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     try {
       const result = await calculatePricingComparison(qtyInOz);
       if (result.success && result.data) {
-        setComparison(result.data);
+        // Sort mechanisms by benefit (highest to lowest)
+        const sortedMechanisms = [...result.data.mechanisms].sort((a, b) => b.benefit - a.benefit);
+        setComparison({
+          ...result.data,
+          mechanisms: sortedMechanisms
+        });
         setSelectedMechanism(result.data.recommendedMechanism);
       }
     } catch (error) {
@@ -64,15 +69,31 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     return <DollarSign className="w-5 h-5" />;
   };
 
-  const getMechanismBadge = (mechanism: string, isRecommended: boolean) => {
-    if (isRecommended) {
+  const getMechanismBadge = (index: number, totalMechanisms: number, isRecommended: boolean) => {
+    if (index === 0) {
       return (
         <span className="px-2 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded">
-          Recommended
+          Best Option
         </span>
       );
     }
     return null;
+  };
+
+  const getCardBackgroundColor = (index: number, totalMechanisms: number) => {
+    if (index === 0) {
+      // Best option - light green
+      return 'bg-emerald-50/80';
+    }
+    // Calculate opacity from 30% to 80% for remaining cards
+    const step = (80 - 30) / Math.max(totalMechanisms - 2, 1);
+    const opacity = 30 + (index - 1) * step;
+
+    // Use Tailwind's opacity utilities
+    if (opacity <= 35) return 'bg-red-50/30';
+    if (opacity <= 50) return 'bg-red-50/40';
+    if (opacity <= 65) return 'bg-red-50/60';
+    return 'bg-red-50/80';
   };
 
   return (
@@ -166,9 +187,11 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {comparison.mechanisms.map((mechanism) => {
+            {comparison.mechanisms.map((mechanism, index) => {
               const isRecommended = mechanism.mechanism === comparison.recommendedMechanism;
               const isSelected = mechanism.mechanism === selectedMechanism;
+              const isBestOption = index === 0;
+              const bgColor = getCardBackgroundColor(index, comparison.mechanisms.length);
 
               return (
                 <Card
@@ -176,10 +199,10 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                   className={`cursor-pointer transition-all ${
                     isSelected
                       ? 'ring-2 ring-blue-500 shadow-lg'
-                      : isRecommended
+                      : isBestOption
                       ? 'ring-2 ring-emerald-500 shadow-md'
                       : 'hover:shadow-md'
-                  }`}
+                  } ${bgColor}`}
                   onClick={() => handleSelectMechanism(mechanism)}
                 >
                   <div className="p-5 space-y-4">
@@ -191,7 +214,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                           <p className="text-xs text-gray-500 mt-0.5">{mechanism.settlementDays} days</p>
                         </div>
                       </div>
-                      {getMechanismBadge(mechanism.mechanism, isRecommended)}
+                      {getMechanismBadge(index, comparison.mechanisms.length, isRecommended)}
                     </div>
 
                     <div className="space-y-2">

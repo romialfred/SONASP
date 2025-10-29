@@ -28,8 +28,8 @@ export type BatchStatus = typeof BATCH_STATUSES[keyof typeof BATCH_STATUSES];
  * Human-readable labels for batch statuses
  */
 export const BATCH_STATUS_LABELS: Record<BatchStatus, string> = {
-  [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: 'Pending Factory Approval',
-  [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: 'Approved for Transport',
+  [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: 'Created',
+  [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: 'Validated for Transport',
   [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: 'In Transit to Airport',
   [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: 'Received at Airport',
   [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: 'Validated for Refinery',

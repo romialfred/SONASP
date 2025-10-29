@@ -399,7 +399,7 @@ export function BatchDetailsEnhanced() {
             <CardTitle>Batch Status Flow</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusFlow currentStatus={batch.status} completedSteps={['created']} />
+            <StatusFlow currentStatus={batch.status} />
           </CardContent>
         </Card>
 

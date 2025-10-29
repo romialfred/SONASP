@@ -1,43 +1,65 @@
 import { Check, Circle } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
 export type BatchStatus =
   | 'created'
-  | 'shipped'
-  | 'received_airport'
-  | 'shipped_refinery'
-  | 'received_refinery'
-  | 'processing'
+  | 'validated'
+  | 'airport'
+  | 'refinery'
   | 'processed'
   | 'approved'
-  | 'ready_for_sale';
+  | 'sell'
+  | 'paid';
 
 export interface StatusFlowProps {
-  currentStatus: BatchStatus;
-  completedSteps?: BatchStatus[];
+  currentStatus: string;
+  completedSteps?: string[];
   className?: string;
 }
 
 const statusSteps: { status: BatchStatus; label: string; description: string }[] = [
   { status: 'created', label: 'Created', description: 'Batch registered' },
-  { status: 'shipped', label: 'Shipped', description: 'En route to airport' },
-  { status: 'received_airport', label: 'Airport', description: 'Received at airport' },
-  { status: 'shipped_refinery', label: 'To Refinery', description: 'Shipped to refinery' },
-  { status: 'received_refinery', label: 'Refinery', description: 'Received at refinery' },
-  { status: 'processing', label: 'Processing', description: 'Refining in progress' },
+  { status: 'validated', label: 'Validated', description: 'Ready for transport' },
+  { status: 'airport', label: 'Airport', description: 'Received at airport' },
+  { status: 'refinery', label: 'Refinery', description: 'Received at refinery' },
   { status: 'processed', label: 'Processed', description: 'Refining completed' },
   { status: 'approved', label: 'Approved', description: 'Ready for sale' },
+  { status: 'sell', label: 'Sell', description: 'Sale completed' },
+  { status: 'paid', label: 'Paid', description: 'Payment received' },
 ];
 
+function mapDatabaseStatusToFlowStatus(dbStatus: string): BatchStatus {
+  const statusMap: Record<string, BatchStatus> = {
+    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: 'created',
+    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: 'validated',
+    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: 'validated',
+    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: 'airport',
+    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: 'airport',
+    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: 'airport',
+    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: 'refinery',
+    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: 'refinery',
+    [BATCH_STATUSES.PROCESSING]: 'processed',
+    [BATCH_STATUSES.IN_INVENTORY]: 'processed',
+    [BATCH_STATUSES.READY_FOR_SALE]: 'approved',
+    [BATCH_STATUSES.ALLOCATED_TO_SALE]: 'sell',
+    [BATCH_STATUSES.SOLD]: 'paid',
+    [BATCH_STATUSES.CANCELLED]: 'created',
+  };
+
+  return statusMap[dbStatus] || 'created';
+}
+
 export function StatusFlow({ currentStatus, completedSteps = [], className }: StatusFlowProps) {
-  const currentIndex = statusSteps.findIndex((step) => step.status === currentStatus);
+  const mappedStatus = mapDatabaseStatusToFlowStatus(currentStatus);
+  const currentIndex = statusSteps.findIndex((step) => step.status === mappedStatus);
 
   const isStepCompleted = (index: number, status: BatchStatus) => {
     return index < currentIndex || completedSteps.includes(status);
   };
 
   const isStepCurrent = (status: BatchStatus) => {
-    return status === currentStatus;
+    return status === mappedStatus;
   };
 
   return (

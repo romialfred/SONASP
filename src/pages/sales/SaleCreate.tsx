@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, TrendingUp, Award, Info } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Calculator, TrendingUp, Award, Info, Package, DollarSign, Users, FileText, CheckCircle, Mail } from 'lucide-react';
+import type { PricingMechanism } from '@/services/goldTradeSpaceService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -29,17 +30,26 @@ interface Customer {
 export function SaleCreate() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const alert = useAlert();
 
+  // Extract data from navigation state (from simulation)
+  const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
+  const initialQuantity = (location.state as any)?.quantityOz || '';
+  const availableFromState = (location.state as any)?.availableStockOz;
+
   const [formData, setFormData] = useState({
     customerId: '',
-    quantityOz: '',
-    londonAMRate: '2450.00',
+    quantityOz: initialQuantity.toString(),
+    londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '2450.00',
     freightCost: '',
     otherCosts: '',
+    mechanismType: mechanismData?.mechanism || '',
+    mechanismDisplayName: mechanismData?.displayName || ''
   });
 
+  const [activeField, setActiveField] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCalculations, setShowCalculations] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -103,7 +113,7 @@ export function SaleCreate() {
   };
 
   const availableInventoryGrams = 1250.5;
-  const availableInventoryOz = availableInventoryGrams / 31.1035;
+  const availableInventoryOz = availableFromState || (availableInventoryGrams / 31.1035);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -185,7 +195,8 @@ export function SaleCreate() {
             net_proceeds: calculations.netProceeds,
             royalties: calculations.royalties,
             final_proceeds: calculations.finalAmount,
-            status: 'pending',
+            status: 'customer_pending',
+            mechanism_type: formData.mechanismType || null,
             created_by: user?.id
           }
         ])
@@ -242,9 +253,38 @@ export function SaleCreate() {
               <h1 className="font-heading text-3xl font-bold text-gray-900">
                 Create New Sale
               </h1>
-              <p className="text-gray-600 mt-1">Configure sale details and calculate proceeds</p>
+              <p className="text-gray-600 mt-1">
+                {mechanismData
+                  ? `Based on ${mechanismData.displayName} simulation`
+                  : 'Configure sale details and calculate proceeds'}
+              </p>
             </div>
           </div>
+
+          {mechanismData && (
+            <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-900 mb-1">Selected Pricing Mechanism</p>
+                    <p className="text-lg font-bold text-emerald-700">{mechanismData.displayName}</p>
+                    <p className="text-xs text-emerald-600 mt-1">{mechanismData.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-600 mb-1">Price per oz</p>
+                    <p className="text-2xl font-bold text-gray-900">${mechanismData.pricePerOz.toFixed(2)}</p>
+                    {mechanismData.adjustmentPercentage !== 0 && (
+                      <p className={`text-xs font-semibold mt-1 ${
+                        mechanismData.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {mechanismData.adjustmentPercentage > 0 ? '+' : ''}{mechanismData.adjustmentPercentage.toFixed(3)}% adjustment
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Alert type="info" title="Available Inventory">
             {availableInventoryGrams.toFixed(2)} g ({availableInventoryOz.toFixed(2)} oz) of fine gold available for sale
@@ -265,6 +305,7 @@ export function SaleCreate() {
                     value={formData.customerId}
                     onChange={(e) => handleInputChange('customerId', e.target.value)}
                     error={!!errors.customerId}
+                    onFocus={() => setActiveField('customer')}
                   >
                     <option value="">Select a customer</option>
                     {customers.map((customer) => (
@@ -337,14 +378,15 @@ export function SaleCreate() {
                       onChange={(e) => handleInputChange('quantityOz', e.target.value)}
                       error={!!errors.quantityOz}
                       placeholder="0.000"
+                      onFocus={() => setActiveField('quantity')}
                     />
                   </FormField>
 
                   <FormField
-                    label="London AM Rate (USD/oz)"
+                    label="Sale Price (USD/oz)"
                     required
                     error={errors.londonAMRate}
-                    hint="Current market rate"
+                    hint={mechanismData ? `From ${mechanismData.displayName}` : 'Current market rate'}
                   >
                     <Input
                       type="number"
@@ -353,6 +395,8 @@ export function SaleCreate() {
                       onChange={(e) => handleInputChange('londonAMRate', e.target.value)}
                       error={!!errors.londonAMRate}
                       placeholder="0.00"
+                      onFocus={() => setActiveField('price')}
+                      className={mechanismData ? 'bg-emerald-50' : ''}
                     />
                   </FormField>
                 </div>
@@ -368,6 +412,7 @@ export function SaleCreate() {
                       value={formData.freightCost}
                       onChange={(e) => handleInputChange('freightCost', e.target.value)}
                       placeholder="0.00"
+                      onFocus={() => setActiveField('freight')}
                     />
                   </FormField>
 
@@ -381,6 +426,7 @@ export function SaleCreate() {
                       value={formData.otherCosts}
                       onChange={(e) => handleInputChange('otherCosts', e.target.value)}
                       placeholder="0.00"
+                      onFocus={() => setActiveField('costs')}
                     />
                   </FormField>
                 </div>

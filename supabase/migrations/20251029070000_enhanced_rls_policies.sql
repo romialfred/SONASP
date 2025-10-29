@@ -75,9 +75,7 @@ CREATE POLICY "users_can_read_assigned_batches" ON batches
         AND (
           -- Management can see everything
           up.role = 'management' OR
-          -- Users can see batches from their assigned mining company
-          batches.mining_company_id = up.mining_company_id OR
-          -- Factory, airport, and refinery staff can see relevant batches
+          -- Factory, airport, and refinery staff can see relevant batches based on status
           (up.role IN ('factory_staff', 'factory_manager') AND batches.status IN (
             'pending_factory_approval', 'approved_for_transport', 'waiting_airport_receipt'
           )) OR

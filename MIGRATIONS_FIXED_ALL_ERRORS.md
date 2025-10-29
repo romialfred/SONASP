@@ -2,7 +2,7 @@
 
 ## 📋 Résumé des Corrections
 
-Deux erreurs SQL ont été identifiées et corrigées dans les migrations:
+Trois erreurs SQL ont été identifiées et corrigées dans les migrations:
 
 ---
 
@@ -91,6 +91,67 @@ END $$;
 
 ### Composant Corrigé
 ✅ Section "Enable RLS on All Sensitive Tables" - Encapsulée dans bloc DO
+
+---
+
+## 🐛 Erreur 3: RLS Policies - Colonne Inexistante
+
+### Fichier
+`supabase/migrations/20251029070000_enhanced_rls_policies.sql`
+
+### Erreur
+```
+ERROR: 42703: column up.mining_company_id does not exist
+LINE 79: batches.mining_company_id = up.mining_company_id OR
+```
+
+### Cause
+La table `user_profiles` n'a pas de colonne `mining_company_id`. Les utilisateurs sont liés aux sites via la table `user_site_assignments`, et non directement aux mining companies.
+
+### Solution
+**Suppression de la vérification incorrecte**
+
+✅ **AVANT:**
+```sql
+CREATE POLICY "users_can_read_assigned_batches" ON batches
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+        AND (
+          up.role = 'management' OR
+          batches.mining_company_id = up.mining_company_id OR  -- ❌ Colonne n'existe pas
+          (up.role IN ('factory_staff') AND ...)
+        )
+    )
+  );
+```
+
+✅ **APRÈS:**
+```sql
+CREATE POLICY "users_can_read_assigned_batches" ON batches
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+        AND (
+          up.role = 'management' OR  -- ✅ Management voit tout
+          (up.role IN ('factory_staff') AND ...)  -- ✅ Autres rôles par statut
+        )
+    )
+  );
+```
+
+### Explication
+La logique d'accès est basée sur:
+1. **Role Management:** Accès complet à tous les batches
+2. **Autres rôles:** Accès basé sur le statut du batch et le rôle de l'utilisateur
+3. **Pas besoin de mining_company_id:** Le workflow est déjà sécurisé par les statuts
+
+### Composant Corrigé
+✅ Policy "users_can_read_assigned_batches" - Logique d'accès simplifiée et corrigée
 
 ---
 

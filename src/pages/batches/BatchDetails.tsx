@@ -73,15 +73,20 @@ export function BatchDetails() {
 
       if (result.success) {
         alert('Batch approved for transportation successfully!');
-        // Reload batch
         await loadBatch();
         await loadTimeline();
       } else {
-        alert(`Failed to approve batch: ${result.error}`);
+        const errorMessage = result.error instanceof Error
+          ? result.error.message
+          : typeof result.error === 'object' && result.error !== null
+            ? (result.error as any).message || JSON.stringify(result.error)
+            : String(result.error || 'Unknown error');
+        alert(`Failed to approve batch: ${errorMessage}`);
       }
     } catch (error: any) {
       console.error('Error approving batch:', error);
-      alert(`Error approving batch: ${error.message}`);
+      const errorMessage = error?.message || String(error);
+      alert(`Error approving batch: ${errorMessage}`);
     } finally {
       setApproving(false);
     }

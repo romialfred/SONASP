@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  UserPlus, ArrowLeft, Lock, Unlock, Shield, Save, X,
+  UserPlus, ArrowLeft, Lock, Unlock, Shield, Save, X, Key,
   LayoutDashboard, Package, Truck, FlaskConical, Users,
   ShoppingCart, TrendingUp, DollarSign, BarChart3, FileText,
   Settings, GitBranch, Info, AlertCircle
@@ -51,6 +51,44 @@ interface ModulePermissions {
 }
 
 type ViewMode = 'list' | 'create' | 'edit';
+
+// Country codes for phone numbers
+const COUNTRY_CODES = [
+  { code: '+224', country: 'Guinea', flag: '🇬🇳' },
+  { code: '+225', country: "Côte d'Ivoire", flag: '🇨🇮' },
+  { code: '+223', country: 'Mali', flag: '🇲🇱' },
+  { code: '+1', country: 'USA/Canada', flag: '🇺🇸' },
+  { code: '+33', country: 'France', flag: '🇫🇷' },
+  { code: '+44', country: 'UK', flag: '🇬🇧' },
+  { code: '+41', country: 'Switzerland', flag: '🇨🇭' },
+  { code: '+971', country: 'UAE', flag: '🇦🇪' },
+  { code: '+27', country: 'South Africa', flag: '🇿🇦' },
+];
+
+// Generate secure random password
+const generateSecurePassword = (): string => {
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const special = '!@#$%^&*';
+  const allChars = uppercase + lowercase + numbers + special;
+
+  let password = '';
+
+  // Ensure at least one of each required character type
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += special[Math.floor(Math.random() * special.length)];
+
+  // Fill the rest randomly (total 12 characters)
+  for (let i = 4; i < 12; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
 
 // Menu structure from AccordionSidebar
 const MENU_STRUCTURE = {
@@ -191,6 +229,7 @@ export function UserManagement() {
     fullName: '',
     email: '',
     phone: '',
+    countryCode: '+224',
     role: '' as UserRole | '',
     siteIds: [] as string[],
     password: '',
@@ -780,62 +819,104 @@ export function UserManagement() {
     </button>
   );
 
-  const GuidancePanel = ({ field }: { field: string }) => {
-    const guidance = FIELD_GUIDANCE[field as keyof typeof FIELD_GUIDANCE];
-    if (!guidance) return null;
+  const GuidancePanel = ({ field }: { field: string | null }) => {
+    // If a specific field is focused, highlight it
+    const focusedField = field;
 
     return (
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-semibold text-blue-900 mb-1">{guidance.title}</h4>
-            <p className="text-sm text-blue-800 mb-2">{guidance.description}</p>
-            {guidance.example && (
-              <p className="text-sm text-blue-700">
-                <span className="font-medium">Example:</span> {guidance.example}
-              </p>
-            )}
-            {guidance.options && (
-              <ul className="mt-2 space-y-1">
-                {Object.entries(guidance.options).map(([key, desc]) => (
-                  <li key={key} className="text-sm text-blue-800">
-                    <span className="font-medium capitalize">{key}:</span> {desc}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {guidance.requirements && (
-              <ul className="mt-2 space-y-1">
-                {guidance.requirements.map((req, idx) => (
-                  <li key={idx} className="text-sm text-blue-800 flex items-center gap-2">
-                    <AlertCircle className="h-3 w-3" />
-                    {req}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {guidance.levels && (
-              <ul className="mt-2 space-y-1">
-                {Object.entries(guidance.levels).map(([level, desc]) => (
-                  <li key={level} className="text-sm text-blue-800">
-                    <span className="font-medium capitalize">{level}:</span> {desc}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {guidance.examples && (
-              <div className="mt-2">
-                <p className="text-sm font-medium text-blue-900">Examples:</p>
-                <ul className="mt-1 space-y-1">
-                  {guidance.examples.map((ex, idx) => (
-                    <li key={idx} className="text-sm text-blue-800">• {ex}</li>
-                  ))}
-                </ul>
+      <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+        {Object.entries(FIELD_GUIDANCE).map(([fieldKey, guidance]) => {
+          const isFocused = focusedField === fieldKey;
+
+          return (
+            <div
+              key={fieldKey}
+              className={`border rounded-lg p-4 transition-all ${
+                isFocused
+                  ? 'bg-blue-50 border-blue-500 border-l-4 shadow-md'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <Info className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
+                  isFocused ? 'text-blue-500' : 'text-gray-400'
+                }`} />
+                <div className="flex-1">
+                  <h4 className={`font-semibold mb-1 ${
+                    isFocused ? 'text-blue-900' : 'text-gray-900'
+                  }`}>
+                    {guidance.title}
+                    {guidance.required && <span className="text-red-500 ml-1">*</span>}
+                  </h4>
+                  <p className={`text-sm mb-2 ${
+                    isFocused ? 'text-blue-800' : 'text-gray-700'
+                  }`}>
+                    {guidance.description}
+                  </p>
+                  {guidance.example && (
+                    <p className={`text-sm ${
+                      isFocused ? 'text-blue-700' : 'text-gray-600'
+                    }`}>
+                      <span className="font-medium">Example:</span> {guidance.example}
+                    </p>
+                  )}
+                  {guidance.options && (
+                    <ul className="mt-2 space-y-1">
+                      {Object.entries(guidance.options).map(([key, desc]) => (
+                        <li key={key} className={`text-sm ${
+                          isFocused ? 'text-blue-800' : 'text-gray-700'
+                        }`}>
+                          <span className="font-medium capitalize">{key}:</span> {desc}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {guidance.requirements && (
+                    <ul className="mt-2 space-y-1">
+                      {guidance.requirements.map((req, idx) => (
+                        <li key={idx} className={`text-sm flex items-center gap-2 ${
+                          isFocused ? 'text-blue-800' : 'text-gray-700'
+                        }`}>
+                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {guidance.levels && (
+                    <ul className="mt-2 space-y-1">
+                      {Object.entries(guidance.levels).map(([level, desc]) => (
+                        <li key={level} className={`text-sm ${
+                          isFocused ? 'text-blue-800' : 'text-gray-700'
+                        }`}>
+                          <span className="font-medium capitalize">{level}:</span> {desc}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {guidance.examples && (
+                    <div className="mt-2">
+                      <p className={`text-sm font-medium ${
+                        isFocused ? 'text-blue-900' : 'text-gray-900'
+                      }`}>
+                        Examples:
+                      </p>
+                      <ul className="mt-1 space-y-1">
+                        {guidance.examples.map((ex, idx) => (
+                          <li key={idx} className={`text-sm ${
+                            isFocused ? 'text-blue-800' : 'text-gray-700'
+                          }`}>
+                            • {ex}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -1051,13 +1132,31 @@ export function UserManagement() {
                     </FormField>
 
                     <FormField label="Phone Number">
-                      <Input
-                        type="tel"
-                        placeholder="+1 234 567 8900"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        onFocus={() => setActiveGuidanceField('phone')}
-                      />
+                      <div className="flex gap-2">
+                        <Select
+                          value={formData.countryCode}
+                          onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
+                          className="w-32"
+                          onFocus={() => setActiveGuidanceField('phone')}
+                        >
+                          {COUNTRY_CODES.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.flag} {country.code}
+                            </option>
+                          ))}
+                        </Select>
+                        <Input
+                          type="tel"
+                          placeholder="234 567 8900"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d\s]/g, '') })}
+                          onFocus={() => setActiveGuidanceField('phone')}
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Full number: {formData.countryCode} {formData.phone}
+                      </p>
                     </FormField>
 
                     <FormField label="Role" required>
@@ -1136,13 +1235,38 @@ export function UserManagement() {
 
                     {viewMode === 'create' && (
                       <FormField label="Initial Password" required hint="User will be prompted to change on first login">
-                        <Input
-                          type="password"
-                          placeholder="Enter temporary password"
-                          value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          onFocus={() => setActiveGuidanceField('password')}
-                        />
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              placeholder="Enter temporary password"
+                              value={formData.password}
+                              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                              onFocus={() => setActiveGuidanceField('password')}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => {
+                                const newPassword = generateSecurePassword();
+                                setFormData({ ...formData, password: newPassword });
+                                addToast('Secure password generated', 'success');
+                              }}
+                              className="whitespace-nowrap"
+                            >
+                              <Key className="h-4 w-4 mr-2" />
+                              Generate
+                            </Button>
+                          </div>
+                          {formData.password && (
+                            <div className="bg-green-50 border border-green-200 rounded p-2">
+                              <p className="text-xs font-medium text-green-800">Generated password:</p>
+                              <p className="text-sm font-mono text-green-900 mt-1 break-all">{formData.password}</p>
+                              <p className="text-xs text-green-700 mt-1">Make sure to copy this password before saving!</p>
+                            </div>
+                          )}
+                        </div>
                       </FormField>
                     )}
 
@@ -1314,15 +1438,7 @@ export function UserManagement() {
                   </button>
                 </div>
 
-                {activeGuidanceField ? (
-                  <GuidancePanel field={activeGuidanceField} />
-                ) : (
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 text-center">
-                      Click on any field to see guidance and help information
-                    </p>
-                  </div>
-                )}
+                <GuidancePanel field={activeGuidanceField} />
               </div>
             </div>
           )}

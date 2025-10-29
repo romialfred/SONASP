@@ -29,6 +29,7 @@ interface User {
   role: UserRole;
   phone?: string | null;
   site_ids: string[];
+  mining_company_names?: string[];
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;
@@ -327,19 +328,41 @@ export function UserManagement() {
         }
 
         if (usersData && Array.isArray(usersData)) {
+          const { data: assignments } = await supabase
+            .from('user_site_assignments')
+            .select('user_id, site_id, mining_companies(name)');
+
+          const assignmentMap = new Map<string, { site_ids: string[]; company_names: string[] }>();
+          if (assignments) {
+            assignments.forEach((assignment: any) => {
+              if (!assignmentMap.has(assignment.user_id)) {
+                assignmentMap.set(assignment.user_id, { site_ids: [], company_names: [] });
+              }
+              const userAssignments = assignmentMap.get(assignment.user_id)!;
+              userAssignments.site_ids.push(assignment.site_id);
+              if (assignment.mining_companies?.name) {
+                userAssignments.company_names.push(assignment.mining_companies.name);
+              }
+            });
+          }
+
           const processedUsers: User[] = usersData
             .filter((profile: any) => profile && profile.id && profile.email)
-            .map((profile: any) => ({
-              id: profile.id,
-              full_name: profile.full_name,
-              email: profile.email,
-              role: profile.role,
-              phone: profile.phone,
-              site_ids: [],
-              is_active: profile.is_active !== false,
-              last_login_at: profile.last_login_at,
-              created_at: profile.created_at,
-            }));
+            .map((profile: any) => {
+              const userAssignments = assignmentMap.get(profile.id) || { site_ids: [], company_names: [] };
+              return {
+                id: profile.id,
+                full_name: profile.full_name,
+                email: profile.email,
+                role: profile.role,
+                phone: profile.phone,
+                site_ids: userAssignments.site_ids,
+                mining_company_names: userAssignments.company_names,
+                is_active: profile.is_active !== false,
+                last_login_at: profile.last_login_at,
+                created_at: profile.created_at,
+              };
+            });
 
           console.log('[UserManagement] Fetched users via fallback:', processedUsers.length);
           setUsers(processedUsers);
@@ -362,19 +385,41 @@ export function UserManagement() {
         return;
       }
 
+      const { data: assignments } = await supabase
+        .from('user_site_assignments')
+        .select('user_id, site_id, mining_companies(name)');
+
+      const assignmentMap = new Map<string, { site_ids: string[]; company_names: string[] }>();
+      if (assignments) {
+        assignments.forEach((assignment: any) => {
+          if (!assignmentMap.has(assignment.user_id)) {
+            assignmentMap.set(assignment.user_id, { site_ids: [], company_names: [] });
+          }
+          const userAssignments = assignmentMap.get(assignment.user_id)!;
+          userAssignments.site_ids.push(assignment.site_id);
+          if (assignment.mining_companies?.name) {
+            userAssignments.company_names.push(assignment.mining_companies.name);
+          }
+        });
+      }
+
       const usersData: User[] = fetchedUsers
         .filter((profile: any) => profile && profile.id && profile.email)
-        .map((profile: any) => ({
-          id: profile.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          role: profile.role,
-          phone: profile.phone,
-          site_ids: [],
-          is_active: profile.is_active !== false,
-          last_login_at: profile.last_login_at,
-          created_at: profile.created_at,
-        }));
+        .map((profile: any) => {
+          const userAssignments = assignmentMap.get(profile.id) || { site_ids: [], company_names: [] };
+          return {
+            id: profile.id,
+            full_name: profile.full_name,
+            email: profile.email,
+            role: profile.role,
+            phone: profile.phone,
+            site_ids: userAssignments.site_ids,
+            mining_company_names: userAssignments.company_names,
+            is_active: profile.is_active !== false,
+            last_login_at: profile.last_login_at,
+            created_at: profile.created_at,
+          };
+        });
 
       console.log('[UserManagement] Processed users:', usersData.length, 'users');
       setUsers(usersData);
@@ -727,6 +772,24 @@ export function UserManagement() {
             label={roleLabels[user.role] || user.role}
             variant="info"
           />
+        );
+      },
+    },
+    {
+      key: 'mining_company',
+      label: 'MINING COMPANY',
+      render: (_value: any, user: User) => {
+        if (!user || !user.mining_company_names || user.mining_company_names.length === 0) {
+          return <span className="text-gray-400 text-sm">Not assigned</span>;
+        }
+        return (
+          <div className="flex flex-col gap-1">
+            {user.mining_company_names.map((name, idx) => (
+              <span key={idx} className="text-sm text-gray-700">
+                {name}
+              </span>
+            ))}
+          </div>
         );
       },
     },

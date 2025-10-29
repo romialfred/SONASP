@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
+import { calculateInventoryMetrics } from '@/services/inventoryService';
 
 interface Batch {
   id: string;
@@ -91,18 +92,10 @@ export function DashboardPage() {
           setSales(salesData as any);
         }
 
-        // Calculate available stock from gold_inventory
-        const { data: inventoryData, error: inventoryError } = await supabase
-          .from('gold_inventory')
-          .select('final_fine_oz, allocated_oz, sold_oz')
-          .eq('status', 'active');
-
-        if (!inventoryError && inventoryData) {
-          const totalStock = inventoryData.reduce((sum, item) => {
-            const available = (item.final_fine_oz || 0) - (item.allocated_oz || 0) - (item.sold_oz || 0);
-            return sum + available;
-          }, 0);
-          setAvailableStock(totalStock);
+        // Calculate available stock from gold_inventory using the same method as InventoryManagement
+        const metricsResult = await calculateInventoryMetrics();
+        if (metricsResult.success) {
+          setAvailableStock(metricsResult.metrics.availableStock);
         }
 
       } catch (error) {

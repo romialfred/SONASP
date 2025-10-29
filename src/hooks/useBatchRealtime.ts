@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -14,8 +14,8 @@ export interface Batch {
   batch_number: string;
   status: string;
   weight_grams: number;
-  weight_ounces: number;
-  metal_type: string;
+  weight_ounces?: number;
+  metal_type?: string;
   shipping_date: string;
   created_at: string;
   updated_at: string;
@@ -30,15 +30,23 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const filtersRef = useRef(filters);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  // Update filters ref when filters change
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   /**
    * Fetch batches from database
    */
-  const fetchBatches = useCallback(async () => {
+  const fetchBatches = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      const currentFilters = filtersRef.current;
 
       let query = supabase
         .from('batches')
@@ -52,20 +60,20 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
         .order('created_at', { ascending: false });
 
       // Apply filters
-      if (filters?.statuses && filters.statuses.length > 0) {
-        query = query.in('status', filters.statuses);
+      if (currentFilters?.statuses && currentFilters.statuses.length > 0) {
+        query = query.in('status', currentFilters.statuses);
       }
 
-      if (filters?.miningCompanyId) {
-        query = query.eq('mining_company_id', filters.miningCompanyId);
+      if (currentFilters?.miningCompanyId) {
+        query = query.eq('mining_company_id', currentFilters.miningCompanyId);
       }
 
-      if (filters?.userId) {
-        query = query.eq('created_by', filters.userId);
+      if (currentFilters?.userId) {
+        query = query.eq('created_by', currentFilters.userId);
       }
 
-      if (filters?.batchId) {
-        query = query.eq('id', filters.batchId);
+      if (currentFilters?.batchId) {
+        query = query.eq('id', currentFilters.batchId);
       }
 
       const { data, error: fetchError } = await query;
@@ -84,7 +92,7 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters?.statuses, filters?.miningCompanyId, filters?.userId, filters?.batchId]);
+  };
 
   /**
    * Set up realtime subscription
@@ -92,6 +100,11 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
   useEffect(() => {
     // Initial fetch
     fetchBatches();
+
+    // Clean up previous channel if exists
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+    }
 
     // Set up realtime channel
     const channelName = `batches-${filters?.batchId || 'all'}-${Date.now()}`;
@@ -109,20 +122,16 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
           console.log('📡 Realtime update received:', payload);
 
           if (payload.eventType === 'INSERT') {
-            // Check if new batch matches filters
             const newBatch = payload.new as Batch;
-            if (shouldIncludeBatch(newBatch, filters)) {
+            if (shouldIncludeBatch(newBatch, filtersRef.current)) {
               setBatches(prev => [newBatch, ...prev]);
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedBatch = payload.new as Batch;
             setBatches(prev => {
-              // Check if batch still matches filters
-              if (!shouldIncludeBatch(updatedBatch, filters)) {
-                // Remove batch from list if it no longer matches
+              if (!shouldIncludeBatch(updatedBatch, filtersRef.current)) {
                 return prev.filter(b => b.id !== updatedBatch.id);
               }
-              // Update existing batch
               return prev.map(b => b.id === updatedBatch.id ? updatedBatch : b);
             });
           } else if (payload.eventType === 'DELETE') {
@@ -131,35 +140,36 @@ export function useBatchRealtime(filters?: BatchRealtimeFilters) {
           }
 
           // Refetch to get complete data with relations
-          fetchBatches();
+          setTimeout(() => fetchBatches(), 100);
         }
       )
       .subscribe((status) => {
         console.log(`📡 Realtime subscription status: ${status}`);
       });
 
-    setChannel(realtimeChannel);
+    channelRef.current = realtimeChannel;
 
     // Cleanup
     return () => {
       console.log('🔌 Unsubscribing from realtime channel');
-      realtimeChannel.unsubscribe();
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
-  }, [fetchBatches, filters?.batchId]);
-
-  /**
-   * Manual refetch function
-   */
-  const refetch = useCallback(() => {
-    return fetchBatches();
-  }, [fetchBatches]);
+  }, [
+    filters?.batchId,
+    filters?.statuses?.join(','),
+    filters?.miningCompanyId,
+    filters?.userId,
+  ]);
 
   return {
     batches,
     loading,
     error,
-    refetch,
-    channel,
+    refetch: fetchBatches,
+    channel: channelRef.current,
   };
 }
 

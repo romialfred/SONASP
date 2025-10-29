@@ -34,14 +34,13 @@ Gold Prices:                365
 
 ---
 
-### 2. `CLEAN_DATABASE.sql` - Clean Transactional Data
+### 2. `CLEAN_DATABASE.sql` - Clean Transactional Data (Standard Version)
 **Purpose:** Delete all batches, sales, customers, inventory (keep stakeholders, FX rates, gold prices)
 
 **Use this when:**
-- Starting fresh with new data
-- Clearing test data
-- Resetting for production launch
-- Preparing for new registration period
+- Your database has all the expected tables
+- You want faster execution
+- You're confident about table structure
 
 **How to run:**
 ```sql
@@ -58,9 +57,36 @@ Gold Prices:                365
 6. ✅ Keeps stakeholders and reference data
 7. ✅ Shows confirmation summary
 
+**✅ FIXED:** All RAISE NOTICE statements are now properly wrapped in DO $$ blocks
+
 ---
 
-### 3. `20251029000000_clean_transactional_data.sql` - Migration Version
+### 3. `CLEAN_DATABASE_SAFE.sql` - Clean Transactional Data (Safe Version)
+**Purpose:** Same as CLEAN_DATABASE.sql but checks if tables exist before deleting
+
+**Use this when:**
+- You're not sure which tables exist
+- You have a customized database schema
+- You want to avoid errors from missing tables
+- You're testing the cleanup process
+
+**How to run:**
+```sql
+-- Copy and paste into Supabase SQL Editor, then click Run
+-- Wait 1-2 minutes for completion
+```
+
+**Advantages:**
+- ✅ No errors if tables don't exist
+- ✅ Shows exactly how many rows deleted from each table
+- ✅ Counts deleted rows and tables
+- ✅ Handles missing tables gracefully
+
+**⭐ Recommended for first-time use!**
+
+---
+
+### 4. `20251029000000_clean_transactional_data.sql` - Migration Version
 **Purpose:** Same as CLEAN_DATABASE.sql but as a Supabase migration
 
 **Use this when:**
@@ -248,7 +274,22 @@ Before running cleanup in production:
 
 ---
 
+## 📁 File Reference
+
+```
+project/
+├── CHECK_DATABASE_STATUS.sql           # Check current database state
+├── CLEAN_DATABASE.sql                  # Standard cleanup script (FIXED)
+├── CLEAN_DATABASE_SAFE.sql            # Safe cleanup with table checks (NEW!)
+├── DATABASE_CLEANUP_GUIDE.md          # Detailed instructions
+├── DATABASE_CLEANUP_README.md         # This quick reference
+└── supabase/migrations/
+    └── 20251029000000_clean_transactional_data.sql  # Migration version
+```
+
+---
+
 **Created:** 2025-10-29
-**Version:** 1.0.0
+**Version:** 2.0.0 (Fixed RAISE NOTICE syntax errors)
 **For:** Gold Shipper Database Cleanup
-**Status:** Ready to Use ✅
+**Status:** ✅ All Scripts Working Correctly

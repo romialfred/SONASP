@@ -30,109 +30,139 @@
 --
 -- ============================================================================
 
--- Disable triggers for faster deletion
-SET session_replication_role = 'replica';
-
 -- ============================================================================
--- SALES DATA CLEANUP
+-- MAIN CLEANUP PROCEDURE
 -- ============================================================================
 
-DELETE FROM sales_notifications_log;
-DELETE FROM sales_audit_trail;
-DELETE FROM sales_documents;
-DELETE FROM sales_commissions;
-DELETE FROM sales_payment_schedules;
-DELETE FROM sales_approvals;
-DELETE FROM sales_line_items;
-DELETE FROM sales_allocations;
-DELETE FROM sale_pricing_details;
-DELETE FROM sale_quantity_recommendations;
-DELETE FROM sales;
+DO $$
+BEGIN
+  -- Disable triggers for faster deletion
+  SET session_replication_role = 'replica';
 
-RAISE NOTICE '✓ Sales data cleaned';
+  RAISE NOTICE '';
+  RAISE NOTICE '=============================================================================';
+  RAISE NOTICE 'Starting Database Cleanup...';
+  RAISE NOTICE '=============================================================================';
+  RAISE NOTICE '';
 
--- ============================================================================
--- PAYMENT DATA CLEANUP
--- ============================================================================
+  -- ============================================================================
+  -- SALES DATA CLEANUP
+  -- ============================================================================
 
-DELETE FROM payment_documents;
-DELETE FROM payment_history;
-DELETE FROM payment_reminders;
-DELETE FROM payments;
+  RAISE NOTICE 'Cleaning Sales Data...';
 
-RAISE NOTICE '✓ Payment data cleaned';
+  DELETE FROM sales_notifications_log;
+  DELETE FROM sales_audit_trail;
+  DELETE FROM sales_documents;
+  DELETE FROM sales_commissions;
+  DELETE FROM sales_payment_schedules;
+  DELETE FROM sales_approvals;
+  DELETE FROM sales_line_items;
+  DELETE FROM sales_allocations;
+  DELETE FROM sale_pricing_details;
+  DELETE FROM sale_quantity_recommendations;
+  DELETE FROM sales;
 
--- ============================================================================
--- CUSTOMER DATA CLEANUP
--- ============================================================================
+  RAISE NOTICE '✓ Sales data cleaned';
 
-DELETE FROM customer_contracts;
-DELETE FROM customer_fx_rates;
-DELETE FROM customers;
+  -- ============================================================================
+  -- PAYMENT DATA CLEANUP
+  -- ============================================================================
 
-RAISE NOTICE '✓ Customer data cleaned';
+  RAISE NOTICE 'Cleaning Payment Data...';
 
--- ============================================================================
--- BATCH DATA CLEANUP
--- ============================================================================
+  DELETE FROM payment_documents;
+  DELETE FROM payment_history;
+  DELETE FROM payment_reminders;
+  DELETE FROM payments;
 
-DELETE FROM batch_alerts;
-DELETE FROM batch_analytics_snapshots;
-DELETE FROM batch_approvals;
-DELETE FROM batch_documents;
-DELETE FROM batch_escalations;
-DELETE FROM batch_merges;
-DELETE FROM batch_quality_checks;
-DELETE FROM batch_reservations;
-DELETE FROM batch_splits;
-DELETE FROM batch_status_history;
-DELETE FROM batch_status_transitions;
-DELETE FROM batch_tags;
-DELETE FROM batch_workflow_instances;
-DELETE FROM batch_workflow_definitions;
-DELETE FROM batches;
+  RAISE NOTICE '✓ Payment data cleaned';
 
-RAISE NOTICE '✓ Batch data cleaned';
+  -- ============================================================================
+  -- CUSTOMER DATA CLEANUP
+  -- ============================================================================
 
--- ============================================================================
--- INVENTORY DATA CLEANUP
--- ============================================================================
+  RAISE NOTICE 'Cleaning Customer Data...';
 
-DELETE FROM inventory_transactions;
-DELETE FROM gold_inventory;
+  DELETE FROM customer_contracts;
+  DELETE FROM customer_fx_rates;
+  DELETE FROM customers;
 
-RAISE NOTICE '✓ Inventory data cleaned';
+  RAISE NOTICE '✓ Customer data cleaned';
 
--- ============================================================================
--- PROCESSING DATA CLEANUP
--- ============================================================================
+  -- ============================================================================
+  -- BATCH DATA CLEANUP
+  -- ============================================================================
 
-DELETE FROM variance_investigations;
-DELETE FROM refining_records;
-DELETE FROM receiving_records;
-DELETE FROM transportation_details;
+  RAISE NOTICE 'Cleaning Batch Data...';
 
-RAISE NOTICE '✓ Processing data cleaned';
+  DELETE FROM batch_alerts;
+  DELETE FROM batch_analytics_snapshots;
+  DELETE FROM batch_approvals;
+  DELETE FROM batch_documents;
+  DELETE FROM batch_escalations;
+  DELETE FROM batch_merges;
+  DELETE FROM batch_quality_checks;
+  DELETE FROM batch_reservations;
+  DELETE FROM batch_splits;
+  DELETE FROM batch_status_history;
+  DELETE FROM batch_status_transitions;
+  DELETE FROM batch_tags;
+  DELETE FROM batch_workflow_instances;
+  DELETE FROM batch_workflow_definitions;
+  DELETE FROM batches;
 
--- ============================================================================
--- OTHER TRANSACTIONAL DATA CLEANUP
--- ============================================================================
+  RAISE NOTICE '✓ Batch data cleaned';
 
-DELETE FROM approval_requests;
-DELETE FROM email_logs;
-DELETE FROM commission_rules;
-DELETE FROM saved_batch_searches;
+  -- ============================================================================
+  -- INVENTORY DATA CLEANUP
+  -- ============================================================================
 
-RAISE NOTICE '✓ Other transactional data cleaned';
+  RAISE NOTICE 'Cleaning Inventory Data...';
 
--- Re-enable triggers
-SET session_replication_role = 'default';
+  DELETE FROM inventory_transactions;
+  DELETE FROM gold_inventory;
+
+  RAISE NOTICE '✓ Inventory data cleaned';
+
+  -- ============================================================================
+  -- PROCESSING DATA CLEANUP
+  -- ============================================================================
+
+  RAISE NOTICE 'Cleaning Processing Data...';
+
+  DELETE FROM variance_investigations;
+  DELETE FROM refining_records;
+  DELETE FROM receiving_records;
+  DELETE FROM transportation_details;
+
+  RAISE NOTICE '✓ Processing data cleaned';
+
+  -- ============================================================================
+  -- OTHER TRANSACTIONAL DATA CLEANUP
+  -- ============================================================================
+
+  RAISE NOTICE 'Cleaning Other Transactional Data...';
+
+  DELETE FROM approval_requests;
+  DELETE FROM email_logs;
+  DELETE FROM commission_rules;
+  DELETE FROM saved_batch_searches;
+
+  RAISE NOTICE '✓ Other transactional data cleaned';
+
+  -- Re-enable triggers
+  SET session_replication_role = 'default';
+
+  RAISE NOTICE '';
+  RAISE NOTICE 'Resetting Auto-Increment Sequences...';
+
+END $$;
 
 -- ============================================================================
 -- RESET AUTO-INCREMENT SEQUENCES
 -- ============================================================================
 
--- Reset sequences for fresh start
 DO $$
 DECLARE
   seq_record RECORD;
@@ -148,6 +178,7 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE '✓ Reset % sequences', reset_count;
+  RAISE NOTICE '';
 END $$;
 
 -- ============================================================================
@@ -157,10 +188,9 @@ END $$;
 VACUUM ANALYZE;
 
 -- ============================================================================
--- VERIFICATION QUERIES
+-- VERIFICATION AND SUMMARY
 -- ============================================================================
 
--- Count remaining records in key tables
 DO $$
 DECLARE
   batch_count INTEGER;
@@ -173,14 +203,14 @@ DECLARE
   fx_rate_count INTEGER;
   gold_price_count INTEGER;
 BEGIN
-  -- Check cleaned tables
+  -- Count cleaned tables
   SELECT COUNT(*) INTO batch_count FROM batches;
   SELECT COUNT(*) INTO customer_count FROM customers;
   SELECT COUNT(*) INTO sales_count FROM sales;
   SELECT COUNT(*) INTO payment_count FROM payments;
   SELECT COUNT(*) INTO inventory_count FROM gold_inventory;
 
-  -- Check preserved tables
+  -- Count preserved tables
   SELECT COUNT(*) INTO mining_count FROM mining_companies;
   SELECT COUNT(*) INTO refinery_count FROM refineries;
   SELECT COUNT(*) INTO fx_rate_count FROM fx_rates;
@@ -213,4 +243,13 @@ BEGIN
 
   RAISE NOTICE '=============================================================================';
   RAISE NOTICE '';
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE '';
+    RAISE NOTICE '=============================================================================';
+    RAISE WARNING 'ERROR DURING CLEANUP: %', SQLERRM;
+    RAISE NOTICE '=============================================================================';
+    RAISE NOTICE '';
+    RAISE;
 END $$;

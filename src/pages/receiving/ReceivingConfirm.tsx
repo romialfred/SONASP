@@ -105,10 +105,25 @@ export function ReceivingConfirm() {
       const actualWeightGrams = parseFloat(actualWeight);
       const actualWeightOunces = convertGramsToOunces(actualWeightGrams);
 
-      // Determine new status based on variance
-      const newStatus = variance?.isSignificant
-        ? BATCH_STATUSES.RECEIVED_AT_AIRPORT // Needs validation
-        : BATCH_STATUSES.VALIDATED_FOR_REFINERY; // Auto-validated
+      // Determine new status based on current status and variance
+      let newStatus: string;
+
+      // Check current status to determine correct next status
+      if (batch.status === 'approved_for_transport') {
+        // If batch comes directly from factory without waiting_airport_receipt step
+        // First move to waiting_airport_receipt, then to received_at_airport
+        // For simplicity, we'll move to received_at_airport directly but this should ideally be two steps
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+      } else if (batch.status === 'waiting_airport_receipt') {
+        // Normal flow: from waiting to received
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+      } else if (batch.status === 'waiting_refinery_receipt') {
+        // At refinery
+        newStatus = BATCH_STATUSES.RECEIVED_AT_REFINERY;
+      } else {
+        // Default: use received_at_airport
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+      }
 
       // Update batch with received weight and new status
       const { error: updateError } = await supabase

@@ -39,8 +39,10 @@ export function LiveGoldMarketWidget() {
     );
   }
 
-  const variance = goldPrice.closing_price - goldPrice.opening_price;
-  const variancePercent = (variance / goldPrice.opening_price) * 100;
+  const variance = (goldPrice.closing_price || goldPrice.london_am_rate) - (goldPrice.opening_price || goldPrice.london_am_rate);
+  const variancePercent = ((goldPrice.opening_price || goldPrice.london_am_rate) !== 0)
+    ? (variance / (goldPrice.opening_price || goldPrice.london_am_rate)) * 100
+    : 0;
   const isPositive = variance >= 0;
 
   return (
@@ -69,7 +71,7 @@ export function LiveGoldMarketWidget() {
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold text-white">
-              {goldPrice.london_am_rate.toLocaleString('en-US', {
+              {(goldPrice.london_am_rate || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
@@ -135,25 +137,25 @@ export function LiveGoldMarketWidget() {
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-400">London LBMA AM Fix</span>
               <span className="text-sm font-semibold text-white">
-                ${goldPrice.london_am_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(goldPrice.london_am_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-400">Opening Price</span>
               <span className="text-sm font-semibold text-gray-300">
-                ${goldPrice.opening_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(goldPrice.opening_price || goldPrice.london_am_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-400">High (24h)</span>
               <span className="text-sm font-semibold text-emerald-400">
-                ${goldPrice.high_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(goldPrice.high_price || goldPrice.london_am_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-400">Low (24h)</span>
               <span className="text-sm font-semibold text-red-400">
-                ${goldPrice.low_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(goldPrice.low_price || goldPrice.london_am_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>

@@ -121,8 +121,8 @@ export function SalesDashboard() {
       try {
         const { data: inventoryData, error: inventoryError } = await supabase
           .from('gold_inventory')
-          .select('available_for_sale_oz')
-          .eq('is_active', true);
+          .select('quantity_available_oz')
+          .eq('transaction_type', 'entry');
 
         if (inventoryError) {
           console.warn('[SalesDashboard] gold_inventory table not available or column missing:', inventoryError.message);
@@ -130,11 +130,11 @@ export function SalesDashboard() {
           const { data: batchesData } = await supabase
             .from('batches')
             .select('final_weight_oz')
-            .eq('status', 'available_for_sale');
+            .eq('status', 'processed');
 
           totalInventory = batchesData?.reduce((sum, b) => sum + (b.final_weight_oz || 0), 0) || 0;
         } else {
-          totalInventory = inventoryData?.reduce((sum, item) => sum + (item.available_for_sale_oz || 0), 0) || 0;
+          totalInventory = inventoryData?.reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0) || 0;
         }
       } catch (invError) {
         console.warn('[SalesDashboard] Inventory check failed, using 0:', invError);

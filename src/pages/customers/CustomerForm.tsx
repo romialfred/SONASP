@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
+import { Loading } from '@/components/ui/Loading';
+import { supabase } from '@/lib/supabase';
+import { useAlert } from '@/hooks/useAlert';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 import { BankAccountForm, type BankAccount } from '@/components/customers/BankAccountForm';
 import { COUNTRIES } from '@/constants/countries';
 import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
@@ -54,49 +58,55 @@ export function CustomerForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditMode);
+  const alert = useAlert();
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && id) {
+      fetchCustomerData();
+    }
+  }, [id, isEditMode]);
+
+  const fetchCustomerData = async () => {
+    try {
+      setIsLoading(true);
+
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormData({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          country: data.country || '',
+          address: data.address || '',
+          contactPerson: data.contact_person || '',
+          taxId: data.tax_id || '',
+          paymentTerms: data.payment_terms || 'Net 30 days',
+          creditLimit: String(data.credit_limit || 500000),
+          status: data.status || 'pending',
+          banks: [],
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching customer:', error);
+      alert.error('Failed to load customer data');
+      navigate('/customers');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Old mock data moved here for reference only
+  useEffect(() => {
+    if (false) {
       const mockCustomers = [
-        {
-          id: '1',
-          name: 'Premium Gold Ltd.',
-          email: 'contact@premiumgold.com',
-          phone: '+41 44 123 4567',
-          country: 'Switzerland',
-          address: 'Bahnhofstrasse 45, 8001 Zurich',
-          contactPerson: 'Hans Mueller',
-          taxId: 'CHE-123.456.789',
-          paymentTerms: 'Net 30 days',
-          creditLimit: '500000',
-          status: 'active' as const,
-        },
-        {
-          id: '2',
-          name: 'Global Metals Inc.',
-          email: 'sales@globalmetals.com',
-          phone: '+971 4 567 8901',
-          country: 'UAE',
-          address: 'Sheikh Zayed Road, Dubai',
-          contactPerson: 'Ahmed Al-Maktoum',
-          taxId: 'TRN-987654321',
-          paymentTerms: 'Net 45 days',
-          creditLimit: '750000',
-          status: 'active' as const,
-        },
-        {
-          id: '3',
-          name: 'Swiss Refineries SA',
-          email: 'info@swissref.ch',
-          phone: '+41 22 987 6543',
-          country: 'Switzerland',
-          address: 'Rue du Rhone 100, 1204 Geneva',
-          contactPerson: 'Pierre Dubois',
-          taxId: 'CHE-987.654.321',
-          paymentTerms: 'Net 30 days',
-          creditLimit: '1000000',
-          status: 'active' as const,
-        },
         {
           id: '4',
           name: 'Asian Gold Trading',
@@ -185,20 +195,60 @@ export function CustomerForm() {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const customerData = {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
+        country: formData.country,
+        address: formData.address.trim(),
+        contact_person: formData.contactPerson.trim(),
+        tax_id: formData.taxId.trim(),
+        payment_terms: formData.paymentTerms,
+        credit_limit: parseFloat(formData.creditLimit),
+        status: formData.status,
+        updated_at: new Date().toISOString(),
+      };
 
-      console.log('Customer data:', formData);
+      if (isEditMode && id) {
+        // Update existing customer
+        const { error } = await supabase
+          .from('customers')
+          .update(customerData)
+          .eq('id', id);
+
+        if (error) throw error;
+
+        alert.success('Customer updated successfully');
+      } else {
+        // Create new customer
+        const { error } = await supabase
+          .from('customers')
+          .insert([customerData]);
+
+        if (error) throw error;
+
+        alert.success('Customer created successfully');
+      }
 
       setSubmitSuccess(true);
       setTimeout(() => {
-        navigate('/customers');
-      }, 1500);
-    } catch (error) {
+        navigateWithAutoRefresh(navigate, '/customers');
+      }, 1000);
+    } catch (error: any) {
       console.error('Error saving customer:', error);
+      alert.error(error.message || 'Failed to save customer');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

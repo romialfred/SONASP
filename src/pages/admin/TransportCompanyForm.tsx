@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/Alert';
 import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 interface FormData {
   name: string;
@@ -163,7 +164,7 @@ export function TransportCompanyForm() {
       }
 
       setTimeout(() => {
-        navigate('/admin/transport-companies');
+        navigateWithAutoRefresh(navigate, '/admin/transport-companies');
       }, 1500);
     } catch (error: any) {
       console.error('Error saving company:', error);

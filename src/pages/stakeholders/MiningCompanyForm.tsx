@@ -10,6 +10,7 @@ import { FormField } from '@/components/ui/FormField';
 import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel';
 import { Factory, ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 const COUNTRIES = ['Guinea', 'Mali', 'Côte d\'Ivoire', 'Liberia', 'Senegal', 'Ghana', 'France', 'UAE', 'South Africa', 'Burkina Faso'];
 const CURRENCIES = ['USD', 'EUR', 'GNF', 'XOF', 'AED', 'ZAR', 'GHS'];
@@ -267,7 +268,7 @@ export function MiningCompanyForm() {
         }
       }
 
-      navigate('/stakeholders/mining-companies');
+      navigateWithAutoRefresh(navigate, '/stakeholders/mining-companies');
     } catch (error: any) {
       console.error('Error saving company:', error);
       showError('Error Saving Company', error.message || 'An unexpected error occurred while saving the mining company.');

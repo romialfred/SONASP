@@ -12,6 +12,7 @@ import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
 import { COUNTRIES } from '@/constants/countries';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 interface FormData {
   name: string;
@@ -173,7 +174,7 @@ export function RefineryForm() {
       }
 
       setTimeout(() => {
-        navigate('/admin/refineries');
+        navigateWithAutoRefresh(navigate, '/admin/refineries');
       }, 1500);
     } catch (error: any) {
       console.error('Error saving refinery:', error);

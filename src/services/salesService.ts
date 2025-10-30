@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { sendSaleApprovedNotification } from './notificationService';
+import { logAuditAction } from '@/lib/auditLog';
 
 export interface CreateSaleData {
   customer_id: string;

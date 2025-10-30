@@ -30,6 +30,8 @@ import {
   SaleStatus,
 } from '@/lib/schemas/sales';
 import { useAlert } from '@/hooks/useAlert';
+import { approveSale, rejectSale } from '@/services/salesService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -137,6 +139,7 @@ export function SaleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const alert = useAlert();
+  const { user } = useAuth();
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -144,6 +147,8 @@ export function SaleDetails() {
   const [sale, setSale] = useState<SaleDetailsView | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const mountedRef = useRef(false);
 
   const loadSaleDetails = useCallback(async () => {
@@ -310,20 +315,77 @@ export function SaleDetails() {
     }
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    if (!id || !user?.email) {
+      alert.error('Unable to approve sale: Missing required information');
+      return;
+    }
+
+    setIsApproving(true);
     console.log('Approving sale with notes:', approvalNotes);
-    setShowApprovalModal(false);
-    void navigate('/sales');
+
+    try {
+      const result = await approveSale(id, user.email, approvalNotes);
+
+      if (result.success) {
+        alert.success('Sale approved successfully! Customer will be notified by email.');
+        setShowApprovalModal(false);
+
+        // Reload sale details to show updated status
+        await loadSaleDetails();
+
+        // Navigate back to sales dashboard after a short delay
+        setTimeout(() => {
+          void navigate('/sales');
+        }, 1500);
+      } else {
+        alert.error(`Failed to approve sale: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      console.error('Error approving sale:', error);
+      alert.error(`Error approving sale: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectionReason.trim()) {
       alert.warning('Please provide a reason for rejection');
       return;
     }
+
+    if (!id || !user?.email) {
+      alert.error('Unable to reject sale: Missing required information');
+      return;
+    }
+
+    setIsRejecting(true);
     console.log('Rejecting sale with reason:', rejectionReason);
-    setShowRejectionModal(false);
-    void navigate('/sales');
+
+    try {
+      const result = await rejectSale(id, user.email, rejectionReason);
+
+      if (result.success) {
+        alert.success('Sale rejected successfully');
+        setShowRejectionModal(false);
+
+        // Reload sale details to show updated status
+        await loadSaleDetails();
+
+        // Navigate back to sales dashboard after a short delay
+        setTimeout(() => {
+          void navigate('/sales');
+        }, 1500);
+      } else {
+        alert.error(`Failed to reject sale: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      console.error('Error rejecting sale:', error);
+      alert.error(`Error rejecting sale: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   if (loading) {
@@ -756,9 +818,10 @@ export function SaleDetails() {
                   </Button>
                   <Button
                     onClick={handleApprove}
+                    disabled={isApproving}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
-                    Confirm Approval
+                    {isApproving ? 'Approving...' : 'Confirm Approval'}
                   </Button>
                 </div>
               </CardContent>
@@ -806,9 +869,10 @@ export function SaleDetails() {
                   </Button>
                   <Button
                     onClick={handleReject}
+                    disabled={isRejecting || !rejectionReason.trim()}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >
-                    Confirm Rejection
+                    {isRejecting ? 'Rejecting...' : 'Confirm Rejection'}
                   </Button>
                 </div>
               </CardContent>

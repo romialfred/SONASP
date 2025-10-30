@@ -497,7 +497,7 @@ export function BatchCreate() {
                       error={!!errors.weight_grams}
                       onFocus={() => setFocusedField('weight_grams')}
                       onBlur={() => setFocusedField('')}
-                      defaultUnit="g"
+                      defaultUnit="oz"
                       showConversion={true}
                     />
                   </FormField>

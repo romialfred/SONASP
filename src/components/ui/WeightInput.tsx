@@ -194,6 +194,13 @@ export function WeightInput({
           {getConversionText()}
         </p>
       )}
+
+      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <span className="font-medium">Reference:</span>
+          <span>1 oz = 31.10 g</span>
+        </div>
+      </div>
     </div>
   );
 }

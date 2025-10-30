@@ -302,7 +302,7 @@ export function ReceivingConfirm() {
                     value={actualWeight}
                     onChange={(grams) => setActualWeight(grams)}
                     placeholder="Enter actual weight"
-                    defaultUnit="g"
+                    defaultUnit="oz"
                     showConversion={true}
                   />
                 </FormField>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Info, Building2, FileText } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
+import { BankAccountForm, type BankAccount } from '@/components/customers/BankAccountForm';
 
 interface CustomerFormData {
   name: string;
@@ -20,6 +21,7 @@ interface CustomerFormData {
   paymentTerms: string;
   creditLimit: string;
   status: 'active' | 'inactive' | 'pending';
+  banks: BankAccount[];
 }
 
 const countries = ['Switzerland', 'UAE', 'Singapore', 'USA', 'UK', 'Germany', 'France'];
@@ -46,6 +48,7 @@ export function CustomerForm() {
     paymentTerms: 'Net 30 days',
     creditLimit: '500000',
     status: 'pending',
+    banks: [],
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
@@ -127,11 +130,15 @@ export function CustomerForm() {
     }
   }, [id, isEditMode]);
 
-  const handleChange = (field: keyof CustomerFormData, value: string) => {
+  const handleChange = (field: keyof CustomerFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleBanksChange = (banks: BankAccount[]) => {
+    setFormData((prev) => ({ ...prev, banks }));
   };
 
   const validateForm = (): boolean => {
@@ -218,13 +225,16 @@ export function CustomerForm() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Customer Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Customer Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label="Company Name" required error={errors.name}>
                   <Input
                     value={formData.name}
@@ -328,26 +338,138 @@ export function CustomerForm() {
                     ))}
                   </Select>
                 </FormField>
-              </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <div className="flex justify-end gap-4 mt-6">
-                <Button type="button" variant="outline" onClick={() => navigate('/customers')}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    'Saving...'
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {isEditMode ? 'Update Customer' : 'Create Customer'}
-                    </>
-                  )}
-                </Button>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Bank Accounts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <BankAccountForm
+                      banks={formData.banks}
+                      onChange={handleBanksChange}
+                    />
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-4">
+                  <Button type="button" variant="outline" onClick={() => navigate('/customers')}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      'Saving...'
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        {isEditMode ? 'Update Customer' : 'Create Customer'}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </form>
+            </form>
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="space-y-6 sticky top-6">
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Info className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Customer Guidelines</h3>
+                      <ul className="text-sm text-gray-700 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 mt-0.5">•</span>
+                          <span>All fields marked with * are required</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 mt-0.5">•</span>
+                          <span>Email will be used for payment notifications</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 mt-0.5">•</span>
+                          <span>Credit limit determines maximum outstanding balance</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 mt-0.5">•</span>
+                          <span>New customers start with "Pending" status</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Bank Information</h3>
+                      <ul className="text-sm text-gray-700 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-0.5">•</span>
+                          <span>Add at least one bank account for payments</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-0.5">•</span>
+                          <span>Primary bank will be used as default</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-0.5">•</span>
+                          <span>IBAN and SWIFT codes ensure accurate transfers</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-0.5">•</span>
+                          <span>Multiple banks can be added for different currencies</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Required Documents</h3>
+                      <ul className="text-sm text-gray-700 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 mt-0.5">✓</span>
+                          <span>Business registration certificate</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 mt-0.5">✓</span>
+                          <span>Tax identification documents</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 mt-0.5">✓</span>
+                          <span>Bank account verification letter</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 mt-0.5">✓</span>
+                          <span>Authorized signatory list</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

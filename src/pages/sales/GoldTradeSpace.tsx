@@ -105,7 +105,7 @@ export function GoldTradeSpace() {
   };
 
   const handleCreateSale = async () => {
-    if (!selectedMechanism || !selectedCustomer) {
+    if (!selectedMechanism || !selectedCustomer || !comparisonData) {
       showError('Please select a pricing mechanism and customer');
       return;
     }
@@ -233,11 +233,9 @@ export function GoldTradeSpace() {
 
             <PricingCalculator
               availableStockOz={availableStock}
-              onMechanismSelect={(mechanism) => {
+              onMechanismSelect={(mechanism, comparison) => {
                 handleMechanismSelect(mechanism);
-                if (comparisonData) {
-                  handleCalculationComplete(comparisonData);
-                }
+                handleCalculationComplete(comparison);
               }}
             />
 
@@ -248,7 +246,7 @@ export function GoldTradeSpace() {
               />
             )}
 
-            {selectedMechanism && (
+            {selectedMechanism && comparisonData && (
               <Card className="border-blue-500 border-2">
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-2">

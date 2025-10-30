@@ -9,7 +9,7 @@ import { calculatePricingComparison, type PricingComparison, type PricingMechani
 
 interface PricingCalculatorProps {
   availableStockOz: number;
-  onMechanismSelect?: (mechanism: PricingMechanism) => void;
+  onMechanismSelect?: (mechanism: PricingMechanism, comparison: PricingComparison) => void;
 }
 
 export function PricingCalculator({ availableStockOz, onMechanismSelect }: PricingCalculatorProps) {
@@ -59,8 +59,8 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
   const handleSelectMechanism = (mechanism: PricingMechanism) => {
     setSelectedMechanism(mechanism.mechanism);
-    if (onMechanismSelect) {
-      onMechanismSelect(mechanism);
+    if (onMechanismSelect && comparison) {
+      onMechanismSelect(mechanism, comparison);
     }
   };
 

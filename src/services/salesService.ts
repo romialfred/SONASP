@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { sendSaleApprovedNotification } from './notificationService';
 
 export interface CreateSaleData {
   customer_id: string;
@@ -236,7 +237,38 @@ export async function approveSale(
   userEmail: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updateSaleStatus(saleId, 'approved', userEmail, notes);
+  try {
+    const result = await updateSaleStatus(saleId, 'approved', userEmail, notes);
+
+    if (result.success) {
+      const { data: sale } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          customer:customers(name, email)
+        `)
+        .eq('id', saleId)
+        .maybeSingle();
+
+      if (sale && sale.customer) {
+        await sendSaleApprovedNotification(
+          sale.sale_number,
+          sale.customer.email,
+          sale.customer.name,
+          sale.quantity_oz,
+          sale.london_am_rate,
+          sale.final_proceeds,
+          sale.id,
+          sale.mechanism_type
+        );
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Error in approveSale:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function rejectSale(

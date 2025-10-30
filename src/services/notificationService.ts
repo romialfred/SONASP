@@ -67,11 +67,14 @@ export async function sendSaleApprovedNotification(
   quantityOz: number,
   londonAMRate: number,
   finalProceeds: number,
-  saleId: string
+  saleId: string,
+  mechanismType?: string | null
 ): Promise<{ success: boolean; error?: string }> {
+  const approvalToken = btoa(`${saleId}-${Date.now()}`);
+
   const notification: EmailNotification = {
     to: customerEmail,
-    subject: `Sale Approved: ${saleNumber}`,
+    subject: `Sale Approval Request: ${saleNumber}`,
     template: 'sale_approved',
     data: {
       customerName,
@@ -79,8 +82,8 @@ export async function sendSaleApprovedNotification(
       quantityOz,
       londonAMRate,
       finalProceeds,
-      approvalLink: `${window.location.origin}/customer/sales/${saleId}/approve`,
-      rejectLink: `${window.location.origin}/customer/sales/${saleId}/reject`,
+      mechanismType: mechanismType || 'spot',
+      approvalLink: `${window.location.origin}/sales/approve/${saleId}/${approvalToken}`,
     },
   };
 

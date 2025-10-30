@@ -35,6 +35,7 @@ import { SalesDashboard } from './pages/sales/SalesDashboard';
 import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
 import { GoldTradeSpace } from './pages/sales/GoldTradeSpace';
+import { CustomerSaleApproval } from './pages/sales/CustomerSaleApproval';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
@@ -292,6 +293,12 @@ function AppRoutes() {
                 <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
                   <GoldTradeSpace />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales/approve/:saleId/:token"
+              element={
+                <CustomerSaleApproval />
               }
             />
             <Route

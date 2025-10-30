@@ -82,7 +82,7 @@ export function RefineryForm() {
       }
     } catch (error: any) {
       console.error('Error loading refinery:', error);
-      alert.showAlert('Error loading refinery', 'error');
+      alert.error('Error loading refinery');
     } finally {
       setLoading(false);
     }
@@ -165,12 +165,12 @@ export function RefineryForm() {
           .eq('id', id);
 
         if (error) throw error;
-        alert.showAlert('Refinery updated successfully', 'success');
+        alert.success('Refinery updated successfully');
       } else {
         const { error } = await supabase.from('refineries').insert([submitData]);
 
         if (error) throw error;
-        alert.showAlert('Refinery created successfully', 'success');
+        alert.success('Refinery created successfully');
       }
 
       setTimeout(() => {
@@ -178,7 +178,7 @@ export function RefineryForm() {
       }, 1500);
     } catch (error: any) {
       console.error('Error saving refinery:', error);
-      alert.showAlert(error.message || 'Error saving refinery', 'error');
+      alert.error(error.message || 'Error saving refinery');
     } finally {
       setIsSubmitting(false);
     }

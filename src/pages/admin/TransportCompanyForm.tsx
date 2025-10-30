@@ -84,7 +84,7 @@ export function TransportCompanyForm() {
       }
     } catch (error: any) {
       console.error('Error loading company:', error);
-      alert.showAlert('Error loading transport company', 'error');
+      alert.error('Error loading transport company');
     } finally {
       setLoading(false);
     }
@@ -153,14 +153,14 @@ export function TransportCompanyForm() {
           .eq('id', id);
 
         if (error) throw error;
-        alert.showAlert('Transport company updated successfully', 'success');
+        alert.success('Transport company updated successfully');
       } else {
         const { error } = await supabase
           .from('transport_companies')
           .insert([submitData]);
 
         if (error) throw error;
-        alert.showAlert('Transport company created successfully', 'success');
+        alert.success('Transport company created successfully');
       }
 
       setTimeout(() => {
@@ -168,7 +168,7 @@ export function TransportCompanyForm() {
       }, 1500);
     } catch (error: any) {
       console.error('Error saving company:', error);
-      alert.showAlert(error.message || 'Error saving transport company', 'error');
+      alert.error(error.message || 'Error saving transport company');
     } finally {
       setIsSubmitting(false);
     }

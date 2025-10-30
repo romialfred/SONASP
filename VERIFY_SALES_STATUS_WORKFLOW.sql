@@ -32,12 +32,12 @@ SELECT
   ) as gold_inventory_exists;
 
 -- 4. If gold_inventory doesn't exist, check batches table for inventory
-SELECT 
+SELECT
   status,
   COUNT(*) as batch_count,
-  SUM(final_weight_oz) as total_oz
+  SUM(weight_ounces) as total_oz
 FROM batches
-WHERE status LIKE '%available%' OR status LIKE '%ready%'
+WHERE status LIKE '%processed%' OR status LIKE '%ready%'
 GROUP BY status
 ORDER BY batch_count DESC;
 

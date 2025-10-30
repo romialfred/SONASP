@@ -460,7 +460,7 @@ export async function getAvailableInventory(): Promise<{
   try {
     const { data, error } = await supabase
       .from('batches')
-      .select('id, batch_number, weight_oz, metal_type, status')
+      .select('id, batch_number, weight_ounces, metal_type, status')
       .eq('status', 'ready_for_sale')
       .order('created_at', { ascending: false });
 
@@ -468,13 +468,16 @@ export async function getAvailableInventory(): Promise<{
       return { success: false, error: error.message };
     }
 
-    const totalWeight = (data || []).reduce((sum, batch) => sum + (batch.weight_oz || 0), 0);
+    const totalWeight = (data || []).reduce((sum, batch) => sum + ((batch as any).weight_ounces || 0), 0);
 
     return {
       success: true,
       data: {
         total_weight_oz: totalWeight,
-        batches: data || [],
+        batches: (data || []).map(b => ({
+          ...b,
+          weight_oz: (b as any).weight_ounces
+        })),
       },
     };
   } catch (error: any) {

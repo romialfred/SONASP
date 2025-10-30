@@ -129,10 +129,10 @@ export function SalesDashboard() {
           // Fallback: calculate from batches
           const { data: batchesData } = await supabase
             .from('batches')
-            .select('final_weight_oz')
+            .select('weight_ounces')
             .eq('status', 'processed');
 
-          totalInventory = batchesData?.reduce((sum, b) => sum + (b.final_weight_oz || 0), 0) || 0;
+          totalInventory = batchesData?.reduce((sum, b) => sum + (b.weight_ounces || 0), 0) || 0;
         } else {
           totalInventory = inventoryData?.reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0) || 0;
         }

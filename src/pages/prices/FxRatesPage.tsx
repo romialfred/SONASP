@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 import { FxRateComparison } from '@/components/fx/FxRateComparison';
+import { LiveFxRatePanel } from '@/components/prices/LiveFxRatePanel';
 import * as XLSX from 'xlsx';
 import { useAlert } from '@/hooks/useAlert';
 
@@ -528,6 +529,9 @@ export function FxRatesPage() {
             )}
           </div>
         </div>
+
+        {/* Live FX Rates Panel */}
+        <LiveFxRatePanel />
 
         {/* Tabs */}
         <div className="border-b border-gray-200">

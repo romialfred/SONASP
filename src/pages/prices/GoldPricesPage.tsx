@@ -10,6 +10,7 @@ import {
 import { Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
+import { LiveGoldPricePanel } from '@/components/prices/LiveGoldPricePanel';
 
 interface DailyPrice {
   price_date: string;
@@ -223,6 +224,9 @@ export function GoldPricesPage() {
             </Button>
           </div>
         </div>
+
+        {/* Live Gold Price Panel */}
+        <LiveGoldPricePanel />
 
         {/* View Mode Tabs */}
         <div className="border-b border-gray-200">

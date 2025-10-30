@@ -68,10 +68,17 @@ export function CustomerListing() {
       const customersWithMetrics = (customersData || []).map(customer => {
         const customerSales = (salesData || []).filter(s => s.customer_id === customer.id);
         const totalPurchases = customerSales.length;
-        const totalSpent = customerSales.reduce((sum, s) => {
-          const proceeds = s.final_proceeds ? Number(s.final_proceeds) : 0;
-          return sum + (isNaN(proceeds) ? 0 : proceeds);
-        }, 0);
+
+        // Calculate total spent with proper error handling
+        let totalSpent = 0;
+        customerSales.forEach(sale => {
+          if (sale.final_proceeds !== null && sale.final_proceeds !== undefined) {
+            const proceeds = Number(sale.final_proceeds);
+            if (!isNaN(proceeds) && isFinite(proceeds)) {
+              totalSpent += proceeds;
+            }
+          }
+        });
 
         // Find last purchase date
         const sortedSales = customerSales.sort((a, b) =>
@@ -83,12 +90,29 @@ export function CustomerListing() {
         const completedSales = customerSales.filter(s => s.status === 'completed' || s.status === 'payment_received');
         const paymentRate = totalPurchases > 0 ? (completedSales.length / totalPurchases) * 100 : 0;
 
-        // Ensure status is valid
+        // Ensure status is valid with strict type checking
         let validStatus: 'active' | 'inactive' | 'pending' = 'active';
-        if (customer.status === 'active' || customer.status === 'inactive' || customer.status === 'pending') {
-          validStatus = customer.status;
-        } else if (!customer.status) {
-          validStatus = 'active'; // Default if null
+        const statusValue = customer.status as any;
+
+        if (statusValue === 'active') {
+          validStatus = 'active';
+        } else if (statusValue === 'inactive') {
+          validStatus = 'inactive';
+        } else if (statusValue === 'pending') {
+          validStatus = 'pending';
+        } else {
+          // Default to active for any other value (null, undefined, invalid)
+          validStatus = 'active';
+          console.warn(`Invalid status '${statusValue}' for customer ${customer.name}, defaulting to 'active'`);
+        }
+
+        // Ensure all numeric values are valid
+        const finalTotalSpent = isNaN(totalSpent) || !isFinite(totalSpent) ? 0 : totalSpent;
+        const finalPaymentRate = isNaN(paymentRate) || !isFinite(paymentRate) ? 0 : paymentRate;
+
+        // Debug log for troubleshooting
+        if (finalTotalSpent === 0 && customerSales.length > 0) {
+          console.log(`Customer ${customer.name} has ${customerSales.length} sales but totalSpent is 0`, customerSales);
         }
 
         return {
@@ -98,10 +122,10 @@ export function CustomerListing() {
           country: customer.country,
           phone: customer.phone || 'N/A',
           totalPurchases,
-          totalSpent: isNaN(totalSpent) ? 0 : totalSpent,
+          totalSpent: finalTotalSpent,
           lastPurchaseDate,
           status: validStatus,
-          paymentRate: isNaN(paymentRate) ? 0 : paymentRate,
+          paymentRate: finalPaymentRate,
         } as Customer;
       });
 

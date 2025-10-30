@@ -100,7 +100,7 @@ export async function transitionBatchStatus(
     // Add metadata to update if provided
     if (metadata?.weightGrams) {
       // Handle refinery-specific weight fields
-      if (newStatus === BATCH_STATUSES.RECEIVED_AT_REFINERY) {
+      if (newStatus === BATCH_STATUSES.RECEIVED_AT_REFINERY || newStatus === BATCH_STATUSES.VALIDATED_FOR_PROCESSING) {
         updateData.refinery_received_weight_grams = metadata.weightGrams;
         updateData.refinery_received_weight_ounces = metadata.weightGrams / 31.1035;
         updateData.refinery_received_at = new Date().toISOString();

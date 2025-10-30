@@ -103,24 +103,47 @@ export function RefineryReceivingConfirm() {
     try {
       const actualWeightGrams = parseFloat(actualWeight);
 
-      // Use the transition service to handle the status change and all related updates
-      const { confirmRefineryReceipt } = await import('@/services/batchTransitionService');
+      // Use the transition service to handle the status changes
+      // The correct workflow is a two-step process:
+      // 1. waiting_refinery_receipt → received_at_refinery (refinery_manager confirms physical receipt)
+      // 2. received_at_refinery → validated_for_processing (refinery_manager validates for processing)
+      const { transitionBatchStatus } = await import('@/services/batchTransitionService');
 
-      const result = await confirmRefineryReceipt(
+      // Step 1: Confirm physical receipt at refinery (if coming from waiting_refinery_receipt)
+      if (batch.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT) {
+        const receiptResult = await transitionBatchStatus(
+          batch.id,
+          BATCH_STATUSES.RECEIVED_AT_REFINERY,
+          {
+            weightGrams: actualWeightGrams,
+            variancePercentage: variance?.percentage,
+            reconciliationComments: reconciliationComments || undefined,
+            comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
+          }
+        );
+
+        if (!receiptResult.success) {
+          throw new Error(receiptResult.error || 'Failed to confirm receipt at refinery');
+        }
+      }
+
+      // Step 2: Validate for processing (from received_at_refinery to validated_for_processing)
+      const validationResult = await transitionBatchStatus(
         batch.id,
-        actualWeightGrams,
+        BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
         {
+          weightGrams: actualWeightGrams,
           variancePercentage: variance?.percentage,
           reconciliationComments: reconciliationComments || undefined,
-          comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
+          comments: `Batch validated for processing. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
         }
       );
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to confirm receipt');
+      if (!validationResult.success) {
+        throw new Error(validationResult.error || 'Failed to validate for processing');
       }
 
-      alert.success('Receipt confirmed successfully at refinery');
+      alert.success('Batch confirmed and validated for processing');
 
       // Navigate after a short delay to show the success message
       setTimeout(() => {

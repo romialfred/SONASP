@@ -1,491 +1,437 @@
-# Freight Company Update Error Fix
+# Freight Companies - Data Not Saving Issue - Diagnostic Guide
 
-## Problem Identified
+## Problem Report
 
-From the console log, when trying to update a Freight Company (Transport Company), the following error occurred:
+**Issue**: Freight Companies records display in the system but the table appears empty in the database.
 
-```
-Error saving company: TypeError: r.showAlert is not a function
-  at p (index-CWTf_GAU.js:951:60058)
-```
-
-**Error Details**:
-- **Location**: TransportCompanyForm component
-- **Issue**: `alert.showAlert()` method does not exist
-- **Impact**: Cannot save or update transport companies
+**Possible Causes**:
+1. Data is hardcoded in the frontend (not from database)
+2. RLS (Row Level Security) policies blocking read access
+3. Wrong table name being queried
+4. Data is in database but user doesn't have permission to see it
+5. Frontend caching old data
 
 ---
 
-## Root Cause Analysis
+## Investigation Summary
 
-### The Problem
+### Code Analysis Results ✅
 
-The code was calling:
+**Freight Companies Page** (`FreightCompaniesPage.tsx`):
+- Is actually an alias for `TransportCompaniesPage`
+- Queries the `transport_companies` table
+- Uses proper Supabase client
+
+**Transport Companies Listing** (`TransportCompaniesPage.tsx`):
 ```typescript
-alert.showAlert('Transport company updated successfully', 'success');
-alert.showAlert('Error loading transport company', 'error');
+// Line 36-38: Queries database correctly
+const { data, error } = await supabase
+  .from('transport_companies')
+  .select('*')
+  .order('name');
 ```
 
-But the `useAlert` hook **does not provide a `showAlert` method**.
-
-### What useAlert Actually Provides
-
-**File**: `/src/hooks/useAlert.ts`
-
+**Transport Company Form** (`TransportCompanyForm.tsx`):
 ```typescript
-export function useAlert() {
-  return {
-    success: (message: string, title?: string) => {...},
-    error: (message: string, title?: string) => {...},
-    info: (message: string, title?: string) => {...},
-    warning: (message: string, title?: string) => {...},
-    confirm: (message: string, onConfirm: () => void, title?: string) => {...},
-    custom: dialog.showDialog,
-    close: dialog.closeDialog
-  };
-}
+// Line 158-160: Inserts into database correctly
+const { data, error } = await supabase
+  .from('transport_companies')
+  .insert([submitData])
+  .select();
 ```
 
-**Available Methods**:
-- ✅ `success(message, title?)`
-- ✅ `error(message, title?)`
-- ✅ `info(message, title?)`
-- ✅ `warning(message, title?)`
-- ✅ `confirm(message, onConfirm, title?)`
-- ❌ `showAlert()` - **Does NOT exist**
+**Conclusion**: The code is correct and should save to database.
 
 ---
 
-## Solution Implemented ✅
+## Diagnostic Steps
 
-### Files Fixed
+### Step 1: Run Diagnostic SQL Script
 
-#### 1. TransportCompanyForm.tsx
+Copy the SQL script to Supabase SQL Editor and run it:
 
-**File**: `/src/pages/admin/TransportCompanyForm.tsx`
+**File**: `diagnose_freight_companies.sql` (in project root)
 
-**Changes Made**:
+Or run this directly:
 
-##### Error on Load (Line 87)
-**Before** ❌:
-```typescript
-catch (error: any) {
-  console.error('Error loading company:', error);
-  alert.showAlert('Error loading transport company', 'error');
-}
-```
-
-**After** ✅:
-```typescript
-catch (error: any) {
-  console.error('Error loading company:', error);
-  alert.error('Error loading transport company');
-}
-```
-
-##### Success on Update (Line 156)
-**Before** ❌:
-```typescript
-if (error) throw error;
-alert.showAlert('Transport company updated successfully', 'success');
-```
-
-**After** ✅:
-```typescript
-if (error) throw error;
-alert.success('Transport company updated successfully');
-```
-
-##### Success on Create (Line 163)
-**Before** ❌:
-```typescript
-if (error) throw error;
-alert.showAlert('Transport company created successfully', 'success');
-```
-
-**After** ✅:
-```typescript
-if (error) throw error;
-alert.success('Transport company created successfully');
-```
-
-##### Error on Save (Line 171)
-**Before** ❌:
-```typescript
-catch (error: any) {
-  console.error('Error saving company:', error);
-  alert.showAlert(error.message || 'Error saving transport company', 'error');
-}
-```
-
-**After** ✅:
-```typescript
-catch (error: any) {
-  console.error('Error saving company:', error);
-  alert.error(error.message || 'Error saving transport company');
-}
-```
-
----
-
-#### 2. RefineryForm.tsx (Same Issue)
-
-**File**: `/src/pages/admin/RefineryForm.tsx`
-
-Found the same issue in this file. Applied identical fixes:
-
-##### Error on Load (Line 85)
-**Before** ❌:
-```typescript
-alert.showAlert('Error loading refinery', 'error');
-```
-
-**After** ✅:
-```typescript
-alert.error('Error loading refinery');
-```
-
-##### Success on Update (Line 168)
-**Before** ❌:
-```typescript
-alert.showAlert('Refinery updated successfully', 'success');
-```
-
-**After** ✅:
-```typescript
-alert.success('Refinery updated successfully');
-```
-
-##### Success on Create (Line 173)
-**Before** ❌:
-```typescript
-alert.showAlert('Refinery created successfully', 'success');
-```
-
-**After** ✅:
-```typescript
-alert.success('Refinery created successfully');
-```
-
-##### Error on Save (Line 181)
-**Before** ❌:
-```typescript
-alert.showAlert(error.message || 'Error saving refinery', 'error');
-```
-
-**After** ✅:
-```typescript
-alert.error(error.message || 'Error saving refinery');
-```
-
----
-
-## Technical Details
-
-### Correct Usage Pattern
-
-**Import**:
-```typescript
-import { useAlert } from '@/hooks/useAlert';
-```
-
-**Hook Usage**:
-```typescript
-const alert = useAlert();
-```
-
-**Correct Method Calls**:
-
-#### Success Messages
-```typescript
-// Simple success
-alert.success('Operation completed successfully');
-
-// Success with custom title
-alert.success('Company saved', 'Success');
-```
-
-#### Error Messages
-```typescript
-// Simple error
-alert.error('Operation failed');
-
-// Error with custom message
-alert.error(error.message || 'Default error message');
-
-// Error with custom title
-alert.error('Failed to save', 'Error');
-```
-
-#### Info Messages
-```typescript
-alert.info('Please review the information');
-alert.info('System will be updated', 'Information');
-```
-
-#### Warning Messages
-```typescript
-alert.warning('This action cannot be undone');
-alert.warning('Check your data', 'Warning');
-```
-
-#### Confirmation Dialogs
-```typescript
-alert.confirm(
-  'Are you sure you want to delete this?',
-  async () => {
-    // Perform delete operation
-    await deleteItem();
-  },
-  'Confirm Delete'
+```sql
+-- Check if table exists
+SELECT EXISTS (
+  SELECT FROM information_schema.tables 
+  WHERE table_schema = 'public' 
+  AND table_name = 'transport_companies'
 );
+
+-- Check table structure
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'transport_companies'
+ORDER BY ordinal_position;
+
+-- Count records
+SELECT COUNT(*) as total FROM transport_companies;
+
+-- View all data
+SELECT id, name, email, company_type, is_active, created_at
+FROM transport_companies
+ORDER BY created_at DESC;
 ```
 
-### Method Signature Comparison
+**What to look for**:
+- Does the table exist? (Should be `true`)
+- How many records? (Might be 0)
+- Are there any records visible?
 
-| Old (Wrong) ❌ | New (Correct) ✅ |
-|----------------|-------------------|
-| `alert.showAlert(message, type)` | `alert.success(message, title?)` |
-| `alert.showAlert('Success', 'success')` | `alert.success('Success')` |
-| `alert.showAlert('Error', 'error')` | `alert.error('Error')` |
-| `alert.showAlert('Info', 'info')` | `alert.info('Info')` |
-| `alert.showAlert('Warning', 'warning')` | `alert.warning('Warning')` |
+### Step 2: Check RLS Policies
 
-**Key Differences**:
-1. ❌ **Old**: Second parameter was alert TYPE ('success', 'error')
-2. ✅ **New**: Second parameter is optional TITLE (custom dialog title)
-3. ❌ **Old**: Single method for all types
-4. ✅ **New**: Separate methods for each type
+RLS might be blocking access:
+
+```sql
+-- Check RLS policies
+SELECT 
+  tablename,
+  policyname,
+  permissive,
+  roles,
+  cmd,
+  qual
+FROM pg_policies
+WHERE tablename = 'transport_companies';
+
+-- Check if RLS is enabled
+SELECT 
+  tablename,
+  rowsecurity
+FROM pg_tables
+WHERE tablename = 'transport_companies';
+```
+
+**What to look for**:
+- If `rowsecurity = true`, RLS is enabled
+- Check if there are SELECT policies
+- Check if your user role matches the policy roles
+
+### Step 3: Test Manual Insert
+
+Try inserting a test record:
+
+```sql
+-- Test insert (will show any errors)
+INSERT INTO transport_companies (
+  name,
+  email,
+  phone,
+  company_type,
+  contact_person,
+  address,
+  is_active
+) VALUES (
+  'Test Company',
+  'test@example.com',
+  '+1234567890',
+  'both',
+  'Test Contact',
+  '123 Test St',
+  true
+)
+RETURNING *;
+```
+
+**What to look for**:
+- Does it succeed?
+- What error do you get (if any)?
+- Does the record appear in SELECT query?
 
 ---
 
-## Error Flow
+## Browser Console Debugging
 
-### What Was Happening
+With the updated code, you now have extensive logging:
 
-```
-1. User clicks "Update Company"
-   ↓
-2. handleSubmit() executes
-   ↓
-3. Supabase update succeeds
-   ↓
-4. Code calls: alert.showAlert(...)
-   ↓
-5. ERROR: showAlert is not a function
-   ↓
-6. TypeScript error in console
-   ↓
-7. Update SUCCEEDS in DB but UI shows error
-   ↓
-8. User confused - data saved but error shown
+### Step 1: Open Browser Console (F12)
+
+### Step 2: Navigate to Freight Companies Page
+
+URL: `/admin/transport-companies`
+
+**Look for this log**:
+```javascript
+Loading transport companies from database...
+Loaded X transport companies: [...]
 ```
 
-### What Happens Now
+**Questions**:
+- What is X? (number of records loaded)
+- What does the array contain?
+- Any errors in console?
 
+### Step 3: Try Creating a New Company
+
+1. Click "Add Company"
+2. Fill in the form
+3. Click "Create Company"
+
+**Look for these logs**:
+```javascript
+Submitting transport company data: {...}
+Inserting new transport company
+Transport company created successfully: [...]
 ```
-1. User clicks "Update Company"
-   ↓
-2. handleSubmit() executes
-   ↓
-3. Supabase update succeeds
-   ↓
-4. Code calls: alert.success(...)
-   ↓
-5. Success dialog appears
-   ↓
-6. After 1.5 seconds, navigate back to list
-   ↓
-7. User sees success message
-   ↓
-8. List refreshes with updated data
+
+**OR if there's an error**:
+```javascript
+Error inserting transport company: {...}
+Error details: {
+  message: "...",
+  details: "...",
+  hint: "...",
+  code: "..."
+}
 ```
+
+This will tell you EXACTLY what's wrong!
 
 ---
 
-## Testing Scenarios
+## Common Issues and Fixes
 
-### Test 1: Create New Transport Company
-**Steps**:
-1. Navigate to `/admin/transport-companies`
-2. Click "Add Company"
-3. Fill all required fields
-4. Click "Create Company"
+### Issue 1: RLS Blocking Access
 
-**Expected Result**: ✅
-- Success message appears
-- Navigates back to list
-- New company visible in list
+**Symptom**: Table exists, but SELECT returns 0 rows even though INSERT succeeds
 
-**Result**: ✅ Pass
+**Diagnosis**:
+```sql
+-- Check RLS status
+SELECT tablename, rowsecurity FROM pg_tables 
+WHERE tablename = 'transport_companies';
+```
 
-### Test 2: Update Existing Transport Company
-**Steps**:
-1. Navigate to `/admin/transport-companies`
-2. Click edit icon on existing company
-3. Modify company details
-4. Click "Update Company"
+**Fix**: Add or update RLS policies
+```sql
+-- Option A: Temporarily disable RLS (NOT for production!)
+ALTER TABLE transport_companies DISABLE ROW LEVEL SECURITY;
 
-**Expected Result**: ✅
-- Success message appears
-- Navigates back to list
-- Company details updated
+-- Option B: Add proper SELECT policy
+CREATE POLICY "Allow all authenticated users to view transport companies"
+  ON transport_companies
+  FOR SELECT
+  TO authenticated
+  USING (true);
 
-**Result**: ✅ Pass (Previously failed ❌)
+-- Option C: Add policy for specific role
+CREATE POLICY "Allow management to view transport companies"
+  ON transport_companies
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_profiles.id = auth.uid()
+      AND user_profiles.role = 'management'
+    )
+  );
+```
 
-### Test 3: Error Handling - Invalid Data
-**Steps**:
-1. Try to create company with existing email
-2. Or leave required fields empty
+### Issue 2: Missing INSERT Policy
 
-**Expected Result**: ✅
-- Error message appears
-- Form validation shows errors
-- User can correct and retry
+**Symptom**: Form submission fails with permission error
 
-**Result**: ✅ Pass
+**Diagnosis**: Check console for error code "42501" (insufficient privilege)
 
-### Test 4: Create New Refinery
-**Steps**:
-1. Navigate to `/admin/refineries`
-2. Click "Add Refinery"
-3. Fill all fields
-4. Click "Create Refinery"
+**Fix**: Add INSERT policy
+```sql
+CREATE POLICY "Allow authenticated users to insert transport companies"
+  ON transport_companies
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+```
 
-**Expected Result**: ✅
-- Success message appears
-- Navigates back to list
+### Issue 3: Table Doesn't Exist
 
-**Result**: ✅ Pass
+**Symptom**: Error "relation transport_companies does not exist"
 
-### Test 5: Update Existing Refinery
-**Steps**:
-1. Navigate to `/admin/refineries`
-2. Click edit on refinery
-3. Modify details
-4. Click "Update Refinery"
+**Diagnosis**: Table wasn't created by migrations
 
-**Expected Result**: ✅
-- Success message appears
-- Data updated correctly
+**Fix**: Create the table
+```sql
+CREATE TABLE IF NOT EXISTS transport_companies (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  email text NOT NULL,
+  phone text NOT NULL,
+  company_type text NOT NULL CHECK (company_type IN ('mine_to_airport', 'airport_to_refinery', 'both')),
+  contact_person text,
+  address text,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
 
-**Result**: ✅ Pass (Previously failed ❌)
+-- Enable RLS
+ALTER TABLE transport_companies ENABLE ROW LEVEL SECURITY;
+
+-- Add basic policies
+CREATE POLICY "Enable read for authenticated users"
+  ON transport_companies FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Enable insert for authenticated users"
+  ON transport_companies FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Enable update for authenticated users"
+  ON transport_companies FOR UPDATE
+  TO authenticated
+  USING (true);
+```
+
+### Issue 4: Frontend Showing Cached/Hardcoded Data
+
+**Symptom**: Data displays but doesn't match database
+
+**Diagnosis**: 
+- Check browser console logs
+- Log shows "Loaded 0 transport companies" but UI shows data
+
+**Fix**: 
+1. Clear browser cache (Ctrl+Shift+Delete)
+2. Hard refresh (Ctrl+F5)
+3. Check if there's demo/seed data in code
 
 ---
 
-## Code Verification
+## Verification Checklist
 
-### Search for Remaining Issues
+After applying fixes, verify:
 
-Ran search to find any remaining `alert.showAlert` calls:
+### Database Checks ✅
+- [ ] Table `transport_companies` exists
+- [ ] Can insert records manually via SQL
+- [ ] Can select records manually via SQL
+- [ ] RLS policies exist and are correct
+- [ ] Constraints are valid (company_type, etc.)
 
-```bash
-grep -r "alert\.showAlert" /tmp/cc-agent/59164212/project/src
-```
+### Frontend Checks ✅
+- [ ] Console shows "Loading transport companies from database..."
+- [ ] Console shows "Loaded X transport companies" with correct count
+- [ ] No errors in console when loading page
+- [ ] Can create new company via form
+- [ ] Console shows "Transport company created successfully"
+- [ ] New company appears in list immediately
 
-**Result**: No matches found ✅
-
-All instances have been corrected!
-
----
-
-## Build Status
-
-```bash
-✓ 2653 modules transformed
-✓ Built in 12.02s
-Bundle: 1904.49 kB
-```
-
-**Quality Checks**:
-- ✅ No TypeScript errors
-- ✅ No runtime errors
-- ✅ No ESLint warnings
-- ✅ Production ready
-- ✅ All alert calls corrected
+### Integration Checks ✅
+- [ ] Data saved in form appears in database
+- [ ] Data in database appears in frontend list
+- [ ] Edit form loads correct data
+- [ ] Updates save correctly
 
 ---
 
-## Files Modified Summary
+## Quick Fix Summary
 
-| File | Lines Changed | Changes |
-|------|---------------|---------|
-| `TransportCompanyForm.tsx` | 4 locations | `showAlert()` → `success()` / `error()` |
-| `RefineryForm.tsx` | 4 locations | `showAlert()` → `success()` / `error()` |
+### Most Likely Issue: RLS Policies Missing
 
-**Total**: 2 files, 8 method calls corrected
+**Quick Fix SQL**:
+```sql
+-- Ensure RLS is enabled
+ALTER TABLE transport_companies ENABLE ROW LEVEL SECURITY;
+
+-- Add permissive policies for authenticated users
+DROP POLICY IF EXISTS "Enable read for authenticated users" ON transport_companies;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON transport_companies;
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON transport_companies;
+
+CREATE POLICY "Enable read for authenticated users"
+  ON transport_companies FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Enable insert for authenticated users"
+  ON transport_companies FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Enable update for authenticated users"
+  ON transport_companies FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+```
+
+Then:
+1. Clear browser cache
+2. Refresh page (Ctrl+F5)
+3. Check console logs
+4. Try creating a new company
 
 ---
 
-## Prevention
+## Files Modified
 
-### For Future Development
+### Added Debug Logging
+- ✅ `TransportCompaniesPage.tsx` - Added load logging
+- ✅ `TransportCompanyForm.tsx` - Added submission logging
 
-**DO** ✅:
-```typescript
-// Import hook
-import { useAlert } from '@/hooks/useAlert';
+### Created Diagnostic Tools
+- ✅ `diagnose_freight_companies.sql` - Comprehensive diagnostic script
+- ✅ `FREIGHT_COMPANY_UPDATE_FIX.md` - This guide
 
-// Use in component
-const alert = useAlert();
+### Build Status
+- ✅ Build successful (1905.81 kB)
+- ✅ No compilation errors
 
-// Call correct methods
-alert.success('Success message');
-alert.error('Error message');
-alert.warning('Warning message');
-alert.info('Info message');
-alert.confirm('Confirm?', onConfirm);
-```
+---
 
-**DON'T** ❌:
-```typescript
-// Wrong - this method doesn't exist
-alert.showAlert('message', 'success');
-alert.showAlert('message', 'error');
+## What to Report Back
 
-// These will cause runtime errors
-```
+After running diagnostics, please report:
 
-### TypeScript Type Safety
+1. **Table Status**:
+   - Does table exist? (Yes/No)
+   - How many records? (Number)
+   
+2. **RLS Status**:
+   - Is RLS enabled? (Yes/No)
+   - How many policies? (Number)
+   - What are the policy names?
 
-The `useAlert` hook returns a properly typed object. TypeScript should catch these errors during development:
+3. **Browser Console**:
+   - What does "Loaded X transport companies" show for X?
+   - Any errors?
+   - What happens when you try to create a company?
 
-```typescript
-// TypeScript knows these methods exist
-alert.success('message');  // ✅ Valid
-alert.error('message');    // ✅ Valid
+4. **Manual Test**:
+   - Can you INSERT a record via SQL?
+   - Does it appear in SELECT query?
+   - Does it appear in the frontend?
 
-// TypeScript should error on this
-alert.showAlert('message'); // ❌ Property 'showAlert' does not exist
-```
-
-**Recommendation**: Ensure TypeScript checks are enabled in your IDE for real-time error detection.
+This information will help identify the exact issue!
 
 ---
 
 ## Summary
 
-### Problem
-❌ `alert.showAlert()` method does not exist in `useAlert` hook
+**Problem**: Data appears in UI but not in database
 
-### Solution
-✅ Replace all `showAlert()` calls with correct methods:
-- `alert.success()` for success messages
-- `alert.error()` for error messages
-- `alert.warning()` for warnings
-- `alert.info()` for information
-- `alert.confirm()` for confirmations
+**Code Status**: ✅ Code is correct, properly queries and inserts to `transport_companies`
 
-### Impact
-✅ **Transport Company update/create** now works correctly
-✅ **Refinery update/create** now works correctly
-✅ All alert notifications display properly
-✅ User experience improved with proper feedback
+**Most Likely Cause**: RLS policies blocking access
 
-### Files Fixed
-- ✅ `/src/pages/admin/TransportCompanyForm.tsx`
-- ✅ `/src/pages/admin/RefineryForm.tsx`
+**Next Steps**:
+1. Run diagnostic SQL script
+2. Check browser console logs  
+3. Apply RLS policy fix if needed
+4. Clear cache and test
+
+**Expected After Fix**:
+- Database shows records
+- Console shows correct count
+- Form saves successfully
+- List displays database data
 
 ---
 
-**The Freight Company (Transport Company) update functionality is now fully operational!** ✅🚚🔧
+**The code is working correctly - the issue is likely RLS policies or table permissions!** ✅🔒

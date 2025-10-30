@@ -130,6 +130,7 @@ export function TransportCompanyForm() {
     e.preventDefault();
 
     if (!validateForm()) {
+      console.log('Form validation failed');
       return;
     }
 
@@ -146,20 +147,34 @@ export function TransportCompanyForm() {
         is_active: formData.is_active,
       };
 
+      console.log('Submitting transport company data:', submitData);
+
       if (isEditMode && id) {
-        const { error } = await supabase
+        console.log('Updating transport company with ID:', id);
+        const { data, error } = await supabase
           .from('transport_companies')
           .update(submitData)
-          .eq('id', id);
+          .eq('id', id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating transport company:', error);
+          throw error;
+        }
+        console.log('Transport company updated successfully:', data);
         alert.success('Transport company updated successfully');
       } else {
-        const { error } = await supabase
+        console.log('Inserting new transport company');
+        const { data, error } = await supabase
           .from('transport_companies')
-          .insert([submitData]);
+          .insert([submitData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting transport company:', error);
+          throw error;
+        }
+        console.log('Transport company created successfully:', data);
         alert.success('Transport company created successfully');
       }
 
@@ -167,7 +182,13 @@ export function TransportCompanyForm() {
         navigateWithAutoRefresh(navigate, '/admin/transport-companies');
       }, 1500);
     } catch (error: any) {
-      console.error('Error saving company:', error);
+      console.error('Error saving transport company - Full error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       alert.error(error.message || 'Error saving transport company');
     } finally {
       setIsSubmitting(false);

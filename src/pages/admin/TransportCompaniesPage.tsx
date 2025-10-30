@@ -32,15 +32,21 @@ export function TransportCompaniesPage() {
   const loadCompanies = async () => {
     try {
       setLoading(true);
+      console.log('Loading transport companies from database...');
       const { data, error } = await supabase
         .from('transport_companies')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading transport companies:', error);
+        throw error;
+      }
+
+      console.log(`Loaded ${data?.length || 0} transport companies:`, data);
       setCompanies(data || []);
     } catch (error: any) {
-      console.error('Error loading companies:', error);
+      console.error('Error loading companies - Full error:', error);
     } finally {
       setLoading(false);
     }

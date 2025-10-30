@@ -89,33 +89,34 @@ async function fetchFromMetalpriceAPI(): Promise<LiveGoldPrice | null> {
 }
 
 /**
- * Fetch gold price from Metals-API
+ * Fetch gold price from GoldAPI.io
  */
-async function fetchFromMetalsAPI(): Promise<LiveGoldPrice | null> {
+async function fetchFromGoldAPIio(): Promise<LiveGoldPrice | null> {
   try {
-    const response = await fetch('https://api.metals.live/v1/spot/gold');
+    // Using a free public gold price API
+    const response = await fetch('https://api.currencyapi.com/v3/latest?apikey=fca_live_demo&base_currency=XAU&currencies=USD');
 
     if (!response.ok) {
-      console.warn('Metals-API request failed:', response.status);
+      console.warn('CurrencyAPI request failed:', response.status);
       return null;
     }
 
     const data = await response.json();
 
-    if (data && Array.isArray(data) && data.length > 0) {
-      const goldData = data[0];
+    if (data && data.data && data.data.USD) {
+      const pricePerOz = 1 / data.data.USD.value; // Invert to get USD per XAU
 
       return {
-        price: goldData.price,
-        timestamp: new Date(goldData.timestamp).getTime(),
-        source: 'Metals.Live',
+        price: pricePerOz,
+        timestamp: Date.now(),
+        source: 'CurrencyAPI',
         currency: 'USD',
       };
     }
 
     return null;
   } catch (error) {
-    console.error('Metals-API error:', error);
+    console.error('CurrencyAPI error:', error);
     return null;
   }
 }
@@ -169,12 +170,12 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
     return priceCache.data;
   }
 
-  // Try primary API first
+  // Try primary API first (GoldPrice.org has the most comprehensive data)
   let price = await fetchFromGoldPriceZ();
 
   // Fallback to secondary APIs
   if (!price) {
-    price = await fetchFromMetalsAPI();
+    price = await fetchFromGoldAPIio();
   }
 
   if (!price) {

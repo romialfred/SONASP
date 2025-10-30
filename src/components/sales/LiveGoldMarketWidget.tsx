@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { TrendingUp, TrendingDown, RefreshCw, Clock, Globe } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Clock, Globe, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   fetchLiveGoldPrice,
   getMarketStatus,
@@ -64,10 +64,14 @@ export function LiveGoldMarketWidget() {
 
   if (loading || !goldPrice) {
     return (
-      <Card className="bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="p-4 animate-pulse">
-          <div className="h-8 bg-gray-700 rounded w-1/2 mb-3"></div>
-          <div className="h-12 bg-gray-700 rounded w-2/3"></div>
+      <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+        <div className="p-6 animate-pulse">
+          <div className="h-8 bg-amber-200 rounded w-1/2 mb-4"></div>
+          <div className="grid grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-20 bg-amber-200 rounded"></div>
+            ))}
+          </div>
         </div>
       </Card>
     );
@@ -83,136 +87,145 @@ export function LiveGoldMarketWidget() {
 
   return (
     <>
-      {/* Main Price Display - Top Banner */}
-      <Card className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700 overflow-visible mb-4">
-        <div className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
+      {/* KPI Summary Card - Prominent at the top */}
+      <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 border-2 border-amber-300 shadow-lg mb-4">
+        <div className="p-6">
+          {/* Header with Title and Refresh */}
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">AU</span>
+              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-xl">AU</span>
               </div>
               <div>
-                <h3 className="text-white font-bold text-lg">XAU/USD</h3>
-                <p className="text-gray-400 text-xs">Gold Spot / U.S. Dollar</p>
-                <p className="text-gray-500 text-xs">
-                  {goldPrice.source} • Real-time
-                </p>
+                <h2 className="text-2xl font-bold text-gray-900">Live Gold Price</h2>
+                <p className="text-sm text-gray-600">XAU/USD Spot Price • {goldPrice.source}</p>
               </div>
             </div>
-            <button
-              onClick={() => fetchGoldData(true)}
-              disabled={refreshing}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-              title="Refresh now"
-            >
-              <RefreshCw
-                className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
-              />
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg font-medium">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                Real-time Data
+              </div>
+              <button
+                onClick={() => fetchGoldData(true)}
+                disabled={refreshing}
+                className="p-2 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh now"
+              >
+                <RefreshCw
+                  className={`w-5 h-5 text-gray-700 ${refreshing ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
           </div>
 
-          {/* Current Price - Large Display */}
-          <div className="space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-white">
-                {formatGoldPrice(goldPrice.price)}
-              </span>
-              <span className="text-sm text-gray-400">USD</span>
+          {/* KPI Grid - 5 Key Metrics */}
+          <div className="grid grid-cols-5 gap-4">
+            {/* Current Spot Price */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 mb-1">Spot Price</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                ${formatGoldPrice(goldPrice.price)}
+              </p>
+              <p className="text-xs text-gray-500">USD/oz</p>
             </div>
 
+            {/* Market Open Price */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 mb-1">Market Open</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                ${formatGoldPrice(mockOpenPrice)}
+              </p>
+              <p className="text-xs text-gray-500">Opening price</p>
+            </div>
+
+            {/* 24h High */}
+            <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 mb-1">High (24h)</p>
+              <p className="text-2xl font-bold text-emerald-600 mb-1 flex items-center gap-1">
+                <ArrowUp className="w-4 h-4" />
+                ${formatGoldPrice(high24h)}
+              </p>
+              <p className="text-xs text-emerald-600">+{((high24h - mockOpenPrice) / mockOpenPrice * 100).toFixed(2)}%</p>
+            </div>
+
+            {/* 24h Low */}
+            <div className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 mb-1">Low (24h)</p>
+              <p className="text-2xl font-bold text-red-600 mb-1 flex items-center gap-1">
+                <ArrowDown className="w-4 h-4" />
+                ${formatGoldPrice(low24h)}
+              </p>
+              <p className="text-xs text-red-600">{((low24h - mockOpenPrice) / mockOpenPrice * 100).toFixed(2)}%</p>
+            </div>
+
+            {/* Trend & Variation */}
+            <div className={`bg-white rounded-xl p-4 border-2 shadow-sm ${
+              isPositive ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'
+            }`}>
+              <p className="text-xs font-medium text-gray-500 mb-1">Trend & Var %</p>
+              <div className="flex items-center gap-2 mb-1">
+                {isPositive ? (
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                ) : (
+                  <TrendingDown className="w-5 h-5 text-red-600" />
+                )}
+                <p className={`text-2xl font-bold ${
+                  isPositive ? 'text-emerald-600' : 'text-red-600'
+                }`}>
+                  {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
+                </p>
+              </div>
+              <p className={`text-xs font-medium ${
+                isPositive ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {isPositive ? '+' : ''}${change24h.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          {/* Update Info */}
+          <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
             <div className="flex items-center gap-2">
-              {isPositive ? (
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-red-400" />
-              )}
-              <span
-                className={`text-lg font-bold ${
-                  isPositive ? 'text-emerald-400' : 'text-red-400'
-                }`}
-              >
-                {isPositive ? '+' : ''}
-                {change24h.toFixed(2)}
-              </span>
-              <span
-                className={`text-base font-semibold ${
-                  isPositive ? 'text-emerald-400' : 'text-red-400'
-                }`}
-              >
-                {isPositive ? '+' : ''}
-                {changePercent.toFixed(2)}%
-              </span>
+              <Clock className="w-4 h-4" />
+              <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
             </div>
-
-            <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded w-fit">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="font-medium">Live Data</span>
-            </div>
-          </div>
-
-          {/* Market Data Quick View */}
-          <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-gray-400">Opening Price</p>
-                <p className="text-sm font-semibold text-gray-300">
-                  ${formatGoldPrice(mockOpenPrice)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Spot Price</p>
-                <p className="text-sm font-semibold text-white">
-                  ${formatGoldPrice(goldPrice.price)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">High (24h)</p>
-                <p className="text-sm font-semibold text-emerald-400">
-                  ${formatGoldPrice(high24h)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Low (24h)</p>
-                <p className="text-sm font-semibold text-red-400">
-                  ${formatGoldPrice(low24h)}
-                </p>
-              </div>
-            </div>
+            <span className="text-gray-500">Next update in {countdown}s</span>
           </div>
         </div>
       </Card>
 
       {/* Global Gold Markets Section */}
-      <Card className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border-slate-700">
+      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-300">
         <div className="p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Globe className="w-5 h-5 text-blue-400" />
-            <h3 className="text-lg font-bold text-white">Global Gold Markets</h3>
+            <Globe className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-bold text-gray-900">Global Gold Markets</h3>
           </div>
 
           <div className="space-y-3">
             {/* London LBMA */}
-            <div className="bg-slate-800/80 rounded-lg p-4 border border-slate-700">
+            <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-amber-500/20 rounded flex items-center justify-center">
-                    <span className="text-amber-400 text-lg">🏛</span>
+                  <div className="w-8 h-8 bg-amber-100 rounded flex items-center justify-center">
+                    <span className="text-amber-600 text-lg">🏛</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">London LBMA</h4>
-                    <p className="text-xs text-gray-400">London Bullion Market</p>
+                    <h4 className="text-sm font-bold text-gray-900">London LBMA</h4>
+                    <p className="text-xs text-gray-600">London Bullion Market</p>
                   </div>
                 </div>
                 <span
-                  className={`text-xs px-2 py-1 rounded ${
+                  className={`text-xs px-3 py-1 rounded-full font-medium ${
                     marketStatus.london.isOpen
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-gray-700 text-gray-400'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
                 >
                   {marketStatus.london.isOpen ? (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                       Market Open
                     </div>
                   ) : (
@@ -223,22 +236,20 @@ export function LiveGoldMarketWidget() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Market</p>
-                  <p className="text-xs text-gray-300">London Bullion Market</p>
+                  <p className="text-xs text-gray-500 mb-1">Market</p>
+                  <p className="text-xs font-medium text-gray-900">London Bullion Market</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Trading Hours</p>
-                  <p className="text-xs text-gray-300">
-                    {marketStatus.london.openTime} - {marketStatus.london.closeTime}
-                  </p>
+                  <p className="text-xs text-gray-500 mb-1">Trading Hours</p>
+                  <p className="text-xs font-medium text-gray-900">8:00 AM - 4:30 PM GMT</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Price Fixing</p>
-                  <p className="text-xs text-gray-300">10:30 AM & 3:00 PM</p>
+                  <p className="text-xs text-gray-500 mb-1">Price Fixing</p>
+                  <p className="text-xs font-medium text-gray-900">10:30 AM & 3:00 PM</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Current Price</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-xs text-gray-500 mb-1">Current Price</p>
+                  <p className="text-base font-bold text-gray-900">
                     ${formatGoldPrice(goldPrice.price)}
                   </p>
                 </div>
@@ -246,27 +257,27 @@ export function LiveGoldMarketWidget() {
             </div>
 
             {/* NYSE COMEX */}
-            <div className="bg-slate-800/80 rounded-lg p-4 border border-slate-700">
+            <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center">
-                    <span className="text-blue-400 text-lg">🏛</span>
+                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                    <span className="text-blue-600 text-lg">🏛</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">NYSE (COMEX)</h4>
-                    <p className="text-xs text-gray-400">New York Commodity Exchange</p>
+                    <h4 className="text-sm font-bold text-gray-900">NYSE (COMEX)</h4>
+                    <p className="text-xs text-gray-600">New York Commodity Exchange</p>
                   </div>
                 </div>
                 <span
-                  className={`text-xs px-2 py-1 rounded ${
+                  className={`text-xs px-3 py-1 rounded-full font-medium ${
                     marketStatus.newYork.isOpen
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-gray-700 text-gray-400'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
                 >
                   {marketStatus.newYork.isOpen ? (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                       Market Open
                     </div>
                   ) : (
@@ -277,22 +288,20 @@ export function LiveGoldMarketWidget() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Market</p>
-                  <p className="text-xs text-gray-300">New York Commodity Exchange</p>
+                  <p className="text-xs text-gray-500 mb-1">Market</p>
+                  <p className="text-xs font-medium text-gray-900">New York Commodity Exchange</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Trading Hours</p>
-                  <p className="text-xs text-gray-300">
-                    {marketStatus.newYork.openTime} - {marketStatus.newYork.closeTime}
-                  </p>
+                  <p className="text-xs text-gray-500 mb-1">Trading Hours</p>
+                  <p className="text-xs font-medium text-gray-900">8:20 AM - 1:30 PM EST</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Electronic</p>
-                  <p className="text-xs text-gray-300">6:00 PM - 5:00 PM EST</p>
+                  <p className="text-xs text-gray-500 mb-1">Electronic</p>
+                  <p className="text-xs font-medium text-gray-900">6:00 PM - 5:00 PM EST</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Current Price</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-xs text-gray-500 mb-1">Current Price</p>
+                  <p className="text-base font-bold text-gray-900">
                     ${formatGoldPrice(goldPrice.price)}
                   </p>
                 </div>
@@ -301,26 +310,16 @@ export function LiveGoldMarketWidget() {
           </div>
 
           {/* Trading Information Footer */}
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <div className="flex items-start gap-2 mb-3">
-              <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs text-amber-400">ℹ</span>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <div className="flex items-start gap-2">
+              <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs text-amber-600">ℹ</span>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-300">Trading Information</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs font-medium text-gray-900">Trading Information</p>
+                <p className="text-xs text-gray-600 mt-1">
                   Prices are based on London AM Fix (LBMA) and COMEX futures. All transactions are settled within 2 business days (T+2).
                 </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-gray-400">
-                <Clock className="w-3 h-3" />
-                <span>Market data updates every 60 seconds</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Next: {countdown}s</span>
               </div>
             </div>
           </div>

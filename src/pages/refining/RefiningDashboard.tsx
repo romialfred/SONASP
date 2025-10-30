@@ -72,10 +72,10 @@ export function RefiningDashboard() {
 
       const { data, error } = await supabase
         .from('batch_status_history')
-        .select('batch_id, status, created_at')
+        .select('batch_id, status, changed_at')
         .eq('status', 'processed')
-        .gte('created_at', sixMonthsAgo.toISOString())
-        .order('created_at', { ascending: true });
+        .gte('changed_at', sixMonthsAgo.toISOString())
+        .order('changed_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching monthly data:', error);
@@ -85,7 +85,7 @@ export function RefiningDashboard() {
       // Group by month
       const monthlyData: { [key: string]: number } = {};
       data?.forEach((record) => {
-        const date = new Date(record.created_at);
+        const date = new Date(record.changed_at);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
       });

@@ -6,26 +6,45 @@ import { getCurrentGoldPrice, type GoldPrice } from '@/services/goldPriceService
 export function LiveGoldMarketWidget() {
   const [goldPrice, setGoldPrice] = useState<GoldPrice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [countdown, setCountdown] = useState(60);
 
-  const fetchGoldData = async () => {
+  const fetchGoldData = async (isManual = false) => {
+    if (isManual) {
+      setRefreshing(true);
+    }
+
     try {
       const priceResult = await getCurrentGoldPrice();
       if (priceResult.success && priceResult.data) {
         setGoldPrice(priceResult.data);
+        setLastUpdate(new Date());
+        setCountdown(60);
       }
-      setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching gold price:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchGoldData();
-    const interval = setInterval(fetchGoldData, 60000);
-    return () => clearInterval(interval);
+
+    const interval = setInterval(() => {
+      fetchGoldData();
+    }, 60000);
+
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 60));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(countdownInterval);
+    };
   }, []);
 
   if (loading || !goldPrice) {
@@ -60,11 +79,12 @@ export function LiveGoldMarketWidget() {
             </div>
           </div>
           <button
-            onClick={fetchGoldData}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            title="Refresh"
+            onClick={() => fetchGoldData(true)}
+            disabled={refreshing}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            title="Refresh now"
           >
-            <RefreshCw className="w-4 h-4 text-gray-400" />
+            <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
@@ -166,7 +186,12 @@ export function LiveGoldMarketWidget() {
             <Clock className="w-3 h-3" />
             <span>Updated: {lastUpdate.toLocaleTimeString()}</span>
           </div>
-          <span className="text-xs text-gray-500">Auto-refresh: 60s</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Next: {countdown}s</span>
+            {refreshing && (
+              <span className="text-xs text-emerald-400">Updating...</span>
+            )}
+          </div>
         </div>
       </div>
     </Card>

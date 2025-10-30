@@ -36,6 +36,13 @@ export interface VarianceResult {
   threshold: number;
 }
 
+/**
+ * Calculate variance between expected and actual values
+ * @param expected - Expected value
+ * @param actual - Actual value
+ * @param threshold - Threshold percentage (default: 2)
+ * @returns Variance result with difference, percentage, and significance
+ */
 export function calculateVariance(
   expected: number,
   actual: number,

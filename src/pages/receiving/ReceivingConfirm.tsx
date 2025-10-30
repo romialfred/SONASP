@@ -13,6 +13,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { Loading } from '@/components/ui/Loading';
 import { WeightInput } from '@/components/ui/WeightInput';
 import { calculateVariance, formatWeight, convertGramsToOunces } from '@/utils/batchUtils';
+import { getMineToAirportVarianceThreshold } from '@/services/businessRulesService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
@@ -31,9 +32,11 @@ export function ReceivingConfirm() {
   const [reconciliationComments, setReconciliationComments] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [varianceThreshold, setVarianceThreshold] = useState<number>(2);
 
   useEffect(() => {
     loadBatch();
+    loadVarianceThreshold();
   }, [id]);
 
   const loadBatch = async () => {
@@ -54,6 +57,16 @@ export function ReceivingConfirm() {
       alert.error('Error loading batch data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVarianceThreshold = async () => {
+    try {
+      const threshold = await getMineToAirportVarianceThreshold();
+      setVarianceThreshold(threshold);
+    } catch (error) {
+      console.error('Error loading variance threshold:', error);
+      // Keep default value of 2
     }
   };
 
@@ -78,7 +91,7 @@ export function ReceivingConfirm() {
   }
 
   const variance = actualWeight > 0
-    ? calculateVariance(batch.weight_grams, actualWeight)
+    ? calculateVariance(batch.weight_grams, actualWeight, varianceThreshold)
     : null;
 
   const canConfirmWithoutReconciliation = variance

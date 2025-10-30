@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Building2, Plus, Trash2, Star } from 'lucide-react';
+import { COUNTRIES } from '@/constants/countries';
 
 export interface BankAccount {
   id?: string;
@@ -32,12 +33,6 @@ const CURRENCIES = [
   { value: 'GNF', label: 'GNF - Guinean Franc' },
   { value: 'XOF', label: 'XOF - West African CFA Franc' },
   { value: 'XAF', label: 'XAF - Central African CFA Franc' },
-];
-
-const COUNTRIES = [
-  'Switzerland', 'United States', 'United Kingdom', 'France', 'Germany',
-  'Guinea', 'Ivory Coast', 'Mali', 'Senegal', 'Belgium', 'Luxembourg',
-  'United Arab Emirates', 'Singapore', 'Hong Kong'
 ];
 
 export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccountFormProps) {

@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { BankAccountForm, type BankAccount } from '@/components/customers/BankAccountForm';
+import { COUNTRIES } from '@/constants/countries';
 
 interface CustomerFormData {
   name: string;
@@ -23,8 +24,6 @@ interface CustomerFormData {
   status: 'active' | 'inactive' | 'pending';
   banks: BankAccount[];
 }
-
-const countries = ['Switzerland', 'UAE', 'Singapore', 'USA', 'UK', 'Germany', 'France'];
 const paymentTermsOptions = ['Net 15 days', 'Net 30 days', 'Net 45 days', 'Net 60 days', 'Immediate'];
 const statusOptions = [
   { value: 'active', label: 'Active' },
@@ -41,7 +40,7 @@ export function CustomerForm() {
     name: '',
     email: '',
     phone: '',
-    country: 'Switzerland',
+    country: '',
     address: '',
     contactPerson: '',
     taxId: '',
@@ -277,7 +276,8 @@ export function CustomerForm() {
                     value={formData.country}
                     onChange={(e) => handleChange('country', e.target.value)}
                   >
-                    {countries.map((country) => (
+                    <option value="">Select a country</option>
+                    {COUNTRIES.map((country) => (
                       <option key={country} value={country}>
                         {country}
                       </option>

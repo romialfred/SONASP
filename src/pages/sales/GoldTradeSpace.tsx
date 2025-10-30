@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
-import { LiveGoldMarketWidget } from '@/components/sales/LiveGoldMarketWidget';
-import { MarketInfoWidget } from '@/components/sales/MarketInfoWidget';
+import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
 import { PricingCalculator } from '@/components/sales/PricingCalculator';
 import { FinancialComparison } from '@/components/sales/FinancialComparison';
 import {
@@ -181,49 +180,51 @@ export function GoldTradeSpace() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {quantityRecommendation && (
-              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-                <div className="p-5 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg">AI-Powered Quantity Recommendation</h3>
-                      <div className="mt-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Recommended Quantity:</span>
-                          <span className="text-xl font-bold text-purple-900">
-                            {quantityRecommendation.recommendedQuantityOz.toFixed(2)} oz
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Percentage of Stock:</span>
-                          <span className="font-semibold text-purple-800">
-                            {quantityRecommendation.recommendedPercentage}%
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            quantityRecommendation.riskLevel === 'low'
-                              ? 'bg-green-100 text-green-800'
-                              : quantityRecommendation.riskLevel === 'medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {quantityRecommendation.riskLevel.toUpperCase()} RISK
-                          </span>
-                          <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                            {quantityRecommendation.confidenceScore}% Confidence
-                          </span>
-                        </div>
+        {/* Live Gold Market Panel - Fixed Right Side */}
+        <LiveGoldMarketPanel />
+
+        <div className="space-y-6 max-w-6xl">
+          {quantityRecommendation && (
+            <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+              <div className="p-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 text-lg">AI-Powered Quantity Recommendation</h3>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Recommended Quantity:</span>
+                        <span className="text-xl font-bold text-purple-900">
+                          {quantityRecommendation.recommendedQuantityOz.toFixed(2)} oz
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Percentage of Stock:</span>
+                        <span className="font-semibold text-purple-800">
+                          {quantityRecommendation.recommendedPercentage}%
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          quantityRecommendation.riskLevel === 'low'
+                            ? 'bg-green-100 text-green-800'
+                            : quantityRecommendation.riskLevel === 'medium'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {quantityRecommendation.riskLevel.toUpperCase()} RISK
+                        </span>
+                        <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                          {quantityRecommendation.confidenceScore}% Confidence
+                        </span>
+                      </div>
                       </div>
                       <p className="text-sm text-gray-700 mt-3 leading-relaxed">
-                        {quantityRecommendation.reasoning}
+                      {quantityRecommendation.reasoning}
                       </p>
                       <div className="text-xs text-gray-600 mt-2 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        <span><strong>Optimal Timing:</strong> {quantityRecommendation.optimalTiming}</span>
+                      <TrendingUp className="w-4 h-4" />
+                      <span><strong>Optimal Timing:</strong> {quantityRecommendation.optimalTiming}</span>
                       </div>
                     </div>
                   </div>
@@ -270,7 +271,7 @@ export function GoldTradeSpace() {
                     <div className="flex justify-between border-t border-blue-200 pt-2">
                       <span className="text-base font-semibold text-gray-700">Total Value:</span>
                       <span className="text-xl font-bold text-blue-900">
-                        ${selectedMechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ${selectedMechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                   </div>
@@ -278,37 +279,37 @@ export function GoldTradeSpace() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Customer <span className="text-red-500">*</span>
+                      Select Customer <span className="text-red-500">*</span>
                       </label>
                       <Select
-                        value={selectedCustomer}
-                        onChange={(e) => setSelectedCustomer(e.target.value)}
+                      value={selectedCustomer}
+                      onChange={(e) => setSelectedCustomer(e.target.value)}
                       >
-                        <option value="">Choose a customer...</option>
-                        {customers.map((customer) => (
-                          <option key={customer.id} value={customer.id}>
-                            {customer.name} ({customer.country})
-                          </option>
-                        ))}
+                      <option value="">Choose a customer...</option>
+                      {customers.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name} ({customer.country})
+                        </option>
+                      ))}
                       </Select>
                     </div>
 
                     {selectedMechanism.mechanism === 'in_process' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select Refinery <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={selectedRefinery}
-                          onChange={(e) => setSelectedRefinery(e.target.value)}
-                        >
-                          <option value="">Choose a refinery...</option>
-                          {refineries.map((refinery) => (
-                            <option key={refinery.id} value={refinery.id}>
-                              {refinery.refinery_name} - {refinery.refinery_location}
-                            </option>
-                          ))}
-                        </Select>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Refinery <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={selectedRefinery}
+                        onChange={(e) => setSelectedRefinery(e.target.value)}
+                      >
+                        <option value="">Choose a refinery...</option>
+                        {refineries.map((refinery) => (
+                          <option key={refinery.id} value={refinery.id}>
+                            {refinery.refinery_name} - {refinery.refinery_location}
+                          </option>
+                        ))}
+                      </Select>
                       </div>
                     )}
 
@@ -324,30 +325,24 @@ export function GoldTradeSpace() {
                 </div>
               </Card>
             )}
-          </div>
 
-          <div className="space-y-6">
-            <LiveGoldMarketWidget />
-
-            <MarketInfoWidget />
-
-            <Card className="bg-amber-50 border-amber-200">
-              <div className="p-5 space-y-3">
-                <div className="flex items-center gap-2 text-amber-800">
-                  <AlertCircle className="w-5 h-5" />
-                  <h4 className="font-semibold">Trading Information</h4>
-                </div>
-                <div className="text-xs text-amber-900 space-y-2">
-                  <p><strong>Available Stock:</strong> {availableStock.toFixed(2)} oz</p>
-                  <p><strong>Trading Hours:</strong> 7:30 AM - 4:30 PM EST</p>
-                  <p><strong>Order Type:</strong> Good Until Cancelled</p>
-                  <p className="border-t border-amber-200 pt-2 mt-2">
-                    All orders are subject to management approval and market conditions
-                  </p>
-                </div>
+          {/* Trading Information Card */}
+          <Card className="bg-amber-50 border-amber-200">
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2 text-amber-800">
+                <AlertCircle className="w-5 h-5" />
+                <h4 className="font-semibold">Trading Information</h4>
               </div>
-            </Card>
-          </div>
+              <div className="text-xs text-amber-900 space-y-2">
+                <p><strong>Available Stock:</strong> {availableStock.toFixed(2)} oz</p>
+                <p><strong>Trading Hours:</strong> 7:30 AM - 4:30 PM EST</p>
+                <p><strong>Order Type:</strong> Good Until Cancelled</p>
+                <p className="border-t border-amber-200 pt-2 mt-2">
+                  All orders are subject to management approval and market conditions
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </MainLayout>

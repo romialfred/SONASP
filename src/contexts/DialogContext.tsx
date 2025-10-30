@@ -166,11 +166,7 @@ export function DialogProvider({ children }: DialogProviderProps) {
     closeDialog();
   };
 
-  if (!config) {
-    return <>{children}</>;
-  }
-
-  const colors = getDialogColors(config.type);
+  const colors = config ? getDialogColors(config.type) : null;
 
   return (
     <DialogContext.Provider
@@ -186,48 +182,50 @@ export function DialogProvider({ children }: DialogProviderProps) {
     >
       {children}
 
-      <Modal isOpen={isOpen} onClose={handleCancel} title="">
-        <div className="p-6">
-          {/* Icon */}
-          <div className="flex justify-center mb-4">
-            {getDialogIcon(config.type)}
-          </div>
+      {config && (
+        <Modal isOpen={isOpen} onClose={handleCancel} title="">
+          <div className="p-6">
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              {getDialogIcon(config.type)}
+            </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-3">
-            {config.title}
-          </h2>
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-3">
+              {config.title}
+            </h2>
 
-          {/* Message */}
-          <div className={`rounded-lg p-4 border ${colors.bg} ${colors.border} mb-6`}>
-            <p className={`text-center ${colors.text} whitespace-pre-line`}>
-              {config.message}
-            </p>
-          </div>
+            {/* Message */}
+            <div className={`rounded-lg p-4 border ${colors!.bg} ${colors!.border} mb-6`}>
+              <p className={`text-center ${colors!.text} whitespace-pre-line`}>
+                {config.message}
+              </p>
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 justify-center">
-            {config.showCancel && (
+            {/* Actions */}
+            <div className="flex gap-3 justify-center">
+              {config.showCancel && (
+                <Button
+                  variant="ghost"
+                  onClick={handleCancel}
+                  disabled={isProcessing}
+                  className="min-w-[120px]"
+                >
+                  {config.cancelText || 'Cancel'}
+                </Button>
+              )}
               <Button
-                variant="ghost"
-                onClick={handleCancel}
-                disabled={isProcessing}
+                variant={colors!.button as 'primary' | 'danger'}
+                onClick={handleConfirm}
+                loading={isProcessing}
                 className="min-w-[120px]"
               >
-                {config.cancelText || 'Cancel'}
+                {config.confirmText || 'OK'}
               </Button>
-            )}
-            <Button
-              variant={colors.button as 'primary' | 'danger'}
-              onClick={handleConfirm}
-              loading={isProcessing}
-              className="min-w-[120px]"
-            >
-              {config.confirmText || 'OK'}
-            </Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </DialogContext.Provider>
   );
 }

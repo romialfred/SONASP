@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Input from './Input';
 import Select from './Select';
 
@@ -35,9 +35,23 @@ export function WeightInput({
 }: WeightInputProps) {
   const [unit, setUnit] = useState<'g' | 'oz'>(defaultUnit);
   const [displayValue, setDisplayValue] = useState('');
+  const isUserTyping = useRef(false);
+  const lastExternalValue = useRef(value);
 
-  // Convert internal grams to display unit
+  // Only update display when value changes externally (not from user typing)
   useEffect(() => {
+    // Skip if user is actively typing
+    if (isUserTyping.current) {
+      return;
+    }
+
+    // Skip if value hasn't actually changed
+    if (lastExternalValue.current === value) {
+      return;
+    }
+
+    lastExternalValue.current = value;
+
     if (value === 0 || value === null || value === undefined) {
       setDisplayValue('');
       return;
@@ -52,9 +66,10 @@ export function WeightInput({
   }, [value, unit]);
 
   const handleValueChange = (inputValue: string) => {
+    isUserTyping.current = true;
     setDisplayValue(inputValue);
 
-    if (inputValue === '' || inputValue === '0') {
+    if (inputValue === '' || inputValue === '0' || inputValue === '0.') {
       onChange(0);
       return;
     }
@@ -69,9 +84,56 @@ export function WeightInput({
     onChange(grams);
   };
 
+  const handleInputBlur = () => {
+    isUserTyping.current = false;
+
+    // Format the display value on blur
+    if (displayValue && displayValue !== '') {
+      const numValue = parseFloat(displayValue);
+      if (!isNaN(numValue)) {
+        if (unit === 'oz') {
+          setDisplayValue(numValue.toFixed(3));
+        } else {
+          setDisplayValue(numValue.toFixed(2));
+        }
+      }
+    }
+
+    if (onBlur) {
+      onBlur();
+    }
+  };
+
+  const handleInputFocus = () => {
+    isUserTyping.current = true;
+    if (onFocus) {
+      onFocus();
+    }
+  };
+
   const handleUnitChange = (newUnit: 'g' | 'oz') => {
+    const oldUnit = unit;
     setUnit(newUnit);
-    // Value will be recalculated in useEffect
+
+    // Convert the current display value to the new unit
+    if (displayValue && displayValue !== '') {
+      const numValue = parseFloat(displayValue);
+      if (!isNaN(numValue)) {
+        let newDisplayValue: string;
+
+        if (oldUnit === 'g' && newUnit === 'oz') {
+          // Converting from grams to oz
+          newDisplayValue = (numValue / GRAMS_PER_OZ).toFixed(3);
+        } else if (oldUnit === 'oz' && newUnit === 'g') {
+          // Converting from oz to grams
+          newDisplayValue = (numValue * GRAMS_PER_OZ).toFixed(2);
+        } else {
+          newDisplayValue = displayValue;
+        }
+
+        setDisplayValue(newDisplayValue);
+      }
+    }
   };
 
   const getConversionText = () => {
@@ -108,8 +170,8 @@ export function WeightInput({
             placeholder={placeholder || `Enter quantity in ${unit}`}
             value={displayValue}
             onChange={(e) => handleValueChange(e.target.value)}
-            onFocus={onFocus}
-            onBlur={onBlur}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             error={error}
             disabled={disabled}
             className="w-full"

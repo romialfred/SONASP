@@ -27,7 +27,7 @@ export function WeightInput({
   error,
   disabled,
   required,
-  defaultUnit = 'g',
+  defaultUnit = 'oz',
   onFocus,
   onBlur,
   className = '',

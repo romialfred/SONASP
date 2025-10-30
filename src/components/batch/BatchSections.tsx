@@ -204,7 +204,7 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
         <TrendingUp className="w-5 h-5 text-blue-600" />,
         activeBatches,
         'active',
-        'bg-gradient-to-r from-blue-600 to-blue-700'
+        'bg-gradient-to-r from-blue-500/80 to-blue-600/80 backdrop-blur-sm'
       )}
 
       {/* In Pipeline Batches Section */}
@@ -213,7 +213,7 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
         <Clock className="w-5 h-5 text-amber-600" />,
         pipelineBatches,
         'pipeline',
-        'bg-gradient-to-r from-amber-600 to-amber-700'
+        'bg-gradient-to-r from-amber-500/80 to-amber-600/80 backdrop-blur-sm'
       )}
 
       {/* Sold Batches Section */}

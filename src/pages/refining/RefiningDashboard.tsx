@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Flame, CheckCircle, Clock, TrendingUp, Package, AlertCircle, Eye, BarChart3 } from 'lucide-react';
+import { BatchFilters } from '@/components/batch/BatchFilters';
+import { convertGramsToOunces } from '@/utils/batchUtils';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -22,6 +24,12 @@ interface Site {
   site_type: string;
 }
 
+interface MiningCompany {
+  id: string;
+  name: string;
+  country?: string;
+}
+
 interface Batch {
   id: string;
   batch_number: string;
@@ -33,6 +41,8 @@ interface Batch {
   comments?: string;
   created_at: string;
   current_site?: Site;
+  mining_company_id?: string;
+  mining_company?: MiningCompany;
 }
 
 interface RefiningRecord {
@@ -58,6 +68,12 @@ export function RefiningDashboard() {
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [monthlyProcessedData, setMonthlyProcessedData] = useState<any[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [miningCompanyFilter, setMiningCompanyFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('');
 
   useEffect(() => {
     fetchData();
@@ -110,27 +126,42 @@ export function RefiningDashboard() {
   async function fetchData() {
     setLoading(true);
     try {
-      // Fetch batches that are validated for refinery or already at refinery
-      const { data: batchData, error: batchError } = await supabase
-        .from('batches')
-        .select(`
-          *,
-          mining_company:mining_companies(name, country)
-        `)
-        .in('status', [
-          BATCH_STATUSES.VALIDATED_FOR_REFINERY,
-          BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
-          BATCH_STATUSES.RECEIVED_AT_REFINERY,
-          BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-          BATCH_STATUSES.PROCESSING,
-          BATCH_STATUSES.PROCESSED
-        ])
-        .order('created_at', { ascending: false });
+      // Fetch batches and mining companies
+      const [batchResult, companiesResult] = await Promise.all([
+        supabase
+          .from('batches')
+          .select(`
+            *,
+            mining_company:mining_companies(id, name, country)
+          `)
+          .in('status', [
+            BATCH_STATUSES.VALIDATED_FOR_REFINERY,
+            BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+            BATCH_STATUSES.RECEIVED_AT_REFINERY,
+            BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
+            BATCH_STATUSES.PROCESSING,
+            BATCH_STATUSES.PROCESSED
+          ])
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('mining_companies')
+          .select('id, name, country')
+          .eq('status', 'active')
+          .order('name')
+      ]);
 
-      if (batchError) {
-        console.error('Error fetching batches:', batchError);
+      if (batchResult.error) {
+        console.error('Error fetching batches:', batchResult.error);
       } else {
-        setBatches(batchData || []);
+        const enrichedBatches = (batchResult.data || []).map((batch: any) => ({
+          ...batch,
+          weight_ounces: batch.weight_ounces || convertGramsToOunces(batch.weight_grams),
+        }));
+        setBatches(enrichedBatches);
+      }
+
+      if (companiesResult.data) {
+        setMiningCompanies(companiesResult.data);
       }
 
       // Fetch refining records
@@ -161,24 +192,57 @@ export function RefiningDashboard() {
     }
   }
 
-  // Count batches by status
-  const waitingReceiptCount = batches.filter(
+  // Filter batches
+  const filteredBatches = useMemo(() => {
+    return batches.filter((batch) => {
+      const matchesSearch = batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
+      const matchesCompany =
+        miningCompanyFilter === 'all' || batch.mining_company_id === miningCompanyFilter;
+
+      let matchesDate = true;
+      if (yearFilter !== 'all') {
+        const batchDate = new Date(batch.shipping_date || batch.created_at);
+        const batchYear = batchDate.getFullYear().toString();
+        matchesDate = batchYear === yearFilter;
+
+        if (matchesDate && monthFilter) {
+          const batchMonth = String(batchDate.getMonth() + 1).padStart(2, '0');
+          matchesDate = batchMonth === monthFilter;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesCompany && matchesDate;
+    });
+  }, [batches, searchQuery, statusFilter, miningCompanyFilter, yearFilter, monthFilter]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    batches.forEach((batch) => {
+      const date = new Date(batch.shipping_date || batch.created_at);
+      years.add(date.getFullYear().toString());
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [batches]);
+
+  // Count batches by status (using filtered batches)
+  const waitingReceiptCount = filteredBatches.filter(
     b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT
   ).length;
 
-  const receivedCount = batches.filter(
+  const receivedCount = filteredBatches.filter(
     b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY
   ).length;
 
-  const validatedCount = batches.filter(
+  const validatedCount = filteredBatches.filter(
     b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING
   ).length;
 
-  const processingCount = batches.filter(
+  const processingCount = filteredBatches.filter(
     b => b.status === BATCH_STATUSES.PROCESSING
   ).length;
 
-  const processedCount = batches.filter(
+  const processedCount = filteredBatches.filter(
     b => b.status === BATCH_STATUSES.PROCESSED
   ).length;
 
@@ -325,6 +389,27 @@ export function RefiningDashboard() {
           </p>
         </div>
 
+        {/* Filters */}
+        <BatchFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          miningCompanyFilter={miningCompanyFilter}
+          onMiningCompanyChange={setMiningCompanyFilter}
+          yearFilter={yearFilter}
+          onYearChange={(year) => {
+            setYearFilter(year);
+            if (year === 'all') {
+              setMonthFilter('');
+            }
+          }}
+          monthFilter={monthFilter}
+          onMonthChange={setMonthFilter}
+          miningCompanies={miningCompanies}
+          availableYears={availableYears}
+        />
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loading size="lg" />
@@ -337,7 +422,7 @@ export function RefiningDashboard() {
               ))}
             </div>
 
-            {batches.length === 0 ? (
+            {filteredBatches.length === 0 ? (
               <div className="space-y-6">
                 <Card>
                   <CardContent>
@@ -377,6 +462,127 @@ export function RefiningDashboard() {
               </div>
             ) : (
               <>
+                {/* BATCHES ACTIFS HEADER */}
+                {(processingCount > 0 || validatedCount > 0) && (
+                  <div className="mt-8 mb-4">
+                    <div className="bg-gradient-to-r from-blue-500/80 to-blue-600/80 backdrop-blur-sm rounded-lg px-6 py-4">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <TrendingUp className="w-6 h-6" />
+                        Batches Actifs
+                      </h2>
+                      <p className="text-white/90 text-sm mt-1">
+                        Batches en cours de traitement dans la raffinerie
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Currently Processing */}
+                {processingCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-red-500" />
+                        Currently Processing ({processingCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {filteredBatches
+                          .filter(b => b.status === BATCH_STATUSES.PROCESSING)
+                          .map((batch) => {
+                            const actions = [
+                              {
+                                id: 'complete_processing',
+                                label: 'Process Completed',
+                                icon: CheckCircle,
+                                variant: 'success' as const,
+                                handler: () => handleCompleteProcessing(batch.id),
+                                requiresConfirmation: true,
+                                confirmationMessage: 'Mark this batch as processed and move to inventory?',
+                                visible: true,
+                                disabled: actionLoading === batch.id,
+                              },
+                              {
+                                id: 'view_details',
+                                label: 'View Details',
+                                icon: Eye,
+                                variant: 'ghost' as const,
+                                handler: () => handleViewDetails(batch.id),
+                                requiresConfirmation: false,
+                                visible: true,
+                              }
+                            ];
+                            const statusInfo = { message: 'Batch is being processed - click Process Completed when done', type: 'warning' as const };
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Ready for Processing */}
+                {validatedCount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        Ready for Processing ({validatedCount})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {filteredBatches
+                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING)
+                          .map((batch) => {
+                            const actions = getAvailableBatchActions(
+                              batch,
+                              { role: getUserRole() },
+                              'refining',
+                              {
+                                onViewDetails: handleViewDetails,
+                                onStartProcessing: handleStartProcessing,
+                              }
+                            );
+                            const statusInfo = getBatchStatusInfo(batch.status, 'refining');
+                            return (
+                              <BatchCard
+                                key={batch.id}
+                                batch={batch}
+                                actions={actions}
+                                statusInfo={statusInfo}
+                                onActionClick={handleActionClick}
+                              />
+                            );
+                          })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* BATCHES EN PIPELINE HEADER */}
+                {(waitingReceiptCount > 0 || receivedCount > 0) && (
+                  <div className="mt-8 mb-4">
+                    <div className="bg-gradient-to-r from-amber-500/80 to-amber-600/80 backdrop-blur-sm rounded-lg px-6 py-4">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Clock className="w-6 h-6" />
+                        Batches en Pipeline
+                      </h2>
+                      <p className="text-white/90 text-sm mt-1">
+                        Batches en attente de réception ou validation
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Awaiting Receipt at Refinery */}
                 {waitingReceiptCount > 0 && (
                   <Card>
@@ -388,7 +594,7 @@ export function RefiningDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {batches
+                        {filteredBatches
                           .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
@@ -437,7 +643,7 @@ export function RefiningDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {batches
+                        {filteredBatches
                           .filter(b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
@@ -451,97 +657,6 @@ export function RefiningDashboard() {
                               }
                             );
                             const statusInfo = getBatchStatusInfo(batch.status, 'refining');
-                            return (
-                              <BatchCard
-                                key={batch.id}
-                                batch={batch}
-                                actions={actions}
-                                statusInfo={statusInfo}
-                                onActionClick={handleActionClick}
-                              />
-                            );
-                          })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Ready for Processing */}
-                {validatedCount > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        Ready for Processing ({validatedCount})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {batches
-                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING)
-                          .map((batch) => {
-                            const actions = getAvailableBatchActions(
-                              batch,
-                              { role: getUserRole() },
-                              'refining',
-                              {
-                                onViewDetails: handleViewDetails,
-                                onStartProcessing: handleStartProcessing,
-                              }
-                            );
-                            const statusInfo = getBatchStatusInfo(batch.status, 'refining');
-                            return (
-                              <BatchCard
-                                key={batch.id}
-                                batch={batch}
-                                actions={actions}
-                                statusInfo={statusInfo}
-                                onActionClick={handleActionClick}
-                              />
-                            );
-                          })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Currently Processing */}
-                {processingCount > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Flame className="w-5 h-5 text-red-500" />
-                        Currently Processing ({processingCount})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {batches
-                          .filter(b => b.status === BATCH_STATUSES.PROCESSING)
-                          .map((batch) => {
-                            const actions = [
-                              {
-                                id: 'complete_processing',
-                                label: 'Process Completed',
-                                icon: CheckCircle,
-                                variant: 'success' as const,
-                                handler: () => handleCompleteProcessing(batch.id),
-                                requiresConfirmation: true,
-                                confirmationMessage: 'Mark this batch as processed and move to inventory?',
-                                visible: true,
-                                disabled: actionLoading === batch.id,
-                              },
-                              {
-                                id: 'view_details',
-                                label: 'View Details',
-                                icon: Eye,
-                                variant: 'ghost' as const,
-                                handler: () => handleViewDetails(batch.id),
-                                requiresConfirmation: false,
-                                visible: true,
-                              }
-                            ];
-                            const statusInfo = { message: 'Batch is being processed - click Process Completed when done', type: 'warning' as const };
                             return (
                               <BatchCard
                                 key={batch.id}

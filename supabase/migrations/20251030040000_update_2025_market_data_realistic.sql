@@ -188,7 +188,7 @@ DO $$
 DECLARE
   ecb_source_id uuid;
 BEGIN
-  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE source_name = 'ECB' LIMIT 1;
+  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE code = 'ECB' LIMIT 1;
 
   IF ecb_source_id IS NOT NULL THEN
     -- January 2025: Peak rates around 639 XOF per USD
@@ -266,7 +266,7 @@ DO $$
 DECLARE
   ecb_source_id uuid;
 BEGIN
-  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE source_name = 'ECB' LIMIT 1;
+  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE code = 'ECB' LIMIT 1;
 
   IF ecb_source_id IS NOT NULL THEN
     -- January 2025: Starting around 8,720
@@ -375,7 +375,7 @@ DO $$
 DECLARE
   ecb_source_id uuid;
 BEGIN
-  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE source_name = 'ECB' LIMIT 1;
+  SELECT id INTO ecb_source_id FROM fx_rate_sources WHERE code = 'ECB' LIMIT 1;
 
   IF ecb_source_id IS NOT NULL THEN
     INSERT INTO fx_rates_monthly_aggregated (year, month, currency_pair, source_id, avg_rate, min_rate, max_rate, opening_rate, closing_rate, data_points)

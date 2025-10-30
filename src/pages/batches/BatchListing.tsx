@@ -10,6 +10,8 @@ import { BatchStatusMetrics } from '@/components/batch/BatchStatusMetrics';
 import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
 import { convertGramsToOunces } from '@/utils/batchUtils';
+import { approveBatchForTransport } from '@/services/batchApprovalService';
+import { useAlert } from '@/hooks/useAlert';
 
 interface MiningCompany {
   id: string;
@@ -33,6 +35,7 @@ interface Batch {
 
 export function BatchListing() {
   const navigate = useNavigate();
+  const alert = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [miningCompanyFilter, setMiningCompanyFilter] = useState<string>('all');
@@ -41,6 +44,7 @@ export function BatchListing() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validatingBatchId, setValidatingBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -127,6 +131,30 @@ export function BatchListing() {
     navigate(`/batches/${batchId}`);
   };
 
+  const handleValidateTransport = async (batchId: string) => {
+    setValidatingBatchId(batchId);
+    try {
+      const result = await approveBatchForTransport(batchId, 'Validated for transportation');
+
+      if (result.success) {
+        alert.success('Batch validé pour transport avec succès!');
+        await fetchData();
+      } else {
+        const errorMessage = result.error instanceof Error
+          ? result.error.message
+          : typeof result.error === 'object' && result.error !== null
+            ? (result.error as any).message || JSON.stringify(result.error)
+            : String(result.error || 'Unknown error');
+        alert.error(`Échec de la validation: ${errorMessage}`);
+      }
+    } catch (error: any) {
+      console.error('Error validating batch:', error);
+      alert.error(`Erreur: ${error?.message || String(error)}`);
+    } finally {
+      setValidatingBatchId(null);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -188,7 +216,12 @@ export function BatchListing() {
 
             {/* Batch Sections */}
             {filteredBatches.length > 0 ? (
-              <BatchSections batches={filteredBatches} onBatchClick={handleBatchClick} />
+              <BatchSections
+                batches={filteredBatches}
+                onBatchClick={handleBatchClick}
+                onValidateTransport={handleValidateTransport}
+                validatingBatchId={validatingBatchId}
+              />
             ) : (
               <Card>
                 <div className="text-center py-12">

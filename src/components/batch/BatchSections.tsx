@@ -1,8 +1,9 @@
 import { Package, Clock, CheckCircle, TrendingUp, Scale, Calendar, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { getBatchStatusLabel, getBatchStatusVariant } from '@/constants/batchStatuses';
+import { getBatchStatusLabel, getBatchStatusVariant, BATCH_STATUSES } from '@/constants/batchStatuses';
 import { formatWeight } from '@/utils/batchUtils';
+import Button from '@/components/ui/Button';
 
 interface Batch {
   id: string;
@@ -23,6 +24,8 @@ interface Batch {
 interface BatchSectionsProps {
   batches: Batch[];
   onBatchClick?: (batchId: string) => void;
+  onValidateTransport?: (batchId: string) => void;
+  validatingBatchId?: string | null;
 }
 
 const ACTIVE_STATUSES = [
@@ -43,7 +46,7 @@ const PIPELINE_STATUSES = [
   'processed',
 ];
 
-export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
+export function BatchSections({ batches, onBatchClick, onValidateTransport, validatingBatchId }: BatchSectionsProps) {
   const [expandedSections, setExpandedSections] = useState({
     active: true,
     pipeline: true,
@@ -67,13 +70,15 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
     return { grams, ounces };
   };
 
-  const renderBatchRow = (batch: Batch) => (
+  const renderBatchRow = (batch: Batch, showActions: boolean = false) => (
     <tr
       key={batch.id}
-      onClick={() => onBatchClick?.(batch.id)}
-      className="hover:bg-gray-50 cursor-pointer transition-colors"
+      className="hover:bg-gray-50 transition-colors"
     >
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
             <Package className="w-4 h-4 text-blue-700" />
@@ -81,22 +86,34 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
           <span className="text-sm font-semibold text-gray-900">{batch.batch_number}</span>
         </div>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         <StatusBadge
           label={getBatchStatusLabel(batch.status)}
           variant={getBatchStatusVariant(batch.status)}
         />
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         <div className="flex flex-col">
           <span className="text-sm font-medium text-gray-900">{formatWeight(batch.weight_grams)}</span>
           <span className="text-xs text-gray-500">{batch.weight_ounces?.toFixed(2)} oz</span>
         </div>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         <span className="text-sm text-gray-600 capitalize">{batch.metal_type || 'Gold'}</span>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         <div className="flex items-center gap-1.5 text-sm text-gray-600">
           <Calendar className="w-3.5 h-3.5" />
           {batch.shipping_date
@@ -104,7 +121,10 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
             : new Date(batch.created_at).toLocaleDateString('fr-FR')}
         </div>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
         {batch.mining_company ? (
           <div className="flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-gray-500" />
@@ -114,6 +134,25 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
           <span className="text-sm text-gray-400">N/A</span>
         )}
       </td>
+      {showActions && (
+        <td className="px-4 py-3 whitespace-nowrap text-right">
+          {batch.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && onValidateTransport && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onValidateTransport(batch.id);
+              }}
+              disabled={validatingBatchId === batch.id}
+              className="gap-1"
+            >
+              <CheckCircle className="h-3 w-3" />
+              Validate for Transport
+            </Button>
+          )}
+        </td>
+      )}
     </tr>
   );
 
@@ -122,7 +161,9 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
     icon: React.ReactNode,
     batchList: Batch[],
     sectionKey: 'active' | 'pipeline' | 'sold',
-    colorClass: string
+    colorClass: string,
+    textColorClass: string = 'text-white',
+    showActions: boolean = false
   ) => {
     const isExpanded = expandedSections[sectionKey];
     const totals = getTotalWeight(batchList);
@@ -132,23 +173,23 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
         {/* Section Header */}
         <button
           onClick={() => toggleSection(sectionKey)}
-          className={`w-full px-6 py-4 flex items-center justify-between ${colorClass} hover:opacity-90 transition-opacity`}
+          className={`w-full px-6 py-2.5 flex items-center justify-between ${colorClass} hover:opacity-90 transition-opacity`}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-white rounded-lg">{icon}</div>
+            <div className="p-1.5 bg-white/90 rounded-lg">{icon}</div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-white">{title}</h3>
-              <p className="text-sm text-white text-opacity-90">
+              <h3 className={`text-base font-bold ${textColorClass}`}>{title}</h3>
+              <p className={`text-xs ${textColorClass} opacity-90`}>
                 {batchList.length} batch{batchList.length !== 1 ? 'es' : ''} • {formatWeight(totals.grams)} • {totals.ounces.toFixed(2)} oz
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-white">{batchList.length}</span>
+            <span className={`text-xl font-bold ${textColorClass}`}>{batchList.length}</span>
             {isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-white" />
+              <ChevronUp className={`w-5 h-5 ${textColorClass}`} />
             ) : (
-              <ChevronDown className="w-5 h-5 text-white" />
+              <ChevronDown className={`w-5 h-5 ${textColorClass}`} />
             )}
           </div>
         </button>
@@ -178,10 +219,15 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Société Minière
                     </th>
+                    {showActions && (
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {batchList.map(renderBatchRow)}
+                  {batchList.map((batch) => renderBatchRow(batch, showActions))}
                 </tbody>
               </table>
             ) : (
@@ -200,19 +246,23 @@ export function BatchSections({ batches, onBatchClick }: BatchSectionsProps) {
       {/* Active Batches Section */}
       {renderSection(
         'Batches Actifs',
-        <TrendingUp className="w-5 h-5 text-blue-600" />,
+        <TrendingUp className="w-4 h-4 text-blue-600" />,
         activeBatches,
         'active',
-        'bg-gradient-to-r from-blue-500/80 to-blue-600/80 backdrop-blur-sm'
+        'bg-gradient-to-r from-blue-500/80 to-blue-600/80 backdrop-blur-sm',
+        'text-white',
+        true
       )}
 
       {/* In Pipeline Batches Section */}
       {renderSection(
         'Batches en Pipeline',
-        <Clock className="w-5 h-5 text-amber-600" />,
+        <Clock className="w-4 h-4 text-gray-700" />,
         pipelineBatches,
         'pipeline',
-        'bg-gradient-to-r from-amber-500/80 to-amber-600/80 backdrop-blur-sm'
+        'bg-gradient-to-r from-amber-500/80 to-amber-600/80 backdrop-blur-sm',
+        'text-gray-900',
+        false
       )}
 
       {/* Sold Batches Section */}

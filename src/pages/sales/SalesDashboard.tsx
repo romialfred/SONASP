@@ -96,26 +96,58 @@ export function SalesDashboard() {
 
   const loadMetrics = useCallback(async () => {
     try {
-      // Load inventory
-      const { data: inventoryData } = await supabase
-        .from('gold_inventory')
-        .select('available_for_sale_oz')
-        .eq('is_active', true);
+      console.log('[SalesDashboard] Loading metrics...');
 
-      const totalInventory = inventoryData?.reduce((sum, item) => sum + (item.available_for_sale_oz || 0), 0) || 0;
-
-      // Load sales metrics
-      const { data: salesData } = await supabase
+      // Load sales metrics first (this is critical)
+      const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select('status, final_proceeds, created_at');
+
+      if (salesError) {
+        console.error('[SalesDashboard] Error loading sales:', salesError);
+        throw salesError;
+      }
 
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const pending = salesData?.filter(s => s.status === 'pending')?.length || 0;
-      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && s.status === 'completed')?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+      const pending = salesData?.filter(s => s.status === 'approved' || s.status === 'customer_pending')?.length || 0;
+      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === 'completed' || s.status === 'payment_received'))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
       const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === 'completed' || s.status === 'payment_received'))?.length || 0;
-      const pendingPayment = salesData?.filter(s => s.status === 'customer_approved')?.length || 0;
+      const pendingPayment = salesData?.filter(s => s.status === 'customer_approved' || s.status === 'waiting_for_payment')?.length || 0;
+
+      // Try to load inventory (optional - won't break if table doesn't exist)
+      let totalInventory = 0;
+      try {
+        const { data: inventoryData, error: inventoryError } = await supabase
+          .from('gold_inventory')
+          .select('available_for_sale_oz')
+          .eq('is_active', true);
+
+        if (inventoryError) {
+          console.warn('[SalesDashboard] gold_inventory table not available or column missing:', inventoryError.message);
+          // Fallback: calculate from batches
+          const { data: batchesData } = await supabase
+            .from('batches')
+            .select('final_weight_oz')
+            .eq('status', 'available_for_sale');
+
+          totalInventory = batchesData?.reduce((sum, b) => sum + (b.final_weight_oz || 0), 0) || 0;
+        } else {
+          totalInventory = inventoryData?.reduce((sum, item) => sum + (item.available_for_sale_oz || 0), 0) || 0;
+        }
+      } catch (invError) {
+        console.warn('[SalesDashboard] Inventory check failed, using 0:', invError);
+        totalInventory = 0;
+      }
+
+      console.log('[SalesDashboard] Metrics loaded:', {
+        totalInventory,
+        pending,
+        monthlyRevenue,
+        completedThisMonth,
+        pendingPayment
+      });
 
       setMetrics({
         availableInventory: totalInventory,
@@ -124,8 +156,9 @@ export function SalesDashboard() {
         completedSales: completedThisMonth,
         pendingPayment,
       });
-    } catch (error) {
-      console.error('Error loading metrics:', error);
+    } catch (error: any) {
+      console.error('[SalesDashboard] Error loading metrics:', error);
+      setPageError('Failed to load sales metrics: ' + error.message);
     }
   }, []);
 

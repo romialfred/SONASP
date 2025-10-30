@@ -26,20 +26,19 @@ interface BatchSectionsProps {
 }
 
 const ACTIVE_STATUSES = [
-  'processing',
-  'validated_for_processing',
-  'received_at_refinery',
-  'waiting_refinery_receipt',
+  'pending_factory_approval',
 ];
 
 const PIPELINE_STATUSES = [
-  'draft',
-  'pending',
   'approved_for_transport',
   'waiting_airport_receipt',
   'received_at_airport',
   'validated_at_airport',
   'validated_for_refinery',
+  'waiting_refinery_receipt',
+  'received_at_refinery',
+  'validated_for_processing',
+  'processing',
   'in_inventory',
   'processed',
 ];

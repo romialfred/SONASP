@@ -6,7 +6,7 @@ import { Loading } from '@/components/ui/Loading';
 import { Download, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { BatchFilters } from '@/components/batch/BatchFilters';
-import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
+import { BatchStatusMetrics } from '@/components/batch/BatchStatusMetrics';
 import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
 import { convertGramsToOunces } from '@/utils/batchUtils';
@@ -61,7 +61,6 @@ export function BatchListing() {
         supabase
           .from('mining_companies')
           .select('id, name, country')
-          .eq('status', 'active')
           .order('name'),
       ]);
 
@@ -75,7 +74,10 @@ export function BatchListing() {
       }
 
       if (companiesResult.data) {
+        console.log('Mining companies loaded:', companiesResult.data);
         setMiningCompanies(companiesResult.data);
+      } else if (companiesResult.error) {
+        console.error('Error loading mining companies:', companiesResult.error);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -107,30 +109,6 @@ export function BatchListing() {
     });
   }, [batches, searchQuery, statusFilter, miningCompanyFilter, yearFilter, monthFilter]);
 
-  const statusMetrics = useMemo(() => {
-    const metricsMap = new Map<string, { count: number; totalWeightGrams: number; totalWeightOunces: number }>();
-
-    filteredBatches.forEach((batch) => {
-      const existing = metricsMap.get(batch.status) || {
-        count: 0,
-        totalWeightGrams: 0,
-        totalWeightOunces: 0,
-      };
-
-      metricsMap.set(batch.status, {
-        count: existing.count + 1,
-        totalWeightGrams: existing.totalWeightGrams + batch.weight_grams,
-        totalWeightOunces: existing.totalWeightOunces + batch.weight_ounces,
-      });
-    });
-
-    return Array.from(metricsMap.entries())
-      .map(([status, data]) => ({
-        status,
-        ...data,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [filteredBatches]);
 
   const availableYears = useMemo(() => {
     const years = new Set<string>();
@@ -205,8 +183,8 @@ export function BatchListing() {
           </Card>
         ) : (
           <>
-            {/* Metrics Tiles */}
-            {statusMetrics.length > 0 && <BatchMetricsTiles metrics={statusMetrics} />}
+            {/* Status Metrics */}
+            <BatchStatusMetrics batches={filteredBatches} />
 
             {/* Batch Sections */}
             {filteredBatches.length > 0 ? (

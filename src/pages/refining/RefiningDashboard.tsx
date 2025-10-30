@@ -146,7 +146,6 @@ export function RefiningDashboard() {
         supabase
           .from('mining_companies')
           .select('id, name, country')
-          .eq('status', 'active')
           .order('name')
       ]);
 

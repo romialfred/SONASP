@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
+import { WeightInput, gramsToOunces, ouncesToGrams } from '@/components/ui/WeightInput';
 import { calculateSaleProceeds, formatCurrency, formatWeight } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,12 +37,12 @@ export function SaleCreate() {
 
   // Extract data from navigation state (from simulation)
   const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
-  const initialQuantity = (location.state as any)?.quantityOz || '';
+  const initialQuantity = (location.state as any)?.quantityOz || 0;
   const availableFromState = (location.state as any)?.availableStockOz;
 
   const [formData, setFormData] = useState({
     customerId: '',
-    quantityOz: initialQuantity.toString(),
+    quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '2450.00',
     freightCost: '',
     otherCosts: '',
@@ -142,8 +143,8 @@ export function SaleCreate() {
       newErrors.customerId = 'Please select a customer';
     }
 
-    const quantity = parseFloat(formData.quantityOz);
-    if (!formData.quantityOz || isNaN(quantity) || quantity <= 0) {
+    const quantity = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0');
+    if (!formData.quantityOz || quantity === 0 || isNaN(quantity) || quantity <= 0) {
       newErrors.quantityOz = 'Please enter a valid quantity';
     } else if (quantity > availableInventoryOz) {
       newErrors.quantityOz = `Quantity exceeds available inventory (${availableInventoryOz.toFixed(3)} oz)`;
@@ -170,7 +171,7 @@ export function SaleCreate() {
     setSubmitting(true);
     try {
       const calculations = calculateSaleProceeds(
-        parseFloat(formData.quantityOz),
+        typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
         parseFloat(formData.londonAMRate),
         parseFloat(formData.freightCost) || 0,
         parseFloat(formData.otherCosts) || 0
@@ -200,7 +201,7 @@ export function SaleCreate() {
             sale_number: saleNumber,
             sale_date: new Date().toISOString().split('T')[0],
             customer_id: formData.customerId,
-            quantity_oz: parseFloat(formData.quantityOz),
+            quantity_oz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
             london_am_rate: parseFloat(formData.londonAMRate),
             freight_cost: parseFloat(formData.freightCost) || 0,
             other_costs: parseFloat(formData.otherCosts) || 0,
@@ -247,7 +248,7 @@ export function SaleCreate() {
 
   const calculations = formData.quantityOz && formData.londonAMRate
     ? calculateSaleProceeds(
-        parseFloat(formData.quantityOz) || 0,
+        (typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) || 0,
         parseFloat(formData.londonAMRate) || 0,
         parseFloat(formData.freightCost) || 0,
         parseFloat(formData.otherCosts) || 0
@@ -411,21 +412,22 @@ export function SaleCreate() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
-                    label="Quantity (Troy Ounces)"
+                    label="Quantity to Sell"
                     required
                     error={errors.quantityOz}
-                    hint={`Max: ${availableInventoryOz.toFixed(3)} oz`}
                   >
-                    <Input
-                      type="number"
-                      step="0.001"
-                      max={availableInventoryOz}
-                      value={formData.quantityOz}
-                      onChange={(e) => handleInputChange('quantityOz', e.target.value)}
+                    <WeightInput
+                      value={ouncesToGrams(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))}
+                      onChange={(grams) => handleInputChange('quantityOz', gramsToOunces(grams))}
+                      placeholder="Enter quantity"
                       error={!!errors.quantityOz}
-                      placeholder="0.000"
+                      defaultUnit="oz"
+                      showConversion={true}
                       onFocus={() => setActiveField('quantity')}
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Max available: {availableInventoryOz.toFixed(3)} oz ({(availableInventoryOz * 31.1034768).toFixed(2)} g)
+                    </p>
                   </FormField>
 
                   <FormField

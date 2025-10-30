@@ -11,6 +11,7 @@ import { FormField } from '@/components/ui/FormField';
 import { AlertBox } from '@/components/dashboard/AlertBox';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Loading } from '@/components/ui/Loading';
+import { WeightInput } from '@/components/ui/WeightInput';
 import { calculateVariance, formatWeight, convertGramsToOunces } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +27,7 @@ export function ReceivingConfirm() {
 
   const [batch, setBatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [actualWeight, setActualWeight] = useState('');
+  const [actualWeight, setActualWeight] = useState<number>(0);
   const [reconciliationComments, setReconciliationComments] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,8 +77,8 @@ export function ReceivingConfirm() {
     );
   }
 
-  const variance = actualWeight
-    ? calculateVariance(batch.weight_grams, parseFloat(actualWeight))
+  const variance = actualWeight > 0
+    ? calculateVariance(batch.weight_grams, actualWeight)
     : null;
 
   const canConfirmWithoutReconciliation = variance
@@ -89,7 +90,7 @@ export function ReceivingConfirm() {
   };
 
   const handleConfirm = async () => {
-    if (!actualWeight) {
+    if (!actualWeight || actualWeight === 0) {
       alert.error('Please enter the actual weight');
       return;
     }
@@ -102,7 +103,7 @@ export function ReceivingConfirm() {
     setIsSubmitting(true);
 
     try {
-      const actualWeightGrams = parseFloat(actualWeight);
+      const actualWeightGrams = actualWeight;
       const actualWeightOunces = convertGramsToOunces(actualWeightGrams);
 
       // Determine new status based on current status
@@ -281,16 +282,15 @@ export function ReceivingConfirm() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormField
-                  label="Actual Received Weight (grams)"
+                  label="Actual Received Weight"
                   required
-                  hint="Enter the actual weight received after verification"
                 >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                  <WeightInput
                     value={actualWeight}
-                    onChange={(e) => setActualWeight(e.target.value)}
+                    onChange={(grams) => setActualWeight(grams)}
+                    placeholder="Enter actual weight"
+                    defaultUnit="g"
+                    showConversion={true}
                   />
                 </FormField>
 
@@ -420,17 +420,17 @@ export function ReceivingConfirm() {
                       ({convertGramsToOunces(batch.weight_grams).toFixed(3)} oz)
                     </div>
                   </div>
-                  {actualWeight && (
+                  {actualWeight > 0 && (
                     <>
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-600">Actual:</span>
                           <span className="font-semibold">
-                            {formatWeight(parseFloat(actualWeight))}
+                            {formatWeight(actualWeight)}
                           </span>
                         </div>
                         <div className="flex justify-end text-xs text-gray-500">
-                          ({convertGramsToOunces(parseFloat(actualWeight)).toFixed(3)} oz)
+                          ({convertGramsToOunces(actualWeight).toFixed(3)} oz)
                         </div>
                       </div>
                       {variance && (
@@ -472,7 +472,7 @@ export function ReceivingConfirm() {
                     variant="primary"
                     onClick={handleConfirm}
                     disabled={
-                      !actualWeight ||
+                      !actualWeight || actualWeight === 0 ||
                       (variance?.isSignificant && !reconciliationComments)
                     }
                     loading={isSubmitting}

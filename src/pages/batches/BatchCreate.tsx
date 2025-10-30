@@ -13,6 +13,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel';
+import { WeightInput } from '@/components/ui/WeightInput';
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
 import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
@@ -482,29 +483,23 @@ export function BatchCreate() {
                   </Select>
                 </FormField>
 
-                {/* Row 3: Weight and Site */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Row 3: Weight */}
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
-                    label="Weight (grams)"
+                    label="Weight"
                     required
                     error={errors.weight_grams}
-                    hint="Enter weight in grams. Conversion to ounces is automatic."
                   >
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.weight_grams}
-                      onChange={(e) => handleInputChange('weight_grams', e.target.value)}
+                    <WeightInput
+                      value={parseFloat(formData.weight_grams) || 0}
+                      onChange={(grams) => handleInputChange('weight_grams', grams.toString())}
+                      placeholder="Enter weight"
+                      error={!!errors.weight_grams}
                       onFocus={() => setFocusedField('weight_grams')}
                       onBlur={() => setFocusedField('')}
-                      error={!!errors.weight_grams}
+                      defaultUnit="g"
+                      showConversion={true}
                     />
-                    {formData.weight_grams && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        ≈ <span className="font-semibold">{weightInOunces.toFixed(2)} oz</span>
-                      </p>
-                    )}
                   </FormField>
 
                 </div>

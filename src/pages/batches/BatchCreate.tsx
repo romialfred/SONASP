@@ -654,45 +654,48 @@ export function BatchCreate() {
           </div>
 
           <div className="space-y-6">
+            {/* Actions Card - Sticky at top */}
+            <div className="sticky top-4 z-10">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    variant="primary"
+                    onClick={handleSubmit}
+                    className="w-full gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    Submit Batch
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveDraft}
+                    className="w-full gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save as Draft
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate('/batches')}
+                    className="w-full"
+                  >
+                    Cancel
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Field Guide Panel */}
             <FieldGuidePanel
               title="Batch Creation Guide"
               guides={fieldGuides}
               currentField={focusedField}
             />
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  variant="primary"
-                  onClick={handleSubmit}
-                  className="w-full gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  Submit Batch
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                  className="w-full gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save as Draft
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/batches')}
-                  className="w-full"
-                >
-                  Cancel
-                </Button>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardHeader>

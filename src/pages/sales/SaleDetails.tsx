@@ -63,7 +63,75 @@ interface SaleDetailsView {
   freightCost: number;
   otherCosts: number;
   calculations: SaleCalculations;
+  mechanismType?: string | null;
 }
+
+const getPaymentTerms = (mechanismType: string | null | undefined) => {
+  if (!mechanismType) {
+    return {
+      title: 'Standard Payment Terms',
+      description: 'Payment within 2 business days upon customer approval',
+      details: [
+        'Customer approval via email link',
+        'Payment expected within 2 business days',
+        'Wire transfer to designated account',
+        'Final settlement upon payment confirmation'
+      ]
+    };
+  }
+
+  switch (mechanismType.toLowerCase()) {
+    case 'spot':
+      return {
+        title: 'Spot Basis Payment',
+        description: 'Immediate payment upon customer approval',
+        details: [
+          'Customer approval = Payment commitment',
+          'Payment due within 2 business days',
+          'Spot price locked at approval time',
+          'Wire transfer required',
+          'Settlement upon payment receipt'
+        ]
+      };
+    case 'forward_7':
+    case 'forward_7_days':
+      return {
+        title: 'Forward 7 Days Payment',
+        description: 'Payment due 7 days after customer approval',
+        details: [
+          'Customer approval locks the terms',
+          'Payment due date: 7 business days',
+          'Price fixed at contract date',
+          'Wire transfer to designated account',
+          'Grace period: 1 additional business day'
+        ]
+      };
+    case 'forward_14':
+    case 'forward_14_days':
+      return {
+        title: 'Forward 14 Days Payment',
+        description: 'Payment due 14 days after customer approval',
+        details: [
+          'Customer approval locks the terms',
+          'Payment due date: 14 business days',
+          'Price fixed at contract date',
+          'Wire transfer to designated account',
+          'Grace period: 2 additional business days'
+        ]
+      };
+    default:
+      return {
+        title: 'Custom Payment Terms',
+        description: `Payment terms based on ${mechanismType} mechanism`,
+        details: [
+          'Customer approval required',
+          'Payment terms as per agreement',
+          'Wire transfer to designated account',
+          'Settlement upon payment confirmation'
+        ]
+      };
+  }
+};
 
 export function SaleDetails() {
   const { id } = useParams();
@@ -167,6 +235,7 @@ export function SaleDetails() {
           royalties: record.royalty_amount,
           finalAmount: record.final_proceeds,
         },
+        mechanismType: record.mechanism_type ?? null,
       });
     } catch (error) {
       console.error('Error fetching sale details:', error);
@@ -506,6 +575,43 @@ export function SaleDetails() {
           </div>
 
           <div className="space-y-6">
+            {sale.mechanismType && (
+              <Card className="border-2 border-emerald-200">
+                <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50">
+                  <CardTitle className="flex items-center gap-2 text-emerald-900">
+                    <DollarSign className="h-5 w-5" />
+                    Payment Terms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {(() => {
+                    const terms = getPaymentTerms(sale.mechanismType);
+                    return (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-bold text-gray-900 mb-1">{terms.title}</h4>
+                          <p className="text-sm text-gray-600">{terms.description}</p>
+                        </div>
+                        <div className="space-y-2">
+                          {terms.details.map((detail, index) => (
+                            <div key={index} className="flex items-start gap-2 text-sm">
+                              <CheckCircle className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                              <span className="text-gray-700">{detail}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-900">
+                            <strong>Note:</strong> Upon customer approval, payment is considered committed according to the {sale.mechanismType} mechanism terms.
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border-2 border-gray-200 sticky top-6">
               <CardHeader className="bg-gray-50">
                 <CardTitle className="text-base">Management Actions</CardTitle>

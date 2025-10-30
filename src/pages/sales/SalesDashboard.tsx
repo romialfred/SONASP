@@ -364,15 +364,22 @@ export function SalesDashboard() {
             </h1>
             <p className="text-gray-600 mt-1">Sales Management Dashboard</p>
           </div>
+          <div className="relative group">
             <Button
               onClick={() => {
-                void navigate('/sales/new');
+                void navigate('/sales/gold-trade-space');
               }}
               className="flex items-center gap-2"
             >
-            <Plus className="h-4 w-4" />
-            Create New Sale
-          </Button>
+              <Plus className="h-4 w-4" />
+              Create New Sale
+            </Button>
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              <p className="text-xs text-blue-900">
+                <strong>Note:</strong> Sales can only be created through the Gold Trade Space module for proper pricing mechanism selection.
+              </p>
+            </div>
+          </div>
         </div>
 
         {pageError && (

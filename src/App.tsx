@@ -41,6 +41,7 @@ import { CustomerForm } from './pages/customers/CustomerForm';
 import { PaymentProcessing } from './pages/customers/PaymentProcessing';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
+import { PaymentRecordPage } from './pages/payments/PaymentRecordPage';
 import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
 import { ReportGeneration } from './pages/reports/ReportGeneration';
 import { UserManagement } from './pages/admin/UserManagement';
@@ -358,6 +359,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PaymentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments/record"
+              element={
+                <ProtectedRoute>
+                  <PaymentRecordPage />
                 </ProtectedRoute>
               }
             />

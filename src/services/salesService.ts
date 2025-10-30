@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { logAuditAction } from '@/lib/auditLog';
 
 export interface CreateSaleData {
   customer_id: string;
@@ -252,7 +251,51 @@ export async function customerApproveSale(
   saleId: string,
   customerEmail: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updateSaleStatus(saleId, 'customer_approved', customerEmail, 'Customer approved sale');
+  try {
+    const { data: sale, error: saleError } = await supabase
+      .from('sales')
+      .select('*, mechanism_type')
+      .eq('id', saleId)
+      .maybeSingle();
+
+    if (saleError || !sale) {
+      return { success: false, error: saleError?.message || 'Sale not found' };
+    }
+
+    const mechanism = sale.mechanism_type?.toLowerCase();
+    const isSpotBasis = !mechanism || mechanism === 'spot';
+
+    let newStatus = 'customer_approved';
+
+    if (isSpotBasis) {
+      newStatus = 'payment_received';
+
+      await logAuditAction({
+        action: 'customer_approved_spot_payment',
+        table_name: 'sales',
+        record_id: saleId,
+        details: {
+          customer_email: customerEmail,
+          mechanism_type: mechanism,
+          note: 'Customer approval on spot basis = Payment commitment',
+          approved_at: new Date().toISOString()
+        },
+        user_email: customerEmail,
+      });
+    }
+
+    return updateSaleStatus(
+      saleId,
+      newStatus,
+      customerEmail,
+      isSpotBasis
+        ? 'Customer approved sale - Payment committed (Spot Basis)'
+        : 'Customer approved sale'
+    );
+  } catch (error: any) {
+    console.error('Error in customerApproveSale:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function customerRejectSale(

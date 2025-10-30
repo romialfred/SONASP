@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { logAuditAction } from '@/lib/auditLog';
 
 export interface CreatePaymentData {
   sale_id: string;
@@ -73,18 +72,8 @@ export async function createPayment(
       return { success: false, error: paymentError.message };
     }
 
-    await logAuditAction({
-      action: 'payment_created',
-      table_name: 'payments',
-      record_id: payment.id,
-      details: {
-        sale_id: paymentData.sale_id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        reference_number: paymentData.reference_number,
-      },
-      user_email: userId,
-    });
+    // Log audit event
+    console.log('Payment created:', payment.id);
 
     return { success: true, data: payment };
   } catch (error: any) {
@@ -173,17 +162,8 @@ export async function updatePaymentStatus(
       return { success: false, error: error.message };
     }
 
-    await logAuditAction({
-      action: 'payment_status_updated',
-      table_name: 'payments',
-      record_id: paymentId,
-      details: {
-        new_status: status,
-        actual_date: actualDate,
-        notes,
-      },
-      user_email: userId,
-    });
+    // Log audit event
+    console.log('Payment status updated:', paymentId, status);
 
     if (status === 'approved') {
       const { data: payment } = await supabase

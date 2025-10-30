@@ -38,20 +38,20 @@ export function FieldGuidePanel({ title = 'Field Guide', guides = [], sections =
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-        <p className="text-sm text-gray-600 mb-4">
-          Guide détaillé des champs du formulaire avec descriptions et exemples.
+      <CardContent className="pt-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+        <p className="text-xs text-gray-600 mb-3">
+          Guide des champs avec descriptions et exemples.
         </p>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {guideSections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className={`rounded-lg p-4 ${section.color}`}>
-              <h3 className="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">
+            <div key={sectionIndex} className={`rounded-lg p-3 ${section.color}`}>
+              <h3 className="font-semibold text-gray-900 mb-2 text-xs uppercase tracking-wide">
                 {section.title}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {section.fields.map((guide, fieldIndex) => (
-                  <div key={fieldIndex} className="bg-white bg-opacity-70 rounded p-3">
+                  <div key={fieldIndex} className="bg-white bg-opacity-70 rounded p-2">
                     <div className="flex items-start gap-2 mb-1">
                       <span className="text-sm font-semibold text-gray-900">
                         {guide.label}
@@ -67,8 +67,8 @@ export function FieldGuidePanel({ title = 'Field Guide', guides = [], sections =
                     </p>
                     {guide.example && (
                       <div className="bg-gray-100 rounded px-2 py-1.5 mt-2">
-                        <p className="text-xs text-gray-600">
-                          <span className="font-medium">Ex:</span> <span className="text-gray-900">{guide.example}</span>
+                        <p className="text-xs text-gray-700 italic">
+                          {guide.example}
                         </p>
                       </div>
                     )}
@@ -89,9 +89,9 @@ export function FieldGuidePanel({ title = 'Field Guide', guides = [], sections =
           ))}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-3">
           <p className="text-xs text-blue-800">
-            <strong className="text-blue-900">Astuce:</strong> Les champs marqués "Requis" doivent être remplis avant de soumettre le formulaire.
+            <strong>Astuce:</strong> Les champs marqués "Requis" doivent être remplis avant de soumettre.
           </p>
         </div>
       </CardContent>

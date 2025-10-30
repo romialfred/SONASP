@@ -78,99 +78,98 @@ export function BatchCreate() {
     {
       field: 'shipping_date',
       label: 'Shipping Date',
-      description: 'The date when the batch will be shipped from the mine to the airport. This date is used to generate the batch number.',
-      example: '27/10/2025',
+      description: 'Date when batch ships from mine to airport.',
+      example: 'Ex: 27/10/2025',
       required: true,
       rules: [
-        'Must be today or a future date',
-        'Used in batch number generation format: GN-YYYYMMDD-XXX'
+        'Today or future date only',
+        'Used in batch number: GN-YYYYMMDD-XXX'
       ]
     },
     {
       field: 'metal_type',
       label: 'Metal Type',
-      description: 'Select the type of precious metal or mineral being shipped in this batch.',
-      example: 'Gold',
+      description: 'Type of precious metal being shipped.',
+      example: 'Ex: Gold',
       required: true,
       rules: [
-        'Options: Gold, Silver, Zinc, Diamond, Other',
-        'Gold is the default selection',
-        'Affects pricing and refining processes'
+        'Gold, Silver, Zinc, Diamond, Other',
+        'Affects refining process'
       ]
     },
     {
       field: 'weight_grams',
       label: 'Weight (grams)',
-      description: 'Enter the gross weight of the precious metal in grams. The system will automatically convert this to troy ounces for display and calculations.',
-      example: '34000g (converts to 1093.12 oz)',
+      description: 'Gross weight in grams. Auto-converts to ounces.',
+      example: 'Ex: 34000g = 1093.12 oz',
       required: true,
       rules: [
-        'Must be a positive number',
-        'Decimal values allowed (e.g., 34000.50)',
-        'Auto-converts to ounces: 1 oz = 31.1035 grams',
-        'Minimum weight: 0.01 grams'
+        'Positive number, decimals allowed',
+        'Minimum: 0.01g'
+      ]
+    },
+    {
+      field: 'mining_company_id',
+      label: 'Mining Company',
+      description: 'Company providing this batch.',
+      example: 'Ex: Société Minière XYZ',
+      required: true,
+      rules: [
+        'Only active companies shown'
       ]
     },
     {
       field: 'mine_to_airport_transport_id',
       label: 'Mine to Airport Transport',
-      description: 'Select the transport company responsible for moving the batch from the mine to the airport (first leg of journey).',
-      example: 'Guinea Express Transport',
+      description: 'Transport company for first leg (mine → airport).',
+      example: 'Ex: Guinea Express',
       required: true,
       rules: [
-        'Only active transport companies shown',
-        'Must have Mine to Airport service type',
-        'Contact info included in shipping documents'
+        'Active companies only'
       ]
     },
     {
       field: 'airport_to_refinery_transport_id',
       label: 'Airport to Refinery Transport',
-      description: 'Select the transport company responsible for international shipping from the airport to the refinery (second leg).',
-      example: 'International Cargo Services',
+      description: 'International transport (airport → refinery).',
+      example: 'Ex: DHL Cargo',
       required: true,
       rules: [
-        'Only active transport companies shown',
-        'Must have Airport to Refinery service type',
-        'Handles customs and international logistics'
+        'Handles customs & international shipping'
       ]
     },
     {
       field: 'destination_refinery_id',
       label: 'Destination Refinery',
-      description: 'Select the refinery where this batch will be processed and purified. The refinery will receive and process the metal.',
-      example: 'Kaloti Precious Metals - Dubai, UAE',
+      description: 'Refinery for processing and purification.',
+      example: 'Ex: Kaloti - Dubai, UAE',
       required: true,
       rules: [
-        'Only active refineries shown',
-        'Determines final processing location',
-        'Affects processing timelines and rates'
+        'Active refineries only',
+        'Affects timelines & rates'
       ]
     },
     {
       field: 'documents',
       label: 'Documents',
-      description: 'Upload supporting documents such as export permits, certificates of origin, shipping manifests, photos, or insurance documents.',
-      example: 'export_permit.pdf, shipping_manifest.pdf',
+      description: 'Upload permits, certificates, manifests, or photos.',
+      example: 'Ex: export_permit.pdf',
       required: false,
       rules: [
-        'Multiple files can be uploaded',
-        'Supported formats: PDF, JPG, PNG, DOC, XLS',
-        'Maximum file size: 10MB per file',
-        'Files stored securely in cloud storage'
+        'Multiple files allowed',
+        'PDF, JPG, PNG, DOC, XLS',
+        'Max: 10MB per file'
       ]
     },
     {
       field: 'comments',
       label: 'Comments',
-      description: 'Add any additional notes, special instructions, or observations about this batch. This field is optional but recommended for important details.',
-      example: 'High-grade ore from new section, requires special handling',
+      description: 'Add notes or special instructions (optional).',
+      example: 'Ex: High-grade ore, special handling',
       required: false,
       rules: [
-        'Maximum 500 characters',
-        'Optional but recommended',
-        'Visible to all stakeholders',
-        'Cannot include sensitive information'
+        'Max 500 characters',
+        'Visible to all stakeholders'
       ]
     }
   ];

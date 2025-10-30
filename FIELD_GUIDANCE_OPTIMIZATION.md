@@ -1,501 +1,342 @@
-# Field Guidance Panel - Optimisation UI/UX
+# ✅ Optimisation du Guide de Création de Lot
 
-## ✅ Modifications Complétées
+## 🎯 Problème Identifié
 
-Le panneau **Field Guidance** a été optimisé pour une meilleure lisibilité et expérience utilisateur:
+**Dans la page Create Batch:**
+- ❌ Bouton "Create Batch" / "Submit Batch" non visible
+- ❌ Descriptions trop longues dans le panneau de guide
+- ❌ Panneau de guide trop haut, masquant les boutons d'action
 
-1. ✅ **Descriptions réduites** - Textes plus courts et concis
-2. ✅ **3 couleurs avec transparence** - Bleu, Amber, Vert
-3. ✅ **Titres en couleur foncée** - Mise en avant visuelle
-4. ✅ **Compact et aéré** - Moins d'espace, meilleure densité
-
----
-
-## 🎨 Système de Couleurs (3 Couleurs)
-
-### **1. Bleu (Blue) - Informations Personnelles**
-```
-Utilisé pour: Full Name, Email, Phone Number
-├─ Background: bg-blue-50/30 (transparence 30%)
-├─ Background Focus: bg-blue-100/60 (transparence 60%)
-├─ Border: border-blue-200/50
-├─ Border Focus: border-blue-500
-├─ Titre: text-blue-800
-├─ Titre Focus: text-blue-900 (plus foncé)
-└─ Icône: text-blue-400 → text-blue-600 (focus)
-```
-
-### **2. Amber (Doré) - Rôles et Sécurité**
-```
-Utilisé pour: User Role, Initial Password
-├─ Background: bg-amber-50/30
-├─ Background Focus: bg-amber-100/60
-├─ Border: border-amber-200/50
-├─ Border Focus: border-amber-500
-├─ Titre: text-amber-800
-├─ Titre Focus: text-amber-900
-└─ Icône: text-amber-400 → text-amber-600
-```
-
-### **3. Vert Émeraude (Green) - Accès et Permissions**
-```
-Utilisé pour: Mining Companies, Module Permissions, Sensitive Fields
-├─ Background: bg-emerald-50/30
-├─ Background Focus: bg-emerald-100/60
-├─ Border: border-emerald-200/50
-├─ Border Focus: border-emerald-500
-├─ Titre: text-emerald-800
-├─ Titre Focus: text-emerald-900
-└─ Icône: text-emerald-400 → text-emerald-600
-```
+**Screenshot:** Le bouton "Submit Batch" devrait être visible en dessous du panneau "Batch Creation Guide"
 
 ---
 
-## 📊 Avant / Après
+## ✅ Corrections Appliquées
 
-### **Descriptions Réduites**
+### 1. Descriptions de Champs Raccourcies
 
-| Champ | Avant (longueur) | Après (longueur) |
-|-------|------------------|------------------|
-| Full Name | 74 caractères | 32 caractères (-57%) |
-| Email | 63 caractères | 32 caractères (-49%) |
-| Phone | 67 caractères | 26 caractères (-61%) |
-| Role | 55 caractères | 38 caractères (-31%) |
-| Mining Companies | 163 caractères | 38 caractères (-77%) |
-| Password | 62 caractères | 37 caractères (-40%) |
-
-**Moyenne de réduction:** ~53% de texte en moins
-
-### **Exemple: Full Name**
-
-**Avant:**
-```
-Enter the complete legal name of the user
-as it appears on official documents.
-```
-
-**Après:**
-```
-Legal name for official records
-```
-
----
-
-## 🎯 Hiérarchie Visuelle
-
-### **État Normal (Non-focusé)**
-```
-┌────────────────────────────────────┐
-│ ℹ Full Name *         [bleu clair]│
-│   Legal name for official records  │
-│   Ex: John Smith                   │
-└────────────────────────────────────┘
-```
-
-### **État Focusé**
-```
-┌════════════════════════════════════┐
-║ ℹ Full Name *      [bleu plus foncé]║
-║   Legal name for official records  ║
-║   Ex: John Smith                   ║
-└════════════════════════════════════┘
-```
-
-**Différences visuelles:**
-- ✅ Border gauche épaisse (border-l-4)
-- ✅ Background plus opaque (60% vs 30%)
-- ✅ Titre plus foncé (text-blue-900 vs text-blue-800)
-- ✅ Icône plus foncée (text-blue-600 vs text-blue-400)
-- ✅ Shadow plus prononcée (shadow-lg vs hover:shadow-sm)
-
----
-
-## 📝 Mapping Couleurs par Champ
-
-### **Catégorie Bleu (Informations Personnelles)**
-```
-┌─────────────────────────────┐
-│ ℹ Full Name *     [BLEU]   │
-│   Legal name for records    │
-├─────────────────────────────┤
-│ ℹ Email Address * [BLEU]   │
-│   Primary login/notifications│
-├─────────────────────────────┤
-│ ℹ Phone Number    [BLEU]   │
-│   Contact with country code │
-└─────────────────────────────┘
-```
-
-### **Catégorie Amber (Rôles & Sécurité)**
-```
-┌─────────────────────────────┐
-│ ℹ User Role *     [AMBER]  │
-│   Primary responsibility    │
-│   • Management: Full access │
-│   • Factory: Create batches │
-├─────────────────────────────┤
-│ ℹ Initial Password * [AMBER]│
-│   Temporary for first login │
-│   • Min 8 chars            │
-│   • One uppercase          │
-└─────────────────────────────┘
-```
-
-### **Catégorie Vert (Accès & Permissions)**
-```
-┌─────────────────────────────┐
-│ ℹ Mining Companies * [VERT] │
-│   Companies user can access │
-│   Ex: Select one or multiple│
-├─────────────────────────────┤
-│ ℹ Module Permissions [VERT] │
-│   Control access per module │
-│   • View: View only        │
-│   • Create: Add new        │
-├─────────────────────────────┤
-│ ℹ Sensitive Fields   [VERT] │
-│   Access to confidential    │
-│   • Prices • Purity %      │
-└─────────────────────────────┘
-```
-
----
-
-## 💻 Détails Techniques
-
-### **Tailles de Police Réduites**
-```css
-Titre: text-sm (14px) - au lieu de text-base
-Description: text-xs (12px) - au lieu de text-sm
-Exemple: text-xs (12px) - au lieu de text-sm
-Options: text-xs (12px) - au lieu de text-sm
-```
-
-### **Espacements Optimisés**
-```css
-Padding card: p-3 (12px) - au lieu de p-4
-Espacement entre cards: space-y-2.5 - au lieu de space-y-3
-Gap icon/texte: gap-2.5 (10px) - au lieu de gap-3
-Margin bottom titre: mb-1 (4px) - au lieu de mb-1
-```
-
-### **Transparence Appliquée**
-```css
-Background normal: /30 (30% d'opacité)
-Background focus: /60 (60% d'opacité)
-Border normal: /50 (50% d'opacité)
-Border focus: solid (100%)
-```
-
-### **Transitions Smooth**
-```css
-transition-all
-├─ Background color
-├─ Border color
-├─ Border width
-├─ Shadow
-└─ Text color
-```
-
----
-
-## 📐 Structure des Données
-
-### **Configuration Champ Type**
+**Avant (trop long):**
 ```typescript
 {
-  title: 'Full Name',
-  description: 'Legal name for official records',
-  example: 'John Smith',
-  required: true,
-  color: 'blue'  // ← NOUVEAU: définit la couleur
+  field: 'shipping_date',
+  description: 'The date when the batch will be shipped from the mine to the airport. This date is used to generate the batch number.',
+  rules: [
+    'Must be today or a future date',
+    'Used in batch number generation format: GN-YYYYMMDD-XXX'
+  ]
 }
 ```
 
-### **Schéma de Couleurs**
+**Après (concis et précis):**
 ```typescript
-const colorSchemes = {
-  blue: {
-    bg: 'bg-blue-50/30',
-    bgFocused: 'bg-blue-100/60',
-    border: 'border-blue-200/50',
-    borderFocused: 'border-blue-500',
-    title: 'text-blue-800',
-    titleFocused: 'text-blue-900',
-    icon: 'text-blue-400',
-    iconFocused: 'text-blue-600'
-  },
-  amber: { /* ... */ },
-  green: { /* ... */ }
-};
+{
+  field: 'shipping_date',
+  description: 'Date when batch ships from mine to airport.',
+  example: 'Ex: 27/10/2025',
+  rules: [
+    'Today or future date only',
+    'Used in batch number: GN-YYYYMMDD-XXX'
+  ]
+}
+```
+
+### 2. Tous les Champs Optimisés
+
+| Champ | Avant | Après |
+|-------|-------|-------|
+| **Shipping Date** | 31 mots | 8 mots ✅ |
+| **Metal Type** | 23 mots | 6 mots ✅ |
+| **Weight** | 35 mots | 8 mots ✅ |
+| **Mining Company** | N/A | Ajouté (6 mots) ✅ |
+| **Mine→Airport** | 28 mots | 8 mots ✅ |
+| **Airport→Refinery** | 26 mots | 6 mots ✅ |
+| **Refinery** | 27 mots | 6 mots ✅ |
+| **Documents** | 33 mots | 8 mots ✅ |
+| **Comments** | 35 mots | 7 mots ✅ |
+
+**Réduction moyenne: ~70% de texte en moins!**
+
+---
+
+## 📊 Exemples de Simplification
+
+### Exemple 1: Weight (grams)
+
+**AVANT:**
+```
+Description: "Enter the gross weight of the precious metal in grams. 
+The system will automatically convert this to troy ounces for display 
+and calculations."
+
+Example: "34000g (converts to 1093.12 oz)"
+
+Rules:
+- Must be a positive number
+- Decimal values allowed (e.g., 34000.50)
+- Auto-converts to ounces: 1 oz = 31.1035 grams
+- Minimum weight: 0.01 grams
+```
+
+**APRÈS:**
+```
+Description: "Gross weight in grams. Auto-converts to ounces."
+
+Example: "Ex: 34000g = 1093.12 oz"
+
+Rules:
+- Positive number, decimals allowed
+- Minimum: 0.01g
+```
+
+### Exemple 2: Mine to Airport Transport
+
+**AVANT:**
+```
+Description: "Select the transport company responsible for moving 
+the batch from the mine to the airport (first leg of journey)."
+
+Example: "Guinea Express Transport"
+
+Rules:
+- Only active transport companies shown
+- Must have Mine to Airport service type
+- Contact info included in shipping documents
+```
+
+**APRÈS:**
+```
+Description: "Transport company for first leg (mine → airport)."
+
+Example: "Ex: Guinea Express"
+
+Rules:
+- Active companies only
+```
+
+### Exemple 3: Comments
+
+**AVANT:**
+```
+Description: "Add any additional notes, special instructions, or 
+observations about this batch. This field is optional but recommended 
+for important details."
+
+Example: "High-grade ore from new section, requires special handling"
+
+Rules:
+- Maximum 500 characters
+- Optional but recommended
+- Visible to all stakeholders
+- Cannot include sensitive information
+```
+
+**APRÈS:**
+```
+Description: "Add notes or special instructions (optional)."
+
+Example: "Ex: High-grade ore, special handling"
+
+Rules:
+- Max 500 characters
+- Visible to all stakeholders
 ```
 
 ---
 
-## 🎨 Exemples Visuels
+## 🎨 Améliorations UI du Panneau
 
-### **Card Normale vs Focusée**
+### 1. Hauteur Maximale Ajustée
 
-**Normal:**
-```
-┌────────────────────────────────┐ ← Border fine, couleur claire
-│ ℹ Email Address *   (bleu 400)│ ← Icône claire
-│   Primary login/notifications  │ ← Texte gris
-│   Ex: john@company.com        │ ← Exemple italique
-└────────────────────────────────┘
-  Background: blue-50/30 (léger)
+**Avant:**
+```css
+max-h-[calc(100vh-200px)]  /* Trop grand */
 ```
 
-**Focus:**
-```
-┏════════════════════════════════┓ ← Border épaisse gauche
-┃ ℹ Email Address *   (bleu 600)┃ ← Icône foncée
-┃   Primary login/notifications  ┃ ← Texte gris foncé
-┃   Ex: john@company.com        ┃ ← Exemple italique
-┗════════════════════════════════┛
-  Background: blue-100/60 (plus visible)
-  Shadow: shadow-lg
+**Après:**
+```css
+max-h-[calc(100vh-300px)]  /* Laisse 300px pour les boutons */
 ```
 
-### **Les 3 Couleurs Côte à Côte**
+### 2. Espacements Réduits
 
-```
-┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│ BLEU (30%)       │ │ AMBER (30%)      │ │ VERT (30%)       │
-│ Infos perso      │ │ Rôles/Sécurité   │ │ Permissions      │
-│ • Full Name      │ │ • User Role      │ │ • Companies      │
-│ • Email          │ │ • Password       │ │ • Modules        │
-│ • Phone          │ │                  │ │ • Fields         │
-└──────────────────┘ └──────────────────┘ └──────────────────┘
-```
+| Élément | Avant | Après |
+|---------|-------|-------|
+| **space-y (sections)** | 4 (16px) | 3 (12px) ✅ |
+| **p-4 (section padding)** | 4 (16px) | 3 (12px) ✅ |
+| **space-y (fields)** | 3 (12px) | 2 (8px) ✅ |
+| **p-3 (field padding)** | 3 (12px) | 2 (8px) ✅ |
+| **mt-4 (tip box)** | 4 (16px) | 3 (12px) ✅ |
+| **p-3 (tip padding)** | 3 (12px) | 2 (8px) ✅ |
 
----
+**Gain d'espace vertical: ~30%**
 
-## 📊 Comparaison Spatiale
+### 3. Texte Intro Raccourci
 
-### **Avant (version longue)**
-```
-Field Guidance
-┌─────────────────────────────────────┐
-│ ℹ Full Name *                       │
-│                                      │ ← Beaucoup d'espace
-│   Enter the complete legal name     │
-│   of the user as it appears on      │
-│   official documents.               │ ← 3 lignes de texte
-│                                      │
-│   Example: John Smith               │
-│                                      │
-└─────────────────────────────────────┘
-│ ← 8 fields = beaucoup de scroll     │
-▼
+**Avant:**
+```html
+<p className="text-sm text-gray-600 mb-4">
+  Guide détaillé des champs du formulaire avec descriptions et exemples.
+</p>
 ```
 
-### **Après (version compacte)**
-```
-Field Guidance
-┌──────────────────────────────┐
-│ ℹ Full Name *                │ ← Compact
-│   Legal name for records     │ ← 1 ligne
-│   Ex: John Smith             │ ← Exemple court
-├──────────────────────────────┤
-│ ℹ Email Address *            │
-│   Primary login/notifications│
-│   Ex: john@company.com       │
-├──────────────────────────────┤
-│ ℹ Phone Number               │
-│   Contact with country code  │
-│   Ex: +224 234 567 8900      │
-└──────────────────────────────┘
-│ ← 8 fields = moins de scroll │
-▼ (40% moins d'espace)
+**Après:**
+```html
+<p className="text-xs text-gray-600 mb-3">
+  Guide des champs avec descriptions et exemples.
+</p>
 ```
 
----
+### 4. Exemple Simplifié
 
-## 🔍 Détail par Champ
-
-### **1. Full Name (Bleu)**
-```
-Titre: Full Name *
-Description: Legal name for official records
-Exemple: John Smith
-Couleur: Bleu (info personnelle)
+**Avant:**
+```html
+<p className="text-xs text-gray-600">
+  <span className="font-medium">Ex:</span> 
+  <span className="text-gray-900">{guide.example}</span>
+</p>
 ```
 
-### **2. Email Address (Bleu)**
-```
-Titre: Email Address *
-Description: Primary login and notifications
-Exemple: john.smith@company.com
-Couleur: Bleu (info personnelle)
-```
-
-### **3. Phone Number (Bleu)**
-```
-Titre: Phone Number
-Description: Contact with country code
-Exemple: +224 234 567 8900
-Couleur: Bleu (info personnelle)
+**Après:**
+```html
+<p className="text-xs text-gray-700 italic">
+  {guide.example}  <!-- Déjà avec "Ex:" dans le texte -->
+</p>
 ```
 
-### **4. User Role (Amber)**
-```
-Titre: User Role *
-Description: Primary responsibility and permissions
-Options:
-  • Management: Full access
-  • Factory: Create batches
-  • Airport: Receive shipments
-  • Refinery: Process refining
-  • Customer: View sales
-Couleur: Amber (rôle/sécurité)
+### 5. Message d'Astuce Simplifié
+
+**Avant:**
+```html
+<strong className="text-blue-900">Astuce:</strong> 
+Les champs marqués "Requis" doivent être remplis avant 
+de soumettre le formulaire.
 ```
 
-### **5. Mining Companies (Vert)**
-```
-Titre: Mining Companies *
-Description: Companies user can access and manage
-Exemple: Select one or multiple companies
-Couleur: Vert (accès/permissions)
-```
-
-### **6. Initial Password (Amber)**
-```
-Titre: Initial Password *
-Description: Temporary password for first login
-Requirements:
-  • Min 8 chars
-  • One uppercase
-  • One number
-Couleur: Amber (sécurité)
-```
-
-### **7. Module Permissions (Vert)**
-```
-Titre: Module Permissions
-Description: Control access per module
-Levels:
-  • View: View only
-  • Create: Add new
-  • Edit: Modify
-  • Delete: Remove
-  • Approve: Authorize
-Couleur: Vert (permissions)
-```
-
-### **8. Sensitive Fields (Vert)**
-```
-Titre: Sensitive Fields
-Description: Access to confidential data
-Examples:
-  • Prices
-  • Purity %
-  • Amounts
-  • Credit limits
-Couleur: Vert (permissions)
-```
-
----
-
-## ✅ Bénéfices
-
-### **Pour la Lisibilité**
-- ✅ **53% moins de texte** - Plus rapide à scanner
-- ✅ **Descriptions concises** - Direct et clair
-- ✅ **Tailles optimisées** - Meilleure hiérarchie
-- ✅ **Moins de scroll** - 40% d'espace économisé
-
-### **Pour la Compréhension**
-- ✅ **Couleurs sémantiques** - 3 catégories claires
-- ✅ **Transparence subtile** - Pas agressif visuellement
-- ✅ **Titres en gras foncé** - Points focaux évidents
-- ✅ **Highlighting contexte** - Focus sans perdre les autres
-
-### **Pour l'Expérience Utilisateur**
-- ✅ **Scan visuel rapide** - Trouve info en 2 secondes
-- ✅ **Moins de fatigue** - Textes courts, aérés
-- ✅ **Navigation fluide** - Scroll minimal
-- ✅ **Feedback immédiat** - Focus visible instantanément
-
----
-
-## 🧪 Tests Visuels
-
-### **Test des Couleurs**
-```bash
-1. Ouvrir formulaire Add New User
-2. Observer le panneau de droite
-3. ✓ Voir 3 couleurs distinctes (bleu, amber, vert)
-4. ✓ Transparence visible (backgrounds légers)
-5. Cliquer sur chaque champ
-6. ✓ Couleur devient plus foncée au focus
-7. ✓ Border gauche épaisse apparaît
-```
-
-### **Test de Lisibilité**
-```bash
-1. Lire rapidement tous les champs
-2. ✓ Descriptions courtes (1 ligne max)
-3. ✓ Titres en gras ressortent
-4. ✓ Exemples faciles à trouver (Ex:)
-5. ✓ Pas besoin de relire
-```
-
-### **Test d'Espace**
-```bash
-1. Compter combien de champs visibles sans scroll
-2. ✓ Avant: ~3 champs
-3. ✓ Après: ~5-6 champs
-4. ✓ Gain de ~40% d'espace vertical
+**Après:**
+```html
+<strong>Astuce:</strong> 
+Les champs marqués "Requis" doivent être remplis avant de soumettre.
 ```
 
 ---
 
 ## 📁 Fichiers Modifiés
 
-**Fichier:** `src/pages/admin/UserManagement.tsx`
+### 1. BatchCreate.tsx
+**Emplacement:** `src/pages/batches/BatchCreate.tsx`
 
-**Sections modifiées:**
+**Modifications:**
+- ✅ 9 descriptions de champs raccourcies (lignes 77-179)
+- ✅ Exemples avec "Ex:" préfixé
+- ✅ Règles simplifiées (1-2 lignes max)
+- ✅ Ajout du champ `mining_company_id` au guide
 
-1. **FIELD_GUIDANCE (lignes 147-214)**
-   - Descriptions raccourcies
-   - Ajout propriété `color` à chaque champ
-   - Options/requirements condensés
+### 2. FieldGuidePanel.tsx
+**Emplacement:** `src/components/ui/FieldGuidePanel.tsx`
 
-2. **GuidancePanel Component (lignes 831-948)**
-   - Système de 3 couleurs avec transparence
-   - Titres en gras et couleurs foncées
-   - Tailles réduites (text-xs, text-sm)
-   - Espacements optimisés
-   - Hover states subtils
-
-**Lignes modifiées:** ~130 lignes
-
----
-
-## 🎯 Résumé Final
-
-**Optimisations appliquées:**
-
-✅ **Texte réduit de 53%** en moyenne
-✅ **3 couleurs** avec transparence (bleu, amber, vert)
-✅ **Titres en gras** et couleurs foncées
-✅ **40% d'espace économisé** verticalement
-✅ **Lisibilité améliorée** significativement
-✅ **UX optimisée** pour scan rapide
-
-**Schéma de couleurs:**
-- 🔵 **Bleu**: Informations personnelles (3 champs)
-- 🟡 **Amber**: Rôles et sécurité (2 champs)
-- 🟢 **Vert**: Accès et permissions (3 champs)
-
-**Build:** ✅ Réussi sans erreurs
-**TypeScript:** ✅ Pas d'erreurs
-**UI/UX:** ✅ Optimisé et professionnel
+**Modifications:**
+- ✅ Hauteur max: `calc(100vh-200px)` → `calc(100vh-300px)` (ligne 41)
+- ✅ Texte intro: `text-sm mb-4` → `text-xs mb-3` (lignes 42-44)
+- ✅ Espacements sections: `space-y-4 p-4` → `space-y-3 p-3` (lignes 46-48)
+- ✅ Titre section: `mb-3 text-sm` → `mb-2 text-xs` (ligne 49)
+- ✅ Espacements champs: `space-y-3 p-3` → `space-y-2 p-2` (lignes 52-54)
+- ✅ Exemple sans "Ex:": Juste italique (lignes 68-74)
+- ✅ Message astuce: `p-3 mt-4` → `p-2 mt-3` (ligne 92-95)
 
 ---
 
-**Date:** 2025-10-29
-**Status:** ✅ Production Ready
+## 🎯 Résultats
 
-🎉 **Le Field Guidance est maintenant compact, coloré et optimisé!**
+### Avant
+- ❌ Descriptions: 20-35 mots chacune
+- ❌ Panneau trop haut
+- ❌ Bouton "Submit Batch" caché
+- ❌ Scroll nécessaire pour tout voir
+
+### Après
+- ✅ Descriptions: 5-8 mots (réduction ~70%)
+- ✅ Panneau optimisé avec scroll
+- ✅ Bouton "Submit Batch" visible
+- ✅ Interface plus compacte et lisible
+- ✅ Exemples clairs avec "Ex:"
+- ✅ Règles concises (1-2 lignes)
+
+---
+
+## 📋 Structure du Panneau Final
+
+```
+┌─────────────────────────────────────┐
+│  Batch Creation Guide               │
+├─────────────────────────────────────┤
+│ Guide des champs avec descriptions  │
+│                                     │
+│ ╔═══════════════════════════════╗  │
+│ ║ INFORMATIONS                  ║  │ ← Section
+│ ║                               ║  │
+│ ║ ┌─ Shipping Date ─────────┐  ║  │
+│ ║ │ Date when batch ships    │  ║  │ ← Description courte
+│ ║ │ Ex: 27/10/2025          │  ║  │ ← Exemple avec Ex:
+│ ║ │ • Today or future only   │  ║  │ ← Règle concise
+│ ║ └─────────────────────────┘  ║  │
+│ ║                               ║  │
+│ ║ ┌─ Metal Type ────────────┐  ║  │
+│ ║ │ Type of precious metal   │  ║  │
+│ ║ │ Ex: Gold                │  ║  │
+│ ║ │ • Gold, Silver, etc     │  ║  │
+│ ║ └─────────────────────────┘  ║  │
+│ ╚═══════════════════════════════╝  │
+│                                     │
+│ [Scroll si nécessaire] ↕           │
+│                                     │
+│ ┌─ Astuce ─────────────────────┐   │
+│ │ Les champs "Requis" doivent  │   │
+│ │ être remplis avant soumettre │   │
+│ └───────────────────────────────┘   │
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Actions                            │
+├─────────────────────────────────────┤
+│  [Submit Batch]        ✅ VISIBLE   │
+│  [Save as Draft]                    │
+│  [Cancel]                           │
+└─────────────────────────────────────┘
+```
+
+---
+
+## ✅ Build Status
+
+```bash
+npm run build
+✓ built in 8.93s (aucune erreur)
+```
+
+---
+
+## 💡 Principes Appliqués
+
+### 1. Concision
+- **Éliminer les mots inutiles**
+- "The date when the batch will be shipped" → "Date when batch ships"
+- "This field is optional but recommended" → "(optional)"
+
+### 2. Clarté
+- **Utiliser des exemples concrets**
+- Description: "Gross weight in grams"
+- Exemple: "Ex: 34000g = 1093.12 oz"
+
+### 3. Actions
+- **Mettre l'accent sur l'action**
+- "Select the transport company responsible" → "Transport company for"
+- "Add any additional notes" → "Add notes"
+
+### 4. Hiérarchie Visuelle
+- **Espacements réduits mais cohérents**
+- Sections: 12px
+- Champs: 8px
+- Éléments: 4-8px
+
+---
+
+**Le bouton "Create Batch" est maintenant visible et le guide est optimisé!** 🎉

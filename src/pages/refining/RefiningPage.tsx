@@ -1,243 +1,241 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { Loading } from '@/components/ui/Loading';
-import { Search, Download } from 'lucide-react';
-import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { Download, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { BatchFilters } from '@/components/batch/BatchFilters';
+import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
+import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
+import { convertGramsToOunces } from '@/utils/batchUtils';
+import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
-interface RefiningRecord {
+interface MiningCompany {
   id: string;
-  batch_id: string;
-  refinery_name?: string;
-  pre_melt_weight_grams?: number;
-  post_melt_weight_grams?: number;
-  fineness_percentage?: number;
-  metal_retained_percentage?: number;
-  status: string;
-  created_at: string;
+  name: string;
+  country?: string;
 }
 
 interface Batch {
   id: string;
   batch_number: string;
+  status: string;
   weight_grams: number;
+  weight_ounces: number;
+  metal_type?: string;
+  shipping_date?: string;
+  created_at: string;
+  mining_company_id?: string;
+  mining_company?: MiningCompany;
+  sale_id?: string;
 }
 
+const REFINERY_STATUSES = [
+  BATCH_STATUSES.VALIDATED_FOR_REFINERY,
+  BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+  BATCH_STATUSES.RECEIVED_AT_REFINERY,
+  BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
+  BATCH_STATUSES.PROCESSING,
+  BATCH_STATUSES.PROCESSED,
+  BATCH_STATUSES.IN_INVENTORY,
+];
+
 export function RefiningPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
-  const [batches, setBatches] = useState<Record<string, Batch>>({});
+  const [miningCompanyFilter, setMiningCompanyFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('');
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchRefiningData() {
-      setLoading(true);
-      try {
-        const { data: refiningData, error: refiningError } = await supabase
-          .from('refining_records')
-          .select('id, batch_id, refinery_name, pre_melt_weight_grams, post_melt_weight_grams, fineness_percentage, metal_retained_percentage, status, created_at')
-          .order('created_at', { ascending: false });
-
-        if (!refiningError && refiningData) {
-          setRefiningRecords(refiningData);
-
-          const batchIds = [...new Set(refiningData.map(r => r.batch_id))];
-
-          if (batchIds.length > 0) {
-            const { data: batchData, error: batchError } = await supabase
-              .from('batches')
-              .select('id, batch_number, weight_grams')
-              .in('id', batchIds);
-
-            if (!batchError && batchData) {
-              const batchMap = batchData.reduce((acc, batch) => {
-                acc[batch.id] = batch;
-                return acc;
-              }, {} as Record<string, Batch>);
-              setBatches(batchMap);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching refining data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRefiningData();
+    fetchData();
   }, []);
 
-  const filteredRefining = refiningRecords.filter((refining) => {
-    const batch = batches[refining.batch_id];
-    const matchesSearch =
-      (batch?.batch_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (refining.refinery_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [batchesResult, companiesResult] = await Promise.all([
+        supabase
+          .from('batches')
+          .select(`
+            *,
+            mining_company:mining_companies(id, name, country),
+            sales!left(id)
+          `)
+          .in('status', REFINERY_STATUSES)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('mining_companies')
+          .select('id, name, country')
+          .eq('status', 'active')
+          .order('name'),
+      ]);
 
-    const matchesStatus = statusFilter === 'all' || refining.status === statusFilter;
+      if (batchesResult.data) {
+        const enrichedBatches = batchesResult.data.map((batch: any) => ({
+          ...batch,
+          weight_ounces: batch.weight_ounces || convertGramsToOunces(batch.weight_grams),
+          sale_id: batch.sales?.[0]?.id || null,
+        }));
+        setBatches(enrichedBatches);
+      }
 
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'in_progress':
-        return 'info';
-      case 'completed':
-        return 'success';
-      case 'approved':
-        return 'success';
-      default:
-        return 'default';
+      if (companiesResult.data) {
+        setMiningCompanies(companiesResult.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  const filteredBatches = useMemo(() => {
+    return batches.filter((batch) => {
+      const matchesSearch = batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
+      const matchesCompany =
+        miningCompanyFilter === 'all' || batch.mining_company_id === miningCompanyFilter;
+
+      let matchesDate = true;
+      if (yearFilter !== 'all') {
+        const batchDate = new Date(batch.shipping_date || batch.created_at);
+        const batchYear = batchDate.getFullYear().toString();
+        matchesDate = batchYear === yearFilter;
+
+        if (matchesDate && monthFilter) {
+          const batchMonth = String(batchDate.getMonth() + 1).padStart(2, '0');
+          matchesDate = batchMonth === monthFilter;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesCompany && matchesDate;
+    });
+  }, [batches, searchQuery, statusFilter, miningCompanyFilter, yearFilter, monthFilter]);
+
+  const statusMetrics = useMemo(() => {
+    const metricsMap = new Map<string, { count: number; totalWeightGrams: number; totalWeightOunces: number }>();
+
+    filteredBatches.forEach((batch) => {
+      const existing = metricsMap.get(batch.status) || {
+        count: 0,
+        totalWeightGrams: 0,
+        totalWeightOunces: 0,
+      };
+
+      metricsMap.set(batch.status, {
+        count: existing.count + 1,
+        totalWeightGrams: existing.totalWeightGrams + batch.weight_grams,
+        totalWeightOunces: existing.totalWeightOunces + batch.weight_ounces,
+      });
+    });
+
+    return Array.from(metricsMap.entries())
+      .map(([status, data]) => ({
+        status,
+        ...data,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredBatches]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    batches.forEach((batch) => {
+      const date = new Date(batch.shipping_date || batch.created_at);
+      years.add(date.getFullYear().toString());
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [batches]);
+
+  const handleExport = () => {
+    console.log('Export functionality to be implemented');
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending';
-      case 'in_progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      case 'approved':
-        return 'Approved';
-      default:
-        return status;
-    }
+  const handleBatchClick = (batchId: string) => {
+    navigate(`/batches/${batchId}`);
   };
 
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Refining</h1>
-            <p className="text-gray-600 mt-1">Monitor refining processes and assay results</p>
+            <h1 className="text-3xl font-bold text-gray-900">Gestion du Raffinage</h1>
+            <p className="text-gray-600 mt-1">
+              Suivez et gérez les batches en cours de raffinage
+            </p>
           </div>
-          <button className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={handleExport} className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Exporter
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate('/refining/process')}
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
+            >
+              <Plus className="w-4 h-4" />
+              Traiter un Batch
+            </Button>
+          </div>
         </div>
 
-        <Card>
-          <div className="p-6 space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search by batch number or refinery..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="approved">Approved</option>
-              </select>
+        {/* Filters */}
+        <BatchFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          miningCompanyFilter={miningCompanyFilter}
+          onMiningCompanyChange={setMiningCompanyFilter}
+          yearFilter={yearFilter}
+          onYearChange={(year) => {
+            setYearFilter(year);
+            if (year === 'all') {
+              setMonthFilter('');
+            }
+          }}
+          monthFilter={monthFilter}
+          onMonthChange={setMonthFilter}
+          miningCompanies={miningCompanies}
+          availableYears={availableYears}
+        />
+
+        {loading ? (
+          <Card>
+            <div className="flex items-center justify-center py-12">
+              <Loading size="lg" />
             </div>
+          </Card>
+        ) : (
+          <>
+            {/* Metrics Tiles */}
+            {statusMetrics.length > 0 && <BatchMetricsTiles metrics={statusMetrics} />}
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loading size="lg" />
-              </div>
+            {/* Batch Sections */}
+            {filteredBatches.length > 0 ? (
+              <BatchSections batches={filteredBatches} onBatchClick={handleBatchClick} />
             ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Batch Number
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Refinery
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Pre-Melt (g)
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Post-Melt (g)
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Fineness %
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Yield %
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredRefining.map((refining) => {
-                        const batch = batches[refining.batch_id];
-                        const yieldPct = refining.pre_melt_weight_grams && refining.post_melt_weight_grams
-                          ? (refining.post_melt_weight_grams / refining.pre_melt_weight_grams) * 100
-                          : null;
-
-                        return (
-                          <tr key={refining.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {batch?.batch_number || 'Unknown'}
-                              {batch && (
-                                <span className="block text-xs text-gray-400">
-                                  Original: {batch.weight_grams.toFixed(2)}g
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {refining.refinery_name || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {refining.pre_melt_weight_grams ? refining.pre_melt_weight_grams.toFixed(2) : '-'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {refining.post_melt_weight_grams ? refining.post_melt_weight_grams.toFixed(2) : '-'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {refining.fineness_percentage ? refining.fineness_percentage.toFixed(2) + '%' : '-'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {yieldPct ? yieldPct.toFixed(2) + '%' : '-'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <StatusBadge status={getStatusLabel(refining.status)} variant={getStatusVariant(refining.status)} />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+              <Card>
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-sm">
+                    {batches.length === 0
+                      ? 'Aucun batch en raffinerie. Les batches validés apparaîtront ici.'
+                      : 'Aucun batch ne correspond à vos critères de recherche.'}
+                  </p>
                 </div>
-
-                {filteredRefining.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">
-                      {refiningRecords.length === 0 ? 'No refining records yet.' : 'No refining records found matching your criteria.'}
-                    </p>
-                  </div>
-                )}
-              </>
+              </Card>
             )}
-          </div>
-        </Card>
+          </>
+        )}
       </div>
     </MainLayout>
   );

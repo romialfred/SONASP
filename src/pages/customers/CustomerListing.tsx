@@ -54,6 +54,8 @@ export function CustomerListing() {
         throw customersError;
       }
 
+      console.log('Fetched customers:', customersData);
+
       // Fetch sales data to calculate metrics
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
@@ -63,6 +65,8 @@ export function CustomerListing() {
       if (salesError) {
         console.error('Error fetching sales:', salesError);
       }
+
+      console.log('Fetched sales:', salesData);
 
       // Calculate customer metrics
       const customersWithMetrics = (customersData || []).map(customer => {
@@ -111,11 +115,21 @@ export function CustomerListing() {
         const finalPaymentRate = isNaN(paymentRate) || !isFinite(paymentRate) ? 0 : paymentRate;
 
         // Debug log for troubleshooting
+        console.log(`Customer ${customer.name}:`, {
+          rawStatus: customer.status,
+          validStatus,
+          totalPurchases,
+          rawTotalSpent: totalSpent,
+          finalTotalSpent,
+          paymentRate: finalPaymentRate,
+          salesCount: customerSales.length
+        });
+
         if (finalTotalSpent === 0 && customerSales.length > 0) {
-          console.log(`Customer ${customer.name} has ${customerSales.length} sales but totalSpent is 0`, customerSales);
+          console.log(`⚠️ Customer ${customer.name} has ${customerSales.length} sales but totalSpent is 0`, customerSales);
         }
 
-        return {
+        const customerResult = {
           id: customer.id,
           name: customer.name,
           email: customer.email,
@@ -127,8 +141,11 @@ export function CustomerListing() {
           status: validStatus,
           paymentRate: finalPaymentRate,
         } as Customer;
+
+        return customerResult;
       });
 
+      console.log('Customers with metrics:', customersWithMetrics);
       setCustomers(customersWithMetrics);
     } catch (error) {
       console.error('Error loading customers:', error);

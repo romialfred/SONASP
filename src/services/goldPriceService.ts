@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchLiveGoldPrice } from './liveGoldPriceService';
 
 export interface GoldPrice {
   id: string;
@@ -24,25 +25,19 @@ export interface GoldPriceStats {
   low_30_days: number;
 }
 
-const GOLD_API_URL = 'https://api.metals.live/v1/spot/gold';
-const FALLBACK_GOLD_API = 'https://www.goldapi.io/api/XAU/USD';
-
+/**
+ * Fetch real-time gold price using the live service with multiple API fallbacks
+ */
 async function fetchGoldPrice(): Promise<{ success: boolean; price?: number; error?: string }> {
   try {
-    const response = await fetch(GOLD_API_URL);
+    const livePrice = await fetchLiveGoldPrice();
 
-    if (!response.ok) {
-      return { success: false, error: 'Failed to fetch gold price' };
-    }
-
-    const data = await response.json();
-    const price = data.price || data[0]?.price;
-
-    if (!price) {
+    if (!livePrice || !livePrice.price) {
       return { success: false, error: 'Price data not available' };
     }
 
-    return { success: true, price };
+    console.log(`Fetched live gold price: $${livePrice.price} from ${livePrice.source}`);
+    return { success: true, price: livePrice.price };
   } catch (error: any) {
     console.error('Error fetching gold price:', error);
     return { success: false, error: error.message };
@@ -60,19 +55,17 @@ export async function updateDailyGoldPrice(): Promise<{ success: boolean; error?
     const today = new Date().toISOString().split('T')[0];
     const price = priceResult.price;
 
-    const slightVariation = () => price * (1 + (Math.random() * 0.02 - 0.01));
-
     const { error } = await supabase
       .from('gold_prices_daily')
       .upsert({
         price_date: today,
-        opening_price: slightVariation(),
+        opening_price: price * 0.998, // Slightly lower than current
         closing_price: price,
         high_price: price * 1.005,
         low_price: price * 0.995,
-        london_am_rate: price * 0.998,
+        london_am_rate: price, // Use actual live price for London AM rate
         london_pm_rate: price * 1.002,
-        source: 'API',
+        source: 'Live API',
         currency: 'USD',
         updated_at: new Date().toISOString(),
       }, {
@@ -121,21 +114,20 @@ export async function getCurrentGoldPrice(): Promise<{
 
       if (priceResult.success && priceResult.price) {
         const price = priceResult.price;
-        const slightVariation = () => price * (1 + (Math.random() * 0.02 - 0.01));
 
         const { data: updatedData, error: upsertError } = await supabase
           .from('gold_prices_daily')
           .upsert({
             price_date: today,
-            opening_price: existingData?.opening_price || slightVariation(),
+            opening_price: existingData?.opening_price || price * 0.998,
             closing_price: price,
             high_price: Math.max(existingData?.high_price || 0, price * 1.005),
             low_price: existingData?.low_price
               ? Math.min(existingData.low_price, price * 0.995)
               : price * 0.995,
-            london_am_rate: price * 0.998,
+            london_am_rate: price, // Use actual live price - this is what's used for sales calculations
             london_pm_rate: price * 1.002,
-            source: 'API',
+            source: 'Live API',
             currency: 'USD',
             updated_at: now.toISOString(),
           }, {
@@ -145,6 +137,7 @@ export async function getCurrentGoldPrice(): Promise<{
           .single();
 
         if (!upsertError && updatedData) {
+          console.log(`Gold price updated in database: $${updatedData.london_am_rate}/oz for ${today}`);
           return { success: true, data: updatedData };
         }
       }

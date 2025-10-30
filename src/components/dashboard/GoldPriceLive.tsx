@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
-import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Coins } from 'lucide-react';
 import {
   fetchLiveGoldPrice,
   clearPriceCache,
@@ -88,11 +88,11 @@ export function GoldPriceLive() {
 
   const getTrendIcon = () => {
     if (priceData.change > 0) {
-      return <TrendingUp className="w-5 h-5 text-green-600" />;
+      return <TrendingUp className="w-4 h-4 text-green-600" />;
     } else if (priceData.change < 0) {
-      return <TrendingDown className="w-5 h-5 text-red-600" />;
+      return <TrendingDown className="w-4 h-4 text-red-600" />;
     }
-    return <Minus className="w-5 h-5 text-gray-600" />;
+    return <Minus className="w-4 h-4 text-gray-600" />;
   };
 
   const getTrendColor = () => {
@@ -121,16 +121,16 @@ export function GoldPriceLive() {
 
   return (
     <div className={`relative backdrop-blur-sm rounded-xl border p-4 hover:shadow-lg transition-all duration-200 ${getCardBgColor()} ${priceData.change > 0 ? 'border-green-200' : priceData.change < 0 ? 'border-red-200' : 'border-gray-200'}`}>
-      {/* Icon in top-left corner */}
-      <div className={`absolute top-4 left-4 w-10 h-10 rounded-lg flex items-center justify-center ${getIconBgColor()}`}>
-        {getTrendIcon()}
+      {/* Gold Icon in top-left corner */}
+      <div className="absolute top-4 left-4 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+        <Coins className="w-6 h-6 text-amber-600" />
       </div>
 
       {/* Content with left padding to avoid icon overlap */}
       <div className="pl-14">
         <div className="flex items-center gap-2 mb-1">
           <p className="text-xs font-medium text-gray-600">
-            Gold Price {priceData.source && `(${priceData.source})`}
+            Gold Price (London LBMA)
           </p>
           <button
             onClick={handleRefresh}
@@ -149,9 +149,10 @@ export function GoldPriceLive() {
             <span className="text-sm font-normal text-gray-500 ml-1">/oz</span>
           </div>
 
-          {/* Variance */}
+          {/* Variance with Trend Icon */}
           <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${getBgColor()}`}>
+              {getTrendIcon()}
               <span className={`text-xs font-semibold ${getTrendColor()}`}>
                 {priceData.change >= 0 ? '+' : ''}
                 ${Math.abs(priceData.change).toFixed(2)}

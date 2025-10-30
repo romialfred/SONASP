@@ -114,6 +114,13 @@ export function BatchCard({
   // Generate action config for confirmation dialog
   const getActionConfig = (action: BatchAction) => {
     const configs: Record<string, any> = {
+      validate_for_refinery: {
+        title: 'Validate for Refinery',
+        description: 'This will validate the batch and prepare it for shipment to the refinery. Please review the batch details before confirming.',
+        confirmButtonText: 'Validate Batch',
+        confirmButtonVariant: 'success' as const,
+        warningMessage: 'Once validated, the batch will be ready for refinery transport. This action is irreversible.',
+      },
       validate_refinery: {
         title: 'Validate Receipt and Start Processing',
         description: 'This will validate the refinery receipt and move the batch to processing status. Please review the batch details before confirming.',

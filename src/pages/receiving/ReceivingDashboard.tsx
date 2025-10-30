@@ -10,11 +10,13 @@ import { useBatchRealtime } from '@/hooks/useBatchRealtime';
 import { BatchCard } from '@/components/batch/BatchCard';
 import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 
 export function ReceivingDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const alert = useAlert();
 
   // Use Realtime hook to fetch batches with relevant statuses for airport
   const { batches, loading } = useBatchRealtime({
@@ -105,14 +107,13 @@ export function ReceivingDashboard() {
 
       if (result.success) {
         // Batch will refresh automatically via realtime
-        console.log('✅ Batch validated for refinery:', result.data);
+        alert.success('Batch validated successfully! Ready for refinery transport.');
       } else {
-        console.error('❌ Failed to validate batch:', result.error);
-        alert('Failed to validate batch: ' + result.error);
+        alert.error(result.error || 'Failed to validate batch');
       }
     } catch (error) {
       console.error('Error validating batch:', error);
-      alert('Error validating batch. Please try again.');
+      alert.error('Error validating batch. Please try again.');
     }
   };
 
@@ -123,10 +124,11 @@ export function ReceivingDashboard() {
   const handleActionClick = (actionId: string, batchId: string) => {
     if (actionId === 'confirm_receipt' || actionId === 'receive_batch') {
       handleConfirmReceipt(batchId);
+    } else if (actionId === 'validate_for_refinery') {
+      handleValidateForRefinery(batchId);
     } else if (actionId === 'view_details') {
       handleViewDetails(batchId);
     }
-    // validate_for_refinery is handled by BatchCard confirmation modal
   };
 
   return (

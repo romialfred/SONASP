@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import {
+  fetchLiveGoldPrice,
+  clearPriceCache,
+  type LiveGoldPrice,
+} from '@/services/liveGoldPriceService';
 
 interface GoldPriceData {
   current: number;
@@ -9,6 +13,7 @@ interface GoldPriceData {
   change: number;
   changePercent: number;
   lastUpdate: string;
+  source: string;
 }
 
 export function GoldPriceLive() {
@@ -18,35 +23,22 @@ export function GoldPriceLive() {
 
   const fetchGoldPrice = async () => {
     try {
-      const { data, error } = await supabase
-        .from('gold_prices_daily')
-        .select('price_date, london_am_rate')
-        .order('price_date', { ascending: false })
-        .limit(2);
+      const livePrice: LiveGoldPrice | null = await fetchLiveGoldPrice();
 
-      if (error) throw error;
-
-      if (data && data.length >= 2) {
-        const current = data[0].london_am_rate;
-        const previous = data[1].london_am_rate;
-        const change = current - previous;
-        const changePercent = (change / previous) * 100;
+      if (livePrice) {
+        // Calculate previous price and change from 24h data
+        const current = livePrice.price;
+        const change24h = livePrice.change24h || 0;
+        const previous = current - change24h;
+        const changePercent = livePrice.changePercent24h || (change24h / previous) * 100;
 
         setPriceData({
           current,
           previous,
-          change,
+          change: change24h,
           changePercent,
-          lastUpdate: data[0].price_date,
-        });
-      } else if (data && data.length === 1) {
-        const current = data[0].london_am_rate;
-        setPriceData({
-          current,
-          previous: current,
-          change: 0,
-          changePercent: 0,
-          lastUpdate: data[0].price_date,
+          lastUpdate: new Date().toISOString(),
+          source: livePrice.source,
         });
       }
     } catch (error) {
@@ -68,6 +60,7 @@ export function GoldPriceLive() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    clearPriceCache(); // Clear cache to force fresh API call
     await fetchGoldPrice();
   };
 
@@ -136,7 +129,9 @@ export function GoldPriceLive() {
       {/* Content with left padding to avoid icon overlap */}
       <div className="pl-14">
         <div className="flex items-center gap-2 mb-1">
-          <p className="text-xs font-medium text-gray-600">Gold Price (London AM)</p>
+          <p className="text-xs font-medium text-gray-600">
+            Gold Price {priceData.source && `(${priceData.source})`}
+          </p>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -173,10 +168,10 @@ export function GoldPriceLive() {
 
           {/* Last Update */}
           <p className="text-xs text-gray-500">
-            Last updated: {new Date(priceData.lastUpdate).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
+            Live • Updated: {new Date(priceData.lastUpdate).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
             })}
           </p>
         </div>

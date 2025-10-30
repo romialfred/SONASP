@@ -196,14 +196,18 @@ ON audit_trail(created_at DESC);
 -- Enable RLS on audit_trail
 ALTER TABLE audit_trail ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist, then recreate
+DROP POLICY IF EXISTS "Allow authenticated users to insert audit logs" ON audit_trail;
+DROP POLICY IF EXISTS "Allow authenticated users to view audit logs" ON audit_trail;
+
 -- Policy to allow authenticated users to insert audit logs
-CREATE POLICY IF NOT EXISTS "Allow authenticated users to insert audit logs"
+CREATE POLICY "Allow authenticated users to insert audit logs"
   ON audit_trail FOR INSERT
   TO authenticated
   WITH CHECK (true);
 
 -- Policy to allow authenticated users to view audit logs
-CREATE POLICY IF NOT EXISTS "Allow authenticated users to view audit logs"
+CREATE POLICY "Allow authenticated users to view audit logs"
   ON audit_trail FOR SELECT
   TO authenticated
   USING (true);

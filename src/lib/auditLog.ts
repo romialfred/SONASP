@@ -113,3 +113,54 @@ export async function logSystemAction(
     status: 'success',
   });
 }
+
+// Generic audit action logger compatible with salesService
+export interface AuditActionEntry {
+  action: string;
+  table_name: string;
+  record_id: string;
+  details: Record<string, any>;
+  user_email: string;
+}
+
+export async function logAuditAction(entry: AuditActionEntry): Promise<void> {
+  try {
+    // Try inserting into audit_trail table (new schema)
+    const { error: trailError } = await supabase
+      .from('audit_trail')
+      .insert({
+        action: entry.action,
+        table_name: entry.table_name,
+        record_id: entry.record_id,
+        details: entry.details,
+        user_email: entry.user_email,
+        created_at: new Date().toISOString()
+      });
+
+    if (trailError) {
+      console.warn('audit_trail insert failed, trying audit_logs fallback:', trailError);
+
+      // Fallback to audit_logs table (legacy schema)
+      const { error: logError } = await supabase
+        .from('audit_logs')
+        .insert({
+          user_email: entry.user_email,
+          action: entry.action,
+          module: entry.table_name,
+          details: JSON.stringify({
+            record_id: entry.record_id,
+            ...entry.details
+          }),
+          status: 'success'
+        });
+
+      if (logError) {
+        console.error('Error logging audit action (both attempts failed):', logError);
+        // Don't throw - audit logging shouldn't break main flow
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error in logAuditAction:', err);
+    // Don't throw - audit logging shouldn't break main flow
+  }
+}

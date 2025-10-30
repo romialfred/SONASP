@@ -208,7 +208,8 @@ export async function confirmAirportReceipt(
 }
 
 /**
- * Specific transition: Validate airport receipt
+ * Specific transition: Validate airport receipt (OLD - with weight parameters)
+ * @deprecated Use validateForRefinery instead
  */
 export async function validateAirportReceipt(
   batchId: string,
@@ -225,6 +226,23 @@ export async function validateAirportReceipt(
       weightGrams: actualWeightGrams,
       variance: varianceGrams,
       variancePercentage,
+    }
+  );
+}
+
+/**
+ * Specific transition: Validate batch for refinery (Simple validation by airport staff)
+ * After batch is received_at_airport, airport staff validates it for refinery transport
+ */
+export async function validateForRefinery(
+  batchId: string,
+  comments?: string
+): Promise<TransitionResult> {
+  return transitionBatchStatus(
+    batchId,
+    BATCH_STATUSES.VALIDATED_FOR_REFINERY,
+    {
+      comments: comments || 'Batch validated for refinery transport by airport staff',
     }
   );
 }

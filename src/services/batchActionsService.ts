@@ -48,6 +48,7 @@ export function getAvailableBatchActions(
   handlers: {
     onApproveForTransport?: (batchId: string) => Promise<void>;
     onConfirmReceipt?: (batchId: string) => void;
+    onValidateForRefinery?: (batchId: string) => Promise<void>;
     onViewDetails?: (batchId: string) => void;
     onEdit?: (batchId: string) => void;
     onCancel?: (batchId: string) => Promise<void>;
@@ -142,9 +143,9 @@ export function getAvailableBatchActions(
         label: 'Validate for Refinery',
         icon: CheckCircle,
         variant: 'success',
-        handler: handlers.onConfirmReceipt || (() => {}),
+        handler: handlers.onValidateForRefinery || (() => {}),
         requiresConfirmation: true,
-        confirmationMessage: 'Validate this batch for refinery transport?',
+        confirmationMessage: 'Validate this batch for refinery transport? This action is irreversible.',
         visible: true,
       });
     }

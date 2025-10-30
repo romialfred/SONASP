@@ -97,16 +97,36 @@ export function ReceivingDashboard() {
     navigate(`/receiving/${batchId}/confirm`);
   };
 
+  const handleValidateForRefinery = async (batchId: string) => {
+    // This will be called after confirmation modal
+    try {
+      const { validateForRefinery } = await import('@/services/batchTransitionService');
+      const result = await validateForRefinery(batchId, 'Validated by airport staff');
+
+      if (result.success) {
+        // Batch will refresh automatically via realtime
+        console.log('✅ Batch validated for refinery:', result.data);
+      } else {
+        console.error('❌ Failed to validate batch:', result.error);
+        alert('Failed to validate batch: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error validating batch:', error);
+      alert('Error validating batch. Please try again.');
+    }
+  };
+
   const handleViewDetails = (batchId: string) => {
     navigate(`/batches/${batchId}`);
   };
 
   const handleActionClick = (actionId: string, batchId: string) => {
-    if (actionId === 'confirm_receipt' || actionId === 'validate_for_refinery' || actionId === 'receive_batch') {
+    if (actionId === 'confirm_receipt' || actionId === 'receive_batch') {
       handleConfirmReceipt(batchId);
     } else if (actionId === 'view_details') {
       handleViewDetails(batchId);
     }
+    // validate_for_refinery is handled by BatchCard confirmation modal
   };
 
   return (
@@ -170,6 +190,7 @@ export function ReceivingDashboard() {
                               {
                                 onViewDetails: handleViewDetails,
                                 onConfirmReceipt: handleConfirmReceipt,
+                                onValidateForRefinery: handleValidateForRefinery,
                               }
                             );
                             const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
@@ -209,6 +230,7 @@ export function ReceivingDashboard() {
                               {
                                 onConfirmReceipt: handleConfirmReceipt,
                                 onViewDetails: handleViewDetails,
+                                onValidateForRefinery: handleValidateForRefinery,
                               }
                             );
                             const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
@@ -248,6 +270,7 @@ export function ReceivingDashboard() {
                               {
                                 onConfirmReceipt: handleConfirmReceipt,
                                 onViewDetails: handleViewDetails,
+                                onValidateForRefinery: handleValidateForRefinery,
                               }
                             );
                             const statusInfo = getBatchStatusInfo(batch.status, 'shipping');
@@ -286,6 +309,7 @@ export function ReceivingDashboard() {
                               'shipping',
                               {
                                 onViewDetails: handleViewDetails,
+                                onValidateForRefinery: handleValidateForRefinery,
                               }
                             );
                             const statusInfo = getBatchStatusInfo(batch.status, 'shipping');

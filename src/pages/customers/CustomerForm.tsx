@@ -195,7 +195,7 @@ export function CustomerForm() {
     setIsSubmitting(true);
 
     try {
-      const customerData = {
+      const baseCustomerData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
@@ -206,14 +206,16 @@ export function CustomerForm() {
         payment_terms: formData.paymentTerms,
         credit_limit: parseFloat(formData.creditLimit),
         status: formData.status,
-        updated_at: new Date().toISOString(),
       };
 
       if (isEditMode && id) {
         // Update existing customer
         const { error } = await supabase
           .from('customers')
-          .update(customerData)
+          .update({
+            ...baseCustomerData,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', id);
 
         if (error) throw error;
@@ -223,7 +225,7 @@ export function CustomerForm() {
         // Create new customer
         const { error } = await supabase
           .from('customers')
-          .insert([customerData]);
+          .insert([baseCustomerData]);
 
         if (error) throw error;
 

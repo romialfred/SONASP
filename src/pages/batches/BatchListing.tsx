@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Plus, Search, Download, Filter, CheckCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Table, Column } from '@/components/ui/Table';
-import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { Card } from '@/components/ui/Card';
+import { Loading } from '@/components/ui/Loading';
+import { Download, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import { BatchTransportApprovalModal } from '@/components/batch/BatchTransportApprovalModal';
-import { formatWeight } from '@/utils/batchUtils';
+import { BatchFilters } from '@/components/batch/BatchFilters';
+import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
+import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
-import { getBatchStatusLabel, getBatchStatusVariant, getBatchStatusOptions, BATCH_STATUSES } from '@/constants/batchStatuses';
-import { approveBatchForTransport } from '@/services/batchApprovalService';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAlert } from '@/hooks/useAlert';
+import { convertGramsToOunces } from '@/utils/batchUtils';
+
+interface MiningCompany {
+  id: string;
+  name: string;
+  country?: string;
+}
 
 interface Batch {
   id: string;
@@ -23,329 +23,207 @@ interface Batch {
   status: string;
   weight_grams: number;
   weight_ounces: number;
-  shipping_date: string;
-  metal_type: string;
-  mining_company_name?: string;
+  metal_type?: string;
+  shipping_date?: string;
   created_at: string;
+  mining_company_id?: string;
+  mining_company?: MiningCompany;
+  sale_id?: string;
 }
 
 export function BatchListing() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const alert = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [siteFilter, setSiteFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [miningCompanyFilter, setMiningCompanyFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('');
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
-  const [approvingBatch, setApprovingBatch] = useState<string | null>(null);
-  const [isManager, setIsManager] = useState(false);
-  const [selectedBatchForApproval, setSelectedBatchForApproval] = useState<Batch | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    loadBatches();
-    checkManagerRole();
+    fetchData();
   }, []);
 
-  const checkManagerRole = async () => {
-    if (!user) return;
+  async function fetchData() {
+    setLoading(true);
     try {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      const [batchesResult, companiesResult] = await Promise.all([
+        supabase
+          .from('batches')
+          .select(`
+            *,
+            mining_company:mining_companies(id, name, country),
+            sales!left(id)
+          `)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('mining_companies')
+          .select('id, name, country')
+          .eq('status', 'active')
+          .order('name'),
+      ]);
 
-      const managerRoles = ['factory_manager', 'manager', 'admin', 'management'];
-      setIsManager(managerRoles.some(role =>
-        profile?.role?.toLowerCase().includes(role)
-      ));
-    } catch (error) {
-      console.error('Error checking manager role:', error);
-    }
-  };
-
-  const loadBatches = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('batches')
-        .select(`
-          id,
-          batch_number,
-          status,
-          weight_grams,
-          weight_ounces,
-          shipping_date,
-          metal_type,
-          created_at,
-          mining_company:mining_companies(name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading batches:', error);
-        throw error;
+      if (batchesResult.data) {
+        const enrichedBatches = batchesResult.data.map((batch: any) => ({
+          ...batch,
+          weight_ounces: batch.weight_ounces || convertGramsToOunces(batch.weight_grams),
+          sale_id: batch.sales?.[0]?.id || null,
+        }));
+        setBatches(enrichedBatches);
       }
 
-      const formattedBatches = (data || []).map((batch: any) => ({
-        id: batch.id,
-        batch_number: batch.batch_number,
-        status: batch.status,
-        weight_grams: parseFloat(batch.weight_grams || 0),
-        weight_ounces: parseFloat(batch.weight_ounces || 0),
-        shipping_date: batch.shipping_date,
-        metal_type: batch.metal_type || 'gold',
-        mining_company_name: batch.mining_company?.name || 'Unknown',
-        created_at: batch.created_at,
-      }));
-
-      setBatches(formattedBatches);
+      if (companiesResult.data) {
+        setMiningCompanies(companiesResult.data);
+      }
     } catch (error) {
-      console.error('Error loading batches:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const filteredBatches = batches.filter((batch) => {
-    const matchesSearch =
-      batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (batch.mining_company_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredBatches = useMemo(() => {
+    return batches.filter((batch) => {
+      const matchesSearch = batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
+      const matchesCompany =
+        miningCompanyFilter === 'all' || batch.mining_company_id === miningCompanyFilter;
 
-    const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
-    const matchesSite = siteFilter === 'all' || (batch.mining_company_name || '').includes(siteFilter);
+      let matchesDate = true;
+      if (yearFilter !== 'all') {
+        const batchDate = new Date(batch.shipping_date || batch.created_at);
+        const batchYear = batchDate.getFullYear().toString();
+        matchesDate = batchYear === yearFilter;
 
-    return matchesSearch && matchesStatus && matchesSite;
-  });
-
-  const columns: Column<Batch>[] = [
-    {
-      key: 'batch_number',
-      label: 'Batch Number',
-      sortable: true,
-      render: (value, row) => (
-        <button
-          onClick={() => navigate(`/batches/${row.id}`)}
-          className="text-primary-600 hover:text-primary-700 font-medium"
-        >
-          {value}
-        </button>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      render: (value) => (
-        <StatusBadge
-          label={getBatchStatusLabel(value)}
-          variant={getBatchStatusVariant(value)}
-        />
-      ),
-    },
-    {
-      key: 'weight_grams',
-      label: 'Weight',
-      sortable: true,
-      render: (value) => formatWeight(value),
-    },
-    {
-      key: 'shipping_date',
-      label: 'Shipping Date',
-      sortable: true,
-      render: (value) => new Date(value).toLocaleDateString(),
-    },
-    {
-      key: 'metal_type',
-      label: 'Metal Type',
-      sortable: true,
-      render: (value) => (
-        <span className="capitalize">
-          {value}
-        </span>
-      ),
-    },
-    {
-      key: 'mining_company_name',
-      label: 'Mining Company',
-      sortable: true,
-    },
-    {
-      key: 'id',
-      label: 'Actions',
-      sortable: false,
-      render: (value, row) => {
-        if (row.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && isManager) {
-          return (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedBatchForApproval(row);
-                setIsModalOpen(true);
-              }}
-              disabled={approvingBatch === row.id}
-              className="gap-1"
-            >
-              <CheckCircle className="h-3 w-3" />
-              Validate for Transport
-            </Button>
-          );
+        if (matchesDate && monthFilter) {
+          const batchMonth = String(batchDate.getMonth() + 1).padStart(2, '0');
+          matchesDate = batchMonth === monthFilter;
         }
-        return null;
-      },
-    },
-  ];
-
-  const handleApproveBatch = async () => {
-    if (!selectedBatchForApproval) return;
-
-    setApprovingBatch(selectedBatchForApproval.id);
-    try {
-      const result = await approveBatchForTransport(selectedBatchForApproval.id, 'Approved by Factory Manager');
-
-      if (result.success) {
-        alert.success('Batch approved for transportation successfully!');
-        setIsModalOpen(false);
-        setSelectedBatchForApproval(null);
-        await loadBatches();
-      } else {
-        const errorMessage = result.error instanceof Error
-          ? result.error.message
-          : typeof result.error === 'object' && result.error !== null
-            ? (result.error as any).message || JSON.stringify(result.error)
-            : String(result.error || 'Unknown error');
-        alert.error(`Failed to approve batch: ${errorMessage}`);
       }
-    } catch (error: any) {
-      console.error('Error approving batch:', error);
-      const errorMessage = error?.message || String(error);
-      alert.error(`Error approving batch: ${errorMessage}`);
-    } finally {
-      setApprovingBatch(null);
-    }
-  };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedBatchForApproval(null);
-  };
+      return matchesSearch && matchesStatus && matchesCompany && matchesDate;
+    });
+  }, [batches, searchQuery, statusFilter, miningCompanyFilter, yearFilter, monthFilter]);
+
+  const statusMetrics = useMemo(() => {
+    const metricsMap = new Map<string, { count: number; totalWeightGrams: number; totalWeightOunces: number }>();
+
+    filteredBatches.forEach((batch) => {
+      const existing = metricsMap.get(batch.status) || {
+        count: 0,
+        totalWeightGrams: 0,
+        totalWeightOunces: 0,
+      };
+
+      metricsMap.set(batch.status, {
+        count: existing.count + 1,
+        totalWeightGrams: existing.totalWeightGrams + batch.weight_grams,
+        totalWeightOunces: existing.totalWeightOunces + batch.weight_ounces,
+      });
+    });
+
+    return Array.from(metricsMap.entries())
+      .map(([status, data]) => ({
+        status,
+        ...data,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredBatches]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    batches.forEach((batch) => {
+      const date = new Date(batch.shipping_date || batch.created_at);
+      years.add(date.getFullYear().toString());
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [batches]);
 
   const handleExport = () => {
-    console.log('Exporting batches...');
+    console.log('Export functionality to be implemented');
+  };
+
+  const handleBatchClick = (batchId: string) => {
+    navigate(`/batches/${batchId}`);
   };
 
   return (
     <MainLayout>
-      {selectedBatchForApproval && (
-        <BatchTransportApprovalModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onConfirm={handleApproveBatch}
-          batch={selectedBatchForApproval}
-          isLoading={approvingBatch === selectedBatchForApproval.id}
-        />
-      )}
-
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold text-gray-900">
-              {t('Batch Management')}
-            </h1>
-            <p className="text-gray-600 mt-1">Track and manage all batches</p>
+            <h1 className="text-3xl font-bold text-gray-900">Gestion des Batches</h1>
+            <p className="text-gray-600 mt-1">
+              Suivez et gérez tous les batches de métaux précieux
+            </p>
           </div>
-
-          <Button
-            variant="primary"
-            onClick={() => navigate('/batches/new')}
-            className="gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Create New Batch
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={handleExport} className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Exporter
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate('/batches/new')}
+              className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700"
+            >
+              <Plus className="w-4 h-4" />
+              Créer un Batch
+            </Button>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Search and Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by batch number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Filters */}
+        <BatchFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          miningCompanyFilter={miningCompanyFilter}
+          onMiningCompanyChange={setMiningCompanyFilter}
+          yearFilter={yearFilter}
+          onYearChange={(year) => {
+            setYearFilter(year);
+            if (year === 'all') {
+              setMonthFilter('');
+            }
+          }}
+          monthFilter={monthFilter}
+          onMonthChange={setMonthFilter}
+          miningCompanies={miningCompanies}
+          availableYears={availableYears}
+        />
 
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                {getBatchStatusOptions().map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-
-              <Select
-                value={siteFilter}
-                onChange={(e) => setSiteFilter(e.target.value)}
-              >
-                <option value="all">All Sites</option>
-                <option value="Conakry">Conakry</option>
-                <option value="Abidjan">Abidjan</option>
-                <option value="Bamako">Bamako</option>
-              </Select>
-
-              <Button variant="outline" onClick={handleExport} className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
+        {loading ? (
+          <Card>
+            <div className="flex items-center justify-center py-12">
+              <Loading size="lg" />
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        ) : (
+          <>
+            {/* Metrics Tiles */}
+            {statusMetrics.length > 0 && <BatchMetricsTiles metrics={statusMetrics} />}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Batches ({filteredBatches.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="text-gray-600">Loading batches...</div>
-              </div>
-            ) : filteredBatches.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No batches found</p>
-                <Button
-                  variant="primary"
-                  onClick={() => navigate('/batches/new')}
-                  className="mt-4 gap-2"
-                >
-                  <Plus className="h-5 w-5" />
-                  Create First Batch
-                </Button>
-              </div>
+            {/* Batch Sections */}
+            {filteredBatches.length > 0 ? (
+              <BatchSections batches={filteredBatches} onBatchClick={handleBatchClick} />
             ) : (
-              <Table
-                data={filteredBatches}
-                columns={columns}
-                pagination
-                pageSize={10}
-              />
+              <Card>
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-sm">
+                    {batches.length === 0
+                      ? 'Aucun batch créé. Cliquez sur "Créer un Batch" pour commencer.'
+                      : 'Aucun batch ne correspond à vos critères de recherche.'}
+                  </p>
+                </div>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+          </>
+        )}
       </div>
     </MainLayout>
   );

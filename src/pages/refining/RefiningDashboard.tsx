@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Flame, CheckCircle, Clock, TrendingUp, Package, AlertCircle, Eye } from 'lucide-react';
+import { Flame, CheckCircle, Clock, TrendingUp, Package, AlertCircle, Eye, BarChart3 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { BatchCard } from '@/components/batch/BatchCard';
+import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { supabase } from '@/lib/supabase';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
@@ -56,10 +57,55 @@ export function RefiningDashboard() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [monthlyProcessedData, setMonthlyProcessedData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
+    fetchMonthlyProcessedData();
   }, []);
+
+  async function fetchMonthlyProcessedData() {
+    try {
+      // Get processed batches grouped by month for the last 6 months
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const { data, error } = await supabase
+        .from('batch_status_history')
+        .select('batch_id, status, created_at')
+        .eq('status', 'processed')
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching monthly data:', error);
+        return;
+      }
+
+      // Group by month
+      const monthlyData: { [key: string]: number } = {};
+      data?.forEach((record) => {
+        const date = new Date(record.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      });
+
+      // Convert to chart format
+      const chartData = Object.entries(monthlyData).map(([month, count]) => {
+        const [year, monthNum] = month.split('-');
+        const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+        const monthName = date.toLocaleDateString('en', { month: 'short', year: 'numeric' });
+        return {
+          name: monthName,
+          value: count,
+        };
+      });
+
+      setMonthlyProcessedData(chartData);
+    } catch (error) {
+      console.error('Error fetching monthly processed data:', error);
+    }
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -292,17 +338,43 @@ export function RefiningDashboard() {
             </div>
 
             {batches.length === 0 ? (
-              <Card>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Flame className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">No batches at refinery</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Validated batches from airport will appear here
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card>
+                  <CardContent>
+                    <div className="text-center py-12">
+                      <Flame className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium text-lg">No Batches to Manage</p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        Validated batches from airport will appear here for processing
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {monthlyProcessedData.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-accent-500" />
+                        Batches Processed by Month
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <BarChartWidget
+                        data={monthlyProcessedData}
+                        xAxisKey="name"
+                        barKey="value"
+                        title=""
+                        height={300}
+                        barColor="#10B981"
+                      />
+                      <p className="text-sm text-gray-500 mt-4 text-center">
+                        Historical processing activity over the last 6 months
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             ) : (
               <>
                 {/* Awaiting Receipt at Refinery */}

@@ -111,7 +111,24 @@ export function ReceivingConfirm() {
       let isRefineryReceipt = false;
 
       // Check current status to determine correct next status
-      if (batch.status === 'approved_for_transport' || batch.status === 'waiting_airport_receipt') {
+      if (batch.status === 'approved_for_transport') {
+        // Special case: batch approved but not yet in transit
+        // We need to do TWO transitions: approved→waiting→received
+        // First, update to waiting_airport_receipt
+        const { error: transitError } = await supabase
+          .from('batches')
+          .update({
+            status: BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', batch.id);
+
+        if (transitError) throw transitError;
+
+        // Then proceed to received_at_airport
+        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
+        isAirportReceipt = true;
+      } else if (batch.status === 'waiting_airport_receipt') {
         // Airport receiving: batch just arrived, mark as received
         newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
         isAirportReceipt = true;

@@ -52,6 +52,8 @@ import { SystemSettings } from './pages/admin/SystemSettings';
 import { AuditTrail } from './pages/admin/AuditTrail';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
+import { TransportCompanyForm } from './pages/admin/TransportCompanyForm';
+import { RefineryForm } from './pages/admin/RefineryForm';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
@@ -530,10 +532,46 @@ function AppRoutes() {
             />
 
             <Route
+              path="/admin/transport-companies/new"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <TransportCompanyForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/transport-companies/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <TransportCompanyForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/admin/refineries"
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <RefineriesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/refineries/new"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <RefineryForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/refineries/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <RefineryForm />
                 </ProtectedRoute>
               }
             />

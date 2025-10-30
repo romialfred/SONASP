@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { TrendingUp, TrendingDown, RefreshCw, Clock, Globe, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   fetchLiveGoldPrice,
-  getMarketStatus,
   formatGoldPrice,
   clearPriceCache,
   type LiveGoldPrice,
@@ -59,8 +58,6 @@ export function LiveGoldMarketWidget() {
       clearInterval(countdownInterval);
     };
   }, []);
-
-  const marketStatus = getMarketStatus();
 
   if (loading || !goldPrice) {
     return (
@@ -191,137 +188,6 @@ export function LiveGoldMarketWidget() {
               <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
             </div>
             <span className="text-gray-500">Next update in {countdown}s</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Global Gold Markets Section */}
-      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-300">
-        <div className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Globe className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-bold text-gray-900">Global Gold Markets</h3>
-          </div>
-
-          <div className="space-y-3">
-            {/* London LBMA */}
-            <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-amber-100 rounded flex items-center justify-center">
-                    <span className="text-amber-600 text-lg">🏛</span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900">London LBMA</h4>
-                    <p className="text-xs text-gray-600">London Bullion Market</p>
-                  </div>
-                </div>
-                <span
-                  className={`text-xs px-3 py-1 rounded-full font-medium ${
-                    marketStatus.london.isOpen
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {marketStatus.london.isOpen ? (
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                      Market Open
-                    </div>
-                  ) : (
-                    'Market Closed'
-                  )}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Market</p>
-                  <p className="text-xs font-medium text-gray-900">London Bullion Market</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Trading Hours</p>
-                  <p className="text-xs font-medium text-gray-900">8:00 AM - 4:30 PM GMT</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Price Fixing</p>
-                  <p className="text-xs font-medium text-gray-900">10:30 AM & 3:00 PM</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Price</p>
-                  <p className="text-base font-bold text-gray-900">
-                    ${formatGoldPrice(goldPrice.price)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* NYSE COMEX */}
-            <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                    <span className="text-blue-600 text-lg">🏛</span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900">NYSE (COMEX)</h4>
-                    <p className="text-xs text-gray-600">New York Commodity Exchange</p>
-                  </div>
-                </div>
-                <span
-                  className={`text-xs px-3 py-1 rounded-full font-medium ${
-                    marketStatus.newYork.isOpen
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {marketStatus.newYork.isOpen ? (
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                      Market Open
-                    </div>
-                  ) : (
-                    'Market Closed'
-                  )}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Market</p>
-                  <p className="text-xs font-medium text-gray-900">New York Commodity Exchange</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Trading Hours</p>
-                  <p className="text-xs font-medium text-gray-900">8:20 AM - 1:30 PM EST</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Electronic</p>
-                  <p className="text-xs font-medium text-gray-900">6:00 PM - 5:00 PM EST</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Price</p>
-                  <p className="text-base font-bold text-gray-900">
-                    ${formatGoldPrice(goldPrice.price)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trading Information Footer */}
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs text-amber-600">ℹ</span>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-900">Trading Information</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Prices are based on London AM Fix (LBMA) and COMEX futures. All transactions are settled within 2 business days (T+2).
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </Card>

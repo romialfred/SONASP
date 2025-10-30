@@ -198,6 +198,7 @@ export function SaleCreate() {
         .insert([
           {
             sale_number: saleNumber,
+            sale_date: new Date().toISOString().split('T')[0],
             customer_id: formData.customerId,
             quantity_oz: parseFloat(formData.quantityOz),
             london_am_rate: parseFloat(formData.londonAMRate),
@@ -207,6 +208,8 @@ export function SaleCreate() {
             net_proceeds: calculations.netProceeds,
             royalties: calculations.royalties,
             final_proceeds: calculations.finalAmount,
+            total_amount: calculations.finalAmount,
+            currency: 'USD',
             status: 'customer_pending',
             mechanism_type: formData.mechanismType || null,
             created_by: user?.id
@@ -217,14 +220,26 @@ export function SaleCreate() {
 
       if (error) {
         console.error('Database error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
 
       alert.success('Sale created successfully!');
       navigate('/sales');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating sale:', error);
-      alert.error('Failed to create sale. Please try again.');
+
+      let errorMessage = 'Failed to create sale. Please try again.';
+
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.details) {
+        errorMessage = `Database error: ${error.details}`;
+      } else if (error?.hint) {
+        errorMessage = `Error: ${error.hint}`;
+      }
+
+      alert.error(errorMessage);
     } finally {
       setSubmitting(false);
     }

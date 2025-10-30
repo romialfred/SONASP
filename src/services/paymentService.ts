@@ -6,33 +6,32 @@ export interface CreatePaymentData {
   amount: number;
   currency: string;
   fx_rate: number;
-  amount_usd?: number;
-  expected_date?: string;
-  bank_name?: string;
+  expected_date: string;
+  bank_name: string;
   account_number?: string;
-  reference_number?: string;
+  reference_number: string;
   proof_url?: string;
   notes?: string;
 }
 
 export interface Payment {
   id: string;
-  payment_number: string;
   sale_id: string;
   amount: number;
   currency: string;
   fx_rate: number;
-  amount_usd: number;
   expected_date: string;
-  received_date?: string;
-  bank_name?: string;
+  actual_date?: string;
+  bank_name: string;
   account_number?: string;
-  reference_number?: string;
+  reference_number: string;
   proof_url?: string;
   status: string;
   notes?: string;
+  created_by?: string;
   created_at: string;
-  updated_at: string;
+  approved_by?: string;
+  approved_at?: string;
 }
 
 export interface FXRate {
@@ -44,44 +43,33 @@ export interface FXRate {
   source: string;
 }
 
-function generatePaymentNumber(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  return `PAY-${year}${month}${day}-${random}`;
-}
-
 export async function createPayment(
   paymentData: CreatePaymentData,
-  userEmail: string
+  userId: string
 ): Promise<{ success: boolean; data?: Payment; error?: string }> {
   try {
-    const paymentNumber = generatePaymentNumber(new Date());
-    const amountUsd = paymentData.amount_usd || (paymentData.amount / paymentData.fx_rate);
-
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
-        payment_number: paymentNumber,
         sale_id: paymentData.sale_id,
         amount: paymentData.amount,
         currency: paymentData.currency,
         fx_rate: paymentData.fx_rate,
-        amount_usd: amountUsd,
-        expected_date: paymentData.expected_date || new Date().toISOString(),
+        expected_date: paymentData.expected_date,
         bank_name: paymentData.bank_name,
         account_number: paymentData.account_number,
         reference_number: paymentData.reference_number,
         proof_url: paymentData.proof_url,
-        status: 'pending_approval',
+        status: 'pending',
         notes: paymentData.notes,
+        created_by: userId,
       })
       .select()
       .single();
 
     if (paymentError) {
       console.error('Error creating payment:', paymentError);
+      console.error('Error details:', JSON.stringify(paymentError, null, 2));
       return { success: false, error: paymentError.message };
     }
 
@@ -90,13 +78,12 @@ export async function createPayment(
       table_name: 'payments',
       record_id: payment.id,
       details: {
-        payment_number: paymentNumber,
         sale_id: paymentData.sale_id,
         amount: paymentData.amount,
         currency: paymentData.currency,
-        amount_usd: amountUsd,
+        reference_number: paymentData.reference_number,
       },
-      user_email: userEmail,
+      user_email: userId,
     });
 
     return { success: true, data: payment };
@@ -159,18 +146,22 @@ export async function getPaymentsBySale(
 export async function updatePaymentStatus(
   paymentId: string,
   status: string,
-  userEmail: string,
-  receivedDate?: string,
+  userId: string,
+  actualDate?: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const updateData: any = {
       status,
-      updated_at: new Date().toISOString(),
     };
 
-    if (receivedDate) {
-      updateData.received_date = receivedDate;
+    if (actualDate) {
+      updateData.actual_date = actualDate;
+    }
+
+    if (status === 'approved') {
+      updateData.approved_by = userId;
+      updateData.approved_at = new Date().toISOString();
     }
 
     const { error } = await supabase
@@ -188,25 +179,24 @@ export async function updatePaymentStatus(
       record_id: paymentId,
       details: {
         new_status: status,
-        received_date: receivedDate,
+        actual_date: actualDate,
         notes,
       },
-      user_email: userEmail,
+      user_email: userId,
     });
 
-    if (status === 'received') {
+    if (status === 'approved') {
       const { data: payment } = await supabase
         .from('payments')
         .select('sale_id')
         .eq('id', paymentId)
-        .single();
+        .maybeSingle();
 
       if (payment) {
         await supabase
           .from('sales')
           .update({
             status: 'payment_received',
-            updated_at: new Date().toISOString(),
           })
           .eq('id', payment.sale_id);
       }
@@ -220,27 +210,18 @@ export async function updatePaymentStatus(
 
 export async function approvePayment(
   paymentId: string,
-  userEmail: string,
+  userId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updatePaymentStatus(paymentId, 'approved', userEmail, undefined, notes);
+  return updatePaymentStatus(paymentId, 'approved', userId, undefined, notes);
 }
 
 export async function rejectPayment(
   paymentId: string,
-  userEmail: string,
+  userId: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updatePaymentStatus(paymentId, 'rejected', userEmail, undefined, reason);
-}
-
-export async function confirmPaymentReceived(
-  paymentId: string,
-  userEmail: string,
-  receivedDate: string,
-  notes?: string
-): Promise<{ success: boolean; error?: string }> {
-  return updatePaymentStatus(paymentId, 'received', userEmail, receivedDate, notes);
+  return updatePaymentStatus(paymentId, 'rejected', userId, undefined, reason);
 }
 
 export async function uploadPaymentProof(
@@ -392,16 +373,16 @@ export async function getPaymentStatistics(filters?: {
   success: boolean;
   data?: {
     total_payments: number;
-    total_amount_usd: number;
+    total_amount: number;
     pending_approvals: number;
-    received_payments: number;
+    approved_payments: number;
   };
   error?: string;
 }> {
   try {
     let query = supabase
       .from('payments')
-      .select('amount_usd, status');
+      .select('amount, currency, fx_rate, status');
 
     if (filters?.date_from) {
       query = query.gte('expected_date', filters.date_from);
@@ -419,17 +400,22 @@ export async function getPaymentStatistics(filters?: {
 
     const payments = data || [];
     const totalPayments = payments.length;
-    const totalAmountUsd = payments.reduce((sum, p) => sum + (p.amount_usd || 0), 0);
-    const pendingApprovals = payments.filter(p => p.status === 'pending_approval').length;
-    const receivedPayments = payments.filter(p => p.status === 'received').length;
+
+    const totalAmount = payments.reduce((sum, p) => {
+      const amountInUsd = p.currency === 'USD' ? p.amount : (p.amount / (p.fx_rate || 1));
+      return sum + amountInUsd;
+    }, 0);
+
+    const pendingApprovals = payments.filter(p => p.status === 'pending').length;
+    const approvedPayments = payments.filter(p => p.status === 'approved').length;
 
     return {
       success: true,
       data: {
         total_payments: totalPayments,
-        total_amount_usd: totalAmountUsd,
+        total_amount: totalAmount,
         pending_approvals: pendingApprovals,
-        received_payments: receivedPayments,
+        approved_payments: approvedPayments,
       },
     };
   } catch (error: any) {

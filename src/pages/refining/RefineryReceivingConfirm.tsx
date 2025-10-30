@@ -104,13 +104,29 @@ export function RefineryReceivingConfirm() {
       const actualWeightGrams = parseFloat(actualWeight);
 
       // Use the transition service to handle the status changes
-      // The correct workflow is a two-step process:
-      // 1. waiting_refinery_receipt → received_at_refinery (refinery_manager confirms physical receipt)
-      // 2. received_at_refinery → validated_for_processing (refinery_manager validates for processing)
+      // The correct workflow can have three entry points:
+      // A. validated_for_refinery → waiting_refinery_receipt (system) → received_at_refinery → validated_for_processing
+      // B. waiting_refinery_receipt → received_at_refinery → validated_for_processing
+      // C. received_at_refinery → validated_for_processing
       const { transitionBatchStatus } = await import('@/services/batchTransitionService');
 
-      // Step 1: Confirm physical receipt at refinery (if coming from waiting_refinery_receipt)
-      if (batch.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT) {
+      // Pre-Step: If coming from validated_for_refinery, transition to waiting_refinery_receipt first
+      if (batch.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY) {
+        const waitingResult = await transitionBatchStatus(
+          batch.id,
+          BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
+          {
+            comments: `Batch ready for refinery receipt`,
+          }
+        );
+
+        if (!waitingResult.success) {
+          throw new Error(waitingResult.error || 'Failed to transition to waiting refinery receipt');
+        }
+      }
+
+      // Step 1: Confirm physical receipt at refinery (if coming from validated_for_refinery or waiting_refinery_receipt)
+      if (batch.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || batch.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT) {
         const receiptResult = await transitionBatchStatus(
           batch.id,
           BATCH_STATUSES.RECEIVED_AT_REFINERY,

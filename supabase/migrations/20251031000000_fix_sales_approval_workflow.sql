@@ -23,26 +23,50 @@
 -- 1. Fix sales table status constraint
 -- ============================================
 
--- Drop existing constraint if it exists
-ALTER TABLE sales DROP CONSTRAINT IF EXISTS sales_status_check;
+-- First, check and display current status values
+DO $$
+DECLARE
+  invalid_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO invalid_count
+  FROM sales
+  WHERE status NOT IN (
+    'pending_approval',
+    'approved',
+    'customer_approved',
+    'customer_rejected',
+    'waiting_for_payment',
+    'payment_received',
+    'completed',
+    'rejected',
+    'cancelled'
+  ) OR status IS NULL;
 
--- Add comprehensive status constraint
-ALTER TABLE sales ADD CONSTRAINT sales_status_check 
-CHECK (status IN (
-  'pending_approval',
-  'approved',
-  'customer_approved',
-  'customer_rejected',
-  'waiting_for_payment',
-  'payment_received',
-  'completed',
-  'rejected',
-  'cancelled'
-));
+  RAISE NOTICE 'Found % sales with invalid or NULL status values', invalid_count;
+END $$;
 
--- Update any existing sales with invalid status to pending_approval
-UPDATE sales 
-SET status = 'pending_approval' 
+-- Update any existing sales with invalid status BEFORE dropping constraint
+-- Handle NULL statuses
+UPDATE sales
+SET status = 'pending_approval',
+    updated_at = now()
+WHERE status IS NULL;
+
+-- Map common invalid status values to valid ones
+UPDATE sales
+SET status = CASE
+  -- Map common variations
+  WHEN status ILIKE '%pending%' THEN 'pending_approval'
+  WHEN status ILIKE '%wait%' THEN 'waiting_for_payment'
+  WHEN status ILIKE '%approv%' AND status NOT LIKE 'customer_%' THEN 'approved'
+  WHEN status ILIKE '%complet%' THEN 'completed'
+  WHEN status ILIKE '%reject%' AND status NOT LIKE 'customer_%' THEN 'rejected'
+  WHEN status ILIKE '%cancel%' THEN 'cancelled'
+  WHEN status ILIKE '%paid%' OR status ILIKE '%payment%' THEN 'payment_received'
+  -- Default fallback
+  ELSE 'pending_approval'
+END,
+updated_at = now()
 WHERE status NOT IN (
   'pending_approval',
   'approved',
@@ -54,6 +78,49 @@ WHERE status NOT IN (
   'rejected',
   'cancelled'
 );
+
+-- Verify all statuses are now valid
+DO $$
+DECLARE
+  remaining_invalid INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO remaining_invalid
+  FROM sales
+  WHERE status NOT IN (
+    'pending_approval',
+    'approved',
+    'customer_approved',
+    'customer_rejected',
+    'waiting_for_payment',
+    'payment_received',
+    'completed',
+    'rejected',
+    'cancelled'
+  ) OR status IS NULL;
+
+  IF remaining_invalid > 0 THEN
+    RAISE EXCEPTION 'Still have % invalid status values after cleanup', remaining_invalid;
+  END IF;
+
+  RAISE NOTICE 'All status values are now valid. Proceeding with constraint.';
+END $$;
+
+-- Now drop existing constraint if it exists
+ALTER TABLE sales DROP CONSTRAINT IF EXISTS sales_status_check;
+
+-- Add comprehensive status constraint
+ALTER TABLE sales ADD CONSTRAINT sales_status_check
+CHECK (status IN (
+  'pending_approval',
+  'approved',
+  'customer_approved',
+  'customer_rejected',
+  'waiting_for_payment',
+  'payment_received',
+  'completed',
+  'rejected',
+  'cancelled'
+));
 
 -- ============================================
 -- 2. Add mechanism_type to sales if missing

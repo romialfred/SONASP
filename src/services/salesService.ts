@@ -282,11 +282,11 @@ export async function rejectSale(
 export async function customerApproveSale(
   saleId: string,
   customerEmail: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; paymentId?: string }> {
   try {
     const { data: sale, error: saleError } = await supabase
       .from('sales')
-      .select('*, mechanism_type')
+      .select('*, customer:customers(id, name, email)')
       .eq('id', saleId)
       .maybeSingle();
 
@@ -294,36 +294,59 @@ export async function customerApproveSale(
       return { success: false, error: saleError?.message || 'Sale not found' };
     }
 
-    const mechanism = sale.mechanism_type?.toLowerCase();
-    const isSpotBasis = !mechanism || mechanism === 'spot';
+    const mechanism = sale.mechanism_type?.toLowerCase() || 'spot';
 
-    let newStatus = 'customer_approved';
+    // TOUJOURS créer un paiement virtuel automatique
+    // Status de la vente → 'waiting_for_payment'
+    const newStatus = 'waiting_for_payment';
 
-    if (isSpotBasis) {
-      newStatus = 'payment_received';
-
-      await logAuditAction({
-        action: 'customer_approved_spot_payment',
-        table_name: 'sales',
-        record_id: saleId,
-        details: {
-          customer_email: customerEmail,
-          mechanism_type: mechanism,
-          note: 'Customer approval on spot basis = Payment commitment',
-          approved_at: new Date().toISOString()
-        },
-        user_email: customerEmail,
+    // 1. Créer le paiement virtuel en utilisant la fonction DB
+    const { data: virtualPaymentId, error: paymentError } = await supabase
+      .rpc('create_virtual_payment', {
+        p_sale_id: saleId,
+        p_customer_id: sale.customer?.id,
+        p_amount: sale.final_proceeds,
+        p_currency: 'USD',
+        p_mechanism_type: mechanism,
+        p_approved_date: new Date().toISOString()
       });
+
+    if (paymentError) {
+      console.error('Error creating virtual payment:', paymentError);
+      return { success: false, error: 'Failed to create virtual payment: ' + paymentError.message };
     }
 
-    return updateSaleStatus(
+    // 2. Log audit action
+    await logAuditAction({
+      action: 'customer_approved_with_virtual_payment',
+      table_name: 'sales',
+      record_id: saleId,
+      details: {
+        customer_email: customerEmail,
+        mechanism_type: mechanism,
+        virtual_payment_id: virtualPaymentId,
+        note: `Customer approved sale. Virtual payment created (${mechanism} terms). Status: waiting_for_payment`,
+        approved_at: new Date().toISOString()
+      },
+      user_email: customerEmail,
+    });
+
+    // 3. Update sale status to waiting_for_payment
+    const statusResult = await updateSaleStatus(
       saleId,
       newStatus,
       customerEmail,
-      isSpotBasis
-        ? 'Customer approved sale - Payment committed (Spot Basis)'
-        : 'Customer approved sale'
+      `Customer approved sale - Virtual payment created (${mechanism} terms). Payment ID: ${virtualPaymentId}`
     );
+
+    if (!statusResult.success) {
+      return statusResult;
+    }
+
+    return {
+      success: true,
+      paymentId: virtualPaymentId
+    };
   } catch (error: any) {
     console.error('Error in customerApproveSale:', error);
     return { success: false, error: error.message };

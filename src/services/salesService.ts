@@ -284,6 +284,8 @@ export async function customerApproveSale(
   customerEmail: string
 ): Promise<{ success: boolean; error?: string; paymentId?: string }> {
   try {
+    console.log('[customerApproveSale] Starting approval for sale:', saleId);
+
     const { data: sale, error: saleError } = await supabase
       .from('sales')
       .select('*, customer:customers(id, name, email)')
@@ -291,30 +293,92 @@ export async function customerApproveSale(
       .maybeSingle();
 
     if (saleError || !sale) {
+      console.error('[customerApproveSale] Error fetching sale:', saleError);
       return { success: false, error: saleError?.message || 'Sale not found' };
     }
 
+    console.log('[customerApproveSale] Sale found:', sale.sale_number, 'Customer:', sale.customer?.name);
+
     const mechanism = sale.mechanism_type?.toLowerCase() || 'spot';
+    console.log('[customerApproveSale] Mechanism type:', mechanism);
 
-    // TOUJOURS créer un paiement virtuel automatique
-    // Status de la vente → 'waiting_for_payment'
-    const newStatus = 'waiting_for_payment';
+    // Calculate due date based on mechanism
+    const calculateDueDate = (mech: string): Date => {
+      const now = new Date();
+      let daysToAdd = 2; // default spot
 
-    // 1. Créer le paiement virtuel en utilisant la fonction DB
-    const { data: virtualPaymentId, error: paymentError } = await supabase
-      .rpc('create_virtual_payment', {
-        p_sale_id: saleId,
-        p_customer_id: sale.customer?.id,
-        p_amount: sale.final_proceeds,
-        p_currency: 'USD',
-        p_mechanism_type: mechanism,
-        p_approved_date: new Date().toISOString()
-      });
+      if (mech === 'forward_7' || mech === 'forward_7_days') {
+        daysToAdd = 7;
+      } else if (mech === 'forward_14' || mech === 'forward_14_days') {
+        daysToAdd = 14;
+      }
+
+      const dueDate = new Date(now);
+      dueDate.setDate(dueDate.getDate() + daysToAdd);
+      return dueDate;
+    };
+
+    const dueDate = calculateDueDate(mechanism);
+    console.log('[customerApproveSale] Calculated due date:', dueDate);
+
+    // 1. Créer le paiement virtuel DIRECTEMENT (sans RPC pour compatibilité)
+    const virtualPaymentRef = `VP-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+    console.log('[customerApproveSale] Creating virtual payment with ref:', virtualPaymentRef);
+
+    const { data: virtualPayment, error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        sale_id: saleId,
+        customer_id: sale.customer?.id,
+        expected_date: dueDate.toISOString().split('T')[0],
+        amount: sale.final_proceeds,
+        currency: 'USD',
+        is_virtual: true,
+        payment_type: 'virtual',
+        mechanism_type: mechanism,
+        auto_credited_at: new Date().toISOString(),
+        virtual_due_date: dueDate.toISOString().split('T')[0],
+        status: 'pending',
+        bank_name: 'Virtual Payment - Pending Confirmation',
+        reference_number: virtualPaymentRef,
+        notes: `Virtual payment created automatically upon customer approval. Payment due: ${dueDate.toLocaleDateString()} (${mechanism} terms)`,
+      })
+      .select()
+      .single();
 
     if (paymentError) {
-      console.error('Error creating virtual payment:', paymentError);
-      return { success: false, error: 'Failed to create virtual payment: ' + paymentError.message };
+      console.error('[customerApproveSale] Error creating virtual payment:', paymentError);
+
+      // Si la colonne n'existe pas, essayer sans les colonnes virtuelles
+      console.log('[customerApproveSale] Trying fallback without virtual columns...');
+      const { data: fallbackPayment, error: fallbackError } = await supabase
+        .from('payments')
+        .insert({
+          sale_id: saleId,
+          customer_id: sale.customer?.id,
+          expected_date: dueDate.toISOString().split('T')[0],
+          amount: sale.final_proceeds,
+          currency: 'USD',
+          status: 'pending',
+          bank_name: 'Virtual Payment - Pending Confirmation',
+          reference_number: virtualPaymentRef,
+          notes: `Virtual payment created automatically upon customer approval. Payment due: ${dueDate.toLocaleDateString()} (${mechanism} terms). Migration pending.`,
+        })
+        .select()
+        .single();
+
+      if (fallbackError) {
+        console.error('[customerApproveSale] Fallback also failed:', fallbackError);
+        return { success: false, error: 'Failed to create payment: ' + fallbackError.message };
+      }
+
+      console.log('[customerApproveSale] Fallback payment created:', fallbackPayment?.id);
+    } else {
+      console.log('[customerApproveSale] Virtual payment created:', virtualPayment?.id);
     }
+
+    const paymentId = virtualPayment?.id || null;
 
     // 2. Log audit action
     await logAuditAction({
@@ -324,31 +388,48 @@ export async function customerApproveSale(
       details: {
         customer_email: customerEmail,
         mechanism_type: mechanism,
-        virtual_payment_id: virtualPaymentId,
-        note: `Customer approved sale. Virtual payment created (${mechanism} terms). Status: waiting_for_payment`,
+        virtual_payment_id: paymentId,
+        due_date: dueDate.toISOString(),
+        note: `Customer approved sale. Virtual payment created (${mechanism} terms).`,
         approved_at: new Date().toISOString()
       },
       user_email: customerEmail,
     });
 
-    // 3. Update sale status to waiting_for_payment
-    const statusResult = await updateSaleStatus(
+    // 3. Update sale status - essayer d'abord 'waiting_for_payment'
+    console.log('[customerApproveSale] Updating sale status to waiting_for_payment...');
+
+    let statusResult = await updateSaleStatus(
       saleId,
-      newStatus,
+      'waiting_for_payment',
       customerEmail,
-      `Customer approved sale - Virtual payment created (${mechanism} terms). Payment ID: ${virtualPaymentId}`
+      `Customer approved sale - Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
     );
 
+    // Si waiting_for_payment échoue (migration pas encore appliquée), utiliser customer_approved
     if (!statusResult.success) {
+      console.warn('[customerApproveSale] waiting_for_payment failed, trying customer_approved...');
+      statusResult = await updateSaleStatus(
+        saleId,
+        'customer_approved',
+        customerEmail,
+        `Customer approved sale - Virtual payment pending (${mechanism} terms). Payment ID: ${paymentId}`
+      );
+    }
+
+    if (!statusResult.success) {
+      console.error('[customerApproveSale] Status update failed:', statusResult.error);
       return statusResult;
     }
 
+    console.log('[customerApproveSale] Success! Payment ID:', paymentId);
+
     return {
       success: true,
-      paymentId: virtualPaymentId
+      paymentId: paymentId
     };
   } catch (error: any) {
-    console.error('Error in customerApproveSale:', error);
+    console.error('[customerApproveSale] Unexpected error:', error);
     return { success: false, error: error.message };
   }
 }

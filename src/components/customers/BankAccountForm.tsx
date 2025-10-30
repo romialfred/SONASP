@@ -94,6 +94,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
         </div>
         {!readOnly && (
           <Button
+            type="button"
             onClick={handleAddBank}
             variant="secondary"
             size="sm"
@@ -114,7 +115,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
               Add at least one bank account for payment processing
             </p>
             {!readOnly && (
-              <Button onClick={handleAddBank} variant="primary" size="sm">
+              <Button type="button" onClick={handleAddBank} variant="primary" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add First Bank Account
               </Button>
@@ -173,6 +174,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                 {!readOnly && (
                   <div className="flex items-center gap-2">
                     <Button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteBank(index);

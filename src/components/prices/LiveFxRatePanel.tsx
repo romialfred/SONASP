@@ -137,7 +137,7 @@ export function LiveFxRatePanel() {
       )}
 
       {/* FX Rate Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {CURRENCY_PAIRS.map((currencyInfo) => {
           const rate = fxRates.get(currencyInfo.pair);
 
@@ -162,7 +162,7 @@ export function LiveFxRatePanel() {
                 isPositive ? 'to-green-50 border-l-4 border-green-500' : 'to-red-50 border-l-4 border-red-500'
               }`}
             >
-              <div className="p-6">
+              <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-xs text-gray-500 font-medium">
@@ -175,14 +175,14 @@ export function LiveFxRatePanel() {
                   <div className="text-2xl">{currencyInfo.flag}</div>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-3">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-gray-900">
+                    <span className="text-2xl font-bold text-gray-900">
                       {formatFxRate(rate.rate, currencyInfo.pair.includes('GNF') ? 2 : 6)}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 mt-2">
+                  <div className="flex items-center gap-1 mt-1">
                     {isPositive ? (
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                     ) : (

@@ -10,6 +10,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { BankAccountForm, type BankAccount } from '@/components/customers/BankAccountForm';
 import { COUNTRIES } from '@/constants/countries';
+import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
 
 interface CustomerFormData {
   name: string;
@@ -374,99 +375,44 @@ export function CustomerForm() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="space-y-6 sticky top-6">
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Info className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Customer Guidelines</h3>
-                      <ul className="text-sm text-gray-700 space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-600 mt-0.5">•</span>
-                          <span>All fields marked with * are required</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-600 mt-0.5">•</span>
-                          <span>Email will be used for payment notifications</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-600 mt-0.5">•</span>
-                          <span>Credit limit determines maximum outstanding balance</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-600 mt-0.5">•</span>
-                          <span>New customers start with "Pending" status</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="sticky top-6">
+              <InfoPanelGroup>
+                <InfoPanel
+                  title="Customer Guidelines"
+                  icon={Info}
+                  variant="blue"
+                  items={[
+                    { text: 'All fields marked with * are required' },
+                    { text: 'Email will be used for payment notifications' },
+                    { text: 'Credit limit determines maximum outstanding balance' },
+                    { text: 'New customers start with "Pending" status' },
+                  ]}
+                />
 
-              <Card className="bg-amber-50 border-amber-200">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Bank Information</h3>
-                      <ul className="text-sm text-gray-700 space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-0.5">•</span>
-                          <span>Add at least one bank account for payments</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-0.5">•</span>
-                          <span>Primary bank will be used as default</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-0.5">•</span>
-                          <span>IBAN and SWIFT codes ensure accurate transfers</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-0.5">•</span>
-                          <span>Multiple banks can be added for different currencies</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <InfoPanel
+                  title="Bank Information"
+                  icon={Building2}
+                  variant="amber"
+                  items={[
+                    { text: 'Add at least one bank account for payments' },
+                    { text: 'Primary bank will be used as default' },
+                    { text: 'IBAN and SWIFT codes ensure accurate transfers' },
+                    { text: 'Multiple banks can be added for different currencies' },
+                  ]}
+                />
 
-              <Card className="bg-green-50 border-green-200">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Required Documents</h3>
-                      <ul className="text-sm text-gray-700 space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5">✓</span>
-                          <span>Business registration certificate</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5">✓</span>
-                          <span>Tax identification documents</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5">✓</span>
-                          <span>Bank account verification letter</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5">✓</span>
-                          <span>Authorized signatory list</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <InfoPanel
+                  title="Required Documents"
+                  icon={FileText}
+                  variant="green"
+                  items={[
+                    { text: 'Business registration certificate', icon: '✓' },
+                    { text: 'Tax identification documents', icon: '✓' },
+                    { text: 'Bank account verification letter', icon: '✓' },
+                    { text: 'Authorized signatory list', icon: '✓' },
+                  ]}
+                />
+              </InfoPanelGroup>
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useAlert } from '@/hooks/useAlert';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 export function RefineryReceivingConfirm() {
   const { id } = useParams();
@@ -175,9 +176,9 @@ export function RefineryReceivingConfirm() {
 
       alert.success('Batch confirmed and validated for processing');
 
-      // Navigate after a short delay to show the success message
+      // Navigate with auto-refresh to update the refining dashboard
       setTimeout(() => {
-        navigate('/refining');
+        navigateWithAutoRefresh(navigate, '/refining');
       }, 1000);
     } catch (error: any) {
       console.error('Error confirming receipt:', error);

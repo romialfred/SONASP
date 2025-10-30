@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { BatchFilters } from '@/components/batch/BatchFilters';
 import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
 import { BatchSections } from '@/components/batch/BatchSections';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { supabase } from '@/lib/supabase';
 import { convertGramsToOunces } from '@/utils/batchUtils';
 
@@ -45,6 +46,14 @@ export function BatchesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-refresh when returning from batch creation
+  useAutoRefresh({
+    enabled: true,
+    onRefresh: () => {
+      fetchData();
+    },
+  });
 
   async function fetchData() {
     setLoading(true);

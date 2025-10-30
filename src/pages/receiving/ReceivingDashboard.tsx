@@ -7,6 +7,7 @@ import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useBatchRealtime } from '@/hooks/useBatchRealtime';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { BatchCard } from '@/components/batch/BatchCard';
 import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,13 +20,23 @@ export function ReceivingDashboard() {
   const alert = useAlert();
 
   // Use Realtime hook to fetch batches with relevant statuses for airport
-  const { batches, loading } = useBatchRealtime({
+  const { batches, loading, refetch } = useBatchRealtime({
     statuses: [
       BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
       BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
       BATCH_STATUSES.RECEIVED_AT_AIRPORT,
       BATCH_STATUSES.VALIDATED_FOR_REFINERY,
     ],
+  });
+
+  // Auto-refresh when returning from batch validation
+  useAutoRefresh({
+    enabled: true,
+    onRefresh: () => {
+      if (refetch) {
+        refetch();
+      }
+    },
   });
 
   // Count batches by status using correct constants

@@ -16,6 +16,7 @@ import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { validateRefineryReceipt, startBatchProcessing } from '@/services/refineryValidationService';
 import { completeProcessing } from '@/services/batchTransitionService';
 
@@ -79,6 +80,15 @@ export function RefiningDashboard() {
     fetchData();
     fetchMonthlyProcessedData();
   }, []);
+
+  // Auto-refresh when returning from batch receiving/processing
+  useAutoRefresh({
+    enabled: true,
+    onRefresh: () => {
+      fetchData();
+      fetchMonthlyProcessedData();
+    },
+  });
 
   async function fetchMonthlyProcessedData() {
     try {

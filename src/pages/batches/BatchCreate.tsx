@@ -19,6 +19,7 @@ import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/s
 import type { CreateBatchData } from '@/services/batchCreationService';
 import { supabase } from '@/lib/supabase';
 import { extractArrayData } from '@/utils/arrayUtils';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 interface FormData {
   shipping_date: string;
@@ -354,7 +355,7 @@ export function BatchCreate() {
         localStorage.removeItem('batch_draft');
         showSuccess('Batch Created', `Batch ${result.data.batch_number} has been created successfully!`);
         setTimeout(() => {
-          navigate('/batches');
+          navigateWithAutoRefresh(navigate, '/batches');
         }, 1500);
       } else {
         const errorMessage = typeof result.error === 'string'

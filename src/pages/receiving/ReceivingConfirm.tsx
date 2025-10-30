@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useAlert } from '@/hooks/useAlert';
+import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
 export function ReceivingConfirm() {
   const { id } = useParams();
@@ -218,9 +219,9 @@ export function ReceivingConfirm() {
         alert.success('Receipt confirmed successfully.');
       }
 
-      // Navigate after a short delay to show the success message
+      // Navigate with auto-refresh to update the receiving dashboard
       setTimeout(() => {
-        navigate('/receiving');
+        navigateWithAutoRefresh(navigate, '/receiving');
       }, 1000);
     } catch (error) {
       console.error('Error confirming receipt:', error);

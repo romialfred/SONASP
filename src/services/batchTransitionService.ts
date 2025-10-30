@@ -6,6 +6,7 @@ export interface TransitionMetadata {
   weightGrams?: number;
   variance?: number;
   variancePercentage?: number;
+  reconciliationComments?: string;
   documents?: string[];
   transportCompanyId?: string;
   receivedBy?: string;
@@ -26,13 +27,12 @@ async function validateTransition(
   newStatus: string,
   batchId: string
 ): Promise<{ valid: boolean; reason?: string }> {
-  // Check if transition exists in batch_status_transitions table
+  // Check if transition exists in allowed_status_transitions table
   const { data: transition, error } = await supabase
-    .from('batch_status_transitions')
+    .from('allowed_status_transitions')
     .select('*')
     .eq('from_status', currentStatus)
     .eq('to_status', newStatus)
-    .eq('is_active', true)
     .maybeSingle();
 
   if (error) {
@@ -99,8 +99,35 @@ export async function transitionBatchStatus(
 
     // Add metadata to update if provided
     if (metadata?.weightGrams) {
-      updateData.weight_grams = metadata.weightGrams;
-      updateData.weight_ounces = metadata.weightGrams / 31.1035;
+      // Handle refinery-specific weight fields
+      if (newStatus === BATCH_STATUSES.RECEIVED_AT_REFINERY) {
+        updateData.refinery_received_weight_grams = metadata.weightGrams;
+        updateData.refinery_received_weight_ounces = metadata.weightGrams / 31.1035;
+        updateData.refinery_received_at = new Date().toISOString();
+        updateData.refinery_received_by = user.id;
+        if (metadata.variancePercentage !== undefined) {
+          updateData.refinery_variance_percentage = metadata.variancePercentage;
+        }
+        if (metadata.reconciliationComments) {
+          updateData.refinery_reconciliation_comments = metadata.reconciliationComments;
+        }
+      } else if (newStatus === BATCH_STATUSES.RECEIVED_AT_AIRPORT) {
+        // Handle airport-specific weight fields
+        updateData.airport_received_weight_grams = metadata.weightGrams;
+        updateData.airport_received_weight_ounces = metadata.weightGrams / 31.1035;
+        updateData.airport_received_at = new Date().toISOString();
+        updateData.airport_received_by = user.id;
+        if (metadata.variancePercentage !== undefined) {
+          updateData.airport_variance_percentage = metadata.variancePercentage;
+        }
+        if (metadata.reconciliationComments) {
+          updateData.airport_reconciliation_comments = metadata.reconciliationComments;
+        }
+      } else {
+        // Default weight update
+        updateData.weight_grams = metadata.weightGrams;
+        updateData.weight_ounces = metadata.weightGrams / 31.1035;
+      }
     }
 
     // Update batch status
@@ -253,14 +280,17 @@ export async function validateForRefinery(
 export async function confirmRefineryReceipt(
   batchId: string,
   actualWeightGrams: number,
-  comments?: string
+  metadata?: TransitionMetadata
 ): Promise<TransitionResult> {
   return transitionBatchStatus(
     batchId,
     BATCH_STATUSES.RECEIVED_AT_REFINERY,
     {
-      comments: comments || 'Received at refinery',
+      comments: metadata?.comments || 'Received at refinery',
       weightGrams: actualWeightGrams,
+      variancePercentage: metadata?.variancePercentage,
+      reconciliationComments: metadata?.reconciliationComments,
+      ...metadata,
     }
   );
 }

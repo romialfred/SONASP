@@ -102,44 +102,22 @@ export function RefineryReceivingConfirm() {
 
     try {
       const actualWeightGrams = parseFloat(actualWeight);
-      const actualWeightOunces = convertGramsToOunces(actualWeightGrams);
 
-      // Update batch with received weight at refinery
-      const { error: updateError } = await supabase
-        .from('batches')
-        .update({
-          status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
-          refinery_received_weight_grams: actualWeightGrams,
-          refinery_received_weight_ounces: actualWeightOunces,
-          refinery_received_at: new Date().toISOString(),
-          refinery_received_by: user?.id,
-          refinery_variance_percentage: variance?.percentage,
-          refinery_reconciliation_comments: reconciliationComments || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', batch.id);
+      // Use the transition service to handle the status change and all related updates
+      const { confirmRefineryReceipt } = await import('@/services/batchTransitionService');
 
-      if (updateError) throw updateError;
+      const result = await confirmRefineryReceipt(
+        batch.id,
+        actualWeightGrams,
+        {
+          variancePercentage: variance?.percentage,
+          reconciliationComments: reconciliationComments || undefined,
+          comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
+        }
+      );
 
-      // Log the reception in batch_history (optional - ignore errors)
-      try {
-        await supabase
-          .from('batch_history')
-          .insert({
-            batch_id: batch.id,
-            status: BATCH_STATUSES.RECEIVED_AT_REFINERY,
-            changed_by: user?.id,
-            comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
-            metadata: {
-              expected_weight: expectedWeight,
-              actual_weight: actualWeightGrams,
-              variance_percentage: variance?.percentage,
-              variance_significant: variance?.isSignificant,
-            },
-          });
-      } catch (historyError) {
-        // Ignore history errors - not critical
-        console.warn('Could not log to batch_history:', historyError);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to confirm receipt');
       }
 
       alert.success('Receipt confirmed successfully at refinery');
@@ -148,9 +126,9 @@ export function RefineryReceivingConfirm() {
       setTimeout(() => {
         navigate('/refining');
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error confirming receipt:', error);
-      alert.error('Error confirming receipt. Please try again.');
+      alert.error(error.message || 'Error confirming receipt. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

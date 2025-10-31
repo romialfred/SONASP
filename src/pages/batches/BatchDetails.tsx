@@ -19,6 +19,10 @@ import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { StatusFlow, StatusHistoryItem } from '@/components/batch/StatusFlow';
 import { Timeline, TimelineEvent } from '@/components/batch/Timeline';
+import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
+import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
+import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
+import { Modal } from '@/components/ui/Modal';
 import { formatWeight } from '@/utils/batchUtils';
 import { supabase } from '@/lib/supabase';
 import { getBatchStatusLabel, getBatchStatusVariant, BATCH_STATUSES } from '@/constants/batchStatuses';
@@ -28,6 +32,7 @@ import { useSingleBatchRealtime } from '@/hooks/useBatchRealtime';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { canEditBatch, getEditRestrictionReason } from '@/utils/batchPermissions';
+import type { AssayCertificate } from '@/services/assayCertificateService';
 
 export function BatchDetails() {
   const { id } = useParams();
@@ -39,6 +44,8 @@ export function BatchDetails() {
   const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
   const [approving, setApproving] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
+  const [certificateRefresh, setCertificateRefresh] = useState(0);
 
   // Use Realtime hook for automatic batch updates
   const { batch, loading, refetch } = useSingleBatchRealtime(id);
@@ -443,6 +450,28 @@ export function BatchDetails() {
                 <Timeline events={timelineEvents} />
               </CardContent>
             </Card>
+
+            {/* Assay Certificates Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Assay Certificates</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <AssayCertificateUpload
+                    batchId={id!}
+                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                  />
+
+                  <AssayCertificatesList
+                    batchId={id!}
+                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                    refreshTrigger={certificateRefresh}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6">
@@ -496,6 +525,31 @@ export function BatchDetails() {
           </div>
         </div>
       </div>
+
+      {/* Certificate Viewer Modal */}
+      {selectedCertificate && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedCertificate(null)}
+          title={`Certificate: ${selectedCertificate.file_name}`}
+          size="large"
+        >
+          <AssayCertificateViewer
+            certificate={selectedCertificate}
+            onApprove={() => {
+              setSelectedCertificate(null);
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+            onReject={() => {
+              setSelectedCertificate(null);
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+            onDataUpdate={() => {
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+          />
+        </Modal>
+      )}
     </MainLayout>
   );
 }

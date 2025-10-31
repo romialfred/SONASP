@@ -1,0 +1,586 @@
+import { supabase } from '@/lib/supabase';
+
+export interface AssayCertificate {
+  id: string;
+  batch_id: string;
+  certificate_number: string | null;
+  certificate_date: string | null;
+  issuing_laboratory: string | null;
+  file_path: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string;
+  parsing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'manual_review';
+  parsing_error: string | null;
+  parsed_at: string | null;
+  approval_status: 'pending' | 'approved' | 'rejected';
+  approved_by: string | null;
+  approved_at: string | null;
+  approval_notes: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssayCertificateData {
+  id: string;
+  certificate_id: string;
+  batch_id: string | null;
+  certificate_number: string | null;
+  certificate_date: string | null;
+  laboratory_name: string | null;
+  laboratory_address: string | null;
+  sample_id: string | null;
+  sample_weight_g: number | null;
+  sample_description: string | null;
+  gold_content_ppm: number | null;
+  gold_content_gpt: number | null;
+  gold_content_ozt: number | null;
+  gold_purity_percentage: number | null;
+  silver_content_ppm: number | null;
+  silver_content_gpt: number | null;
+  silver_content_ozt: number | null;
+  silver_purity_percentage: number | null;
+  platinum_content_ppm: number | null;
+  palladium_content_ppm: number | null;
+  deleterious_elements: Record<string, number>;
+  copper_percentage: number | null;
+  iron_percentage: number | null;
+  zinc_percentage: number | null;
+  fineness: number | null;
+  moisture_percentage: number | null;
+  total_weight_g: number | null;
+  is_verified: boolean;
+  verification_notes: string | null;
+  raw_text: string | null;
+  extraction_confidence: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ParsedCertificateResult {
+  success: boolean;
+  data?: AssayCertificateData;
+  error?: string;
+  confidence?: number;
+}
+
+/**
+ * Upload assay certificate PDF
+ */
+export async function uploadAssayCertificate(
+  batchId: string,
+  file: File,
+  userId: string
+): Promise<{ success: boolean; data?: AssayCertificate; error?: string }> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${batchId}_${Date.now()}.${fileExt}`;
+    const filePath = `${batchId}/${fileName}`;
+
+    // Upload file to storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('assay-certificates')
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { success: false, error: uploadError.message };
+    }
+
+    // Create certificate record
+    const { data: certificate, error: dbError } = await supabase
+      .from('assay_certificates')
+      .insert({
+        batch_id: batchId,
+        file_path: uploadData.path,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        uploaded_by: userId,
+        parsing_status: 'pending',
+        approval_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      return { success: false, error: dbError.message };
+    }
+
+    return { success: true, data: certificate };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get public URL for certificate PDF
+ */
+export async function getCertificateUrl(filePath: string): Promise<string> {
+  const { data } = supabase.storage
+    .from('assay-certificates')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+/**
+ * Get signed URL for certificate PDF (for private access)
+ */
+export async function getCertificateSignedUrl(
+  filePath: string,
+  expiresIn: number = 3600
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('assay-certificates')
+      .createSignedUrl(filePath, expiresIn);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, url: data.signedUrl };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Parse PDF text content (client-side extraction)
+ * This is a simplified parser - in production, you'd use a more sophisticated library
+ */
+export async function parsePDFText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const typedArray = new Uint8Array(e.target?.result as ArrayBuffer);
+
+        // In a real implementation, you would use pdf.js or similar library
+        // For now, we'll return a placeholder
+        const text = 'PDF text extraction requires pdf.js library';
+        resolve(text);
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Extract assay data from text using pattern matching
+ */
+export function extractAssayDataFromText(text: string): Partial<AssayCertificateData> {
+  const data: Partial<AssayCertificateData> = {
+    deleterious_elements: {},
+    extraction_confidence: 0.0,
+  };
+
+  // Certificate number patterns
+  const certNumberPatterns = [
+    /Certificate\s+(?:No|Number|#)[:\s]+([A-Z0-9-]+)/i,
+    /Cert[.:\s]+([A-Z0-9-]+)/i,
+    /Report\s+No[:\s]+([A-Z0-9-]+)/i,
+  ];
+
+  for (const pattern of certNumberPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      data.certificate_number = match[1].trim();
+      break;
+    }
+  }
+
+  // Date patterns
+  const datePatterns = [
+    /Date[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})/i,
+    /(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})/,
+  ];
+
+  for (const pattern of datePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      data.certificate_date = match[1];
+      break;
+    }
+  }
+
+  // Laboratory name
+  const labPattern = /Laboratory[:\s]+([^\n]+)/i;
+  const labMatch = text.match(labPattern);
+  if (labMatch) {
+    data.laboratory_name = labMatch[1].trim();
+  }
+
+  // Gold content patterns
+  const goldPatterns = [
+    /Gold[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt|ppm)/i,
+    /Au[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt|ppm)/i,
+    /Gold.*?(\d+\.?\d*)\s*(?:%|percent)/i,
+  ];
+
+  for (const pattern of goldPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const value = parseFloat(match[1]);
+      if (pattern.source.includes('%')) {
+        data.gold_purity_percentage = value;
+      } else {
+        data.gold_content_gpt = value;
+        data.gold_content_ppm = value; // Often the same for g/t
+      }
+      break;
+    }
+  }
+
+  // Silver content patterns
+  const silverPatterns = [
+    /Silver[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt|ppm)/i,
+    /Ag[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt|ppm)/i,
+    /Silver.*?(\d+\.?\d*)\s*(?:%|percent)/i,
+  ];
+
+  for (const pattern of silverPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const value = parseFloat(match[1]);
+      if (pattern.source.includes('%')) {
+        data.silver_purity_percentage = value;
+      } else {
+        data.silver_content_gpt = value;
+        data.silver_content_ppm = value;
+      }
+      break;
+    }
+  }
+
+  // Fineness
+  const finenessPattern = /Fineness[:\s]+(\d+\.?\d*)/i;
+  const finenessMatch = text.match(finenessPattern);
+  if (finenessMatch) {
+    data.fineness = parseFloat(finenessMatch[1]);
+  }
+
+  // Deleterious elements
+  const elementPatterns = {
+    arsenic: /(?:Arsenic|As)[:\s]+(\d+\.?\d*)/i,
+    mercury: /(?:Mercury|Hg)[:\s]+(\d+\.?\d*)/i,
+    lead: /(?:Lead|Pb)[:\s]+(\d+\.?\d*)/i,
+    antimony: /(?:Antimony|Sb)[:\s]+(\d+\.?\d*)/i,
+    cadmium: /(?:Cadmium|Cd)[:\s]+(\d+\.?\d*)/i,
+  };
+
+  for (const [element, pattern] of Object.entries(elementPatterns)) {
+    const match = text.match(pattern);
+    if (match) {
+      data.deleterious_elements![element] = parseFloat(match[1]);
+    }
+  }
+
+  // Base metals
+  const copperPattern = /(?:Copper|Cu)[:\s]+(\d+\.?\d*)\s*%/i;
+  const copperMatch = text.match(copperPattern);
+  if (copperMatch) {
+    data.copper_percentage = parseFloat(copperMatch[1]);
+  }
+
+  const ironPattern = /(?:Iron|Fe)[:\s]+(\d+\.?\d*)\s*%/i;
+  const ironMatch = text.match(ironPattern);
+  if (ironMatch) {
+    data.iron_percentage = parseFloat(ironMatch[1]);
+  }
+
+  // Sample weight
+  const weightPattern = /(?:Sample\s+)?Weight[:\s]+(\d+\.?\d*)\s*(?:g|grams)/i;
+  const weightMatch = text.match(weightPattern);
+  if (weightMatch) {
+    data.sample_weight_g = parseFloat(weightMatch[1]);
+  }
+
+  // Calculate confidence based on fields found
+  const fieldsFound = Object.values(data).filter((v) => v !== null && v !== undefined && v !== '').length;
+  data.extraction_confidence = Math.min(fieldsFound / 10, 1.0);
+
+  data.raw_text = text;
+
+  return data;
+}
+
+/**
+ * Parse certificate and save data
+ */
+export async function parseCertificate(
+  certificateId: string,
+  file: File
+): Promise<ParsedCertificateResult> {
+  try {
+    // Update status to processing
+    await supabase
+      .from('assay_certificates')
+      .update({ parsing_status: 'processing' })
+      .eq('id', certificateId);
+
+    // Extract text from PDF
+    const text = await parsePDFText(file);
+
+    // Extract data from text
+    const extractedData = extractAssayDataFromText(text);
+
+    // Get certificate to get batch_id
+    const { data: certificate } = await supabase
+      .from('assay_certificates')
+      .select('batch_id')
+      .eq('id', certificateId)
+      .single();
+
+    // Save parsed data
+    const { data: parsedData, error: saveError } = await supabase
+      .from('assay_certificate_data')
+      .insert({
+        certificate_id: certificateId,
+        batch_id: certificate?.batch_id,
+        ...extractedData,
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      await supabase
+        .from('assay_certificates')
+        .update({
+          parsing_status: 'failed',
+          parsing_error: saveError.message,
+        })
+        .eq('id', certificateId);
+
+      return { success: false, error: saveError.message };
+    }
+
+    // Update certificate status
+    await supabase
+      .from('assay_certificates')
+      .update({
+        parsing_status: 'completed',
+        parsed_at: new Date().toISOString(),
+      })
+      .eq('id', certificateId);
+
+    return {
+      success: true,
+      data: parsedData,
+      confidence: extractedData.extraction_confidence,
+    };
+  } catch (error: any) {
+    await supabase
+      .from('assay_certificates')
+      .update({
+        parsing_status: 'failed',
+        parsing_error: error.message,
+      })
+      .eq('id', certificateId);
+
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get certificates for a batch
+ */
+export async function getBatchCertificates(
+  batchId: string
+): Promise<{ success: boolean; data?: AssayCertificate[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('assay_certificates')
+      .select('*')
+      .eq('batch_id', batchId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get parsed data for a certificate
+ */
+export async function getCertificateData(
+  certificateId: string
+): Promise<{ success: boolean; data?: AssayCertificateData; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('assay_certificate_data')
+      .select('*')
+      .eq('certificate_id', certificateId)
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update parsed certificate data
+ */
+export async function updateCertificateData(
+  dataId: string,
+  updates: Partial<AssayCertificateData>
+): Promise<{ success: boolean; data?: AssayCertificateData; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('assay_certificate_data')
+      .update(updates)
+      .eq('id', dataId)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Approve certificate data
+ */
+export async function approveCertificateData(
+  certificateId: string,
+  userId: string,
+  notes?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Update certificate approval status
+    const { error: certError } = await supabase
+      .from('assay_certificates')
+      .update({
+        approval_status: 'approved',
+        approved_by: userId,
+        approved_at: new Date().toISOString(),
+        approval_notes: notes,
+      })
+      .eq('id', certificateId);
+
+    if (certError) {
+      return { success: false, error: certError.message };
+    }
+
+    // Create approval record
+    const { error: approvalError } = await supabase
+      .from('certificate_approvals')
+      .insert({
+        certificate_id: certificateId,
+        action: 'approved',
+        reviewed_by: userId,
+        review_notes: notes,
+      });
+
+    if (approvalError) {
+      return { success: false, error: approvalError.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Reject certificate data
+ */
+export async function rejectCertificateData(
+  certificateId: string,
+  userId: string,
+  notes: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Update certificate approval status
+    const { error: certError } = await supabase
+      .from('assay_certificates')
+      .update({
+        approval_status: 'rejected',
+        approved_by: userId,
+        approved_at: new Date().toISOString(),
+        approval_notes: notes,
+      })
+      .eq('id', certificateId);
+
+    if (certError) {
+      return { success: false, error: certError.message };
+    }
+
+    // Create approval record
+    const { error: approvalError } = await supabase
+      .from('certificate_approvals')
+      .insert({
+        certificate_id: certificateId,
+        action: 'rejected',
+        reviewed_by: userId,
+        review_notes: notes,
+      });
+
+    if (approvalError) {
+      return { success: false, error: approvalError.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Delete certificate
+ */
+export async function deleteCertificate(
+  certificateId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Get certificate to get file path
+    const { data: certificate } = await supabase
+      .from('assay_certificates')
+      .select('file_path')
+      .eq('id', certificateId)
+      .single();
+
+    if (certificate?.file_path) {
+      // Delete file from storage
+      await supabase.storage.from('assay-certificates').remove([certificate.file_path]);
+    }
+
+    // Delete certificate record (cascade will delete related data)
+    const { error } = await supabase
+      .from('assay_certificates')
+      .delete()
+      .eq('id', certificateId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

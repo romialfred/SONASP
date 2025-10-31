@@ -75,26 +75,115 @@ CREATE TABLE IF NOT EXISTS fx_rate_analysis (
   )
 );
 
--- Add missing columns if table already exists
+-- Drop existing constraints that might block column additions
 DO $$
 BEGIN
-  -- Add virtual_payment_amount if missing
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_amount'
-  ) THEN
+  ALTER TABLE fx_rate_analysis DROP CONSTRAINT IF EXISTS valid_amounts;
+  ALTER TABLE fx_rate_analysis DROP CONSTRAINT IF EXISTS positive_rates;
+  RAISE NOTICE 'Dropped existing constraints to allow column additions';
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+END $$;
+
+-- Add ALL missing columns if table already exists
+DO $$
+DECLARE
+  v_column_count integer;
+BEGIN
+  -- Check if table exists and count columns
+  SELECT COUNT(*) INTO v_column_count
+  FROM information_schema.columns
+  WHERE table_name = 'fx_rate_analysis';
+
+  RAISE NOTICE 'fx_rate_analysis table has % columns', v_column_count;
+
+  -- Add each column if missing
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_amount') THEN
     ALTER TABLE fx_rate_analysis ADD COLUMN virtual_payment_amount numeric(18, 2);
-    RAISE NOTICE 'Added column virtual_payment_amount to fx_rate_analysis';
+    RAISE NOTICE 'Added column: virtual_payment_amount';
   END IF;
 
-  -- Add virtual_payment_currency if missing
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_currency'
-  ) THEN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_currency') THEN
     ALTER TABLE fx_rate_analysis ADD COLUMN virtual_payment_currency text;
-    RAISE NOTICE 'Added column virtual_payment_currency to fx_rate_analysis';
+    RAISE NOTICE 'Added column: virtual_payment_currency';
   END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'amount_with_customer_rate') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN amount_with_customer_rate numeric(18, 2) NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added column: amount_with_customer_rate';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'amount_with_best_rate') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN amount_with_best_rate numeric(18, 2) NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added column: amount_with_best_rate';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'gain_loss_amount') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN gain_loss_amount numeric(18, 2) NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added column: gain_loss_amount';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'gain_loss_percentage') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN gain_loss_percentage numeric(8, 4) NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added column: gain_loss_percentage';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'best_rate') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN best_rate numeric(18, 6) NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added column: best_rate';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'best_rate_source') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN best_rate_source text NOT NULL DEFAULT 'Unknown';
+    RAISE NOTICE 'Added column: best_rate_source';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'worst_rate') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN worst_rate numeric(18, 6);
+    RAISE NOTICE 'Added column: worst_rate';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'worst_rate_source') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN worst_rate_source text;
+    RAISE NOTICE 'Added column: worst_rate_source';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fx_rate_analysis' AND column_name = 'market_spread') THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN market_spread numeric(8, 4);
+    RAISE NOTICE 'Added column: market_spread';
+  END IF;
+
+  RAISE NOTICE 'All missing columns added to fx_rate_analysis';
+END $$;
+
+-- Re-add constraints after all columns exist
+DO $$
+BEGIN
+  -- Drop old constraints first if they exist
+  ALTER TABLE fx_rate_analysis DROP CONSTRAINT IF EXISTS valid_amounts;
+  ALTER TABLE fx_rate_analysis DROP CONSTRAINT IF EXISTS positive_rates;
+
+  -- Add constraints back
+  ALTER TABLE fx_rate_analysis ADD CONSTRAINT positive_rates CHECK (
+    customer_rate > 0 AND
+    best_rate > 0 AND
+    (revolut_rate IS NULL OR revolut_rate > 0) AND
+    (ecb_rate IS NULL OR ecb_rate > 0) AND
+    (bceao_rate IS NULL OR bceao_rate > 0) AND
+    (other_rate IS NULL OR other_rate > 0)
+  );
+
+  ALTER TABLE fx_rate_analysis ADD CONSTRAINT valid_amounts CHECK (
+    (virtual_payment_amount IS NULL OR virtual_payment_amount > 0) AND
+    amount_with_customer_rate > 0 AND
+    amount_with_best_rate > 0
+  );
+
+  RAISE NOTICE 'Constraints re-added to fx_rate_analysis';
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN others THEN
+    RAISE NOTICE 'Error adding constraints: %', SQLERRM;
 END $$;
 
 -- Create indexes for performance

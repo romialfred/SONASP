@@ -369,6 +369,10 @@ export function PaymentsPage() {
             <p className="text-gray-600 mt-1">Track and manage all customer payments</p>
           </div>
           <div className="flex gap-3">
+            <Button onClick={() => navigate('/payments/create')}>
+              <DollarSign className="h-4 w-4 mr-2" />
+              Create Payment
+            </Button>
             <Button variant="outline" onClick={() => {}}>
               <Download className="h-4 w-4 mr-2" />
               Export

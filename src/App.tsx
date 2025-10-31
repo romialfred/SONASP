@@ -41,6 +41,7 @@ import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
 import { PaymentProcessing } from './pages/customers/PaymentProcessing';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
+import { PaymentCreate } from './pages/payments/PaymentCreate';
 import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
 import { PaymentRecordPage } from './pages/payments/PaymentRecordPage';
 import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
@@ -369,6 +370,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PaymentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments/create"
+              element={
+                <ProtectedRoute>
+                  <PaymentCreate />
                 </ProtectedRoute>
               }
             />

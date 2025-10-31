@@ -38,12 +38,40 @@ BEGIN
   RAISE NOTICE 'Status transition triggers temporarily removed for migration';
 END $$;
 
--- Drop existing status constraint if it exists
+-- First, list all existing constraints on sales table
 DO $$
+DECLARE
+  v_constraint record;
 BEGIN
-  ALTER TABLE sales DROP CONSTRAINT IF EXISTS sales_status_check;
-EXCEPTION
-  WHEN undefined_object THEN NULL;
+  RAISE NOTICE '--- Existing constraints on sales table ---';
+  FOR v_constraint IN
+    SELECT conname, pg_get_constraintdef(oid) as definition
+    FROM pg_constraint
+    WHERE conrelid = 'sales'::regclass
+      AND conname LIKE '%status%'
+  LOOP
+    RAISE NOTICE 'Constraint: % - Definition: %', v_constraint.conname, v_constraint.definition;
+  END LOOP;
+END $$;
+
+-- Drop ALL existing status constraints
+DO $$
+DECLARE
+  v_constraint_name text;
+BEGIN
+  -- Find and drop all status-related check constraints dynamically
+  FOR v_constraint_name IN
+    SELECT conname
+    FROM pg_constraint
+    WHERE conrelid = 'sales'::regclass
+      AND contype = 'c'
+      AND conname LIKE '%status%'
+  LOOP
+    EXECUTE format('ALTER TABLE sales DROP CONSTRAINT IF EXISTS %I', v_constraint_name);
+    RAISE NOTICE 'Dropped constraint: %', v_constraint_name;
+  END LOOP;
+
+  RAISE NOTICE 'All status constraints dropped';
 END $$;
 
 -- IMPORTANT: Migrate existing statuses to new workflow statuses BEFORE adding constraint

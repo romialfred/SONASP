@@ -433,7 +433,7 @@ export function SaleDetails() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 max-w-7xl mx-auto px-4">
+      <div className="space-y-6 w-full px-6">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"

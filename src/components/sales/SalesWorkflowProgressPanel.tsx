@@ -1,6 +1,5 @@
 import { CheckCircle, Clock, XCircle, DollarSign, Send, FileCheck, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { SALES_STATUSES } from '@/constants/salesStatuses';
 
 interface WorkflowStep {
   status: string;
@@ -11,43 +10,31 @@ interface WorkflowStep {
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
   {
-    status: SALES_STATUSES.CREATE_SALES,
-    label: 'Create Sales',
-    description: 'Sale initiated',
-    icon: FileCheck
-  },
-  {
-    status: SALES_STATUSES.PENDING_APPROVAL,
+    status: 'pending',
     label: 'Pending Approval',
     description: 'Awaiting management approval',
     icon: Clock
   },
   {
-    status: SALES_STATUSES.CUSTOMER_APPROVED,
+    status: 'approved',
+    label: 'Management Approved',
+    description: 'Management approved the sale',
+    icon: CheckCircle
+  },
+  {
+    status: 'customer_approved',
     label: 'Customer Approved',
     description: 'Customer accepted the sale',
     icon: CheckCircle
   },
   {
-    status: SALES_STATUSES.VIRTUAL_PAYMENT,
-    label: 'Virtual Payment',
-    description: 'Payment auto-created',
-    icon: AlertCircle
-  },
-  {
-    status: SALES_STATUSES.WAITING_FOR_PAYMENT,
-    label: 'Waiting Payment',
-    description: 'Awaiting payment confirmation',
-    icon: Clock
-  },
-  {
-    status: SALES_STATUSES.PAYMENT_RECEIVED,
+    status: 'payment_received',
     label: 'Payment Received',
     description: 'Payment confirmed',
     icon: DollarSign
   },
   {
-    status: SALES_STATUSES.COMPLETED,
+    status: 'completed',
     label: 'Completed',
     description: 'Sale finalized',
     icon: Send
@@ -77,7 +64,7 @@ export function SalesWorkflowProgressPanel({
     return stepStatus === currentStatus;
   };
 
-  const isRejected = currentStatus === SALES_STATUSES.CUSTOMER_REJECTED;
+  const isRejected = currentStatus === 'rejected' || currentStatus === 'customer_rejected';
   const currentStepIndex = getCurrentStepIndex();
 
   return (

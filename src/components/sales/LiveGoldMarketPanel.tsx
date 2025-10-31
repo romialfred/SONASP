@@ -19,7 +19,11 @@ import {
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
 
-export function LiveGoldMarketPanel() {
+interface LiveGoldMarketPanelProps {
+  onCollapseChange?: (isCollapsed: boolean) => void;
+}
+
+export function LiveGoldMarketPanel({ onCollapseChange }: LiveGoldMarketPanelProps) {
   const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,7 +95,11 @@ export function LiveGoldMarketPanel() {
     >
       {/* Collapse/Expand Button */}
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={() => {
+          const newCollapsed = !isCollapsed;
+          setIsCollapsed(newCollapsed);
+          onCollapseChange?.(newCollapsed);
+        }}
         className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 bg-white shadow-lg rounded-l-lg p-2 hover:bg-gray-50 transition-colors border-l border-t border-b border-gray-200"
         title={isCollapsed ? 'Show market data' : 'Hide market data'}
       >

@@ -58,6 +58,8 @@ export function GoldTradeSpace() {
   const [loading, setLoading] = useState(true);
   const [processingOrder, setProcessingOrder] = useState(false);
 
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -181,9 +183,14 @@ export function GoldTradeSpace() {
         </div>
 
         {/* Live Gold Market Panel - Fixed Right Side */}
-        <LiveGoldMarketPanel />
+        <LiveGoldMarketPanel onCollapseChange={setIsPanelCollapsed} />
 
-        <div className="space-y-6 max-w-6xl">
+        {/* Main Content Area - Adjusts based on panel state */}
+        <div
+          className={`space-y-6 transition-all duration-300 ${
+            isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-96 max-w-5xl'
+          }`}
+        >
           {quantityRecommendation && (
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
               <div className="p-5 space-y-3">

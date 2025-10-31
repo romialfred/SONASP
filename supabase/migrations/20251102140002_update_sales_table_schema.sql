@@ -29,9 +29,16 @@ BEGIN
   RAISE NOTICE 'Existing statuses in sales table: %', COALESCE(v_status_list, 'none');
 END $$;
 
--- CRITICAL: Disable the status transition trigger during migration
-ALTER TABLE sales DISABLE TRIGGER IF EXISTS trigger_validate_sales_status_transition;
-ALTER TABLE sales DISABLE TRIGGER IF EXISTS check_sales_status_transition_trigger;
+-- CRITICAL: Disable the status transition triggers during migration
+DO $$
+BEGIN
+  -- Disable status transition triggers if they exist
+  ALTER TABLE sales DISABLE TRIGGER ALL;
+  RAISE NOTICE 'All triggers on sales table temporarily disabled for migration';
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Could not disable triggers: %', SQLERRM;
+END $$;
 
 -- Drop existing status constraint if it exists
 DO $$
@@ -197,9 +204,15 @@ ALTER TABLE sales ADD CONSTRAINT sales_status_check
 -- Add comment for documentation
 COMMENT ON TABLE sales IS 'Sales records with new 9-step workflow status management and approval tracking';
 
--- Re-enable the status transition trigger (will be recreated in next migration)
-ALTER TABLE sales ENABLE TRIGGER IF EXISTS trigger_validate_sales_status_transition;
-ALTER TABLE sales ENABLE TRIGGER IF EXISTS check_sales_status_transition_trigger;
+-- Re-enable all triggers on the sales table
+DO $$
+BEGIN
+  ALTER TABLE sales ENABLE TRIGGER ALL;
+  RAISE NOTICE 'All triggers on sales table re-enabled';
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Could not re-enable triggers: %', SQLERRM;
+END $$;
 
 -- Final verification and success message
 DO $$

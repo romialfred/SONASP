@@ -11,6 +11,7 @@ import { Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Resp
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
 import { LiveGoldPricePanel } from '@/components/prices/LiveGoldPricePanel';
+import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
 
 interface DailyPrice {
   price_date: string;
@@ -103,6 +104,8 @@ export function GoldPricesPage() {
   };
 
   const loadDailyPrices = async () => {
+    // Fetch daily gold prices from LBMA source stored in database
+    // Data is sourced from London Bullion Market Association (LBMA) - the global authority for gold pricing
     const { data, error } = await supabase
       .from('gold_prices_daily')
       .select('*')
@@ -115,6 +118,8 @@ export function GoldPricesPage() {
   };
 
   const loadMonthlyAggregates = async () => {
+    // Fetch monthly aggregate gold prices from LBMA data
+    // This includes average, high, low, opening, and closing prices for each month
     const { data, error } = await supabase
       .from('gold_prices_monthly')
       .select('*')
@@ -203,6 +208,9 @@ export function GoldPricesPage() {
 
   return (
     <MainLayout>
+      {/* Live Gold Market Panel - Right Side */}
+      <LiveGoldMarketPanel />
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">

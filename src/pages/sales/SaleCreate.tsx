@@ -282,24 +282,31 @@ export function SaleCreate() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-    setShowCalculations(false);
-
     // Update seller type when seller changes
     if (field === 'sellerId' && value) {
       const selectedSeller = sellers.find(s => s.id === value);
       if (selectedSeller) {
         setFormData((prev) => ({
           ...prev,
+          sellerId: value,
           sellerType: selectedSeller.type,
           // Reset customer when seller changes to avoid invalid combinations
           customerId: ''
         }));
+        if (errors.sellerId) {
+          setErrors((prev) => ({ ...prev, sellerId: '' }));
+        }
+        setShowCalculations(false);
+        return;
       }
     }
+
+    // Default handling for other fields
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+    setShowCalculations(false);
   };
 
   const validateForm = (): boolean => {
@@ -311,6 +318,10 @@ export function SaleCreate() {
 
     if (!formData.sellerId) {
       newErrors.sellerId = 'Please select a seller';
+    }
+
+    if (!formData.sellerType) {
+      newErrors.sellerId = 'Seller type is missing. Please select a seller and try again.';
     }
 
     // Check for seller validation errors
@@ -342,6 +353,21 @@ export function SaleCreate() {
 
   const handleSubmit = async () => {
     if (!validateForm() || !showCalculations) return;
+
+    // Final safety check - ensure seller type is set
+    if (!formData.sellerType && formData.sellerId) {
+      const selectedSeller = sellers.find(s => s.id === formData.sellerId);
+      if (selectedSeller) {
+        setFormData(prev => ({ ...prev, sellerType: selectedSeller.type }));
+        alert.error('Seller type was missing. Please try again.');
+        return;
+      }
+    }
+
+    if (!formData.sellerType) {
+      alert.error('Seller type is missing. Please select a seller and try again.');
+      return;
+    }
 
     setSubmitting(true);
     try {

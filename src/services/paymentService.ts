@@ -13,6 +13,54 @@ export interface CreatePaymentData {
   notes?: string;
 }
 
+export interface CreateRealPaymentData {
+  sale_id: string;
+  customer_bank_id: string;
+  seller_bank_id: string;
+  payment_currency: string;
+  receiving_currency: string;
+  received_amount: number;
+  reference_number: string;
+  fx_rate?: number;
+  notes?: string;
+}
+
+export interface SaleAwaitingPayment {
+  id: string;
+  sale_number: string;
+  customer_id: string;
+  customer_name: string;
+  quantity_oz: number;
+  sale_date: string;
+  mechanism_type?: string;
+  gross_proceeds: number;
+  net_proceeds: number;
+  final_proceeds: number;
+  status: string;
+}
+
+export interface CustomerBank {
+  id: string;
+  bank_name: string;
+  country: string;
+  currency: string;
+  account_number: string;
+  swift_code?: string;
+  is_primary: boolean;
+}
+
+export interface SellerBank {
+  id: string;
+  stakeholder_type: string;
+  stakeholder_id: string;
+  account_name: string;
+  bank_name: string;
+  bank_country: string;
+  account_currency: string;
+  swift_code?: string;
+  is_primary: boolean;
+}
+
 export interface Payment {
   id: string;
   sale_id: string;
@@ -342,6 +390,174 @@ export async function compareFXRates(
       },
     };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getSalesAwaitingPayment(): Promise<{
+  success: boolean;
+  data?: SaleAwaitingPayment[];
+  error?: string;
+}> {
+  try {
+    const { data: sales, error } = await supabase
+      .from('sales')
+      .select(`
+        id,
+        sale_number,
+        customer_id,
+        quantity_oz,
+        sale_date,
+        mechanism_type,
+        gross_proceeds,
+        net_proceeds,
+        final_proceeds,
+        status,
+        customers(id, name)
+      `)
+      .eq('status', 'waiting_for_payment')
+      .order('sale_date', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const formattedSales: SaleAwaitingPayment[] = (sales || []).map((sale: any) => ({
+      id: sale.id,
+      sale_number: sale.sale_number,
+      customer_id: sale.customer_id,
+      customer_name: sale.customers?.name || 'Unknown',
+      quantity_oz: sale.quantity_oz,
+      sale_date: sale.sale_date,
+      mechanism_type: sale.mechanism_type,
+      gross_proceeds: sale.gross_proceeds,
+      net_proceeds: sale.net_proceeds,
+      final_proceeds: sale.final_proceeds,
+      status: sale.status,
+    }));
+
+    return { success: true, data: formattedSales };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getCustomerBanks(
+  customerId: string
+): Promise<{ success: boolean; data?: CustomerBank[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('customer_banks')
+      .select('*')
+      .eq('customer_id', customerId)
+      .eq('is_active', true)
+      .order('is_primary', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getSellerBanks(
+  stakeholderType: string = 'mining_company'
+): Promise<{ success: boolean; data?: SellerBank[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('stakeholder_bank_accounts')
+      .select('*')
+      .eq('stakeholder_type', stakeholderType)
+      .eq('is_active', true)
+      .order('is_primary', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createRealPayment(
+  paymentData: CreateRealPaymentData,
+  userId: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const { data: sale, error: saleError } = await supabase
+      .from('sales')
+      .select('id, status, gross_proceeds, final_proceeds')
+      .eq('id', paymentData.sale_id)
+      .maybeSingle();
+
+    if (saleError || !sale) {
+      return { success: false, error: 'Sale not found' };
+    }
+
+    if (sale.status !== 'waiting_for_payment' && sale.status !== 'virtual_payment') {
+      return {
+        success: false,
+        error: `Cannot record payment for sale with status: ${sale.status}`,
+      };
+    }
+
+    const { data: existingRealPayment } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('sale_id', paymentData.sale_id)
+      .eq('payment_type', 'real')
+      .maybeSingle();
+
+    if (existingRealPayment) {
+      return {
+        success: false,
+        error: 'A real payment already exists for this sale',
+      };
+    }
+
+    const fxRate = paymentData.fx_rate || 1.0;
+    const expectedAmount = sale.final_proceeds || sale.gross_proceeds;
+
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        sale_id: paymentData.sale_id,
+        amount: paymentData.received_amount,
+        currency: paymentData.receiving_currency,
+        payment_type: 'real',
+        is_virtual: false,
+        customer_bank_id: paymentData.customer_bank_id,
+        seller_bank_id: paymentData.seller_bank_id,
+        payment_currency: paymentData.payment_currency,
+        receiving_currency: paymentData.receiving_currency,
+        received_amount: paymentData.received_amount,
+        fx_rate: fxRate,
+        expected_date: new Date().toISOString().split('T')[0],
+        actual_date: new Date().toISOString().split('T')[0],
+        reference_number: paymentData.reference_number,
+        status: 'approved',
+        notes: paymentData.notes,
+        created_by: userId,
+        approved_by: userId,
+        approved_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (paymentError) {
+      console.error('Error creating real payment:', paymentError);
+      return { success: false, error: paymentError.message };
+    }
+
+    console.log('Real payment created successfully:', payment.id);
+    return { success: true, data: payment };
+  } catch (error: any) {
+    console.error('Error in createRealPayment:', error);
     return { success: false, error: error.message };
   }
 }

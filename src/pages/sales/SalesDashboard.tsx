@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { formatCurrency, formatWeight } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
 import {
@@ -128,12 +127,6 @@ export function SalesDashboard() {
     completedSales: 0,
     pendingPayment: 0,
   });
-  const [monthlySalesData, setMonthlySalesData] = useState<Array<{ name: string; sales: number; revenue: number }>>([]);
-  const [customerPerformance, setCustomerPerformance] = useState({
-    topCustomer: 'N/A',
-    avgOrderValue: 0,
-    paymentSuccessRate: 0,
-  });
 
   const loadMetrics = useCallback(async () => {
     try {
@@ -203,93 +196,6 @@ export function SalesDashboard() {
     }
   }, []);
 
-  const loadMonthlySalesData = useCallback(async () => {
-    try {
-      const { data } = await supabase
-        .from('sales')
-        .select('created_at, final_proceeds, status')
-        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString());
-
-      if (!data) {
-        setMonthlySalesData([]);
-        return;
-      }
-
-      const monthlyData: Record<string, { sales: number; revenue: number }> = {};
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-      months.forEach((month, index) => {
-        monthlyData[month] = { sales: 0, revenue: 0 };
-      });
-
-      data.forEach(sale => {
-        const date = new Date(sale.created_at);
-        const monthName = months[date.getMonth()];
-        if (monthlyData[monthName]) {
-          monthlyData[monthName].sales += 1;
-          if (sale.status === SALES_STATUSES.COMPLETED || sale.status === SALES_STATUSES.PAYMENT_RECEIVED) {
-            monthlyData[monthName].revenue += sale.final_proceeds || 0;
-          }
-        }
-      });
-
-      const chartData = months.map(month => ({
-        name: month,
-        sales: monthlyData[month].sales,
-        revenue: Math.round(monthlyData[month].revenue / 1000),
-      }));
-
-      setMonthlySalesData(chartData);
-    } catch (error) {
-      console.error('Error loading monthly sales data:', error);
-      setMonthlySalesData([]);
-    }
-  }, []);
-
-  const loadCustomerPerformance = useCallback(async () => {
-    try {
-      const { data: salesData } = await supabase
-        .from('sales')
-        .select(`
-          final_proceeds,
-          customer:customers(name),
-          status
-        `);
-
-      if (!salesData || salesData.length === 0) {
-        return;
-      }
-
-      const customerTotals: Record<string, number> = {};
-      let totalCompleted = 0;
-      let totalSales = 0;
-
-      salesData.forEach(sale => {
-        const customerName = (sale.customer as any)?.name || 'Unknown';
-        if (!customerTotals[customerName]) {
-          customerTotals[customerName] = 0;
-        }
-        customerTotals[customerName] += sale.final_proceeds || 0;
-        totalSales += sale.final_proceeds || 0;
-
-        if (sale.status === SALES_STATUSES.COMPLETED || sale.status === SALES_STATUSES.PAYMENT_RECEIVED) {
-          totalCompleted++;
-        }
-      });
-
-      const topCustomer = Object.entries(customerTotals).sort((a, b) => b[1] - a[1])[0];
-      const avgOrderValue = salesData.length > 0 ? totalSales / salesData.length : 0;
-      const paymentSuccessRate = salesData.length > 0 ? (totalCompleted / salesData.length) * 100 : 0;
-
-      setCustomerPerformance({
-        topCustomer: topCustomer ? topCustomer[0] : 'N/A',
-        avgOrderValue,
-        paymentSuccessRate,
-      });
-    } catch (error) {
-      console.error('Error loading customer performance:', error);
-    }
-  }, []);
 
   const loadSales = useCallback(async () => {
     setLoading(true);
@@ -338,11 +244,7 @@ export function SalesDashboard() {
 
       setSales(salesData);
 
-      await Promise.all([
-        loadMetrics(),
-        loadMonthlySalesData(),
-        loadCustomerPerformance(),
-      ]);
+      await loadMetrics();
     } catch (error) {
       console.error('Error fetching sales:', error);
       if (!mountedRef.current) {
@@ -357,7 +259,7 @@ export function SalesDashboard() {
         setLoading(false);
       }
     }
-  }, [loadMetrics, loadMonthlySalesData, loadCustomerPerformance]);
+  }, [loadMetrics]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -417,6 +319,15 @@ export function SalesDashboard() {
     const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Separate active and completed sales
+  const activeSales = filteredSales.filter(sale =>
+    !['completed', 'payment_received'].includes(sale.status)
+  );
+
+  const completedSales = filteredSales.filter(sale =>
+    ['completed', 'payment_received'].includes(sale.status)
+  );
 
   if (loading) {
     return (
@@ -481,53 +392,6 @@ export function SalesDashboard() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Sales Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <LineChartWidget
-                data={monthlySalesData}
-                lines={[
-                  { dataKey: 'revenue', color: '#B8860B', name: 'Revenue ($K)' },
-                ]}
-                height={250}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Customer Performance Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Top Customer</span>
-                  <span className="text-sm font-semibold text-gray-900">{customerPerformance.topCustomer}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Avg Order Value</span>
-                  <span className="text-sm font-semibold text-gray-900">{formatCurrency(customerPerformance.avgOrderValue)}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Payment Success Rate</span>
-                  <span className="text-sm font-semibold text-accent-600">{customerPerformance.paymentSuccessRate.toFixed(1)}%</span>
-                </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      void navigate('/customers');
-                    }}
-                    className="w-full"
-                  >
-                  View All Customers
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <Card>
           <CardHeader>
@@ -566,7 +430,7 @@ export function SalesDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSales.map((sale) => {
+                {activeSales.map((sale) => {
                   const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                 const StatusIcon = status.icon;
 
@@ -634,14 +498,112 @@ export function SalesDashboard() {
                 );
               })}
 
-              {filteredSales.length === 0 && !pageError && (
+              {activeSales.length === 0 && !pageError && (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No sales found matching your criteria</p>
+                  <p className="text-gray-500">No active sales found matching your criteria</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
+
+        {completedSales.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Completed Sales
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Sale Number
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Quantity
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {completedSales.map((sale) => {
+                      const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
+                      const StatusIcon = status.icon;
+
+                      return (
+                        <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="text-sm font-semibold text-gray-900">{sale.saleNumber}</span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-700">{sale.customer}</span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="text-sm font-medium text-gray-900">{sale.quantity.toFixed(3)} oz</span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="text-sm font-bold text-gray-900">{formatCurrency(sale.amount)}</span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className={`inline-flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
+                              <StatusIcon className="h-3 w-3" />
+                              {status.label}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-600">
+                              {new Date(sale.createdDate).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                void navigate(`/sales/${sale.id}`);
+                              }}
+                              className="text-xs"
+                            >
+                              View Details
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {completedSales.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No completed sales to display</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </MainLayout>
   );

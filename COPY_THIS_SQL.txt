@@ -1,0 +1,49 @@
+================================================================================
+COPY AND PASTE THIS ENTIRE FILE INTO SUPABASE SQL EDITOR
+================================================================================
+
+This is the migration SQL you need to run in Supabase to enable the
+Assay Certificates upload feature.
+
+FILE TO COPY: supabase/migrations/20251104000000_create_assay_certificates_system.sql
+
+INSTRUCTIONS:
+
+1. Open the file above
+2. Select ALL text (Ctrl+A)
+3. Copy (Ctrl+C)
+4. Go to Supabase Dashboard → SQL Editor
+5. Click "+ New query"
+6. Paste (Ctrl+V)
+7. Click "Run" or press Ctrl+Enter
+8. Wait for "Success" message
+9. Refresh your Gold Shipper app
+10. Upload feature will work!
+
+WHAT THIS CREATES:
+
+✓ 3 database tables (assay_certificates, assay_base_metals, assay_deleterious_elements)
+✓ Row Level Security policies
+✓ Storage bucket for PDFs
+✓ All necessary indexes
+
+FILE SIZE: 361 lines of SQL
+
+TIME TO RUN: 5-10 seconds
+
+AFTER RUNNING:
+
+- Refresh browser (F5)
+- Go to any batch details page
+- Scroll down on LEFT column
+- You'll see "Assay Certificates" section with upload!
+
+================================================================================
+
+The SQL file is too large to include here (361 lines).
+
+Please open: supabase/migrations/20251104000000_create_assay_certificates_system.sql
+
+And copy the entire contents to run in Supabase SQL Editor.
+
+================================================================================

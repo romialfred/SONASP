@@ -319,26 +319,31 @@ export function BatchCreate() {
 
     setUploading(true);
     try {
-      // Check if the storage bucket exists
+      // Try to check if the storage bucket exists
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
 
       if (listError) {
         console.error('Error checking buckets:', listError);
-        showError('Storage Access Error', 'Unable to access storage. Document upload is currently unavailable. You can create the batch without documents and add them later.');
-        setUploading(false);
-        // Clear the file input
-        event.target.value = '';
-        return;
-      }
+        console.error('Error details:', {
+          message: listError.message,
+          status: listError.status,
+          statusText: listError.statusText
+        });
 
-      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+        // If we can't list buckets, just try to upload anyway
+        // The upload will fail with a better error if the bucket truly doesn't exist
+        console.log('Cannot list buckets, will attempt upload anyway...');
+      } else {
+        console.log('Available buckets:', buckets?.map(b => b.name).join(', '));
 
-      if (!bucketExists) {
-        showError('Storage Not Configured', 'The documents storage bucket has not been created yet. Please run the database migrations (APPLY_ALL_MIGRATIONS.sql) to set up storage, or create the batch without documents for now.');
-        setUploading(false);
-        // Clear the file input
-        event.target.value = '';
-        return;
+        const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+
+        if (!bucketExists) {
+          showError('Storage Not Configured', 'The documents storage bucket was not found. Please ensure the bucket is created in Supabase Storage Dashboard, then try again.');
+          setUploading(false);
+          event.target.value = '';
+          return;
+        }
       }
 
       for (const file of Array.from(files)) {

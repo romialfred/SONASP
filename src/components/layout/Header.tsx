@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, LogOut, User, Globe } from 'lucide-react';
+import { Bell, LogOut, User, Globe, HelpCircle } from 'lucide-react';
 import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -159,6 +159,15 @@ export function Header() {
                     <User className="h-4 w-4" />
                     {t('auth.profile')}
                   </Link>
+                  <Link
+                    to="/help"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-blue-600"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    Help Center
+                  </Link>
+                  <div className="border-t border-gray-100 my-1" />
                   <button
                     onClick={async () => {
                       await signOut();

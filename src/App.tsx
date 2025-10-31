@@ -40,6 +40,7 @@ import { CustomerSaleApproval } from './pages/sales/CustomerSaleApproval';
 import PreSalesDashboard from './pages/presales/PreSalesDashboard';
 import PreSaleCreate from './pages/presales/PreSaleCreate';
 import PreSaleDetails from './pages/presales/PreSaleDetails';
+import HelpCenter from './pages/HelpCenter';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
@@ -165,6 +166,16 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Help Center - Accessible to all authenticated users */}
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <HelpCenter />
                 </ProtectedRoute>
               }
             />

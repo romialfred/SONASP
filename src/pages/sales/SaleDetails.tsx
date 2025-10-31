@@ -32,6 +32,7 @@ import {
 import { useAlert } from '@/hooks/useAlert';
 import { approveSale, rejectSale } from '@/services/salesService';
 import { useAuth } from '@/contexts/AuthContext';
+import { SalesWorkflowVisualizer } from '@/components/sales/SalesWorkflowVisualizer';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -632,6 +633,22 @@ export function SaleDetails() {
                     </span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Workflow Visualizer */}
+            <Card className="border-2 border-indigo-200">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                  Sales Workflow Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <SalesWorkflowVisualizer
+                  currentStatus={sale.status}
+                  showRejected={sale.status === 'customer_rejected'}
+                />
               </CardContent>
             </Card>
           </div>

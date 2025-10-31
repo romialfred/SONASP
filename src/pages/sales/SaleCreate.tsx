@@ -310,25 +310,59 @@ export function SaleCreate() {
       if (error) {
         console.error('Database error:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
+
+        // Enhanced error handling with user-friendly messages
+        let userMessage = 'Failed to create sale. ';
+
+        // Check for common error patterns
+        if (error.code === '23503') {
+          // Foreign key constraint violation
+          if (error.message.includes('seller_id')) {
+            userMessage += 'The selected seller is invalid. Please refresh and try again.';
+          } else if (error.message.includes('customer_id')) {
+            userMessage += 'The selected customer is invalid. Please refresh and try again.';
+          } else {
+            userMessage += 'Invalid reference data. Please check your selections.';
+          }
+        } else if (error.code === '23505') {
+          // Unique constraint violation
+          userMessage += 'A sale with this number already exists. Please try again.';
+        } else if (error.code === '23514') {
+          // Check constraint violation
+          if (error.message.includes('status')) {
+            userMessage += 'Invalid status value. This is a system error - please contact support.';
+          } else {
+            userMessage += 'Data validation failed. Please check all fields.';
+          }
+        } else if (error.message?.includes('seller_id')) {
+          userMessage += 'Seller information is missing. Please select a seller and try again.';
+        } else if (error.message?.includes('seller_type')) {
+          userMessage += 'Seller type is missing. Please select a seller and try again.';
+        } else if (error.message) {
+          userMessage += error.message;
+        } else {
+          userMessage += 'An unexpected error occurred. Please try again or contact support.';
+        }
+
+        alert.error(userMessage);
         throw error;
       }
 
-      alert.success('Sale created successfully!');
+      alert.success(`Sale ${saleNumber} created successfully! Customer will receive approval email.`);
+
+      // Log success for audit
+      console.log('[SaleCreate] Sale created successfully:', {
+        saleNumber,
+        customerId: formData.customerId,
+        sellerId: formData.sellerId,
+        amount: calculations.finalAmount
+      });
+
       navigate('/sales');
     } catch (error: any) {
       console.error('Error creating sale:', error);
 
-      let errorMessage = 'Failed to create sale. Please try again.';
-
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.details) {
-        errorMessage = `Database error: ${error.details}`;
-      } else if (error?.hint) {
-        errorMessage = `Error: ${error.hint}`;
-      }
-
-      alert.error(errorMessage);
+      // Error already handled above, just ensure submitting is reset
     } finally {
       setSubmitting(false);
     }

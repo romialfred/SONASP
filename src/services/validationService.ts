@@ -13,6 +13,7 @@
  */
 
 import { BATCH_STATUSES } from '@/constants/batchStatuses';
+import { SALES_STATUSES } from '@/constants/salesStatuses';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -362,6 +363,159 @@ export function formatValidationErrors(result: ValidationResult): string {
   }
 
   return messages.join('\n');
+}
+
+/**
+ * Validate sales status transition
+ */
+export function validateSalesStatusTransition(
+  currentStatus: string,
+  newStatus: string,
+  context?: {
+    hasPayment?: boolean;
+    paymentConfirmed?: boolean;
+    isCustomerApproval?: boolean;
+  }
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Define valid sales transitions based on the 7-step workflow
+  const validTransitions: Record<string, string[]> = {
+    [SALES_STATUSES.CREATE_SALES]: [SALES_STATUSES.PENDING_APPROVAL],
+    [SALES_STATUSES.PENDING_APPROVAL]: [
+      SALES_STATUSES.CUSTOMER_APPROVED,
+      SALES_STATUSES.CUSTOMER_REJECTED
+    ],
+    [SALES_STATUSES.CUSTOMER_APPROVED]: [
+      SALES_STATUSES.VIRTUAL_PAYMENT,
+      SALES_STATUSES.CUSTOMER_REJECTED
+    ],
+    [SALES_STATUSES.CUSTOMER_REJECTED]: [SALES_STATUSES.PENDING_APPROVAL],
+    [SALES_STATUSES.VIRTUAL_PAYMENT]: [
+      SALES_STATUSES.PAYMENT_RECEIVED,
+      SALES_STATUSES.CUSTOMER_REJECTED
+    ],
+    [SALES_STATUSES.WAITING_FOR_PAYMENT]: [
+      SALES_STATUSES.PAYMENT_RECEIVED,
+      SALES_STATUSES.VIRTUAL_PAYMENT,
+      SALES_STATUSES.CUSTOMER_REJECTED
+    ],
+    [SALES_STATUSES.PAYMENT_RECEIVED]: [SALES_STATUSES.COMPLETED],
+    [SALES_STATUSES.COMPLETED]: []
+  };
+
+  const allowed = validTransitions[currentStatus] || [];
+
+  if (!allowed.includes(newStatus)) {
+    errors.push(
+      `Invalid status transition from "${currentStatus}" to "${newStatus}". Allowed transitions: ${allowed.join(', ') || 'none'}`
+    );
+  }
+
+  // Context-specific validations
+  if (context?.isCustomerApproval) {
+    if (currentStatus !== SALES_STATUSES.PENDING_APPROVAL) {
+      errors.push('Customer approval can only be performed on sales with status "pending_approval"');
+    }
+  }
+
+  if (newStatus === SALES_STATUSES.PAYMENT_RECEIVED) {
+    if (!context?.hasPayment) {
+      errors.push('Cannot mark as payment received without a payment record');
+    }
+    if (context?.hasPayment && !context?.paymentConfirmed) {
+      warnings.push('Payment exists but has not been confirmed by management');
+    }
+  }
+
+  if (newStatus === SALES_STATUSES.COMPLETED) {
+    if (currentStatus !== SALES_STATUSES.PAYMENT_RECEIVED) {
+      errors.push('Sale can only be completed after payment is received');
+    }
+  }
+
+  // Warn about rejected sales
+  if (newStatus === SALES_STATUSES.CUSTOMER_REJECTED) {
+    warnings.push('Sale will be marked as rejected. This action should be accompanied by a reason.');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
+/**
+ * Validate sale creation data
+ */
+export interface SaleCreationData {
+  customer_id: string;
+  seller_id: string;
+  seller_type: 'mining_company' | 'mansa';
+  quantity_oz: number;
+  london_am_rate: number;
+  available_inventory_oz: number;
+}
+
+export function validateSaleCreation(data: SaleCreationData): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Validate customer
+  if (!data.customer_id) {
+    errors.push('Customer is required');
+  }
+
+  // Validate seller
+  if (!data.seller_id) {
+    errors.push('Seller is required');
+  }
+
+  if (!data.seller_type) {
+    errors.push('Seller type is required');
+  }
+
+  // Validate quantity
+  if (data.quantity_oz <= 0) {
+    errors.push('Quantity must be greater than zero');
+  }
+
+  if (data.quantity_oz > data.available_inventory_oz) {
+    errors.push(
+      `Quantity (${data.quantity_oz} oz) exceeds available inventory (${data.available_inventory_oz} oz)`
+    );
+  }
+
+  if (data.quantity_oz > data.available_inventory_oz * 0.9) {
+    warnings.push(
+      `Sale quantity is more than 90% of available inventory. Ensure this is intentional.`
+    );
+  }
+
+  // Validate price
+  if (data.london_am_rate <= 0) {
+    errors.push('London AM rate must be greater than zero');
+  }
+
+  if (data.london_am_rate < 1000) {
+    warnings.push(
+      `London AM rate of $${data.london_am_rate} is unusually low. Current typical range is $2000-$2500 per oz.`
+    );
+  }
+
+  if (data.london_am_rate > 5000) {
+    warnings.push(
+      `London AM rate of $${data.london_am_rate} is unusually high. Please verify this is correct.`
+    );
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
 }
 
 /**

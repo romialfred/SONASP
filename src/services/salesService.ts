@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase';
 import { sendSaleApprovedNotification } from './notificationService';
 import { logAuditAction } from '@/lib/auditLog';
 import { SALES_STATUSES, INITIAL_SALE_STATUS } from '@/constants/salesStatuses';
+import { validateSalesStatusTransition, validateSaleCreation } from './validationService';
+import type { SaleCreationData as ValidationSaleData } from './validationService';
 
 export interface CreateSaleData {
   customer_id: string;
@@ -378,8 +380,35 @@ export async function updateSaleStatus(
   status: string,
   userEmail: string,
   notes?: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; warnings?: string[] }> {
   try {
+    // Fetch current sale to validate transition
+    const { data: currentSale, error: fetchError } = await supabase
+      .from('sales')
+      .select('status, id')
+      .eq('id', saleId)
+      .maybeSingle();
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message };
+    }
+
+    if (!currentSale) {
+      return { success: false, error: 'Sale not found' };
+    }
+
+    // Validate status transition
+    const validation = validateSalesStatusTransition(currentSale.status, status);
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        error: validation.errors.join('; '),
+        warnings: validation.warnings
+      };
+    }
+
+    // Perform the update
     const { error } = await supabase
       .from('sales')
       .update({
@@ -397,13 +426,18 @@ export async function updateSaleStatus(
       table_name: 'sales',
       record_id: saleId,
       details: {
+        old_status: currentSale.status,
         new_status: status,
         notes,
+        warnings: validation.warnings,
       },
       user_email: userEmail,
     });
 
-    return { success: true };
+    return {
+      success: true,
+      warnings: validation.warnings
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

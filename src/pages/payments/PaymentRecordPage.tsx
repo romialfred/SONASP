@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { createPayment, getCurrentFXRate, compareFXRates } from '@/services/paymentService';
+import { createFxAnalysis } from '@/services/fxAnalysisService';
 
 interface Customer {
   id: string;
@@ -208,8 +209,44 @@ export function PaymentRecordPage() {
         notes: formData.notes
       }, user.id);
 
-      if (result.success) {
-        alert.success('Payment recorded successfully!');
+      if (result.success && result.data) {
+        const paymentId = result.data.id;
+
+        // Create FX analysis if currency is not USD
+        if (formData.currency !== 'USD') {
+          try {
+            // Get rates from comparisons
+            const ecbRate = fxComparisons.find(c => c.source === 'European Central Bank')?.rate || null;
+            const commercialRate = fxComparisons.find(c => c.source === 'Commercial Bank')?.rate || null;
+            const xeRate = fxComparisons.find(c => c.source === 'XE.com')?.rate || null;
+
+            const fxAnalysisResult = await createFxAnalysis({
+              payment_id: paymentId,
+              customer_rate: parseFloat(formData.fxRate),
+              ecb_rate: ecbRate,
+              revolut_rate: commercialRate,
+              bceao_rate: xeRate,
+              amount_paid: parseFloat(formData.amount),
+              payment_currency: formData.currency,
+              currency_pair: `${formData.currency}/USD`,
+              created_by: user.id
+            });
+
+            if (fxAnalysisResult.success) {
+              console.log('[PaymentRecord] FX analysis created:', fxAnalysisResult.data);
+              alert.success('Payment recorded successfully with FX analysis!');
+            } else {
+              console.warn('[PaymentRecord] FX analysis creation failed:', fxAnalysisResult.error);
+              alert.success('Payment recorded successfully (FX analysis skipped)');
+            }
+          } catch (fxError) {
+            console.error('[PaymentRecord] Error creating FX analysis:', fxError);
+            alert.success('Payment recorded successfully (FX analysis skipped)');
+          }
+        } else {
+          alert.success('Payment recorded successfully!');
+        }
+
         navigate('/payments');
       } else {
         alert.error(result.error || 'Failed to record payment');

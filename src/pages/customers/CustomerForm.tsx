@@ -80,6 +80,26 @@ export function CustomerForm() {
       if (error) throw error;
 
       if (data) {
+        const { data: banksData, error: banksError } = await supabase
+          .from('customer_banks')
+          .select('*')
+          .eq('customer_id', id)
+          .eq('is_active', true)
+          .order('is_primary', { ascending: false });
+
+        const loadedBanks: BankAccount[] = banksData?.map(bank => ({
+          id: bank.id,
+          bankName: bank.bank_name,
+          accountNumber: bank.account_number || '',
+          swiftCode: bank.swift_code || '',
+          iban: bank.iban || '',
+          currency: bank.currency,
+          country: bank.country,
+          city: bank.city,
+          isPrimary: bank.is_primary,
+          isActive: bank.is_active,
+        })) || [];
+
         setFormData({
           name: data.name || '',
           email: data.email || '',
@@ -91,7 +111,7 @@ export function CustomerForm() {
           paymentTerms: data.payment_terms || 'Net 30 days',
           creditLimit: String(data.credit_limit || 500000),
           status: data.status || 'pending',
-          banks: [],
+          banks: loadedBanks,
         });
       }
     } catch (error: any) {
@@ -208,6 +228,8 @@ export function CustomerForm() {
         status: formData.status,
       };
 
+      let customerId = id;
+
       if (isEditMode && id) {
         // Update existing customer
         const { error } = await supabase
@@ -220,16 +242,51 @@ export function CustomerForm() {
 
         if (error) throw error;
 
+        // Delete existing banks and recreate them
+        await supabase
+          .from('customer_banks')
+          .delete()
+          .eq('customer_id', id);
+
         alert.success('Customer updated successfully');
       } else {
         // Create new customer
-        const { error } = await supabase
+        const { data: newCustomer, error } = await supabase
           .from('customers')
-          .insert([baseCustomerData]);
+          .insert([baseCustomerData])
+          .select()
+          .single();
 
         if (error) throw error;
+        if (!newCustomer) throw new Error('Failed to create customer');
 
+        customerId = newCustomer.id;
         alert.success('Customer created successfully');
+      }
+
+      // Save bank accounts
+      if (formData.banks && formData.banks.length > 0 && customerId) {
+        const banksToInsert = formData.banks.map(bank => ({
+          customer_id: customerId,
+          bank_name: bank.bankName,
+          account_number: bank.accountNumber || null,
+          swift_code: bank.swiftCode || null,
+          iban: bank.iban || null,
+          currency: bank.currency,
+          country: bank.country,
+          city: bank.city,
+          is_primary: bank.isPrimary || false,
+          is_active: bank.isActive !== false,
+        }));
+
+        const { error: banksError } = await supabase
+          .from('customer_banks')
+          .insert(banksToInsert);
+
+        if (banksError) {
+          console.error('Error saving banks:', banksError);
+          alert.error('Customer saved but failed to save bank accounts');
+        }
       }
 
       setSubmitSuccess(true);

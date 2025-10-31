@@ -1,55 +1,72 @@
-═══════════════════════════════════════════════════════
-  FIX "POLICY ALREADY EXISTS" ERROR
-═══════════════════════════════════════════════════════
+================================================================================
+  FIX THE TRIGGER ERROR - RUN THIS SQL INSTEAD
+================================================================================
 
-ERROR YOU GOT:
-  "policy 'Management can view all scheduled reports'
-   already exists"
+You got an error because some parts of the migration already exist.
 
-SOLUTION:
-  Just run APPLY_ALL_MIGRATIONS.sql
-  (it drops old policies then creates new ones)
+Use this clean version instead:
 
-═══════════════════════════════════════════════════════
-  STEPS TO FIX (30 SECONDS)
-═══════════════════════════════════════════════════════
+FILE: CLEAN_AND_REAPPLY_MIGRATION.sql
 
-1. Open Supabase Dashboard → SQL Editor
+================================================================================
+INSTRUCTIONS:
+================================================================================
 
-2. Copy ALL of: APPLY_ALL_MIGRATIONS.sql
+1. STOP trying to run the old migration file
 
-3. Paste in SQL Editor
+2. Open this file instead: CLEAN_AND_REAPPLY_MIGRATION.sql
 
-4. Click RUN
+3. Copy ALL the contents (Ctrl+A, Ctrl+C)
 
-5. Done! ✅
+4. Go to Supabase SQL Editor
 
-═══════════════════════════════════════════════════════
-  WHAT IT DOES
-═══════════════════════════════════════════════════════
+5. Create new query
 
-✅ Drops old policies (broken with user_id)
-✅ Creates new policies (fixed with id)
-✅ Creates storage buckets
-✅ Safe to run multiple times
+6. Paste (Ctrl+V)
 
-═══════════════════════════════════════════════════════
-  WHY THIS WORKS
-═══════════════════════════════════════════════════════
+7. Click RUN
 
-The file includes:
+8. You should see "SUCCESS!" at the end
 
-  DROP POLICY IF EXISTS "Management can..." -- ✅ Removes old
+9. Refresh your Gold Shipper app (F5)
 
-  CREATE POLICY "Management can..."         -- ✅ Creates new
-    WHERE user_profiles.id = auth.uid()     -- ✅ FIXED!
+10. Upload button will now work!
 
-═══════════════════════════════════════════════════════
+================================================================================
+WHAT THIS DOES DIFFERENTLY:
+================================================================================
 
-Status: ✅ READY TO FIX
-File:   APPLY_ALL_MIGRATIONS.sql
-Time:   30 seconds
+The new SQL file:
+- Drops existing triggers FIRST (no more errors!)
+- Checks if tables exist before creating
+- Recreates everything cleanly
+- Works even if migration was partially applied
+- Shows success message at the end
 
-🚀 RUN IT NOW!
+================================================================================
+EXPECTED OUTPUT:
+================================================================================
 
-═══════════════════════════════════════════════════════
+After running, you should see:
+
+status    | tables_created
+--------- | --------------
+SUCCESS!  | 3
+
+This means 3 tables were created successfully!
+
+================================================================================
+AFTER RUNNING:
+================================================================================
+
+1. Refresh browser (F5)
+2. Go to batch details
+3. Scroll down LEFT column
+4. See "Assay Certificates" section
+5. Upload button works! ✅
+
+================================================================================
+
+File to use: CLEAN_AND_REAPPLY_MIGRATION.sql (in your project root)
+
+================================================================================

@@ -31,7 +31,6 @@ interface Sale {
   customers?: {
     id: string;
     name: string;
-    segment?: string;
   };
 }
 
@@ -81,8 +80,7 @@ export function DashboardPage() {
             created_at,
             customers (
               id,
-              name,
-              segment
+              name
             )
           `)
           .gte('created_at', twelveMonthsAgo.toISOString())

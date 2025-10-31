@@ -29,6 +29,10 @@ BEGIN
   RAISE NOTICE 'Existing statuses in sales table: %', COALESCE(v_status_list, 'none');
 END $$;
 
+-- CRITICAL: Disable the status transition trigger during migration
+ALTER TABLE sales DISABLE TRIGGER IF EXISTS trigger_validate_sales_status_transition;
+ALTER TABLE sales DISABLE TRIGGER IF EXISTS check_sales_status_transition_trigger;
+
 -- Drop existing status constraint if it exists
 DO $$
 BEGIN
@@ -40,13 +44,18 @@ END $$;
 -- IMPORTANT: Migrate existing statuses to new workflow statuses BEFORE adding constraint
 UPDATE sales
 SET status = CASE
-  -- Map old statuses to new ones
+  -- Map all old/legacy statuses to new ones
   WHEN status = 'pending' THEN 'pending_management_approval'
+  WHEN status = 'pending_approval' THEN 'pending_management_approval'
   WHEN status = 'approved' THEN 'management_approved'
   WHEN status = 'rejected' THEN 'management_rejected'
+  WHEN status = 'customer_approval' THEN 'pending_for_customer_approval'
   WHEN status = 'customer_approved' THEN 'customer_approved'
+  WHEN status = 'customer_rejected' THEN 'customer_rejected'
+  WHEN status = 'awaiting_payment' THEN 'waiting_for_payment'
   WHEN status = 'payment_received' THEN 'payment_received'
   WHEN status = 'completed' THEN 'completed'
+  WHEN status = 'cancelled' THEN 'management_rejected'
   -- If status is already in new format, keep it
   WHEN status IN ('create_sales', 'pending_management_approval', 'management_approved',
                   'management_rejected', 'pending_for_customer_approval',
@@ -187,6 +196,10 @@ CREATE TRIGGER trigger_update_sales_approval_timestamps
 -- Add comment for documentation
 COMMENT ON TABLE sales IS 'Sales records with new 9-step workflow status management and approval tracking';
 
+-- Re-enable the status transition trigger (will be recreated in next migration)
+ALTER TABLE sales ENABLE TRIGGER IF EXISTS trigger_validate_sales_status_transition;
+ALTER TABLE sales ENABLE TRIGGER IF EXISTS check_sales_status_transition_trigger;
+
 -- Final verification and success message
 DO $$
 DECLARE
@@ -196,6 +209,7 @@ BEGIN
   RAISE NOTICE 'New workflow statuses added to constraint';
   RAISE NOTICE 'Approval tracking columns added';
   RAISE NOTICE 'Automatic timestamp triggers created';
+  RAISE NOTICE 'Status transition triggers re-enabled';
   RAISE NOTICE '---';
   RAISE NOTICE 'Current status distribution:';
 

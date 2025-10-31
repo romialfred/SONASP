@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { generatePDF } from '@/services/pdfGenerationService';
+import { reportSchedulingService, type ScheduledReport, type ReportHistory } from '@/services/reportSchedulingService';
 
 interface ReportType {
   id: string;
@@ -30,6 +31,30 @@ interface ReportType {
 export function ReportsDashboard() {
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState('');
+  const [selectedReportId, setSelectedReportId] = useState('');
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
+  const [reportHistory, setReportHistory] = useState<ReportHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [scheduled, history] = await Promise.all([
+        reportSchedulingService.getActiveScheduledReports(),
+        reportSchedulingService.getReportHistory(10)
+      ]);
+      setScheduledReports(scheduled);
+      setReportHistory(history);
+    } catch (error) {
+      console.error('Error loading reports data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const reportTypes: ReportType[] = [
     {
@@ -117,13 +142,26 @@ export function ReportsDashboard() {
   };
 
   const handleSchedule = (reportId: string, reportTitle: string) => {
+    setSelectedReportId(reportId);
     setSelectedReport(reportTitle);
     setSchedulerOpen(true);
   };
 
-  const handleGeneratePDF = (reportId: string) => {
+  const handleGeneratePDF = async (reportId: string) => {
     try {
       generatePDF(reportId);
+
+      const reportType = reportTypes.find(r => r.id === reportId);
+      if (reportType) {
+        await reportSchedulingService.createReportHistory({
+          report_type: reportId,
+          report_name: `${reportType.title} - ${new Date().toLocaleDateString()}`,
+          format: 'pdf',
+          file_size: '2.4 MB'
+        });
+
+        await loadData();
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('An error occurred while generating the PDF. Please try again.');
@@ -262,36 +300,43 @@ export function ReportsDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Scheduled Reports</CardTitle>
+            <CardTitle>Scheduled Reports ({scheduledReports.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Executive Summary</p>
-                    <p className="text-xs text-gray-600">Weekly - Every Monday at 09:00</p>
-                  </div>
-                </div>
-                <span className="text-xs text-blue-600 font-medium">Active</span>
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">Loading scheduled reports...</div>
+            ) : scheduledReports.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No scheduled reports yet. Click "Schedule Report" on any report type to create one.
               </div>
+            ) : (
+              <div className="space-y-3">
+                {scheduledReports.map((schedule) => {
+                  const reportType = reportTypes.find(r => r.id === schedule.report_type);
+                  const Icon = reportType?.icon || FileText;
+                  const frequencyText = schedule.frequency === 'weekly'
+                    ? `Weekly - ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][schedule.schedule_weekday || 1]} at ${schedule.schedule_time}`
+                    : schedule.frequency === 'monthly'
+                    ? `Monthly - Day ${schedule.schedule_day} at ${schedule.schedule_time}`
+                    : `${schedule.frequency.charAt(0).toUpperCase() + schedule.frequency.slice(1)} at ${schedule.schedule_time}`;
 
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Sales Performance</p>
-                    <p className="text-xs text-gray-600">Monthly - 1st day at 10:00</p>
-                  </div>
-                </div>
-                <span className="text-xs text-green-600 font-medium">Active</span>
+                  return (
+                    <div key={schedule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Icon className={`h-5 w-5 ${reportType?.color || 'text-gray-600'}`} />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{reportType?.title || schedule.report_type}</p>
+                          <p className="text-xs text-gray-600">{frequencyText}</p>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium ${schedule.is_active ? 'text-green-600' : 'text-gray-400'}`}>
+                        {schedule.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="text-center py-4 text-sm text-gray-500">
-                + Add new scheduled report
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -300,6 +345,8 @@ export function ReportsDashboard() {
         isOpen={schedulerOpen}
         onClose={() => setSchedulerOpen(false)}
         reportType={selectedReport}
+        reportId={selectedReportId}
+        onScheduled={loadData}
       />
     </MainLayout>
   );

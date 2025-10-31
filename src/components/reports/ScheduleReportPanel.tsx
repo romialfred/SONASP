@@ -3,24 +3,52 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
+import { reportSchedulingService } from '@/services/reportSchedulingService';
 
 interface ScheduleReportPanelProps {
   isOpen: boolean;
   onClose: () => void;
   reportType: string;
+  reportId: string;
+  onScheduled?: () => void;
 }
 
-export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleReportPanelProps) {
+export function ScheduleReportPanel({ isOpen, onClose, reportType, reportId, onScheduled }: ScheduleReportPanelProps) {
   const [frequency, setFrequency] = useState('weekly');
   const [recipients, setRecipients] = useState('');
-  const [day, setDay] = useState('monday');
+  const [day, setDay] = useState('1');
+  const [weekday, setWeekday] = useState('1');
   const [time, setTime] = useState('09:00');
+  const [format, setFormat] = useState('pdf');
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSchedule = () => {
-    console.log('Scheduling report:', { reportType, frequency, recipients, day, time });
-    onClose();
+  const handleSchedule = async () => {
+    try {
+      setSaving(true);
+      const recipientsList = recipients.split(',').map(r => r.trim()).filter(r => r);
+
+      await reportSchedulingService.createScheduledReport({
+        report_type: reportId as any,
+        frequency: frequency as any,
+        schedule_time: time,
+        schedule_day: frequency === 'monthly' ? parseInt(day) : undefined,
+        schedule_weekday: frequency === 'weekly' ? parseInt(weekday) : undefined,
+        recipients: recipientsList,
+        format: format as 'pdf' | 'excel'
+      });
+
+      if (onScheduled) {
+        onScheduled();
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error scheduling report:', error);
+      alert('Failed to schedule report. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -69,17 +97,17 @@ export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleRep
                 Day of Week
               </label>
               <Select
-                value={day}
-                onChange={(e) => setDay(e.target.value)}
+                value={weekday}
+                onChange={(e) => setWeekday(e.target.value)}
                 className="w-full"
               >
-                <option value="monday">Monday</option>
-                <option value="tuesday">Tuesday</option>
-                <option value="wednesday">Wednesday</option>
-                <option value="thursday">Thursday</option>
-                <option value="friday">Friday</option>
-                <option value="saturday">Saturday</option>
-                <option value="sunday">Sunday</option>
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
               </Select>
             </div>
           )}
@@ -93,7 +121,8 @@ export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleRep
                 type="number"
                 min="1"
                 max="31"
-                defaultValue="1"
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
                 className="w-full"
               />
             </div>
@@ -129,19 +158,22 @@ export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleRep
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900 mb-1">
-                  Report Format
-                </p>
-                <p className="text-xs text-blue-700">
-                  Reports will be generated as PDF documents with professional formatting,
-                  charts, and recommendations.
-                </p>
-              </div>
-            </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <FileText className="h-4 w-4" />
+              Report Format
+            </label>
+            <Select
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              className="w-full"
+            >
+              <option value="pdf">PDF (Professional Report)</option>
+              <option value="excel">Excel (Data Export)</option>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              PDF reports include charts and insights, Excel provides raw data
+            </p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
@@ -149,9 +181,10 @@ export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleRep
             <div className="text-sm text-gray-700 space-y-1">
               <p><span className="font-medium">Report:</span> {reportType}</p>
               <p><span className="font-medium">Frequency:</span> {frequency.charAt(0).toUpperCase() + frequency.slice(1)}</p>
-              {frequency === 'weekly' && <p><span className="font-medium">Day:</span> {day.charAt(0).toUpperCase() + day.slice(1)}</p>}
+              {frequency === 'weekly' && <p><span className="font-medium">Day:</span> {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][parseInt(weekday)]}</p>}
+              {frequency === 'monthly' && <p><span className="font-medium">Day:</span> {day} of the month</p>}
               <p><span className="font-medium">Time:</span> {time}</p>
-              <p><span className="font-medium">Format:</span> PDF</p>
+              <p><span className="font-medium">Format:</span> {format.toUpperCase()}</p>
             </div>
           </div>
         </div>
@@ -167,7 +200,7 @@ export function ScheduleReportPanel({ isOpen, onClose, reportType }: ScheduleRep
           <Button
             onClick={handleSchedule}
             className="flex-1 bg-primary-600 hover:bg-primary-700"
-            disabled={!recipients.trim()}
+            disabled={!recipients.trim() || saving}
           >
             Schedule Report
           </Button>

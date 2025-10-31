@@ -48,38 +48,81 @@ export type SaleSummaryRecord = z.infer<typeof saleSummarySchema>;
 export type SaleDetailRecord = z.infer<typeof saleDetailSchema>;
 
 export type SaleStatus =
-  | 'pending'
-  | 'approved'
+  | 'create_sales'
+  | 'pending_management_approval'
+  | 'management_approved'
+  | 'management_rejected'
+  | 'pending_for_customer_approval'
   | 'customer_approved'
+  | 'customer_rejected'
+  | 'waiting_for_payment'
+  | 'virtual_payment'
   | 'payment_received'
   | 'completed'
+  | 'pending'
+  | 'approved'
   | 'rejected';
 
 const SALE_STATUS_MAP: Record<string, SaleStatus> = {
-  pending: 'pending',
-  pending_approval: 'pending',
-  awaiting_approval: 'pending',
-  approved: 'approved',
-  management_approved: 'approved',
+  create_sales: 'create_sales',
+  pending_management_approval: 'pending_management_approval',
+  management_approved: 'management_approved',
+  management_rejected: 'management_rejected',
+  pending_for_customer_approval: 'pending_for_customer_approval',
   customer_approved: 'customer_approved',
-  customerapproval: 'customer_approved',
+  customer_rejected: 'customer_rejected',
+  waiting_for_payment: 'waiting_for_payment',
+  virtual_payment: 'virtual_payment',
   payment_received: 'payment_received',
-  paid: 'payment_received',
   completed: 'completed',
+  pending: 'pending_management_approval',
+  pending_approval: 'pending_management_approval',
+  awaiting_approval: 'pending_management_approval',
+  approved: 'management_approved',
+  customerapproval: 'customer_approved',
+  paid: 'payment_received',
   finished: 'completed',
   closed: 'completed',
-  rejected: 'rejected',
-  declined: 'rejected',
-  cancelled: 'rejected',
+  rejected: 'management_rejected',
+  declined: 'management_rejected',
+  cancelled: 'management_rejected',
 };
 
 export function normalizeSaleStatus(rawStatus: string | null | undefined): SaleStatus {
   if (!rawStatus) {
-    return 'pending';
+    return 'pending_management_approval';
   }
 
   const normalized = rawStatus.toLowerCase().replace(/\s+/g, '_');
-  return SALE_STATUS_MAP[normalized] ?? 'pending';
+  const mappedStatus = SALE_STATUS_MAP[normalized];
+
+  if (mappedStatus) {
+    return mappedStatus;
+  }
+
+  // If status not in map, return as-is if it's a valid SaleStatus
+  const validStatuses: SaleStatus[] = [
+    'create_sales',
+    'pending_management_approval',
+    'management_approved',
+    'management_rejected',
+    'pending_for_customer_approval',
+    'customer_approved',
+    'customer_rejected',
+    'waiting_for_payment',
+    'virtual_payment',
+    'payment_received',
+    'completed',
+    'pending',
+    'approved',
+    'rejected'
+  ];
+
+  if (validStatuses.includes(normalized as SaleStatus)) {
+    return normalized as SaleStatus;
+  }
+
+  return 'pending_management_approval';
 }
 
 export function extractCustomerName(customer: SaleSummaryRecord['customer']): string {

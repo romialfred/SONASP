@@ -39,6 +39,11 @@ type StatusDisplay = {
 const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
   pending: StatusDisplay;
 } = {
+  create_sales: {
+    label: 'Creating Sale',
+    color: 'bg-gray-100 text-gray-800 border-gray-300',
+    icon: Clock,
+  },
   pending: {
     label: 'Pending Approval',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-300',

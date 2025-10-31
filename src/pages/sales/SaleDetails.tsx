@@ -289,6 +289,21 @@ export function SaleDetails() {
       color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       icon: Clock
     },
+    pending_management_approval: {
+      label: 'Pending Management Approval',
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      icon: Clock
+    },
+    management_approved: {
+      label: 'Management Approved',
+      color: 'bg-blue-100 text-blue-800 border-blue-300',
+      icon: CheckCircle
+    },
+    pending_for_customer_approval: {
+      label: 'Pending Customer Approval',
+      color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      icon: Clock
+    },
     approved: {
       label: 'Management Approved',
       color: 'bg-blue-100 text-blue-800 border-blue-300',
@@ -299,6 +314,11 @@ export function SaleDetails() {
       color: 'bg-green-100 text-green-800 border-green-300',
       icon: CheckCircle
     },
+    waiting_for_payment: {
+      label: 'Waiting for Payment',
+      color: 'bg-orange-100 text-orange-800 border-orange-300',
+      icon: Clock
+    },
     payment_received: {
       label: 'Payment Received',
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
@@ -308,6 +328,16 @@ export function SaleDetails() {
       label: 'Completed',
       color: 'bg-gray-100 text-gray-800 border-gray-300',
       icon: CheckCircle
+    },
+    management_rejected: {
+      label: 'Management Rejected',
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: XCircle
+    },
+    customer_rejected: {
+      label: 'Customer Rejected',
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: XCircle
     },
     rejected: {
       label: 'Rejected',
@@ -467,9 +497,15 @@ export function SaleDetails() {
           </div>
         </div>
 
-        {sale.status === 'pending' && (
+        {(sale.status === 'pending' || sale.status === 'pending_management_approval') && (
           <Alert type="warning" title="Action Required">
             This sale requires management approval before proceeding to customer notification.
+          </Alert>
+        )}
+
+        {sale.status === 'pending_for_customer_approval' && (
+          <Alert type="info" title="Awaiting Customer">
+            This sale has been approved by management and is awaiting customer approval.
           </Alert>
         )}
 
@@ -674,13 +710,14 @@ export function SaleDetails() {
           </div>
 
           {/* Right sidebar column - Sticky sidebar */}
-          <div className="space-y-6">
+          <div className="lg:col-span-1">
+            <div className="sticky top-6 space-y-6">
             <Card className="border-2 border-gray-200 sticky top-6">
               <CardHeader className="bg-gray-50">
                 <CardTitle className="text-base">Management Actions</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                {sale.status === 'pending' ? (
+                {(sale.status === 'pending' || sale.status === 'pending_management_approval') ? (
                   <div className="space-y-3">
                     <Button
                       onClick={() => {
@@ -701,6 +738,89 @@ export function SaleDetails() {
                       <XCircle className="h-4 w-4" />
                       Reject Sale
                     </Button>
+                  </div>
+                ) : sale.status === 'pending_for_customer_approval' ? (
+                  <div className="space-y-4">
+                    <div className="text-center py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <Clock className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
+                      <p className="text-sm font-semibold text-indigo-900 mb-1">
+                        Awaiting Customer Approval
+                      </p>
+                      <p className="text-xs text-indigo-700">
+                        Email sent to customer
+                      </p>
+                    </div>
+                    <div className="pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-600 mb-3 text-center">
+                        Administrator override options:
+                      </p>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={async () => {
+                            if (!id || !user?.email) return;
+                            setIsApproving(true);
+                            try {
+                              const { data, error } = await supabase
+                                .from('sales')
+                                .update({ status: 'customer_approved' })
+                                .eq('id', id)
+                                .select()
+                                .single();
+
+                              if (!error) {
+                                alert.success('Sale approved as customer (admin override)');
+                                await loadSaleDetails();
+                              } else {
+                                alert.error('Failed to override: ' + error.message);
+                              }
+                            } catch (err: any) {
+                              alert.error('Error: ' + err.message);
+                            } finally {
+                              setIsApproving(false);
+                            }
+                          }}
+                          disabled={isApproving}
+                          size="sm"
+                          className="w-full bg-green-600 hover:bg-green-700 text-xs"
+                        >
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Approve as Customer
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            if (!id || !user?.email) return;
+                            const reason = prompt('Rejection reason:');
+                            if (!reason) return;
+
+                            setIsRejecting(true);
+                            try {
+                              const { error } = await supabase
+                                .from('sales')
+                                .update({ status: 'customer_rejected' })
+                                .eq('id', id);
+
+                              if (!error) {
+                                alert.success('Sale rejected (admin override)');
+                                await loadSaleDetails();
+                              } else {
+                                alert.error('Failed to override: ' + error.message);
+                              }
+                            } catch (err: any) {
+                              alert.error('Error: ' + err.message);
+                            } finally {
+                              setIsRejecting(false);
+                            }
+                          }}
+                          disabled={isRejecting}
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-red-600 border-red-600 hover:bg-red-50 text-xs"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Reject as Customer
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -744,6 +864,7 @@ export function SaleDetails() {
                 </ul>
               </CardContent>
             </Card>
+            </div>
           </div>
         </div>
 

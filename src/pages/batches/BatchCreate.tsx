@@ -319,11 +319,18 @@ export function BatchCreate() {
 
     setUploading(true);
     try {
-      // Ensure the storage bucket exists before uploading
-      const bucketExists = await ensureStorageBucketExists('documents');
+      // Check if the storage bucket exists
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+
+      if (listError) {
+        console.error('Error checking buckets:', listError);
+        throw new Error('Unable to access storage. Please contact your administrator.');
+      }
+
+      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
 
       if (!bucketExists) {
-        throw new Error('Storage bucket could not be created. Please contact your administrator to set up the "documents" bucket in Supabase Storage.');
+        throw new Error('Storage bucket "documents" does not exist. Please contact your administrator to create the "documents" bucket in Supabase Storage before uploading files.');
       }
 
       for (const file of Array.from(files)) {

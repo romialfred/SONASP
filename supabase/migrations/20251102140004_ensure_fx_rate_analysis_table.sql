@@ -344,8 +344,11 @@ CREATE TRIGGER update_fx_analysis_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_fx_analysis_updated_at();
 
+-- Drop existing view first to allow column changes
+DROP VIEW IF EXISTS fx_analysis_with_details;
+
 -- Create comprehensive view for FX analysis with payment and sale details
-CREATE OR REPLACE VIEW fx_analysis_with_details AS
+CREATE VIEW fx_analysis_with_details AS
 SELECT
   fxa.id as analysis_id,
   fxa.payment_id,

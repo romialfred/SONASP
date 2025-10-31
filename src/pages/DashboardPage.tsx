@@ -2,6 +2,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { GoldPriceLive } from '@/components/dashboard/GoldPriceLive';
+import { CustomerAccountsWidget } from '@/components/dashboard/CustomerAccountsWidget';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { DollarSign, Package, TrendingUp, ShoppingCart, Activity } from 'lucide-react';
 import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -297,6 +298,9 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Customer Accounts Receivable Widget */}
+        <CustomerAccountsWidget />
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

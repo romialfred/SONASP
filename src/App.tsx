@@ -37,6 +37,9 @@ import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
 import { GoldTradeSpace } from './pages/sales/GoldTradeSpace';
 import { CustomerSaleApproval } from './pages/sales/CustomerSaleApproval';
+import PreSalesDashboard from './pages/presales/PreSalesDashboard';
+import PreSaleCreate from './pages/presales/PreSaleCreate';
+import PreSaleDetails from './pages/presales/PreSaleDetails';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
@@ -276,6 +279,33 @@ function AppRoutes() {
               }
             />
 
+            {/* Pre-Sales Routes */}
+            <Route
+              path="/presales"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                  <PreSalesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/presales/new"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                  <PreSaleCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/presales/:id"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                  <PreSaleDetails />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Sales Routes */}
             <Route
               path="/sales"
               element={

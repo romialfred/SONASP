@@ -549,86 +549,84 @@ export function SaleDetails() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
-                    <span className="text-sm font-semibold text-gray-700">Quantity</span>
-                    <span className="text-base font-bold text-gray-900">{sale.quantity.toFixed(3)} oz</span>
+              <CardContent className="pt-4">
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-50 rounded transition-colors">
+                    <span className="text-sm font-medium text-gray-700">Quantity</span>
+                    <span className="text-sm font-bold text-gray-900">{sale.quantity.toFixed(3)} oz</span>
                   </div>
 
-                  <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
-                    <span className="text-sm font-semibold text-gray-700">London AM Rate</span>
-                    <span className="text-base font-bold text-gray-900">{formatCurrency(sale.londonAMRate)} / oz</span>
+                  <div className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-50 rounded transition-colors">
+                    <span className="text-sm font-medium text-gray-700">London AM Rate</span>
+                    <span className="text-sm font-bold text-gray-900">{formatCurrency(sale.londonAMRate)} / oz</span>
                   </div>
 
-                  <div className="h-px bg-gray-200 my-2"></div>
+                  <div className="h-px bg-gray-200 my-1"></div>
 
-                  <div className="flex justify-between items-center py-3 px-4 bg-green-50 rounded">
+                  <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded">
                     <div>
                       <span className="text-sm font-semibold text-green-900">Gross Proceeds</span>
-                      <p className="text-xs text-green-700 mt-1">
+                      <p className="text-xs text-green-700">
                         {sale.quantity.toFixed(3)} oz × {formatCurrency(sale.londonAMRate)}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-green-700">
+                    <span className="text-base font-bold text-green-700">
                       {formatCurrency(sale.calculations.grossProceeds)}
                     </span>
                   </div>
 
                   {sale.calculations.freight > 0 && (
-                    <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
-                      <span className="text-sm font-semibold text-gray-700">Freight Cost</span>
-                      <span className="text-base font-bold text-red-600">
+                    <div className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-50 rounded transition-colors">
+                      <span className="text-sm font-medium text-gray-700">Freight Cost</span>
+                      <span className="text-sm font-bold text-red-600">
                         -{formatCurrency(sale.calculations.freight)}
                       </span>
                     </div>
                   )}
 
                   {sale.calculations.otherCosts > 0 && (
-                    <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
-                      <span className="text-sm font-semibold text-gray-700">Other Costs</span>
-                      <span className="text-base font-bold text-red-600">
+                    <div className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-50 rounded transition-colors">
+                      <span className="text-sm font-medium text-gray-700">Other Costs</span>
+                      <span className="text-sm font-bold text-red-600">
                         -{formatCurrency(sale.calculations.otherCosts)}
                       </span>
                     </div>
                   )}
 
-                  <div className="h-px bg-gray-300 my-2"></div>
+                  <div className="h-px bg-gray-300 my-1"></div>
 
-                  <div className="flex justify-between items-center py-3 px-4 bg-blue-50 rounded">
+                  <div className="flex justify-between items-center py-2 px-3 bg-blue-50 rounded">
                     <div>
                       <span className="text-sm font-semibold text-blue-900">Net Proceeds</span>
-                      <p className="text-xs text-blue-700 mt-1">
+                      <p className="text-xs text-blue-700">
                         Gross - Total Costs ({formatCurrency(sale.calculations.freight + sale.calculations.otherCosts)})
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-blue-700">
+                    <span className="text-base font-bold text-blue-700">
                       {formatCurrency(sale.calculations.netProceeds)}
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded transition-colors">
+                  <div className="flex justify-between items-center py-1.5 px-3 hover:bg-gray-50 rounded transition-colors">
                     <div>
-                      <span className="text-sm font-semibold text-gray-700">Net Smelted Royalties (3%)</span>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <span className="text-sm font-medium text-gray-700">Net Smelted Royalties (3%)</span>
+                      <p className="text-xs text-gray-600">
                         {formatCurrency(sale.calculations.netProceeds)} × 3%
                       </p>
                     </div>
-                    <span className="text-base font-bold text-red-600">
+                    <span className="text-sm font-bold text-red-600">
                       -{formatCurrency(sale.calculations.royalties)}
                     </span>
                   </div>
 
-                  <div className="h-1 bg-gradient-to-r from-primary-200 to-blue-200 my-3 rounded-full"></div>
+                  <div className="h-0.5 bg-gradient-to-r from-primary-200 to-blue-200 my-2 rounded-full"></div>
 
-                  <div className="flex justify-between items-center py-4 px-4 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg">
+                  <div className="flex justify-between items-center py-2.5 px-3 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg">
                     <div>
-                      <span className="text-lg font-bold text-gray-900">Final Proceeds</span>
-                      <p className="text-xs text-gray-700 mt-1">
-                        Net - Royalties
-                      </p>
+                      <span className="text-base font-bold text-gray-900">Final Proceeds</span>
+                      <p className="text-xs text-gray-700">Net - Royalties</p>
                     </div>
-                    <span className="text-2xl font-bold text-primary-700">
+                    <span className="text-xl font-bold text-primary-700">
                       {formatCurrency(sale.calculations.finalAmount)}
                     </span>
                   </div>

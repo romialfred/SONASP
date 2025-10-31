@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, Package, DollarSign, Users, Calendar, Info } from 'lucide-react';
+import { ArrowLeft, Calculator, Package, DollarSign, Users, Calendar, Info, ChevronDown, ChevronUp, TrendingUp, AlertCircle } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -52,7 +53,13 @@ export default function PreSaleCreate() {
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [showCalculations, setShowCalculations] = useState(false);
+
+  // Accordion state for right panel
+  const [accordionState, setAccordionState] = useState({
+    calculations: true,
+    guidance: true,
+    workflow: false,
+  });
 
   useEffect(() => {
     loadData();
@@ -149,290 +156,389 @@ export default function PreSaleCreate() {
     }).format(amount);
   };
 
+  const toggleAccordion = (key: keyof typeof accordionState) => {
+    setAccordionState((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="secondary" onClick={() => navigate('/presales')} size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Create Pre-Sale</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Pre-sell a validated batch before inventory arrives
-            </p>
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="secondary" onClick={() => navigate('/presales')} size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Create Pre-Sale</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Pre-sell a validated batch before inventory arrives
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Info Alert */}
-      <Alert variant="info" icon={Info}>
-        <p className="font-medium">What is a Pre-Sale?</p>
-        <p className="text-sm mt-1">
-          Pre-sales allow you to sell validated batches before they arrive at the factory. The system will automatically
-          convert the pre-sale to a regular sale when the inventory arrives, with intelligent variance handling.
-        </p>
-      </Alert>
-
-      <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-3">
-        {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Batch Selection */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Package className="h-5 w-5 text-gray-600" />
-              <h2 className="text-lg font-semibold">Batch Information</h2>
+        {/* Info Alert */}
+        <Alert variant="info">
+          <div className="flex items-start gap-2">
+            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">What is a Pre-Sale?</p>
+              <p className="text-sm mt-1">
+                Pre-sales allow you to sell validated batches before they arrive at the factory. The system will automatically
+                convert the pre-sale to a regular sale when the inventory arrives, with intelligent variance handling.
+              </p>
             </div>
+          </div>
+        </Alert>
 
-            <div className="space-y-4">
-              <FormField label="Select Batch" required>
+        {/* Form Grid with Right Panel */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Main Form - Left Side */}
+          <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
+            {/* Batch Selection */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Package className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold">Batch Information</h2>
+              </div>
+
+              <div className="space-y-4">
+                <FormField label="Select Batch" required>
+                  <Select
+                    value={formData.batch_id}
+                    onChange={(e) => setFormData({ ...formData, batch_id: e.target.value })}
+                    required
+                  >
+                    <option value="">-- Select Batch --</option>
+                    {batches.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.batch_number} - {batch.final_weight_oz.toFixed(2)} oz
+                        {batch.mining_companies ? ` (${batch.mining_companies.name})` : ''}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                {selectedBatch && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="font-medium text-blue-900 mb-2">Batch Details</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-blue-600">Batch Number</p>
+                        <p className="font-medium text-blue-900">{selectedBatch.batch_number}</p>
+                      </div>
+                      <div>
+                        <p className="text-blue-600">Weight</p>
+                        <p className="font-medium text-blue-900">
+                          {selectedBatch.final_weight_oz.toFixed(2)} oz
+                        </p>
+                      </div>
+                      {selectedBatch.mining_companies && (
+                        <div className="col-span-2">
+                          <p className="text-blue-600">Mining Company</p>
+                          <p className="font-medium text-blue-900">{selectedBatch.mining_companies.name}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <FormField label="Expected Arrival Date">
+                  <Input
+                    type="date"
+                    value={formData.expected_arrival_date}
+                    onChange={(e) => setFormData({ ...formData, expected_arrival_date: e.target.value })}
+                  />
+                </FormField>
+              </div>
+            </Card>
+
+            {/* Customer Selection */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold">Customer Information</h2>
+              </div>
+
+              <FormField label="Select Customer" required>
                 <Select
-                  value={formData.batch_id}
-                  onChange={(e) => setFormData({ ...formData, batch_id: e.target.value })}
+                  value={formData.customer_id}
+                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
                   required
                 >
-                  <option value="">-- Select Batch --</option>
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.batch_number} - {batch.final_weight_oz.toFixed(2)} oz
-                      {batch.mining_companies ? ` (${batch.mining_companies.name})` : ''}
+                  <option value="">-- Select Customer --</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name} ({customer.country})
                     </option>
                   ))}
                 </Select>
               </FormField>
+            </Card>
 
-              {selectedBatch && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-medium text-blue-900 mb-2">Batch Details</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-blue-600">Batch Number</p>
-                      <p className="font-medium text-blue-900">{selectedBatch.batch_number}</p>
-                    </div>
-                    <div>
-                      <p className="text-blue-600">Weight</p>
-                      <p className="font-medium text-blue-900">
-                        {selectedBatch.final_weight_oz.toFixed(2)} oz
-                      </p>
-                    </div>
-                    {selectedBatch.mining_companies && (
-                      <div className="col-span-2">
-                        <p className="text-blue-600">Mining Company</p>
-                        <p className="font-medium text-blue-900">{selectedBatch.mining_companies.name}</p>
+            {/* Pricing Details */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold">Pricing Details</h2>
+              </div>
+
+              <div className="space-y-4">
+                <FormField label="Quantity (oz)" required>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.quantity_oz}
+                    onChange={(e) => setFormData({ ...formData, quantity_oz: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </FormField>
+
+                <FormField label="London AM Rate (USD/oz)" required>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.london_am_rate}
+                    onChange={(e) => setFormData({ ...formData, london_am_rate: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Freight Cost (USD)">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.freight_cost}
+                    onChange={(e) => setFormData({ ...formData, freight_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </FormField>
+
+                <FormField label="Other Costs (USD)">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.other_costs}
+                    onChange={(e) => setFormData({ ...formData, other_costs: parseFloat(e.target.value) || 0 })}
+                  />
+                </FormField>
+
+                <FormField label="Notes">
+                  <TextArea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
+                    placeholder="Add any additional notes about this pre-sale..."
+                  />
+                </FormField>
+              </div>
+            </Card>
+
+            {/* Submit Button */}
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/presales')}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={submitting}>
+                Create Pre-Sale
+              </Button>
+            </div>
+          </form>
+
+          {/* Right Accordion Panel */}
+          <div className="space-y-4">
+            {/* Calculations Accordion */}
+            <Card className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleAccordion('calculations')}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-150 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5 text-primary-600" />
+                  <span className="font-semibold text-primary-900">Live Calculations</span>
+                </div>
+                {accordionState.calculations ? (
+                  <ChevronUp className="h-5 w-5 text-primary-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-primary-600" />
+                )}
+              </button>
+
+              {accordionState.calculations && (
+                <div className="p-4 space-y-3 border-t border-primary-200">
+                  {calculations ? (
+                    <>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm text-gray-600">Gross Proceeds</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(calculations.gross_proceeds)}
+                        </span>
                       </div>
-                    )}
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm text-gray-600">Freight Cost</span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(calculations.freight_cost)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm text-gray-600">Other Costs</span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(calculations.other_costs)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm font-medium text-gray-700">Net Proceeds</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(calculations.net_proceeds)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm text-gray-600">Royalty (3%)</span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(calculations.royalty_amount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 bg-accent-50 rounded-lg px-3 mt-2">
+                        <span className="text-sm font-bold text-accent-900">Final Proceeds</span>
+                        <span className="text-lg font-bold text-accent-700">
+                          {formatCurrency(calculations.final_proceeds)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      Enter quantity and rate to see calculations
+                    </p>
+                  )}
+                </div>
+              )}
+            </Card>
+
+            {/* Guidance Accordion */}
+            <Card className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleAccordion('guidance')}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold text-blue-900">Field Guidance</span>
+                </div>
+                {accordionState.guidance ? (
+                  <ChevronUp className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-blue-600" />
+                )}
+              </button>
+
+              {accordionState.guidance && (
+                <div className="p-4 space-y-3 border-t border-blue-200 text-sm">
+                  <div>
+                    <p className="font-medium text-blue-900 mb-1">Batch Selection</p>
+                    <p className="text-blue-700">
+                      Only validated batches are available for pre-sales. These are batches that have been approved for transport but haven't arrived at the factory yet.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900 mb-1">Quantity</p>
+                    <p className="text-blue-700">
+                      The system will auto-fill with the batch's total weight, but you can adjust if selling partial quantities.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900 mb-1">Expected Arrival</p>
+                    <p className="text-blue-700">
+                      Set the expected date when inventory will arrive. The system will track this for automatic conversion.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900 mb-1">London AM Rate</p>
+                    <p className="text-blue-700">
+                      Current market rate for gold. This will be used to calculate the sale amount.
+                    </p>
                   </div>
                 </div>
               )}
+            </Card>
 
-              <FormField label="Expected Arrival Date">
-                <Input
-                  type="date"
-                  value={formData.expected_arrival_date}
-                  onChange={(e) => setFormData({ ...formData, expected_arrival_date: e.target.value })}
-                />
-              </FormField>
-            </div>
-          </Card>
-
-          {/* Customer Selection */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="h-5 w-5 text-gray-600" />
-              <h2 className="text-lg font-semibold">Customer Information</h2>
-            </div>
-
-            <FormField label="Select Customer" required>
-              <Select
-                value={formData.customer_id}
-                onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                required
+            {/* Workflow Accordion */}
+            <Card className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleAccordion('workflow')}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-150 transition-colors"
               >
-                <option value="">-- Select Customer --</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} - {customer.country}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-          </Card>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <span className="font-semibold text-amber-900">Workflow Steps</span>
+                </div>
+                {accordionState.workflow ? (
+                  <ChevronUp className="h-5 w-5 text-amber-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-amber-600" />
+                )}
+              </button>
 
-          {/* Pricing Information */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="h-5 w-5 text-gray-600" />
-              <h2 className="text-lg font-semibold">Pricing Information</h2>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField label="Quantity (oz)" required>
-                <Input
-                  type="number"
-                  step="0.0001"
-                  value={formData.quantity_oz}
-                  onChange={(e) => setFormData({ ...formData, quantity_oz: parseFloat(e.target.value) || 0 })}
-                  required
-                  min="0.0001"
-                />
-              </FormField>
-
-              <FormField label="London AM Rate ($/oz)" required>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.london_am_rate}
-                  onChange={(e) => setFormData({ ...formData, london_am_rate: parseFloat(e.target.value) || 0 })}
-                  required
-                  min="0.01"
-                />
-              </FormField>
-
-              <FormField label="Freight Cost ($)">
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.freight_cost || ''}
-                  onChange={(e) => setFormData({ ...formData, freight_cost: parseFloat(e.target.value) || 0 })}
-                  min="0"
-                />
-              </FormField>
-
-              <FormField label="Other Costs ($)">
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.other_costs || ''}
-                  onChange={(e) => setFormData({ ...formData, other_costs: parseFloat(e.target.value) || 0 })}
-                  min="0"
-                />
-              </FormField>
-            </div>
-
-            <div className="mt-4">
-              <FormField label="Notes">
-                <TextArea
-                  value={formData.notes || ''}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                  placeholder="Additional notes about this pre-sale..."
-                />
-              </FormField>
-            </div>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="flex-1"
-            >
-              {submitting ? 'Creating Pre-Sale...' : 'Create Pre-Sale'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowCalculations(!showCalculations)}
-            >
-              <Calculator className="h-4 w-4 mr-2" />
-              {showCalculations ? 'Hide' : 'Show'} Calculations
-            </Button>
-          </div>
-        </div>
-
-        {/* Calculations Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 space-y-6">
-            {/* Calculation Summary */}
-            {showCalculations && calculations && (
-              <Card className="p-6">
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
-                  Calculation Summary
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Quantity:</span>
-                    <span className="font-medium">{formData.quantity_oz.toFixed(4)} oz</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">London AM Rate:</span>
-                    <span className="font-medium">{formatCurrency(formData.london_am_rate)}</span>
-                  </div>
-
-                  <div className="border-t pt-3 flex justify-between">
-                    <span className="font-medium text-gray-700">Gross Proceeds:</span>
-                    <span className="font-semibold">{formatCurrency(calculations.gross_proceeds)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>Freight Cost:</span>
-                    <span>-{formatCurrency(formData.freight_cost || 0)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>Other Costs:</span>
-                    <span>-{formatCurrency(formData.other_costs || 0)}</span>
-                  </div>
-
-                  <div className="border-t pt-3 flex justify-between">
-                    <span className="font-medium text-gray-700">Net Proceeds:</span>
-                    <span className="font-semibold">{formatCurrency(calculations.net_proceeds)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>Royalty (3%):</span>
-                    <span>-{formatCurrency(calculations.royalty_amount)}</span>
-                  </div>
-
-                  <div className="border-t-2 border-gray-300 pt-3 flex justify-between">
-                    <span className="font-bold text-gray-900">Final Proceeds:</span>
-                    <span className="font-bold text-lg text-green-600">
-                      {formatCurrency(calculations.final_proceeds)}
+              {accordionState.workflow && (
+                <div className="p-4 space-y-2 border-t border-amber-200 text-sm">
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      1
                     </span>
+                    <p className="text-amber-800">Management reviews and approves pre-sale</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      2
+                    </span>
+                    <p className="text-amber-800">Customer receives approval email</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      3
+                    </span>
+                    <p className="text-amber-800">Customer account receivable is created (we owe them)</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      4
+                    </span>
+                    <p className="text-amber-800">System tracks batch arrival automatically</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      5
+                    </span>
+                    <p className="text-amber-800">Auto-converts to sale when inventory arrives (±2% variance)</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold">
+                      6
+                    </span>
+                    <p className="text-amber-800">Payment processed and transaction completed</p>
                   </div>
                 </div>
-              </Card>
-            )}
-
-            {/* Info Card */}
-            <Card className="p-6 bg-teal-50 border-teal-200">
-              <h3 className="font-semibold text-teal-900 mb-3">Pre-Sale Benefits</h3>
-              <ul className="space-y-2 text-sm text-teal-800">
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-600 mt-0.5">•</span>
-                  <span>Lock in prices before inventory arrives</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-600 mt-0.5">•</span>
-                  <span>Automatic conversion when batch arrives</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-600 mt-0.5">•</span>
-                  <span>Customer account tracking (we owe them)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-600 mt-0.5">•</span>
-                  <span>Intelligent variance detection</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-600 mt-0.5">•</span>
-                  <span>Same approval workflow as sales</span>
-                </li>
-              </ul>
+              )}
             </Card>
           </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

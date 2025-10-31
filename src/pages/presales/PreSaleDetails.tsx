@@ -13,6 +13,7 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -153,17 +154,23 @@ export default function PreSaleDetails() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
 
   if (!preSale) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Pre-sale not found</p>
-        <Button onClick={() => navigate('/presales')} className="mt-4">
-          Back to Pre-Sales
-        </Button>
-      </div>
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-500">Pre-sale not found</p>
+          <Button onClick={() => navigate('/presales')} className="mt-4">
+            Back to Pre-Sales
+          </Button>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -177,7 +184,8 @@ export default function PreSaleDetails() {
     Math.abs(inventoryMatch.variance_percentage) > 2;
 
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -460,5 +468,6 @@ export default function PreSaleDetails() {
         </div>
       </div>
     </div>
+    </MainLayout>
   );
 }

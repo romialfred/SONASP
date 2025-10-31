@@ -244,11 +244,36 @@ export async function approveRequest(
         })
         .eq('id', approvalRequestId);
 
+      // Update entity status based on approval type
       if (approvalRequest.approval_type === 'sale') {
+        // For sales, after management approval, move to customer_approved
+        // This triggers customer notification to approve for payment
         await supabase
           .from('sales')
-          .update({ status: 'approved' })
+          .update({
+            status: 'customer_approved',
+            management_approved_at: new Date().toISOString(),
+            management_approved_by: approverEmail
+          })
           .eq('id', approvalRequest.entity_id);
+
+        // Send email to customer for approval
+        const { data: saleData } = await supabase
+          .from('sales')
+          .select('sale_number, customer:customers(name, email), quantity_oz, final_proceeds')
+          .eq('id', approvalRequest.entity_id)
+          .single();
+
+        if (saleData && saleData.customer) {
+          await sendSaleApprovalRequest(
+            approvalRequest.entity_id,
+            saleData.sale_number,
+            saleData.customer.name,
+            saleData.quantity_oz,
+            saleData.final_proceeds,
+            saleData.customer.email
+          );
+        }
       } else if (approvalRequest.approval_type === 'payment') {
         await supabase
           .from('payments')
@@ -321,9 +346,15 @@ export async function rejectRequest(
       .eq('id', approvalRequestId);
 
     if (approvalRequest.approval_type === 'sale') {
+      // For sales, rejection means customer_rejected status
       await supabase
         .from('sales')
-        .update({ status: 'rejected' })
+        .update({
+          status: 'customer_rejected',
+          management_rejected_at: new Date().toISOString(),
+          management_rejected_by: approverEmail,
+          rejection_reason: reason
+        })
         .eq('id', approvalRequest.entity_id);
     } else if (approvalRequest.approval_type === 'payment') {
       await supabase

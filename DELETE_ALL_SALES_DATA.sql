@@ -41,7 +41,7 @@ BEGIN
   -- Get counts before deletion
   SELECT COUNT(*) INTO v_sales_count FROM sales;
   SELECT COUNT(*) INTO v_payments_count FROM payments;
-  SELECT COUNT(*) INTO v_approvals_count FROM approval_requests WHERE approval_type = 'sale';
+  SELECT COUNT(*) INTO v_approvals_count FROM approval_requests WHERE request_type IN ('sale_approval', 'payment_approval');
 
   RAISE NOTICE '
 ╔════════════════════════════════════════════════════════════════════════════════╗
@@ -61,13 +61,13 @@ Starting deletion process...
   -- Step 1: Delete sales approval requests
   RAISE NOTICE '→ Deleting sales approval requests...';
   DELETE FROM approval_requests
-  WHERE approval_type IN ('sale', 'sale_approval');
+  WHERE request_type IN ('sale_approval', 'payment_approval');
 
   -- Step 2: Delete approval steps related to sales
   RAISE NOTICE '→ Deleting approval steps for sales...';
   DELETE FROM approval_steps
   WHERE approval_request_id IN (
-    SELECT id FROM approval_requests WHERE approval_type IN ('sale', 'sale_approval')
+    SELECT id FROM approval_requests WHERE request_type IN ('sale_approval', 'payment_approval')
   );
 
   -- Step 3: Delete virtual payments
@@ -166,4 +166,4 @@ SELECT
   'approval_requests (sales)' as table_name,
   COUNT(*) as remaining_records
 FROM approval_requests
-WHERE approval_type IN ('sale', 'sale_approval');
+WHERE request_type IN ('sale_approval', 'payment_approval');

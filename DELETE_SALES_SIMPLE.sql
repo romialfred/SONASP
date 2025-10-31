@@ -11,12 +11,12 @@
 DELETE FROM approval_steps
 WHERE approval_request_id IN (
   SELECT id FROM approval_requests
-  WHERE approval_type IN ('sale', 'sale_approval')
+  WHERE request_type IN ('sale_approval', 'payment_approval')
 );
 
 -- 2. Delete sales approval requests
 DELETE FROM approval_requests
-WHERE approval_type IN ('sale', 'sale_approval');
+WHERE request_type IN ('sale_approval', 'payment_approval');
 
 -- 3. Delete virtual payments
 DELETE FROM virtual_payments;
@@ -54,4 +54,4 @@ UNION ALL
 SELECT 'Virtual Payments', COUNT(*) FROM virtual_payments
 UNION ALL
 SELECT 'Sales Approvals', COUNT(*) FROM approval_requests
-WHERE approval_type IN ('sale', 'sale_approval');
+WHERE request_type IN ('sale_approval', 'payment_approval');

@@ -284,6 +284,92 @@ export function getMarketStatus(): {
 }
 
 /**
+ * Calculate time until market opens or closes
+ */
+export function getTimeUntilMarketChange(): {
+  isOpen: boolean;
+  timeUntil: string;
+  nextEvent: 'opening' | 'closing';
+  marketName: string;
+} {
+  const now = new Date();
+  const utcHours = now.getUTCHours();
+  const utcMinutes = now.getUTCMinutes();
+  const utcDay = now.getUTCDay();
+
+  const isWeekend = utcDay === 0 || utcDay === 6;
+
+  // Current time in minutes from midnight UTC
+  const currentMinutes = utcHours * 60 + utcMinutes;
+
+  // London market: 8:00 AM - 4:30 PM GMT (480 - 990 minutes)
+  const londonOpen = 8 * 60; // 480
+  const londonClose = 16 * 60 + 30; // 990
+
+  // Check if weekend
+  if (isWeekend) {
+    // Calculate minutes until Monday 8:00 AM GMT
+    const daysUntilMonday = utcDay === 0 ? 1 : 2; // Sunday = 1 day, Saturday = 2 days
+    const minutesUntilMonday = (daysUntilMonday * 24 * 60) + londonOpen - currentMinutes;
+
+    return {
+      isOpen: false,
+      timeUntil: formatTimeUntil(minutesUntilMonday),
+      nextEvent: 'opening',
+      marketName: 'London'
+    };
+  }
+
+  // During London hours
+  if (currentMinutes >= londonOpen && currentMinutes < londonClose) {
+    const minutesUntilClose = londonClose - currentMinutes;
+    return {
+      isOpen: true,
+      timeUntil: formatTimeUntil(minutesUntilClose),
+      nextEvent: 'closing',
+      marketName: 'London'
+    };
+  }
+
+  // Before London opens
+  if (currentMinutes < londonOpen) {
+    const minutesUntilOpen = londonOpen - currentMinutes;
+    return {
+      isOpen: false,
+      timeUntil: formatTimeUntil(minutesUntilOpen),
+      nextEvent: 'opening',
+      marketName: 'London'
+    };
+  }
+
+  // After London closes
+  const minutesUntilNextDay = (24 * 60) - currentMinutes + londonOpen;
+  return {
+    isOpen: false,
+    timeUntil: formatTimeUntil(minutesUntilNextDay),
+    nextEvent: 'opening',
+    marketName: 'London'
+  };
+}
+
+/**
+ * Format minutes into human-readable time string
+ */
+function formatTimeUntil(totalMinutes: number): string {
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = Math.floor(totalMinutes % 60);
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+/**
  * Clear price cache (useful for manual refresh)
  */
 export function clearPriceCache(): void {

@@ -15,6 +15,7 @@ import {
   formatGoldPrice,
   clearPriceCache,
   getMarketStatus,
+  getTimeUntilMarketChange,
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
 import { recordIntradayPrice } from '@/services/goldPriceAggregationService';
@@ -26,6 +27,8 @@ export function LiveGoldPricePanel() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState<string | null>(null);
+  const [marketCountdown, setMarketCountdown] = useState(getTimeUntilMarketChange());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const fetchGoldData = async (isManual = false) => {
     if (isManual) {
@@ -67,9 +70,22 @@ export function LiveGoldPricePanel() {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 60));
     }, 1000);
 
+    // Update market countdown every minute
+    const marketInterval = setInterval(() => {
+      setMarketCountdown(getTimeUntilMarketChange());
+      setCurrentDate(new Date());
+    }, 60000);
+
+    // Update current date every second for real-time clock
+    const dateInterval = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
     return () => {
       clearInterval(interval);
       clearInterval(countdownInterval);
+      clearInterval(marketInterval);
+      clearInterval(dateInterval);
     };
   }, []);
 
@@ -228,9 +244,9 @@ export function LiveGoldPricePanel() {
         </Card>
       </div>
 
-      {/* Market Info Bar */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
+      {/* Market Info Bar with Date and Status */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-gray-400" />
@@ -243,11 +259,72 @@ export function LiveGoldPricePanel() {
               <span className="text-sm font-medium text-emerald-600">Live Data</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Next update in: {countdown}s</span>
-            {refreshing && (
-              <span className="text-emerald-600 font-medium">Updating...</span>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Current Date</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {currentDate.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </p>
+              <p className="text-xs text-gray-600">
+                {currentDate.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })}
+              </p>
+            </div>
+            <div className="text-sm text-gray-500">
+              Next update in: {countdown}s
+              {refreshing && (
+                <span className="text-emerald-600 font-medium ml-2">Updating...</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Market Status with Countdown */}
+        <div className="pt-3 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {marketCountdown.marketName} Market
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className={`w-2 h-2 rounded-full ${
+                    marketCountdown.isOpen
+                      ? 'bg-emerald-500 animate-pulse'
+                      : 'bg-red-500'
+                  }`}></div>
+                  <span className={`text-sm font-semibold ${
+                    marketCountdown.isOpen
+                      ? 'text-emerald-600'
+                      : 'text-red-600'
+                  }`}>
+                    {marketCountdown.isOpen ? 'OPEN' : 'CLOSED'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 mb-1">
+                {marketCountdown.nextEvent === 'opening' ? 'Opening in' : 'Closing in'}
+              </p>
+              <p className="text-lg font-bold text-gray-900">
+                {marketCountdown.timeUntil}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {marketCountdown.nextEvent === 'opening'
+                  ? '8:00 AM GMT'
+                  : '4:30 PM GMT'}
+              </p>
+            </div>
           </div>
         </div>
       </div>

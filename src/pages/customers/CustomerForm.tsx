@@ -243,12 +243,14 @@ export function CustomerForm() {
         if (error) throw error;
 
         // Delete existing banks and recreate them
-        await supabase
+        const { error: deleteError } = await supabase
           .from('customer_banks')
           .delete()
           .eq('customer_id', id);
 
-        alert.success('Customer updated successfully');
+        if (deleteError) {
+          console.error('Error deleting old banks:', deleteError);
+        }
       } else {
         // Create new customer
         const { data: newCustomer, error } = await supabase
@@ -261,7 +263,6 @@ export function CustomerForm() {
         if (!newCustomer) throw new Error('Failed to create customer');
 
         customerId = newCustomer.id;
-        alert.success('Customer created successfully');
       }
 
       // Save bank accounts
@@ -285,9 +286,12 @@ export function CustomerForm() {
 
         if (banksError) {
           console.error('Error saving banks:', banksError);
-          alert.error('Customer saved but failed to save bank accounts');
+          throw new Error('Failed to save bank accounts: ' + banksError.message);
         }
       }
+
+      // Show success message after everything is saved
+      alert.success(`Customer ${isEditMode ? 'updated' : 'created'} successfully`);
 
       setSubmitSuccess(true);
       setTimeout(() => {

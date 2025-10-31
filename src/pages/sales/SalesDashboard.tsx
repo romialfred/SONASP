@@ -44,6 +44,21 @@ const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
     color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
     icon: Clock,
   },
+  pending_management_approval: {
+    label: 'Pending Management Approval',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    icon: Clock,
+  },
+  management_approved: {
+    label: 'Management Approved',
+    color: 'bg-blue-100 text-blue-800 border-blue-300',
+    icon: CheckCircle,
+  },
+  pending_for_customer_approval: {
+    label: 'Pending Customer Approval',
+    color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+    icon: Clock,
+  },
   approved: {
     label: 'Management Approved',
     color: 'bg-blue-100 text-blue-800 border-blue-300',
@@ -53,6 +68,16 @@ const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
     label: 'Customer Approved',
     color: 'bg-green-100 text-green-800 border-green-300',
     icon: CheckCircle,
+  },
+  waiting_for_payment: {
+    label: 'Waiting for Payment',
+    color: 'bg-orange-100 text-orange-800 border-orange-300',
+    icon: Clock,
+  },
+  virtual_payment: {
+    label: 'Virtual Payment',
+    color: 'bg-purple-100 text-purple-800 border-purple-300',
+    icon: DollarSign,
   },
   payment_received: {
     label: 'Payment Received',
@@ -64,12 +89,22 @@ const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
     color: 'bg-gray-100 text-gray-800 border-gray-300',
     icon: CheckCircle,
   },
+  management_rejected: {
+    label: 'Management Rejected',
+    color: 'bg-red-100 text-red-800 border-red-300',
+    icon: XCircle,
+  },
+  customer_rejected: {
+    label: 'Customer Rejected',
+    color: 'bg-red-100 text-red-800 border-red-300',
+    icon: XCircle,
+  },
   rejected: {
     label: 'Rejected',
     color: 'bg-red-100 text-red-800 border-red-300',
     icon: XCircle,
   },
-};
+} as const;
 
 export function SalesDashboard() {
   const { t } = useTranslation();
@@ -512,11 +547,16 @@ export function SalesDashboard() {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
-                <option value="pending">Pending Approval</option>
-                <option value="approved">Management Approved</option>
+                <option value="pending_management_approval">Pending Management Approval</option>
+                <option value="management_approved">Management Approved</option>
+                <option value="pending_for_customer_approval">Pending Customer Approval</option>
                 <option value="customer_approved">Customer Approved</option>
+                <option value="waiting_for_payment">Waiting for Payment</option>
+                <option value="virtual_payment">Virtual Payment</option>
                 <option value="payment_received">Payment Received</option>
                 <option value="completed">Completed</option>
+                <option value="management_rejected">Management Rejected</option>
+                <option value="customer_rejected">Customer Rejected</option>
               </select>
             </div>
 

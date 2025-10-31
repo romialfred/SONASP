@@ -84,25 +84,57 @@ export async function getAvailableSellers(): Promise<{
       return { success: false, error: mcError.message };
     }
 
-    // 2. Fetch Mansa stakeholder (seller)
-    const { data: mansa, error: mansaError } = await supabase
+    // 2. Fetch Mansa stakeholder (seller) - try multiple approaches
+    let mansa = null;
+
+    // Try to find Mansa in stakeholders table
+    const { data: mansaStakeholder, error: mansaError } = await supabase
       .from('stakeholders')
-      .select('id, name, type, country')
+      .select('id, name, type, country, status')
       .eq('type', 'seller')
-      .eq('status', 'active')
       .maybeSingle();
 
-    if (mansaError) {
-      console.error('Error fetching Mansa stakeholder:', mansaError);
-      return { success: false, error: mansaError.message };
+    if (!mansaError && mansaStakeholder && mansaStakeholder.status === 'active') {
+      mansa = mansaStakeholder;
+    } else {
+      // If not found as stakeholder, look in mining_companies for "Mansa"
+      const { data: mansaCompany, error: mansaCompanyError } = await supabase
+        .from('mining_companies')
+        .select('id, name, country, status')
+        .ilike('name', '%Mansa%')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!mansaCompanyError && mansaCompany) {
+        mansa = {
+          id: mansaCompany.id,
+          name: mansaCompany.name,
+          type: 'seller',
+          country: mansaCompany.country
+        };
+      }
     }
 
     // 3. Build sellers array
     const sellers: Seller[] = [];
 
+    // Add Mansa FIRST (can sell to external customers) - if found
+    if (mansa) {
+      sellers.push({
+        id: mansa.id,
+        name: mansa.name || 'Mansa Resources',
+        type: 'mansa',
+        country: mansa.country,
+        canSellTo: 'external_customers',
+      });
+    }
+
     // Add mining companies (can only sell to Mansa)
     if (miningCompanies) {
       miningCompanies.forEach((mc) => {
+        // Skip if this is the Mansa company we already added
+        if (mansa && mc.id === mansa.id) return;
+
         sellers.push({
           id: mc.id,
           name: mc.name,
@@ -113,15 +145,9 @@ export async function getAvailableSellers(): Promise<{
       });
     }
 
-    // Add Mansa (can sell to external customers)
-    if (mansa) {
-      sellers.push({
-        id: mansa.id,
-        name: mansa.name || 'Mansa Resources',
-        type: 'mansa',
-        country: mansa.country,
-        canSellTo: 'external_customers',
-      });
+    // If no sellers found at all, log warning but don't fail
+    if (sellers.length === 0) {
+      console.warn('No sellers found. Database may need to be seeded with mining companies or stakeholders.');
     }
 
     return { success: true, data: sellers };

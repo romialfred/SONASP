@@ -465,61 +465,64 @@ export function SaleCreate() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <FormField
-                  label="Customer"
-                  required
-                  error={errors.customerId}
-                >
-                  <Select
-                    value={formData.customerId}
-                    onChange={(e) => handleInputChange('customerId', e.target.value)}
-                    error={!!errors.customerId}
-                    onFocus={() => setActiveField('customer')}
+                {/* Seller and Customer on the same row - Seller first */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Seller"
+                    required
+                    error={errors.sellerId}
+                    hint={
+                      customerIsMansa
+                        ? 'For internal transfer to Mansa, mining companies can be selected'
+                        : 'External sales must be from Mansa Resources'
+                    }
                   >
-                    <option value="">Select a customer</option>
-                    {customers.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.country}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
+                    <Select
+                      value={formData.sellerId}
+                      onChange={(e) => handleInputChange('sellerId', e.target.value)}
+                      error={!!errors.sellerId}
+                      onFocus={() => setActiveField('seller')}
+                    >
+                      <option value="">Select a seller</option>
+                      {sellers
+                        .filter((seller) => {
+                          // Business Rule: External customers can only buy from Mansa
+                          if (!customerIsMansa && formData.customerId) {
+                            return seller.type === 'mansa';
+                          }
+                          // For Mansa customers, show all sellers
+                          return true;
+                        })
+                        .map((seller) => (
+                          <option key={seller.id} value={seller.id}>
+                            {seller.name}
+                            {seller.type === 'mining_company' && ' (Mining Company)'}
+                            {seller.type === 'mansa' && ' (Mansa Resources)'}
+                          </option>
+                        ))}
+                    </Select>
+                  </FormField>
 
-                <FormField
-                  label="Seller"
-                  required
-                  error={errors.sellerId}
-                  hint={
-                    customerIsMansa
-                      ? 'For internal transfer to Mansa, mining companies can be selected'
-                      : 'External sales must be from Mansa Resources'
-                  }
-                >
-                  <Select
-                    value={formData.sellerId}
-                    onChange={(e) => handleInputChange('sellerId', e.target.value)}
-                    error={!!errors.sellerId}
-                    onFocus={() => setActiveField('seller')}
+                  <FormField
+                    label="Customer"
+                    required
+                    error={errors.customerId}
                   >
-                    <option value="">Select a seller</option>
-                    {sellers
-                      .filter((seller) => {
-                        // Business Rule: External customers can only buy from Mansa
-                        if (!customerIsMansa && formData.customerId) {
-                          return seller.type === 'mansa';
-                        }
-                        // For Mansa customers, show all sellers
-                        return true;
-                      })
-                      .map((seller) => (
-                        <option key={seller.id} value={seller.id}>
-                          {seller.name}
-                          {seller.type === 'mining_company' && ' (Mining Company)'}
-                          {seller.type === 'mansa' && ' (Mansa Resources)'}
+                    <Select
+                      value={formData.customerId}
+                      onChange={(e) => handleInputChange('customerId', e.target.value)}
+                      error={!!errors.customerId}
+                      onFocus={() => setActiveField('customer')}
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name} - {customer.country}
                         </option>
                       ))}
-                  </Select>
-                </FormField>
+                    </Select>
+                  </FormField>
+                </div>
 
                 {sellerValidationError && (
                   <Alert type="error" title="Invalid Seller Selection">

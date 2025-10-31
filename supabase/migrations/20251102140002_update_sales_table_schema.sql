@@ -71,7 +71,7 @@ UPDATE sales
 SET status = 'pending_management_approval'
 WHERE status IS NULL;
 
--- Verify all statuses are valid before adding constraint
+-- Verify all statuses are valid before continuing
 DO $$
 DECLARE
   v_invalid_count integer;
@@ -90,25 +90,9 @@ BEGIN
   IF v_invalid_count > 0 THEN
     RAISE EXCEPTION 'Found % rows with invalid statuses: %. Please fix these before continuing.', v_invalid_count, v_invalid_statuses;
   ELSE
-    RAISE NOTICE 'All statuses are valid. Ready to add constraint.';
+    RAISE NOTICE 'All statuses are valid. Ready to proceed.';
   END IF;
 END $$;
-
--- Now add the new status constraint (without legacy statuses since we migrated them)
-ALTER TABLE sales ADD CONSTRAINT sales_status_check
-  CHECK (status IN (
-    'create_sales',
-    'pending_management_approval',
-    'management_approved',
-    'management_rejected',
-    'pending_for_customer_approval',
-    'customer_approved',
-    'customer_rejected',
-    'waiting_for_payment',
-    'virtual_payment',
-    'payment_received',
-    'completed'
-  ));
 
 -- Add management approval tracking columns
 DO $$
@@ -192,6 +176,23 @@ CREATE TRIGGER trigger_update_sales_approval_timestamps
   FOR EACH ROW
   WHEN (OLD.status IS DISTINCT FROM NEW.status)
   EXECUTE FUNCTION update_sales_approval_timestamps();
+
+-- NOW add the status constraint AFTER all columns and triggers are created
+-- This prevents conflicts during trigger execution
+ALTER TABLE sales ADD CONSTRAINT sales_status_check
+  CHECK (status IN (
+    'create_sales',
+    'pending_management_approval',
+    'management_approved',
+    'management_rejected',
+    'pending_for_customer_approval',
+    'customer_approved',
+    'customer_rejected',
+    'waiting_for_payment',
+    'virtual_payment',
+    'payment_received',
+    'completed'
+  ));
 
 -- Add comment for documentation
 COMMENT ON TABLE sales IS 'Sales records with new 9-step workflow status management and approval tracking';

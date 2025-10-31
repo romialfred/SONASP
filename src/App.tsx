@@ -7,6 +7,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
+import { DomainRestriction } from './components/auth/DomainRestriction';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { DashboardPage } from './pages/DashboardPage';
@@ -601,19 +602,21 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <NotificationProvider>
-            <DialogProvider>
-              <AppErrorBoundary>
-                <AppRoutes />
-              </AppErrorBoundary>
-            </DialogProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ToastProvider>
+    <DomainRestriction>
+      <ToastProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <NotificationProvider>
+              <DialogProvider>
+                <AppErrorBoundary>
+                  <AppRoutes />
+                </AppErrorBoundary>
+              </DialogProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ToastProvider>
+    </DomainRestriction>
   );
 }
 

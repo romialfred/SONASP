@@ -16,6 +16,14 @@ import { calculateSaleProceeds, formatCurrency, formatWeight } from '@/utils/sal
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
+import { INITIAL_SALE_STATUS } from '@/constants/salesStatuses';
+import {
+  getAvailableSellers,
+  isCustomerMansa,
+  validateSellerCustomerPair,
+  type Seller,
+  type SellerType
+} from '@/services/salesService';
 
 interface Customer {
   id: string;
@@ -42,6 +50,8 @@ export function SaleCreate() {
 
   const [formData, setFormData] = useState({
     customerId: '',
+    sellerId: '',
+    sellerType: '' as SellerType | '',
     quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '2450.00',
     freightCost: '',
@@ -54,12 +64,26 @@ export function SaleCreate() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCalculations, setShowCalculations] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [customerIsMansa, setCustomerIsMansa] = useState(false);
+  const [sellerValidationError, setSellerValidationError] = useState<string>('');
 
   useEffect(() => {
     fetchCustomers();
+    fetchSellers();
   }, []);
+
+  useEffect(() => {
+    // When customer changes, check if it's Mansa and validate seller
+    if (formData.customerId) {
+      checkCustomerAndValidateSeller();
+    } else {
+      setCustomerIsMansa(false);
+      setSellerValidationError('');
+    }
+  }, [formData.customerId, formData.sellerId, formData.sellerType]);
 
   const fetchCustomers = async () => {
     try {
@@ -120,8 +144,53 @@ export function SaleCreate() {
     } catch (error) {
       console.error('Error fetching customers:', error);
       alert.error('Failed to load customers. Please refresh the page.');
+    }
+  };
+
+  const fetchSellers = async () => {
+    try {
+      const result = await getAvailableSellers();
+      if (result.success && result.data) {
+        setSellers(result.data);
+        console.log('Sellers loaded:', result.data);
+      } else {
+        console.error('Error fetching sellers:', result.error);
+        alert.error('Failed to load sellers. Please refresh the page.');
+      }
+    } catch (error) {
+      console.error('Error fetching sellers:', error);
+      alert.error('Failed to load sellers. Please refresh the page.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkCustomerAndValidateSeller = async () => {
+    if (!formData.customerId) return;
+
+    try {
+      // Check if customer is Mansa
+      const result = await isCustomerMansa(formData.customerId);
+      if (result.success) {
+        setCustomerIsMansa(result.isMansa);
+
+        // Validate seller if both customer and seller are selected
+        if (formData.sellerId && formData.sellerType) {
+          const validation = validateSellerCustomerPair(
+            formData.sellerType,
+            formData.customerId,
+            result.isMansa
+          );
+
+          if (!validation.valid) {
+            setSellerValidationError(validation.error || 'Invalid seller-customer combination');
+          } else {
+            setSellerValidationError('');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking customer:', error);
     }
   };
 
@@ -134,6 +203,14 @@ export function SaleCreate() {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
     setShowCalculations(false);
+
+    // Update seller type when seller changes
+    if (field === 'sellerId' && value) {
+      const selectedSeller = sellers.find(s => s.id === value);
+      if (selectedSeller) {
+        setFormData((prev) => ({ ...prev, sellerType: selectedSeller.type }));
+      }
+    }
   };
 
   const validateForm = (): boolean => {
@@ -141,6 +218,15 @@ export function SaleCreate() {
 
     if (!formData.customerId) {
       newErrors.customerId = 'Please select a customer';
+    }
+
+    if (!formData.sellerId) {
+      newErrors.sellerId = 'Please select a seller';
+    }
+
+    // Check for seller validation errors
+    if (sellerValidationError) {
+      newErrors.sellerId = sellerValidationError;
     }
 
     const quantity = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0');
@@ -201,6 +287,8 @@ export function SaleCreate() {
             sale_number: saleNumber,
             sale_date: new Date().toISOString().split('T')[0],
             customer_id: formData.customerId,
+            seller_id: formData.sellerId,
+            seller_type: formData.sellerType,
             quantity_oz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
             london_am_rate: parseFloat(formData.londonAMRate),
             freight_cost: parseFloat(formData.freightCost) || 0,
@@ -211,7 +299,7 @@ export function SaleCreate() {
             final_proceeds: calculations.finalAmount,
             total_amount: calculations.finalAmount,
             currency: 'USD',
-            status: 'customer_pending',
+            status: INITIAL_SALE_STATUS,
             mechanism_type: formData.mechanismType || null,
             created_by: user?.id
           }
@@ -362,6 +450,48 @@ export function SaleCreate() {
                     ))}
                   </Select>
                 </FormField>
+
+                <FormField
+                  label="Seller"
+                  required
+                  error={errors.sellerId}
+                  hint={
+                    customerIsMansa
+                      ? 'For internal transfer to Mansa, mining companies can be selected'
+                      : 'External sales must be from Mansa Resources'
+                  }
+                >
+                  <Select
+                    value={formData.sellerId}
+                    onChange={(e) => handleInputChange('sellerId', e.target.value)}
+                    error={!!errors.sellerId}
+                    onFocus={() => setActiveField('seller')}
+                  >
+                    <option value="">Select a seller</option>
+                    {sellers
+                      .filter((seller) => {
+                        // Business Rule: External customers can only buy from Mansa
+                        if (!customerIsMansa && formData.customerId) {
+                          return seller.type === 'mansa';
+                        }
+                        // For Mansa customers, show all sellers
+                        return true;
+                      })
+                      .map((seller) => (
+                        <option key={seller.id} value={seller.id}>
+                          {seller.name}
+                          {seller.type === 'mining_company' && ' (Mining Company)'}
+                          {seller.type === 'mansa' && ' (Mansa Resources)'}
+                        </option>
+                      ))}
+                  </Select>
+                </FormField>
+
+                {sellerValidationError && (
+                  <Alert type="error" title="Invalid Seller Selection">
+                    {sellerValidationError}
+                  </Alert>
+                )}
 
                 {selectedCustomer && (
                   <div className="space-y-3">
@@ -684,6 +814,7 @@ export function SaleCreate() {
                       </h3>
                       <p className="text-sm font-semibold text-blue-700">
                         {activeField === 'customer' && 'Customer Selection'}
+                        {activeField === 'seller' && 'Seller Selection'}
                         {activeField === 'quantity' && 'Quantity (Troy Ounces)'}
                         {activeField === 'price' && 'Sale Price'}
                         {activeField === 'freight' && 'Freight Cost'}
@@ -728,40 +859,47 @@ export function SaleCreate() {
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">2</div>
                         <div>
+                          <p className="font-semibold text-gray-900">Select Seller</p>
+                          <p className="text-gray-600">Mining company or Mansa (based on business rules)</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">3</div>
+                        <div>
                           <p className="font-semibold text-gray-900">Review Statistics</p>
                           <p className="text-gray-600">Check customer's YTD performance</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">3</div>
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">4</div>
                         <div>
                           <p className="font-semibold text-gray-900">Enter Quantity</p>
                           <p className="text-gray-600">Max: {availableInventoryOz.toFixed(2)} oz available</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">4</div>
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">5</div>
                         <div>
                           <p className="font-semibold text-gray-900">Confirm Price</p>
                           <p className="text-gray-600">{mechanismData ? 'Pre-filled from simulation' : 'Enter sale price per oz'}</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">5</div>
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">6</div>
                         <div>
                           <p className="font-semibold text-gray-900">Add Costs</p>
                           <p className="text-gray-600">Include freight and other expenses</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">6</div>
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">7</div>
                         <div>
                           <p className="font-semibold text-gray-900">Calculate Proceeds</p>
                           <p className="text-gray-600">Click "Calculate" to preview</p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">7</div>
+                        <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">8</div>
                         <div>
                           <p className="font-semibold text-gray-900">Submit to Customer</p>
                           <p className="text-gray-600">Send directly for customer approval</p>

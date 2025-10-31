@@ -18,6 +18,7 @@ import {
   extractCustomerName,
   SaleStatus,
 } from '@/lib/schemas/sales';
+import { SALES_STATUSES } from '@/constants/salesStatuses';
 
 interface Sale {
   id: string;
@@ -111,10 +112,10 @@ export function SalesDashboard() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const pending = salesData?.filter(s => s.status === 'approved' || s.status === 'customer_pending')?.length || 0;
-      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === 'completed' || s.status === 'payment_received'))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
-      const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === 'completed' || s.status === 'payment_received'))?.length || 0;
-      const pendingPayment = salesData?.filter(s => s.status === 'customer_approved' || s.status === 'waiting_for_payment')?.length || 0;
+      const pending = salesData?.filter(s => s.status === SALES_STATUSES.PENDING_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES)?.length || 0;
+      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+      const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.length || 0;
+      const pendingPayment = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.length || 0;
 
       // Try to load inventory (optional - won't break if table doesn't exist)
       let totalInventory = 0;
@@ -186,7 +187,7 @@ export function SalesDashboard() {
         const monthName = months[date.getMonth()];
         if (monthlyData[monthName]) {
           monthlyData[monthName].sales += 1;
-          if (sale.status === 'completed' || sale.status === 'payment_received') {
+          if (sale.status === SALES_STATUSES.COMPLETED || sale.status === SALES_STATUSES.PAYMENT_RECEIVED) {
             monthlyData[monthName].revenue += sale.final_proceeds || 0;
           }
         }
@@ -231,7 +232,7 @@ export function SalesDashboard() {
         customerTotals[customerName] += sale.final_proceeds || 0;
         totalSales += sale.final_proceeds || 0;
 
-        if (sale.status === 'completed' || sale.status === 'payment_received') {
+        if (sale.status === SALES_STATUSES.COMPLETED || sale.status === SALES_STATUSES.PAYMENT_RECEIVED) {
           totalCompleted++;
         }
       });

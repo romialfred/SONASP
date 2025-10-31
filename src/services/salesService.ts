@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { sendSaleApprovedNotification } from './notificationService';
 import { logAuditAction } from '@/lib/auditLog';
+import { SALES_STATUSES, INITIAL_SALE_STATUS } from '@/constants/salesStatuses';
 
 export interface CreateSaleData {
   customer_id: string;
@@ -42,6 +43,181 @@ export interface Sale {
 }
 
 export const ROYALTY_RATE = 0.03;
+
+// ============================================================================
+// MULTI-VENDOR BUSINESS RULES - PHASE 1.2
+// ============================================================================
+
+export type SellerType = 'mining_company' | 'mansa';
+
+export interface Seller {
+  id: string;
+  name: string;
+  type: SellerType;
+  country?: string;
+  canSellTo: 'mansa_only' | 'external_customers';
+}
+
+/**
+ * Get all available sellers (Mining Companies and Mansa)
+ * Business Rules:
+ * - Mining companies can only sell to Mansa
+ * - Mansa can sell to external customers
+ */
+export async function getAvailableSellers(): Promise<{
+  success: boolean;
+  data?: Seller[];
+  error?: string;
+}> {
+  try {
+    // 1. Fetch all active mining companies
+    const { data: miningCompanies, error: mcError } = await supabase
+      .from('mining_companies')
+      .select('id, name, country, status')
+      .eq('status', 'active')
+      .order('name');
+
+    if (mcError) {
+      console.error('Error fetching mining companies:', mcError);
+      return { success: false, error: mcError.message };
+    }
+
+    // 2. Fetch Mansa stakeholder (seller)
+    const { data: mansa, error: mansaError } = await supabase
+      .from('stakeholders')
+      .select('id, name, type, country')
+      .eq('type', 'seller')
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (mansaError) {
+      console.error('Error fetching Mansa stakeholder:', mansaError);
+      return { success: false, error: mansaError.message };
+    }
+
+    // 3. Build sellers array
+    const sellers: Seller[] = [];
+
+    // Add mining companies (can only sell to Mansa)
+    if (miningCompanies) {
+      miningCompanies.forEach((mc) => {
+        sellers.push({
+          id: mc.id,
+          name: mc.name,
+          type: 'mining_company',
+          country: mc.country,
+          canSellTo: 'mansa_only',
+        });
+      });
+    }
+
+    // Add Mansa (can sell to external customers)
+    if (mansa) {
+      sellers.push({
+        id: mansa.id,
+        name: mansa.name || 'Mansa Resources',
+        type: 'mansa',
+        country: mansa.country,
+        canSellTo: 'external_customers',
+      });
+    }
+
+    return { success: true, data: sellers };
+  } catch (error: any) {
+    console.error('Error in getAvailableSellers:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get seller options for sale creation based on current user
+ * Filters sellers based on business rules and user permissions
+ */
+export async function getSellerOptionsForUser(userRole?: string): Promise<{
+  success: boolean;
+  data?: Seller[];
+  error?: string;
+}> {
+  const result = await getAvailableSellers();
+
+  if (!result.success || !result.data) {
+    return result;
+  }
+
+  // For now, return all sellers (can be filtered by role in future)
+  // Mining company users would only see their own company
+  // Mansa users would see Mansa
+  // Management sees all
+
+  return { success: true, data: result.data };
+}
+
+/**
+ * Validate seller selection against business rules
+ * Returns true if the sale is valid according to business rules
+ */
+export function validateSellerCustomerPair(
+  sellerType: SellerType,
+  customerId: string,
+  isMansaCustomer: boolean
+): {
+  valid: boolean;
+  error?: string;
+} {
+  // Business Rule 1: Mining companies can ONLY sell to Mansa
+  if (sellerType === 'mining_company' && !isMansaCustomer) {
+    return {
+      valid: false,
+      error:
+        'Mining companies can only sell to Mansa Resources. Please select Mansa as the seller for external customer sales.',
+    };
+  }
+
+  // Business Rule 2: External customers must buy from Mansa
+  if (!isMansaCustomer && sellerType !== 'mansa') {
+    return {
+      valid: false,
+      error: 'External customers can only purchase from Mansa Resources.',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Check if a customer is Mansa (for internal transfers)
+ * Returns true if the customer represents Mansa Resources
+ */
+export async function isCustomerMansa(customerId: string): Promise<{
+  success: boolean;
+  isMansa: boolean;
+  error?: string;
+}> {
+  try {
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('name, email')
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (error) {
+      return { success: false, isMansa: false, error: error.message };
+    }
+
+    if (!customer) {
+      return { success: false, isMansa: false, error: 'Customer not found' };
+    }
+
+    // Check if customer name or email contains "mansa" (case insensitive)
+    const nameLower = (customer.name || '').toLowerCase();
+    const emailLower = (customer.email || '').toLowerCase();
+    const isMansa = nameLower.includes('mansa') || emailLower.includes('mansa');
+
+    return { success: true, isMansa };
+  } catch (error: any) {
+    return { success: false, isMansa: false, error: error.message };
+  }
+}
 
 export function calculateSaleProceeds(
   quantityOz: number,
@@ -100,7 +276,7 @@ export async function createSale(
         royalty_amount: calculations.royalty_amount,
         final_proceeds: calculations.final_proceeds,
         sale_date: saleData.sale_date || new Date().toISOString(),
-        status: 'pending_approval',
+        status: INITIAL_SALE_STATUS,
         notes: saleData.notes,
       })
       .select()
@@ -239,7 +415,7 @@ export async function approveSale(
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const result = await updateSaleStatus(saleId, 'approved', userEmail, notes);
+    const result = await updateSaleStatus(saleId, SALES_STATUSES.CUSTOMER_APPROVED, userEmail, notes);
 
     if (result.success) {
       const { data: sale } = await supabase
@@ -277,7 +453,7 @@ export async function rejectSale(
   userEmail: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updateSaleStatus(saleId, 'rejected', userEmail, reason);
+  return updateSaleStatus(saleId, SALES_STATUSES.CUSTOMER_REJECTED, userEmail, reason);
 }
 
 export async function customerApproveSale(
@@ -402,7 +578,7 @@ export async function customerApproveSale(
 
     let statusResult = await updateSaleStatus(
       saleId,
-      'waiting_for_payment',
+      SALES_STATUSES.WAITING_FOR_PAYMENT,
       customerEmail,
       `Customer approved sale - Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
     );
@@ -412,7 +588,7 @@ export async function customerApproveSale(
       console.warn('[customerApproveSale] waiting_for_payment failed, trying customer_approved...');
       statusResult = await updateSaleStatus(
         saleId,
-        'customer_approved',
+        SALES_STATUSES.CUSTOMER_APPROVED,
         customerEmail,
         `Customer approved sale - Virtual payment pending (${mechanism} terms). Payment ID: ${paymentId}`
       );
@@ -440,7 +616,7 @@ export async function customerRejectSale(
   customerEmail: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updateSaleStatus(saleId, 'customer_rejected', customerEmail, reason);
+  return updateSaleStatus(saleId, SALES_STATUSES.CUSTOMER_REJECTED, customerEmail, reason);
 }
 
 export async function getAvailableInventory(): Promise<{
@@ -523,7 +699,7 @@ export async function getSaleStatistics(filters?: {
     const totalQuantityOz = sales.reduce((sum, s) => sum + (s.quantity_oz || 0), 0);
     const totalRevenue = sales.reduce((sum, s) => sum + (s.final_proceeds || 0), 0);
     const avgPricePerOz = totalQuantityOz > 0 ? totalRevenue / totalQuantityOz : 0;
-    const pendingApprovals = sales.filter(s => s.status === 'pending_approval').length;
+    const pendingApprovals = sales.filter(s => s.status === SALES_STATUSES.PENDING_APPROVAL).length;
 
     return {
       success: true,

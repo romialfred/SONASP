@@ -194,6 +194,56 @@ export function SaleCreate() {
     }
   };
 
+  // Filter customers based on selected seller
+  const getFilteredCustomers = (): Customer[] => {
+    if (!formData.sellerId || !formData.sellerType) {
+      // No seller selected - show all customers
+      return customers;
+    }
+
+    const selectedSeller = sellers.find(s => s.id === formData.sellerId);
+    if (!selectedSeller) return customers;
+
+    // Business Rule 1: If seller is Mining Company → Customer must be Mansa Resources ONLY
+    if (selectedSeller.type === 'mining_company') {
+      return customers.filter(c =>
+        c.name.toLowerCase().includes('mansa') ||
+        c.name.toLowerCase().includes('mansa resources')
+      );
+    }
+
+    // Business Rule 2: If seller is Mansa Resources → Customer must be Auramet or StoneX
+    if (selectedSeller.type === 'mansa') {
+      return customers.filter(c => {
+        const nameLower = c.name.toLowerCase();
+        return nameLower.includes('auramet') || nameLower.includes('stonex');
+      });
+    }
+
+    // Default: show all customers
+    return customers;
+  };
+
+  // Get hint text for customer field based on seller
+  const getCustomerHint = (): string => {
+    if (!formData.sellerId || !formData.sellerType) {
+      return 'Select a seller first to see available customers';
+    }
+
+    const selectedSeller = sellers.find(s => s.id === formData.sellerId);
+    if (!selectedSeller) return '';
+
+    if (selectedSeller.type === 'mining_company') {
+      return 'Mining companies can only sell to Mansa Resources';
+    }
+
+    if (selectedSeller.type === 'mansa') {
+      return 'Mansa Resources can sell to Auramet or StoneX';
+    }
+
+    return '';
+  };
+
   const availableInventoryGrams = 1250.5;
   const availableInventoryOz = availableFromState || (availableInventoryGrams / 31.1035);
 
@@ -208,7 +258,12 @@ export function SaleCreate() {
     if (field === 'sellerId' && value) {
       const selectedSeller = sellers.find(s => s.id === value);
       if (selectedSeller) {
-        setFormData((prev) => ({ ...prev, sellerType: selectedSeller.type }));
+        setFormData((prev) => ({
+          ...prev,
+          sellerType: selectedSeller.type,
+          // Reset customer when seller changes to avoid invalid combinations
+          customerId: ''
+        }));
       }
     }
   };
@@ -507,6 +562,7 @@ export function SaleCreate() {
                     label="Customer"
                     required
                     error={errors.customerId}
+                    hint={getCustomerHint()}
                   >
                     <Select
                       value={formData.customerId}
@@ -515,7 +571,7 @@ export function SaleCreate() {
                       onFocus={() => setActiveField('customer')}
                     >
                       <option value="">Select a customer</option>
-                      {customers.map((customer) => (
+                      {getFilteredCustomers().map((customer) => (
                         <option key={customer.id} value={customer.id}>
                           {customer.name} - {customer.country}
                         </option>

@@ -277,20 +277,81 @@ export function BatchCreate() {
     }
   };
 
+  const ensureStorageBucketExists = async (bucketName: string): Promise<boolean> => {
+    try {
+      // Check if bucket exists
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+
+      if (listError) {
+        console.error('Error listing buckets:', listError);
+        return false;
+      }
+
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+
+      if (bucketExists) {
+        return true;
+      }
+
+      // Try to create the bucket if it doesn't exist
+      const { error: createError } = await supabase.storage.createBucket(bucketName, {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      });
+
+      if (createError) {
+        console.error('Error creating bucket:', createError);
+        return false;
+      }
+
+      console.log(`Bucket '${bucketName}' created successfully`);
+      return true;
+    } catch (error) {
+      console.error('Error ensuring bucket exists:', error);
+      return false;
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
     try {
+      // Ensure the storage bucket exists before uploading
+      const bucketExists = await ensureStorageBucketExists('documents');
+
+      if (!bucketExists) {
+        throw new Error('Storage bucket could not be created. Please contact your administrator to set up the "documents" bucket in Supabase Storage.');
+      }
+
       for (const file of Array.from(files)) {
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          showError('File Too Large', `${file.name} exceeds the 10MB limit`);
+          continue;
+        }
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+          showError('Invalid File Type', `${file.name} is not a supported file type (PDF, JPG, PNG, DOC, DOCX only)`);
+          continue;
+        }
+
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(2, 15);
+        const fileName = `${timestamp}_${randomStr}.${fileExt}`;
         const filePath = `batch-documents/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('documents')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) {
           throw uploadError;
@@ -309,10 +370,12 @@ export function BatchCreate() {
         };
 
         setDocuments(prev => [...prev, newDoc]);
+        showSuccess('File Uploaded', `${file.name} uploaded successfully`);
       }
     } catch (error: any) {
       console.error('Error uploading file:', error);
-      showError('Upload Failed', `Error uploading file: ${error.message}`);
+      const errorMessage = error.message || 'Unknown error occurred';
+      showError('Upload Failed', errorMessage);
     } finally {
       setUploading(false);
     }

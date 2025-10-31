@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS fx_rate_analysis (
   payment_id uuid NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
 
   -- Virtual payment information for reference
-  virtual_payment_amount numeric(18, 2) NOT NULL,
-  virtual_payment_currency text NOT NULL,
+  virtual_payment_amount numeric(18, 2),
+  virtual_payment_currency text,
 
   -- Rate sources
   customer_rate numeric(18, 6) NOT NULL,
@@ -69,11 +69,33 @@ CREATE TABLE IF NOT EXISTS fx_rate_analysis (
   ),
   CONSTRAINT valid_currency_pair CHECK (currency_pair ~ '^[A-Z]{3}/[A-Z]{3}$'),
   CONSTRAINT valid_amounts CHECK (
-    virtual_payment_amount > 0 AND
+    (virtual_payment_amount IS NULL OR virtual_payment_amount > 0) AND
     amount_with_customer_rate > 0 AND
     amount_with_best_rate > 0
   )
 );
+
+-- Add missing columns if table already exists
+DO $$
+BEGIN
+  -- Add virtual_payment_amount if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_amount'
+  ) THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN virtual_payment_amount numeric(18, 2);
+    RAISE NOTICE 'Added column virtual_payment_amount to fx_rate_analysis';
+  END IF;
+
+  -- Add virtual_payment_currency if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'fx_rate_analysis' AND column_name = 'virtual_payment_currency'
+  ) THEN
+    ALTER TABLE fx_rate_analysis ADD COLUMN virtual_payment_currency text;
+    RAISE NOTICE 'Added column virtual_payment_currency to fx_rate_analysis';
+  END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_fx_analysis_payment ON fx_rate_analysis(payment_id);

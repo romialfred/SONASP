@@ -117,7 +117,7 @@ COMMENT ON TABLE pre_sales IS 'Pre-sales of validated batches before inventory a
 COMMENT ON COLUMN pre_sales.pre_sale_number IS 'Unique pre-sale number (auto-generated)';
 COMMENT ON COLUMN pre_sales.is_converted IS 'TRUE when pre-sale is converted to regular sale';
 COMMENT ON COLUMN pre_sales.converted_sale_id IS 'Reference to the regular sale created from this pre-sale';
-COMMENT ON COLUMN pre_sales.inventory_arrived IS 'Marks when the related batch inventory has arrived';
+COMMENT ON COLUMN pre_sales.actual_arrival_date IS 'Date when the related batch inventory actually arrived';
 
 -- ============================================================================
 -- TABLE: pre_sales_inventory_matches

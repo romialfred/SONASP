@@ -67,7 +67,7 @@ CREATE POLICY "Management can view all scheduled reports"
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles
-      WHERE user_profiles.user_id = auth.uid()
+      WHERE user_profiles.id = auth.uid()
       AND user_profiles.role = 'management'
     )
   );
@@ -78,7 +78,7 @@ CREATE POLICY "Management can create scheduled reports"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM user_profiles
-      WHERE user_profiles.user_id = auth.uid()
+      WHERE user_profiles.id = auth.uid()
       AND user_profiles.role = 'management'
     )
   );
@@ -89,14 +89,14 @@ CREATE POLICY "Management can update scheduled reports"
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles
-      WHERE user_profiles.user_id = auth.uid()
+      WHERE user_profiles.id = auth.uid()
       AND user_profiles.role = 'management'
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM user_profiles
-      WHERE user_profiles.user_id = auth.uid()
+      WHERE user_profiles.id = auth.uid()
       AND user_profiles.role = 'management'
     )
   );
@@ -107,7 +107,7 @@ CREATE POLICY "Management can delete scheduled reports"
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles
-      WHERE user_profiles.user_id = auth.uid()
+      WHERE user_profiles.id = auth.uid()
       AND user_profiles.role = 'management'
     )
   );

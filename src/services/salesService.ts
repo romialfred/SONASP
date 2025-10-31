@@ -75,8 +75,8 @@ export async function getAvailableSellers(): Promise<{
     // 1. Fetch all active mining companies
     const { data: miningCompanies, error: mcError } = await supabase
       .from('mining_companies')
-      .select('id, name, country, status')
-      .eq('status', 'active')
+      .select('id, name, country, is_active')
+      .eq('is_active', true)
       .order('name');
 
     if (mcError) {
@@ -87,32 +87,21 @@ export async function getAvailableSellers(): Promise<{
     // 2. Fetch Mansa stakeholder (seller) - try multiple approaches
     let mansa = null;
 
-    // Try to find Mansa in stakeholders table
-    const { data: mansaStakeholder, error: mansaError } = await supabase
-      .from('stakeholders')
-      .select('id, name, type, country, status')
-      .eq('type', 'seller')
+    // Look for Mansa in mining_companies (stakeholders table doesn't exist)
+    const { data: mansaCompany, error: mansaCompanyError } = await supabase
+      .from('mining_companies')
+      .select('id, name, country, is_active')
+      .ilike('name', '%Mansa%')
+      .eq('is_active', true)
       .maybeSingle();
 
-    if (!mansaError && mansaStakeholder && mansaStakeholder.status === 'active') {
-      mansa = mansaStakeholder;
-    } else {
-      // If not found as stakeholder, look in mining_companies for "Mansa"
-      const { data: mansaCompany, error: mansaCompanyError } = await supabase
-        .from('mining_companies')
-        .select('id, name, country, status')
-        .ilike('name', '%Mansa%')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (!mansaCompanyError && mansaCompany) {
-        mansa = {
-          id: mansaCompany.id,
-          name: mansaCompany.name,
-          type: 'seller',
-          country: mansaCompany.country
-        };
-      }
+    if (!mansaCompanyError && mansaCompany) {
+      mansa = {
+        id: mansaCompany.id,
+        name: mansaCompany.name,
+        type: 'seller',
+        country: mansaCompany.country
+      };
     }
 
     // 3. Build sellers array

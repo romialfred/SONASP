@@ -277,7 +277,10 @@ export function ReceivingConfirm() {
                   <div>
                     <p className="text-sm text-gray-600">Expected Weight</p>
                     <p className="text-base font-semibold text-gray-900">
-                      {formatWeight(batch.weight_grams)}
+                      {convertGramsToOunces(batch.weight_grams).toFixed(3)} oz
+                      <span className="text-sm text-gray-600 font-normal ml-2">
+                        ({batch.weight_grams?.toFixed(2)} g)
+                      </span>
                     </p>
                   </div>
                   <div>

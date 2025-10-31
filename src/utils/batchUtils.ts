@@ -143,12 +143,10 @@ export function generateBatchTimeline(batch: any): BatchTimeline[] {
   return timeline;
 }
 
-export function formatWeight(grams: number, unit: 'g' | 'oz' = 'g'): string {
-  if (unit === 'oz') {
-    const ounces = convertGramsToOunces(grams);
-    return `${ounces.toFixed(2)} oz`;
-  }
-  return `${grams.toFixed(2)} g`;
+export function formatWeight(grams: number, unit?: 'g' | 'oz'): string {
+  // Always display in oz with grams equivalent (new platform standard)
+  const ounces = convertGramsToOunces(grams);
+  return `${ounces.toFixed(3)} oz (${grams.toFixed(2)} g)`;
 }
 
 export function gramsToOunces(grams: number): number {

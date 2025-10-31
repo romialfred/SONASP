@@ -57,6 +57,7 @@ export function ReceivingDashboard() {
   ).length;
 
   const totalWeight = batches.reduce((sum, b) => sum + (b.weight_ounces || 0), 0);
+  const totalWeightGrams = totalWeight * 31.1034768;
 
   const metrics = [
     {
@@ -94,7 +95,7 @@ export function ReceivingDashboard() {
     {
       title: 'Total Weight',
       value: `${totalWeight.toFixed(1)} oz`,
-      change: 'All batches',
+      change: `(${totalWeightGrams.toFixed(2)} g)`,
       changeType: 'positive' as const,
       icon: TrendingUp,
       iconColor: 'text-primary-500',
@@ -117,8 +118,14 @@ export function ReceivingDashboard() {
       const result = await validateForRefinery(batchId, 'Validated by airport staff');
 
       if (result.success) {
-        // Batch will refresh automatically via realtime
         alert.success('Batch validated successfully! Ready for refinery transport.');
+
+        // Force immediate refresh of the dashboard
+        if (refetch) {
+          setTimeout(() => {
+            refetch();
+          }, 500);
+        }
       } else {
         alert.error(result.error || 'Failed to validate batch');
       }

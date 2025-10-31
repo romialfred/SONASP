@@ -7,12 +7,10 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
   }).format(amount);
 }
 
-export function formatWeight(grams: number, unit: 'g' | 'oz' = 'g'): string {
-  if (unit === 'oz') {
-    const ounces = grams / 31.1035;
-    return `${ounces.toFixed(2)} oz`;
-  }
-  return `${grams.toFixed(2)} g`;
+export function formatWeight(grams: number, unit?: 'g' | 'oz'): string {
+  // Always display in oz with grams equivalent (new platform standard)
+  const ounces = grams / 31.1035;
+  return `${ounces.toFixed(3)} oz (${grams.toFixed(2)} g)`;
 }
 
 export function formatPercentage(value: number, decimals: number = 2): string {

@@ -33,6 +33,7 @@ import { useAlert } from '@/hooks/useAlert';
 import { approveSale, rejectSale } from '@/services/salesService';
 import { useAuth } from '@/contexts/AuthContext';
 import { SalesWorkflowVisualizer } from '@/components/sales/SalesWorkflowVisualizer';
+import { SalesWorkflowProgressPanel } from '@/components/sales/SalesWorkflowProgressPanel';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -690,7 +691,10 @@ export function SaleDetails() {
                 </CardContent>
               </Card>
             )}
+          </div>
 
+          {/* Right sidebar column */}
+          <div className="space-y-6">
             <Card className="border-2 border-gray-200 sticky top-6">
               <CardHeader className="bg-gray-50">
                 <CardTitle className="text-base">Management Actions</CardTitle>
@@ -717,40 +721,6 @@ export function SaleDetails() {
                       <XCircle className="h-4 w-4" />
                       Reject Sale
                     </Button>
-
-                    <div className="pt-4 border-t border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Approval Process</h4>
-                      <div className="space-y-2 text-xs text-gray-600">
-                        <div className="flex items-start gap-2">
-                          <div className="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-700 font-semibold flex-shrink-0">1</div>
-                          <div>
-                            <p className="font-semibold text-gray-900">Management Review</p>
-                            <p>Current stage - Pending your approval</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-semibold flex-shrink-0">2</div>
-                          <div>
-                            <p className="font-semibold text-gray-500">Customer Notification</p>
-                            <p>Email sent to customer for confirmation</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-semibold flex-shrink-0">3</div>
-                          <div>
-                            <p className="font-semibold text-gray-500">Customer Approval</p>
-                            <p>Customer approves via email link</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-semibold flex-shrink-0">4</div>
-                          <div>
-                            <p className="font-semibold text-gray-500">Payment Processing</p>
-                            <p>Payment tracking and verification</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -762,6 +732,9 @@ export function SaleDetails() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sales Workflow Progress Panel */}
+            <SalesWorkflowProgressPanel currentStatus={sale.status} />
 
             <Card>
               <CardHeader>

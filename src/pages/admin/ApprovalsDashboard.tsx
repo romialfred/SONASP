@@ -3,6 +3,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AlertBox } from '@/components/dashboard/AlertBox';
 import { ApprovalRequestCard } from '@/components/approval/ApprovalRequestCard';
+import { SalesApprovalCard } from '@/components/approval/SalesApprovalCard';
+import { SalesApprovalWorkflowPanel } from '@/components/sales/SalesApprovalWorkflowPanel';
 import { supabase } from '@/lib/supabase';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
@@ -10,6 +12,7 @@ export function ApprovalsDashboard() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [selectedSale, setSelectedSale] = useState<any>(null);
 
   useEffect(() => {
     loadApprovals();
@@ -31,6 +34,20 @@ export function ApprovalsDashboard() {
 
       if (error) throw error;
       setApprovals(data || []);
+
+      // Auto-select first pending sale for workflow display
+      const firstPendingSale = data?.find(a => a.status === 'pending' && a.approval_type === 'sale');
+      if (firstPendingSale && !selectedSale) {
+        const { data: saleData } = await supabase
+          .from('sales')
+          .select('status')
+          .eq('id', firstPendingSale.entity_id)
+          .maybeSingle();
+
+        if (saleData) {
+          setSelectedSale(saleData);
+        }
+      }
     } catch (error) {
       console.error('Error loading approvals:', error);
     } finally {
@@ -158,15 +175,38 @@ export function ApprovalsDashboard() {
                 <p className="text-gray-600">No {filter !== 'all' ? filter : ''} approval requests found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {approvals.map((approval) => (
-                  <ApprovalRequestCard
-                    key={approval.id}
-                    approval={approval}
-                    onApproved={loadApprovals}
-                    onRejected={loadApprovals}
-                  />
-                ))}
+              <div className="flex gap-6">
+                {/* Left Column: Approval Cards */}
+                <div className="flex-1 space-y-4 min-w-0">
+                  {approvals.map((approval) => (
+                    approval.approval_type === 'sale' ? (
+                      <SalesApprovalCard
+                        key={approval.id}
+                        approval={approval}
+                        onApproved={loadApprovals}
+                        onRejected={loadApprovals}
+                      />
+                    ) : (
+                      <ApprovalRequestCard
+                        key={approval.id}
+                        approval={approval}
+                        onApproved={loadApprovals}
+                        onRejected={loadApprovals}
+                      />
+                    )
+                  ))}
+                </div>
+
+                {/* Right Panel: Workflow Visualizer (only for sales) */}
+                {selectedSale && filter === 'pending' && (
+                  <div className="hidden xl:block w-96 flex-shrink-0">
+                    <div className="sticky top-6">
+                      <SalesApprovalWorkflowPanel
+                        currentStatus={selectedSale.status}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

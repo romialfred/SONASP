@@ -6,6 +6,8 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Moda
 import TextArea from '@/components/ui/TextArea';
 import { approveVariance } from '@/services/receivingValidationService';
 import { approveRefining } from '@/services/refiningValidationService';
+import { approveRequest, rejectRequest } from '@/services/approvalService';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 
 interface ApprovalRequestCardProps {
@@ -19,13 +21,16 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const { user } = useAuth();
   const alert = useAlert();
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       batch_receipt: 'Batch Receipt Variance',
       refining_process: 'Refining Process',
+      sale: 'Sale Approval',
       sale_approval: 'Sale Approval',
+      payment: 'Payment Approval',
       payment_approval: 'Payment Approval',
     };
     return labels[type] || type;
@@ -35,7 +40,9 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
     const colors: Record<string, string> = {
       batch_receipt: 'bg-amber-100 text-amber-800 border-amber-200',
       refining_process: 'bg-blue-100 text-blue-800 border-blue-200',
+      sale: 'bg-green-100 text-green-800 border-green-200',
       sale_approval: 'bg-green-100 text-green-800 border-green-200',
+      payment: 'bg-purple-100 text-purple-800 border-purple-200',
       payment_approval: 'bg-purple-100 text-purple-800 border-purple-200',
     };
     return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -51,11 +58,20 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
         result = await approveVariance(approval.entity_id, approval.entity_id);
       } else if (approval.request_type === 'refining_process') {
         result = await approveRefining(approval.entity_id, approval.entity_id);
+      } else if (approval.request_type === 'sale' || approval.request_type === 'sale_approval') {
+        // Handle sale approval through approvalService
+        if (!user?.email) {
+          alert.error('User email not found');
+          setProcessing(false);
+          return;
+        }
+        result = await approveRequest(approval.id, user.email);
       } else {
-        result = { success: false, error: 'Unknown approval type' };
+        result = { success: false, error: 'Unknown approval type: ' + approval.request_type };
       }
 
       if (result.success) {
+        alert.success('Approval processed successfully');
         onApproved?.();
       } else {
         alert.error('Error approving: ' + result.error);
@@ -77,8 +93,20 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
     setProcessing(true);
 
     try {
-      alert.info('Rejection functionality will be implemented');
-      onRejected?.();
+      if (!user?.email) {
+        alert.error('User email not found');
+        setProcessing(false);
+        return;
+      }
+
+      const result = await rejectRequest(approval.id, user.email, rejectionReason);
+
+      if (result.success) {
+        alert.success('Request rejected successfully');
+        onRejected?.();
+      } else {
+        alert.error('Error rejecting: ' + result.error);
+      }
     } catch (error: any) {
       alert.error('Error: ' + error.message);
     } finally {

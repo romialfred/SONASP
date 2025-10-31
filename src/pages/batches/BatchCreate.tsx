@@ -324,13 +324,21 @@ export function BatchCreate() {
 
       if (listError) {
         console.error('Error checking buckets:', listError);
-        throw new Error('Unable to access storage. Please contact your administrator.');
+        showError('Storage Access Error', 'Unable to access storage. Document upload is currently unavailable. You can create the batch without documents and add them later.');
+        setUploading(false);
+        // Clear the file input
+        event.target.value = '';
+        return;
       }
 
       const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
 
       if (!bucketExists) {
-        throw new Error('Storage bucket "documents" does not exist. Please contact your administrator to create the "documents" bucket in Supabase Storage before uploading files.');
+        showError('Storage Not Configured', 'The documents storage bucket has not been created yet. Please run the database migrations (APPLY_ALL_MIGRATIONS.sql) to set up storage, or create the batch without documents for now.');
+        setUploading(false);
+        // Clear the file input
+        event.target.value = '';
+        return;
       }
 
       for (const file of Array.from(files)) {

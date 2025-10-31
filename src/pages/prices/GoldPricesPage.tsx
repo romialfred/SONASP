@@ -10,7 +10,6 @@ import {
 import { Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
-import { LiveGoldPricePanel } from '@/components/prices/LiveGoldPricePanel';
 import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
 
 interface DailyPrice {
@@ -69,6 +68,7 @@ export function GoldPricesPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [loading, setLoading] = useState(true);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
   const [dailyPrices, setDailyPrices] = useState<DailyPrice[]>([]);
   const [monthlyAggregates, setMonthlyAggregates] = useState<MonthlyAggregate[]>([]);
@@ -209,9 +209,14 @@ export function GoldPricesPage() {
   return (
     <MainLayout>
       {/* Live Gold Market Panel - Right Side */}
-      <LiveGoldMarketPanel />
+      <LiveGoldMarketPanel onCollapseChange={setIsPanelCollapsed} />
 
-      <div className="space-y-6">
+      <div
+        className="space-y-6 transition-all duration-300"
+        style={{
+          marginRight: isPanelCollapsed ? '0' : '320px',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -232,9 +237,6 @@ export function GoldPricesPage() {
             </Button>
           </div>
         </div>
-
-        {/* Live Gold Price Panel */}
-        <LiveGoldPricePanel />
 
         {/* View Mode Tabs */}
         <div className="border-b border-gray-200">

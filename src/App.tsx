@@ -22,6 +22,7 @@ import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
 import { BatchListing } from './pages/batches/BatchListing';
 import { BatchCreate } from './pages/batches/BatchCreate';
 import { BatchDetailsWorkflow } from './pages/batches/BatchDetailsWorkflow';
+import { AssayCertificatesPage } from './pages/batches/AssayCertificatesPage';
 import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
 import { RefiningDashboard } from './pages/refining/RefiningDashboard';
@@ -195,6 +196,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <BatchDetailsWorkflow />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assay-certificates"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                  <AssayCertificatesPage />
                 </ProtectedRoute>
               }
             />

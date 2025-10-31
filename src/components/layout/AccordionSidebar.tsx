@@ -28,6 +28,7 @@ import {
   Handshake,
   Store,
   Activity,
+  ScanText,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -57,6 +58,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIcon: Package,
       items: [
         { label: t('nav.batches'), path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
+        { label: 'Assay Certificates', path: '/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
         { label: t('shipping.title'), path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
         { label: t('refining.title'), path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
       ],

@@ -319,32 +319,9 @@ export function BatchCreate() {
 
     setUploading(true);
     try {
-      // Try to check if the storage bucket exists
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-
-      if (listError) {
-        console.error('Error checking buckets:', listError);
-        console.error('Error details:', {
-          message: listError.message,
-          status: listError.status,
-          statusText: listError.statusText
-        });
-
-        // If we can't list buckets, just try to upload anyway
-        // The upload will fail with a better error if the bucket truly doesn't exist
-        console.log('Cannot list buckets, will attempt upload anyway...');
-      } else {
-        console.log('Available buckets:', buckets?.map(b => b.name).join(', '));
-
-        const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
-
-        if (!bucketExists) {
-          showError('Storage Not Configured', 'The documents storage bucket was not found. Please ensure the bucket is created in Supabase Storage Dashboard, then try again.');
-          setUploading(false);
-          event.target.value = '';
-          return;
-        }
-      }
+      // Note: We skip checking if buckets exist because it requires special permissions
+      // Instead, we'll try to upload directly and handle errors appropriately
+      console.log('Starting file upload to documents bucket...');
 
       for (const file of Array.from(files)) {
         // Validate file size (10MB max)
@@ -374,7 +351,8 @@ export function BatchCreate() {
           });
 
         if (uploadError) {
-          throw uploadError;
+          console.error('Upload error details:', uploadError);
+          throw new Error(`Failed to upload ${file.name}: ${uploadError.message || 'Storage bucket may not be configured correctly'}`);
         }
 
         const { data: { publicUrl } } = supabase.storage

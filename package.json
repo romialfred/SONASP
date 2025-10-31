@@ -13,7 +13,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "deploy:cleanup": "tsx scripts/deployment-cleanup.ts",
-    "deploy:full": "npm run deploy:cleanup && npm run build"
+    "deploy:full": "npm run deploy:cleanup && npm run build",
+    "create-buckets": "node scripts/create-storage-buckets.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

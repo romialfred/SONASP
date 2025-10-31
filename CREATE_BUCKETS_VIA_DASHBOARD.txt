@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════════
+  STORAGE BUCKET ISSUE - QUICK FIX
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM:
+  Migration ran but storage buckets not created
+  Error: "Storage bucket 'documents' does not exist"
+
+WHY SQL MIGRATION DIDN'T WORK:
+  Supabase Storage buckets can't always be created via SQL INSERT
+  Need to use Supabase Dashboard UI or Admin API instead
+
+═══════════════════════════════════════════════════════════════════
+  SOLUTION: Use Supabase Dashboard (2 minutes)
+═══════════════════════════════════════════════════════════════════
+
+1. Open Supabase Dashboard
+   → Go to your project
+
+2. Click "Storage" in left sidebar
+
+3. Click "New bucket" button (top right)
+
+4. Create FIRST bucket:
+   Name: documents
+   ✓ Check "Public bucket"
+   File size limit: 50 MB
+   Allowed MIME types: Leave default or add:
+     - application/pdf
+     - image/jpeg
+     - image/png
+     - image/jpg
+   Click "Save"
+
+5. Click "New bucket" again
+
+6. Create SECOND bucket:
+   Name: reports
+   ✓ Check "Public bucket"
+   File size limit: 50 MB
+   Click "Save"
+
+7. Click "New bucket" again
+
+8. Create THIRD bucket:
+   Name: payment-proofs
+   ✓ Check "Public bucket"
+   File size limit: 50 MB
+   Click "Save"
+
+9. DONE! Refresh your app and try uploading again ✅
+
+═══════════════════════════════════════════════════════════════════
+  VERIFY BUCKETS WERE CREATED
+═══════════════════════════════════════════════════════════════════
+
+In Supabase Dashboard → Storage:
+  You should see 3 buckets listed:
+    ✓ documents
+    ✓ reports
+    ✓ payment-proofs
+
+Or run this SQL:
+
+  SELECT id, name, public, file_size_limit, created_at
+  FROM storage.buckets
+  WHERE id IN ('documents', 'reports', 'payment-proofs');
+
+Should see 3 rows!
+
+═══════════════════════════════════════════════════════════════════
+  AFTER BUCKETS ARE CREATED
+═══════════════════════════════════════════════════════════════════
+
+✅ Document upload will work in Batch Management
+✅ Report generation will work
+✅ Payment proof uploads will work
+✅ No more "Storage Not Configured" errors
+
+═══════════════════════════════════════════════════════════════════
+
+TIME NEEDED: 2 minutes
+DIFFICULTY: Easy - just click and create!
+
+═══════════════════════════════════════════════════════════════════

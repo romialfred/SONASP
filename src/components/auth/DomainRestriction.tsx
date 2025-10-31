@@ -26,11 +26,11 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
 
     const accessDeniedHTML = `
       <!DOCTYPE html>
-      <html lang="fr">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Accès Refusé - Global Shipping</title>
+        <title>Access Denied - Global Shipping</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           * {
@@ -77,13 +77,13 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                 font-weight: 700;
                 margin: 0 0 8px 0;
                 letter-spacing: -0.5px;
-              ">Accès Refusé</h1>
+              ">Access Denied</h1>
               <p style="
                 color: rgba(255, 255, 255, 0.95);
                 font-size: 0.95rem;
                 margin: 0;
                 line-height: 1.4;
-              ">Cette application n'est accessible que via le domaine officiel</p>
+              ">This application is only accessible via the official domain</p>
             </div>
 
             <!-- Content -->
@@ -95,7 +95,7 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                   font-size: 0.9rem;
                   margin: 0 0 18px 0;
                   font-weight: 500;
-                ">Veuillez accéder à l'application via le domaine officiel:</p>
+                ">Please access the application via the official domain:</p>
                 <a href="https://global-shipping.org" style="
                   display: inline-block;
                   background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
@@ -115,7 +115,7 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                   this.style.transform='translateY(0)';
                   this.style.boxShadow='0 10px 25px -5px rgba(20, 184, 166, 0.5)';
                 ">
-                  Cliquez Ici pour accéder
+                  Click Here to Access
                 </a>
               </div>
 
@@ -139,7 +139,7 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                   font-weight: 600;
                   margin: 0 0 15px 0;
                   text-align: center;
-                ">Besoin d'assistance?</h3>
+                ">Need Assistance?</h3>
 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                   <!-- Email -->
@@ -189,7 +189,7 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                       </svg>
                     </div>
                     <div>
-                      <p style="margin: 0; color: #64748b; font-size: 0.8rem; font-weight: 500;">Téléphone</p>
+                      <p style="margin: 0; color: #64748b; font-size: 0.8rem; font-weight: 500;">Phone</p>
                       <a href="tel:+2250767344711" style="
                         color: #0f766e;
                         font-size: 0.9rem;
@@ -217,8 +217,8 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                   margin: 0;
                   line-height: 1.5;
                 ">
-                  © 2025 Global Shipping - Tous droits réservés<br>
-                  Plateforme sécurisée de gestion des expéditions
+                  © 2025 Global Shipping - All Rights Reserved<br>
+                  Secure Shipment Management Platform
                 </p>
               </div>
             </div>

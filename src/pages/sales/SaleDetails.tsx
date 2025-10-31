@@ -32,7 +32,6 @@ import {
 import { useAlert } from '@/hooks/useAlert';
 import { approveSale, rejectSale } from '@/services/salesService';
 import { useAuth } from '@/contexts/AuthContext';
-import { SalesWorkflowVisualizer } from '@/components/sales/SalesWorkflowVisualizer';
 import { SalesWorkflowProgressPanel } from '@/components/sales/SalesWorkflowProgressPanel';
 
 interface SaleDetailsCustomer {
@@ -434,7 +433,7 @@ export function SaleDetails() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
@@ -637,24 +636,7 @@ export function SaleDetails() {
               </CardContent>
             </Card>
 
-            {/* Workflow Visualizer */}
-            <Card className="border-2 border-indigo-200">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                  Sales Workflow Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <SalesWorkflowVisualizer
-                  currentStatus={sale.status}
-                  showRejected={sale.status === 'customer_rejected'}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
+            {/* Payment Terms */}
             {sale.mechanismType && (
               <Card className="border-2 border-emerald-200">
                 <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50">
@@ -693,7 +675,7 @@ export function SaleDetails() {
             )}
           </div>
 
-          {/* Right sidebar column */}
+          {/* Right sidebar column - Sticky sidebar */}
           <div className="space-y-6">
             <Card className="border-2 border-gray-200 sticky top-6">
               <CardHeader className="bg-gray-50">

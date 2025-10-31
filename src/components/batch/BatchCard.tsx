@@ -58,8 +58,7 @@ export function BatchCard({
 
   // Border color based on status variant
   const borderColorClass = {
-    default: 'border-gray-200',
-    pending: 'border-yellow-300',
+    neutral: 'border-gray-200',
     info: 'border-blue-300',
     warning: 'border-orange-300',
     success: 'border-green-300',

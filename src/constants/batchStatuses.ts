@@ -77,8 +77,10 @@ export function getBatchStatusLabel(status: string): string {
 /**
  * Get badge variant for a batch status
  */
-export function getBatchStatusVariant(status: string): 'default' | 'pending' | 'info' | 'warning' | 'success' | 'error' {
-  return BATCH_STATUS_VARIANTS[status as BatchStatus] || 'default';
+export function getBatchStatusVariant(status: string): 'neutral' | 'info' | 'warning' | 'success' | 'error' {
+  const variant = BATCH_STATUS_VARIANTS[status as BatchStatus];
+  if (variant === 'default' || variant === 'pending') return 'neutral';
+  return variant || 'neutral';
 }
 
 /**

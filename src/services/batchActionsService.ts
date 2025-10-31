@@ -15,7 +15,7 @@ export interface BatchAction {
   id: string;
   label: string;
   icon: LucideIcon;
-  variant: 'primary' | 'success' | 'warning' | 'danger' | 'outline' | 'ghost';
+  variant: 'primary' | 'secondary' | 'success' | 'danger' | 'outline' | 'ghost';
   handler: (batchId: string) => void | Promise<void>;
   requiresConfirmation: boolean;
   confirmationMessage?: string;

@@ -228,14 +228,13 @@ export async function createPreSale(data: CreatePreSaleData) {
     if (createError) throw createError;
 
     // Log audit action
-    await logAuditAction(
-      'create',
-      'pre_sales',
-      preSale.id,
-      null,
-      preSale,
-      'Pre-sale created for batch ' + batch.batch_number
-    );
+    await logAuditAction({
+      action: 'create',
+      table_name: 'pre_sales',
+      record_id: preSale.id,
+      details: { pre_sale: preSale },
+      user_email: 'system@mansa.com'
+    });
 
     return { success: true, data: preSale };
   } catch (error: any) {
@@ -274,14 +273,13 @@ export async function updatePreSaleStatus(
 
     if (error) throw error;
 
-    await logAuditAction(
-      'update',
-      'pre_sales',
-      preSaleId,
-      { status: preSale.status },
-      { status: newStatus },
-      `Pre-sale status changed from ${preSale.status} to ${newStatus}`
-    );
+    await logAuditAction({
+      action: 'update',
+      table_name: 'pre_sales',
+      record_id: preSaleId,
+      details: { old_status: preSale.status, new_status: newStatus },
+      user_email: 'system@mansa.com'
+    });
 
     return { success: true, data };
   } catch (error: any) {

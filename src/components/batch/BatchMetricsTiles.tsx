@@ -20,50 +20,50 @@ export function BatchMetricsTiles({ metrics }: BatchMetricsTilesProps) {
 
   const getStatusColor = (status: string) => {
     const variant = getBatchStatusVariant(status);
-    const colorMap = {
+    const colorMap: Record<string, string> = {
       success: 'from-emerald-500 to-emerald-600',
       warning: 'from-amber-500 to-amber-600',
-      danger: 'from-red-500 to-red-600',
+      error: 'from-red-500 to-red-600',
       info: 'from-blue-500 to-blue-600',
-      default: 'from-gray-500 to-gray-600',
+      neutral: 'from-gray-500 to-gray-600',
     };
-    return colorMap[variant] || colorMap.default;
+    return colorMap[variant] || colorMap.neutral;
   };
 
   const getStatusBgColor = (status: string) => {
     const variant = getBatchStatusVariant(status);
-    const colorMap = {
+    const colorMap: Record<string, string> = {
       success: 'bg-emerald-50 border-emerald-200',
       warning: 'bg-amber-50 border-amber-200',
-      danger: 'bg-red-50 border-red-200',
+      error: 'bg-red-50 border-red-200',
       info: 'bg-blue-50 border-blue-200',
-      default: 'bg-gray-50 border-gray-200',
+      neutral: 'bg-gray-50 border-gray-200',
     };
-    return colorMap[variant] || colorMap.default;
+    return colorMap[variant] || colorMap.neutral;
   };
 
   const getStatusIconBg = (status: string) => {
     const variant = getBatchStatusVariant(status);
-    const colorMap = {
+    const colorMap: Record<string, string> = {
       success: 'bg-emerald-100',
       warning: 'bg-amber-100',
-      danger: 'bg-red-100',
+      error: 'bg-red-100',
       info: 'bg-blue-100',
-      default: 'bg-gray-100',
+      neutral: 'bg-gray-100',
     };
-    return colorMap[variant] || colorMap.default;
+    return colorMap[variant] || colorMap.neutral;
   };
 
   const getStatusIconColor = (status: string) => {
     const variant = getBatchStatusVariant(status);
-    const colorMap = {
+    const colorMap: Record<string, string> = {
       success: 'text-emerald-700',
       warning: 'text-amber-700',
-      danger: 'text-red-700',
+      error: 'text-red-700',
       info: 'text-blue-700',
-      default: 'text-gray-700',
+      neutral: 'text-gray-700',
     };
-    return colorMap[variant] || colorMap.default;
+    return colorMap[variant] || colorMap.neutral;
   };
 
   return (

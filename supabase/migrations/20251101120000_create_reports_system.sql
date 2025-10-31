@@ -62,6 +62,15 @@ CREATE INDEX IF NOT EXISTS idx_report_history_user ON report_history(generated_b
 ALTER TABLE scheduled_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE report_history ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Management can view all scheduled reports" ON scheduled_reports;
+DROP POLICY IF EXISTS "Management can create scheduled reports" ON scheduled_reports;
+DROP POLICY IF EXISTS "Management can update scheduled reports" ON scheduled_reports;
+DROP POLICY IF EXISTS "Management can delete scheduled reports" ON scheduled_reports;
+DROP POLICY IF EXISTS "Authenticated users can view report history" ON report_history;
+DROP POLICY IF EXISTS "Authenticated users can create report history entries" ON report_history;
+DROP POLICY IF EXISTS "Users can update their own report history entries" ON report_history;
+
 -- Policies for scheduled_reports
 CREATE POLICY "Management can view all scheduled reports"
   ON scheduled_reports FOR SELECT

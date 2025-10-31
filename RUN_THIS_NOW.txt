@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════
+  FIX "POLICY ALREADY EXISTS" ERROR
+═══════════════════════════════════════════════════════
+
+ERROR YOU GOT:
+  "policy 'Management can view all scheduled reports'
+   already exists"
+
+SOLUTION:
+  Just run APPLY_ALL_MIGRATIONS.sql
+  (it drops old policies then creates new ones)
+
+═══════════════════════════════════════════════════════
+  STEPS TO FIX (30 SECONDS)
+═══════════════════════════════════════════════════════
+
+1. Open Supabase Dashboard → SQL Editor
+
+2. Copy ALL of: APPLY_ALL_MIGRATIONS.sql
+
+3. Paste in SQL Editor
+
+4. Click RUN
+
+5. Done! ✅
+
+═══════════════════════════════════════════════════════
+  WHAT IT DOES
+═══════════════════════════════════════════════════════
+
+✅ Drops old policies (broken with user_id)
+✅ Creates new policies (fixed with id)
+✅ Creates storage buckets
+✅ Safe to run multiple times
+
+═══════════════════════════════════════════════════════
+  WHY THIS WORKS
+═══════════════════════════════════════════════════════
+
+The file includes:
+
+  DROP POLICY IF EXISTS "Management can..." -- ✅ Removes old
+
+  CREATE POLICY "Management can..."         -- ✅ Creates new
+    WHERE user_profiles.id = auth.uid()     -- ✅ FIXED!
+
+═══════════════════════════════════════════════════════
+
+Status: ✅ READY TO FIX
+File:   APPLY_ALL_MIGRATIONS.sql
+Time:   30 seconds
+
+🚀 RUN IT NOW!
+
+═══════════════════════════════════════════════════════

@@ -209,7 +209,7 @@ export function BatchAnalytics() {
               <h4 className="font-semibold text-yellow-900 mb-2">Focus Areas</h4>
               <ul className="text-sm text-gray-700 space-y-1">
                 <li>• On-time delivery 89% vs 90% target</li>
-                <li>• 24 batches with >3% variance</li>
+                <li>• 24 batches with {'>'}3% variance</li>
                 <li>• Refinery A processing time 5.1 days</li>
               </ul>
             </div>

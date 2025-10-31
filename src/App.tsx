@@ -44,8 +44,8 @@ import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
 import { PaymentRecordPage } from './pages/payments/PaymentRecordPage';
 import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
-import { AnalyticsDashboard } from './pages/analytics/AnalyticsDashboard';
-import { ReportGeneration } from './pages/reports/ReportGeneration';
+import { AnalyticsDashboardEnhanced as AnalyticsDashboard } from './pages/analytics/AnalyticsDashboardEnhanced';
+import { ReportsDashboard } from './pages/reports/ReportsDashboard';
 import { UserManagement } from './pages/admin/UserManagement';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
 import { SystemSettings } from './pages/admin/SystemSettings';
@@ -409,7 +409,7 @@ function AppRoutes() {
               path="/reports"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
-                  <ReportGeneration />
+                  <ReportsDashboard />
                 </ProtectedRoute>
               }
             />

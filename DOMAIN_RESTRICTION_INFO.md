@@ -1,57 +1,82 @@
-# Domain Restriction Configuration
+# Restriction de Domaine - Configuration
 
-## Overview
-This application includes domain restriction security to ensure it's only accessible from authorized domains.
+## Vue d'ensemble
+Cette application inclut une sécurité de restriction de domaine pour garantir qu'elle n'est accessible que depuis les domaines autorisés.
 
-## Current Configuration
+## Configuration Actuelle
 
-### Allowed Domains
+### Domaines Autorisés
 - `global-shipping.org` (Production)
-- `www.global-shipping.org` (Production with www)
-- `localhost` (Local development)
-- `127.0.0.1` (Local development)
+- `www.global-shipping.org` (Production avec www)
+- `localhost` (Développement local)
+- `127.0.0.1` (Développement local)
 
-### Blocked Domains
-- **WebContainer Preview URLs**: All URLs containing:
+### Domaines Bloqués
+- **URLs de Prévisualisation WebContainer**: Toutes les URLs contenant:
   - `webcontainer`
   - `local-credentialless`
   - `.local-`
 
-- **Other Unauthorized Domains**: Any domain not in the allowed list
+- **Autres Domaines Non Autorisés**: Tout domaine non présent dans la liste autorisée
 
-## How It Works
+## Fonctionnement
 
-The domain restriction is implemented in `/src/components/auth/DomainRestriction.tsx` and wraps the entire application in `/src/App.tsx`.
+La restriction de domaine est implémentée dans `/src/components/auth/DomainRestriction.tsx` et enveloppe l'application entière dans `/src/App.tsx`.
 
-When a user tries to access the application from an unauthorized domain:
-1. The application detects the hostname
-2. Checks against allowed domains
-3. If unauthorized, displays a security message with a redirect link to `https://global-shipping.org`
-4. Prevents the application from loading
+Lorsqu'un utilisateur tente d'accéder à l'application depuis un domaine non autorisé:
+1. L'application détecte le nom d'hôte
+2. Vérifie par rapport aux domaines autorisés
+3. Si non autorisé, affiche une page de sécurité professionnelle avec:
+   - Message "Accès Refusé" en français
+   - Bouton "Cliquez Ici pour accéder" pointant vers `https://global-shipping.org`
+   - Informations de contact:
+     - Email: infos@business-tech.net
+     - Téléphone: +225 07 67 34 47 11
+   - Design professionnel en bleu (pas violet)
+4. Empêche le chargement de l'application
 
-## For Development
+## Design de la Page de Restriction
 
-During local development on `localhost` or `127.0.0.1`, the application works normally. This allows developers to test the application locally while blocking unauthorized preview URLs.
+La page de restriction présente un design professionnel avec:
+- **Couleurs**: Dégradé bleu professionnel (#1e3a8a → #2563eb)
+- **Carte blanche** centrée avec ombrage élégant
+- **En-tête bleu** avec icône de cadenas
+- **Alerte jaune** pour la notice de sécurité
+- **Bouton d'accès bleu** avec effet hover
+- **Section contact** avec icônes email et téléphone
+- **Footer** avec copyright et mention de sécurité
 
-## Adding New Domains
+## Pour le Développement
 
-To add a new authorized domain, edit `/src/components/auth/DomainRestriction.tsx`:
+Durant le développement local sur `localhost` ou `127.0.0.1`, l'application fonctionne normalement. Cela permet aux développeurs de tester l'application localement tout en bloquant les URLs de prévisualisation non autorisées.
+
+## Ajouter de Nouveaux Domaines
+
+Pour ajouter un nouveau domaine autorisé, éditez `/src/components/auth/DomainRestriction.tsx`:
 
 ```typescript
 const ALLOWED_DOMAINS = [
   'global-shipping.org',
   'www.global-shipping.org',
-  'your-new-domain.com',  // Add here
+  'votre-nouveau-domaine.com',  // Ajouter ici
   'localhost',
   '127.0.0.1'
 ];
 ```
 
-## Security Notice
+## Notice de Sécurité
 
-This restriction helps prevent:
-- Unauthorized access via development preview URLs
-- Access from cloned or copied deployments
-- Phishing attempts using similar domains
+Cette restriction aide à prévenir:
+- L'accès non autorisé via les URLs de prévisualisation de développement
+- L'accès depuis des déploiements clonés ou copiés
+- Les tentatives de phishing utilisant des domaines similaires
 
-The restriction is client-side and serves as an additional security layer. Always ensure your backend APIs also validate the request origin.
+La restriction est côté client et sert de couche de sécurité supplémentaire. Assurez-vous toujours que vos APIs backend valident également l'origine de la requête.
+
+## Contact Support
+
+En cas de problème d'accès, les utilisateurs peuvent contacter:
+- **Email**: infos@business-tech.net
+- **Téléphone**: +225 07 67 34 47 11
+
+Ces informations sont affichées directement sur la page de restriction pour faciliter l'assistance.

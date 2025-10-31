@@ -765,7 +765,7 @@ export async function getSaleStatistics(filters?: {
     const totalQuantityOz = sales.reduce((sum, s) => sum + (s.quantity_oz || 0), 0);
     const totalRevenue = sales.reduce((sum, s) => sum + (s.final_proceeds || 0), 0);
     const avgPricePerOz = totalQuantityOz > 0 ? totalRevenue / totalQuantityOz : 0;
-    const pendingApprovals = sales.filter(s => s.status === SALES_STATUSES.PENDING_APPROVAL).length;
+    const pendingApprovals = sales.filter(s => s.status === SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL).length;
 
     return {
       success: true,

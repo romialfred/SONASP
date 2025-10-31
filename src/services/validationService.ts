@@ -380,26 +380,32 @@ export function validateSalesStatusTransition(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Define valid sales transitions based on the 7-step workflow
+  // Define valid sales transitions based on the 11-step workflow
   const validTransitions: Record<string, string[]> = {
-    [SALES_STATUSES.CREATE_SALES]: [SALES_STATUSES.PENDING_APPROVAL],
-    [SALES_STATUSES.PENDING_APPROVAL]: [
+    [SALES_STATUSES.CREATE_SALES]: [SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL],
+    [SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL]: [
+      SALES_STATUSES.MANAGEMENT_APPROVED,
+      SALES_STATUSES.MANAGEMENT_REJECTED
+    ],
+    [SALES_STATUSES.MANAGEMENT_APPROVED]: [
+      SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL
+    ],
+    [SALES_STATUSES.MANAGEMENT_REJECTED]: [SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL],
+    [SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL]: [
       SALES_STATUSES.CUSTOMER_APPROVED,
       SALES_STATUSES.CUSTOMER_REJECTED
     ],
     [SALES_STATUSES.CUSTOMER_APPROVED]: [
-      SALES_STATUSES.VIRTUAL_PAYMENT,
-      SALES_STATUSES.CUSTOMER_REJECTED
+      SALES_STATUSES.WAITING_FOR_PAYMENT,
+      SALES_STATUSES.VIRTUAL_PAYMENT
     ],
-    [SALES_STATUSES.CUSTOMER_REJECTED]: [SALES_STATUSES.PENDING_APPROVAL],
-    [SALES_STATUSES.VIRTUAL_PAYMENT]: [
-      SALES_STATUSES.PAYMENT_RECEIVED,
-      SALES_STATUSES.CUSTOMER_REJECTED
-    ],
+    [SALES_STATUSES.CUSTOMER_REJECTED]: [SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL],
     [SALES_STATUSES.WAITING_FOR_PAYMENT]: [
-      SALES_STATUSES.PAYMENT_RECEIVED,
       SALES_STATUSES.VIRTUAL_PAYMENT,
-      SALES_STATUSES.CUSTOMER_REJECTED
+      SALES_STATUSES.PAYMENT_RECEIVED
+    ],
+    [SALES_STATUSES.VIRTUAL_PAYMENT]: [
+      SALES_STATUSES.PAYMENT_RECEIVED
     ],
     [SALES_STATUSES.PAYMENT_RECEIVED]: [SALES_STATUSES.COMPLETED],
     [SALES_STATUSES.COMPLETED]: []
@@ -415,8 +421,8 @@ export function validateSalesStatusTransition(
 
   // Context-specific validations
   if (context?.isCustomerApproval) {
-    if (currentStatus !== SALES_STATUSES.PENDING_APPROVAL) {
-      errors.push('Customer approval can only be performed on sales with status "pending_approval"');
+    if (currentStatus !== SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL) {
+      errors.push('Customer approval can only be performed on sales with status "pending_for_customer_approval"');
     }
   }
 

@@ -112,7 +112,7 @@ export function SalesDashboard() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const pending = salesData?.filter(s => s.status === SALES_STATUSES.PENDING_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES)?.length || 0;
+      const pending = salesData?.filter(s => s.status === SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES)?.length || 0;
       const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
       const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.length || 0;
       const pendingPayment = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.length || 0;

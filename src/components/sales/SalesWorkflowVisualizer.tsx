@@ -18,11 +18,25 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     color: 'blue'
   },
   {
-    status: SALES_STATUSES.PENDING_APPROVAL,
-    label: 'Pending Approval',
+    status: SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL,
+    label: 'Pending Management',
     description: 'Awaiting management approval',
     icon: Clock,
     color: 'yellow'
+  },
+  {
+    status: SALES_STATUSES.MANAGEMENT_APPROVED,
+    label: 'Management Approved',
+    description: 'Approved by management',
+    icon: CheckCircle,
+    color: 'green'
+  },
+  {
+    status: SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL,
+    label: 'Pending Customer',
+    description: 'Awaiting customer approval',
+    icon: Clock,
+    color: 'blue'
   },
   {
     status: SALES_STATUSES.CUSTOMER_APPROVED,
@@ -32,18 +46,18 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     color: 'green'
   },
   {
-    status: SALES_STATUSES.VIRTUAL_PAYMENT,
-    label: 'Virtual Payment',
-    description: 'Payment auto-created',
-    icon: AlertCircle,
-    color: 'indigo'
-  },
-  {
     status: SALES_STATUSES.WAITING_FOR_PAYMENT,
     label: 'Waiting Payment',
     description: 'Awaiting payment confirmation',
     icon: Clock,
     color: 'orange'
+  },
+  {
+    status: SALES_STATUSES.VIRTUAL_PAYMENT,
+    label: 'Virtual Payment',
+    description: 'Payment auto-created',
+    icon: AlertCircle,
+    color: 'slate'
   },
   {
     status: SALES_STATUSES.PAYMENT_RECEIVED,
@@ -61,13 +75,22 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
   }
 ];
 
-const REJECTED_STEP: WorkflowStep = {
-  status: SALES_STATUSES.CUSTOMER_REJECTED,
-  label: 'Rejected',
-  description: 'Customer rejected',
-  icon: XCircle,
-  color: 'red'
-};
+const REJECTED_STEPS: WorkflowStep[] = [
+  {
+    status: SALES_STATUSES.MANAGEMENT_REJECTED,
+    label: 'Management Rejected',
+    description: 'Rejected by management',
+    icon: XCircle,
+    color: 'red'
+  },
+  {
+    status: SALES_STATUSES.CUSTOMER_REJECTED,
+    label: 'Customer Rejected',
+    description: 'Rejected by customer',
+    icon: XCircle,
+    color: 'red'
+  }
+];
 
 interface SalesWorkflowVisualizerProps {
   currentStatus: string;
@@ -95,7 +118,8 @@ export function SalesWorkflowVisualizer({
     return stepStatus === currentStatus;
   };
 
-  const isRejected = currentStatus === SALES_STATUSES.CUSTOMER_REJECTED;
+  const isRejected = currentStatus === SALES_STATUSES.CUSTOMER_REJECTED || currentStatus === SALES_STATUSES.MANAGEMENT_REJECTED;
+  const rejectedStep = REJECTED_STEPS.find(step => step.status === currentStatus);
 
   const getStepColor = (step: WorkflowStep, stepIndex: number) => {
     if (isCurrent(step.status)) {
@@ -221,10 +245,12 @@ export function SalesWorkflowVisualizer({
               <XCircle className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-red-900">{REJECTED_STEP.label}</h3>
-              <p className="text-sm text-red-700 mt-1">{REJECTED_STEP.description}</p>
+              <h3 className="font-semibold text-red-900">{rejectedStep?.label || 'Rejected'}</h3>
+              <p className="text-sm text-red-700 mt-1">{rejectedStep?.description || 'Sale rejected'}</p>
               <p className="text-xs text-red-600 mt-2">
-                The sale was rejected by the customer and requires review or cancellation.
+                {currentStatus === SALES_STATUSES.MANAGEMENT_REJECTED
+                  ? 'The sale was rejected by management and requires review or resubmission.'
+                  : 'The sale was rejected by the customer and requires review or cancellation.'}
               </p>
             </div>
           </div>

@@ -32,7 +32,11 @@ END $$;
 -- CRITICAL: Drop the status transition triggers temporarily during migration
 DROP TRIGGER IF EXISTS trigger_validate_sales_status_transition ON sales;
 DROP TRIGGER IF EXISTS check_sales_status_transition_trigger ON sales;
-RAISE NOTICE 'Status transition triggers temporarily removed for migration';
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Status transition triggers temporarily removed for migration';
+END $$;
 
 -- Drop existing status constraint if it exists
 DO $$
@@ -199,7 +203,10 @@ ALTER TABLE sales ADD CONSTRAINT sales_status_check
 COMMENT ON TABLE sales IS 'Sales records with new 9-step workflow status management and approval tracking';
 
 -- Note: Status transition triggers will be recreated in migration 20251102140006_create_status_transition_triggers.sql
-RAISE NOTICE 'Status transition triggers will be recreated in the next migration';
+DO $$
+BEGIN
+  RAISE NOTICE 'Status transition triggers will be recreated in the next migration';
+END $$;
 
 -- Final verification and success message
 DO $$

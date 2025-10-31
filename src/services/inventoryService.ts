@@ -316,3 +316,61 @@ export async function calculateInventoryMetrics() {
     };
   }
 }
+
+export async function getInventoryBySeller(sellerId: string, sellerType: 'mining_company' | 'mansa') {
+  try {
+    if (sellerType === 'mining_company') {
+      const { data, error } = await supabase
+        .from('gold_inventory')
+        .select(`
+          quantity_available_oz,
+          quantity_allocated_oz,
+          quantity_sold_oz,
+          final_fine_oz,
+          final_fine_grams,
+          batch:batches!inner(
+            id,
+            batch_number,
+            mining_company_id
+          )
+        `)
+        .eq('transaction_type', 'entry')
+        .eq('batch.mining_company_id', sellerId);
+
+      if (error) throw error;
+
+      const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
+      const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
+
+      return {
+        success: true,
+        availableOz: totalAvailableOz,
+        availableGrams: totalAvailableGrams
+      };
+    } else {
+      const { data, error } = await supabase
+        .from('gold_inventory')
+        .select('quantity_available_oz, final_fine_grams, final_fine_oz')
+        .eq('transaction_type', 'entry');
+
+      if (error) throw error;
+
+      const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
+      const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
+
+      return {
+        success: true,
+        availableOz: totalAvailableOz,
+        availableGrams: totalAvailableGrams
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching inventory by seller:', error);
+    return {
+      success: false,
+      availableOz: 0,
+      availableGrams: 0,
+      error
+    };
+  }
+}

@@ -24,6 +24,7 @@ import {
   type Seller,
   type SellerType
 } from '@/services/salesService';
+import { getInventoryBySeller } from '@/services/inventoryService';
 
 interface Customer {
   id: string;
@@ -69,11 +70,21 @@ export function SaleCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [customerIsMansa, setCustomerIsMansa] = useState(false);
   const [sellerValidationError, setSellerValidationError] = useState<string>('');
+  const [sellerInventory, setSellerInventory] = useState({ availableOz: 0, availableGrams: 0 });
+  const [loadingInventory, setLoadingInventory] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
     fetchSellers();
   }, []);
+
+  useEffect(() => {
+    if (formData.sellerId && formData.sellerType) {
+      fetchSellerInventory();
+    } else {
+      setSellerInventory({ availableOz: 0, availableGrams: 0 });
+    }
+  }, [formData.sellerId, formData.sellerType]);
 
   useEffect(() => {
     // When customer changes, check if it's Mansa and validate seller
@@ -244,8 +255,31 @@ export function SaleCreate() {
     return '';
   };
 
-  const availableInventoryGrams = 1250.5;
-  const availableInventoryOz = availableFromState || (availableInventoryGrams / 31.1035);
+  const availableInventoryGrams = sellerInventory.availableGrams;
+  const availableInventoryOz = availableFromState || sellerInventory.availableOz;
+
+  const fetchSellerInventory = async () => {
+    if (!formData.sellerId || !formData.sellerType) return;
+
+    try {
+      setLoadingInventory(true);
+      const result = await getInventoryBySeller(formData.sellerId, formData.sellerType);
+      if (result.success) {
+        setSellerInventory({
+          availableOz: result.availableOz,
+          availableGrams: result.availableGrams
+        });
+      } else {
+        console.error('Error fetching seller inventory:', result.error);
+        setSellerInventory({ availableOz: 0, availableGrams: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching seller inventory:', error);
+      setSellerInventory({ availableOz: 0, availableGrams: 0 });
+    } finally {
+      setLoadingInventory(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -880,7 +914,7 @@ export function SaleCreate() {
               onClick={handleSubmit}
               disabled={!showCalculations || submitting}
             >
-              {submitting ? 'Submitting...' : 'Submit to Customer for Approval'}
+              {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </div>

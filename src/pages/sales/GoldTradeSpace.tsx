@@ -188,7 +188,7 @@ export function GoldTradeSpace() {
         {/* Main Content Area - Adjusts based on panel state */}
         <div
           className={`space-y-6 transition-all duration-300 ${
-            isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-96 max-w-5xl'
+            isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
           }`}
         >
           {quantityRecommendation && (

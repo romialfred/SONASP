@@ -464,9 +464,22 @@ export async function approveSale(
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const result = await updateSaleStatus(saleId, SALES_STATUSES.CUSTOMER_APPROVED, userEmail, notes);
+    // Step 1: Approve by management
+    const result = await updateSaleStatus(saleId, SALES_STATUSES.MANAGEMENT_APPROVED, userEmail, notes);
 
-    if (result.success) {
+    if (!result.success) {
+      return result;
+    }
+
+    // Step 2: Move to pending customer approval
+    const pendingResult = await updateSaleStatus(
+      saleId,
+      SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL,
+      userEmail,
+      'Sale approved by management, sent to customer for approval'
+    );
+
+    if (pendingResult.success) {
       const { data: sale } = await supabase
         .from('sales')
         .select(`
@@ -490,7 +503,7 @@ export async function approveSale(
       }
     }
 
-    return result;
+    return pendingResult;
   } catch (error: any) {
     console.error('Error in approveSale:', error);
     return { success: false, error: error.message };
@@ -502,7 +515,7 @@ export async function rejectSale(
   userEmail: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  return updateSaleStatus(saleId, SALES_STATUSES.CUSTOMER_REJECTED, userEmail, reason);
+  return updateSaleStatus(saleId, SALES_STATUSES.MANAGEMENT_REJECTED, userEmail, reason);
 }
 
 export async function customerApproveSale(
@@ -527,11 +540,11 @@ export async function customerApproveSale(
     console.log('[customerApproveSale] Current sale status:', sale.status);
 
     // Check if sale is in correct status for customer approval
-    if (!['pending_approval', 'customer_approved'].includes(sale.status)) {
+    if (sale.status !== 'pending_for_customer_approval') {
       console.error('[customerApproveSale] Invalid status for customer approval:', sale.status);
       return {
         success: false,
-        error: `Sale cannot be approved in current status: ${sale.status}. Expected 'pending_approval' or 'customer_approved'.`
+        error: `Sale cannot be approved in current status: ${sale.status}. Expected 'pending_for_customer_approval'.`
       };
     }
 
@@ -632,33 +645,28 @@ export async function customerApproveSale(
       user_email: customerEmail,
     });
 
-    // 3. Update sale status based on current status
-    let statusResult;
+    // 3. Update sale status: pending_for_customer_approval -> customer_approved -> waiting_for_payment
+    console.log('[customerApproveSale] Moving to customer_approved...');
+    const approvedResult = await updateSaleStatus(
+      saleId,
+      SALES_STATUSES.CUSTOMER_APPROVED,
+      customerEmail,
+      `Customer approved sale. Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
+    );
 
-    if (sale.status === 'pending_approval') {
-      // If still pending approval, move to customer_approved (customer is approving before management)
-      console.log('[customerApproveSale] Status is pending_approval, moving to customer_approved...');
-      statusResult = await updateSaleStatus(
-        saleId,
-        SALES_STATUSES.CUSTOMER_APPROVED,
-        customerEmail,
-        `Customer approved sale - Awaiting management approval. Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
-      );
-    } else if (sale.status === 'customer_approved') {
-      // If already customer_approved (management approved first), move to waiting_for_payment
-      console.log('[customerApproveSale] Status is customer_approved, moving to waiting_for_payment...');
-      statusResult = await updateSaleStatus(
-        saleId,
-        SALES_STATUSES.WAITING_FOR_PAYMENT,
-        customerEmail,
-        `Customer confirmed payment commitment - Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
-      );
-    } else {
-      return {
-        success: false,
-        error: `Cannot approve sale in status: ${sale.status}`
-      };
+    if (!approvedResult.success) {
+      console.error('[customerApproveSale] Failed to update to customer_approved:', approvedResult.error);
+      return approvedResult;
     }
+
+    // Move to waiting_for_payment
+    console.log('[customerApproveSale] Moving to waiting_for_payment...');
+    const statusResult = await updateSaleStatus(
+      saleId,
+      SALES_STATUSES.WAITING_FOR_PAYMENT,
+      customerEmail,
+      `Customer confirmed payment commitment - Virtual payment created (${mechanism} terms). Payment ID: ${paymentId}`
+    );
 
     if (!statusResult.success) {
       console.error('[customerApproveSale] Status update failed:', statusResult.error);

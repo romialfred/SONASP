@@ -142,9 +142,8 @@ export function CustomerSaleApproval() {
         throw new Error('Sale not found');
       }
 
-      // Customer can approve when status is 'customer_approved' (management approved, awaiting customer)
-      // or 'pending_approval' in some cases
-      if (!['pending_approval', 'customer_approved'].includes(data.status)) {
+      // Customer can approve when status is 'pending_for_customer_approval' (management approved, awaiting customer)
+      if (data.status !== 'pending_for_customer_approval') {
         throw new Error('This sale is not available for customer approval. Current status: ' + data.status);
       }
 

@@ -3,10 +3,14 @@
 
   1. Purpose
     - Update status constraint to include new workflow statuses
+    - Add seller tracking columns
     - Add timestamp columns for approval tracking
     - Add columns for approval user tracking
 
   2. New Columns
+    - seller_id (uuid) - ID of the seller (mining company or Mansa)
+    - seller_type (text) - Type of seller: 'mining_company' or 'mansa'
+    - is_internal_sale (boolean) - TRUE for internal sales (mining co to Mansa)
     - management_approved_at (timestamptz)
     - management_approved_by (uuid)
     - customer_approved_at (timestamptz)
@@ -14,6 +18,7 @@
 
   3. Updated Constraints
     - Status constraint with all new status values
+    - Seller type constraint
 
   4. Security
     - Uses existing RLS policies
@@ -126,6 +131,56 @@ BEGIN
     RAISE NOTICE 'All statuses are valid. Ready to proceed.';
   END IF;
 END $$;
+
+-- Add seller tracking columns
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sales' AND column_name = 'seller_id'
+  ) THEN
+    ALTER TABLE sales ADD COLUMN seller_id uuid;
+    COMMENT ON COLUMN sales.seller_id IS 'ID of the seller (mining company or Mansa Ressources)';
+    RAISE NOTICE 'Added column: seller_id';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sales' AND column_name = 'seller_type'
+  ) THEN
+    ALTER TABLE sales ADD COLUMN seller_type text CHECK (seller_type IN ('mining_company', 'mansa'));
+    COMMENT ON COLUMN sales.seller_type IS 'Type of seller: mining_company or mansa';
+    RAISE NOTICE 'Added column: seller_type';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sales' AND column_name = 'is_internal_sale'
+  ) THEN
+    ALTER TABLE sales ADD COLUMN is_internal_sale boolean DEFAULT false;
+    COMMENT ON COLUMN sales.is_internal_sale IS 'TRUE when mining company sells to Mansa (internal), FALSE for external sales';
+    RAISE NOTICE 'Added column: is_internal_sale';
+  END IF;
+END $$;
+
+-- Set default values for existing records (assume all are Mansa external sales)
+UPDATE sales
+SET
+  seller_type = 'mansa',
+  is_internal_sale = false
+WHERE seller_type IS NULL;
+
+-- Create indexes for seller columns
+CREATE INDEX IF NOT EXISTS idx_sales_seller_id ON sales(seller_id);
+CREATE INDEX IF NOT EXISTS idx_sales_seller_type ON sales(seller_type);
+CREATE INDEX IF NOT EXISTS idx_sales_is_internal ON sales(is_internal_sale);
+CREATE INDEX IF NOT EXISTS idx_sales_seller_composite ON sales(seller_id, seller_type, is_internal_sale);
 
 -- Add management approval tracking columns
 DO $$

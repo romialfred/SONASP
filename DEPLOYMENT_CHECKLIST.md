@@ -1,258 +1,402 @@
-# Deployment Checklist - Gold Shipper
+# ✅ ASSAY CERTIFICATES - FINAL DEPLOYMENT CHECKLIST
 
-## Pre-Deployment
-
-### 1. Environment Configuration
-- [ ] Set up production Supabase project
-- [ ] Configure environment variables:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-- [ ] Verify Supabase project settings
-- [ ] Configure custom domain (if applicable)
-
-### 2. Database Setup
-- [ ] Apply all migrations in order:
-  ```bash
-  # Migrations are in supabase/migrations/
-  20251101120000_create_reports_system.sql
-  20251101130000_create_storage_buckets.sql
-  20251102140000_clean_sales_status_transitions.sql
-  20251102140001_insert_new_sales_status_transitions.sql
-  20251102140002_update_sales_table_schema.sql
-  20251102140003_update_payments_table_schema.sql
-  20251102140004_ensure_fx_rate_analysis_table.sql
-  20251102140005_create_virtual_payment_triggers.sql
-  20251102140006_create_status_transition_triggers.sql
-  20251102140007_add_reception_tracking_columns.sql
-  20251102150000_fix_management_approved_transition.sql
-  20251102160000_create_customer_banks_table.sql
-  20251103000000_add_physical_payment_trigger.sql
-  20251103000000_create_presales_module.sql
-  ```
-- [ ] Verify all tables created successfully
-- [ ] Verify all RLS policies applied
-- [ ] Test database triggers and functions
-
-### 3. Storage Configuration
-- [ ] Create storage buckets:
-  - `documents`
-  - `payment-proofs`
-  - `batch-documents`
-- [ ] Configure storage policies
-- [ ] Test file upload/download
-- [ ] Set up storage size limits
-
-### 4. Authentication Setup
-- [ ] Configure email templates
-- [ ] Set up 2FA settings
-- [ ] Configure password policies
-- [ ] Set session timeout
-- [ ] Configure allowed domains (if needed)
-
-### 5. Build Verification
-- [ ] Run `npm install` to ensure dependencies
-- [ ] Run `npm run build` to create production build
-- [ ] Verify build completes successfully
-- [ ] Check dist/ directory has all assets
-- [ ] Test built application locally with `npm run preview`
-
-## Deployment
-
-### 1. Choose Deployment Platform
-Choose one of the following platforms:
-
-#### Option A: Netlify
-- [ ] Create new site from Git
-- [ ] Configure build settings:
-  - Build command: `npm run build`
-  - Publish directory: `dist`
-- [ ] Add environment variables
-- [ ] Deploy site
-- [ ] Configure custom domain (if applicable)
-
-#### Option B: Vercel
-- [ ] Import project from Git
-- [ ] Configure build settings:
-  - Framework: Vite
-  - Build command: `npm run build`
-  - Output directory: `dist`
-- [ ] Add environment variables
-- [ ] Deploy project
-- [ ] Configure custom domain (if applicable)
-
-#### Option C: AWS Amplify
-- [ ] Create new app from Git
-- [ ] Configure build settings:
-  - Build command: `npm run build`
-  - Output directory: `dist`
-- [ ] Add environment variables
-- [ ] Deploy app
-- [ ] Configure custom domain (if applicable)
-
-### 2. Configure Hosting
-- [ ] Set up custom domain
-- [ ] Configure SSL certificate
-- [ ] Set up CDN (if not included)
-- [ ] Configure redirects for SPA routing
-- [ ] Set up CORS if needed
-
-### 3. Deploy Application
-- [ ] Push code to production branch
-- [ ] Monitor deployment process
-- [ ] Verify deployment successful
-- [ ] Check deployment logs for errors
-
-## Post-Deployment
-
-### 1. Verification
-- [ ] Access deployed application URL
-- [ ] Test login functionality
-- [ ] Test 2FA setup
-- [ ] Verify all pages load correctly
-- [ ] Test mobile responsiveness
-- [ ] Verify PWA installation works
-- [ ] Test offline functionality
-- [ ] Verify all API calls work
-- [ ] Test file uploads
-- [ ] Check real-time updates
-
-### 2. Functionality Testing
-- [ ] Create a test batch
-- [ ] Test receiving workflow
-- [ ] Test refining workflow
-- [ ] Create a test sale
-- [ ] Test payment processing
-- [ ] Create a test pre-sale
-- [ ] Test customer approval flow
-- [ ] Verify calculations are correct
-- [ ] Test report generation
-- [ ] Verify email notifications
-
-### 3. Security Verification
-- [ ] Test RLS policies work correctly
-- [ ] Verify role-based access control
-- [ ] Test 2FA authentication
-- [ ] Verify session management
-- [ ] Check audit trail logging
-- [ ] Test permission restrictions
-- [ ] Verify data isolation between sites
-
-### 4. Performance Check
-- [ ] Run Lighthouse audit
-- [ ] Check page load times
-- [ ] Verify bundle sizes
-- [ ] Test on slow connections
-- [ ] Monitor database query performance
-- [ ] Check real-time update latency
-
-### 5. User Setup
-- [ ] Create initial admin user
-- [ ] Set up user roles
-- [ ] Configure permissions
-- [ ] Create test users for each role
-- [ ] Verify user access levels
-- [ ] Set up mining companies
-- [ ] Configure transport companies
-- [ ] Set up refinery plants
-
-### 6. Monitoring Setup
-- [ ] Set up error tracking (Sentry, etc.)
-- [ ] Configure application monitoring
-- [ ] Set up uptime monitoring
-- [ ] Configure alerts for errors
-- [ ] Set up database monitoring
-- [ ] Configure performance monitoring
-- [ ] Set up log aggregation
-
-### 7. Backup Configuration
-- [ ] Configure automated database backups
-- [ ] Test backup restoration
-- [ ] Set up backup retention policy
-- [ ] Document backup procedures
-- [ ] Configure disaster recovery plan
-
-## Documentation
-
-### 1. User Documentation
-- [ ] Create user manual
-- [ ] Document workflows
-- [ ] Create video tutorials (if needed)
-- [ ] Prepare training materials
-- [ ] Update help center content
-
-### 2. Technical Documentation
-- [ ] Document deployment process
-- [ ] Create troubleshooting guide
-- [ ] Document API endpoints
-- [ ] Create maintenance procedures
-- [ ] Document backup/recovery process
-
-### 3. Training
-- [ ] Schedule user training sessions
-- [ ] Prepare training environment
-- [ ] Create training data
-- [ ] Conduct admin training
-- [ ] Conduct end-user training
-
-## Maintenance
-
-### Daily
-- [ ] Monitor application health
-- [ ] Check error logs
-- [ ] Review database performance
-- [ ] Monitor user activity
-
-### Weekly
-- [ ] Review audit trail
-- [ ] Check storage usage
-- [ ] Review performance metrics
-- [ ] Update documentation as needed
-
-### Monthly
-- [ ] Review security policies
-- [ ] Update dependencies
-- [ ] Review user feedback
-- [ ] Plan improvements
-- [ ] Backup verification test
-
-## Emergency Contacts
-
-| Role | Name | Contact |
-|------|------|---------|
-| System Admin | TBD | TBD |
-| Database Admin | TBD | TBD |
-| Support Lead | TBD | TBD |
-| Developer | TBD | TBD |
-
-## Rollback Procedure
-
-### If Issues Occur:
-1. Identify the issue severity
-2. Check deployment logs
-3. Review error tracking
-4. If critical:
-   - Revert to previous deployment
-   - Restore database backup if needed
-   - Notify users of downtime
-5. Debug issue in staging
-6. Redeploy with fixes
-
-## Success Criteria
-
-- [ ] All core features working
-- [ ] No critical errors in logs
-- [ ] Performance metrics acceptable
-- [ ] Users can log in and perform tasks
-- [ ] Data is being saved correctly
-- [ ] Real-time updates functioning
-- [ ] Email notifications working
-- [ ] Audit trail recording actions
-- [ ] Reports generating correctly
-- [ ] Mobile experience acceptable
+Complete this checklist to ensure the Assay Certificates feature is fully functional.
 
 ---
 
-**Deployment Date:** _____________
-**Deployed By:** _____________
-**Version:** 1.0.0
-**Status:** _____________
+## 📋 PRE-DEPLOYMENT CHECKLIST
+
+### 1. Code Changes
+- [x] BatchDetails.tsx - Hardcoded documents removed
+- [x] assayCertificateService.ts - Fixed to use correct columns
+- [x] AssayCertificateUpload.tsx - Component exists
+- [x] AssayCertificatesList.tsx - Component exists
+- [x] AssayCertificateViewer.tsx - Component exists
+- [x] pdfParsingService.ts - PDF parsing implemented
+- [x] Build successful - No TypeScript errors
+
+### 2. Database Migrations
+- [ ] Base migration applied (`APPLY_ASSAY_MIGRATION_NOW.sql`)
+  - Creates 3 tables
+  - Creates storage bucket
+  - Sets up RLS policies
+  - Creates helper functions
+  
+- [ ] Fix migration applied (`FIX_ASSAY_SCHEMA.sql`)
+  - Adds 12 summary columns
+  - Creates index on sample_id
+  - Enables quick-access queries
+
+### 3. Browser Cache
+- [ ] Hard refresh performed (Ctrl+Shift+R)
+- [ ] Service worker cleared
+- [ ] Old cached JavaScript removed
+- [ ] New bundle loaded
+
+---
+
+## 🔍 VERIFICATION STEPS
+
+### Step 1: Database Verification
+
+Run in Supabase SQL Editor:
+```sql
+-- Check column count
+SELECT COUNT(*) as columns 
+FROM information_schema.columns
+WHERE table_name = 'assay_certificates';
+
+-- Expected: 30 (if both migrations applied)
+-- Expected: 18 (if only base migration applied)
+```
+
+**Result:** _____ columns
+
+- [ ] ✅ 30 columns (Both migrations applied - PERFECT!)
+- [ ] ⚠️ 18 columns (Need to apply FIX_ASSAY_SCHEMA.sql)
+- [ ] ❌ 0 columns (Need to apply APPLY_ASSAY_MIGRATION_NOW.sql)
+
+### Step 2: Storage Verification
+
+```sql
+SELECT name, public, file_size_limit 
+FROM storage.buckets 
+WHERE name = 'assay-certificates';
+```
+
+- [ ] ✅ Bucket exists
+- [ ] ✅ public = false
+- [ ] ✅ file_size_limit = 10485760 (10MB)
+
+### Step 3: RLS Policies Verification
+
+```sql
+SELECT COUNT(*) as policy_count
+FROM pg_policies
+WHERE schemaname = 'public'
+  AND tablename LIKE '%assay%';
+```
+
+**Result:** _____ policies
+
+- [ ] ✅ 7+ policies exist
+
+### Step 4: Storage Policies Verification
+
+```sql
+SELECT COUNT(*) as storage_policy_count
+FROM pg_policies
+WHERE schemaname = 'storage'
+  AND tablename = 'objects'
+  AND policyname LIKE '%certificate%';
+```
+
+**Result:** _____ storage policies
+
+- [ ] ✅ 4 policies exist (INSERT, SELECT, UPDATE, DELETE)
+
+---
+
+## 🧪 FUNCTIONAL TESTING
+
+### Test 1: UI Visibility
+
+**Action:** Navigate to any Batch Details page
+
+**Expected Results:**
+- [ ] "Assay Certificates" section visible in left column
+- [ ] "Upload Assay Certificate" heading present
+- [ ] Drop zone with "Drop PDF here" message
+- [ ] Info box with supported formats
+- [ ] "No certificates uploaded yet" message (if none exist)
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 2: File Selection
+
+**Action:** Click on upload area
+
+**Expected Results:**
+- [ ] File dialog opens
+- [ ] Only PDF files selectable
+- [ ] Selected filename displays
+- [ ] "Upload & Parse Certificate" button appears
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 3: File Upload
+
+**Action:** Select a PDF and click "Upload & Parse Certificate"
+
+**Expected Results:**
+- [ ] Progress indicator appears
+- [ ] "Certificate uploaded successfully!" message
+- [ ] "Parsing certificate..." message
+- [ ] Upload completes in 2-10 seconds
+- [ ] No console errors
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Console Errors:** _________________________________
+
+### Test 4: Database Verification After Upload
+
+**Action:** Run in Supabase SQL Editor after upload
+
+```sql
+SELECT 
+  file_name,
+  parsing_status,
+  approval_status,
+  created_at
+FROM assay_certificates
+ORDER BY created_at DESC
+LIMIT 1;
+```
+
+**Expected Results:**
+- [ ] Record exists
+- [ ] parsing_status = 'processing' or 'completed'
+- [ ] approval_status = 'pending'
+- [ ] file_name matches uploaded file
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 5: Storage Verification
+
+**Action:** Check Supabase Dashboard → Storage → assay-certificates
+
+**Expected Results:**
+- [ ] Uploaded PDF visible in bucket
+- [ ] File organized by batch_id
+- [ ] File is viewable/downloadable
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 6: Parsing Results
+
+**Action:** Wait 5-10 seconds, refresh page
+
+**Expected Results:**
+- [ ] Certificate appears in list
+- [ ] Parsing status badge shows status
+- [ ] Approval status badge shows "Pending"
+- [ ] "View" button is clickable
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 7: View Certificate
+
+**Action:** Click "View" button
+
+**Expected Results:**
+- [ ] Modal opens
+- [ ] Certificate filename in title
+- [ ] PDF metadata visible
+- [ ] Parsed data fields shown (if parsing succeeded)
+- [ ] Approve/Reject buttons visible
+- [ ] Close button works
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+### Test 8: Multiple Uploads
+
+**Action:** Upload 2-3 more certificates
+
+**Expected Results:**
+- [ ] All certificates appear in list
+- [ ] Each has unique ID
+- [ ] Each has correct batch_id
+- [ ] List updates in real-time
+- [ ] No duplicate entries
+
+**Status:** ✅ Pass / ❌ Fail
+
+**Notes:** _________________________________
+
+---
+
+## 🐛 ERROR TESTING
+
+### Error Test 1: Wrong File Type
+
+**Action:** Try to upload .jpg or .docx
+
+**Expected Results:**
+- [ ] File type restriction works
+- [ ] Only PDF files can be selected
+- [ ] Clear error message if wrong type
+
+**Status:** ✅ Pass / ❌ Fail
+
+### Error Test 2: File Too Large
+
+**Action:** Try to upload PDF > 10MB
+
+**Expected Results:**
+- [ ] Upload fails with clear message
+- [ ] "File too large" error shown
+- [ ] No partial upload
+
+**Status:** ✅ Pass / ❌ Fail
+
+### Error Test 3: No Internet Connection
+
+**Action:** Disconnect internet, try upload
+
+**Expected Results:**
+- [ ] Clear error message
+- [ ] No silent failure
+- [ ] Can retry after reconnection
+
+**Status:** ✅ Pass / ❌ Fail
+
+---
+
+## 🔐 SECURITY TESTING
+
+### Security Test 1: Unauthenticated Access
+
+**Action:** Logout, try to access batch details
+
+**Expected Results:**
+- [ ] Redirected to login
+- [ ] No data visible
+- [ ] No API calls succeed
+
+**Status:** ✅ Pass / ❌ Fail
+
+### Security Test 2: Cross-Batch Access
+
+**Action:** Try to upload certificate with wrong batch_id
+
+**Expected Results:**
+- [ ] Upload should fail or
+- [ ] RLS should prevent access
+
+**Status:** ✅ Pass / ❌ Fail
+
+### Security Test 3: Direct Storage Access
+
+**Action:** Try to access storage URL directly without auth
+
+**Expected Results:**
+- [ ] Access denied
+- [ ] 403 or 401 error
+- [ ] No file download
+
+**Status:** ✅ Pass / ❌ Fail
+
+---
+
+## 📊 PERFORMANCE TESTING
+
+### Performance Test 1: Upload Speed
+
+**Test with 1MB PDF:**
+- Upload time: _____ seconds
+- Expected: 2-5 seconds
+- [ ] ✅ Within acceptable range
+
+### Performance Test 2: Parsing Speed
+
+**Test with simple certificate:**
+- Parsing time: _____ seconds
+- Expected: 2-10 seconds
+- [ ] ✅ Within acceptable range
+
+### Performance Test 3: List Loading
+
+**Test with 10+ certificates:**
+- List load time: _____ seconds
+- Expected: < 2 seconds
+- [ ] ✅ Within acceptable range
+
+---
+
+## 🎯 FINAL VERIFICATION
+
+### Code Quality
+- [x] No TypeScript errors
+- [x] No ESLint warnings
+- [x] Build successful
+- [x] All imports correct
+
+### Database
+- [ ] All tables exist
+- [ ] All columns exist (30 in assay_certificates)
+- [ ] RLS enabled on all tables
+- [ ] All policies active
+- [ ] Storage bucket configured
+- [ ] Helper functions created
+
+### Frontend
+- [ ] No console errors
+- [ ] No React warnings
+- [ ] UI renders correctly
+- [ ] Responsive on mobile
+- [ ] All interactions work
+
+### Integration
+- [ ] Upload → Storage works
+- [ ] Upload → Database works
+- [ ] Parsing works
+- [ ] List displays correctly
+- [ ] View modal works
+- [ ] Approval workflow ready
+
+---
+
+## 📝 DEPLOYMENT STATUS
+
+### Overall Status
+
+**Code:** ✅ Complete  
+**Database:** [ ] Complete (Apply migrations)  
+**Testing:** [ ] Complete (Run tests)  
+**Documentation:** ✅ Complete  
+
+### Remaining Actions
+
+1. [ ] Apply `FIX_ASSAY_SCHEMA.sql` migration
+2. [ ] Hard refresh browser (Ctrl+Shift+R)
+3. [ ] Run all functional tests
+4. [ ] Verify security
+5. [ ] Test performance
+6. [ ] Sign off as production-ready
+
+---
+
+## 🎉 SIGN OFF
+
+**Tested By:** _________________________________  
+**Date:** _________________________________  
+**Status:** ✅ Ready for Production / ⚠️ Issues Found / ❌ Not Ready  
+
+**Notes:**
+_________________________________
+_________________________________
+_________________________________
+
+---
+
+## 🆘 TROUBLESHOOTING REFERENCE
+
+If any test fails, refer to:
+- `BATCH_DOCUMENT_UPLOAD_FIX.md` - Cache and visibility issues
+- `CHECK_ASSAY_DATABASE.md` - Database verification queries
+- `ASSAY_CERTIFICATE_TESTING_GUIDE.md` - Detailed testing scenarios
+- `WHERE_TO_UPLOAD_CERTIFICATES.md` - Location and cache guide
+

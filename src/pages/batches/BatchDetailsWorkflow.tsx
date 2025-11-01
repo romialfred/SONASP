@@ -18,9 +18,6 @@ import {
   DollarSign,
   CreditCard,
   Info,
-  ChevronRight,
-  ChevronLeft,
-  Clock,
 } from 'lucide-react';
 import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
 import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
@@ -71,7 +68,6 @@ export function BatchDetailsWorkflow() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
-  const [timelineExpanded, setTimelineExpanded] = useState(false);
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');
@@ -369,36 +365,6 @@ export function BatchDetailsWorkflow() {
       current: index === currentIndex,
       upcoming: index > currentIndex,
     }));
-  };
-
-  const getTimelineIcon = (status: string) => {
-    const iconMap: Record<string, any> = {
-      created: Package,
-      validated_for_transport: CheckCircle,
-      received_airport: MapPin,
-      received_refinery: Building2,
-      processed: CheckCircle,
-      approved: CheckCircle,
-      sold: DollarSign,
-      paid: CreditCard,
-      rejected: XCircle,
-    };
-    return iconMap[status] || Package;
-  };
-
-  const getTimelineColor = (status: string) => {
-    const colorMap: Record<string, string> = {
-      created: 'bg-gray-500',
-      validated_for_transport: 'bg-green-500',
-      received_airport: 'bg-blue-500',
-      received_refinery: 'bg-purple-500',
-      processed: 'bg-accent-500',
-      approved: 'bg-green-500',
-      sold: 'bg-primary-500',
-      paid: 'bg-green-600',
-      rejected: 'bg-red-500',
-    };
-    return colorMap[status] || 'bg-gray-500';
   };
 
   if (loading) {
@@ -829,96 +795,6 @@ export function BatchDetailsWorkflow() {
             </div>
           </div>
         </div>
-
-      {/* Fixed Timeline Panel - Right Side (similar to Live Gold Price) */}
-      <div
-        className={`fixed top-20 right-0 transition-all duration-300 z-40 ${
-          timelineExpanded ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        style={{ maxHeight: 'calc(100vh - 5rem)' }}
-      >
-        {/* Collapse/Expand Button */}
-        <button
-          onClick={() => setTimelineExpanded(!timelineExpanded)}
-          className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 bg-white shadow-lg rounded-l-lg p-2 hover:bg-gray-50 transition-colors border-l border-t border-b border-gray-200"
-          title={timelineExpanded ? 'Hide timeline' : 'Show timeline'}
-        >
-          {timelineExpanded ? (
-            <ChevronRight className="w-5 h-5 text-gray-600" />
-          ) : (
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-          )}
-        </button>
-
-        {/* Timeline Panel */}
-        <div className="bg-white shadow-2xl rounded-l-2xl border-l border-gray-200 w-96 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 5rem)' }}>
-          <div className="p-4 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">Batch Timeline</h2>
-                  <p className="text-xs text-gray-500">{timeline.length} events</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline Events */}
-            {timeline.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">No timeline events yet</p>
-            ) : (
-              <div className="space-y-4">
-                {timeline.map((event, index) => {
-                  const Icon = getTimelineIcon(event.status);
-                  const colorClass = getTimelineColor(event.status);
-
-                  return (
-                    <div key={event.id} className="flex items-start gap-3">
-                      {/* Icon */}
-                      <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 shadow-md`}>
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="text-sm font-bold text-gray-900 capitalize">
-                            {event.status === 'received_airport'
-                              ? 'Received at Airport'
-                              : event.status === 'received_refinery'
-                              ? 'Received at Refinery'
-                              : event.status.replace('_', ' ')}
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-600 mb-1">
-                          {new Date(event.changed_at).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                          {' '}
-                          {new Date(event.changed_at).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                        {event.comments && (
-                          <p className="text-xs text-gray-600 mb-1">{event.comments}</p>
-                        )}
-                        <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Success Modal */}
       <Modal

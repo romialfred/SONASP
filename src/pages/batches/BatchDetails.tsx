@@ -48,7 +48,6 @@ export function BatchDetails() {
   const [isManager, setIsManager] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
-  const [certificatesExpanded, setCertificatesExpanded] = useState(true);
   const [timelineExpanded, setTimelineExpanded] = useState(true);
 
   // Use Realtime hook for automatic batch updates
@@ -284,7 +283,9 @@ export function BatchDetails() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* MAIN CONTENT - Full width on left */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Batch Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Batch Information</CardTitle>
@@ -427,55 +428,35 @@ export function BatchDetails() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Assay Certificates - Below Batch Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-amber-600">
+                  Assay Certificates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <AssayCertificateUpload
+                    batchId={id!}
+                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                  />
+
+                  <AssayCertificatesList
+                    batchId={id!}
+                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                    refreshTrigger={certificateRefresh}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* RIGHT PANEL - Sidebar */}
           <div className="space-y-6">
-            {/* Assay Certificates - Collapsible (TOP) */}
-            <Card>
-              <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setCertificatesExpanded(!certificatesExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-amber-600">
-                    Assay Certificates
-                  </CardTitle>
-                  <button
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCertificatesExpanded(!certificatesExpanded);
-                    }}
-                  >
-                    {certificatesExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              </CardHeader>
-              {certificatesExpanded && (
-                <CardContent>
-                  <div className="space-y-6">
-                    <AssayCertificateUpload
-                      batchId={id!}
-                      onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                      onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                    />
-
-                    <AssayCertificatesList
-                      batchId={id!}
-                      onViewCertificate={(cert) => setSelectedCertificate(cert)}
-                      refreshTrigger={certificateRefresh}
-                    />
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
-            {/* Timeline - Collapsible */}
+            {/* Timeline - Collapsible Accordion */}
             <Card>
               <CardHeader
                 className="cursor-pointer hover:bg-gray-50 transition-colors"

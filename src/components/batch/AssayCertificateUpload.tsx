@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, XCircle, Loader, AlertCircle, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Alert } from '@/components/ui/Alert';
@@ -31,23 +31,29 @@ export function AssayCertificateUpload({
   const [parsing, setParsing] = useState(false);
   const [uploadedCertificate, setUploadedCertificate] = useState<AssayCertificate | null>(null);
   const [parseConfidence, setParseConfidence] = useState<number | null>(null);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        alert.showAlert('Please select a PDF file', 'error');
+        alert.error('Please select a PDF file');
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        alert.showAlert('File size must be less than 10MB', 'error');
+        alert.error('File size must be less than 10MB');
         return;
       }
 
       setSelectedFile(file);
       setUploadedCertificate(null);
       setParseConfidence(null);
+
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setPdfUrl(url);
     }
   };
 
@@ -60,16 +66,16 @@ export function AssayCertificateUpload({
 
       if (result.success && result.data) {
         setUploadedCertificate(result.data);
-        alert.showAlert('Certificate uploaded successfully!', 'success');
+        alert.success('Certificate uploaded successfully!');
         onUploadComplete?.(result.data);
 
         // Automatically start parsing
         handleParse(result.data.id, selectedFile);
       } else {
-        alert.showAlert(result.error || 'Failed to upload certificate', 'error');
+        alert.error(result.error || 'Failed to upload certificate');
       }
     } catch (error: any) {
-      alert.showAlert('Error uploading certificate: ' + error.message, 'error');
+      alert.error('Error uploading certificate: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -82,16 +88,15 @@ export function AssayCertificateUpload({
 
       if (result.success && result.data) {
         setParseConfidence(result.confidence || 0);
-        alert.showAlert(
-          `Certificate parsed successfully! Confidence: ${((result.confidence || 0) * 100).toFixed(0)}%`,
-          'success'
+        alert.success(
+          `Certificate parsed successfully! Confidence: ${((result.confidence || 0) * 100).toFixed(0)}%`
         );
         onParseComplete?.(certificateId);
       } else {
-        alert.showAlert(result.error || 'Failed to parse certificate', 'error');
+        alert.error(result.error || 'Failed to parse certificate');
       }
     } catch (error: any) {
-      alert.showAlert('Error parsing certificate: ' + error.message, 'error');
+      alert.error('Error parsing certificate: ' + error.message);
     } finally {
       setParsing(false);
     }
@@ -102,8 +107,10 @@ export function AssayCertificateUpload({
     const file = event.dataTransfer.files[0];
     if (file && file.type === 'application/pdf') {
       setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPdfUrl(url);
     } else {
-      alert.showAlert('Please drop a PDF file', 'error');
+      alert.error('Please drop a PDF file');
     }
   };
 
@@ -115,6 +122,11 @@ export function AssayCertificateUpload({
     setSelectedFile(null);
     setUploadedCertificate(null);
     setParseConfidence(null);
+    setShowPdfPreview(false);
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -175,20 +187,52 @@ export function AssayCertificateUpload({
               </div>
             </div>
 
-            {/* Upload Button */}
+            {/* Upload and Preview Buttons */}
             {selectedFile && (
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleUpload}
-                  loading={uploading}
-                  disabled={uploading || parsing}
-                  className="flex-1"
-                >
-                  {uploading ? 'Uploading...' : 'Upload & Parse Certificate'}
-                </Button>
-                <Button variant="secondary" onClick={resetUpload} disabled={uploading || parsing}>
-                  Cancel
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleUpload}
+                    loading={uploading}
+                    disabled={uploading || parsing}
+                    className="flex-1"
+                  >
+                    {uploading ? 'Uploading...' : 'Upload & Parse Certificate'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowPdfPreview(true)}
+                    disabled={uploading || parsing}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Preview PDF
+                  </Button>
+                  <Button variant="secondary" onClick={resetUpload} disabled={uploading || parsing}>
+                    Cancel
+                  </Button>
+                </div>
+
+                {/* PDF Preview Modal */}
+                {showPdfPreview && pdfUrl && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+                      <div className="flex items-center justify-between p-4 border-b">
+                        <h3 className="text-lg font-semibold">PDF Preview: {selectedFile.name}</h3>
+                        <Button variant="ghost" onClick={() => setShowPdfPreview(false)}>
+                          Close
+                        </Button>
+                      </div>
+                      <div className="flex-1 overflow-auto">
+                        <iframe
+                          src={pdfUrl}
+                          className="w-full h-full"
+                          title="PDF Preview"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>

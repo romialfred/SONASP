@@ -64,7 +64,7 @@ export function AssayCertificateViewer({
         }
       }
     } catch (error: any) {
-      alert.showAlert('Error loading certificate: ' + error.message, 'error');
+      alert.error('Error loading certificate: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -80,13 +80,13 @@ export function AssayCertificateViewer({
       if (result.success && result.data) {
         setCertificateData(result.data);
         setEditing(false);
-        alert.showAlert('Certificate data updated successfully!', 'success');
+        alert.success('Certificate data updated successfully!');
         onDataUpdate?.();
       } else {
-        alert.showAlert(result.error || 'Failed to update data', 'error');
+        alert.error(result.error || 'Failed to update data');
       }
     } catch (error: any) {
-      alert.showAlert('Error updating data: ' + error.message, 'error');
+      alert.error('Error updating data: ' + error.message);
     } finally {
       setSubmitting(false);
     }
@@ -100,13 +100,13 @@ export function AssayCertificateViewer({
       const result = await approveCertificateData(certificate.id, user.id);
 
       if (result.success) {
-        alert.showAlert('Certificate data approved!', 'success');
+        alert.success('Certificate data approved!');
         onApprove?.();
       } else {
-        alert.showAlert(result.error || 'Failed to approve', 'error');
+        alert.error(result.error || 'Failed to approve');
       }
     } catch (error: any) {
-      alert.showAlert('Error approving: ' + error.message, 'error');
+      alert.error('Error approving: ' + error.message);
     } finally {
       setSubmitting(false);
     }
@@ -123,13 +123,13 @@ export function AssayCertificateViewer({
       const result = await rejectCertificateData(certificate.id, user.id, notes);
 
       if (result.success) {
-        alert.showAlert('Certificate data rejected', 'success');
+        alert.success('Certificate data rejected');
         onReject?.();
       } else {
-        alert.showAlert(result.error || 'Failed to reject', 'error');
+        alert.error(result.error || 'Failed to reject');
       }
     } catch (error: any) {
-      alert.showAlert('Error rejecting: ' + error.message, 'error');
+      alert.error('Error rejecting: ' + error.message);
     } finally {
       setSubmitting(false);
     }

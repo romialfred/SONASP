@@ -392,7 +392,7 @@ export function AssayCertificatesPage() {
                 : null;
 
               return (
-                <Card key={batch.id} className="overflow-hidden">
+                <Card key={batch.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                   <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-5 border-b border-gray-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -403,7 +403,7 @@ export function AssayCertificatesPage() {
                           <div>
                             <div className="flex items-center gap-3">
                               <h3
-                                className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                                className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
                                 onClick={() => navigate(`/batches/${batch.id}`)}
                               >
                                 {batch.batch_number}
@@ -413,6 +413,9 @@ export function AssayCertificatesPage() {
                                 label={batch.status}
                                 color={batch.status.includes('approved') ? 'green' : batch.status.includes('rejected') ? 'red' : 'blue'}
                               />
+                              <span className="text-xs text-gray-500 font-medium">
+                                ({totalCerts} lab{totalCerts !== 1 ? 's' : ''})
+                              </span>
                             </div>
                             <p className="text-sm text-gray-500 mt-1">
                               {totalCerts} certificate{totalCerts !== 1 ? 's' : ''} • {approvedCerts} approved • {pendingCerts} pending
@@ -421,41 +424,41 @@ export function AssayCertificatesPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="flex items-start gap-2">
-                            <Building2 className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="group flex items-start gap-2 p-3 rounded-lg transition-all duration-300 hover:bg-blue-50 hover:scale-105 cursor-pointer">
+                            <Building2 className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0 group-hover:text-blue-600 transition-colors" />
                             <div className="min-w-0">
-                              <p className="text-xs text-gray-500">Mining Company</p>
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">Mining Company</p>
+                              <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
                                 {batch.mining_company_name}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-start gap-2">
-                            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="group flex items-start gap-2 p-3 rounded-lg transition-all duration-300 hover:bg-emerald-50 hover:scale-105 cursor-pointer">
+                            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0 group-hover:text-emerald-600 transition-colors" />
                             <div className="min-w-0">
-                              <p className="text-xs text-gray-500">Country</p>
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-xs text-gray-500 group-hover:text-emerald-600 transition-colors">Country</p>
+                              <p className="text-sm font-medium text-gray-900 truncate group-hover:text-emerald-700">
                                 {batch.mining_company_country}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-start gap-2">
-                            <Scale className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="group flex items-start gap-2 p-3 rounded-lg transition-all duration-300 hover:bg-amber-50 hover:scale-105 cursor-pointer">
+                            <Scale className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0 group-hover:text-amber-600 transition-colors" />
                             <div className="min-w-0">
-                              <p className="text-xs text-gray-500">Weight</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-xs text-gray-500 group-hover:text-amber-600 transition-colors">Weight</p>
+                              <p className="text-sm font-medium text-gray-900 group-hover:text-amber-700">
                                 {batch.weight_grams.toLocaleString()} g
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-start gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="group flex items-start gap-2 p-3 rounded-lg transition-all duration-300 hover:bg-purple-50 hover:scale-105 cursor-pointer">
+                            <Calendar className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0 group-hover:text-purple-600 transition-colors" />
                             <div className="min-w-0">
-                              <p className="text-xs text-gray-500">Created</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-xs text-gray-500 group-hover:text-purple-600 transition-colors">Created</p>
+                              <p className="text-sm font-medium text-gray-900 group-hover:text-purple-700">
                                 {new Date(batch.created_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -516,24 +519,24 @@ export function AssayCertificatesPage() {
                           return (
                             <div
                               key={certificate.id}
-                              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all bg-white"
+                              className="group border border-gray-200 rounded-lg p-4 transition-all duration-300 bg-transparent hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02] cursor-pointer"
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-3">
-                                    <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                                    <p className="font-medium text-gray-900 text-sm">
+                                    <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                                    <p className="font-medium text-gray-900 text-sm group-hover:text-blue-700 transition-colors">
                                       {certificate.file_name}
                                     </p>
                                     {certificate.certificate_number && (
-                                      <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0">
+                                      <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                         #{certificate.certificate_number}
                                       </span>
                                     )}
                                   </div>
 
                                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                    <div>
+                                    <div className="p-2 rounded-lg transition-all duration-300 hover:bg-white hover:scale-105">
                                       <p className="text-xs text-gray-500 mb-1">Created Date</p>
                                       <p className="text-sm font-medium text-gray-900">
                                         {new Date(certificate.created_at).toLocaleDateString()}
@@ -541,7 +544,7 @@ export function AssayCertificatesPage() {
                                     </div>
 
                                     {parsedData?.gold_content_gpt && (
-                                      <div>
+                                      <div className="p-2 rounded-lg transition-all duration-300 hover:bg-yellow-100 hover:scale-105">
                                         <p className="text-xs text-gray-500 mb-1">Au g/t</p>
                                         <p className="text-sm font-semibold text-yellow-700">
                                           {parsedData.gold_content_gpt}
@@ -550,7 +553,7 @@ export function AssayCertificatesPage() {
                                     )}
 
                                     {parsedData?.gold_purity_percentage && (
-                                      <div>
+                                      <div className="p-2 rounded-lg transition-all duration-300 hover:bg-amber-100 hover:scale-105">
                                         <p className="text-xs text-gray-500 mb-1">Purity</p>
                                         <p className="text-sm font-semibold text-yellow-700">
                                           {parsedData.gold_purity_percentage}%
@@ -559,7 +562,7 @@ export function AssayCertificatesPage() {
                                     )}
 
                                     {parsedData?.metal_retained_percentage && (
-                                      <div>
+                                      <div className="p-2 rounded-lg transition-all duration-300 hover:bg-blue-100 hover:scale-105">
                                         <p className="text-xs text-gray-500 mb-1">Metal Retained</p>
                                         <p className="text-sm font-semibold text-blue-700">
                                           {parsedData.metal_retained_percentage}%
@@ -568,7 +571,7 @@ export function AssayCertificatesPage() {
                                     )}
 
                                     {parsedData?.sample_weight_grams && (
-                                      <div>
+                                      <div className="p-2 rounded-lg transition-all duration-300 hover:bg-emerald-100 hover:scale-105">
                                         <p className="text-xs text-gray-500 mb-1">Gold Quantity</p>
                                         <p className="text-sm font-medium text-gray-900">
                                           {parsedData.sample_weight_grams} g

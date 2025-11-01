@@ -86,23 +86,23 @@ export default function HelpCenter() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
+      {/* Header - Sticky */}
+      <div className="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 text-white sticky top-0 z-50 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-white/10 p-2">
-                <Book className="h-8 w-8" />
+              <div className="rounded-lg bg-white/20 backdrop-blur-sm p-2 shadow-md">
+                <Book className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Help Center</h1>
-                <p className="text-blue-100 mt-1">Everything you need to know about Gold Shipper</p>
+                <h1 className="text-xl font-bold tracking-tight">Gold Shipper - Help Center</h1>
+                <p className="text-amber-50 text-sm">Professional Documentation & Workflows</p>
               </div>
             </div>
             <Button
               variant="secondary"
               onClick={() => navigate('/dashboard')}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-md"
             >
               <Home className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -110,56 +110,23 @@ export default function HelpCenter() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative max-w-2xl">
+          <div className="relative max-w-2xl mt-4">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
               placeholder="Search documentation, guides, workflows..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-12 py-4 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-blue-200"
+              className="pl-12 pr-12 py-3 bg-white/90 backdrop-blur-sm border-white/40 text-gray-900 placeholder-gray-500 shadow-md"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
               </button>
             )}
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Total Articles</p>
-                  <p className="text-2xl font-bold mt-1">
-                    {helpCategories.reduce((sum, cat) => sum + cat.articles.length, 0)}
-                  </p>
-                </div>
-                <FileText className="h-8 w-8 text-blue-200" />
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Categories</p>
-                  <p className="text-2xl font-bold mt-1">{helpCategories.length}</p>
-                </div>
-                <Book className="h-8 w-8 text-blue-200" />
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Workflows</p>
-                  <p className="text-2xl font-bold mt-1">8</p>
-                </div>
-                <GitBranch className="h-8 w-8 text-blue-200" />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -316,8 +283,26 @@ export default function HelpCenter() {
                     </p>
                   </div>
 
-                  <div className="prose prose-blue max-w-none">
-                    <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
+                  <div className="prose prose-lg max-w-none help-content">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-3xl font-bold text-amber-700 mb-4 mt-8" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-2xl font-bold text-amber-600 mb-3 mt-6 pb-2 border-b-2 border-amber-200" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-xl font-semibold text-gray-800 mb-2 mt-4" {...props} />,
+                        h4: ({node, ...props}) => <h4 className="text-lg font-semibold text-gray-700 mb-2 mt-3" {...props} />,
+                        p: ({node, ...props}) => <p className="text-gray-700 leading-relaxed mb-4" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-2 ml-4 mb-4 text-gray-700" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-2 ml-4 mb-4 text-gray-700" {...props} />,
+                        li: ({node, ...props}) => <li className="ml-2" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+                        em: ({node, ...props}) => <em className="italic text-gray-600" {...props} />,
+                        code: ({node, inline, ...props}: any) =>
+                          inline ?
+                            <code className="bg-amber-50 text-amber-800 px-2 py-1 rounded text-sm font-mono" {...props} /> :
+                            <code className="block bg-gray-100 text-gray-800 p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4" {...props} />,
+                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-amber-500 pl-4 italic text-gray-600 my-4" {...props} />,
+                      }}
+                    >{currentArticle.content}</ReactMarkdown>
                   </div>
 
                   {/* Related Modules */}

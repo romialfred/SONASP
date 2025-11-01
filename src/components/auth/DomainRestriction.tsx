@@ -24,6 +24,11 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
                           hostname.includes('local-credentialless') ||
                           hostname.includes('.local-');
 
+    // Allow WebContainer for development/testing in Bolt
+    if (isWebContainer) {
+      return; // Allow access in Bolt environment
+    }
+
     const accessDeniedHTML = `
       <!DOCTYPE html>
       <html lang="en">
@@ -227,13 +232,6 @@ export function DomainRestriction({ children }: { children: React.ReactNode }) {
       </body>
       </html>
     `;
-
-    if (isWebContainer) {
-      document.open();
-      document.write(accessDeniedHTML);
-      document.close();
-      throw new Error('Access denied: Development preview URL not allowed');
-    }
 
     if (!isAllowedDomain && !isLocalDevelopment) {
       document.open();

@@ -358,11 +358,16 @@ export function AssayCertificatesPage() {
               </div>
             </Card>
           ) : (
-            filteredBatchGroups.map((batch) => {
+            filteredBatchGroups.map((batch, batchIndex) => {
               const isExpanded = expandedBatches.has(batch.id);
               const totalCerts = batch.certificates.length;
               const approvedCerts = batch.certificates.filter(c => c.approval_status === 'approved').length;
               const pendingCerts = batch.certificates.filter(c => c.approval_status === 'pending').length;
+
+              // Alternating background colors for batches
+              const batchBgColor = batchIndex % 2 === 0 ? 'bg-blue-50/40' : 'bg-purple-50/40';
+              const batchHoverBg = batchIndex % 2 === 0 ? 'hover:bg-blue-100/60' : 'hover:bg-purple-100/60';
+              const batchBorderColor = batchIndex % 2 === 0 ? 'border-blue-200' : 'border-purple-200';
 
               // Get unique laboratories - extract short name only
               const extractLabName = (fullName: string | null | undefined): string | null => {
@@ -394,7 +399,7 @@ export function AssayCertificatesPage() {
               return (
                 <Card
                   key={batch.id}
-                  className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border-2 ${batchBorderColor} ${batchBgColor} ${batchHoverBg} hover:border-blue-400`}
                   onClick={() => navigate(`/batches/${batch.id}`)}
                 >
                   <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-5 border-b border-gray-200">
@@ -520,13 +525,19 @@ export function AssayCertificatesPage() {
                   {isExpanded && (
                     <div className="p-5 bg-gray-50">
                       <div className="space-y-3">
-                        {batch.certificates.map((certificate) => {
+                        {batch.certificates.map((certificate, certIndex) => {
                           const parsedData = certificate.parsed_data;
+
+                          // Alternating background colors for certificates
+                          const certBgColor = certIndex % 2 === 0 ? 'bg-emerald-50/40' : 'bg-amber-50/40';
+                          const certHoverBg = certIndex % 2 === 0
+                            ? 'hover:bg-gradient-to-r hover:from-emerald-100 hover:to-teal-100'
+                            : 'hover:bg-gradient-to-r hover:from-amber-100 hover:to-orange-100';
 
                           return (
                             <div
                               key={certificate.id}
-                              className="group border border-gray-200 rounded-lg p-4 transition-all duration-300 bg-transparent hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02] cursor-pointer"
+                              className={`group border-2 rounded-lg p-4 transition-all duration-300 ${certBgColor} ${certHoverBg} hover:border-blue-400 hover:shadow-md hover:scale-[1.02] cursor-pointer`}
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">

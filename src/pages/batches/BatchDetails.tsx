@@ -196,24 +196,6 @@ export function BatchDetails() {
     return colors[index % colors.length];
   };
 
-
-  const documents = [
-    {
-      id: '1',
-      name: 'Initial Quality Report.pdf',
-      type: 'Quality Report',
-      size: '245 KB',
-      uploaded_at: '2024-10-20 09:15 AM',
-    },
-    {
-      id: '2',
-      name: 'Shipping Manifest.pdf',
-      type: 'Shipping Document',
-      size: '180 KB',
-      uploaded_at: '2024-10-20 10:00 AM',
-    },
-  ];
-
   if (loading) {
     return (
       <MainLayout>
@@ -475,37 +457,6 @@ export function BatchDetails() {
           </div>
 
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Documents</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
-                    >
-                      <FileText className="h-5 w-5 text-primary-500 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {doc.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{doc.type}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {doc.size} • {doc.uploaded_at}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                  <Button variant="outline" className="w-full">
-                    Upload Document
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>

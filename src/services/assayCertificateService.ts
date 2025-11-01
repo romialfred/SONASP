@@ -356,25 +356,13 @@ export async function parseCertificate(
     const assayData = extractAssayData(text);
     const extractedData = extractAssayDataFromText(text);
 
-    // Update certificate with extracted data (populate direct fields)
+    // Update certificate with extracted data (only fields that exist in assay_certificates)
     await supabase
       .from('assay_certificates')
       .update({
         certificate_number: assayData.certificateNumber,
         issuing_laboratory: assayData.laboratoryName,
         certificate_date: assayData.certificateDate,
-        sample_id: assayData.sampleId,
-        sample_weight_grams: assayData.sampleWeight,
-        gold_content_ppm: assayData.goldContent.ppm,
-        gold_content_gpt: assayData.goldContent.gpt,
-        gold_content_percent: assayData.goldContent.percent,
-        silver_content_ppm: assayData.silverContent.ppm,
-        silver_content_gpt: assayData.silverContent.gpt,
-        silver_content_percent: assayData.silverContent.percent,
-        platinum_content_ppm: assayData.platinumPpm,
-        palladium_content_ppm: assayData.palladiumPpm,
-        fineness: assayData.fineness,
-        purity_percent: assayData.purity,
       })
       .eq('id', certificateId);
 

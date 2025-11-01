@@ -1,74 +1,138 @@
-# ⚡ QUICK START - Assay Certificates
+# QUICK START - RÉSOUDRE L'ERREUR RLS
 
-## 🎯 ÉTAPE 1: Appliquer la Migration
+## SITUATION ACTUELLE
 
-### Option A: Fichier SQL déjà préparé (FACILE!)
+✅ Vous avez créé 4 policies (je les vois dans votre screenshot)
+❌ Mais la requête SQL ne les trouve pas avec `LIKE '%ASSAY-CERTIFICATES%'`
 
-J'ai créé le fichier **`APPLY_ASSAY_MIGRATION_NOW.sql`** à la racine de votre projet.
+**POURQUOI?** Les noms de vos policies sont:
+- "Authenticated users can upload certificates"
+- "Users can delete their certificates"
+- etc.
 
-**Instructions:**
-
-1. Ouvrez le fichier `APPLY_ASSAY_MIGRATION_NOW.sql`
-2. Copiez TOUT (Ctrl+A, Ctrl+C)
-3. Allez dans **Supabase → SQL Editor**
-4. Collez (Ctrl+V)
-5. Cliquez **RUN**
-6. Attendez 5-10 secondes
-7. ✅ Terminé!
-
-### Option B: Via le fichier original
-
-Si vous préférez, le fichier original est dans:
-```
-supabase/migrations/20251104000000_create_assay_certificates_system.sql
-```
-
-Faites la même chose: copiez → collez dans SQL Editor → RUN
+Ces noms ne contiennent PAS "ASSAY-CERTIFICATES" donc la recherche échoue!
 
 ---
 
-## 🎯 ÉTAPE 2: Vérifier que ça a fonctionné
+## SOLUTION RAPIDE (2 MINUTES)
 
-Exécutez ce SQL dans **SQL Editor**:
+### Option A: Tester si vos policies fonctionnent déjà
 
+1. **Hard refresh browser**: Ctrl+Shift+R
+2. **Allez sur Batch Details**
+3. **Essayez d'uploader un certificat**
+
+**SI ÇA MARCHE** → Parfait, vos policies sont bonnes!
+
+**SI ÇA NE MARCHE PAS** → Passez à Option B
+
+---
+
+### Option B: Remplacer avec des policies simples
+
+1. **Copiez tout le contenu de:** `REPLACE_POLICIES_NOW.sql`
+2. **Supabase → SQL Editor**
+3. **Collez et RUN**
+4. **Vérifiez le résultat:** Devrait afficher "✅ SUCCESS: 4 policies created"
+5. **Hard refresh:** Ctrl+Shift+R
+6. **Testez l'upload**
+
+---
+
+## DIAGNOSTIC
+
+Avant de remplacer, vous pouvez diagnostiquer:
+
+### 1. Voir toutes vos policies
 ```sql
-SELECT table_name, COUNT(*) as columns
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name IN ('assay_certificates', 'assay_certificate_data')
-GROUP BY table_name;
+SELECT policyname, cmd 
+FROM pg_policies
+WHERE schemaname = 'storage' AND tablename = 'objects'
+ORDER BY cmd;
 ```
 
-**Résultat attendu:**
-- assay_certificates → 18
-- assay_certificate_data → 35
+### 2. Vérifier si elles checkent bucket_id
+Executez: `SHOW_POLICY_DETAILS.sql`
+
+Si vous voyez "❌ Does NOT check bucket_id", alors vos policies s'appliquent à TOUS les buckets, pas juste ASSAY-CERTIFICATES.
 
 ---
 
-## 🎯 ÉTAPE 3: Tester dans l'App
+## COMPRENDRE LE PROBLÈME
 
-1. Refresh votre app (F5)
-2. Login
-3. Allez dans **Batches**
-4. Cliquez sur n'importe quel batch
-5. Scrollez vers le bas
-6. Vous devriez voir **"Assay Certificates"**
-7. Essayez d'**uploader un PDF**!
+**Vos policies actuelles (dans l'interface):**
+- Nom: "Authenticated users can upload certificates"
+- Condition: ???
 
----
+**Policies nécessaires:**
+- Nom: Peu importe!
+- Condition: `bucket_id = 'ASSAY-CERTIFICATES'` ← CRUCIAL!
 
-## ✅ C'EST TOUT!
-
-Si vous voyez la section "Assay Certificates" et que vous pouvez uploader un PDF, **c'est bon!**
+Sans cette condition, la policy ne sait pas sur quel bucket s'appliquer!
 
 ---
 
-## ⚠️ Si ça ne marche pas
+## FICHIERS À UTILISER
 
-Envoyez-moi:
-1. Le résultat du SQL de vérification (Étape 2)
-2. Une capture d'écran de la page Batch Details
-3. Les erreurs dans la console (F12 → Console)
+**Diagnostic:**
+- `CHECK_YOUR_ACTUAL_POLICIES.sql` - Voir toutes vos policies
+- `SHOW_POLICY_DETAILS.sql` - Voir les détails (USING/WITH CHECK)
 
-Je vous aiderai à corriger!
+**Fix:**
+- `REPLACE_POLICIES_NOW.sql` - Remplace tout avec des policies simples
 
+**Vérification:**
+- `CHECK_STORAGE_STATUS.sql` - Status complet du bucket
+
+---
+
+## APRÈS LE FIX
+
+Une fois les policies appliquées:
+
+1. ✅ Hard refresh (Ctrl+Shift+R)
+2. ✅ Batch Details → Right panel → **Assay Certificates au TOP**
+3. ✅ Cliquez sur header pour collapse/expand
+4. ✅ Upload certificat → **PAS D'ERREUR RLS!**
+5. ✅ Parsing automatique
+6. ✅ Certificat affiché dans la liste
+
+---
+
+## EN CAS DE PROBLÈME
+
+**Erreur persiste?**
+
+Vérifiez dans la console browser (F12):
+```javascript
+// Vérifier l'auth
+const { data } = await supabase.auth.getUser()
+console.log('User:', data.user)
+
+// Vérifier le bucket
+const { data: buckets } = await supabase.storage.listBuckets()
+console.log('Buckets:', buckets)
+```
+
+**Bucket name mismatch?**
+Le code utilise `'ASSAY-CERTIFICATES'` (uppercase).
+Vérifiez que le bucket existe avec ce nom exact.
+
+---
+
+## RÉSUMÉ
+
+**MAINTENANT:**
+1. Testez upload (après hard refresh)
+2. Si erreur → Executez REPLACE_POLICIES_NOW.sql
+3. Hard refresh
+4. Testez à nouveau
+5. ✅ Devrait fonctionner!
+
+**Les policies DOIVENT avoir:**
+- `FOR INSERT` avec `WITH CHECK (bucket_id = 'ASSAY-CERTIFICATES')`
+- `FOR SELECT` avec `USING (bucket_id = 'ASSAY-CERTIFICATES')`
+- `FOR UPDATE` avec les deux clauses
+- `FOR DELETE` avec `USING (bucket_id = 'ASSAY-CERTIFICATES')`
+
+Sans ces conditions, les policies ne s'appliquent pas correctement au bucket!

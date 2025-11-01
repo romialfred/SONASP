@@ -364,12 +364,24 @@ export function AssayCertificatesPage() {
               const approvedCerts = batch.certificates.filter(c => c.approval_status === 'approved').length;
               const pendingCerts = batch.certificates.filter(c => c.approval_status === 'pending').length;
 
-              // Get unique laboratories
+              // Get unique laboratories - extract short name only
+              const extractLabName = (fullName: string | null | undefined): string | null => {
+                if (!fullName) return null;
+                // Extract just the lab name before "License No:" or "Certificate"
+                const match = fullName.match(/^([^L]+?)(?:\s+License|Certificate)/);
+                return match ? match[1].trim() : fullName.split(/\s+/).slice(0, 5).join(' ');
+              };
+
               const labs = Array.from(new Set(
                 batch.certificates
-                  .map(c => c.parsed_data?.laboratory_name || c.issuing_laboratory)
+                  .map(c => extractLabName(c.parsed_data?.laboratory_name || c.issuing_laboratory))
                   .filter(Boolean)
               ));
+
+              // Get certificate numbers
+              const certNumbers = batch.certificates
+                .map(c => c.certificate_number)
+                .filter(Boolean);
 
               // Calculate average gold content if available
               const goldContents = batch.certificates
@@ -451,26 +463,24 @@ export function AssayCertificatesPage() {
                         </div>
 
                         {labs.length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
+                          <div className="mt-4 pt-3 border-t border-gray-200">
+                            <div className="flex items-center gap-3 text-sm">
                               <FlaskConical className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Laboratory</p>
-                            </div>
-                            <div className="grid grid-cols-3 gap-4 pl-6">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Country</p>
-                                <p className="text-sm font-medium text-gray-900">{batch.mining_company_country}</p>
-                              </div>
-                              <div className="col-span-2">
-                                <p className="text-xs text-gray-500 mb-1">Laboratory Name</p>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {labs.map((lab, idx) => (
-                                    <span key={idx} className="text-sm font-medium text-emerald-700">
-                                      {lab}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
+                              <span className="text-gray-500">Laboratory:</span>
+                              <span className="font-medium text-emerald-700">
+                                {labs[0]}
+                              </span>
+                              <span className="text-gray-300">•</span>
+                              <span className="text-gray-500">{batch.mining_company_country}</span>
+                              {certNumbers.length > 0 && (
+                                <>
+                                  <span className="text-gray-300">•</span>
+                                  <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">
+                                    {certNumbers[0]}
+                                    {certNumbers.length > 1 && ` +${certNumbers.length - 1}`}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}

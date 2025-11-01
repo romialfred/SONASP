@@ -781,97 +781,9 @@ export function BatchDetailsWorkflow() {
 
           </div>
 
-          {/* Right Column (1/3) - Timeline Accordion + Field Guide */}
+          {/* Right Column (1/3) - Field Guide */}
           <div className="space-y-6">
-            {/* Horizontal Accordion Timeline */}
-            <div className="sticky top-6 space-y-6">
-              <Card className="border-gray-300 shadow-lg overflow-hidden">
-                {/* Timeline Header - Clickable */}
-                <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors bg-gradient-to-r from-blue-50 to-indigo-50"
-                  onClick={() => setTimelineExpanded(!timelineExpanded)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Timeline</p>
-                      <p className="text-xs text-gray-600">{timeline.length} events</p>
-                    </div>
-                  </div>
-                  <button
-                    className="p-2 hover:bg-white rounded-lg transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTimelineExpanded(!timelineExpanded);
-                    }}
-                  >
-                    {timelineExpanded ? (
-                      <ChevronLeft className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Timeline Content - Expands Horizontally */}
-                <div
-                  className={`transition-all duration-300 ease-in-out ${
-                    timelineExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  } overflow-hidden`}
-                >
-                  <div className="border-t border-gray-200 bg-white">
-                    {timeline.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-8">No timeline events yet</p>
-                    ) : (
-                      <div className="p-4">
-                        {/* Horizontal scrollable timeline */}
-                        <div className="relative pb-4">
-                          {/* Horizontal line */}
-                          <div className="absolute top-6 left-4 right-4 h-0.5 bg-gray-200"></div>
-
-                          {/* Events horizontally */}
-                          <div className="flex gap-6 overflow-x-auto">
-                            {timeline.map((event, index) => {
-                              const Icon = getTimelineIcon(event.status);
-                              const colorClass = getTimelineColor(event.status);
-
-                              return (
-                                <div key={event.id} className="flex flex-col items-center min-w-[120px] flex-shrink-0">
-                                  {/* Icon */}
-                                  <div className={`w-12 h-12 rounded-full ${colorClass} flex items-center justify-center z-10 mb-3 shadow-lg`}>
-                                    <Icon className="h-6 w-6 text-white" />
-                                  </div>
-
-                                  {/* Content */}
-                                  <div className="text-center">
-                                    <p className="text-xs font-bold text-gray-900 mb-1 capitalize line-clamp-2">
-                                      {event.status === 'received_airport'
-                                        ? 'Airport'
-                                        : event.status === 'received_refinery'
-                                        ? 'Refinery'
-                                        : event.status.replace('_', ' ')}
-                                    </p>
-                                    <p className="text-xs text-gray-600 mb-1">
-                                      {new Date(event.changed_at).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })}
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">{event.changed_by_name}</p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-
+            <div className="sticky top-6">
               {/* Field Guide */}
               <Card className="border-blue-200 bg-blue-50">
               <CardHeader>
@@ -915,6 +827,96 @@ export function BatchDetailsWorkflow() {
             </div>
           </div>
         </div>
+
+      {/* Fixed Timeline Panel - Right Side (similar to Live Gold Price) */}
+      <div
+        className={`fixed top-20 right-0 transition-all duration-300 z-40 ${
+          timelineExpanded ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{ maxHeight: 'calc(100vh - 5rem)' }}
+      >
+        {/* Collapse/Expand Button */}
+        <button
+          onClick={() => setTimelineExpanded(!timelineExpanded)}
+          className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 bg-white shadow-lg rounded-l-lg p-2 hover:bg-gray-50 transition-colors border-l border-t border-b border-gray-200"
+          title={timelineExpanded ? 'Hide timeline' : 'Show timeline'}
+        >
+          {timelineExpanded ? (
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          )}
+        </button>
+
+        {/* Timeline Panel */}
+        <div className="bg-white shadow-2xl rounded-l-2xl border-l border-gray-200 w-96 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 5rem)' }}>
+          <div className="p-4 space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Batch Timeline</h2>
+                  <p className="text-xs text-gray-500">{timeline.length} events</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline Events */}
+            {timeline.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No timeline events yet</p>
+            ) : (
+              <div className="space-y-4">
+                {timeline.map((event, index) => {
+                  const Icon = getTimelineIcon(event.status);
+                  const colorClass = getTimelineColor(event.status);
+
+                  return (
+                    <div key={event.id} className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 shadow-md`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="text-sm font-bold text-gray-900 capitalize">
+                            {event.status === 'received_airport'
+                              ? 'Received at Airport'
+                              : event.status === 'received_refinery'
+                              ? 'Received at Refinery'
+                              : event.status.replace('_', ' ')}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">
+                          {new Date(event.changed_at).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                          {' '}
+                          {new Date(event.changed_at).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                        {event.comments && (
+                          <p className="text-xs text-gray-600 mb-1">{event.comments}</p>
+                        )}
+                        <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Success Modal */}
       <Modal

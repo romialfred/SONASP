@@ -392,7 +392,11 @@ export function AssayCertificatesPage() {
                 : null;
 
               return (
-                <Card key={batch.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+                <Card
+                  key={batch.id}
+                  className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  onClick={() => navigate(`/batches/${batch.id}`)}
+                >
                   <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-5 border-b border-gray-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -423,7 +427,7 @@ export function AssayCertificatesPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4" onClick={(e) => e.stopPropagation()}>
                           <div className="group flex items-start gap-2 p-3 rounded-lg transition-all duration-300 hover:bg-blue-50 hover:scale-105 cursor-pointer">
                             <Building2 className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0 group-hover:text-blue-600 transition-colors" />
                             <div className="min-w-0">
@@ -492,7 +496,10 @@ export function AssayCertificatesPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => toggleBatchExpansion(batch.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBatchExpansion(batch.id);
+                        }}
                         className="ml-4"
                       >
                         {isExpanded ? (

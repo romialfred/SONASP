@@ -1,49 +1,90 @@
 ================================================================================
-COPY AND PASTE THIS ENTIRE FILE INTO SUPABASE SQL EDITOR
+                    ✅ RUN THIS SQL - CORRECTED VERSION
 ================================================================================
 
-This is the migration SQL you need to run in Supabase to enable the
-Assay Certificates upload feature.
+The previous version had an ORDER PROBLEM:
+- It tried to DROP TRIGGERS before TABLES existed ❌
 
-FILE TO COPY: supabase/migrations/20251104000000_create_assay_certificates_system.sql
+This new version creates tables FIRST, then triggers ✅
 
+FILE TO USE: APPLY_ASSAY_MIGRATION_NOW.sql
+
+================================================================================
 INSTRUCTIONS:
+================================================================================
 
-1. Open the file above
-2. Select ALL text (Ctrl+A)
-3. Copy (Ctrl+C)
-4. Go to Supabase Dashboard → SQL Editor
-5. Click "+ New query"
-6. Paste (Ctrl+V)
-7. Click "Run" or press Ctrl+Enter
-8. Wait for "Success" message
-9. Refresh your Gold Shipper app
-10. Upload feature will work!
+1. Open file: APPLY_ASSAY_MIGRATION_NOW.sql
 
-WHAT THIS CREATES:
+2. Copy ALL contents (Ctrl+A, Ctrl+C)
 
-✓ 3 database tables (assay_certificates, assay_base_metals, assay_deleterious_elements)
-✓ Row Level Security policies
-✓ Storage bucket for PDFs
-✓ All necessary indexes
+3. Go to Supabase Dashboard → SQL Editor
 
-FILE SIZE: 361 lines of SQL
+4. Create new query
 
-TIME TO RUN: 5-10 seconds
+5. Paste (Ctrl+V)
 
-AFTER RUNNING:
+6. Click RUN
 
-- Refresh browser (F5)
-- Go to any batch details page
-- Scroll down on LEFT column
-- You'll see "Assay Certificates" section with upload!
+7. Check verification results at the end
+
+================================================================================
+EXPECTED RESULTS:
+================================================================================
+
+After running, you should see 4 verification queries:
+
+1. Tables created:
+   status         | table_count
+   -------------- | -----------
+   Tables created | 3
+
+2. RLS status:
+   tablename                    | rls_status
+   ---------------------------- | ----------
+   assay_certificates           | ENABLED
+   assay_base_metals            | ENABLED
+   assay_deleterious_elements   | ENABLED
+
+3. Policies created:
+   status           | policy_count
+   ---------------- | ------------
+   Policies created | 10
+
+4. Triggers created:
+   status           | trigger_count
+   ---------------- | -------------
+   Triggers created | 3
+
+================================================================================
+IF ALL 4 CHECKS PASS = SUCCESS! ✅
+================================================================================
+
+Next steps:
+1. Refresh your browser (F5)
+2. Go to any batch details page
+3. Scroll down LEFT column
+4. See "Assay Certificates" section
+5. Upload button works! 🎉
+
+================================================================================
+WHY THE NEW VERSION WORKS:
+================================================================================
+
+OLD VERSION ORDER:
+1. DROP triggers ❌ (tables don't exist yet!)
+2. CREATE tables
+3. CREATE triggers
+
+NEW VERSION ORDER:
+1. CREATE tables ✅
+2. CREATE indexes ✅
+3. ENABLE RLS ✅
+4. CREATE policies ✅
+5. DROP triggers (now safe!)
+6. CREATE triggers ✅
 
 ================================================================================
 
-The SQL file is too large to include here (361 lines).
-
-Please open: supabase/migrations/20251104000000_create_assay_certificates_system.sql
-
-And copy the entire contents to run in Supabase SQL Editor.
+Use file: APPLY_ASSAY_MIGRATION_NOW.sql
 
 ================================================================================

@@ -12,6 +12,8 @@ import {
   FileText,
   Truck,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -46,6 +48,8 @@ export function BatchDetails() {
   const [isManager, setIsManager] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
+  const [certificatesExpanded, setCertificatesExpanded] = useState(true);
+  const [timelineExpanded, setTimelineExpanded] = useState(true);
 
   // Use Realtime hook for automatic batch updates
   const { batch, loading, refetch } = useSingleBatchRealtime(id);
@@ -423,40 +427,85 @@ export function BatchDetails() {
                 )}
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Timeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Timeline events={timelineEvents} />
-              </CardContent>
-            </Card>
-
-            {/* Assay Certificates Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Assay Certificates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <AssayCertificateUpload
-                    batchId={id!}
-                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                  />
-
-                  <AssayCertificatesList
-                    batchId={id!}
-                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
-                    refreshTrigger={certificateRefresh}
-                  />
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
+          {/* RIGHT PANEL */}
           <div className="space-y-6">
+            {/* Assay Certificates - Collapsible (TOP) */}
+            <Card>
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setCertificatesExpanded(!certificatesExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-amber-600">
+                    Assay Certificates
+                  </CardTitle>
+                  <button
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCertificatesExpanded(!certificatesExpanded);
+                    }}
+                  >
+                    {certificatesExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+                </div>
+              </CardHeader>
+              {certificatesExpanded && (
+                <CardContent>
+                  <div className="space-y-6">
+                    <AssayCertificateUpload
+                      batchId={id!}
+                      onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                      onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                    />
+
+                    <AssayCertificatesList
+                      batchId={id!}
+                      onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                      refreshTrigger={certificateRefresh}
+                    />
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Timeline - Collapsible */}
+            <Card>
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setTimelineExpanded(!timelineExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle>Timeline</CardTitle>
+                  <button
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTimelineExpanded(!timelineExpanded);
+                    }}
+                  >
+                    {timelineExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+                </div>
+              </CardHeader>
+              {timelineExpanded && (
+                <CardContent>
+                  <Timeline events={timelineEvents} />
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>

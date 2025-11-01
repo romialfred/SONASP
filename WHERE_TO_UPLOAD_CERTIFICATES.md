@@ -1,268 +1,162 @@
-# Where to Upload Assay Certificates
+# 📍 WHERE IS THE ASSAY CERTIFICATES SECTION?
 
-## ⚠️ Important: Two Different Upload Sections
+## ✅ CODE IS CORRECT
 
-Your batch details page has **TWO different sections**:
+The code in `BatchDetails.tsx` is **already fixed**:
+- ❌ Hardcoded "Documents" section REMOVED
+- ✅ "Assay Certificates" section PRESENT (lines 436-456)
+- ✅ Located in LEFT column after Timeline
 
-### ❌ Documents Section (RIGHT SIDE) - NOT for Assay Certificates
-This is what you clicked in your screenshot. This "Upload Document" button is a placeholder for general documents and **does not work yet**.
+## 🔍 YOUR BROWSER IS SHOWING CACHED CODE
 
-Location:
+The "Documents" section you see is **old cached JavaScript**.
+
+### Layout Structure:
 ```
-Right Column
-└── Documents Card
-    └── Upload Document button ← This doesn't work!
-```
-
-### ✅ Assay Certificates Section (LEFT SIDE) - USE THIS!
-This is the correct section for uploading assay certificates with auto-parsing.
-
-Location:
-```
-Left Column (scroll down)
-├── Batch Information Card
-├── Timeline Card
-└── Assay Certificates Card ← USE THIS ONE!
-    ├── Upload Drop Zone (drag & drop PDF)
-    └── "Upload & Parse Certificate" button
-```
-
----
-
-## 📍 How to Find the Assay Certificates Upload
-
-### Step 1: Open Batch Details
-- Go to: Sidebar → Batch Management → Batches
-- Click on any batch (e.g., GN-2025-10-003)
-
-### Step 2: Scroll Down on the LEFT Column
-The page has a 2-column layout:
-```
-┌─────────────────────────────────┬───────────────────┐
-│ LEFT COLUMN (wider)             │ RIGHT COLUMN      │
-│                                 │                   │
-│ ✓ Batch Status Flow             │ ✓ Documents       │
-│ ✓ Batch Information             │ ✓ Quick Actions   │
-│ ✓ Timeline                      │                   │
-│                                 │                   │
-│ ⬇️ SCROLL DOWN HERE             │                   │
-│                                 │                   │
-│ ✓ Assay Certificates ← HERE!    │                   │
-│   [Upload Drop Zone]            │                   │
-│                                 │                   │
-└─────────────────────────────────┴───────────────────┘
+Batch Status Flow (top)
+  ↓
+Grid Layout (2 columns on desktop)
+  ↓
+LEFT COLUMN (2/3 width):
+  - Batch Information
+  - Timeline
+  - Assay Certificates ← THIS IS THERE!
+  
+RIGHT COLUMN (1/3 width):
+  - Quick Actions
 ```
 
-### Step 3: Look for "Assay Certificates" Card
-You'll see a card titled **"Assay Certificates"** with:
-- 📄 Upload drop zone (dashed border box)
-- Text: "Drop PDF here or click to browse"
-- File size info: "PDF files up to 10MB"
+## 🚀 HOW TO FIX (30 SECONDS)
 
-### Step 4: Upload Your Certificate
-- **Drag & drop** PDF into the box, OR
-- **Click** on the box to browse files
-- Select your PDF file
-- Click **"Upload & Parse Certificate"** button
-
----
-
-## 🎯 Visual Guide
-
-### What You're Currently Seeing (Your Screenshot)
+### Step 1: Hard Refresh Browser
 ```
-Right Side Column:
-┌─────────────────────┐
-│ Documents           │
-├─────────────────────┤
-│ Initial Quality... │
-│ Shipping Manifest  │
-│                    │
-│ [Upload Document]  │ ← You clicked here (doesn't work)
-└─────────────────────┘
+Windows/Linux: Ctrl + Shift + R
+Mac: Cmd + Shift + R
+
+Or:
+Clear cache and hard reload (F12 → Right-click refresh → Empty cache and hard reload)
 ```
 
-### What You Should Look For (Left Side, Scroll Down)
-```
-Left Side Column:
-┌──────────────────────────────────┐
-│ Batch Status Flow                │
-└──────────────────────────────────┘
-         ⬇️
-┌──────────────────────────────────┐
-│ Batch Information                │
-└──────────────────────────────────┘
-         ⬇️
-┌──────────────────────────────────┐
-│ Timeline                         │
-└──────────────────────────────────┘
-         ⬇️ SCROLL DOWN
-┌──────────────────────────────────┐
-│ Assay Certificates              │ ← FIND THIS!
-├──────────────────────────────────┤
-│ 📄 Upload Assay Certificate      │
-│                                  │
-│ ┌──────────────────────────────┐ │
-│ │ ⬆️ Upload icon                │ │
-│ │ Drop PDF here or click        │ │
-│ │ PDF files up to 10MB          │ │
-│ └──────────────────────────────┘ │
-│                                  │
-│ ℹ️ Supported Certificate Formats │
-│ • Standard assay certificates   │
-│ • Gold and silver content       │
-└──────────────────────────────────┘
+### Step 2: Rebuild Project
+```bash
+npm run build
 ```
 
----
-
-## 🔍 Troubleshooting
-
-### Problem: "I don't see the Assay Certificates section"
-
-**Solution 1: Scroll Down**
-- The section is below Timeline
-- Scroll down on the LEFT column (the wider one)
-- It's not on the right side with Documents
-
-**Solution 2: Check Browser Width**
-- On narrow screens, sections stack vertically
-- Make browser window wider
-- Refresh the page
-
-**Solution 3: Check Database**
-- The migration might not be applied
-- Go to Supabase SQL Editor
-- Run the migration from `supabase/migrations/20251104000000_create_assay_certificates_system.sql`
-
-### Problem: "The Upload Document button doesn't work"
-
-**Explanation:**
-- That's the wrong button!
-- "Upload Document" in Documents section is a placeholder
-- Use "Assay Certificates" section instead (scroll down left column)
-
-### Problem: "Upload button appears but nothing happens"
-
-**Check:**
-1. Browser console for errors (F12 → Console tab)
-2. File is actually a PDF (not image or other type)
-3. File size is under 10MB
-4. You're logged in
-5. Storage bucket exists in Supabase
-
----
-
-## ✅ Quick Test
-
-### Test with Sample PDF
-
-1. **Navigate**
-   ```
-   Sidebar → Batches → Select any batch
-   ```
-
-2. **Scroll Down Left Column**
-   ```
-   Pass: Batch Status Flow
-   Pass: Batch Information
-   Pass: Timeline
-   Stop: Assay Certificates ← HERE
-   ```
-
-3. **Find Upload Section**
-   ```
-   Look for:
-   - Card titled "Assay Certificates"
-   - Blue file icon 📄
-   - Dashed border drop zone
-   ```
-
-4. **Upload Sample PDF**
-   ```
-   File: public/sample-assay-certificate.pdf
-   Action: Drag & drop OR click to browse
-   Button: "Upload & Parse Certificate"
-   ```
-
-5. **Wait for Result**
-   ```
-   - Uploading... (~2 seconds)
-   - Parsing... (~5 seconds)
-   - Success! (shows confidence score)
-   ```
-
----
-
-## 📊 Page Layout Reference
-
+### Step 3: Restart Dev Server
 ```
-Batch Details Page Layout:
-
-┌────────────────────────────────────────────────────────────┐
-│ Header: Batch Number + Back Button + Edit Button          │
-└────────────────────────────────────────────────────────────┘
-┌────────────────────────────────────────────────────────────┐
-│ Batch Status Flow (full width)                            │
-└────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────┬──────────────────────────┐
-│ LEFT COLUMN (2/3 width)         │ RIGHT COLUMN (1/3)       │
-├─────────────────────────────────┼──────────────────────────┤
-│ 1. Batch Information            │ 1. Documents             │
-│    - Weight, Date, Status       │    - Static mockup       │
-│    - Location, Transport        │    - Upload button       │
-│                                 │      (doesn't work)      │
-│ 2. Timeline                     │                          │
-│    - History events             │ 2. Quick Actions         │
-│    - Status changes             │    - Print, Export       │
-│                                 │    - Share               │
-│ 3. Assay Certificates           │                          │
-│    ← YOU NEED THIS SECTION!     │                          │
-│    - Upload drop zone           │                          │
-│    - Auto-parsing               │                          │
-│    - Certificate list           │                          │
-│    - View/Edit/Approve          │                          │
-└─────────────────────────────────┴──────────────────────────┘
+Stop the dev server (if running)
+Start it again: npm run dev
 ```
 
----
+## 📊 VERIFICATION
 
-## 🎓 Key Takeaways
+After hard refresh, you should see:
 
-1. **Two Upload Sections Exist:**
-   - ❌ Documents → "Upload Document" (right side, doesn't work)
-   - ✅ Assay Certificates → Upload zone (left side, works!)
+### In Batch Details Page:
+1. ✅ Batch Status Flow (top)
+2. ✅ Batch Information (left)
+3. ✅ Timeline (left)
+4. ✅ **Assay Certificates** (left) ← NEW!
+   - Upload certificate area
+   - "No certificates uploaded yet" message
+5. ✅ Quick Actions (right sidebar)
+6. ❌ NO "Documents" section
 
-2. **Scroll Down:**
-   - Assay Certificates is below Timeline
-   - On the LEFT column (wider column)
+## 🔬 DEBUG STEPS
 
-3. **Look for:**
-   - Card title: "Assay Certificates"
-   - Dashed border drop zone
-   - Blue file icon 📄
+### Check 1: View Page Source
+```
+1. Right-click on page
+2. "View Page Source"
+3. Search for "Assay Certificates"
+4. If NOT found → Still serving old build
+```
 
-4. **Use:**
-   - Drag & drop PDF
-   - OR click to browse
-   - Then click "Upload & Parse Certificate"
+### Check 2: Network Tab
+```
+1. F12 → Network tab
+2. Refresh page
+3. Look for "index-*.js" files
+4. Check timestamp → Should be recent
+```
 
----
+### Check 3: Check Build Output
+```bash
+# Check if dist folder is up to date
+ls -la dist/assets/index-*.js
 
-## 📞 Still Can't Find It?
+# Should show recent timestamp
+```
 
-1. **Take a screenshot** of your entire browser window
-2. **Check the URL** - should be `/batches/[batch-id]`
-3. **Verify you're on Batch Details page**, not Batch Listing
-4. **Scroll down slowly** on the left side
-5. **Look for the card** with "Assay Certificates" title
+## ⚠️ STILL NOT SHOWING?
 
-The section IS there - you just need to scroll past Timeline on the LEFT column!
+### Problem: Dev server serving old build
 
----
+**Solution 1: Kill all node processes**
+```bash
+# Windows
+taskkill /F /IM node.exe
 
-**Summary:**
-- ❌ Don't use: Documents → "Upload Document" (right side)
-- ✅ Use this: Assay Certificates → Upload zone (left side, scroll down)
+# Linux/Mac  
+killall node
+```
 
-**Location:** Left Column → Scroll Down → After Timeline → "Assay Certificates" Card
+**Solution 2: Delete build artifacts**
+```bash
+# Delete dist folder
+rm -rf dist/
+
+# Delete node_modules/.vite cache
+rm -rf node_modules/.vite/
+
+# Rebuild
+npm run build
+```
+
+**Solution 3: Check if file was actually saved**
+```bash
+# Verify the file doesn't have "Documents" hardcoded
+grep -n "Documents" src/pages/batches/BatchDetails.tsx
+
+# Should return nothing!
+```
+
+## 🎯 AFTER FIX
+
+Once you see "Assay Certificates" section:
+
+1. ✅ Apply `FIX_ASSAY_SCHEMA.sql` migration
+2. ✅ Upload a PDF certificate
+3. ✅ System should work!
+
+## 📝 WHAT THE SECTION LOOKS LIKE
+
+```
+┌─────────────────────────────────────┐
+│ Assay Certificates                  │
+├─────────────────────────────────────┤
+│ ┌─────────────────────────────────┐ │
+│ │  📄 Drop PDF here or click to   │ │
+│ │     browse                       │ │
+│ │  PDF files up to 10MB            │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ No certificates uploaded yet        │
+│                                     │
+│ Supported Certificate Formats:      │
+│ • Standard assay laboratory certs   │
+│ • Gold and silver content reports   │
+│ • Deleterious elements analysis     │
+│ • Purity and fineness certificates  │
+└─────────────────────────────────────┘
+```
+
+## 🎉 SUMMARY
+
+**Problem:** Browser cache showing old code  
+**Solution:** Hard refresh (Ctrl+Shift+R)  
+**Location:** Left column, after Timeline  
+**Name:** "Assay Certificates" (not "Documents")  
+
+**The code is already fixed! Just refresh your browser!**
+

@@ -6,13 +6,13 @@
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM storage.buckets WHERE id = 'assay-certificates'
+    SELECT 1 FROM storage.buckets WHERE id = 'ASSAY-CERTIFICATES'
   ) THEN
     -- Create the bucket if it doesn't exist
     INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
     VALUES (
-      'assay-certificates',
-      'assay-certificates',
+      'ASSAY-CERTIFICATES',
+      'ASSAY-CERTIFICATES',
       false, -- PRIVATE bucket
       10485760, -- 10MB limit
       ARRAY['application/pdf']
@@ -27,7 +27,7 @@ BEGIN
       public = false,
       file_size_limit = 10485760,
       allowed_mime_types = ARRAY['application/pdf']
-    WHERE id = 'assay-certificates';
+    WHERE id = 'ASSAY-CERTIFICATES';
     RAISE NOTICE 'Updated bucket configuration';
   END IF;
 END $$;
@@ -47,7 +47,7 @@ ON storage.objects
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  bucket_id = 'assay-certificates'
+  bucket_id = 'ASSAY-CERTIFICATES'
   AND auth.uid() IS NOT NULL
 );
 
@@ -57,7 +57,7 @@ ON storage.objects
 FOR SELECT
 TO authenticated
 USING (
-  bucket_id = 'assay-certificates'
+  bucket_id = 'ASSAY-CERTIFICATES'
   AND auth.uid() IS NOT NULL
 );
 
@@ -67,11 +67,11 @@ ON storage.objects
 FOR UPDATE
 TO authenticated
 USING (
-  bucket_id = 'assay-certificates'
+  bucket_id = 'ASSAY-CERTIFICATES'
   AND auth.uid() IS NOT NULL
 )
 WITH CHECK (
-  bucket_id = 'assay-certificates'
+  bucket_id = 'ASSAY-CERTIFICATES'
   AND auth.uid() IS NOT NULL
 );
 
@@ -81,7 +81,7 @@ ON storage.objects
 FOR DELETE
 TO authenticated
 USING (
-  bucket_id = 'assay-certificates'
+  bucket_id = 'ASSAY-CERTIFICATES'
   AND auth.uid() IS NOT NULL
 );
 
@@ -94,7 +94,7 @@ BEGIN
   -- Check bucket
   SELECT COUNT(*) INTO bucket_count
   FROM storage.buckets
-  WHERE id = 'assay-certificates';
+  WHERE id = 'ASSAY-CERTIFICATES';
   
   -- Check policies
   SELECT COUNT(*) INTO policy_count
@@ -127,4 +127,4 @@ SELECT
   file_size_limit,
   allowed_mime_types
 FROM storage.buckets
-WHERE id = 'assay-certificates';
+WHERE id = 'ASSAY-CERTIFICATES';

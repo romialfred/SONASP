@@ -5,7 +5,7 @@
 -- Check 1: Does the bucket exist?
 SELECT 
   CASE 
-    WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'assay-certificates') 
+    WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'ASSAY-CERTIFICATES') 
     THEN '✅ Bucket exists'
     ELSE '❌ Bucket NOT FOUND'
   END as bucket_status;
@@ -18,7 +18,7 @@ SELECT
   allowed_mime_types,
   created_at
 FROM storage.buckets
-WHERE id = 'assay-certificates';
+WHERE id = 'ASSAY-CERTIFICATES';
 
 -- Check 3: Storage policies
 SELECT 

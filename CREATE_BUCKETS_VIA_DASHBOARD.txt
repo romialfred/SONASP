@@ -1,85 +1,186 @@
-═══════════════════════════════════════════════════════════════════
-  STORAGE BUCKET ISSUE - QUICK FIX
-═══════════════════════════════════════════════════════════════════
+================================================================================
+       CREATE ASSAY CERTIFICATES BUCKET - DASHBOARD METHOD
+================================================================================
 
-PROBLEM:
-  Migration ran but storage buckets not created
-  Error: "Storage bucket 'documents' does not exist"
+ERROR: "must be owner of table objects" means you need to use Supabase Dashboard
+instead of SQL Editor for storage bucket creation.
 
-WHY SQL MIGRATION DIDN'T WORK:
-  Supabase Storage buckets can't always be created via SQL INSERT
-  Need to use Supabase Dashboard UI or Admin API instead
+================================================================================
+STEP-BY-STEP INSTRUCTIONS
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
-  SOLUTION: Use Supabase Dashboard (2 minutes)
-═══════════════════════════════════════════════════════════════════
+1. GO TO SUPABASE DASHBOARD
+   - Open your Supabase project
+   - https://app.supabase.com (login if needed)
 
-1. Open Supabase Dashboard
-   → Go to your project
+2. NAVIGATE TO STORAGE
+   - Click "Storage" in the left sidebar
+   - You'll see list of existing buckets
 
-2. Click "Storage" in left sidebar
+3. CREATE NEW BUCKET
+   - Click "New bucket" button (top right)
+   
+4. CONFIGURE BUCKET
+   - Name: assay-certificates
+   - Public bucket: OFF (keep private)
+   - File size limit: 10485760 (10MB in bytes)
+   - Allowed MIME types: application/pdf
+   
+5. CLICK "Create bucket"
 
-3. Click "New bucket" button (top right)
+6. CONFIGURE BUCKET POLICIES
+   - Click on the "assay-certificates" bucket you just created
+   - Click "Policies" tab at the top
+   - Click "New policy"
 
-4. Create FIRST bucket:
-   Name: documents
-   ✓ Check "Public bucket"
-   File size limit: 50 MB
-   Allowed MIME types: Leave default or add:
-     - application/pdf
-     - image/jpeg
-     - image/png
-     - image/jpg
-   Click "Save"
+================================================================================
+POLICY 1: Allow authenticated users to upload
+================================================================================
 
-5. Click "New bucket" again
+Policy name: Users can upload assay certificates
+Allowed operation: INSERT
+Policy definition:
 
-6. Create SECOND bucket:
-   Name: reports
-   ✓ Check "Public bucket"
-   File size limit: 50 MB
-   Click "Save"
+SELECT:
+Target roles: authenticated
 
-7. Click "New bucket" again
+WITH CHECK:
+bucket_id = 'assay-certificates'
 
-8. Create THIRD bucket:
-   Name: payment-proofs
-   ✓ Check "Public bucket"
-   File size limit: 50 MB
-   Click "Save"
+Click "Review" then "Save policy"
 
-9. DONE! Refresh your app and try uploading again ✅
+================================================================================
+POLICY 2: Allow authenticated users to read
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
-  VERIFY BUCKETS WERE CREATED
-═══════════════════════════════════════════════════════════════════
+Policy name: Users can view assay certificates
+Allowed operation: SELECT
+Policy definition:
 
-In Supabase Dashboard → Storage:
-  You should see 3 buckets listed:
-    ✓ documents
-    ✓ reports
-    ✓ payment-proofs
+Target roles: authenticated
 
-Or run this SQL:
+USING expression:
+bucket_id = 'assay-certificates'
 
-  SELECT id, name, public, file_size_limit, created_at
-  FROM storage.buckets
-  WHERE id IN ('documents', 'reports', 'payment-proofs');
+Click "Review" then "Save policy"
 
-Should see 3 rows!
+================================================================================
+POLICY 3: Allow users to update their files
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
-  AFTER BUCKETS ARE CREATED
-═══════════════════════════════════════════════════════════════════
+Policy name: Users can update their certificates
+Allowed operation: UPDATE
+Policy definition:
 
-✅ Document upload will work in Batch Management
-✅ Report generation will work
-✅ Payment proof uploads will work
-✅ No more "Storage Not Configured" errors
+Target roles: authenticated
 
-═══════════════════════════════════════════════════════════════════
+USING expression:
+bucket_id = 'assay-certificates' AND (storage.foldername(name))[1] = auth.uid()::text
 
-TIME NEEDED: 2 minutes
-DIFFICULTY: Easy - just click and create!
+Click "Review" then "Save policy"
 
-═══════════════════════════════════════════════════════════════════
+================================================================================
+POLICY 4: Allow users to delete their files
+================================================================================
+
+Policy name: Users can delete their certificates
+Allowed operation: DELETE
+Policy definition:
+
+Target roles: authenticated
+
+USING expression:
+bucket_id = 'assay-certificates' AND (storage.foldername(name))[1] = auth.uid()::text
+
+Click "Review" then "Save policy"
+
+================================================================================
+ALTERNATIVE: SIMPLER POLICY (RECOMMENDED)
+================================================================================
+
+If the above policies are complex, use this simpler approach:
+
+After creating the bucket:
+1. Click "Policies" tab
+2. Click "New policy"
+3. Select "For full customization"
+4. Use this template:
+
+Policy 1 - SELECT (View):
+---------------------------
+CREATE POLICY "Allow authenticated uploads"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (bucket_id = 'assay-certificates');
+
+Policy 2 - INSERT (Upload):
+---------------------------
+CREATE POLICY "Allow authenticated selects"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'assay-certificates');
+
+Policy 3 - DELETE:
+---------------------------
+CREATE POLICY "Allow delete own files"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'assay-certificates');
+
+================================================================================
+VERIFICATION
+================================================================================
+
+After creating bucket and policies:
+
+1. Go to: Storage → assay-certificates bucket
+2. Try uploading a test PDF file manually
+3. If upload works = SUCCESS!
+
+4. Check policies:
+   - Storage → assay-certificates → Policies tab
+   - Should see 3-4 policies listed
+
+================================================================================
+QUICK TEST IN APPLICATION
+================================================================================
+
+1. Refresh your Gold Shipper application (F5)
+2. Login
+3. Navigate to: Batches → Any Batch
+4. Scroll down to "Assay Certificates" section
+5. You should see the upload button
+6. Try uploading a PDF
+7. Should work!
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: "Bucket not found" error in app
+Fix: Make sure bucket name is exactly: assay-certificates (with dash, not underscore)
+
+Issue: "Permission denied" on upload
+Fix: Check policies are created for "authenticated" role
+
+Issue: Upload button still not showing
+Fix: Check browser console (F12) for errors, may need to:
+     - Clear browser cache
+     - Re-login to app
+     - Check migration ran successfully
+
+================================================================================
+SUMMARY
+================================================================================
+
+✓ Create bucket via Dashboard (not SQL)
+✓ Name: assay-certificates
+✓ Private bucket
+✓ Add 3-4 policies for authenticated users
+✓ Refresh app
+✓ Test upload
+
+Setup time: 5 minutes
+No SQL knowledge required!
+
+================================================================================

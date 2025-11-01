@@ -530,8 +530,9 @@ export function BatchDetailsWorkflow() {
           </CardContent>
         </Card>
 
+        {/* Main Grid Layout - 2 columns on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content - Left Column (2/3) */}
+          {/* Left Column (2/3) - Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Batch Information - Compact */}
             <Card>
@@ -805,64 +806,85 @@ export function BatchDetailsWorkflow() {
           </div>
 
           {/* Right Column (1/3) - Field Guide */}
-          <div className="space-y-6">
+          <div className="lg:col-span-1">
             <div className="sticky top-24">
               {/* Field Guide */}
-              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg">
-              <CardHeader className="border-b border-blue-200">
-                <CardTitle className="text-blue-900 flex items-center text-lg">
-                  <Info className="h-5 w-5 mr-2" />
-                  Batch Tracking Guide
+              <Card className="border-2 border-blue-300 bg-white shadow-lg">
+              <CardHeader className="bg-blue-50 border-b-2 border-blue-200 py-4">
+                <CardTitle className="text-blue-800 flex items-center text-base font-bold">
+                  <Info className="h-5 w-5 mr-2 text-blue-600" />
+                  Field Guide
                 </CardTitle>
-                <p className="text-xs text-blue-600 mt-1">Field descriptions and guidance</p>
+                <p className="text-xs text-blue-600 mt-1 font-medium">Guide des champs avec descriptions et exemples.</p>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[calc(100vh-12rem)] overflow-y-auto">
-                <div className="bg-white border-l-4 border-blue-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center">
-                    <Package className="h-4 w-4 mr-2" />
-                    Batch Number
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Unique identifier generated automatically for tracking purposes</p>
+              <CardContent className="space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto p-4">
+
+                {/* Section Title */}
+                <div className="mb-3">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">BATCH INFORMATION</h3>
                 </div>
 
-                <div className="bg-white border-l-4 border-green-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-green-900 mb-1 flex items-center">
-                    <Weight className="h-4 w-4 mr-2" />
-                    Weight Information
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Total weight in grams with automatic conversion to ounces</p>
-                </div>
+                {/* Field Items */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-blue-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <Package className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Batch Number</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Unique identifier generated automatically for tracking purposes</p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="bg-white border-l-4 border-orange-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-orange-900 mb-1 flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Shipping Date
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Date when batch is scheduled for transportation</p>
-                </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-green-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <Weight className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Weight Information</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Total weight in grams with automatic conversion to ounces</p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="bg-white border-l-4 border-purple-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-purple-900 mb-1 flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Current Status
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Current stage in the batch processing workflow</p>
-                </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-orange-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <Calendar className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Shipping Date</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Date when batch is scheduled for transportation</p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="bg-white border-l-4 border-pink-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-pink-900 mb-1 flex items-center">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Origin & Location
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Where the batch started and its current physical location</p>
-                </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-purple-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <CheckCircle className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Current Status</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Current stage in the batch processing workflow</p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="bg-white border-l-4 border-yellow-500 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <p className="text-sm font-semibold text-yellow-900 mb-1 flex items-center">
-                    <Truck className="h-4 w-4 mr-2" />
-                    Transportation
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">Logistics company handling the shipment</p>
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-pink-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <MapPin className="h-4 w-4 text-pink-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Origin & Location</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Where the batch started and its current physical location</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-yellow-500">
+                    <div className="flex items-start gap-2 mb-1">
+                      <Truck className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Transportation</p>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-1">Logistics company handling the shipment</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

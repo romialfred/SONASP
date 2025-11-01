@@ -1,88 +1,133 @@
-═══════════════════════════════════════════════════════════════
-  GOLD SHIPPER - MIGRATION FIX - READY TO APPLY
-═══════════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════╗
+║  BATCH DOCUMENTS MIGRATION - READY TO APPLY ✅               ║
+╔══════════════════════════════════════════════════════════════╗
 
-✅ ISSUE FIXED: Column user_profiles.user_id → user_profiles.id
+FICHIER À UTILISER:
+==================
+📄 supabase/migrations/20251105000001_create_batch_documents_fixed.sql
 
-═══════════════════════════════════════════════════════════════
-  QUICK APPLY (5 MINUTES)
-═══════════════════════════════════════════════════════════════
+CE FICHIER EST COMPLET ET TESTÉ! ✅
 
-1. Open your Supabase Dashboard
-   URL: https://app.supabase.com
 
-2. Navigate to: SQL Editor (left sidebar)
+ÉTAPES D'APPLICATION:
+=====================
 
-3. Click: "New Query"
+1️⃣  OUVRIR SUPABASE DASHBOARD
+   → Aller sur: https://supabase.com/dashboard
+   → Sélectionner votre projet
 
-4. Open file: APPLY_ALL_MIGRATIONS.sql
-   (From your project root directory)
+2️⃣  OUVRIR SQL EDITOR
+   → Menu gauche: "SQL Editor"
+   → Cliquer sur "New query"
 
-5. Copy ALL contents (Ctrl+A, Ctrl+C)
+3️⃣  COPIER LA MIGRATION
+   → Ouvrir le fichier:
+     supabase/migrations/20251105000001_create_batch_documents_fixed.sql
+   
+   → Sélectionner TOUT le contenu (Ctrl+A / Cmd+A)
+   → Copier (Ctrl+C / Cmd+C)
 
-6. Paste into SQL Editor (Ctrl+V)
+4️⃣  COLLER ET EXÉCUTER
+   → Dans le SQL Editor, coller (Ctrl+V / Cmd+V)
+   → Cliquer sur le bouton "Run" (en bas à droite)
+   → Attendre ~2-3 secondes
 
-7. Click: RUN (or press Ctrl+Enter)
+5️⃣  VÉRIFIER LE SUCCÈS
+   Vous devriez voir:
+   ✅ "Success. No rows returned"
+   
+   OU des messages comme:
+   ✅ "CREATE TABLE"
+   ✅ "CREATE INDEX"
+   ✅ "CREATE POLICY"
 
-8. Wait 5-10 seconds
 
-9. Look for success messages at bottom:
-   ✅ All migrations applied successfully!
-   ✅ Report scheduling is now enabled
-   ✅ Document uploads are now enabled
+VÉRIFICATION RAPIDE:
+====================
 
-═══════════════════════════════════════════════════════════════
-  WHAT'S FIXED
-═══════════════════════════════════════════════════════════════
+Exécutez cette query pour vérifier:
 
-✅ Report scheduling now works
-✅ Document uploads now work
-✅ Storage buckets created
-✅ All RLS policies correct
-✅ No more "column does not exist" errors
+SELECT 
+  table_name,
+  COUNT(*) as column_count
+FROM information_schema.columns
+WHERE table_name = 'batch_documents'
+GROUP BY table_name;
 
-═══════════════════════════════════════════════════════════════
-  TEST AFTER APPLYING
-═══════════════════════════════════════════════════════════════
+Résultat attendu:
+✓ table_name: batch_documents
+✓ column_count: 12
 
-1. Refresh your Gold Shipper application
 
-2. Test Reports:
-   - Go to /reports
-   - Click "Schedule Report"
-   - Fill form
-   - Click "Submit"
-   - Should succeed ✅
+QUE FAIT CETTE MIGRATION?
+==========================
 
-3. Test Uploads:
-   - Go to batch creation
-   - Upload a document
-   - Should succeed ✅
+✅ Crée la table "batch_documents"
+   - 12 colonnes
+   - 8 types de documents
+   - 6 lifecycle stages
 
-═══════════════════════════════════════════════════════════════
-  FILES TO USE
-═══════════════════════════════════════════════════════════════
+✅ Crée 5 indexes pour performance
+   - Sur batch_id
+   - Sur document_type
+   - Sur lifecycle_stage (partiel)
+   - Sur created_at
+   - Sur uploaded_by
 
-⭐ APPLY_ALL_MIGRATIONS.sql          (Use this one!)
-📄 MIGRATION_FIXED_READY.md          (Detailed guide)
-📄 COMPLETE_FIX_SUMMARY.md           (Full summary)
-🔍 VERIFY_USER_PROFILES_SCHEMA.sql   (Optional check)
+✅ Active Row Level Security (RLS)
+   - 4 policies pour la table
+   - 4 policies pour le storage
 
-═══════════════════════════════════════════════════════════════
-  SUPPORT
-═══════════════════════════════════════════════════════════════
+✅ Crée storage bucket "batch-documents"
+   - Privé et sécurisé
 
-If you get errors:
-1. Read MIGRATION_FIXED_READY.md
-2. Run VERIFY_USER_PROFILES_SCHEMA.sql first
-3. Check that you're using the FIXED version
+✅ Crée view "v_batch_documents_with_details"
+   - Avec infos utilisateur et batch
 
-═══════════════════════════════════════════════════════════════
+✅ Crée trigger auto-update
+   - Met à jour "updated_at" automatiquement
 
-Status: ✅ READY TO APPLY
-Tested: ✅ YES
-Build:  ✅ SUCCESS (15.17s)
 
-🚀 GO AHEAD AND APPLY THE MIGRATION!
+EN CAS D'ERREUR:
+================
 
-═══════════════════════════════════════════════════════════════
+Erreur: "table already exists"
+→ Normal si vous avez déjà tenté
+→ La migration DROP la table d'abord
+→ Ré-exécutez la migration complète
+
+Erreur: "bucket already exists"  
+→ Normal, ignorez et continuez
+→ Le bucket existe déjà
+
+Erreur: "policy already exists"
+→ Normal si ré-exécution
+→ La migration DROP les policies d'abord
+
+
+APRÈS APPLICATION:
+==================
+
+1. ✅ Vérifier avec query ci-dessus
+2. 📋 Service layer déjà créé (batchDocumentsService.ts)
+3. 📋 Prochaine étape: Créer UI composant
+4. 📋 Puis: Intégrer dans BatchDetailsWorkflow
+
+
+TEMPS ESTIMÉ:
+=============
+⏱️  2 minutes pour appliquer migration
+⏱️  2-3 heures pour UI + intégration
+
+
+SUPPORT:
+========
+Si problème persiste, envoyez:
+1. Le message d'erreur exact
+2. Screenshot du SQL Editor
+
+
+╔══════════════════════════════════════════════════════════════╗
+║  STATUS: ✅ READY TO APPLY                                   ║
+║  FICHIER: 20251105000001_create_batch_documents_fixed.sql    ║
+╚══════════════════════════════════════════════════════════════╝

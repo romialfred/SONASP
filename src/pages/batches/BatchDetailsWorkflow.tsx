@@ -80,6 +80,7 @@ export function BatchDetailsWorkflow() {
     fieldGuide: true,
     timeline: true,
   });
+  const [timelineExpanded, setTimelineExpanded] = useState(true);
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');

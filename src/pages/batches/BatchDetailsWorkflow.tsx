@@ -11,7 +11,6 @@ import {
   Building2,
   User,
   FileText,
-  Upload,
   CheckCircle,
   XCircle,
   Truck,
@@ -20,6 +19,10 @@ import {
   CreditCard,
   Info,
 } from 'lucide-react';
+import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
+import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
+import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
+import type { AssayCertificate } from '@/services/assayCertificateService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -63,6 +66,8 @@ export function BatchDetailsWorkflow() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
+  const [certificateRefresh, setCertificateRefresh] = useState(0);
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');
@@ -805,36 +810,25 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Documents */}
+            {/* Assay Certificates */}
             <Card>
               <CardHeader>
-                <CardTitle>Documents</CardTitle>
+                <CardTitle>Assay Certificates</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Initial Quality Report.pdf</p>
-                        <p className="text-xs text-gray-500">245 KB • 2024-10-20 09:15 AM</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Shipping Manifest.pdf</p>
-                        <p className="text-xs text-gray-500">180 KB • 2024-10-20 10:00 AM</p>
-                      </div>
-                    </div>
-                  </div>
+              <CardContent>
+                <div className="space-y-6">
+                  <AssayCertificateUpload
+                    batchId={id!}
+                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                  />
+
+                  <AssayCertificatesList
+                    batchId={id!}
+                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                    refreshTrigger={certificateRefresh}
+                  />
                 </div>
-                <Button variant="secondary" className="w-full">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Document
-                </Button>
               </CardContent>
             </Card>
           </div>
@@ -870,6 +864,31 @@ export function BatchDetailsWorkflow() {
           </Button>
         </div>
       </Modal>
+
+      {/* Certificate Viewer Modal */}
+      {selectedCertificate && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedCertificate(null)}
+          title={`Certificate: ${selectedCertificate.file_name}`}
+          size="large"
+        >
+          <AssayCertificateViewer
+            certificate={selectedCertificate}
+            onApprove={() => {
+              setSelectedCertificate(null);
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+            onReject={() => {
+              setSelectedCertificate(null);
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+            onDataUpdate={() => {
+              setCertificateRefresh((prev) => prev + 1);
+            }}
+          />
+        </Modal>
+      )}
     </MainLayout>
   );
 }

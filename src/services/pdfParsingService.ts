@@ -154,12 +154,13 @@ export function extractAssayData(text: string): ExtractedAssayData {
   
   let fieldsFound = 0;
   
-  // Certificate Number
+  // Certificate Number - Enhanced patterns
   const certPatterns = [
     /certificate\s+(?:no|number|#)[:\s]+([A-Z0-9\/-]+)/i,
     /cert[.:\s]+([A-Z0-9\/-]+)/i,
     /report\s+(?:no|number)[:\s]+([A-Z0-9\/-]+)/i,
-    /reference[:\s]+([A-Z0-9\/-]+)/i
+    /reference[:\s]+([A-Z0-9\/-]+)/i,
+    /(?:certificate|cert)\s+number[:\s]+(AC-[0-9\/-]+)/i
   ];
   
   for (const pattern of certPatterns) {
@@ -189,9 +190,11 @@ export function extractAssayData(text: string): ExtractedAssayData {
   
   // Laboratory
   const labPatterns = [
-    /laboratory[:\s]+([^\n]{3,50})/i,
-    /lab[:\s]+([^\n]{3,50})/i,
-    /analyzed\s+by[:\s]+([^\n]{3,50})/i
+    /([A-Za-z\s]+(?:Gold\s+)?Assay\s+Laboratory)/i,
+    /laboratory[:\s]+([^\n]{3,80})/i,
+    /lab[:\s]+([^\n]{3,80})/i,
+    /analyzed\s+by[:\s]+([^\n]{3,80})/i,
+    /((?:[A-Z][a-z]+\s+){1,3}Laboratory)/i
   ];
   
   for (const pattern of labPatterns) {
@@ -226,41 +229,67 @@ export function extractAssayData(text: string): ExtractedAssayData {
     }
   }
   
-  // Gold Content
+  // Gold Content - Enhanced patterns for sample certificate format
   const goldPatterns = [
+    // Match "Gold (Au)    18.35    18,350    92.50" format
+    /(?:gold|au)\s*\(\w+\)[:\s]+(\d+\.?\d*)\s+(\d+,?\d*)\s+(\d+\.?\d*)/i,
+    // Standard formats
     /(?:gold|au)[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt)/i,
     /(?:gold|au)[:\s]+(\d+\.?\d*)\s*ppm/i,
     /(?:gold|au)[:\s]+(\d+\.?\d*)\s*%/i
   ];
   
-  goldPatterns.forEach((pattern, index) => {
-    const match = text.match(pattern);
-    if (match) {
-      const value = parseFloat(match[1]);
-      if (index === 0) data.goldContent.gpt = value;
-      else if (index === 1) data.goldContent.ppm = value;
-      else if (index === 2) data.goldContent.percent = value;
-      fieldsFound++;
-    }
-  });
+  // Parse gold content with enhanced matching
+  const goldMatch = text.match(goldPatterns[0]); // Try compound format first
+  if (goldMatch) {
+    data.goldContent.gpt = parseFloat(goldMatch[1]);
+    data.goldContent.ppm = parseFloat(goldMatch[2].replace(',', ''));
+    data.goldContent.percent = parseFloat(goldMatch[3]);
+    fieldsFound += 3;
+  } else {
+    // Fallback to individual patterns
+    goldPatterns.slice(1).forEach((pattern, index) => {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1]);
+        if (index === 0) data.goldContent.gpt = value;
+        else if (index === 1) data.goldContent.ppm = value;
+        else if (index === 2) data.goldContent.percent = value;
+        fieldsFound++;
+      }
+    });
+  }
   
-  // Silver Content
+  // Silver Content - Enhanced patterns for sample certificate format
   const silverPatterns = [
+    // Match "Silver (Ag)    2.45    2,450    88.20" format
+    /(?:silver|ag)\s*\(\w+\)[:\s]+(\d+\.?\d*)\s+(\d+,?\d*)\s+(\d+\.?\d*)/i,
+    // Standard formats
     /(?:silver|ag)[:\s]+(\d+\.?\d*)\s*(?:g\/t|gpt)/i,
     /(?:silver|ag)[:\s]+(\d+\.?\d*)\s*ppm/i,
     /(?:silver|ag)[:\s]+(\d+\.?\d*)\s*%/i
   ];
   
-  silverPatterns.forEach((pattern, index) => {
-    const match = text.match(pattern);
-    if (match) {
-      const value = parseFloat(match[1]);
-      if (index === 0) data.silverContent.gpt = value;
-      else if (index === 1) data.silverContent.ppm = value;
-      else if (index === 2) data.silverContent.percent = value;
-      fieldsFound++;
-    }
-  });
+  // Parse silver content with enhanced matching
+  const silverMatch = text.match(silverPatterns[0]); // Try compound format first
+  if (silverMatch) {
+    data.silverContent.gpt = parseFloat(silverMatch[1]);
+    data.silverContent.ppm = parseFloat(silverMatch[2].replace(',', ''));
+    data.silverContent.percent = parseFloat(silverMatch[3]);
+    fieldsFound += 3;
+  } else {
+    // Fallback to individual patterns
+    silverPatterns.slice(1).forEach((pattern, index) => {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1]);
+        if (index === 0) data.silverContent.gpt = value;
+        else if (index === 1) data.silverContent.ppm = value;
+        else if (index === 2) data.silverContent.percent = value;
+        fieldsFound++;
+      }
+    });
+  }
   
   // Platinum
   const ptMatch = text.match(/(?:platinum|pt)[:\s]+(\d+\.?\d*)\s*(?:ppm|g\/t)/i);

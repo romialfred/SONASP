@@ -50,14 +50,17 @@ CREATE TABLE IF NOT EXISTS batch_documents (
   file_size bigint,
   mime_type text,
   uploaded_by uuid REFERENCES user_profiles(id),
-  lifecycle_stage text CHECK (lifecycle_stage IN (
-    'factory',
-    'airport', 
-    'refinery',
-    'processing',
-    'sales',
-    'payment'
-  )),
+  lifecycle_stage text CHECK (
+    lifecycle_stage IS NULL OR
+    lifecycle_stage IN (
+      'factory',
+      'airport',
+      'refinery',
+      'processing',
+      'sales',
+      'payment'
+    )
+  ),
   description text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
@@ -66,7 +69,7 @@ CREATE TABLE IF NOT EXISTS batch_documents (
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_batch_documents_batch_id ON batch_documents(batch_id);
 CREATE INDEX IF NOT EXISTS idx_batch_documents_type ON batch_documents(document_type);
-CREATE INDEX IF NOT EXISTS idx_batch_documents_stage ON batch_documents(lifecycle_stage);
+CREATE INDEX IF NOT EXISTS idx_batch_documents_stage ON batch_documents(lifecycle_stage) WHERE lifecycle_stage IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_batch_documents_created_at ON batch_documents(created_at DESC);
 
 -- Enable RLS

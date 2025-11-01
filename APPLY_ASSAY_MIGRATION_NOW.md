@@ -1,227 +1,118 @@
-# 🚨 URGENT: Apply Database Migration to Enable Assay Certificates
+# 🚀 MIGRATION À APPLIQUER - Assay Certificates System
 
-## Current Status
+## 📌 FICHIER À MIGRER
 
-**❌ Upload feature is NOT WORKING** because the database tables don't exist yet!
+**UN SEUL fichier:**
 
-You need to apply the migration to create the required tables.
-
----
-
-## Quick Fix (5 Minutes)
-
-### Step 1: Open Supabase Dashboard
-
-1. Go to: https://supabase.com
-2. Sign in to your account
-3. Select your project
-4. Click **"SQL Editor"** in left sidebar
-
-### Step 2: Get Migration SQL
-
-Open this file in your project:
 ```
 supabase/migrations/20251104000000_create_assay_certificates_system.sql
 ```
 
-Copy the ENTIRE contents (it's a long file)
+---
 
-### Step 3: Run Migration
+## 🎯 MÉTHODE 1: Via Supabase Dashboard (RECOMMANDÉ)
 
-1. In Supabase SQL Editor, click **"+ New query"**
-2. Paste the entire migration SQL
-3. Click **"Run"** button (or press Ctrl+Enter)
-4. Wait for **"Success"** message
+### Étapes:
 
-### Step 4: Verify
+1. **Ouvrez le fichier** sur votre machine:
+   ```
+   supabase/migrations/20251104000000_create_assay_certificates_system.sql
+   ```
 
-Check that 3 new tables were created:
+2. **Copiez TOUT le contenu** du fichier (Ctrl+A, Ctrl+C)
 
-1. In Supabase, click **"Table Editor"**
-2. Look for these tables:
-   - ✅ `assay_certificates`
-   - ✅ `assay_base_metals`
-   - ✅ `assay_deleterious_elements`
+3. **Allez dans Supabase Dashboard:**
+   - Cliquez sur **SQL Editor** (dans la sidebar gauche)
+   - Cliquez sur **New Query**
 
-### Step 5: Refresh App
+4. **Collez le contenu** (Ctrl+V)
 
-1. Go back to your Gold Shipper app
-2. Press **F5** to refresh
-3. Go to any batch details page
-4. Scroll down on LEFT column
-5. **Assay Certificates section should now appear!** ✅
+5. **Cliquez sur RUN** (en haut à droite)
+
+6. **Attendez** que l'exécution se termine (environ 5-10 secondes)
+
+7. **Vérifiez** qu'il n'y a pas d'erreurs
 
 ---
 
-## What This Migration Creates
+## ✅ CE QUE CETTE MIGRATION VA CRÉER
 
-### Database Tables
+### Tables:
+- ✅ `assay_certificates` (18 colonnes)
+- ✅ `assay_certificate_data` (35 colonnes)
+- ✅ `certificate_approvals` (7 colonnes)
 
-1. **assay_certificates** - Main table for certificates
-   - Stores PDF file info
-   - Tracks parsing status
-   - Contains all extracted data
-   - Approval workflow fields
+### Storage:
+- ✅ Bucket `assay-certificates`
+- ✅ 4 policies storage (INSERT, SELECT, UPDATE, DELETE)
 
-2. **assay_base_metals** - Base metals analysis
-   - Copper, iron, zinc, etc.
-   - Linked to certificates
+### Security:
+- ✅ RLS activé sur toutes les tables
+- ✅ 7 policies RLS pour les tables
+- ✅ Triggers pour `updated_at`
 
-3. **assay_deleterious_elements** - Harmful elements
-   - Arsenic, mercury, lead, etc.
-   - Safety tracking
-
-### Security
-
-- Row Level Security (RLS) enabled on all tables
-- Only authenticated users can access
-- Users can only see their company's data
-
-### Storage
-
-- Storage bucket for PDF files
-- Secure file upload policies
-- 10MB file size limit
+### Fonctions:
+- ✅ `get_certificate_with_data()`
+- ✅ `get_batch_certificates()`
 
 ---
 
-## After Migration Success
+## 🔍 VÉRIFICATION APRÈS MIGRATION
 
-You'll be able to:
-
-✅ Upload PDF certificates from batch details
-✅ Auto-parse certificate data
-✅ View certificates in PDF viewer
-✅ Edit parsed data if needed
-✅ Approve/reject certificates
-✅ See all certificates on dedicated page
-✅ Search and filter certificates
-
----
-
-## Troubleshooting
-
-### "Error running migration"
-
-**Check:**
-- Are you in the correct Supabase project?
-- Do tables already exist? (shouldn't, but check)
-- Any syntax errors in SQL?
-
-**Solution:**
-- Copy SQL again carefully
-- Make sure entire file is copied
-- Try running smaller sections if it fails
-
-### "Tables created but upload doesn't work"
-
-**Check:**
-- Hard refresh browser (Ctrl+Shift+R)
-- Clear browser cache
-- Check browser console (F12) for errors
-
-**Solution:**
-- Make sure storage bucket was created
-- Verify RLS policies are active
-- Check user is authenticated
-
-### "Upload works but parsing fails"
-
-**Check:**
-- Is PDF readable (not scanned image)?
-- Is file size <10MB?
-- Check `parsing_error` column in database
-
-**Solution:**
-- Try with sample PDF first: `public/sample-assay-certificate.pdf`
-- Check that PDF has text layer
-- Review error message in database
-
----
-
-## Verification SQL
-
-After applying migration, run this to verify:
+Une fois la migration appliquée, exécutez ce SQL pour vérifier:
 
 ```sql
--- Check if main table exists
-SELECT EXISTS (
-  SELECT FROM information_schema.tables
-  WHERE table_schema = 'public'
-  AND table_name = 'assay_certificates'
-) as migration_applied;
-
--- Check all 3 tables
-SELECT table_name
-FROM information_schema.tables
+-- Vérifier les tables
+SELECT table_name, COUNT(*) as columns
+FROM information_schema.columns
 WHERE table_schema = 'public'
-  AND table_name LIKE 'assay_%'
-ORDER BY table_name;
+  AND table_name IN ('assay_certificates', 'assay_certificate_data', 'certificate_approvals')
+GROUP BY table_name;
 
--- Expected output:
--- assay_base_metals
--- assay_certificates
--- assay_deleterious_elements
+-- Devrait retourner:
+-- assay_certificates → 18
+-- assay_certificate_data → 35
+-- certificate_approvals → 7
 ```
 
 ---
 
-## Quick Checklist
+## 📋 APRÈS LA MIGRATION
 
-Before applying migration:
-- [ ] Supabase dashboard open
-- [ ] SQL Editor ready
-- [ ] Migration file content copied
-- [ ] Correct project selected
-
-After applying migration:
-- [ ] Success message received
-- [ ] 3 tables created
-- [ ] Browser refreshed
-- [ ] Batch details page checked
-- [ ] Upload section visible
+1. ✅ Refresh votre app (F5)
+2. ✅ Login
+3. ✅ Allez dans un Batch Details
+4. ✅ Scrollez vers le bas
+5. ✅ Vous devriez voir **"Assay Certificates"**
+6. ✅ Essayez d'uploader un PDF!
 
 ---
 
-## Why This Happened
+## ⚠️ SI VOUS AVEZ DES ERREURS
 
-The Assay Certificates feature was added to the codebase, but the database schema changes weren't applied yet. This is normal for new features - the code is ready, but database needs to be updated.
+### Erreur: "already exists"
+→ La migration a déjà été appliquée! Pas besoin de la réappliquer.
 
-Think of it like:
-- ✅ Frontend code = Ready (upload button, UI components)
-- ✅ Backend code = Ready (parsing, storage logic)
-- ❌ Database = Not ready (tables don't exist yet)
+### Erreur: "permission denied"
+→ Assurez-vous d'être connecté avec un compte admin.
 
-Once you apply the migration:
-- ✅ Database = Ready (tables created)
-- ✅ Everything works! 🎉
+### Erreur: "bucket already exists"
+→ Normal! Le bucket existe déjà, la migration continue quand même.
 
 ---
 
-## Still Need Help?
+## 🎯 EN RÉSUMÉ
 
-1. **Take a screenshot** of any error message
-2. **Check** the browser console (F12 → Console tab)
-3. **Verify** you're in the correct Supabase project
-4. **Try** the sample PDF first to test
+**1 fichier à migrer:**
+- `supabase/migrations/20251104000000_create_assay_certificates_system.sql`
 
----
+**Méthode:**
+- Copier-coller dans SQL Editor
+- Cliquer RUN
+- Attendre 5-10 secondes
+- C'est fait!
 
-## Summary
+**Ensuite:**
+- Refresh l'app
+- Tester l'upload!
 
-**Problem:** Upload button doesn't appear or doesn't work
-**Cause:** Database tables don't exist yet
-**Solution:** Apply migration SQL in Supabase Dashboard
-**Time Required:** 2-5 minutes
-**Difficulty:** Easy (copy & paste SQL)
-
-**Migration File Location:**
-```
-supabase/migrations/20251104000000_create_assay_certificates_system.sql
-```
-
-**After Migration:** Feature works immediately! ✅
-
----
-
-**Need the migration SQL?** It's in your project at the file path above. Just copy everything and run it in Supabase SQL Editor.

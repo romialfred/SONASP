@@ -1,385 +1,140 @@
-# Storage Policy - Detailed Step-by-Step Guide
+# ÉTAPES EXACTES BASÉES SUR VOTRE SCREENSHOT
 
----
+## ✅ CE QUE JE VOIS
 
-## Step 3: Add Storage Policy (Detailed)
+Dans votre sidebar gauche, je vois:
 
-After creating the bucket, you need to add a policy to allow users to upload files.
-
----
-
-## 📍 Where You Are Now
-
-You've just created the bucket `assay-certificates` in Supabase Dashboard.
-Now you should see it in your Storage list.
-
----
-
-## 🎯 Step-by-Step Instructions
-
-### **1. Navigate to Your Bucket**
-
-- In Supabase Dashboard
-- Left sidebar → **Storage**
-- You'll see a list of buckets
-- **Click on**: `assay-certificates` bucket
-
----
-
-### **2. Go to Policies Tab**
-
-Once inside the bucket:
-- At the top, you'll see tabs: **Files | Policies | Settings**
-- **Click on**: **Policies** tab
-
-You'll see a page that says:
 ```
-No policies found
+ALL BUCKETS
+  documents
+  reports
+  payment-proofs
+  assay-certificates
+
+CONFIGURATION
+  Policies    ← JE LA VOIS! ✅
+  Settings
 ```
 
 ---
 
-### **3. Create New Policy**
+## 🎯 ÉTAPES À SUIVRE (SIMPLE!)
 
-- Click the **"New Policy"** button (usually top right)
+### Étape 1: Cliquer sur "Policies"
 
-You'll see options:
-1. **Get started quickly** (templates)
-2. **For full customization** (custom SQL)
-
-- **Click on**: **"For full customization"**
+Dans la sidebar gauche, sous "CONFIGURATION", **cliquez sur "Policies"**
 
 ---
 
-### **4. Policy Editor Opens**
+### Étape 2: Sélectionner le Bucket
 
-You'll see a form with:
-- Policy name (optional)
-- Command (SELECT, INSERT, UPDATE, DELETE, ALL)
-- Target roles
-- USING expression
-- WITH CHECK expression
+Une fois dans Policies:
 
----
-
-### **5. Fill the Form**
-
-#### **Option A: Simple UI Form** (Recommended)
-
-**Policy name:** (optional, leave empty or type):
-```
-Allow authenticated users all operations
-```
-
-**Allowed operation:** 
-- Select: **ALL**
-  (This covers SELECT, INSERT, UPDATE, DELETE)
-
-**Target roles:**
-- Select: **authenticated**
-  (This means logged-in users)
-
-**Policy definition - USING:**
-```sql
-bucket_id = 'assay-certificates'
-```
-
-**Policy definition - WITH CHECK:**
-```sql
-bucket_id = 'assay-certificates'
-```
+1. Vous verrez probablement une liste vide ou des policies existantes
+2. En haut, cherchez un **dropdown/selector** pour choisir le bucket
+3. Sélectionnez **"assay-certificates"** dans ce dropdown
+4. OU la page sera déjà filtrée pour "assay-certificates"
 
 ---
 
-#### **Option B: SQL Editor** (If available)
+### Étape 3: Créer la Nouvelle Policy
 
-If you see a SQL editor instead of the form, paste this complete policy:
+1. Cliquez le bouton **"New Policy"** ou **"+ Create Policy"**
 
-```sql
-CREATE POLICY "Allow authenticated users all operations"
-ON storage.objects
-FOR ALL
-TO authenticated
-USING (bucket_id = 'assay-certificates')
-WITH CHECK (bucket_id = 'assay-certificates');
-```
+2. Vous verrez 2 options:
+   - "Get started quickly" (templates)
+   - "For full customization" ← **CHOISISSEZ CELLE-CI**
+
+3. Un formulaire apparaîtra
 
 ---
 
-### **6. Review Your Policy**
+### Étape 4: Remplir le Formulaire
 
-Before saving, review:
-
-- ✅ Operation: **ALL**
-- ✅ Target: **authenticated** users
-- ✅ USING: `bucket_id = 'assay-certificates'`
-- ✅ WITH CHECK: `bucket_id = 'assay-certificates'`
-
-This means:
-- Logged-in users can upload, view, update, delete files
-- Only in the `assay-certificates` bucket
-- Not in other buckets
-
----
-
-### **7. Save the Policy**
-
-- Click **"Review"** button (if shown)
-- Then click **"Save policy"** button
-
-You'll see:
-```
-✅ Policy created successfully
-```
-
----
-
-### **8. Verify Policy Exists**
-
-After saving, you should see:
-
-**Policies list:**
-```
-Policy Name: Allow authenticated users all operations
-Command: ALL
-Roles: authenticated
-Status: Active ✅
-```
-
----
-
-## 🔍 Visual Guide
-
-Here's what you're looking for at each step:
+Remplissez EXACTEMENT comme suit:
 
 ```
-Supabase Dashboard
-├── Storage (sidebar)
-│   └── assay-certificates (your bucket)
-│       ├── Files (tab)
-│       ├── Policies (tab) ← YOU ARE HERE
-│       │   ├── [New Policy] button
-│       │   │   ├── Get started quickly
-│       │   │   └── For full customization ← CLICK THIS
-│       │   │       └── Policy Editor
-│       │   │           ├── Policy name
-│       │   │           ├── Command: ALL
-│       │   │           ├── Roles: authenticated
-│       │   │           ├── USING: bucket_id = 'assay-certificates'
-│       │   │           └── WITH CHECK: bucket_id = 'assay-certificates'
-│       │   └── [Save Policy] ← FINAL CLICK
-│       └── Settings (tab)
+┌─────────────────────────────────────────────────────────┐
+│ Policy Name:                                            │
+│ Allow authenticated users all operations                │
+├─────────────────────────────────────────────────────────┤
+│ Policy Command: (dropdown)                              │
+│ SELECT "ALL"                                            │
+├─────────────────────────────────────────────────────────┤
+│ Target Roles: (dropdown)                                │
+│ SELECT "authenticated"                                  │
+├─────────────────────────────────────────────────────────┤
+│ USING expression (check):                               │
+│ bucket_id = 'assay-certificates'                        │
+├─────────────────────────────────────────────────────────┤
+│ WITH CHECK expression (optional):                       │
+│ bucket_id = 'assay-certificates'                        │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
-
-## ❓ Common Questions
-
-### Q: What does USING do?
-**A:** Controls WHO can access files (read/view)
-
-### Q: What does WITH CHECK do?
-**A:** Controls WHO can create/upload files
-
-### Q: Why both the same?
-**A:** So authenticated users can both read AND write
-
-### Q: What if I see "Policy already exists"?
-**A:** Good! Policy is already there, skip this step
-
-### Q: Can I use a different policy name?
-**A:** Yes! Name doesn't affect functionality
+**IMPORTANT**: 
+- Les expressions USING et WITH CHECK doivent utiliser des **single quotes** `'`
+- Pas de double quotes `"`
+- Exactement: `bucket_id = 'assay-certificates'`
 
 ---
 
-## 🧪 Test the Policy
+### Étape 5: Sauvegarder
 
-After creating the policy:
-
-1. **Manual Test in Dashboard:**
-   - Storage → assay-certificates → Files tab
-   - Click **"Upload"** button
-   - Try uploading a PDF file
-   - If it works = ✅ Policy is correct!
-
-2. **Test in Your App:**
-   - Refresh Gold Shipper (F5)
-   - Login
-   - Batches → Any batch → Batch details
-   - Scroll to "Assay Certificates"
-   - Try drag & drop a PDF
-   - If it uploads = ✅ Policy works in app!
+1. En bas du formulaire, cliquez **"Review"** ou **"Save Policy"**
+2. Si demandé de confirmer, cliquez **"Confirm"** ou **"Save"**
+3. Vous devriez voir un message de succès ✅
 
 ---
 
-## 🚨 Troubleshooting
+## ✅ VÉRIFICATION
 
-### Error: "Permission denied"
+Après sauvegarde:
 
-**Cause:** Policy not created or incorrect
-
-**Fix:**
-1. Check policy exists: Storage → Bucket → Policies
-2. Verify target role is **authenticated** (not public)
-3. Verify bucket_id matches exactly: `assay-certificates`
+1. Vous devriez voir votre nouvelle policy dans la liste
+2. Elle devrait s'appeler: "Allow authenticated users all operations"
+3. Status: Active/Enabled
 
 ---
 
-### Error: "Bucket not found"
+## 🧪 TEST FINAL
 
-**Cause:** Bucket name mismatch
-
-**Fix:**
-- Bucket must be named: `assay-certificates` (with dash)
-- Not: `assay_certificates` (underscore)
-- Case sensitive!
-
----
-
-### Policy not showing after save
-
-**Cause:** Refresh needed
-
-**Fix:**
-- Refresh the Policies tab
-- Or go back to Storage list and re-enter bucket
+1. **Retournez à votre app Gold Shipper**
+2. **Refresh** la page (F5)
+3. **Login** si nécessaire
+4. **Allez à Batches** → Sélectionnez n'importe quel batch
+5. **Scrollez** jusqu'à la section "Assay Certificates"
+6. **Essayez d'uploader** un PDF
+7. **ÇA DEVRAIT MARCHER!** ✅
 
 ---
 
-## ✅ Success Checklist
+## 🆘 SI ÇA NE MARCHE PAS
 
-After completing Step 3:
+Si après avoir créé la policy, l'upload ne marche toujours pas:
 
-- [ ] Policy created in Dashboard
-- [ ] Policy visible in Policies tab
-- [ ] Policy command is **ALL**
-- [ ] Policy role is **authenticated**
-- [ ] Manual upload works in Dashboard
-- [ ] Can see upload button in app
-
-All checked? → **Step 3 Complete!** 🎉
+1. Vérifiez dans la console du navigateur (F12) → Console tab
+2. Cherchez des erreurs rouges
+3. Copiez l'erreur et envoyez-la moi
+4. Je vous aiderai à debugger!
 
 ---
 
-## 📸 Screenshots Reference
+## 📸 PROCHAINE ÉTAPE
 
-### What the Policy Editor Looks Like:
+Une fois que vous cliquez sur "Policies" dans la sidebar:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ New Policy                                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ Policy name (optional)                                      │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Allow authenticated users all operations                │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ Allowed operation                                           │
-│ ┌─────────┐                                                │
-│ │ ALL   ▼ │                                                │
-│ └─────────┘                                                │
-│                                                             │
-│ Target roles                                                │
-│ ┌──────────────────┐                                       │
-│ │ authenticated  ▼ │                                       │
-│ └──────────────────┘                                       │
-│                                                             │
-│ USING expression                                            │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ bucket_id = 'assay-certificates'                        │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ WITH CHECK expression                                       │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ bucket_id = 'assay-certificates'                        │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│                    [Review]  [Save policy]                  │
-└─────────────────────────────────────────────────────────────┘
-```
+**Prenez un screenshot** de ce que vous voyez, et je vous guiderai 
+pour la suite si nécessaire!
 
 ---
 
-## 🎓 Understanding the Policy
+## 🎯 RÉSUMÉ EN 5 SECONDES
 
-### What This Policy Does:
+1. Cliquez **"Policies"** (sidebar gauche, sous CONFIGURATION)
+2. Cliquez **"New Policy"**
+3. Choisissez **"For full customization"**
+4. Remplissez le formulaire (voir ci-dessus)
+5. Cliquez **"Save Policy"**
+6. ✅ DONE!
 
-```sql
-CREATE POLICY "Allow authenticated users all operations"
-ON storage.objects
-FOR ALL
-TO authenticated
-USING (bucket_id = 'assay-certificates')
-WITH CHECK (bucket_id = 'assay-certificates');
-```
-
-**Line by line:**
-
-1. `CREATE POLICY` - Creates a new access rule
-2. `ON storage.objects` - Applies to storage files
-3. `FOR ALL` - All operations (SELECT, INSERT, UPDATE, DELETE)
-4. `TO authenticated` - Only logged-in users
-5. `USING (...)` - Read permission: must be this bucket
-6. `WITH CHECK (...)` - Write permission: must be this bucket
-
-**In plain English:**
-"Logged-in users can do anything with files in the assay-certificates bucket, and only that bucket."
-
----
-
-## 🔐 Security Note
-
-This policy is **secure** because:
-- ✅ Only authenticated users (not public)
-- ✅ Only this specific bucket
-- ✅ Row Level Security (RLS) enabled
-- ✅ Each user sees their own files
-
----
-
-## 📚 Alternative: Multiple Policies
-
-Instead of one "ALL" policy, you can create separate policies:
-
-**Policy 1 - Read:**
-```sql
-CREATE POLICY "Users can view certificates"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (bucket_id = 'assay-certificates');
-```
-
-**Policy 2 - Upload:**
-```sql
-CREATE POLICY "Users can upload certificates"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'assay-certificates');
-```
-
-**Policy 3 - Delete:**
-```sql
-CREATE POLICY "Users can delete certificates"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'assay-certificates');
-```
-
-But the **single ALL policy is simpler and works perfectly!**
-
----
-
-## ✨ Next Steps
-
-After Step 3 is complete:
-
-1. ✅ Refresh your app
-2. ✅ Test upload feature
-3. ✅ Upload a sample PDF
-4. ✅ Watch auto-parsing work
-5. ✅ Celebrate! 🎉
-
----
-
-**Need help?** Re-read this guide or check the troubleshooting section!

@@ -18,6 +18,9 @@ import {
   DollarSign,
   CreditCard,
   Info,
+  ChevronRight,
+  ChevronLeft,
+  Clock,
 } from 'lucide-react';
 import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
 import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
@@ -68,6 +71,7 @@ export function BatchDetailsWorkflow() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');
@@ -503,61 +507,6 @@ export function BatchDetailsWorkflow() {
           </CardContent>
         </Card>
 
-        {/* Horizontal Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Batch Timeline ({timeline.length} events)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {timeline.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">No timeline events yet</p>
-            ) : (
-              <div className="relative">
-                {/* Horizontal line */}
-                <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200"></div>
-
-                {/* Timeline events horizontally */}
-                <div className="flex justify-between gap-4 overflow-x-auto pb-4">
-                  {timeline.map((event, index) => {
-                    const Icon = getTimelineIcon(event.status);
-                    const colorClass = getTimelineColor(event.status);
-
-                    return (
-                      <div key={event.id} className="flex flex-col items-center min-w-[140px]">
-                        {/* Icon */}
-                        <div className={`w-12 h-12 rounded-full ${colorClass} flex items-center justify-center z-10 mb-3 shadow-lg`}>
-                          <Icon className="h-6 w-6 text-white" />
-                        </div>
-
-                        {/* Content */}
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-gray-900 mb-1 capitalize">
-                            {event.status === 'received_airport'
-                              ? 'Airport'
-                              : event.status === 'received_refinery'
-                              ? 'Refinery'
-                              : event.status.replace('_', ' ')}
-                          </p>
-                          <p className="text-xs text-gray-600 mb-1">
-                            {new Date(event.changed_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </p>
-                          <p className="text-xs text-gray-500">{event.changed_by_name}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Column (2/3) */}
           <div className="lg:col-span-2 space-y-6">
@@ -832,9 +781,99 @@ export function BatchDetailsWorkflow() {
 
           </div>
 
-          {/* Right Column (1/3) - Field Guide */}
+          {/* Right Column (1/3) - Timeline Accordion + Field Guide */}
           <div className="space-y-6">
-            <Card className="border-blue-200 bg-blue-50 sticky top-6">
+            {/* Horizontal Accordion Timeline */}
+            <div className="sticky top-6 space-y-6">
+              <Card className="border-gray-300 shadow-lg overflow-hidden">
+                {/* Timeline Header - Clickable */}
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors bg-gradient-to-r from-blue-50 to-indigo-50"
+                  onClick={() => setTimelineExpanded(!timelineExpanded)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Timeline</p>
+                      <p className="text-xs text-gray-600">{timeline.length} events</p>
+                    </div>
+                  </div>
+                  <button
+                    className="p-2 hover:bg-white rounded-lg transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTimelineExpanded(!timelineExpanded);
+                    }}
+                  >
+                    {timelineExpanded ? (
+                      <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Timeline Content - Expands Horizontally */}
+                <div
+                  className={`transition-all duration-300 ease-in-out ${
+                    timelineExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  } overflow-hidden`}
+                >
+                  <div className="border-t border-gray-200 bg-white">
+                    {timeline.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-8">No timeline events yet</p>
+                    ) : (
+                      <div className="p-4">
+                        {/* Horizontal scrollable timeline */}
+                        <div className="relative pb-4">
+                          {/* Horizontal line */}
+                          <div className="absolute top-6 left-4 right-4 h-0.5 bg-gray-200"></div>
+
+                          {/* Events horizontally */}
+                          <div className="flex gap-6 overflow-x-auto">
+                            {timeline.map((event, index) => {
+                              const Icon = getTimelineIcon(event.status);
+                              const colorClass = getTimelineColor(event.status);
+
+                              return (
+                                <div key={event.id} className="flex flex-col items-center min-w-[120px] flex-shrink-0">
+                                  {/* Icon */}
+                                  <div className={`w-12 h-12 rounded-full ${colorClass} flex items-center justify-center z-10 mb-3 shadow-lg`}>
+                                    <Icon className="h-6 w-6 text-white" />
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="text-center">
+                                    <p className="text-xs font-bold text-gray-900 mb-1 capitalize line-clamp-2">
+                                      {event.status === 'received_airport'
+                                        ? 'Airport'
+                                        : event.status === 'received_refinery'
+                                        ? 'Refinery'
+                                        : event.status.replace('_', ' ')}
+                                    </p>
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      {new Date(event.changed_at).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate">{event.changed_by_name}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Field Guide */}
+              <Card className="border-blue-200 bg-blue-50">
               <CardHeader>
                 <CardTitle className="text-blue-900 flex items-center">
                   <Info className="h-5 w-5 mr-2" />
@@ -873,9 +912,9 @@ export function BatchDetailsWorkflow() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           </div>
         </div>
-
 
       {/* Success Modal */}
       <Modal

@@ -438,22 +438,32 @@ export function BatchDetailsWorkflow() {
             <div className="relative">
               {/* Progress Line */}
               <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200" style={{ left: '2.5rem', right: '2.5rem' }}></div>
+              {/* Green Progress Line for completed steps */}
+              <div
+                className="absolute top-5 left-0 h-0.5 bg-green-500 transition-all duration-500"
+                style={{
+                  left: '2.5rem',
+                  width: `calc(${(statusSteps.filter(s => s.completed).length / (statusSteps.length - 1)) * 100}% - 2.5rem)`
+                }}
+              ></div>
 
               {/* Steps */}
               <div className="relative flex justify-between">
                 {statusSteps.map((step, index) => (
                   <div key={step.key} className="flex flex-col items-center" style={{ width: '12.5%' }}>
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center z-10 mb-2 ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center z-10 mb-2 transition-all duration-300 ${
                         step.completed
-                          ? 'bg-primary-500 text-white'
+                          ? 'bg-green-500 text-white shadow-lg'
                           : step.current
-                          ? 'bg-primary-500 text-white ring-4 ring-primary-100'
+                          ? 'bg-primary-500 text-white ring-4 ring-primary-100 shadow-lg'
                           : 'bg-gray-200 text-gray-400'
                       }`}
                     >
                       {step.completed ? (
                         <CheckCircle className="h-5 w-5" />
+                      ) : step.current ? (
+                        <div className="w-3 h-3 rounded-full bg-white animate-pulse"></div>
                       ) : (
                         <div className="w-3 h-3 rounded-full bg-current"></div>
                       )}
@@ -471,99 +481,99 @@ export function BatchDetailsWorkflow() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Batch Information */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Batch Information */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Main Content - Full Width */}
+          <div className="space-y-6">
+            {/* Batch Information - Compact */}
             <Card>
               <CardHeader>
-                <CardTitle>Batch Information</CardTitle>
+                <CardTitle className="text-lg">Batch Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-                      <Package className="h-5 w-5 text-primary-600" />
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                      <Package className="h-4 w-4 text-primary-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Batch Number</p>
-                      <p className="text-sm font-semibold text-gray-900">{batch.batch_number}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{batch.batch_number}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Weight className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Weight className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Weight</p>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
                         {batch.weight_grams.toFixed(2)}g ({batch.weight_ounces.toFixed(2)} oz)
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="h-5 w-5 text-green-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="h-4 w-4 text-green-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Shipping Date</p>
-                      <p className="text-sm font-semibold text-gray-900">{batch.shipping_date}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{batch.shipping_date}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-purple-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Current Status</p>
-                      <p className="text-sm font-semibold text-gray-900 capitalize">{batch.status.replace(/_/g, ' ')}</p>
+                      <p className="text-sm font-semibold text-gray-900 capitalize truncate">{batch.status.replace(/_/g, ' ')}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="h-5 w-5 text-orange-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-orange-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Origin Site</p>
-                      <p className="text-sm font-semibold text-gray-900">{batch.origin_site_name}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{batch.origin_site_name}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="h-5 w-5 text-teal-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-teal-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">Current Location</p>
-                      <p className="text-sm font-semibold text-gray-900">{batch.current_site_name}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{batch.current_site_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 text-pink-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Created By</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{batch.created_by_name}</p>
                     </div>
                   </div>
 
                   {batch.transportation_company && (
-                    <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="h-5 w-5 text-yellow-600" />
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-4 w-4 text-yellow-600" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs text-gray-500">Transportation</p>
-                        <p className="text-sm font-semibold text-gray-900">{batch.transportation_company}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{batch.transportation_company}</p>
                       </div>
                     </div>
                   )}
-
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
-                      <User className="h-5 w-5 text-pink-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Created By</p>
-                      <p className="text-sm font-semibold text-gray-900">{batch.created_by_name}</p>
-                    </div>
-                  </div>
                 </div>
 
                 {batch.comments && (
@@ -598,9 +608,7 @@ export function BatchDetailsWorkflow() {
             </Card>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Validation Actions */}
+            {/* Validation Actions - Now in main column */}
             {canValidate && (
               <Card className="border-primary-200 bg-primary-50">
                 <CardHeader>
@@ -786,74 +794,87 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Timeline - Collapsible Accordion - Moved from left panel */}
-            <Card>
-              <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setTimelineExpanded(!timelineExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle>Timeline</CardTitle>
-                  <button
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTimelineExpanded(!timelineExpanded);
-                    }}
-                  >
-                    {timelineExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              </CardHeader>
-              {timelineExpanded && (
-                <CardContent>
-                  <div className="space-y-6">
-                    {timeline.length === 0 ? (
-                      <p className="text-sm text-gray-500">No timeline events yet</p>
-                    ) : (
-                      timeline.map((event, index) => {
-                        const Icon = getTimelineIcon(event.status);
-                        const colorClass = getTimelineColor(event.status);
+        </div>
 
-                        return (
-                          <div key={event.id} className="flex items-start space-x-4">
-                            <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                              <Icon className="h-5 w-5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-1">
-                                <p className="font-semibold text-gray-900 capitalize">
-                                  {event.status === 'received_airport'
-                                    ? 'Quality Check Passed'
-                                    : event.status === 'received_refinery'
-                                    ? 'Shipment Initiated'
-                                    : event.status.replace('_', ' ')}
-                                </p>
-                                <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                                  {new Date(event.changed_at).toLocaleDateString()} {new Date(event.changed_at).toLocaleTimeString()}
-                                </p>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-1">
-                                {event.comments ||
-                                  (event.status === 'created' ? 'Initial batch registration at factory' :
-                                   event.status === 'received_airport' ? 'Batch passed initial quality inspection' :
-                                   event.status === 'received_refinery' ? 'Batch handed over to TransGold Logistics' :
-                                   `Batch status changed to ${event.status.replace('_', ' ')}`)}
-                              </p>
-                              <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
-                            </div>
+        {/* Floating Timeline Widget - Similar to Live Gold Price */}
+        <div className="fixed bottom-6 right-6 w-96 z-40">
+          <div className={`relative backdrop-blur-sm rounded-xl border shadow-2xl transition-all duration-300 ${
+            timelineExpanded ? 'bg-white/95' : 'bg-white/90 hover:bg-white/95'
+          }`}>
+            {/* Timeline Header - Clickable */}
+            <div
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/50 transition-colors rounded-t-xl"
+              onClick={() => setTimelineExpanded(!timelineExpanded)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Timeline</p>
+                  <p className="text-xs text-gray-500">{timeline.length} events</p>
+                </div>
+              </div>
+              <button
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTimelineExpanded(!timelineExpanded);
+                }}
+              >
+                {timelineExpanded ? (
+                  <ChevronDown className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <ChevronUp className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </div>
+
+            {/* Timeline Content */}
+            {timelineExpanded && (
+              <div className="border-t border-gray-200">
+                <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+                  {timeline.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No timeline events yet</p>
+                  ) : (
+                    timeline.map((event, index) => {
+                      const Icon = getTimelineIcon(event.status);
+                      const colorClass = getTimelineColor(event.status);
+
+                      return (
+                        <div key={event.id} className="flex items-start space-x-3">
+                          <div className={`w-8 h-8 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
+                            <Icon className="h-4 w-4 text-white" />
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <p className="text-sm font-semibold text-gray-900 capitalize">
+                                {event.status === 'received_airport'
+                                  ? 'Quality Check Passed'
+                                  : event.status === 'received_refinery'
+                                  ? 'Shipment Initiated'
+                                  : event.status.replace('_', ' ')}
+                              </p>
+                              <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                {new Date(event.changed_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-1">
+                              {event.comments ||
+                                (event.status === 'created' ? 'Initial batch registration' :
+                                 event.status === 'received_airport' ? 'Passed quality inspection' :
+                                 event.status === 'received_refinery' ? 'Handed to logistics' :
+                                 `Status: ${event.status.replace('_', ' ')}`)}
+                            </p>
+                            <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

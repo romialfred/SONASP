@@ -481,9 +481,9 @@ export function BatchDetailsWorkflow() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-6">
-          {/* Main Content - Full Width */}
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content - Left Column (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Batch Information - Compact */}
             <Card>
               <CardHeader>
@@ -753,15 +753,18 @@ export function BatchDetailsWorkflow() {
               </Card>
             )}
 
-            {/* Field Guide */}
-            <Card className="border-blue-200 bg-blue-50">
+          </div>
+
+          {/* Right Column (1/3) - Field Guide */}
+          <div className="space-y-6">
+            <Card className="border-blue-200 bg-blue-50 sticky top-6">
               <CardHeader>
                 <CardTitle className="text-blue-900 flex items-center">
                   <Info className="h-5 w-5 mr-2" />
                   Batch Tracking Guide
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div className="bg-blue-100 rounded-lg p-3">
                   <p className="text-sm font-medium text-blue-900 mb-1">Batch Number</p>
                   <p className="text-xs text-blue-700">Unique identifier generated automatically for tracking purposes</p>
@@ -793,7 +796,7 @@ export function BatchDetailsWorkflow() {
                 </div>
               </CardContent>
             </Card>
-
+          </div>
         </div>
 
         {/* Floating Timeline Widget - Similar to Live Gold Price */}
@@ -877,7 +880,6 @@ export function BatchDetailsWorkflow() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Success Modal */}
       <Modal

@@ -18,6 +18,8 @@ import {
   DollarSign,
   CreditCard,
   Info,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
 import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
@@ -68,6 +70,7 @@ export function BatchDetailsWorkflow() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
+  const [timelineExpanded, setTimelineExpanded] = useState(true);
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');
@@ -572,51 +575,24 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Timeline */}
+            {/* Assay Certificates - Moved from right panel */}
             <Card>
               <CardHeader>
-                <CardTitle>Timeline</CardTitle>
+                <CardTitle className="text-lg font-semibold text-amber-600">Assay Certificates</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {timeline.length === 0 ? (
-                    <p className="text-sm text-gray-500">No timeline events yet</p>
-                  ) : (
-                    timeline.map((event, index) => {
-                      const Icon = getTimelineIcon(event.status);
-                      const colorClass = getTimelineColor(event.status);
+                  <AssayCertificateUpload
+                    batchId={id!}
+                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                  />
 
-                      return (
-                        <div key={event.id} className="flex items-start space-x-4">
-                          <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className="h-5 w-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-1">
-                              <p className="font-semibold text-gray-900 capitalize">
-                                {event.status === 'received_airport'
-                                  ? 'Quality Check Passed'
-                                  : event.status === 'received_refinery'
-                                  ? 'Shipment Initiated'
-                                  : event.status.replace('_', ' ')}
-                              </p>
-                              <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                                {new Date(event.changed_at).toLocaleDateString()} {new Date(event.changed_at).toLocaleTimeString()}
-                              </p>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-1">
-                              {event.comments ||
-                                (event.status === 'created' ? 'Initial batch registration at factory' :
-                                 event.status === 'received_airport' ? 'Batch passed initial quality inspection' :
-                                 event.status === 'received_refinery' ? 'Batch handed over to TransGold Logistics' :
-                                 `Batch status changed to ${event.status.replace('_', ' ')}`)}
-                            </p>
-                            <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                  <AssayCertificatesList
+                    batchId={id!}
+                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                    refreshTrigger={certificateRefresh}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -810,26 +786,73 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Assay Certificates */}
+            {/* Timeline - Collapsible Accordion - Moved from left panel */}
             <Card>
-              <CardHeader>
-                <CardTitle>Assay Certificates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <AssayCertificateUpload
-                    batchId={id!}
-                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                  />
-
-                  <AssayCertificatesList
-                    batchId={id!}
-                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
-                    refreshTrigger={certificateRefresh}
-                  />
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setTimelineExpanded(!timelineExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle>Timeline</CardTitle>
+                  <button
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTimelineExpanded(!timelineExpanded);
+                    }}
+                  >
+                    {timelineExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
                 </div>
-              </CardContent>
+              </CardHeader>
+              {timelineExpanded && (
+                <CardContent>
+                  <div className="space-y-6">
+                    {timeline.length === 0 ? (
+                      <p className="text-sm text-gray-500">No timeline events yet</p>
+                    ) : (
+                      timeline.map((event, index) => {
+                        const Icon = getTimelineIcon(event.status);
+                        const colorClass = getTimelineColor(event.status);
+
+                        return (
+                          <div key={event.id} className="flex items-start space-x-4">
+                            <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
+                              <Icon className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-1">
+                                <p className="font-semibold text-gray-900 capitalize">
+                                  {event.status === 'received_airport'
+                                    ? 'Quality Check Passed'
+                                    : event.status === 'received_refinery'
+                                    ? 'Shipment Initiated'
+                                    : event.status.replace('_', ' ')}
+                                </p>
+                                <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                  {new Date(event.changed_at).toLocaleDateString()} {new Date(event.changed_at).toLocaleTimeString()}
+                                </p>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-1">
+                                {event.comments ||
+                                  (event.status === 'created' ? 'Initial batch registration at factory' :
+                                   event.status === 'received_airport' ? 'Batch passed initial quality inspection' :
+                                   event.status === 'received_refinery' ? 'Batch handed over to TransGold Logistics' :
+                                   `Batch status changed to ${event.status.replace('_', ' ')}`)}
+                              </p>
+                              <p className="text-xs text-gray-500">By {event.changed_by_name}</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </div>
         </div>

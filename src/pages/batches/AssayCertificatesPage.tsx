@@ -451,24 +451,26 @@ export function AssayCertificatesPage() {
                         </div>
 
                         {labs.length > 0 && (
-                          <div className="mt-4 pt-3 border-t border-gray-200">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <FlaskConical className="h-4 w-4 text-emerald-600" />
-                              <p className="text-xs text-gray-500">Laboratory:</p>
-                              {labs.map((lab, idx) => (
-                                <span key={idx} className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded">
-                                  {lab}
-                                </span>
-                              ))}
-                              {avgGoldContent && (
-                                <>
-                                  <span className="text-gray-300 mx-1">•</span>
-                                  <span className="text-xs text-gray-500">Avg Gold:</span>
-                                  <span className="text-xs font-medium px-2 py-1 bg-yellow-50 text-yellow-700 rounded">
-                                    {avgGoldContent} g/t
-                                  </span>
-                                </>
-                              )}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FlaskConical className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Laboratory</p>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 pl-6">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Country</p>
+                                <p className="text-sm font-medium text-gray-900">{batch.mining_company_country}</p>
+                              </div>
+                              <div className="col-span-2">
+                                <p className="text-xs text-gray-500 mb-1">Laboratory Name</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {labs.map((lab, idx) => (
+                                    <span key={idx} className="text-sm font-medium text-emerald-700">
+                                      {lab}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -496,81 +498,101 @@ export function AssayCertificatesPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="p-5">
-                      <div className="space-y-2">
-                        {batch.certificates.map((certificate) => (
-                          <div
-                            key={certificate.id}
-                            className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:shadow-sm transition-all bg-white"
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="p-2 bg-blue-50 rounded flex-shrink-0">
-                                  <FileText className="h-4 w-4 text-blue-600" />
-                                </div>
+                    <div className="p-5 bg-gray-50">
+                      <div className="space-y-3">
+                        {batch.certificates.map((certificate) => {
+                          const parsedData = certificate.parsed_data;
 
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-medium text-gray-900 text-sm truncate">
+                          return (
+                            <div
+                              key={certificate.id}
+                              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all bg-white"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                    <p className="font-medium text-gray-900 text-sm">
                                       {certificate.file_name}
                                     </p>
                                     {certificate.certificate_number && (
-                                      <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0">
+                                      <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0">
                                         #{certificate.certificate_number}
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      {new Date(certificate.created_at).toLocaleDateString()}
-                                    </span>
-                                    {certificate.parsed_data?.laboratory_name && (
-                                      <>
-                                        <span className="text-gray-300">•</span>
-                                        <span className="flex items-center gap-1 truncate">
-                                          <FlaskConical className="h-3 w-3 text-emerald-600 flex-shrink-0" />
-                                          <span className="truncate">{certificate.parsed_data.laboratory_name}</span>
-                                        </span>
-                                      </>
+                                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Created Date</p>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {new Date(certificate.created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
+
+                                    {parsedData?.gold_content_gpt && (
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Au g/t</p>
+                                        <p className="text-sm font-semibold text-yellow-700">
+                                          {parsedData.gold_content_gpt}
+                                        </p>
+                                      </div>
                                     )}
-                                    {certificate.parsed_data?.gold_content_gpt && (
-                                      <>
-                                        <span className="text-gray-300">•</span>
-                                        <span className="font-semibold text-yellow-700 flex-shrink-0">
-                                          Au: {certificate.parsed_data.gold_content_gpt} g/t
-                                        </span>
-                                      </>
+
+                                    {parsedData?.gold_purity_percentage && (
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Purity</p>
+                                        <p className="text-sm font-semibold text-yellow-700">
+                                          {parsedData.gold_purity_percentage}%
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {parsedData?.metal_retained_percentage && (
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Metal Retained</p>
+                                        <p className="text-sm font-semibold text-blue-700">
+                                          {parsedData.metal_retained_percentage}%
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {parsedData?.sample_weight_grams && (
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Gold Quantity</p>
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {parsedData.sample_weight_grams} g
+                                        </p>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
+
+                                <div className="flex items-start gap-2 flex-shrink-0">
+                                  <StatusBadge
+                                    status={certificate.approval_status}
+                                    label={certificate.approval_status}
+                                    color={getApprovalStatusColor(certificate.approval_status)}
+                                  />
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setSelectedCertificate(certificate)}
+                                    title="View details"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
 
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <StatusBadge
-                                  status={certificate.approval_status}
-                                  label={certificate.approval_status}
-                                  color={getApprovalStatusColor(certificate.approval_status)}
-                                />
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => setSelectedCertificate(certificate)}
-                                  className="whitespace-nowrap"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              {certificate.parsing_error && (
+                                <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                                  <p className="font-medium">Error: {certificate.parsing_error}</p>
+                                </div>
+                              )}
                             </div>
-
-                            {certificate.parsing_error && (
-                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-                                <p className="font-medium">Error: {certificate.parsing_error}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

@@ -497,81 +497,76 @@ export function AssayCertificatesPage() {
 
                   {isExpanded && (
                     <div className="p-5">
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {batch.certificates.map((certificate) => (
                           <div
                             key={certificate.id}
-                            className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50/30 transition-all"
+                            className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:shadow-sm transition-all bg-white"
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className="p-2 bg-blue-100 rounded">
-                                  <FileText className="h-5 w-5 text-blue-600" />
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="p-2 bg-blue-50 rounded flex-shrink-0">
+                                  <FileText className="h-4 w-4 text-blue-600" />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-medium text-gray-900 truncate">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-medium text-gray-900 text-sm truncate">
                                       {certificate.file_name}
                                     </p>
                                     {certificate.certificate_number && (
-                                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                      <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0">
                                         #{certificate.certificate_number}
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 flex-wrap">
-                                    <span>{new Date(certificate.created_at).toLocaleDateString()}</span>
+                                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {new Date(certificate.created_at).toLocaleDateString()}
+                                    </span>
                                     {certificate.parsed_data?.laboratory_name && (
-                                      <span className="flex items-center gap-1">
-                                        <FlaskConical className="h-3 w-3" />
-                                        {certificate.parsed_data.laboratory_name}
-                                      </span>
+                                      <>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="flex items-center gap-1 truncate">
+                                          <FlaskConical className="h-3 w-3 text-emerald-600 flex-shrink-0" />
+                                          <span className="truncate">{certificate.parsed_data.laboratory_name}</span>
+                                        </span>
+                                      </>
                                     )}
                                     {certificate.parsed_data?.gold_content_gpt && (
-                                      <span className="font-medium text-yellow-700">
-                                        Au: {certificate.parsed_data.gold_content_gpt} g/t
-                                      </span>
+                                      <>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="font-semibold text-yellow-700 flex-shrink-0">
+                                          Au: {certificate.parsed_data.gold_content_gpt} g/t
+                                        </span>
+                                      </>
                                     )}
-                                    {certificate.parsed_data?.gold_purity_percentage && (
-                                      <span className="font-medium text-yellow-700">
-                                        Purity: {certificate.parsed_data.gold_purity_percentage}%
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <StatusBadge
-                                      status={certificate.parsing_status}
-                                      label={certificate.parsing_status}
-                                      color={getParsingStatusColor(certificate.parsing_status)}
-                                    />
-                                    <StatusBadge
-                                      status={certificate.approval_status}
-                                      label={certificate.approval_status}
-                                      color={getApprovalStatusColor(certificate.approval_status)}
-                                    />
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 ml-4">
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <StatusBadge
+                                  status={certificate.approval_status}
+                                  label={certificate.approval_status}
+                                  color={getApprovalStatusColor(certificate.approval_status)}
+                                />
                                 <Button
                                   variant="secondary"
                                   size="sm"
                                   onClick={() => setSelectedCertificate(certificate)}
+                                  className="whitespace-nowrap"
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
 
                             {certificate.parsing_error && (
-                              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-                                <p className="font-medium">Parsing Error:</p>
-                                <p className="mt-1">{certificate.parsing_error}</p>
+                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                                <p className="font-medium">Error: {certificate.parsing_error}</p>
                               </div>
                             )}
                           </div>

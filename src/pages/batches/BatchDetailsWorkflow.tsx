@@ -21,16 +21,21 @@ import {
   ChevronRight,
   ChevronLeft,
   Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
 import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
 import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
+import { BatchDocuments } from '@/components/batch/BatchDocuments';
 import type { AssayCertificate } from '@/services/assayCertificateService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
+import { batchFieldGuideSections } from '@/data/batchFieldGuides';
 import { supabase } from '@/lib/supabase';
 
 interface BatchData {
@@ -71,7 +76,10 @@ export function BatchDetailsWorkflow() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [certificateRefresh, setCertificateRefresh] = useState(0);
-  const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [accordionState, setAccordionState] = useState({
+    fieldGuide: true,
+    timeline: true,
+  });
 
   // Airport receiving form state
   const [receivedWeight, setReceivedWeight] = useState<string>('');
@@ -429,6 +437,13 @@ export function BatchDetailsWorkflow() {
   const isCreator = batch.created_by === user?.id;
   const isPlantManager = user && (user.role === 'factory' || user.role === 'management');
   const canValidate = batch.status === 'created' && isCreator && isPlantManager;
+
+  const toggleAccordion = (section: 'fieldGuide' | 'timeline') => {
+    setAccordionState(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   return (
     <MainLayout>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Eye, CheckCircle, XCircle, Edit, Save } from 'lucide-react';
+import { FileText, Download, Eye, CheckCircle, XCircle, Edit, Save, Award, Beaker, Scale, Sparkles, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -136,216 +136,305 @@ export function AssayCertificateViewer({
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loading />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Certificate Info Card */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary-600" />
-            <h3 className="text-lg font-semibold">Certificate Details</h3>
+    <div className="space-y-6 p-6">
+      {/* Professional Header with Status Indicators */}
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Award className="h-7 w-7 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Certificate Analysis</h2>
+              <p className="text-sm text-gray-600 mb-3">{certificate.file_name}</p>
+
+              <div className="flex flex-wrap gap-3">
+                {/* Parsing Status */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-600">Parsing:</span>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      certificate.parsing_status === 'completed'
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : certificate.parsing_status === 'failed'
+                        ? 'bg-red-100 text-red-800 border border-red-300'
+                        : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                    }`}
+                  >
+                    {certificate.parsing_status === 'completed' ? (
+                      <>
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Completed
+                      </>
+                    ) : certificate.parsing_status === 'failed' ? (
+                      <>
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Failed
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Pending
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Approval Status */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-600">Approval:</span>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      certificate.approval_status === 'approved'
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : certificate.approval_status === 'rejected'
+                        ? 'bg-red-100 text-red-800 border border-red-300'
+                        : 'bg-gray-100 text-gray-800 border border-gray-300'
+                    }`}
+                  >
+                    {certificate.approval_status === 'approved' ? (
+                      <>
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Approved
+                      </>
+                    ) : certificate.approval_status === 'rejected' ? (
+                      <>
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Rejected
+                      </>
+                    ) : (
+                      <>
+                        <Info className="w-3 h-3 mr-1" />
+                        Pending Review
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Upload Date */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-600">Uploaded:</span>
+                  <span className="text-xs font-medium text-gray-900">
+                    {new Date(certificate.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Action Buttons */}
           <div className="flex gap-2">
             <Button
               variant="secondary"
               size="sm"
               onClick={() => setShowPDF(!showPDF)}
+              className="flex items-center gap-2"
             >
-              <Eye className="h-4 w-4 mr-2" />
-              {showPDF ? 'Hide' : 'View'} PDF
+              <Eye className="h-4 w-4" />
+              {showPDF ? 'Hide PDF' : 'View PDF'}
             </Button>
             {pdfUrl && (
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => window.open(pdfUrl, '_blank')}
+                className="flex items-center gap-2"
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4" />
                 Download
               </Button>
             )}
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600">File Name</p>
-            <p className="font-medium text-gray-900">{certificate.file_name}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Upload Date</p>
-            <p className="font-medium text-gray-900">
-              {new Date(certificate.created_at).toLocaleDateString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-600">Parsing Status</p>
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                certificate.parsing_status === 'completed'
-                  ? 'bg-green-100 text-green-800'
-                  : certificate.parsing_status === 'failed'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
-            >
-              {certificate.parsing_status}
-            </span>
-          </div>
-          <div>
-            <p className="text-gray-600">Approval Status</p>
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                certificate.approval_status === 'approved'
-                  ? 'bg-green-100 text-green-800'
-                  : certificate.approval_status === 'rejected'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {certificate.approval_status}
-            </span>
-          </div>
-        </div>
-      </Card>
+      </div>
 
       {/* PDF Viewer */}
       {showPDF && pdfUrl && (
-        <Card className="p-4">
-          <PDFViewer pdfUrl={pdfUrl} />
+        <Card className="border-2 border-gray-200">
+          <div className="p-2">
+            <PDFViewer pdfUrl={pdfUrl} />
+          </div>
         </Card>
       )}
 
-      {/* Parsed Data Card */}
+      {/* Parsed Data Section */}
       {certificateData && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Parsed Assay Data</h3>
+        <div className="space-y-6">
+          {/* Section Header with Edit Button */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Beaker className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Assay Data</h3>
+                <p className="text-sm text-gray-600">Extracted laboratory analysis results</p>
+              </div>
+            </div>
             {!editing && certificate.approval_status === 'pending' && (
-              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
                 Edit Data
               </Button>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Certificate Info */}
-            <FormField label="Certificate Number">
-              <Input
-                value={editing ? editedData.certificate_number || '' : certificateData.certificate_number || 'N/A'}
-                onChange={(e) => setEditedData({ ...editedData, certificate_number: e.target.value })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            <FormField label="Laboratory">
-              <Input
-                value={editing ? editedData.laboratory_name || '' : certificateData.laboratory_name || 'N/A'}
-                onChange={(e) => setEditedData({ ...editedData, laboratory_name: e.target.value })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            {/* Gold Content */}
-            <FormField label="Gold Content (g/t)">
-              <Input
-                type="number"
-                step="0.001"
-                value={editing ? editedData.gold_content_gpt || '' : certificateData.gold_content_gpt || ''}
-                onChange={(e) => setEditedData({ ...editedData, gold_content_gpt: parseFloat(e.target.value) || null })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            <FormField label="Gold Purity (%)">
-              <Input
-                type="number"
-                step="0.01"
-                value={editing ? editedData.gold_purity_percentage || '' : certificateData.gold_purity_percentage || ''}
-                onChange={(e) => setEditedData({ ...editedData, gold_purity_percentage: parseFloat(e.target.value) || null })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            {/* Silver Content */}
-            <FormField label="Silver Content (g/t)">
-              <Input
-                type="number"
-                step="0.001"
-                value={editing ? editedData.silver_content_gpt || '' : certificateData.silver_content_gpt || ''}
-                onChange={(e) => setEditedData({ ...editedData, silver_content_gpt: parseFloat(e.target.value) || null })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            <FormField label="Fineness">
-              <Input
-                type="number"
-                step="0.001"
-                value={editing ? editedData.fineness || '' : certificateData.fineness || ''}
-                onChange={(e) => setEditedData({ ...editedData, fineness: parseFloat(e.target.value) || null })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            {/* Sample Info */}
-            <FormField label="Sample Weight (g)">
-              <Input
-                type="number"
-                step="0.001"
-                value={editing ? editedData.sample_weight_g || '' : certificateData.sample_weight_g || ''}
-                onChange={(e) => setEditedData({ ...editedData, sample_weight_g: parseFloat(e.target.value) || null })}
-                disabled={!editing}
-              />
-            </FormField>
-
-            <FormField label="Extraction Confidence">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      certificateData.extraction_confidence > 0.7
-                        ? 'bg-green-500'
-                        : certificateData.extraction_confidence > 0.4
-                        ? 'bg-yellow-500'
-                        : 'bg-red-500'
-                    }`}
-                    style={{ width: `${certificateData.extraction_confidence * 100}%` }}
+          {/* Certificate Information */}
+          <Card className="border-2 border-blue-100 bg-blue-50/30">
+            <div className="p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                Certificate Information
+              </h4>
+              <div className="grid grid-cols-2 gap-6">
+                <FormField label="Certificate Number">
+                  <Input
+                    value={editing ? editedData.certificate_number || '' : certificateData.certificate_number || 'N/A'}
+                    onChange={(e) => setEditedData({ ...editedData, certificate_number: e.target.value })}
+                    disabled={!editing}
+                    className={editing ? 'border-blue-300 focus:border-blue-500' : ''}
                   />
-                </div>
-                <span className="text-sm font-medium">
-                  {(certificateData.extraction_confidence * 100).toFixed(0)}%
-                </span>
+                </FormField>
+
+                <FormField label="Laboratory Name">
+                  <Input
+                    value={editing ? editedData.laboratory_name || '' : certificateData.laboratory_name || 'N/A'}
+                    onChange={(e) => setEditedData({ ...editedData, laboratory_name: e.target.value })}
+                    disabled={!editing}
+                    className={editing ? 'border-blue-300 focus:border-blue-500' : ''}
+                  />
+                </FormField>
               </div>
-            </FormField>
-          </div>
+            </div>
+          </Card>
+
+          {/* Gold & Silver Analysis */}
+          <Card className="border-2 border-amber-100 bg-amber-50/30">
+            <div className="p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-600" />
+                Precious Metals Analysis
+              </h4>
+              <div className="grid grid-cols-3 gap-6">
+                <FormField label="Gold Content (g/t)">
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={editing ? editedData.gold_content_gpt || '' : certificateData.gold_content_gpt || ''}
+                    onChange={(e) => setEditedData({ ...editedData, gold_content_gpt: parseFloat(e.target.value) || null })}
+                    disabled={!editing}
+                    className={editing ? 'border-amber-300 focus:border-amber-500' : ''}
+                  />
+                </FormField>
+
+                <FormField label="Gold Purity (%)">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editing ? editedData.gold_purity_percentage || '' : certificateData.gold_purity_percentage || ''}
+                    onChange={(e) => setEditedData({ ...editedData, gold_purity_percentage: parseFloat(e.target.value) || null })}
+                    disabled={!editing}
+                    className={editing ? 'border-amber-300 focus:border-amber-500' : ''}
+                  />
+                </FormField>
+
+                <FormField label="Fineness">
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={editing ? editedData.fineness || '' : certificateData.fineness || ''}
+                    onChange={(e) => setEditedData({ ...editedData, fineness: parseFloat(e.target.value) || null })}
+                    disabled={!editing}
+                    className={editing ? 'border-amber-300 focus:border-amber-500' : ''}
+                  />
+                </FormField>
+
+                <FormField label="Silver Content (g/t)">
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={editing ? editedData.silver_content_gpt || '' : certificateData.silver_content_gpt || ''}
+                    onChange={(e) => setEditedData({ ...editedData, silver_content_gpt: parseFloat(e.target.value) || null })}
+                    disabled={!editing}
+                    className={editing ? 'border-amber-300 focus:border-amber-500' : ''}
+                  />
+                </FormField>
+
+                <FormField label="Sample Weight (g)">
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={editing ? editedData.sample_weight_g || '' : certificateData.sample_weight_g || ''}
+                    onChange={(e) => setEditedData({ ...editedData, sample_weight_g: parseFloat(e.target.value) || null })}
+                    disabled={!editing}
+                    className={editing ? 'border-amber-300 focus:border-amber-500' : ''}
+                  />
+                </FormField>
+
+                <FormField label="Extraction Confidence">
+                  <div className="flex items-center gap-3 h-10">
+                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all ${
+                          certificateData.extraction_confidence > 0.7
+                            ? 'bg-green-500'
+                            : certificateData.extraction_confidence > 0.4
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                        }`}
+                        style={{ width: `${certificateData.extraction_confidence * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900 min-w-[45px]">
+                      {(certificateData.extraction_confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </FormField>
+              </div>
+            </div>
+          </Card>
 
           {/* Deleterious Elements */}
           {Object.keys(certificateData.deleterious_elements || {}).length > 0 && (
-            <div className="mt-6">
-              <h4 className="font-medium mb-3">Deleterious Elements</h4>
-              <div className="grid grid-cols-3 gap-3">
-                {Object.entries(certificateData.deleterious_elements).map(([element, value]) => (
-                  <div key={element} className="bg-gray-50 rounded p-3">
-                    <p className="text-xs text-gray-600 capitalize">{element}</p>
-                    <p className="text-sm font-medium">{value} ppm</p>
-                  </div>
-                ))}
+            <Card className="border-2 border-orange-100 bg-orange-50/30">
+              <div className="p-6">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  Deleterious Elements
+                </h4>
+                <div className="grid grid-cols-4 gap-4">
+                  {Object.entries(certificateData.deleterious_elements).map(([element, value]) => (
+                    <div key={element} className="bg-white rounded-lg border border-orange-200 p-4 text-center">
+                      <p className="text-xs text-gray-600 uppercase font-medium mb-1">{element}</p>
+                      <p className="text-lg font-bold text-gray-900">{value}</p>
+                      <p className="text-xs text-gray-500">ppm</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Professional Design */}
           {editing ? (
-            <div className="flex gap-3 mt-6">
-              <Button onClick={handleSaveChanges} loading={submitting}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
+            <div className="flex gap-4 justify-end p-6 bg-gray-50 border-t-2 border-gray-200 -mx-6 -mb-6 rounded-b-lg">
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -353,24 +442,61 @@ export function AssayCertificateViewer({
                   setEditedData(certificateData);
                 }}
                 disabled={submitting}
+                size="lg"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={handleSaveChanges}
+                loading={submitting}
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
               </Button>
             </div>
           ) : (
             certificate.approval_status === 'pending' && (
-              <div className="flex gap-3 mt-6">
-                <Button onClick={handleApprove} loading={submitting}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Data
+              <div className="flex gap-4 justify-center p-8 bg-gradient-to-r from-green-50 to-red-50 border-t-2 border-gray-200 -mx-6 -mb-6 rounded-b-lg">
+                <Button
+                  onClick={handleReject}
+                  disabled={submitting}
+                  size="lg"
+                  className="bg-red-600 hover:bg-red-700 text-white px-8"
+                >
+                  <XCircle className="h-5 w-5 mr-2" />
+                  Reject Certificate
                 </Button>
-                <Button variant="danger" onClick={handleReject} disabled={submitting}>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Reject
+                <Button
+                  onClick={handleApprove}
+                  loading={submitting}
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8"
+                >
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Approve Certificate
                 </Button>
               </div>
             )
           )}
+        </div>
+      )}
+
+      {/* No Data Message */}
+      {!certificateData && certificate.parsing_status !== 'completed' && (
+        <Card className="border-2 border-yellow-200 bg-yellow-50">
+          <div className="p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-yellow-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Certificate Data Not Available
+            </h3>
+            <p className="text-sm text-gray-600">
+              {certificate.parsing_status === 'pending'
+                ? 'The certificate is currently being processed. Please check back later.'
+                : 'The certificate parsing has failed. Please contact support.'}
+            </p>
+          </div>
         </Card>
       )}
     </div>

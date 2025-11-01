@@ -916,8 +916,8 @@ export function BatchDetailsWorkflow() {
         <Modal
           isOpen={true}
           onClose={() => setSelectedCertificate(null)}
-          title={`Certificate: ${selectedCertificate.file_name}`}
-          size="large"
+          title={`Assay Certificate: ${selectedCertificate.file_name}`}
+          size="5xl"
         >
           <AssayCertificateViewer
             certificate={selectedCertificate}

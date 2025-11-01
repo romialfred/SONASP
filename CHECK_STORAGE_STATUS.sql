@@ -21,9 +21,9 @@ FROM storage.buckets
 WHERE id = 'ASSAY-CERTIFICATES';
 
 -- Check 3: Storage policies
-SELECT 
+SELECT
   COUNT(*) as policy_count,
-  CASE 
+  CASE
     WHEN COUNT(*) >= 4 THEN '✅ All policies present'
     WHEN COUNT(*) > 0 THEN '⚠️ Some policies missing'
     ELSE '❌ NO POLICIES'
@@ -31,25 +31,23 @@ SELECT
 FROM pg_policies
 WHERE schemaname = 'storage'
   AND tablename = 'objects'
-  AND policyname LIKE '%certificate%';
+  AND policyname LIKE '%ASSAY-CERTIFICATES%';
 
 -- Check 4: List all certificate policies
-SELECT 
+SELECT
   policyname as policy_name,
-  cmd as operation,
-  qual as using_clause,
-  with_check as check_clause
+  cmd as operation
 FROM pg_policies
 WHERE schemaname = 'storage'
   AND tablename = 'objects'
-  AND policyname LIKE '%certificate%'
+  AND policyname LIKE '%ASSAY-CERTIFICATES%'
 ORDER BY policyname;
 
 -- Check 5: RLS enabled on storage.objects?
-SELECT 
-  tablename,
-  CASE 
-    WHEN relrowsecurity THEN '✅ RLS Enabled'
+SELECT
+  c.relname as table_name,
+  CASE
+    WHEN c.relrowsecurity THEN '✅ RLS Enabled'
     ELSE '❌ RLS Disabled'
   END as rls_status
 FROM pg_class c

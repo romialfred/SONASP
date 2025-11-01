@@ -172,6 +172,13 @@ export function BatchDetailsWorkflow() {
         refinery_location: batchData.refinery?.location || 'Unknown',
         created_by_name: batchData.created_by_user?.full_name || 'Unknown',
         created_by: batchData.created_by,
+        origin_site_name: batchData.mining_company?.name || 'Unknown',
+        origin_site_country: batchData.mining_company?.country || 'Unknown',
+        current_site_name: batchData.status === 'received_refinery' || batchData.status === 'processed'
+          ? batchData.refinery?.name || 'In Transit'
+          : batchData.status === 'received_airport'
+          ? 'Airport'
+          : batchData.mining_company?.name || 'Unknown',
       });
 
       // Load timeline

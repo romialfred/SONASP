@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { extractTextFromPDF, extractAssayData, type ExtractedAssayData } from './pdfParsingService';
 
 export interface AssayCertificate {
   id: string;
@@ -150,36 +151,56 @@ export async function getCertificateSignedUrl(
 }
 
 /**
- * Parse PDF text content (client-side extraction)
- * This is a simplified parser - in production, you'd use a more sophisticated library
+ * Parse PDF text content using pdf.js
  */
 export async function parsePDFText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      try {
-        const typedArray = new Uint8Array(e.target?.result as ArrayBuffer);
-
-        // In a real implementation, you would use pdf.js or similar library
-        // For now, we'll return a placeholder
-        const text = 'PDF text extraction requires pdf.js library';
-        resolve(text);
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
+  try {
+    const result = await extractTextFromPDF(file);
+    return result.text;
+  } catch (error) {
+    console.error('PDF parsing error:', error);
+    throw error;
+  }
 }
 
 /**
- * Extract assay data from text using pattern matching
+ * Extract assay data from text using pattern matching (enhanced)
  */
 export function extractAssayDataFromText(text: string): Partial<AssayCertificateData> {
+  // Use the new enhanced extraction
+  const extracted = extractAssayData(text);
+
   const data: Partial<AssayCertificateData> = {
+    certificate_number: extracted.certificateNumber,
+    certificate_date: extracted.certificateDate,
+    laboratory_name: extracted.laboratoryName,
+    sample_id: extracted.sampleId,
+    sample_weight_g: extracted.sampleWeight,
+
+    gold_content_ppm: extracted.goldContent.ppm,
+    gold_content_gpt: extracted.goldContent.gpt,
+    gold_purity_percentage: extracted.goldContent.percent,
+
+    silver_content_ppm: extracted.silverContent.ppm,
+    silver_content_gpt: extracted.silverContent.gpt,
+    silver_purity_percentage: extracted.silverContent.percent,
+
+    platinum_content_ppm: extracted.platinumPpm,
+    palladium_content_ppm: extracted.palladiumPpm,
+
+    fineness: extracted.fineness,
+
+    copper_percentage: extracted.baseMetals.copper,
+    iron_percentage: extracted.baseMetals.iron,
+    zinc_percentage: extracted.baseMetals.zinc,
+
+    deleterious_elements: extracted.deleteriousElements,
+    extraction_confidence: extracted.confidence,
+    raw_text: text,
+  };
+
+  // Legacy fallback code below (keeping for compatibility)
+  const legacyData: Partial<AssayCertificateData> = {
     deleterious_elements: {},
     extraction_confidence: 0.0,
   };
@@ -331,8 +352,31 @@ export async function parseCertificate(
     // Extract text from PDF
     const text = await parsePDFText(file);
 
-    // Extract data from text
+    // Extract structured data from text
+    const assayData = extractAssayData(text);
     const extractedData = extractAssayDataFromText(text);
+
+    // Update certificate with extracted data (populate direct fields)
+    await supabase
+      .from('assay_certificates')
+      .update({
+        certificate_number: assayData.certificateNumber,
+        issuing_laboratory: assayData.laboratoryName,
+        certificate_date: assayData.certificateDate,
+        sample_id: assayData.sampleId,
+        sample_weight_grams: assayData.sampleWeight,
+        gold_content_ppm: assayData.goldContent.ppm,
+        gold_content_gpt: assayData.goldContent.gpt,
+        gold_content_percent: assayData.goldContent.percent,
+        silver_content_ppm: assayData.silverContent.ppm,
+        silver_content_gpt: assayData.silverContent.gpt,
+        silver_content_percent: assayData.silverContent.percent,
+        platinum_content_ppm: assayData.platinumPpm,
+        palladium_content_ppm: assayData.palladiumPpm,
+        fineness: assayData.fineness,
+        purity_percent: assayData.purity,
+      })
+      .eq('id', certificateId);
 
     // Get certificate to get batch_id
     const { data: certificate } = await supabase

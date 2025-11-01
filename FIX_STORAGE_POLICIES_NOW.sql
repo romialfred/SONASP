@@ -1,80 +1,71 @@
--- ═══════════════════════════════════════════════════════════════════
---  FIX STORAGE POLICIES - COPY AND RUN IN SUPABASE SQL EDITOR
--- ═══════════════════════════════════════════════════════════════════
+-- ============================================================================
+--  CREATE STORAGE POLICY FOR ASSAY CERTIFICATES BUCKET
+--  Run this in Supabase SQL Editor if you can't find the Policies UI
+-- ============================================================================
 
--- Step 1: Verify buckets exist
-SELECT 'Checking buckets...' as status;
-SELECT id, name, public FROM storage.buckets
-WHERE id IN ('documents', 'reports', 'payment-proofs');
+-- This creates the policy to allow authenticated users to upload, view,
+-- update, and delete files in the assay-certificates bucket
 
--- Step 2: Make buckets public
-UPDATE storage.buckets
-SET public = true
-WHERE id IN ('documents', 'reports', 'payment-proofs');
+CREATE POLICY "Allow authenticated users all operations"
+ON storage.objects
+FOR ALL
+TO authenticated
+USING (bucket_id = 'assay-certificates')
+WITH CHECK (bucket_id = 'assay-certificates');
 
-SELECT 'Buckets updated to public' as status;
+-- ============================================================================
+-- VERIFICATION: Run this to check if policy was created
+-- ============================================================================
 
--- Step 3: Enable RLS
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
--- Step 4: Drop old policies to start fresh
-DROP POLICY IF EXISTS "Public Access" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can read" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update files" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete files" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can read public buckets" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload to public buckets" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload documents" ON storage.objects;
-DROP POLICY IF EXISTS "Users can view documents" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update their own documents" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete their own documents" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload reports" ON storage.objects;
-DROP POLICY IF EXISTS "Users can view reports" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload payment proofs" ON storage.objects;
-DROP POLICY IF EXISTS "Users can view payment proofs" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update their own payment proofs" ON storage.objects;
-
-SELECT 'Old policies dropped' as status;
-
--- Step 5: Create new simple, permissive policies
-CREATE POLICY "Anyone can read public buckets"
-  ON storage.objects FOR SELECT
-  USING (bucket_id IN ('documents', 'reports', 'payment-proofs'));
-
-CREATE POLICY "Authenticated users can upload to public buckets"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id IN ('documents', 'reports', 'payment-proofs'));
-
-CREATE POLICY "Authenticated users can read"
-  ON storage.objects FOR SELECT
-  TO authenticated
-  USING (bucket_id IN ('documents', 'reports', 'payment-proofs'));
-
-CREATE POLICY "Users can update files"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (bucket_id IN ('documents', 'reports', 'payment-proofs'))
-  WITH CHECK (bucket_id IN ('documents', 'reports', 'payment-proofs'));
-
-CREATE POLICY "Users can delete files"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (bucket_id IN ('documents', 'reports', 'payment-proofs'));
-
-SELECT 'New policies created' as status;
-
--- Step 6: Verify policies were created
-SELECT 'Verifying policies...' as status;
-SELECT schemaname, tablename, policyname, permissive, roles, cmd
+SELECT 
+    policyname,
+    cmd,
+    roles,
+    qual,
+    with_check
 FROM pg_policies
-WHERE tablename = 'objects' AND schemaname = 'storage';
+WHERE schemaname = 'storage'
+  AND tablename = 'objects'
+  AND policyname LIKE '%assay%';
 
--- Step 7: Final count - should show 5 policies
-SELECT 'Final check...' as status;
-SELECT COUNT(*) as policy_count
-FROM pg_policies
-WHERE tablename = 'objects' AND schemaname = 'storage';
+-- Expected result: 1 row showing your new policy
 
-SELECT '✅ Storage policies configured successfully!' as result;
+-- ============================================================================
+-- WHAT THIS POLICY DOES:
+-- ============================================================================
+-- 
+-- ✅ Allows logged-in users (authenticated) to:
+--    - Upload files (INSERT)
+--    - View files (SELECT)
+--    - Update files (UPDATE)
+--    - Delete files (DELETE)
+-- 
+-- ✅ Only in the 'assay-certificates' bucket
+-- ✅ Not accessible to public/anonymous users
+-- ✅ Secure by default
+--
+-- ============================================================================
+-- HOW TO USE:
+-- ============================================================================
+--
+-- 1. Copy the CREATE POLICY statement above (lines 10-15)
+-- 2. Go to Supabase Dashboard → SQL Editor
+-- 3. Paste and click "RUN"
+-- 4. Should see: "Success. No rows returned"
+-- 5. Run the verification query (lines 21-28)
+-- 6. Should see 1 row with your policy
+-- 7. ✅ Done!
+--
+-- ============================================================================
+-- TEST:
+-- ============================================================================
+--
+-- After running this:
+-- 1. Refresh your Gold Shipper app (F5)
+-- 2. Login
+-- 3. Go to Batches → Any batch
+-- 4. Scroll down to "Assay Certificates"
+-- 5. Try uploading a PDF
+-- 6. Should work! ✅
+--
+-- ============================================================================

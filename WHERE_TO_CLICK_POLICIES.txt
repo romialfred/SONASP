@@ -1,0 +1,181 @@
+================================================================================
+              WHERE TO FIND "POLICIES" - BASED ON YOUR SCREEN
+================================================================================
+
+IMPORTANT: The Policies tab is in the LEFT SIDEBAR, not at the top!
+
+================================================================================
+YOUR CURRENT SCREEN
+================================================================================
+
+You are here:
+✅ Storage (left sidebar main menu)
+✅ assay-certificates bucket (selected)
+✅ Showing the files upload area
+
+================================================================================
+WHERE TO CLICK (LOOK AT LEFT SIDEBAR)
+================================================================================
+
+Left Sidebar Structure:
+┌─────────────────────────────────┐
+│ Storage                         │
+├─────────────────────────────────┤
+│ + New bucket                    │
+│ 🔍 Search buckets...            │
+│                                 │
+│ ALL BUCKETS                     │
+│   documents                     │
+│   reports                       │
+│   payment-proofs                │
+│ → assay-certificates  ← (You are here, red circle)
+│                                 │
+│ CONFIGURATION                   │
+│ → Policies  ← CLICK HERE! ✅    │
+│   Settings                      │
+└─────────────────────────────────┘
+
+================================================================================
+STEP-BY-STEP FROM YOUR CURRENT SCREEN
+================================================================================
+
+1. Look at LEFT sidebar (not the top)
+
+2. Scroll down in sidebar if needed
+
+3. Find section called "CONFIGURATION"
+
+4. Under CONFIGURATION, you'll see:
+   - Policies  ← CLICK THIS
+   - Settings
+
+5. Click on "Policies"
+
+6. You'll see the policies page for assay-certificates bucket
+
+7. Click "New Policy" button
+
+8. Follow the form instructions from earlier guide
+
+================================================================================
+WHAT YOU'LL SEE AFTER CLICKING "POLICIES"
+================================================================================
+
+The main area will change to show:
+
+┌─────────────────────────────────────────────────────────────┐
+│ Policies for assay-certificates                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ No policies found                                           │
+│                                                             │
+│                                [+ New Policy]  ← Click this │
+└─────────────────────────────────────────────────────────────┘
+
+================================================================================
+THEN CONTINUE WITH POLICY CREATION
+================================================================================
+
+Once you click "New Policy", follow these steps:
+
+1. Click "For full customization"
+
+2. Fill the form:
+   - Policy name: Allow authenticated users all operations
+   - Allowed operation: ALL
+   - Target roles: authenticated
+   - USING: bucket_id = 'assay-certificates'
+   - WITH CHECK: bucket_id = 'assay-certificates'
+
+3. Click "Save policy"
+
+4. Done! ✅
+
+================================================================================
+VISUAL REFERENCE FROM YOUR SCREEN
+================================================================================
+
+Your current location in sidebar:
+   documents
+   reports  
+   payment-proofs
+   assay-certificates  ← YOU ARE HERE (red circle in your screenshot)
+   
+Below that, you should see:
+   CONFIGURATION
+   ├─ Policies      ← CLICK HERE!
+   └─ Settings
+
+If you don't see "CONFIGURATION" section:
+→ Scroll down in the left sidebar
+→ It's below the bucket list
+
+================================================================================
+ALTERNATIVE: IF YOU STILL DON'T SEE IT
+================================================================================
+
+Some Supabase versions have policies elsewhere. Try this:
+
+Method 1: Click the three dots (•••) next to bucket name
+→ Look for "Policies" option in the menu
+
+Method 2: Use the Settings gear icon
+→ Sometimes policies are under Settings
+
+Method 3: Look at the very bottom of left sidebar
+→ Scroll all the way down
+→ Configuration section might be collapsed
+
+================================================================================
+QUICK SQL ALTERNATIVE (IF POLICIES UI NOT WORKING)
+================================================================================
+
+If you really can't find the Policies UI, you can run this SQL:
+
+Go to: SQL Editor (left sidebar, main menu)
+
+Run this:
+
+CREATE POLICY "Allow authenticated users all operations"
+ON storage.objects
+FOR ALL
+TO authenticated
+USING (bucket_id = 'assay-certificates')
+WITH CHECK (bucket_id = 'assay-certificates');
+
+This will create the policy directly!
+
+================================================================================
+VERIFY POLICY WAS CREATED
+================================================================================
+
+After creating (either way), verify with this SQL:
+
+SELECT *
+FROM pg_policies
+WHERE tablename = 'objects'
+  AND schemaname = 'storage'
+  AND policyname LIKE '%assay%';
+
+If you see a row returned = Policy exists! ✅
+
+================================================================================
+SUMMARY
+================================================================================
+
+Based on your screenshot:
+
+1. ✅ You're in the right place (assay-certificates bucket)
+2. ✅ Bucket exists and is ready
+3. ❌ You need to add the policy
+
+To add policy:
+→ Look at LEFT sidebar
+→ Find "CONFIGURATION" section (below bucket list)
+→ Click "Policies"
+→ Click "New Policy"
+→ Fill form and save
+
+OR use SQL Editor method above.
+
+================================================================================

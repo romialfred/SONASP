@@ -1,174 +1,75 @@
 ================================================================================
-                    STEP 3: ADD STORAGE POLICY
-              (Simple Visual Guide - Follow the Numbers)
+STEP 3: SET YOUR USER AS MANAGEMENT - COPY/PASTE THIS
 ================================================================================
 
-WHERE: Supabase Dashboard → Storage → assay-certificates bucket
+INSTRUCTIONS:
+1. First, run CHECK_USER_SCHEMA.sql to find your user ID
+2. Copy your UUID (example: 12345678-1234-1234-1234-123456789abc)
+3. Replace 'YOUR_USER_ID_HERE' below with your actual UUID
+4. Copy the entire SQL block below
+5. Paste in Supabase SQL Editor
+6. Click "Run"
 
 ================================================================================
-CLICK PATH (Follow These Arrows)
+SQL TO EXECUTE (replace YOUR_USER_ID_HERE):
 ================================================================================
 
-1. Supabase Dashboard
-   ↓
-2. Click "Storage" (left sidebar)
-   ↓
-3. Click "assay-certificates" bucket
-   ↓
-4. Click "Policies" tab (at the top)
-   ↓
-5. Click "New Policy" button
-   ↓
-6. Click "For full customization"
-   ↓
-7. Fill the form (see below)
-   ↓
-8. Click "Save policy"
-   ↓
-9. ✅ Done!
+-- Option 1: Update existing profile
+UPDATE user_profiles
+SET 
+  role = 'management',
+  is_active = true
+WHERE id = 'YOUR_USER_ID_HERE';
+
+-- Option 2: If UPDATE returns 0 rows, create profile
+INSERT INTO user_profiles (
+  id,
+  email,
+  full_name,
+  role,
+  is_active,
+  two_factor_enabled
+)
+SELECT 
+  id,
+  email,
+  COALESCE(raw_user_meta_data->>'full_name', 'Admin User'),
+  'management',
+  true,
+  false
+FROM auth.users
+WHERE id = 'YOUR_USER_ID_HERE'
+ON CONFLICT (id) DO UPDATE
+SET role = 'management', is_active = true;
+
+-- Verify the result
+SELECT 
+  id,
+  email,
+  full_name,
+  role,
+  is_active
+FROM user_profiles
+WHERE id = 'YOUR_USER_ID_HERE';
 
 ================================================================================
-FORM TO FILL (Step 7 Details)
+EXPECTED OUTPUT:
 ================================================================================
 
-You'll see a form. Fill it like this:
+After running, you should see:
 
-┌────────────────────────────────────────────────────────────┐
-│ Policy name (optional)                                     │
-│ ┌────────────────────────────────────────────────────────┐ │
-│ │ Allow authenticated users all operations               │ │ ← Type this
-│ └────────────────────────────────────────────────────────┘ │
-│                                                            │
-│ Allowed operation                                          │
-│ ┌─────────┐                                               │
-│ │ ALL   ▼ │ ← Select "ALL" from dropdown                 │
-│ └─────────┘                                               │
-│                                                            │
-│ Target roles                                               │
-│ ┌──────────────────┐                                      │
-│ │ authenticated  ▼ │ ← Select "authenticated"            │
-│ └──────────────────┘                                      │
-│                                                            │
-│ USING expression                                           │
-│ ┌────────────────────────────────────────────────────────┐ │
-│ │ bucket_id = 'assay-certificates'                       │ │ ← Copy/paste
-│ └────────────────────────────────────────────────────────┘ │
-│                                                            │
-│ WITH CHECK expression                                      │
-│ ┌────────────────────────────────────────────────────────┐ │
-│ │ bucket_id = 'assay-certificates'                       │ │ ← Copy/paste
-│ └────────────────────────────────────────────────────────┘ │
-│                                                            │
-│              [Review]  [Save policy]  ← Click these        │
-└────────────────────────────────────────────────────────────┘
+role: management
+is_active: true
+
+If you see this, SUCCESS! ✅
 
 ================================================================================
-COPY-PASTE VALUES
+NEXT STEP:
 ================================================================================
 
-For USING expression, copy this:
-bucket_id = 'assay-certificates'
-
-For WITH CHECK expression, copy this (same):
-bucket_id = 'assay-certificates'
-
-IMPORTANT: Don't forget the quotes around 'assay-certificates'
-
-================================================================================
-IF YOU SEE SQL EDITOR INSTEAD
-================================================================================
-
-Some Supabase versions show a SQL editor. If so, paste this entire block:
-
-CREATE POLICY "Allow authenticated users all operations"
-ON storage.objects
-FOR ALL
-TO authenticated
-USING (bucket_id = 'assay-certificates')
-WITH CHECK (bucket_id = 'assay-certificates');
-
-Then click "Save".
-
-================================================================================
-VERIFICATION
-================================================================================
-
-After saving, you should see in the Policies tab:
-
-┌────────────────────────────────────────────────────────────┐
-│ Policies (1)                                               │
-├────────────────────────────────────────────────────────────┤
-│ ✅ Allow authenticated users all operations                │
-│    Command: ALL                                            │
-│    Roles: authenticated                                    │
-└────────────────────────────────────────────────────────────┘
-
-If you see this = SUCCESS! ✅
-
-================================================================================
-QUICK TEST
-================================================================================
-
-Test in Dashboard:
-1. Click "Files" tab (top of bucket page)
-2. Click "Upload" button
-3. Select any PDF file
-4. If upload works = Policy is correct! ✅
-
-Test in App:
-1. Refresh Gold Shipper (F5)
-2. Login
-3. Go to Batches → Any batch
-4. Scroll down, find "Assay Certificates"
-5. See upload button? = Working! ✅
-
-================================================================================
-TROUBLESHOOTING
-================================================================================
-
-Problem: "Permission denied" when uploading
-→ Check: Role is "authenticated" (not "anon" or "public")
-→ Check: bucket_id has quotes: 'assay-certificates'
-
-Problem: Policy not showing after save
-→ Refresh the Policies tab
-→ Or go back to Storage list and re-enter bucket
-
-Problem: Can't find "Policies" tab
-→ Make sure you clicked ON the bucket name
-→ Not just hovering over it
-
-================================================================================
-WHAT THIS POLICY DOES
-================================================================================
-
-Simple explanation:
-"Allow logged-in users to upload, view, update, and delete files 
- in the assay-certificates bucket only."
-
-Security:
-✅ Only authenticated users (logged in)
-✅ Only this specific bucket
-✅ Not accessible to public
-✅ Secure by default
-
-================================================================================
-NEXT STEPS
-================================================================================
-
-After policy is saved:
-
-1. ✅ Close Supabase Dashboard
-2. ✅ Go to Gold Shipper app
-3. ✅ Refresh page (F5)
-4. ✅ Test upload feature
-5. ✅ Enjoy automatic PDF parsing! 🎉
-
-================================================================================
-NEED MORE HELP?
-================================================================================
-
-See detailed guide: STORAGE_POLICY_DETAILED_STEPS.md
-Full documentation: ASSAY_CERTIFICATE_COMPLETE_GUIDE.md
+1. Refresh your application (F5)
+2. Go to Administration → User Management
+3. Click "Create User"
+4. Test user creation
 
 ================================================================================

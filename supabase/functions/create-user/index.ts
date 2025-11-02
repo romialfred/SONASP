@@ -253,7 +253,7 @@ Deno.serve(async (req: Request) => {
         console.log('[create-user] Sending activation email...');
 
         const emailResponse = await fetch(
-          `${supabaseUrl}/functions/v1/send-activation-email`,
+          `${supabaseUrl}/functions/v1/send-email`,
           {
             method: 'POST',
             headers: {

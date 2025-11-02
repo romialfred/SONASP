@@ -24,11 +24,13 @@ import {
 import { AssayCertificateUpload } from '@/components/batch/AssayCertificateUpload';
 import { AssayCertificatesList } from '@/components/batch/AssayCertificatesList';
 import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
+import { BatchDocuments } from '@/components/batch/BatchDocuments';
 import type { AssayCertificate } from '@/services/assayCertificateService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { Tabs } from '@/components/ui/Tabs';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { supabase } from '@/lib/supabase';
 
@@ -612,25 +614,52 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Assay Certificates - Full Width */}
+            {/* Documents and Certificates Tabs */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-amber-600">Assay Certificates</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">Batch Lifecycle Documents</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <AssayCertificateUpload
-                    batchId={id!}
-                    onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                    onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
-                  />
+                <Tabs
+                  tabs={[
+                    {
+                      id: 'documents',
+                      label: 'Documents',
+                      icon: FileText,
+                    },
+                    {
+                      id: 'certificates',
+                      label: 'Assay Certificates',
+                      icon: FileText,
+                    },
+                  ]}
+                  defaultTab="documents"
+                >
+                  {(activeTab) => (
+                    <>
+                      {activeTab === 'documents' && (
+                        <div className="-mx-6 -mt-6">
+                          <BatchDocuments batchId={id!} batchStatus={batch.status} />
+                        </div>
+                      )}
+                      {activeTab === 'certificates' && (
+                        <div className="space-y-6">
+                          <AssayCertificateUpload
+                            batchId={id!}
+                            onUploadComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                            onParseComplete={() => setCertificateRefresh((prev) => prev + 1)}
+                          />
 
-                  <AssayCertificatesList
-                    batchId={id!}
-                    onViewCertificate={(cert) => setSelectedCertificate(cert)}
-                    refreshTrigger={certificateRefresh}
-                  />
-                </div>
+                          <AssayCertificatesList
+                            batchId={id!}
+                            onViewCertificate={(cert) => setSelectedCertificate(cert)}
+                            refreshTrigger={certificateRefresh}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </Tabs>
               </CardContent>
             </Card>
 

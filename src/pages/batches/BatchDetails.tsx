@@ -282,16 +282,16 @@ export function BatchDetails() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* MAIN CONTENT - Full width on left */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Batch Information */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* MAIN CONTENT - 3 columns on left */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Batch Information - Full width with 3 columns */}
             <Card>
               <CardHeader>
                 <CardTitle>Batch Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary-100 rounded-lg">
                       <Package className="h-5 w-5 text-primary-600" />
@@ -429,7 +429,7 @@ export function BatchDetails() {
               </CardContent>
             </Card>
 
-            {/* Assay Certificates - Below Batch Information */}
+            {/* Assay Certificates - Full width */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-amber-600">
@@ -454,7 +454,7 @@ export function BatchDetails() {
             </Card>
           </div>
 
-          {/* RIGHT PANEL - Sidebar */}
+          {/* RIGHT PANEL - Narrow sidebar (1/4 width) */}
           <div className="space-y-6">
             {/* Timeline - Collapsible Accordion */}
             <Card>

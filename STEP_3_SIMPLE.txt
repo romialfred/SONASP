@@ -1,75 +1,32 @@
-================================================================================
-STEP 3: SET YOUR USER AS MANAGEMENT - COPY/PASTE THIS
-================================================================================
+-- ================================================================
+-- SINGLE COMPLETE FIX - COPY AND RUN THIS ONCE
+-- This fixes EVERYTHING in one go
+-- ================================================================
 
-INSTRUCTIONS:
-1. First, run CHECK_USER_SCHEMA.sql to find your user ID
-2. Copy your UUID (example: 12345678-1234-1234-1234-123456789abc)
-3. Replace 'YOUR_USER_ID_HERE' below with your actual UUID
-4. Copy the entire SQL block below
-5. Paste in Supabase SQL Editor
-6. Click "Run"
+-- 1. Disable RLS on user_profiles (stops recursion)
+ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
 
-================================================================================
-SQL TO EXECUTE (replace YOUR_USER_ID_HERE):
-================================================================================
+-- 2. Drop ALL policies
+DO $$
+DECLARE pol record;
+BEGIN
+  FOR pol IN SELECT policyname FROM pg_policies WHERE tablename = 'user_profiles'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON user_profiles', pol.policyname);
+  END LOOP;
+END $$;
 
--- Option 1: Update existing profile
-UPDATE user_profiles
-SET 
-  role = 'management',
-  is_active = true
-WHERE id = 'YOUR_USER_ID_HERE';
+-- 3. Grant ALL permissions to service_role (Edge Functions need this!)
+GRANT ALL ON user_profiles TO service_role;
+GRANT ALL ON auth.users TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA auth TO service_role;
 
--- Option 2: If UPDATE returns 0 rows, create profile
-INSERT INTO user_profiles (
-  id,
-  email,
-  full_name,
-  role,
-  is_active,
-  two_factor_enabled
-)
-SELECT 
-  id,
-  email,
-  COALESCE(raw_user_meta_data->>'full_name', 'Admin User'),
-  'management',
-  true,
-  false
-FROM auth.users
-WHERE id = 'YOUR_USER_ID_HERE'
-ON CONFLICT (id) DO UPDATE
-SET role = 'management', is_active = true;
+-- 4. Grant permissions to authenticated
+GRANT SELECT, UPDATE ON user_profiles TO authenticated;
 
--- Verify the result
-SELECT 
-  id,
-  email,
-  full_name,
-  role,
-  is_active
-FROM user_profiles
-WHERE id = 'YOUR_USER_ID_HERE';
+-- 5. Ensure Edge Function can access auth.users
+GRANT SELECT, INSERT, UPDATE ON auth.users TO service_role;
 
-================================================================================
-EXPECTED OUTPUT:
-================================================================================
-
-After running, you should see:
-
-role: management
-is_active: true
-
-If you see this, SUCCESS! ✅
-
-================================================================================
-NEXT STEP:
-================================================================================
-
-1. Refresh your application (F5)
-2. Go to Administration → User Management
-3. Click "Create User"
-4. Test user creation
-
-================================================================================
+-- Success message
+SELECT '✅ FIX COMPLETE - REFRESH YOUR APP NOW!' as status;

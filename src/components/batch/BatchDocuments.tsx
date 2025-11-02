@@ -363,115 +363,171 @@ export function BatchDocuments({ batchId, batchStatus }: BatchDocumentsProps) {
         </CardContent>
       </Card>
 
-      {/* Upload Modal */}
+      {/* Upload Modal - Enhanced Professional Design */}
       <Modal
         isOpen={showUploadModal}
         onClose={() => {
           setShowUploadModal(false);
           resetUploadForm();
         }}
-        title="Upload Batch Document"
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <Upload className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Upload Document</h2>
+              <p className="text-sm text-gray-500">Add a new document to this batch</p>
+            </div>
+          </div>
+        }
         size="lg"
       >
-        <form onSubmit={handleUpload} className="space-y-4">
+        <form onSubmit={handleUpload} className="space-y-6">
           {uploadError && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-800">{uploadError}</p>
+            <div className="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4 flex items-start gap-3 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Upload Error</p>
+                <p className="text-sm text-red-700 mt-1">{uploadError}</p>
+              </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Document Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={documentName}
-              onChange={(e) => setDocumentName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., Shipping Report Q4 2024"
-              required
-            />
+          {/* Document Information Section */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 space-y-4 border border-blue-200">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-blue-500 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">Document Information</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Document Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={documentName}
+                  onChange={(e) => setDocumentName(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white shadow-sm"
+                  placeholder="e.g., Shipping Report Q4 2024"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Document Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value as DocumentType)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white shadow-sm appearance-none"
+                  required
+                >
+                  {Object.entries(DOCUMENT_TYPE_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Lifecycle Stage
+                  <span className="text-xs font-normal text-gray-500 ml-2">(Optional)</span>
+                </label>
+                <select
+                  value={lifecycleStage}
+                  onChange={(e) => setLifecycleStage(e.target.value as LifecycleStage | '')}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white shadow-sm appearance-none"
+                >
+                  <option value="">Select stage...</option>
+                  {Object.entries(LIFECYCLE_STAGE_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Document Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={documentType}
-              onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              {Object.entries(DOCUMENT_TYPE_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
+          {/* File Upload Section */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 space-y-4 border border-amber-200">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-amber-500 flex items-center justify-center">
+                <Upload className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">File Upload</h3>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select File <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-3 border-2 border-dashed border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-white hover:file:bg-amber-600 file:cursor-pointer cursor-pointer"
+                  required
+                />
+              </div>
+              <div className="mt-3 flex items-start gap-2 bg-amber-100 rounded-lg p-3">
+                <CheckCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800">
+                  <span className="font-semibold">Supported formats:</span> PDF, JPG, PNG, DOC, DOCX
+                  <br />
+                  <span className="font-semibold">Maximum size:</span> 10MB
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lifecycle Stage (Optional)
-            </label>
-            <select
-              value={lifecycleStage}
-              onChange={(e) => setLifecycleStage(e.target.value as LifecycleStage | '')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">None</option>
-              {Object.entries(LIFECYCLE_STAGE_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              File <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Supported formats: PDF, JPG, PNG, DOC, DOCX (Max 10MB)
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description (Optional)
-            </label>
+          {/* Description Section */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 space-y-3 border border-green-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-lg bg-green-500 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Additional Notes
+                <span className="text-xs font-normal text-gray-500 ml-2">(Optional)</span>
+              </h3>
+            </div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Additional notes about this document..."
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all bg-white shadow-sm resize-none"
+              placeholder="Add any additional notes or context about this document..."
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-2">
             <Button
               type="submit"
               variant="primary"
-              className="flex-1"
+              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
               disabled={uploading}
             >
               {uploading ? (
-                'Uploading...'
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Uploading...</span>
+                </div>
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-5 w-5 mr-2" />
                   Upload Document
                 </>
               )}
@@ -484,6 +540,7 @@ export function BatchDocuments({ batchId, batchStatus }: BatchDocumentsProps) {
                 resetUploadForm();
               }}
               disabled={uploading}
+              className="px-6 py-3 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 font-semibold rounded-xl transition-all duration-200"
             >
               Cancel
             </Button>

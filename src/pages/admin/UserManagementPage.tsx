@@ -83,6 +83,13 @@ export default function UserManagementPage() {
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [userCredentials, setUserCredentials] = useState<{
+    email: string;
+    full_name: string;
+    temporary_password: string;
+    activation_url?: string;
+  } | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -282,10 +289,14 @@ export default function UserManagementPage() {
 
       alert.success(`User created successfully! ${result.message || ''}`);
 
-      // Show password to admin
-      if (result.temporary_password) {
-        alert.info(`Temporary Password: ${result.temporary_password}`, 10000);
-      }
+      // Show credentials modal with all information
+      setUserCredentials({
+        email: formData.email,
+        full_name: formData.full_name,
+        temporary_password: result.temporary_password || formData.password,
+        activation_url: result.activation_url,
+      });
+      setShowCredentialsModal(true);
 
       // Reset form and reload users
       setFormData({
@@ -854,6 +865,172 @@ export default function UserManagementPage() {
               <Button onClick={handleSavePermissions}>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Save Permissions
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* User Credentials Modal */}
+        <Modal
+          isOpen={showCredentialsModal}
+          onClose={() => setShowCredentialsModal(false)}
+          title="User Created Successfully"
+        >
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-green-900">
+                  Account Created!
+                </h3>
+              </div>
+              <p className="text-sm text-green-700">
+                Please save these credentials and send them to the user securely.
+              </p>
+            </div>
+
+            {userCredentials && (
+              <div className="space-y-4">
+                {/* User Details */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="bg-gray-50 border border-gray-300 rounded-md p-3 font-medium">
+                    {userCredentials.full_name}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="bg-gray-50 border border-gray-300 rounded-md p-3 font-mono text-sm">
+                    {userCredentials.email}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(userCredentials.email);
+                      alert.success('Email copied to clipboard!');
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                  >
+                    Copy email
+                  </button>
+                </div>
+
+                {/* Temporary Password */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Temporary Password
+                  </label>
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-md p-3">
+                    <p className="font-mono text-lg font-bold text-yellow-900 break-all">
+                      {userCredentials.temporary_password}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(userCredentials.temporary_password);
+                      alert.success('Password copied to clipboard!');
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                  >
+                    Copy password
+                  </button>
+                </div>
+
+                {/* Activation URL (if available) */}
+                {userCredentials.activation_url && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Activation Link
+                    </label>
+                    <div className="bg-blue-50 border border-blue-300 rounded-md p-3">
+                      <p className="font-mono text-xs text-blue-900 break-all">
+                        {userCredentials.activation_url}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (userCredentials.activation_url) {
+                          navigator.clipboard.writeText(userCredentials.activation_url);
+                          alert.success('Activation link copied to clipboard!');
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                    >
+                      Copy activation link
+                    </button>
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">Instructions for User:</h4>
+                  <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                    <li>Use the email address as your username</li>
+                    <li>Log in with the temporary password provided</li>
+                    {userCredentials.activation_url && (
+                      <li>Click the activation link to activate your account</li>
+                    )}
+                    <li>You will be required to change your password on first login</li>
+                    <li>Password must be at least 12 characters with uppercase, lowercase, number, and special character</li>
+                    <li>Two-Factor Authentication (2FA) setup is mandatory</li>
+                  </ol>
+                </div>
+
+                {/* Warning */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <Shield className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-red-900 mb-1">Security Notice</h4>
+                      <p className="text-sm text-red-700">
+                        This temporary password will only be shown once. Please copy it now and send it to the user through a secure channel (not email). The user must activate their account within 24 hours.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Copy All Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const text = `
+Gold Shipper Account Credentials
+
+Full Name: ${userCredentials.full_name}
+Email: ${userCredentials.email}
+Temporary Password: ${userCredentials.temporary_password}
+${userCredentials.activation_url ? `Activation Link: ${userCredentials.activation_url}` : ''}
+
+Instructions:
+1. Use your email address as username
+2. Log in with the temporary password
+${userCredentials.activation_url ? '3. Click the activation link to activate your account\n' : ''}
+${userCredentials.activation_url ? '4' : '3'}. Change your password on first login
+${userCredentials.activation_url ? '5' : '4'}. Set up Two-Factor Authentication (2FA)
+
+⚠️ IMPORTANT: Change your password immediately after first login.
+⚠️ This temporary password expires in 24 hours.
+                    `.trim();
+
+                    navigator.clipboard.writeText(text);
+                    alert.success('All credentials copied to clipboard!');
+                  }}
+                  className="w-full"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Copy All Credentials
+                </Button>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button onClick={() => setShowCredentialsModal(false)}>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Done
               </Button>
             </div>
           </div>

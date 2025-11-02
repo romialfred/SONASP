@@ -21,6 +21,7 @@ import { safeFetch } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { logUserAction } from '@/lib/auditLog';
 import type { UserRole } from '@/types/auth';
+import { createUser, resetUserPassword, checkActivationSystemAvailable, createUserDirect } from '@/services/userManagementService';
 
 interface User {
   id: string;
@@ -541,35 +542,50 @@ export function UserManagement() {
     setSaving(true);
     try {
       if (viewMode === 'create') {
-        // Create user via Edge Function
-        const { data: { session } } = await supabase.auth.getSession();
+        // Check if activation system is available
+        const hasActivationSystem = await checkActivationSystemAvailable();
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              password: formData.password,
-              full_name: formData.fullName,
-              phone: formData.phone,
-              role: formData.role,
-              is_active: formData.isActive,
-              permissions: permissions,
-            }),
-          }
-        );
+        console.log('[UserManagement] Activation system available:', hasActivationSystem);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create user');
+        let result;
+        if (hasActivationSystem) {
+          // Use Edge Function with activation system
+          result = await createUser({
+            email: formData.email,
+            password: formData.password,
+            full_name: formData.fullName,
+            phone: formData.phone,
+            role: formData.role,
+            is_active: formData.isActive,
+            permissions: permissions,
+          });
+        } else {
+          // Fallback to direct creation
+          console.warn('[UserManagement] Using fallback direct creation mode');
+          result = await createUserDirect({
+            email: formData.email,
+            password: formData.password,
+            full_name: formData.fullName,
+            phone: formData.phone,
+            role: formData.role,
+            is_active: formData.isActive,
+            permissions: permissions,
+          });
         }
 
-        addToast('User created successfully', 'success');
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create user');
+        }
+
+        // Show success message with credentials
+        if (result.temporary_password) {
+          addToast(
+            `User created successfully!\n\nEmail: ${formData.email}\nTemporary Password: ${result.temporary_password}\n\n${hasActivationSystem ? 'Activation email sent.' : 'Please share these credentials securely.'}`,
+            'success'
+          );
+        } else {
+          addToast('User created successfully', 'success');
+        }
       } else if (viewMode === 'edit' && selectedUserId) {
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -686,6 +702,40 @@ export function UserManagement() {
       fetchUsers();
     } catch (error: any) {
       addToast(error.message || 'Failed to update user status', 'error');
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    if (!currentUser) return;
+
+    if (!confirm('Are you sure you want to reset this user\'s password? The user will receive an email with a temporary password.')) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const result = await resetUserPassword(userId);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
+      await logUserAction(
+        currentUser.id,
+        currentUser.email,
+        'RESET_PASSWORD',
+        userId,
+        'Reset user password'
+      );
+
+      addToast(
+        `Password reset successfully!\n\nTemporary Password: ${result.temporary_password}\n\nAn email has been sent to the user.`,
+        'success'
+      );
+    } catch (error: any) {
+      addToast(error.message || 'Failed to reset password', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -859,6 +909,16 @@ export function UserManagement() {
               ) : (
                 <Unlock className="h-4 w-4 text-accent-600" />
               )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleResetPassword(user.id);
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              title="Reset Password"
+            >
+              <Key className="h-4 w-4 text-yellow-600" />
             </button>
           </div>
         );

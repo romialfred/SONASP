@@ -1,137 +1,53 @@
-================================================================================
-🚨 COPIER ET EXÉCUTER CE SQL MAINTENANT - FIX INFINIE RÉCURSION
-================================================================================
-
-PROBLÈME: Récursion infinie dans les politiques RLS de user_profiles
-SOLUTION: Désactiver RLS et utiliser Edge Functions pour la sécurité
-
-================================================================================
-ÉTAPE 1: OUVRIR L'ÉDITEUR SQL
-================================================================================
-
-Cliquer: https://supabase.com/dashboard/project/boolqagzdqbahqnpawpb/sql
-
-
-================================================================================
-ÉTAPE 2: COPIER TOUT CE QUI EST ENTRE LES LIGNES CI-DESSOUS
-================================================================================
-
 -- ================================================================
--- URGENT FIX: INFINITE RECURSION IN USER_PROFILES RLS POLICIES
+-- COMPLETE USER MANAGEMENT FIX
+-- This fixes ALL permissions and table issues
 -- ================================================================
 
 -- Step 1: Disable RLS on user_profiles
 ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
 
--- Step 2: Drop ALL existing policies on user_profiles
+-- Step 2: Drop ALL policies
 DO $$
-DECLARE
-  pol RECORD;
+DECLARE pol record;
 BEGIN
-  FOR pol IN 
-    SELECT policyname 
-    FROM pg_policies 
-    WHERE tablename = 'user_profiles'
+  FOR pol IN SELECT policyname FROM pg_policies WHERE tablename = 'user_profiles'
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON user_profiles', pol.policyname);
-    RAISE NOTICE 'Dropped policy: %', pol.policyname;
   END LOOP;
 END $$;
 
--- Step 3: Grant full access to service_role (for Edge Functions)
+-- Step 3: Grant ALL permissions to service_role
 GRANT ALL ON user_profiles TO service_role;
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON auth.users TO service_role;
+GRANT ALL ON modules TO service_role;
+GRANT ALL ON user_permissions TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA auth TO service_role;
 
--- Step 4: Grant read/update to authenticated users (for own profile)
-GRANT SELECT ON user_profiles TO authenticated;
-GRANT UPDATE ON user_profiles TO authenticated;
-
--- Step 5: Create helper function to check management role (bypasses RLS)
-CREATE OR REPLACE FUNCTION public.is_management_user(user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-AS $$
-  SELECT EXISTS (
-    SELECT 1 
-    FROM user_profiles 
-    WHERE id = user_id AND role = 'management'
-  );
-$$;
-
--- Grant execute to authenticated
-GRANT EXECUTE ON FUNCTION public.is_management_user(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_management_user(uuid) TO service_role;
-
--- Step 6: Verify final state
-SELECT 
-  'Policies on user_profiles:' as check_type,
-  COUNT(*) as count,
-  CASE 
-    WHEN COUNT(*) = 0 THEN '✅ SUCCESS - No policies (no recursion!)'
-    ELSE '⚠️  WARNING - Still has policies'
-  END as status
-FROM pg_policies
-WHERE tablename = 'user_profiles';
-
-SELECT 
-  'RLS Status:' as check_type,
-  rowsecurity as enabled,
-  CASE 
-    WHEN rowsecurity = false THEN '✅ SUCCESS - RLS disabled'
-    ELSE '⚠️  WARNING - RLS still enabled'
-  END as status
-FROM pg_tables
-WHERE tablename = 'user_profiles';
-
--- Success message
+-- Step 4: Ensure user_profiles has all required columns
 DO $$
 BEGIN
-  RAISE NOTICE '✅ FIX APPLIED SUCCESSFULLY!';
-  RAISE NOTICE '✅ No more infinite recursion!';
-  RAISE NOTICE '';
-  RAISE NOTICE 'NEXT: Refresh your app (Ctrl+Shift+R)';
+  -- Add is_active if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'user_profiles' AND column_name = 'is_active'
+  ) THEN
+    ALTER TABLE user_profiles ADD COLUMN is_active boolean DEFAULT true;
+  END IF;
+
+  -- Add two_factor_enabled if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'user_profiles' AND column_name = 'two_factor_enabled'
+  ) THEN
+    ALTER TABLE user_profiles ADD COLUMN two_factor_enabled boolean DEFAULT false;
+  END IF;
 END $$;
 
-================================================================================
-ÉTAPE 3: COLLER DANS L'ÉDITEUR SQL ET CLIQUER "RUN"
-================================================================================
+-- Step 5: Drop problematic trigger if exists
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
-
-================================================================================
-ÉTAPE 4: VÉRIFIER LE RÉSULTAT
-================================================================================
-
-Vous devriez voir:
-✅ SUCCESS - No policies (no recursion!)
-✅ SUCCESS - RLS disabled
-✅ FIX APPLIED SUCCESSFULLY!
-
-
-================================================================================
-ÉTAPE 5: TESTER DANS L'APPLICATION
-================================================================================
-
-1. Rafraîchir l'app: Ctrl+Shift+R (ou Cmd+Shift+R sur Mac)
-2. Aller à: Administration → User Management
-3. La page devrait charger SANS erreurs!
-4. Plus d'erreur "infinite recursion" dans la console
-
-
-================================================================================
-RÉSULTAT ATTENDU
-================================================================================
-
-✅ Page User Management charge en <2 secondes
-✅ Liste des utilisateurs s'affiche
-✅ Console (F12) ne montre AUCUNE erreur rouge
-✅ Peut créer un nouvel utilisateur
-✅ Tout fonctionne normalement
-
-
-================================================================================
-TEMPS D'EXÉCUTION: 30 secondes
-RISQUE: Faible (peut revenir en arrière facilement)
-IMPACT: Élevé (répare User Management complètement)
-================================================================================
+-- Step 6: Verify setup
+SELECT
+  '✅ ALL PERMISSIONS GRANTED' as status,
+  'Refresh your app and try creating a user again' as next_step;

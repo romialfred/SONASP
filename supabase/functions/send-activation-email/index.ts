@@ -49,35 +49,72 @@ Deno.serve(async (req: Request) => {
       ? generateActivationEmailHTML(full_name, activationUrl, temporary_password)
       : generatePasswordResetEmailHTML(full_name, activationUrl, temporary_password);
 
-    // Send email using Supabase Edge Functions or external email service
-    // For now, we'll log the email details and return success
-    console.log('Sending email to:', email);
-    console.log('Activation URL:', activationUrl);
-    console.log('Temporary Password:', temporary_password);
+    console.log('[send-activation-email] Preparing to send email to:', email);
+    console.log('[send-activation-email] Activation URL:', activationUrl);
 
-    // In production, integrate with an email service like SendGrid, Mailgun, or AWS SES
-    // Example with SendGrid:
-    /*
-    const sendGridApiKey = Deno.env.get('SENDGRID_API_KEY');
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    // Get Resend API key from environment
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+
+    if (!resendApiKey) {
+      console.warn('[send-activation-email] RESEND_API_KEY not configured - email will not be sent');
+      console.log('[send-activation-email] Temporary Password (for testing):', temporary_password);
+
+      // Log to audit trail even if email not sent
+      await supabaseAdmin
+        .from('audit_trail')
+        .insert({
+          user_id: user_id,
+          action: isActivation ? 'account_activation_email_queued' : 'password_reset_email_queued',
+          details: {
+            email: email,
+            token_expiry: '24 hours',
+            status: 'email_service_not_configured',
+          },
+          performed_by: user_id,
+        });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Email service not configured. Credentials returned for manual delivery.',
+          activation_url: activationUrl,
+          temporary_password: temporary_password,
+          email_sent: false,
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    // Send email using Resend API
+    console.log('[send-activation-email] Sending email via Resend...');
+
+    const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${sendGridApiKey}`,
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: email, name: full_name }],
-          subject: subject,
-        }],
-        from: { email: 'noreply@goldshipper.com', name: 'Gold Shipper' },
-        content: [{
-          type: 'text/html',
-          value: emailBody,
-        }],
+        from: 'Gold Shipper <noreply@goldshipper.app>',
+        to: [email],
+        subject: subject,
+        html: emailBody,
       }),
     });
-    */
+
+    const emailResult = await emailResponse.json();
+
+    if (!emailResponse.ok) {
+      console.error('[send-activation-email] Resend API error:', emailResult);
+      throw new Error(`Failed to send email: ${emailResult.message || 'Unknown error'}`);
+    }
+
+    console.log('[send-activation-email] Email sent successfully via Resend:', emailResult.id);
 
     // Log the email in the database for audit purposes
     await supabaseAdmin
@@ -88,6 +125,8 @@ Deno.serve(async (req: Request) => {
         details: {
           email: email,
           token_expiry: '24 hours',
+          resend_email_id: emailResult.id,
+          status: 'sent',
         },
         performed_by: user_id,
       });
@@ -95,9 +134,9 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${isActivation ? 'Activation' : 'Password reset'} email sent successfully`,
-        activation_url: activationUrl, // For testing purposes
-        temporary_password: temporary_password, // For testing purposes
+        message: `${isActivation ? 'Activation' : 'Password reset'} email sent successfully to ${email}`,
+        email_sent: true,
+        resend_email_id: emailResult.id,
       }),
       {
         headers: {

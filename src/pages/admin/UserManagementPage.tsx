@@ -287,16 +287,23 @@ export default function UserManagementPage() {
         throw new Error(result.error || result.details || 'Failed to create user');
       }
 
-      alert.success(`User created successfully! ${result.message || ''}`);
+      // Check if email was sent
+      const emailSent = result.email_sent !== false;
 
-      // Show credentials modal with all information
-      setUserCredentials({
-        email: formData.email,
-        full_name: formData.full_name,
-        temporary_password: result.temporary_password || formData.password,
-        activation_url: result.activation_url,
-      });
-      setShowCredentialsModal(true);
+      if (emailSent) {
+        alert.success(`User created successfully! Email sent to ${formData.email}`);
+      } else {
+        alert.success(`User created successfully! ${result.message || ''}`);
+
+        // Only show credentials modal if email was NOT sent
+        setUserCredentials({
+          email: formData.email,
+          full_name: formData.full_name,
+          temporary_password: result.temporary_password || formData.password,
+          activation_url: result.activation_url,
+        });
+        setShowCredentialsModal(true);
+      }
 
       // Reset form and reload users
       setFormData({

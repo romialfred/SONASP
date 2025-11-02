@@ -3,18 +3,28 @@ import { X, Download, ZoomIn, ZoomOut, RotateCw, Loader } from 'lucide-react';
 import { Button } from './Button';
 
 interface PDFViewerProps {
-  url: string;
-  fileName: string;
-  onClose: () => void;
+  url?: string;
+  fileUrl?: string;
+  pdfUrl?: string;
+  fileName?: string;
+  onClose?: () => void;
 }
 
-export function PDFViewer({ url, fileName, onClose }: PDFViewerProps) {
+export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewerProps) {
+  // Use whichever URL prop was provided
+  const pdfSrc = url || fileUrl || pdfUrl;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
+    if (!pdfSrc) {
+      setError('No PDF URL provided');
+      setLoading(false);
+      return;
+    }
+
     const iframe = document.getElementById('pdf-iframe') as HTMLIFrameElement;
     if (iframe) {
       iframe.onload = () => setLoading(false);
@@ -23,16 +33,18 @@ export function PDFViewer({ url, fileName, onClose }: PDFViewerProps) {
         setError('Failed to load PDF document');
       };
     }
-  }, [url]);
+  }, [pdfSrc]);
 
   const handleDownload = async () => {
+    if (!pdfSrc) return;
+
     try {
-      const response = await fetch(url);
+      const response = await fetch(pdfSrc);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = fileName;
+      link.download = fileName || 'document.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -54,12 +66,52 @@ export function PDFViewer({ url, fileName, onClose }: PDFViewerProps) {
     setRotation((prev) => (prev + 90) % 360);
   };
 
+  // If used within a Modal (no onClose provided), render simplified version
+  if (!onClose) {
+    return (
+      <div className="w-full h-full min-h-[70vh] bg-gray-100 rounded-lg overflow-hidden">
+        {loading && (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <div className="text-center">
+              <Loader className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-3" />
+              <p className="text-gray-600 text-sm">Loading PDF document...</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <div className="text-center">
+              <div className="bg-red-100 text-red-800 px-6 py-4 rounded-lg">
+                <p className="font-medium">Error loading PDF</p>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!error && pdfSrc && (
+          <iframe
+            id="pdf-iframe"
+            src={`${pdfSrc}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+            className="w-full h-full border-0"
+            style={{
+              minHeight: '70vh',
+            }}
+            title={fileName || 'PDF Document'}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Standalone full-screen viewer
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
       <div className="relative w-full h-full max-w-7xl mx-4 my-4 bg-white rounded-lg shadow-2xl flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{fileName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{fileName || 'PDF Document'}</h3>
             <p className="text-sm text-gray-500">PDF Document</p>
           </div>
 
@@ -140,7 +192,7 @@ export function PDFViewer({ url, fileName, onClose }: PDFViewerProps) {
             </div>
           )}
 
-          {!error && (
+          {!error && pdfSrc && (
             <div
               className="flex items-center justify-center min-h-full"
               style={{
@@ -151,14 +203,14 @@ export function PDFViewer({ url, fileName, onClose }: PDFViewerProps) {
             >
               <iframe
                 id="pdf-iframe"
-                src={`${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                src={`${pdfSrc}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                 className="w-full h-full border-0 bg-white shadow-lg"
                 style={{
                   minHeight: '800px',
                   width: '100%',
                   maxWidth: '1000px',
                 }}
-                title={fileName}
+                title={fileName || 'PDF Document'}
               />
             </div>
           )}

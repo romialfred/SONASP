@@ -134,13 +134,20 @@ export function BatchDocuments({ batchId, batchStatus }: BatchDocumentsProps) {
   };
 
   const handleView = async (document: BatchDocument) => {
+    console.log('[handleView] Document:', document);
+    console.log('[handleView] Original file_url:', document.file_url);
+
     try {
       // Get signed URL for secure viewing
       const signedUrl = await getDocumentDownloadUrl(document.file_url);
+      console.log('[handleView] Signed URL obtained:', signedUrl);
+
       setSelectedDocument({ ...document, file_url: signedUrl });
       setShowPdfViewer(true);
     } catch (error) {
-      console.error('Error preparing document for viewing:', error);
+      console.error('[handleView] Error preparing document for viewing:', error);
+      console.log('[handleView] Falling back to original URL');
+
       // Fallback to original URL
       setSelectedDocument(document);
       setShowPdfViewer(true);

@@ -225,12 +225,16 @@ export async function updateBatchDocument(
  * Get document download URL with authentication
  */
 export async function getDocumentDownloadUrl(fileUrl: string): Promise<string> {
+  console.log('[getDocumentDownloadUrl] Input URL:', fileUrl);
+
   // Extract file path from public URL
   const urlParts = fileUrl.split('/batch-documents/');
   if (urlParts.length < 2) {
+    console.warn('[getDocumentDownloadUrl] Unexpected URL format, returning as-is');
     return fileUrl; // Return as-is if format is unexpected
   }
   const filePath = urlParts[1].split('?')[0];
+  console.log('[getDocumentDownloadUrl] Extracted file path:', filePath);
 
   // Create signed URL for secure access
   const { data, error } = await supabase.storage
@@ -238,10 +242,12 @@ export async function getDocumentDownloadUrl(fileUrl: string): Promise<string> {
     .createSignedUrl(filePath, 3600); // 1 hour expiry
 
   if (error) {
-    console.error('Error creating signed URL:', error);
+    console.error('[getDocumentDownloadUrl] Error creating signed URL:', error);
+    console.log('[getDocumentDownloadUrl] Falling back to original URL');
     return fileUrl; // Fallback to public URL
   }
 
+  console.log('[getDocumentDownloadUrl] Signed URL created successfully');
   return data.signedUrl;
 }
 

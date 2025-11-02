@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Download, ZoomIn, ZoomOut, RotateCw, Loader } from 'lucide-react';
+import { X, Download, ZoomIn, ZoomOut, RotateCw, Loader, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
 
 interface PDFViewerProps {
@@ -81,10 +81,22 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
 
         {error && (
           <div className="flex items-center justify-center h-full min-h-[400px]">
-            <div className="text-center">
-              <div className="bg-red-100 text-red-800 px-6 py-4 rounded-lg">
-                <p className="font-medium">Error loading PDF</p>
-                <p className="text-sm mt-1">{error}</p>
+            <div className="text-center max-w-md mx-auto px-4">
+              <div className="bg-red-50 border-2 border-red-200 text-red-800 px-6 py-4 rounded-lg">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                <p className="font-semibold mb-2">Unable to Load PDF</p>
+                <p className="text-sm mb-3">{error}</p>
+                <p className="text-xs text-red-600">
+                  Please check if the file exists and you have permission to view it.
+                </p>
+                {pdfSrc && (
+                  <button
+                    onClick={() => window.open(pdfSrc, '_blank')}
+                    className="mt-3 text-xs underline hover:no-underline"
+                  >
+                    Try opening in new tab
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -99,6 +111,10 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               minHeight: '70vh',
             }}
             title={fileName || 'PDF Document'}
+            onError={() => {
+              setError('Failed to load PDF. The file may be corrupted or inaccessible.');
+              setLoading(false);
+            }}
           />
         )}
       </div>

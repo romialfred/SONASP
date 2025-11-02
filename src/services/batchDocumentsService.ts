@@ -11,6 +11,7 @@ export interface BatchDocument {
   uploaded_by: string;
   lifecycle_stage?: LifecycleStage;
   description?: string;
+  can_be_downloaded?: boolean;
   created_at: string;
   updated_at: string;
   uploaded_by_name?: string;
@@ -85,6 +86,7 @@ export async function uploadBatchDocument(
     document_name: string;
     lifecycle_stage?: LifecycleStage;
     description?: string;
+    can_be_downloaded?: boolean;
   }
 ): Promise<BatchDocument> {
   // Get current user
@@ -127,6 +129,7 @@ export async function uploadBatchDocument(
       uploaded_by: user.id,
       lifecycle_stage: metadata.lifecycle_stage,
       description: metadata.description,
+      can_be_downloaded: metadata.can_be_downloaded ?? true,
     })
     .select()
     .single();
@@ -200,6 +203,7 @@ export async function updateBatchDocument(
     document_type?: DocumentType;
     lifecycle_stage?: LifecycleStage;
     description?: string;
+    can_be_downloaded?: boolean;
   }
 ): Promise<BatchDocument> {
   const { data, error } = await supabase

@@ -710,60 +710,97 @@ export function BatchCreate() {
             </Card>
           </div>
 
-          <div className="space-y-6">
-            {/* Actions Card - Sticky at top */}
-            <div className="sticky top-4 z-10">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Actions</CardTitle>
+          {/* Right Sidebar - Fixed Position */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-4 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              {/* Actions Card */}
+              <Card className="shadow-lg border-2 border-primary-200">
+                <CardHeader className="bg-gradient-to-br from-primary-50 to-primary-100 border-b border-primary-200">
+                  <CardTitle className="text-primary-900 flex items-center gap-2">
+                    <Send className="h-5 w-5" />
+                    Actions
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 pt-4">
                   <Button
                     variant="primary"
                     onClick={handleSubmit}
-                    className="w-full gap-2"
+                    className="w-full gap-2 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl transition-all text-base font-semibold"
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-5 w-5" />
                     Submit Batch
                   </Button>
 
                   <Button
                     variant="outline"
                     onClick={handleSaveDraft}
-                    className="w-full gap-2"
+                    className="w-full gap-2 py-3 border-2 border-gray-300 hover:border-primary-500 hover:bg-primary-50 transition-all font-medium"
                   >
-                    <Save className="h-4 w-4" />
+                    <Save className="h-5 w-5" />
                     Save as Draft
                   </Button>
 
                   <Button
                     variant="ghost"
                     onClick={() => navigate('/batches')}
-                    className="w-full"
+                    className="w-full py-3 hover:bg-gray-100 transition-all font-medium text-gray-700"
                   >
                     Cancel
                   </Button>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Field Guide Panel */}
-            <FieldGuidePanel
-              title="Batch Creation Guide"
-              guides={fieldGuides}
-              currentField={focusedField}
-            />
+              {/* Field Guide Panel */}
+              <FieldGuidePanel
+                title="Batch Creation Guide"
+                guides={fieldGuides}
+                currentField={focusedField}
+              />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Form Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Required Fields</span>
-                    <span className="font-medium">
-                      {[
+              {/* Form Progress Card */}
+              <Card className="border-2 border-green-200">
+                <CardHeader className="bg-gradient-to-br from-green-50 to-emerald-50 border-b border-green-200">
+                  <CardTitle className="text-green-900 text-base">Form Progress</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">Required Fields</span>
+                      <span className="font-bold text-green-700 text-base">
+                        {[
+                          formData.shipping_date,
+                          formData.weight_grams,
+                          formData.metal_type,
+                          formData.mining_company_id,
+                          formData.mine_to_airport_transport_id,
+                          formData.airport_to_refinery_transport_id,
+                          formData.destination_refinery_id,
+                        ].filter(Boolean).length}{' '}
+                        / 7
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                      <div
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all duration-300 shadow-sm"
+                        style={{
+                          width: `${
+                            ([
+                              formData.shipping_date,
+                              formData.weight_grams,
+                              formData.metal_type,
+                              formData.mining_company_id,
+                              formData.mine_to_airport_transport_id,
+                              formData.airport_to_refinery_transport_id,
+                              formData.destination_refinery_id,
+                            ].filter(Boolean).length /
+                              7) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      {([
                         formData.shipping_date,
                         formData.weight_grams,
                         formData.metal_type,
@@ -771,33 +808,14 @@ export function BatchCreate() {
                         formData.mine_to_airport_transport_id,
                         formData.airport_to_refinery_transport_id,
                         formData.destination_refinery_id,
-                      ].filter(Boolean).length}{' '}
-                      / 7
-                    </span>
+                      ].filter(Boolean).length === 7)
+                        ? '✓ All required fields completed!'
+                        : 'Fill in all required fields to submit'}
+                    </p>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-primary-500 h-2 rounded-full transition-all"
-                      style={{
-                        width: `${
-                          ([
-                            formData.shipping_date,
-                            formData.weight_grams,
-                            formData.metal_type,
-                            formData.mining_company_id,
-                            formData.mine_to_airport_transport_id,
-                            formData.airport_to_refinery_transport_id,
-                            formData.destination_refinery_id,
-                          ].filter(Boolean).length /
-                            7) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

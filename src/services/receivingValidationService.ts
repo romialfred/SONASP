@@ -1,12 +1,35 @@
 import { supabase } from '@/lib/supabase';
+import { getBusinessRuleValue } from './businessRulesService';
 
-export async function validateReceiving(batchId: string, actualWeight: number, expectedWeight: number) {
+export async function validateReceiving(
+  batchId: string,
+  actualWeight: number,
+  expectedWeight: number,
+  location: 'airport' | 'refinery' = 'airport'
+) {
   const variance = ((actualWeight - expectedWeight) / expectedWeight) * 100;
 
+  // Get configurable threshold based on location
+  let threshold = 2.0; // Default fallback
+
+  try {
+    if (location === 'airport') {
+      const value = await getBusinessRuleValue('var_threshold_mine_airport');
+      threshold = value ?? 2.0;
+    } else if (location === 'refinery') {
+      const value = await getBusinessRuleValue('var_threshold_airport_refinery');
+      threshold = value ?? 1.5;
+    }
+  } catch (error) {
+    console.error('Error fetching variance threshold:', error);
+    // Use default threshold on error
+  }
+
   return {
-    isValid: Math.abs(variance) <= 2,
+    isValid: Math.abs(variance) <= threshold,
     variance,
-    requiresApproval: Math.abs(variance) > 2,
+    requiresApproval: Math.abs(variance) > threshold,
+    threshold,
   };
 }
 
@@ -18,8 +41,20 @@ export async function createReceivingRecord(data: {
   variance: number;
   received_by: string;
   notes?: string;
+  threshold?: number;
 }) {
   try {
+    // Get threshold if not provided
+    let threshold = data.threshold;
+    if (!threshold) {
+      const locationKey = data.location.toLowerCase().includes('refinery') ? 'refinery' : 'airport';
+      if (locationKey === 'airport') {
+        threshold = (await getBusinessRuleValue('var_threshold_mine_airport')) ?? 2.0;
+      } else {
+        threshold = (await getBusinessRuleValue('var_threshold_airport_refinery')) ?? 1.5;
+      }
+    }
+
     const { data: record, error } = await supabase
       .from('receiving_records')
       .insert({
@@ -31,7 +66,7 @@ export async function createReceivingRecord(data: {
         received_by: data.received_by,
         received_at: new Date().toISOString(),
         notes: data.notes,
-        status: Math.abs(data.variance) > 2 ? 'pending_approval' : 'approved',
+        status: Math.abs(data.variance) > threshold ? 'pending_approval' : 'approved',
       })
       .select()
       .single();

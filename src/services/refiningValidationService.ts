@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { calculateFinalFine } from '@/utils/batchUtils';
+import { getBusinessRuleValue } from './businessRulesService';
 
 export interface RefiningData {
   batch_id: string;
@@ -9,6 +10,37 @@ export interface RefiningData {
   metal_retained_percentage: number;
   processed_by: string;
   notes?: string;
+}
+
+/**
+ * Validate refining loss against configurable threshold
+ */
+export async function validateRefiningLoss(
+  preMeltingWeight: number,
+  postMeltingWeight: number
+): Promise<{
+  isValid: boolean;
+  lossPercentage: number;
+  threshold: number;
+  requiresApproval: boolean;
+}> {
+  const lossPercentage = ((preMeltingWeight - postMeltingWeight) / preMeltingWeight) * 100;
+
+  // Get configurable threshold
+  let threshold = 5.0; // Default fallback
+  try {
+    const value = await getBusinessRuleValue('var_threshold_refining_loss');
+    threshold = value ?? 5.0;
+  } catch (error) {
+    console.error('Error fetching refining loss threshold:', error);
+  }
+
+  return {
+    isValid: lossPercentage <= threshold,
+    lossPercentage,
+    threshold,
+    requiresApproval: lossPercentage > threshold,
+  };
 }
 
 export async function createRefiningRecord(data: RefiningData) {

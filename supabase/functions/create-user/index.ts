@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
@@ -62,25 +62,47 @@ Deno.serve(async (req: Request) => {
     });
 
     const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
-    
+
     if (userError || !currentUser) {
+      console.error('[create-user] Auth error:', userError);
       throw new Error('Unauthorized');
     }
 
-    const { data: profile } = await supabaseClient
+    console.log('[create-user] Current user:', currentUser.id);
+
+    const { data: profile, error: profileError } = await supabaseClient
       .from('user_profiles')
       .select('role')
       .eq('id', currentUser.id)
       .single();
 
+    if (profileError) {
+      console.error('[create-user] Error fetching user profile:', profileError);
+      throw new Error('Unable to verify user permissions');
+    }
+
+    console.log('[create-user] User profile:', profile);
+
     if (!profile || profile.role !== 'management') {
+      console.warn('[create-user] Unauthorized user attempt:', { userId: currentUser.id, role: profile?.role });
       throw new Error('Only management users can create accounts');
     }
 
     const requestData: CreateUserRequest = await req.json();
     const { email, password, full_name, phone, role, is_active, permissions } = requestData;
 
+    console.log('[create-user] Request received:', {
+      email,
+      full_name,
+      role,
+      hasPhone: !!phone,
+      hasPassword: !!password,
+      isActive: is_active,
+      hasPermissions: !!permissions,
+    });
+
     if (!email || !full_name || !role) {
+      console.error('[create-user] Missing required fields:', { email: !!email, full_name: !!full_name, role: !!role });
       throw new Error('Missing required fields: email, full_name, and role are required');
     }
 
@@ -96,10 +118,12 @@ Deno.serve(async (req: Request) => {
 
     const userPassword = password || generateRandomPassword();
 
+    console.log('[create-user] Creating auth user...');
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: userPassword,
-      email_confirm: false, // User must activate account first
+      email_confirm: true, // Auto-confirm email for now
       user_metadata: {
         full_name: full_name,
         phone: phone || '',
@@ -110,12 +134,16 @@ Deno.serve(async (req: Request) => {
     });
 
     if (authError) {
+      console.error('[create-user] Auth creation error:', authError);
       throw authError;
     }
 
     if (!authData.user) {
+      console.error('[create-user] No user returned from auth.admin.createUser');
       throw new Error('User creation failed');
     }
+
+    console.log('[create-user] Auth user created:', authData.user.id);
 
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
@@ -125,26 +153,29 @@ Deno.serve(async (req: Request) => {
         full_name: full_name,
         phone: phone || null,
         role: role,
-        is_active: false, // Will be activated after completing activation workflow
+        is_active: is_active !== undefined ? is_active : true, // Default to active
         two_factor_enabled: false,
-        account_activated: false,
       });
 
     if (profileError) {
+      console.error('[create-user] Profile creation error:', profileError);
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       throw profileError;
     }
 
+    console.log('[create-user] User profile created');
+
     // Save user permissions if provided
     if (permissions && Object.keys(permissions).length > 0) {
-      // Get module IDs for the provided module names
+      console.log('[create-user] Saving permissions...');
+
       const { data: modules, error: modulesError } = await supabaseAdmin
         .from('modules')
         .select('id, name')
         .in('name', Object.keys(permissions));
 
       if (modulesError) {
-        console.error('Error fetching modules:', modulesError);
+        console.error('[create-user] Error fetching modules:', modulesError);
       } else if (modules && modules.length > 0) {
         const permissionsToInsert = modules.map((module) => {
           const perm = permissions[module.name];
@@ -173,60 +204,86 @@ Deno.serve(async (req: Request) => {
           .insert(permissionsToInsert);
 
         if (permError) {
-          console.error('Error saving permissions:', permError);
+          console.error('[create-user] Error saving permissions:', permError);
+        } else {
+          console.log('[create-user] Permissions saved successfully');
         }
       }
     }
 
-    // Generate activation token
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc(
-      'generate_activation_token',
-      {
-        p_user_id: authData.user.id,
-        p_token_type: 'activation',
-        p_temporary_password: userPassword,
-        p_created_by: currentUser.id,
-      }
-    );
+    // Try to generate activation token (may not exist if migration not applied)
+    let activationToken = null;
+    let hasActivationSystem = false;
 
-    if (tokenError) {
-      console.error('Error generating activation token:', tokenError);
-      throw new Error('Failed to generate activation token');
-    }
-
-    const activationToken = tokenData;
-
-    // Send activation email
     try {
-      const emailResponse = await fetch(
-        `${supabaseUrl}/functions/v1/send-activation-email`,
+      console.log('[create-user] Attempting to generate activation token...');
+
+      const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc(
+        'generate_activation_token',
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-          },
-          body: JSON.stringify({
-            user_id: authData.user.id,
-            email: email,
-            full_name: full_name,
-            token: activationToken,
-            temporary_password: userPassword,
-            token_type: 'activation',
-          }),
+          p_user_id: authData.user.id,
+          p_token_type: 'activation',
+          p_temporary_password: userPassword,
+          p_created_by: currentUser.id,
         }
       );
 
-      const emailResult = await emailResponse.json();
-
-      if (!emailResult.success) {
-        console.error('Failed to send activation email:', emailResult.error);
-        // Don't fail user creation if email fails - admin can resend
+      if (tokenError) {
+        console.warn('[create-user] Activation token generation error:', tokenError.message, tokenError.code);
+        // If function doesn't exist, user is already active
+        if (tokenError.message?.includes('function') || tokenError.code === '42883' || tokenError.code === 'PGRST202') {
+          console.log('[create-user] Activation system not available - user already activated');
+        } else {
+          // Other errors should not fail user creation
+          console.error('[create-user] Unexpected token generation error:', tokenError);
+        }
+      } else {
+        activationToken = tokenData;
+        hasActivationSystem = true;
+        console.log('[create-user] Activation token generated successfully');
       }
-    } catch (emailError) {
-      console.error('Error sending activation email:', emailError);
-      // Continue even if email fails
+    } catch (error: any) {
+      console.warn('[create-user] Activation system error (caught):', error.message);
+      // Continue without activation system
     }
+
+    // Send activation email only if activation system is available
+    if (hasActivationSystem && activationToken) {
+      try {
+        console.log('[create-user] Sending activation email...');
+
+        const emailResponse = await fetch(
+          `${supabaseUrl}/functions/v1/send-activation-email`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceRoleKey}`,
+            },
+            body: JSON.stringify({
+              user_id: authData.user.id,
+              email: email,
+              full_name: full_name,
+              token: activationToken,
+              temporary_password: userPassword,
+              token_type: 'activation',
+            }),
+          }
+        );
+
+        const emailResult = await emailResponse.json();
+
+        if (!emailResult.success) {
+          console.error('[create-user] Failed to send activation email:', emailResult.error);
+        } else {
+          console.log('[create-user] Activation email sent successfully');
+        }
+      } catch (emailError: any) {
+        console.error('[create-user] Error sending activation email:', emailError.message);
+      }
+    }
+
+    console.log('[create-user] User creation completed successfully');
 
     return new Response(
       JSON.stringify({
@@ -239,9 +296,12 @@ Deno.serve(async (req: Request) => {
         },
         activation_token: activationToken,
         temporary_password: userPassword,
-        message: 'User created successfully. Activation email sent.',
+        message: hasActivationSystem
+          ? 'User created successfully. Activation email sent.'
+          : 'User created successfully and activated immediately.',
       }),
       {
+        status: 200,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
@@ -249,11 +309,14 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error: any) {
-    console.error('Error creating user:', error);
+    console.error('[create-user] Error creating user:', error);
+    console.error('[create-user] Error stack:', error.stack);
+
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message || 'An unexpected error occurred',
+        details: error.stack || '',
       }),
       {
         status: 400,

@@ -10,6 +10,7 @@ import { PublicRoute } from './components/auth/PublicRoute';
 import { DomainRestriction } from './components/auth/DomainRestriction';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import ActivateAccount from './pages/auth/ActivateAccount';
 import { DashboardPage } from './pages/DashboardPage';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
@@ -85,6 +86,14 @@ function AppRoutes() {
               element={
                 <PublicRoute>
                   <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/activate-account"
+              element={
+                <PublicRoute>
+                  <ActivateAccount />
                 </PublicRoute>
               }
             />

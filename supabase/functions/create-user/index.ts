@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: userPassword,
-      email_confirm: true,
+      email_confirm: false, // User must activate account first
       user_metadata: {
         full_name: full_name,
         phone: phone || '',
@@ -125,8 +125,9 @@ Deno.serve(async (req: Request) => {
         full_name: full_name,
         phone: phone || null,
         role: role,
-        is_active: is_active !== undefined ? is_active : true,
+        is_active: false, // Will be activated after completing activation workflow
         two_factor_enabled: false,
+        account_activated: false,
       });
 
     if (profileError) {
@@ -177,6 +178,56 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Generate activation token
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc(
+      'generate_activation_token',
+      {
+        p_user_id: authData.user.id,
+        p_token_type: 'activation',
+        p_temporary_password: userPassword,
+        p_created_by: currentUser.id,
+      }
+    );
+
+    if (tokenError) {
+      console.error('Error generating activation token:', tokenError);
+      throw new Error('Failed to generate activation token');
+    }
+
+    const activationToken = tokenData;
+
+    // Send activation email
+    try {
+      const emailResponse = await fetch(
+        `${supabaseUrl}/functions/v1/send-activation-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceRoleKey}`,
+          },
+          body: JSON.stringify({
+            user_id: authData.user.id,
+            email: email,
+            full_name: full_name,
+            token: activationToken,
+            temporary_password: userPassword,
+            token_type: 'activation',
+          }),
+        }
+      );
+
+      const emailResult = await emailResponse.json();
+
+      if (!emailResult.success) {
+        console.error('Failed to send activation email:', emailResult.error);
+        // Don't fail user creation if email fails - admin can resend
+      }
+    } catch (emailError) {
+      console.error('Error sending activation email:', emailError);
+      // Continue even if email fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -186,7 +237,9 @@ Deno.serve(async (req: Request) => {
           full_name: full_name,
           role: role,
         },
-        temporary_password: password ? undefined : userPassword,
+        activation_token: activationToken,
+        temporary_password: userPassword,
+        message: 'User created successfully. Activation email sent.',
       }),
       {
         headers: {

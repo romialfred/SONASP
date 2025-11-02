@@ -17,7 +17,6 @@ import {
   Factory,
   DollarSign,
   CreditCard,
-  Info,
   ChevronRight,
   ChevronLeft,
   Clock,
@@ -509,16 +508,16 @@ export function BatchDetailsWorkflow() {
         </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content - Left Column (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Batch Information - Compact */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Main Content - Full Width */}
+          <div className="space-y-6">
+            {/* Batch Information - Full Width with 4 columns */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Batch Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
                       <Package className="h-4 w-4 text-primary-600" />
@@ -613,7 +612,7 @@ export function BatchDetailsWorkflow() {
               </CardContent>
             </Card>
 
-            {/* Assay Certificates - Moved from right panel */}
+            {/* Assay Certificates - Full Width */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-amber-600">Assay Certificates</CardTitle>
@@ -634,9 +633,8 @@ export function BatchDetailsWorkflow() {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-            {/* Validation Actions - Now in main column */}
+            {/* Validation Actions */}
             {canValidate && (
               <Card className="border-primary-200 bg-primary-50">
                 <CardHeader>
@@ -782,53 +780,8 @@ export function BatchDetailsWorkflow() {
             )}
 
           </div>
-
-          {/* Right Column (1/3) - Field Guide */}
-          <div className="space-y-6">
-            <div className="sticky top-6">
-              {/* Field Guide */}
-              <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="text-blue-900 flex items-center">
-                  <Info className="h-5 w-5 mr-2" />
-                  Batch Tracking Guide
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="bg-blue-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-900 mb-1">Batch Number</p>
-                  <p className="text-xs text-blue-700">Unique identifier generated automatically for tracking purposes</p>
-                </div>
-
-                <div className="bg-green-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-green-900 mb-1">Weight Information</p>
-                  <p className="text-xs text-green-700">Total weight in grams with automatic conversion to ounces</p>
-                </div>
-
-                <div className="bg-orange-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-orange-900 mb-1">Shipping Date</p>
-                  <p className="text-xs text-orange-700">Date when batch is scheduled for transportation</p>
-                </div>
-
-                <div className="bg-purple-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-purple-900 mb-1">Current Status</p>
-                  <p className="text-xs text-purple-700">Current stage in the batch processing workflow</p>
-                </div>
-
-                <div className="bg-pink-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-pink-900 mb-1">Origin & Location</p>
-                  <p className="text-xs text-pink-700">Where the batch started and its current physical location</p>
-                </div>
-
-                <div className="bg-yellow-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-yellow-900 mb-1">Transportation</p>
-                  <p className="text-xs text-yellow-700">Logistics company handling the shipment</p>
-                </div>
-              </CardContent>
-            </Card>
-            </div>
-          </div>
         </div>
+      </div>
 
       {/* Fixed Timeline Panel - Right Side (similar to Live Gold Price) */}
       <div

@@ -144,19 +144,19 @@ export function AssayCertificateViewer({
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-3 p-3">
       {/* Professional Header with Status Indicators */}
-      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6">
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Award className="h-7 w-7 text-amber-600" />
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Award className="h-5 w-5 text-amber-600" />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Certificate Analysis</h2>
-              <p className="text-sm text-gray-600 mb-3">{certificate.file_name}</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-0.5">Certificate Analysis</h2>
+              <p className="text-xs text-gray-600 mb-2">{certificate.file_name}</p>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {/* Parsing Status */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-gray-600">Parsing:</span>
@@ -271,16 +271,16 @@ export function AssayCertificateViewer({
 
       {/* Parsed Data Section */}
       {certificateData && (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Section Header with Edit Button */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Beaker className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Beaker className="h-4 w-4 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Assay Data</h3>
-                <p className="text-sm text-gray-600">Extracted laboratory analysis results</p>
+                <h3 className="text-base font-bold text-gray-900">Assay Data</h3>
+                <p className="text-xs text-gray-600">Extracted laboratory analysis results</p>
               </div>
             </div>
             {!editing && certificate.approval_status === 'pending' && (
@@ -297,13 +297,13 @@ export function AssayCertificateViewer({
           </div>
 
           {/* Certificate Information */}
-          <Card className="border-2 border-blue-100 bg-blue-50/30">
-            <div className="p-6">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
+          <Card className="border border-blue-100 bg-blue-50/30">
+            <div className="p-3">
+              <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-600" />
                 Certificate Information
               </h4>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-3">
                 <FormField label="Certificate Number">
                   <Input
                     value={editing ? editedData.certificate_number || '' : certificateData.certificate_number || 'N/A'}
@@ -326,13 +326,13 @@ export function AssayCertificateViewer({
           </Card>
 
           {/* Gold & Silver Analysis */}
-          <Card className="border-2 border-amber-100 bg-amber-50/30">
-            <div className="p-6">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-amber-600" />
+          <Card className="border border-amber-100 bg-amber-50/30">
+            <div className="p-3">
+              <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-amber-600" />
                 Precious Metals Analysis
               </h4>
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 gap-3">
                 <FormField label="Gold Content (g/t)">
                   <Input
                     type="number"
@@ -413,17 +413,17 @@ export function AssayCertificateViewer({
 
           {/* Deleterious Elements */}
           {Object.keys(certificateData.deleterious_elements || {}).length > 0 && (
-            <Card className="border-2 border-orange-100 bg-orange-50/30">
-              <div className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <Card className="border border-orange-100 bg-orange-50/30">
+              <div className="p-3">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
                   Deleterious Elements
                 </h4>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-2">
                   {Object.entries(certificateData.deleterious_elements).map(([element, value]) => (
-                    <div key={element} className="bg-white rounded-lg border border-orange-200 p-4 text-center">
-                      <p className="text-xs text-gray-600 uppercase font-medium mb-1">{element}</p>
-                      <p className="text-lg font-bold text-gray-900">{value}</p>
+                    <div key={element} className="bg-white rounded border border-orange-200 p-2 text-center">
+                      <p className="text-xs text-gray-600 uppercase font-medium">{element}</p>
+                      <p className="text-base font-bold text-gray-900">{value}</p>
                       <p className="text-xs text-gray-500">ppm</p>
                     </div>
                   ))}
@@ -434,7 +434,7 @@ export function AssayCertificateViewer({
 
           {/* Action Buttons - Professional Design */}
           {editing ? (
-            <div className="flex gap-4 justify-end p-6 bg-gray-50 border-t-2 border-gray-200 -mx-6 -mb-6 rounded-b-lg">
+            <div className="flex gap-3 justify-end p-3 bg-gray-50 border-t border-gray-200 -mx-3 -mb-3 rounded-b-lg">
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -458,7 +458,7 @@ export function AssayCertificateViewer({
             </div>
           ) : (
             certificate.approval_status === 'pending' && (
-              <div className="flex gap-4 justify-center p-8 bg-gradient-to-r from-green-50 to-red-50 border-t-2 border-gray-200 -mx-6 -mb-6 rounded-b-lg">
+              <div className="flex gap-3 justify-center p-4 bg-gradient-to-r from-green-50 to-red-50 border-t border-gray-200 -mx-3 -mb-3 rounded-b-lg">
                 <Button
                   onClick={handleReject}
                   disabled={submitting}

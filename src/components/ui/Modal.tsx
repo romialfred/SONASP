@@ -62,7 +62,7 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
       />
       <div
         className={cn(
-          'relative z-50 w-full bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto',
+          'relative z-50 w-full bg-white rounded-lg shadow-2xl max-h-[92vh] flex flex-col',
           maxWidth || sizeStyles[size as keyof typeof sizeStyles] || sizeStyles.md,
           className
         )}
@@ -84,8 +84,8 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
 
 export function ModalHeader({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
   return (
-    <div className="flex items-center justify-between p-6 border-b border-gray-200">
-      <div className="font-heading text-xl font-semibold">{children}</div>
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+      <div className="font-heading text-lg font-semibold">{children}</div>
       {onClose && (
         <button
           onClick={onClose}
@@ -101,7 +101,7 @@ export function ModalHeader({ children, onClose }: { children: ReactNode; onClos
 
 export function ModalBody({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('p-6', className)}>
+    <div className={cn('p-4 overflow-y-auto flex-1', className)}>
       {children}
     </div>
   );
@@ -109,7 +109,7 @@ export function ModalBody({ children, className }: { children: ReactNode; classN
 
 export function ModalFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('flex items-center justify-end gap-3 p-6 border-t border-gray-200', className)}>
+    <div className={cn('flex items-center justify-end gap-3 p-4 border-t border-gray-200 flex-shrink-0', className)}>
       {children}
     </div>
   );

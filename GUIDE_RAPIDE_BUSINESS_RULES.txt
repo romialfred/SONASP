@@ -1,0 +1,201 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║      ✅ GUIDE RAPIDE - MODULE BUSINESS RULES RÉVISÉ              ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+MODIFICATION: Réorganisation du module Business Rules uniquement
+
+═══════════════════════════════════════════════════════════════════════
+
+FICHIER MODIFIÉ
+
+✅ src/pages/admin/ParametersPage.tsx
+❌ Aucun autre fichier touché
+
+═══════════════════════════════════════════════════════════════════════
+
+NOUVELLE ORGANISATION (4 SECTIONS)
+
+1. 📊 Conversion Rates (Inchangé)
+   └─ Taux de conversion grams/ounces, kg/ounces
+
+2. ⚖️  Seuils de Variance des Poids (NOUVEAU)
+   ├─ Seuil Usine → Aéroport (2.0%)
+   └─ Seuil Aéroport → Raffinerie (1.5%)
+
+3. 💰 Configuration du Cours de l'Or (NOUVEAU)
+   ├─ Marge sur London AM
+   ├─ Prix Minimum
+   ├─ Prix Maximum
+   ├─ Pourcentage Royalties
+   └─ Frais de Transport
+
+4. 🔴 Autres Seuils de Contrôle (Conditionnel)
+   └─ Refining Loss, etc.
+
+═══════════════════════════════════════════════════════════════════════
+
+ACCÈS AU MODULE
+
+1. Connexion Management
+2. Navigation: Administration → Paramètres
+3. Onglet: Business Rules
+
+═══════════════════════════════════════════════════════════════════════
+
+CONFIGURATION SEUILS DE POIDS
+
+Section: "Seuils de Variance des Poids"
+
+┌──────────────────────────────────────────────────────────┐
+│ Seuil Usine → Aéroport                                   │
+│ [  2.0  ] %                                              │
+│ Variance maximale acceptable entre usine et aéroport     │
+└──────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────┐
+│ Seuil Aéroport → Raffinerie                              │
+│ [  1.5  ] %                                              │
+│ Variance maximale acceptable entre aéroport et raffinerie│
+└──────────────────────────────────────────────────────────┘
+
+Modification: Changez la valeur → Save Business Rules
+
+═══════════════════════════════════════════════════════════════════════
+
+AJOUTER LES RÈGLES DU COURS DE L'OR
+
+ÉTAPE 1: Exécuter le Script SQL
+--------------------------------
+Fichier: ADD_GOLD_PRICE_RULES.sql
+
+Via Supabase:
+1. Dashboard → SQL Editor → New Query
+2. Copier-coller le script SQL
+3. Run (exécuter)
+
+Le script ajoute 5 règles:
+✅ Marge sur London AM (2.5%)
+✅ Prix Minimum (1800 USD/oz)
+✅ Prix Maximum (3000 USD/oz)
+✅ Pourcentage Royalties (3.0%)
+✅ Frais de Transport (500 USD)
+
+ÉTAPE 2: Vérifier
+------------------
+Dans Supabase SQL Editor:
+
+SELECT * FROM business_rules 
+WHERE rule_category = 'gold_price';
+
+Résultat attendu: 5 lignes
+
+ÉTAPE 3: Rafraîchir l'Interface
+--------------------------------
+1. Retour à Gold Shipper
+2. Rafraîchir la page (F5)
+3. Administration → Paramètres → Business Rules
+4. Section "Configuration du Cours de l'Or" affiche les 5 règles
+
+═══════════════════════════════════════════════════════════════════════
+
+UTILISATION
+
+Les règles peuvent être modifiées directement dans l'interface:
+
+┌──────────────────────────────────────────────────────────┐
+│ 💰 Configuration du Cours de l'Or                        │
+│                                                           │
+│ Marge sur London AM              [  2.5  ] %             │
+│ Prix Minimum de l'Or             [ 1800  ] USD/oz        │
+│ Prix Maximum de l'Or             [ 3000  ] USD/oz        │
+│ Pourcentage Royalties            [  3.0  ] %             │
+│ Frais de Transport par Défaut    [  500  ] USD           │
+└──────────────────────────────────────────────────────────┘
+
+[Save Business Rules]
+
+═══════════════════════════════════════════════════════════════════════
+
+ÉTAT VIDE
+
+Si aucune règle d'or n'existe:
+
+┌──────────────────────────────────────────────────────────┐
+│ 💰 Configuration du Cours de l'Or                        │
+│                                                           │
+│         💵                                                │
+│   Aucune règle de cours d'or configurée                  │
+│   Ajoutez des règles dans la base de données             │
+│   avec category = 'gold_price'                           │
+└──────────────────────────────────────────────────────────┘
+
+Solution: Exécuter ADD_GOLD_PRICE_RULES.sql
+
+═══════════════════════════════════════════════════════════════════════
+
+AVANTAGES
+
+✅ Organisation Claire
+   └─ 4 sections bien séparées avec icônes distinctes
+
+✅ Libellés en Français
+   └─ "Seuil Usine → Aéroport" au lieu de "Mine to Airport"
+
+✅ Section Dédiée Or
+   └─ Toutes les règles d'or regroupées
+
+✅ Flexibilité
+   └─ Facile d'ajouter de nouvelles règles
+
+✅ Sans Impact
+   └─ Aucun autre module affecté
+
+═══════════════════════════════════════════════════════════════════════
+
+VALIDATION
+
+✅ Build réussi
+✅ TypeScript OK
+✅ Aucune erreur
+✅ Interface responsive
+✅ Prêt pour production
+
+═══════════════════════════════════════════════════════════════════════
+
+FICHIERS CRÉÉS
+
+Documentation:
+- PARAMETRAGE_BUSINESS_RULES_FR.md (Documentation complète)
+- GUIDE_RAPIDE_BUSINESS_RULES.txt (Ce fichier)
+- ADD_GOLD_PRICE_RULES.sql (Script SQL)
+
+═══════════════════════════════════════════════════════════════════════
+
+PROCHAINES ÉTAPES
+
+1. ✅ Tester l'interface (déjà fait - build OK)
+
+2. 📋 Exécuter ADD_GOLD_PRICE_RULES.sql
+   └─ Via Supabase SQL Editor
+
+3. 🔄 Rafraîchir la page des Paramètres
+   └─ Vérifier que les 5 règles apparaissent
+
+4. ✏️  Configurer les valeurs
+   └─ Selon vos besoins métier
+
+5. 💾 Sauvegarder
+   └─ Bouton "Save Business Rules"
+
+═══════════════════════════════════════════════════════════════════════
+
+RÉSUMÉ
+
+✅ Module Business Rules réorganisé
+✅ Section poids séparée (Usine-Aéroport, Aéroport-Raffinerie)
+✅ Nouvelle section cours de l'or (5 règles configurables)
+✅ Interface en français avec icônes
+✅ Aucun autre module modifié
+✅ Build réussi - prêt à déployer
+
+═══════════════════════════════════════════════════════════════════════

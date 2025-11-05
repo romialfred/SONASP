@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
-import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, TrendingDown, AlertTriangle, DollarSign } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface UserProfile {
@@ -325,25 +325,37 @@ export function ParametersPage() {
                           </div>
                         </Card>
 
+                        {/* Weight Variance Thresholds - Factory to Airport & Airport to Refinery */}
                         <Card>
                           <div className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                               <div className="p-2 bg-amber-100 rounded-lg">
-                                <AlertTriangle className="h-6 w-6 text-amber-600" />
+                                <Scale className="h-6 w-6 text-amber-600" />
                               </div>
                               <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Variance Thresholds</h3>
-                                <p className="text-sm text-gray-500">Maximum acceptable variance percentages between locations</p>
+                                <h3 className="text-lg font-semibold text-gray-900">Seuils de Variance des Poids</h3>
+                                <p className="text-sm text-gray-500">Écarts maximaux acceptables entre les points de contrôle</p>
                               </div>
                             </div>
                             <div className="space-y-4">
                               {businessRules
-                                .filter(rule => rule.rule_category === 'threshold')
+                                .filter(rule =>
+                                  rule.rule_key === 'var_threshold_mine_airport' ||
+                                  rule.rule_key === 'var_threshold_airport_refinery'
+                                )
                                 .map((rule) => (
                                   <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                                     <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
-                                      <p className="text-sm text-gray-500">{rule.description}</p>
+                                      <h4 className="font-medium text-gray-900">
+                                        {rule.rule_key === 'var_threshold_mine_airport'
+                                          ? 'Seuil Usine → Aéroport'
+                                          : 'Seuil Aéroport → Raffinerie'}
+                                      </h4>
+                                      <p className="text-sm text-gray-500">
+                                        {rule.rule_key === 'var_threshold_mine_airport'
+                                          ? 'Variance maximale acceptable entre le poids de l\'usine et l\'aéroport'
+                                          : 'Variance maximale acceptable entre le poids de l\'aéroport et la raffinerie'}
+                                      </p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                       <input
@@ -355,15 +367,113 @@ export function ParametersPage() {
                                         onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
                                         className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
                                       />
-                                      {rule.unit && (
-                                        <span className="text-sm text-gray-600 w-12">{rule.unit}</span>
-                                      )}
+                                      <span className="text-sm text-gray-600 w-12">%</span>
                                     </div>
                                   </div>
                                 ))}
                             </div>
                           </div>
                         </Card>
+
+                        {/* Gold Price Configuration */}
+                        <Card>
+                          <div className="p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="p-2 bg-yellow-100 rounded-lg">
+                                <DollarSign className="h-6 w-6 text-yellow-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Configuration du Cours de l'Or</h3>
+                                <p className="text-sm text-gray-500">Paramètres pour le prix de l'or et marges commerciales</p>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              {businessRules
+                                .filter(rule => rule.rule_category === 'gold_price')
+                                .map((rule) => (
+                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
+                                      <p className="text-sm text-gray-500">{rule.description}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={editedRules[rule.rule_key] || rule.rule_value}
+                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
+                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
+                                      />
+                                      {rule.unit && (
+                                        <span className="text-sm text-gray-600 w-20">{rule.unit}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+
+                              {/* Show message if no gold price rules exist yet */}
+                              {businessRules.filter(rule => rule.rule_category === 'gold_price').length === 0 && (
+                                <div className="py-8 text-center">
+                                  <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                  <p className="text-gray-500 text-sm">Aucune règle de cours d'or configurée</p>
+                                  <p className="text-gray-400 text-xs mt-1">Ajoutez des règles dans la base de données avec category = 'gold_price'</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+
+                        {/* Other Thresholds (Refining Loss, etc.) */}
+                        {businessRules.filter(rule =>
+                          rule.rule_category === 'threshold' &&
+                          rule.rule_key !== 'var_threshold_mine_airport' &&
+                          rule.rule_key !== 'var_threshold_airport_refinery'
+                        ).length > 0 && (
+                          <Card>
+                            <div className="p-6">
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-red-100 rounded-lg">
+                                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-semibold text-gray-900">Autres Seuils de Contrôle</h3>
+                                  <p className="text-sm text-gray-500">Seuils additionnels pour les processus de transformation</p>
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                {businessRules
+                                  .filter(rule =>
+                                    rule.rule_category === 'threshold' &&
+                                    rule.rule_key !== 'var_threshold_mine_airport' &&
+                                    rule.rule_key !== 'var_threshold_airport_refinery'
+                                  )
+                                  .map((rule) => (
+                                    <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                      <div className="flex-1">
+                                        <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
+                                        <p className="text-sm text-gray-500">{rule.description}</p>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <input
+                                          type="number"
+                                          step="0.1"
+                                          min="0"
+                                          max="100"
+                                          value={editedRules[rule.rule_key] || rule.rule_value}
+                                          onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
+                                          className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
+                                        />
+                                        {rule.unit && (
+                                          <span className="text-sm text-gray-600 w-12">{rule.unit}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          </Card>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -21,7 +21,7 @@
   3️⃣  Tester dans l'application
       → Cliquer "License Management"
 
-
+A
 📚 DOCUMENTATION DISPONIBLE
 ═══════════════════════════════════════════════════════════════════════════════
 

@@ -261,7 +261,7 @@ CREATE TABLE IF NOT EXISTS licenses (
     status = 'ACTIVE' AND
     CURRENT_DATE >= COALESCE(start_date, issue_date) AND
     CURRENT_DATE <= expiry_date AND
-    remaining_qty_oz > 0
+    (authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) > 0
   ) STORED,
 
   days_to_expiry integer GENERATED ALWAYS AS (
@@ -271,7 +271,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   remaining_percentage decimal(5,2) GENERATED ALWAYS AS (
     CASE
       WHEN authorized_qty_oz > 0 THEN
-        ROUND((remaining_qty_oz / authorized_qty_oz * 100)::numeric, 2)
+        ROUND(((authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) / authorized_qty_oz * 100)::numeric, 2)
       ELSE 0
     END
   ) STORED,
@@ -481,7 +481,7 @@ BEGIN
 
   -- Close license if quota fully consumed
   IF NEW.status = 'ACTIVE' AND
-     NEW.remaining_qty_oz <= 0 THEN
+     (NEW.authorized_qty_oz - NEW.consumed_qty_oz - NEW.reserved_qty_oz) <= 0 THEN
     NEW.status := 'CLOSED';
   END IF;
 

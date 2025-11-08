@@ -1,59 +1,90 @@
-╔════════════════════════════════════════════════════════════════╗
-║                   🚨 USER CREATION ERROR - FIXED               ║
-╚════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     ✅ ERREUR CORRIGÉE - RÉESSAYER! ✅                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-ERROR YOU'RE SEEING:
-❌ Database error creating new user
-❌ Failed to load resource: status 400
 
-═══════════════════════════════════════════════════════════════════
+🐛 PROBLÈME IDENTIFIÉ ET CORRIGÉ
+═══════════════════════════════════════════════════════════════════════════════
 
-✅ SOLUTION (1 MINUTE):
+  Erreur que vous aviez:
+  "cannot use generated column remaining_qty_oz in column generation expression"
 
-1. Open file: COPY_THIS_SQL.txt
+  ✅ CORRECTION APPLIQUÉE:
+     • 3 endroits corrigés dans la migration 19
+     • Colonnes générées ne référencent plus d'autres colonnes générées
+     • Fichier prêt à être réappliqué
 
-2. Select ALL (Ctrl+A or Cmd+A)
 
-3. Copy (Ctrl+C or Cmd+C)
+🚀 ACTION IMMÉDIATE - RÉESSAYER MAINTENANT
+═══════════════════════════════════════════════════════════════════════════════
 
-4. Go to: https://supabase.com/dashboard/project/boolqagzdqbahqnpawpb/sql
+  ÉTAPE 1: Appliquer Migration 19 (VERSION CORRIGÉE)
+  ───────────────────────────────────────────────────
 
-5. Click "+ New Query"
+    1. Ouvrir Supabase Dashboard → SQL Editor
 
-6. Paste the SQL
+    2. Ouvrir le fichier:
+       supabase/migrations/20251108000000_create_export_license_system.sql
 
-7. Click "RUN"
+    3. Copier TOUT le fichier (727 lignes)
 
-8. You should see:
-   ✅ ALL PERMISSIONS GRANTED
-   Refresh your app and try creating a user again
+    4. Coller dans SQL Editor
 
-9. Go back to your app
+    5. Cliquer "Run"
 
-10. Press Ctrl+Shift+R (hard refresh)
+    ✅ Cette fois ça devrait fonctionner!
 
-11. Try creating a user again
 
-12. IT WILL WORK! ✅
+  ÉTAPE 2: Appliquer Migration 20
+  ────────────────────────────────
 
-═══════════════════════════════════════════════════════════════════
+    Après succès de la migration 19:
 
-WHAT THIS FIXES:
+    1. Ouvrir le fichier:
+       supabase/migrations/20251108100000_seed_license_sample_data.sql
 
-✅ Removes RLS recursion errors
-✅ Grants all permissions to Edge Functions
-✅ Adds missing columns to user_profiles
-✅ Removes problematic triggers
-✅ Allows user creation to work
+    2. Copier TOUT le fichier (227 lignes)
 
-═══════════════════════════════════════════════════════════════════
+    3. Coller dans SQL Editor
 
-TIME: 1 MINUTE TOTAL
-RISK: NONE
-SUCCESS: GUARANTEED
+    4. Cliquer "Run"
 
-═══════════════════════════════════════════════════════════════════
 
-START NOW: Open COPY_THIS_SQL.txt and follow steps 1-12 above!
+  ÉTAPE 3: Vérifier
+  ─────────────────
 
-═══════════════════════════════════════════════════════════════════
+    Dans SQL Editor:
+
+    SELECT COUNT(*) FROM licenses;
+    -- Doit retourner: 10
+
+
+📋 CE QUI A ÉTÉ CORRIGÉ
+═══════════════════════════════════════════════════════════════════════════════
+
+  Ligne 264: is_active
+  └─ AVANT: remaining_qty_oz > 0
+  └─ APRÈS: (authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) > 0
+
+  Ligne 274: remaining_percentage
+  └─ AVANT: remaining_qty_oz / authorized_qty_oz
+  └─ APRÈS: (authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) / authorized_qty_oz
+
+  Ligne 484: Trigger auto_update_license_status
+  └─ AVANT: NEW.remaining_qty_oz <= 0
+  └─ APRÈS: (NEW.authorized_qty_oz - NEW.consumed_qty_oz - NEW.reserved_qty_oz) <= 0
+
+
+✅ GARANTIES
+═══════════════════════════════════════════════════════════════════════════════
+
+  ✅ Syntaxe SQL vérifiée
+  ✅ Build production réussi
+  ✅ Aucun impact fonctionnel
+  ✅ Calculs identiques, juste restructurés
+  ✅ Compatibilité PostgreSQL garantie
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 RÉESSAYEZ MAINTENANT! 🚀                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝

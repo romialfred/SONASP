@@ -553,31 +553,25 @@ ALTER TABLE license_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE license_kpi_thresholds ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for license_requests
-CREATE POLICY "Users can view license requests from their mine"
+CREATE POLICY "Users can view license requests"
   ON license_requests FOR SELECT
   TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles
       WHERE user_profiles.id = auth.uid()
-      AND (
-        user_profiles.role = 'management'
-        OR user_profiles.mining_company_id = license_requests.mine_id
-      )
+      AND user_profiles.role IN ('management', 'factory')
     )
   );
 
-CREATE POLICY "Users can create license requests for their mine"
+CREATE POLICY "Factory and management can create license requests"
   ON license_requests FOR INSERT
   TO authenticated
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM user_profiles
       WHERE user_profiles.id = auth.uid()
-      AND (
-        user_profiles.role = 'management'
-        OR user_profiles.mining_company_id = mine_id
-      )
+      AND user_profiles.role IN ('management', 'factory')
     )
   );
 
@@ -589,25 +583,19 @@ CREATE POLICY "Users can update their draft license requests"
     EXISTS (
       SELECT 1 FROM user_profiles
       WHERE user_profiles.id = auth.uid()
-      AND (
-        user_profiles.role = 'management'
-        OR user_profiles.mining_company_id = mine_id
-      )
+      AND user_profiles.role IN ('management', 'factory')
     )
   );
 
 -- RLS Policies for licenses
-CREATE POLICY "Users can view licenses from their mine"
+CREATE POLICY "Users can view licenses"
   ON licenses FOR SELECT
   TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles
       WHERE user_profiles.id = auth.uid()
-      AND (
-        user_profiles.role = 'management'
-        OR user_profiles.mining_company_id = applicant_mine_id
-      )
+      AND user_profiles.role IN ('management', 'factory')
     )
   );
 

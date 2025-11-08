@@ -227,9 +227,9 @@ export function LicensesListingPage() {
               Track and manage gold export licenses and quota utilization
             </p>
           </div>
-          <Button onClick={() => navigate('/licenses/register')}>
+          <Button onClick={() => navigate('/licenses/requests/new')}>
             <Plus className="w-5 h-5 mr-2" />
-            Register License
+            Request License
           </Button>
         </div>
 
@@ -350,9 +350,9 @@ export function LicensesListingPage() {
               <p className="text-gray-600 mb-6">
                 Register your first export license to start tracking quota utilization
               </p>
-              <Button onClick={() => navigate('/licenses/register')}>
+              <Button onClick={() => navigate('/licenses/requests/new')}>
                 <Plus className="w-5 h-5 mr-2" />
-                Register License
+                Request License
               </Button>
             </div>
           ) : (

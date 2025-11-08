@@ -101,7 +101,7 @@ export const licenseService = {
 
   async listLicenses(filters?: LicenseFilters): Promise<License[]> {
     let query = supabase
-      .from('licenses')
+      .from('licenses_with_computed_fields')
       .select('*')
       .order('expiry_date', { ascending: true });
 
@@ -151,7 +151,7 @@ export const licenseService = {
 
   async getActiveLicensesForMine(mineId: string): Promise<License[]> {
     const { data, error } = await supabase
-      .from('licenses')
+      .from('licenses_with_computed_fields')
       .select('*')
       .eq('applicant_mine_id', mineId)
       .eq('is_active', true)

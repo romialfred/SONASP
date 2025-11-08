@@ -18,6 +18,7 @@ import {
   Upload,
   Download,
   Activity,
+  Package,
 } from 'lucide-react';
 import type { License, LicenseQuotaTransaction, LicenseEvent, LicenseEvaluation } from '@/types/license';
 
@@ -28,6 +29,7 @@ export function LicenseDetailsPage() {
   const [evaluation, setEvaluation] = useState<LicenseEvaluation | null>(null);
   const [transactions, setTransactions] = useState<LicenseQuotaTransaction[]>([]);
   const [events, setEvents] = useState<LicenseEvent[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -42,15 +44,17 @@ export function LicenseDetailsPage() {
 
     setLoading(true);
     try {
-      const [licenseData, transactionsData, eventsData] = await Promise.all([
+      const [licenseData, transactionsData, eventsData, batchesData] = await Promise.all([
         licenseService.getLicense(id),
         licenseService.getQuotaTransactions(id),
         licenseService.getLicenseEvents(id),
+        loadAssociatedBatches(id),
       ]);
 
       setLicense(licenseData);
       setTransactions(transactionsData);
       setEvents(eventsData);
+      setBatches(batchesData);
 
       const evaluationResult = await licenseService.evaluateLicense(licenseData);
       setEvaluation(evaluationResult);
@@ -58,6 +62,32 @@ export function LicenseDetailsPage() {
       console.error('Error loading license:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAssociatedBatches = async (licenseId: string) => {
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('batches')
+        .select(`
+          id,
+          batch_number,
+          created_at,
+          status,
+          weight_grams,
+          weight_oz,
+          origin_site,
+          mining_companies (name)
+        `)
+        .eq('license_id', licenseId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading batches:', error);
+      return [];
     }
   };
 
@@ -397,6 +427,7 @@ export function LicenseDetailsPage() {
         <Card>
           <Tabs
             tabs={[
+              { id: 'batches', label: `Associated Batches (${batches.length})`, icon: Package },
               { id: 'transactions', label: 'Quota Transactions', icon: Activity },
               { id: 'events', label: 'Audit Trail', icon: FileText },
             ]}
@@ -405,6 +436,87 @@ export function LicenseDetailsPage() {
           />
 
           <div className="p-6">
+            {activeTab === 'batches' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Batches Using This License
+                </h3>
+                {batches.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    No batches associated with this license yet
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Batch Number
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date Created
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Weight (oz)
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Mining Company
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Origin
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {batches.map((batch) => (
+                          <tr key={batch.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <Package className="w-4 h-4 text-gray-400 mr-2" />
+                                <span className="text-sm font-medium text-gray-900">
+                                  {batch.batch_number}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {new Date(batch.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <StatusBadge status={batch.status} />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                              {batch.weight_oz?.toFixed(3) || '0.000'} oz
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {batch.mining_companies?.name || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {batch.origin_site || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => navigate(`/batches/${batch.id}`)}
+                              >
+                                View Details
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'transactions' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">

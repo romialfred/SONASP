@@ -31,8 +31,8 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
   const menuItems = {
     factory: [
       { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/dashboard' },
+      { icon: Award, label: 'License Management', href: '/licenses' },
       { icon: Package, label: t('nav.batches'), href: '/batches' },
-      { icon: Award, label: 'Export Licenses', href: '/licenses' },
       { icon: Truck, label: t('nav.shipments'), href: '/shipments' },
       { icon: FileText, label: t('nav.reports'), href: '/reports' },
     ],
@@ -55,11 +55,11 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
     ],
     management: [
       { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/dashboard' },
+      { icon: Award, label: 'License Management', href: '/licenses' },
       { icon: BarChart3, label: t('nav.analytics'), href: '/analytics' },
       { icon: DollarSign, label: t('nav.sales'), href: '/sales' },
       { icon: Users, label: t('nav.customers'), href: '/customers' },
       { icon: Package, label: t('nav.batches'), href: '/batches' },
-      { icon: Award, label: 'Export Licenses', href: '/licenses' },
       { icon: GitBranch, label: 'Workflow', href: '/admin/workflow' },
       { icon: FileText, label: t('nav.reports'), href: '/reports' },
       { icon: Settings, label: t('nav.settings'), href: '/settings' },

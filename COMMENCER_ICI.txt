@@ -1,182 +1,170 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                          🚀 COMMENCER ICI 🚀                                 ║
-║                                                                              ║
-║                   GUIDE RAPIDE - LICENSE MANAGEMENT                          ║
-║                                                                              ║
+║                    🚨 TABLE LICENSES VIDE - DIAGNOSTIC 🚨                    ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
+📋 ÉTAPES DE DIAGNOSTIC (Copier dans Supabase SQL Editor)
+══════════════════════════════════════════════════════════════════════════════
 
-📍 VOUS ÊTES ICI
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 1: Script de diagnostic complet
+──────────────────────────────────────
 
-  ✅ 18 migrations déjà appliquées (migrations 1 à 18)
-  ❌ 2 migrations restantes (License Management)
+-- ═══════════════════════════════════════════════════════════════════════
+-- DIAGNOSTIC COMPLET LICENSES
+-- ═══════════════════════════════════════════════════════════════════════
 
-  Progression: ████████████████████░░ 90%
+-- 1. Vérifier tables
+SELECT '1. TABLES' as check_type,
+       COUNT(*) as count,
+       CASE WHEN COUNT(*) >= 2 THEN '✅ OK' ELSE '❌ MANQUANT' END as status
+FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_name IN ('licenses', 'license_requests');
 
+-- 2. Vérifier vue
+SELECT '2. VIEW' as check_type,
+       COUNT(*) as count,
+       CASE WHEN COUNT(*) = 1 THEN '✅ OK' ELSE '❌ MANQUANT' END as status
+FROM pg_views
+WHERE schemaname = 'public'
+AND viewname = 'licenses_with_computed_fields';
 
-🎯 OBJECTIF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- 3. Compter licenses dans table
+SELECT '3. LICENSES IN TABLE' as check_type,
+       COUNT(*) as count,
+       CASE WHEN COUNT(*) > 0 THEN '✅ OK' ELSE '❌ VIDE' END as status
+FROM licenses;
 
-  Appliquer les 2 dernières migrations pour activer le système de gestion
-  des licenses d'exportation avec 10 licenses échantillons.
+-- 4. Vérifier RLS
+SELECT '4. RLS ENABLED' as check_type,
+       CASE WHEN rowsecurity THEN 1 ELSE 0 END as count,
+       CASE WHEN rowsecurity THEN '✅ ACTIVÉ' ELSE '⚠️ DÉSACTIVÉ' END as status
+FROM pg_tables
+WHERE schemaname = 'public'
+AND tablename = 'licenses';
 
-
-⚡ ACTION IMMÉDIATE - 3 ÉTAPES SIMPLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │                                                                        │
-  │  ÉTAPE 1: VÉRIFIER L'ÉTAT                                             │
-  │  ═══════════════════════════════                                       │
-  │                                                                        │
-  │  1. Ouvrez: https://supabase.com → Votre projet → SQL Editor          │
-  │                                                                        │
-  │  2. Ouvrez le fichier: VERIFIER_ETAT_BD_MAINTENANT.sql                │
-  │                                                                        │
-  │  3. Copiez TOUT le contenu                                            │
-  │                                                                        │
-  │  4. Collez dans SQL Editor                                            │
-  │                                                                        │
-  │  5. Cliquez "Run"                                                     │
-  │                                                                        │
-  │  ⏱️  30 secondes                                                       │
-  │                                                                        │
-  └────────────────────────────────────────────────────────────────────────┘
-
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │                                                                        │
-  │  ÉTAPE 2: APPLIQUER LES MIGRATIONS                                    │
-  │  ════════════════════════════════                                      │
-  │                                                                        │
-  │  Le script de l'étape 1 vous dira EXACTEMENT quoi faire:              │
-  │                                                                        │
-  │    → Si migration 19 manque: Appliquer migration 19                   │
-  │    → Si migration 20 manque: Appliquer migration 20                   │
-  │    → Si tout est OK: Aller à l'étape 3                                │
-  │                                                                        │
-  │  ⏱️  5-10 secondes par migration                                       │
-  │                                                                        │
-  └────────────────────────────────────────────────────────────────────────┘
-
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │                                                                        │
-  │  ÉTAPE 3: TESTER DANS L'APPLICATION                                   │
-  │  ══════════════════════════════════                                    │
-  │                                                                        │
-  │  1. Ouvrez votre application web                                      │
-  │                                                                        │
-  │  2. Cliquez "License Management" dans le menu                         │
-  │                                                                        │
-  │  3. Voyez les 10 licenses avec indicateurs colorés                    │
-  │                                                                        │
-  │  4. Cliquez sur une license → Explorez les onglets                    │
-  │                                                                        │
-  │  ⏱️  1 minute                                                          │
-  │                                                                        │
-  └────────────────────────────────────────────────────────────────────────┘
-
-
-📚 DOCUMENTATION DISPONIBLE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Pour Démarrer Rapidement:
-  ─────────────────────────
-  ⭐ VERIFIER_ETAT_BD_MAINTENANT.sql        ← Script de vérification
-  ⭐ RESUME_SIMPLE_MIGRATIONS.txt            ← Guide ultra-simple (2 min)
-
-  Pour Comprendre en Détail:
-  ──────────────────────────
-  📘 POINT_MIGRATIONS_FRANCAIS.md            ← Guide complet français
-  📗 VERIFICATION_MIGRATIONS_BD.md           ← Détails techniques
-  🎨 MIGRATIONS_VISUALISATION.txt            ← Vue graphique
-
-  Pour Navigation:
-  ────────────────
-  📚 INDEX_FICHIERS_DOCUMENTATION.md         ← Tous les fichiers listés
-
-  En Anglais:
-  ───────────
-  📕 APPLY_MIGRATIONS_NOW.md                 ← Complete guide
-  📙 MIGRATIONS_EXECUTION_ORDER.md           ← All 20 migrations
-
-
-📁 FICHIERS DE MIGRATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Migration 19 (À appliquer EN PREMIER):
-  ──────────────────────────────────────
-  📄 supabase/migrations/20251108000000_create_export_license_system.sql
-     • Crée 6 tables
-     • Crée 4 enums
-     • Ajoute triggers et fonctions
-     • Active RLS
-     • 727 lignes
-
-  Migration 20 (À appliquer APRÈS la 19):
-  ───────────────────────────────────────
-  📄 supabase/migrations/20251108100000_seed_license_sample_data.sql
-     • Crée 10 licenses échantillons
-     • Ajoute événements et transactions
-     • Lie batches aux licenses
-     • 227 lignes (VERSION CORRIGÉE ✅)
-
-
-⏱️  TEMPS TOTAL ESTIMÉ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Vérification:        30 secondes
-  Application:         10 secondes
-  Test:                1 minute
-  ───────────────────────────────
-  TOTAL:               ~2 minutes
-
-
-✅ CE QUE VOUS AUREZ APRÈS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ✨ Système de gestion des licenses d'exportation complet
-  ✨ 10 licenses échantillons sur 8 mois
-  ✨ Indicateurs visuels (🔴 🟡 🟢 ⚫)
-  ✨ Suivi automatique des quotas
-  ✨ Audit trail complet
-  ✨ Intégration avec les batches
-  ✨ Interface utilisateur fonctionnelle
-  ✨ Données réalistes pour tests
-
-
-⚠️  POINTS IMPORTANTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  1. Toujours appliquer migration 19 AVANT la 20
-  2. Ne pas interrompre l'exécution
-  3. Lire les messages de succès/erreur
-  4. La migration 20 est la version corrigée
-  5. Tout est sécurisé avec RLS
-
-
-🎯 PROCHAINE ACTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  👉 Ouvrir et exécuter: VERIFIER_ETAT_BD_MAINTENANT.sql
-
-  Il vous guidera pour la suite!
-
-
-🆘 BESOIN D'AIDE?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  • Consultez: POINT_MIGRATIONS_FRANCAIS.md → Section "Dépannage"
-  • Relisez les messages d'erreur
-  • Vérifiez l'ordre d'application (19 puis 20)
-  • Tous les fichiers de doc sont dans ce dossier
+-- 5. Vérifier votre rôle
+SELECT '5. YOUR ROLE' as check_type,
+       1 as count,
+       COALESCE(role, '❌ PAS DE ROLE') as status
+FROM user_profiles
+WHERE id = auth.uid();
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                   ✅ TOUT EST PRÊT! COMMENCEZ MAINTENANT! ✅                  ║
-║                                                                              ║
-║            Étape 1: Exécuter VERIFIER_ETAT_BD_MAINTENANT.sql                ║
-║                                                                              ║
+║                          🔧 SOLUTIONS PAR CAS 🔧                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
+
+CAS A: Check 1 = ❌ MANQUANT (Tables n'existent pas)
+────────────────────────────────────────────────────
+
+  → APPLIQUER MIGRATION 19
+
+  Fichier: supabase/migrations/20251108000000_create_export_license_system.sql
+  
+  1. Ouvrir le fichier
+  2. CTRL+A (tout sélectionner)
+  3. CTRL+C (copier)
+  4. Ouvrir Supabase Dashboard → SQL Editor
+  5. CTRL+V (coller)
+  6. Cliquer "RUN"
+  7. Attendre ~5 secondes
+  8. Passer au CAS B
+
+
+CAS B: Check 3 = ❌ VIDE (Table vide)
+─────────────────────────────────────
+
+  → APPLIQUER MIGRATION 20
+
+  Fichier: supabase/migrations/20251108100000_seed_license_sample_data.sql
+  
+  1. Ouvrir le fichier
+  2. Copier TOUT
+  3. Coller dans SQL Editor
+  4. Run
+  5. Devrait voir: "INSERT 0 10"
+  6. Passer à l'étape de vérification
+
+
+CAS C: Check 5 = ❌ PAS DE ROLE ou role ≠ management/factory
+─────────────────────────────────────────────────────────────
+
+  → CORRIGER VOTRE RÔLE
+
+  UPDATE user_profiles
+  SET role = 'management'
+  WHERE id = auth.uid();
+
+  Puis recharger la page /licenses
+
+
+CAS D: Tout OK mais toujours vide dans UI
+──────────────────────────────────────────
+
+  → TESTER VUE DIRECTEMENT
+
+  SELECT
+    license_number,
+    applicant_company_name,
+    status,
+    is_active,
+    days_to_expiry
+  FROM licenses_with_computed_fields
+  LIMIT 3;
+
+  Si ça retourne des données → Problème frontend
+  Si ça retourne 0 ligne → Problème RLS
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 SOLUTION ULTRA-RAPIDE (Fix All) 🚀                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Si vous voulez juste que ça marche immédiatement:
+
+-- 1. Mettre votre rôle en management
+UPDATE user_profiles SET role = 'management' WHERE id = auth.uid();
+
+-- 2. Vérifier si données existent
+SELECT COUNT(*) FROM licenses;
+
+-- 3. Si COUNT = 0, appliquer migration 20 (seed data)
+-- 4. Recharger page /licenses
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       ✅ VÉRIFICATION FINALE ✅                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+SELECT
+  license_number,
+  applicant_company_name,
+  status,
+  authorized_qty_oz,
+  remaining_qty_oz,
+  remaining_percentage,
+  is_active,
+  days_to_expiry
+FROM licenses_with_computed_fields
+ORDER BY expiry_date
+LIMIT 5;
+
+✅ Si vous voyez 5 lignes → SUCCÈS! Recharger /licenses
+❌ Si 0 ligne → Revenir au diagnostic étape 1
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         📊 ORDRE D'EXÉCUTION 📊                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  1️⃣  Copier le script de diagnostic (ÉTAPE 1)
+  2️⃣  Coller dans Supabase SQL Editor
+  3️⃣  Run
+  4️⃣  Lire les résultats (check_type, count, status)
+  5️⃣  Identifier le CAS (A, B, C ou D)
+  6️⃣  Appliquer la solution du CAS
+  7️⃣  Exécuter la vérification finale
+  8️⃣  Recharger la page /licenses
+
+
+══════════════════════════════════════════════════════════════════════════════

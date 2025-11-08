@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Table } from '@/components/ui/Table';
+import { Alert } from '@/components/ui/Alert';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { licenseService } from '@/services/licenseService';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +28,7 @@ export function LicensesListingPage() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [summary, setSummary] = useState<LicenseSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
   const [filters, setFilters] = useState({
     status: '',
     search: '',
@@ -41,6 +43,7 @@ export function LicensesListingPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       const statusFilter = filters.status ? [filters.status as LicenseStatus] : undefined;
 
@@ -58,8 +61,9 @@ export function LicensesListingPage() {
 
       setLicenses(licensesData);
       setSummary(summaryData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading licenses:', error);
+      setError(error?.message || 'Failed to load licenses. Please check database permissions.');
     } finally {
       setLoading(false);
     }
@@ -340,9 +344,31 @@ export function LicensesListingPage() {
           </div>
         </Card>
 
+        {error && (
+          <Alert variant="error" className="mb-6">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </Alert>
+        )}
+
         <Card>
           {loading ? (
             <div className="p-12 text-center text-gray-500">Loading licenses...</div>
+          ) : error ? (
+            <div className="p-12 text-center">
+              <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Licenses</h3>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <p className="text-sm text-gray-500 mb-6">
+                Please check that:
+                <br />• Database migrations have been applied
+                <br />• Your user role is 'management' or 'factory'
+                <br />• RLS policies are configured correctly
+              </p>
+              <Button onClick={() => loadData()} variant="secondary">
+                Retry
+              </Button>
+            </div>
           ) : licenses.length === 0 ? (
             <div className="p-12 text-center">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />

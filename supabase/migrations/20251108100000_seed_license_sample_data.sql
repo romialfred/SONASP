@@ -18,15 +18,17 @@
 -- Insert sample licenses for testing
 INSERT INTO licenses (
   license_number,
-  mining_company_id,
-  issuing_authority,
+  applicant_mine_id,
+  applicant_company_name,
+  applicant_signatory,
+  issuer_organization,
+  issuer_signatory,
+  issuer_country,
+  request_date,
   issue_date,
   expiry_date,
-  authorized_quantity_grams,
-  authorized_quantity_oz,
-  used_quantity_grams,
-  destination_country,
-  destination_buyer,
+  authorized_qty_oz,
+  consumed_qty_oz,
   license_type,
   status,
   notes,
@@ -35,44 +37,38 @@ INSERT INTO licenses (
 )
 SELECT
   'LIC-2024-' || LPAD(generate_series::text, 4, '0') as license_number,
-  (SELECT id FROM mining_companies ORDER BY RANDOM() LIMIT 1),
+  (SELECT id FROM mining_companies ORDER BY RANDOM() LIMIT 1) as applicant_mine_id,
+  (SELECT name FROM mining_companies ORDER BY RANDOM() LIMIT 1) as applicant_company_name,
+  'John Doe' as applicant_signatory,
   CASE (generate_series % 3)
     WHEN 0 THEN 'Ministry of Mines - Guinea'
     WHEN 1 THEN 'Ministry of Mines - Mali'
     ELSE 'Ministry of Mines - Côte d''Ivoire'
-  END as issuing_authority,
+  END as issuer_organization,
+  'Minister of Mines' as issuer_signatory,
+  CASE (generate_series % 3)
+    WHEN 0 THEN 'GN'
+    WHEN 1 THEN 'ML'
+    ELSE 'CI'
+  END as issuer_country,
+  DATE '2024-04-01' + (generate_series * 25 || ' days')::interval - INTERVAL '7 days' as request_date,
   DATE '2024-04-01' + (generate_series * 25 || ' days')::interval as issue_date,
   DATE '2024-04-01' + (generate_series * 25 || ' days')::interval + INTERVAL '90 days' as expiry_date,
-  (50000 + (generate_series * 15000))::numeric as authorized_quantity_grams,
-  ((50000 + (generate_series * 15000)) / 31.1035)::numeric as authorized_quantity_oz,
+  ((50000 + (generate_series * 15000)) / 31.1035)::numeric as authorized_qty_oz,
   CASE
     -- Some licenses heavily used (RED)
-    WHEN generate_series IN (1, 2) THEN (48000 + (generate_series * 15000))::numeric
+    WHEN generate_series IN (1, 2) THEN ((48000 + (generate_series * 15000)) / 31.1035)::numeric
     -- Some moderately used (YELLOW)
-    WHEN generate_series IN (3, 4) THEN (40000 + (generate_series * 10000))::numeric
+    WHEN generate_series IN (3, 4) THEN ((40000 + (generate_series * 10000)) / 31.1035)::numeric
     -- Some lightly used (GREEN)
-    WHEN generate_series IN (5, 6) THEN (20000 + (generate_series * 5000))::numeric
+    WHEN generate_series IN (5, 6) THEN ((20000 + (generate_series * 5000)) / 31.1035)::numeric
     -- Some unused (GREEN)
     ELSE 0
-  END as used_quantity_grams,
-  CASE (generate_series % 5)
-    WHEN 0 THEN 'United Arab Emirates'
-    WHEN 1 THEN 'Switzerland'
-    WHEN 2 THEN 'United Kingdom'
-    WHEN 3 THEN 'United States'
-    ELSE 'Belgium'
-  END as destination_country,
-  CASE (generate_series % 5)
-    WHEN 0 THEN 'Emirates Gold DMCC'
-    WHEN 1 THEN 'Metalor Technologies SA'
-    WHEN 2 THEN 'Baird & Co.'
-    WHEN 3 THEN 'Auramet International'
-    ELSE 'Umicore Precious Metals'
-  END as destination_buyer,
+  END as consumed_qty_oz,
   CASE (generate_series % 3)
-    WHEN 0 THEN 'STANDARD_EXPORT'
-    WHEN 1 THEN 'RE_EXPORT'
-    ELSE 'TEMPORARY_EXPORT'
+    WHEN 0 THEN 'GOLD_EXPORT'
+    WHEN 1 THEN 'GOLD_EXPORT'
+    ELSE 'GOLD_EXPORT'
   END as license_type,
   CASE
     -- Recently issued licenses still REGISTERED
@@ -91,16 +87,18 @@ FROM generate_series(1, 10);
 INSERT INTO license_events (
   license_id,
   event_type,
-  event_data,
+  event_description,
+  payload,
   user_id,
-  created_at
+  event_at
 )
 SELECT
   l.id,
   'REGISTERED'::license_event_type,
+  'License registered: ' || l.license_number,
   jsonb_build_object(
     'license_number', l.license_number,
-    'authorized_quantity_grams', l.authorized_quantity_grams,
+    'authorized_qty_oz', l.authorized_qty_oz,
     'issue_date', l.issue_date,
     'expiry_date', l.expiry_date
   ),
@@ -113,13 +111,15 @@ WHERE l.license_number LIKE 'LIC-2024-%';
 INSERT INTO license_events (
   license_id,
   event_type,
-  event_data,
+  event_description,
+  payload,
   user_id,
-  created_at
+  event_at
 )
 SELECT
   l.id,
   'ACTIVATED'::license_event_type,
+  'License activated: ' || l.license_number,
   jsonb_build_object(
     'license_number', l.license_number,
     'activation_date', l.issue_date + INTERVAL '1 day'
@@ -134,44 +134,29 @@ WHERE l.license_number LIKE 'LIC-2024-%'
 INSERT INTO license_quota_transactions (
   license_id,
   transaction_type,
-  quantity_grams,
   quantity_oz,
-  reference_type,
-  reference_id,
-  notes,
-  created_by,
-  created_at
+  reserved_qty_after,
+  consumed_qty_after,
+  remaining_qty_after,
+  reason,
+  performed_by,
+  transaction_date
 )
 SELECT
   l.id,
   'CONSUME'::quota_transaction_type,
-  l.used_quantity_grams,
-  l.used_quantity_grams / 31.1035,
-  'EXPORT',
-  gen_random_uuid()::text,
+  l.consumed_qty_oz,
+  0,
+  l.consumed_qty_oz,
+  l.authorized_qty_oz - l.consumed_qty_oz,
   'Initial consumption for sample data',
   (SELECT id FROM auth.users LIMIT 1),
   l.issue_date + INTERVAL '15 days'
 FROM licenses l
 WHERE l.license_number LIKE 'LIC-2024-%'
-  AND l.used_quantity_grams > 0;
+  AND l.consumed_qty_oz > 0;
 
--- Insert KPI thresholds if not exists
-INSERT INTO license_kpi_thresholds (
-  country,
-  license_type,
-  quota_usage_warning_pct,
-  quota_usage_critical_pct,
-  days_to_expiry_warning,
-  days_to_expiry_critical,
-  created_at,
-  updated_at
-)
-VALUES
-  ('GN', 'STANDARD_EXPORT', 70, 90, 30, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('ML', 'STANDARD_EXPORT', 70, 90, 30, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('CI', 'STANDARD_EXPORT', 70, 90, 30, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (country, license_type) DO NOTHING;
+-- KPI thresholds are already inserted in the main migration file
 
 -- Link some existing batches to licenses (if batches exist)
 DO $$
@@ -211,16 +196,13 @@ END $$;
 -- Add some sample license requests
 INSERT INTO license_requests (
   request_number,
-  mining_company_id,
-  destination_country,
-  destination_buyer,
-  planned_quantity_grams,
+  mine_id,
+  mine_name,
+  request_date,
   planned_quantity_oz,
-  planned_export_date,
-  license_type,
-  justification,
+  planned_start_date,
+  planned_end_date,
   status,
-  submitted_at,
   created_by,
   created_at,
   updated_at
@@ -228,32 +210,16 @@ INSERT INTO license_requests (
 SELECT
   'REQ-2024-' || LPAD(generate_series::text, 4, '0') as request_number,
   (SELECT id FROM mining_companies ORDER BY RANDOM() LIMIT 1),
-  CASE (generate_series % 4)
-    WHEN 0 THEN 'United Arab Emirates'
-    WHEN 1 THEN 'Switzerland'
-    WHEN 2 THEN 'United Kingdom'
-    ELSE 'United States'
-  END as destination_country,
-  CASE (generate_series % 4)
-    WHEN 0 THEN 'Emirates Gold DMCC'
-    WHEN 1 THEN 'Metalor Technologies SA'
-    WHEN 2 THEN 'Baird & Co.'
-    ELSE 'Auramet International'
-  END as destination_buyer,
-  (60000 + (generate_series * 20000))::numeric as planned_quantity_grams,
+  (SELECT name FROM mining_companies ORDER BY RANDOM() LIMIT 1),
+  CURRENT_DATE - (generate_series * 5 || ' days')::interval,
   ((60000 + (generate_series * 20000)) / 31.1035)::numeric as planned_quantity_oz,
-  CURRENT_DATE + (generate_series * 30 || ' days')::interval as planned_export_date,
-  'STANDARD_EXPORT' as license_type,
-  'Request for export license - Sample ' || generate_series as justification,
+  CURRENT_DATE + (generate_series * 30 || ' days')::interval,
+  CURRENT_DATE + (generate_series * 30 || ' days')::interval + INTERVAL '90 days',
   CASE
     WHEN generate_series <= 2 THEN 'APPROVED'::license_request_status
     WHEN generate_series <= 4 THEN 'IN_REVIEW'::license_request_status
     ELSE 'SUBMITTED'::license_request_status
   END as status,
-  CASE
-    WHEN generate_series <= 4 THEN CURRENT_TIMESTAMP - (generate_series || ' days')::interval
-    ELSE NULL
-  END as submitted_at,
   (SELECT id FROM auth.users LIMIT 1),
   CURRENT_TIMESTAMP - (generate_series * 2 || ' days')::interval,
   CURRENT_TIMESTAMP

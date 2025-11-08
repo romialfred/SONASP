@@ -29,6 +29,7 @@ import {
   Store,
   Activity,
   ScanText,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -293,6 +294,25 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
           {!collapsed && (
             <span className="text-sm">
               {t('nav.dashboard')}
+            </span>
+          )}
+        </Link>
+
+        {/* License Management - Direct Link (Not in Group) */}
+        <Link
+          to="/licenses"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
+            isActive('/licenses')
+              ? 'bg-amber-500 text-white font-semibold shadow-md'
+              : 'text-gray-700 hover:bg-gray-100/70'
+          )}
+        >
+          <Award className={cn('w-5 h-5', isActive('/licenses') ? 'text-white' : 'text-amber-600')} />
+          {!collapsed && (
+            <span className="text-sm">
+              License Management
             </span>
           )}
         </Link>

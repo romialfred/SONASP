@@ -235,9 +235,6 @@ CREATE TABLE IF NOT EXISTS licenses (
   -- Calculated quota tracking
   reserved_qty_oz decimal(18,3) DEFAULT 0 CHECK (reserved_qty_oz >= 0),
   consumed_qty_oz decimal(18,3) DEFAULT 0 CHECK (consumed_qty_oz >= 0),
-  remaining_qty_oz decimal(18,3) GENERATED ALWAYS AS (
-    authorized_qty_oz - consumed_qty_oz - reserved_qty_oz
-  ) STORED,
 
   -- Pricing information
   theoretical_price_usd_per_oz decimal(18,2),
@@ -256,16 +253,9 @@ CREATE TABLE IF NOT EXISTS licenses (
   ocr_extracted_data jsonb,
   ocr_extracted_at timestamptz,
 
-  -- Validity flags
-  is_active boolean GENERATED ALWAYS AS (
-    status = 'ACTIVE' AND
-    CURRENT_DATE >= COALESCE(start_date, issue_date) AND
-    CURRENT_DATE <= expiry_date AND
-    (authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) > 0
-  ) STORED,
-
-  days_to_expiry integer GENERATED ALWAYS AS (
-    expiry_date - CURRENT_DATE
+  -- Calculated quota (can be computed in queries or views)
+  remaining_qty_oz decimal(18,3) GENERATED ALWAYS AS (
+    authorized_qty_oz - consumed_qty_oz - reserved_qty_oz
   ) STORED,
 
   remaining_percentage decimal(5,2) GENERATED ALWAYS AS (
@@ -412,7 +402,6 @@ CREATE INDEX IF NOT EXISTS idx_licenses_mine_id ON licenses(applicant_mine_id);
 CREATE INDEX IF NOT EXISTS idx_licenses_status ON licenses(status);
 CREATE INDEX IF NOT EXISTS idx_licenses_expiry_date ON licenses(expiry_date);
 CREATE INDEX IF NOT EXISTS idx_licenses_license_number ON licenses(license_number);
-CREATE INDEX IF NOT EXISTS idx_licenses_is_active ON licenses(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_licenses_country ON licenses(issuer_country);
 
 CREATE INDEX IF NOT EXISTS idx_quota_transactions_license_id ON license_quota_transactions(license_id);
@@ -422,6 +411,21 @@ CREATE INDEX IF NOT EXISTS idx_quota_transactions_export_id ON license_quota_tra
 CREATE INDEX IF NOT EXISTS idx_license_events_license_id ON license_events(license_id);
 CREATE INDEX IF NOT EXISTS idx_license_events_type ON license_events(event_type);
 CREATE INDEX IF NOT EXISTS idx_license_events_date ON license_events(event_at);
+
+-- Create view for computed time-dependent fields
+CREATE OR REPLACE VIEW licenses_with_computed_fields AS
+SELECT
+  l.*,
+  -- Compute is_active based on current date
+  (
+    l.status = 'ACTIVE' AND
+    CURRENT_DATE >= COALESCE(l.start_date, l.issue_date) AND
+    CURRENT_DATE <= l.expiry_date AND
+    l.remaining_qty_oz > 0
+  ) AS is_active,
+  -- Compute days to expiry
+  (l.expiry_date - CURRENT_DATE) AS days_to_expiry
+FROM licenses l;
 
 -- Create function to auto-generate request numbers
 CREATE OR REPLACE FUNCTION generate_license_request_number()
@@ -462,23 +466,10 @@ CREATE TRIGGER update_licenses_timestamp
   FOR EACH ROW
   EXECUTE FUNCTION update_license_timestamp();
 
--- Create function to auto-update license status
+-- Create function to auto-update license status based on quota
 CREATE OR REPLACE FUNCTION auto_update_license_status()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Activate license on issue date if not already active
-  IF NEW.status = 'REGISTERED' AND
-     CURRENT_DATE >= COALESCE(NEW.start_date, NEW.issue_date) AND
-     CURRENT_DATE <= NEW.expiry_date THEN
-    NEW.status := 'ACTIVE';
-  END IF;
-
-  -- Expire license if past expiry date
-  IF NEW.status IN ('ACTIVE', 'REGISTERED') AND
-     CURRENT_DATE > NEW.expiry_date THEN
-    NEW.status := 'EXPIRED';
-  END IF;
-
   -- Close license if quota fully consumed
   IF NEW.status = 'ACTIVE' AND
      (NEW.authorized_qty_oz - NEW.consumed_qty_oz - NEW.reserved_qty_oz) <= 0 THEN
@@ -724,3 +715,32 @@ VALUES
   ('ALL', 'ALL', 'Quota Low Warning', 'QUOTA_PERCENTAGE', 25.00, 10.00),
   ('ALL', 'ALL', 'Expiry Warning', 'DAYS_TO_EXPIRY', 30.00, 15.00)
 ON CONFLICT (country, license_type, threshold_name) DO NOTHING;
+
+-- Function to update license statuses based on dates (should be called periodically via cron job)
+CREATE OR REPLACE FUNCTION update_license_statuses_by_date()
+RETURNS void AS $$
+BEGIN
+  -- Activate licenses that should be active
+  UPDATE licenses
+  SET status = 'ACTIVE'
+  WHERE status = 'REGISTERED'
+    AND CURRENT_DATE >= COALESCE(start_date, issue_date)
+    AND CURRENT_DATE <= expiry_date;
+
+  -- Expire licenses that are past expiry date
+  UPDATE licenses
+  SET status = 'EXPIRED'
+  WHERE status IN ('ACTIVE', 'REGISTERED')
+    AND CURRENT_DATE > expiry_date;
+
+  -- Close licenses with no remaining quota
+  UPDATE licenses
+  SET status = 'CLOSED'
+  WHERE status = 'ACTIVE'
+    AND (authorized_qty_oz - consumed_qty_oz - reserved_qty_oz) <= 0;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Note: To automatically update license statuses daily, create a cron job:
+-- SELECT cron.schedule('update-license-statuses', '0 0 * * *', 'SELECT update_license_statuses_by_date()');
+-- This requires the pg_cron extension to be enabled in Supabase

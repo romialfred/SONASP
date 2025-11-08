@@ -630,10 +630,7 @@ CREATE POLICY "Users can view documents from their license requests"
       SELECT 1 FROM license_requests lr
       JOIN user_profiles up ON up.id = auth.uid()
       WHERE lr.id = license_request_documents.license_request_id
-      AND (
-        up.role = 'management'
-        OR up.mining_company_id = lr.mine_id
-      )
+      AND up.role IN ('management', 'factory')
     )
   );
 
@@ -646,10 +643,7 @@ CREATE POLICY "Users can upload documents to their license requests"
       JOIN user_profiles up ON up.id = auth.uid()
       WHERE lr.id = license_request_id
       AND lr.status = 'DRAFT'
-      AND (
-        up.role = 'management'
-        OR up.mining_company_id = lr.mine_id
-      )
+      AND up.role IN ('management', 'factory')
     )
   );
 
@@ -662,10 +656,7 @@ CREATE POLICY "Users can view quota transactions for their licenses"
       SELECT 1 FROM licenses l
       JOIN user_profiles up ON up.id = auth.uid()
       WHERE l.id = license_quota_transactions.license_id
-      AND (
-        up.role = 'management'
-        OR up.mining_company_id = l.applicant_mine_id
-      )
+      AND up.role IN ('management', 'factory')
     )
   );
 
@@ -678,10 +669,7 @@ CREATE POLICY "Users can view events for their licenses"
       SELECT 1 FROM licenses l
       JOIN user_profiles up ON up.id = auth.uid()
       WHERE l.id = license_events.license_id
-      AND (
-        up.role = 'management'
-        OR up.mining_company_id = l.applicant_mine_id
-      )
+      AND up.role IN ('management', 'factory')
     )
   );
 

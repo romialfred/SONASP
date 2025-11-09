@@ -375,17 +375,18 @@ export function LicenseRequestForm() {
 
   return (
     <MainLayout>
-      <div className="p-8 flex gap-6">
-        <div className="flex-1 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">New Export License Request</h1>
-          <p className="text-gray-600 mt-2">
-            Submit a request to the Ministry of Mines for gold export authorization
-          </p>
-        </div>
+      <div className="h-full flex">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 max-w-5xl mx-auto">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">New Export License Request</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Submit a request to the Ministry of Mines for gold export authorization
+              </p>
+            </div>
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center flex-1">
                 <div
@@ -407,20 +408,20 @@ export function LicenseRequestForm() {
                 {s < 3 && <div className="flex-1 h-1 mx-4 bg-gray-300" />}
               </div>
             ))}
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {error && (
-          <Alert variant="error" className="mb-6">
-            <AlertCircle className="w-5 h-5" />
-            <span>{error}</span>
-          </Alert>
-        )}
+            {error && (
+              <Alert variant="error" className="mb-4">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </Alert>
+            )}
 
-        <Card className="p-6">
+            <Card className="p-6">
           {step === 1 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Request Information</h2>
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">Request Information</h2>
 
               <Input
                 label="License Title"
@@ -566,9 +567,9 @@ export function LicenseRequestForm() {
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Supporting Documents</h2>
+                <h2 className="text-lg font-semibold">Supporting Documents</h2>
                 <Button onClick={addDocument} size="sm" variant="secondary">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Document
@@ -636,7 +637,7 @@ export function LicenseRequestForm() {
           )}
 
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <h2 className="text-xl font-semibold">Applicant Signature</h2>
 
               <Input
@@ -716,15 +717,16 @@ export function LicenseRequestForm() {
                   Submit Request
                 </Button>
               )}
+              </div>
             </div>
+          </Card>
           </div>
-        </Card>
         </div>
 
-        <div className="w-96 shrink-0">
-          <div className="sticky top-8">
+        <div className="w-[420px] shrink-0 border-l border-gray-200 bg-gray-50 overflow-hidden">
+          <div className="h-full overflow-y-auto p-6">
             <FieldGuidePanel
-              title="Field Guide"
+              title="Export License Guide"
               guides={fieldGuides}
             />
           </div>

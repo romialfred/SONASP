@@ -1,11 +1,12 @@
-import { Info, HelpCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { HelpCircle } from 'lucide-react';
 
 export interface FieldGuideItem {
   field: string;
-  label: string;
+  title?: string;
+  label?: string;
   description: string;
   example?: string;
+  examples?: string[];
   required?: boolean;
   rules?: string[];
   section?: string;
@@ -25,77 +26,64 @@ interface FieldGuidePanelProps {
 }
 
 export function FieldGuidePanel({ title = 'Field Guide', guides = [], sections = [], currentField }: FieldGuidePanelProps) {
-  // If sections are provided, use them; otherwise group guides by section
-  const guideSections: FieldGuideSection[] = sections.length > 0
-    ? sections
-    : groupGuidesBySection(guides);
+  const colors = [
+    'bg-blue-50 border-blue-200',
+    'bg-green-50 border-green-200',
+    'bg-orange-50 border-orange-200',
+    'bg-purple-50 border-purple-200',
+    'bg-teal-50 border-teal-200',
+    'bg-pink-50 border-pink-200',
+    'bg-cyan-50 border-cyan-200',
+  ];
+
+  const textColors = [
+    'text-blue-900',
+    'text-green-900',
+    'text-orange-900',
+    'text-purple-900',
+    'text-teal-900',
+    'text-pink-900',
+    'text-cyan-900',
+  ];
+
+  const descriptionColors = [
+    'text-blue-700',
+    'text-green-700',
+    'text-orange-700',
+    'text-purple-700',
+    'text-teal-700',
+    'text-pink-700',
+    'text-cyan-700',
+  ];
 
   return (
-    <Card className="sticky top-6">
-      <CardHeader className="bg-blue-50 border-b border-blue-100">
-        <CardTitle className="flex items-center gap-2 text-blue-900">
-          <HelpCircle className="w-5 h-5" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4 max-h-[calc(100vh-300px)] overflow-y-auto">
-        <p className="text-xs text-gray-600 mb-3">
-          Guide des champs avec descriptions et exemples.
-        </p>
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <HelpCircle className="w-5 h-5 text-blue-600" />
+        <h2 className="text-lg font-semibold text-blue-600">{title}</h2>
+      </div>
 
-        <div className="space-y-3">
-          {guideSections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className={`rounded-lg p-3 ${section.color}`}>
-              <h3 className="font-semibold text-gray-900 mb-2 text-xs uppercase tracking-wide">
-                {section.title}
+      <div className="space-y-3">
+        {guides.map((guide, index) => {
+          const colorIndex = index % colors.length;
+          const displayTitle = guide.title || guide.label || guide.field;
+
+          return (
+            <div
+              key={guide.field}
+              className={`border rounded-lg p-4 ${colors[colorIndex]}`}
+            >
+              <h3 className={`font-semibold mb-2 ${textColors[colorIndex]}`}>
+                {displayTitle}
               </h3>
-              <div className="space-y-2">
-                {section.fields.map((guide, fieldIndex) => (
-                  <div key={fieldIndex} className="bg-white bg-opacity-70 rounded p-2">
-                    <div className="flex items-start gap-2 mb-1">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {guide.label}
-                      </span>
-                      {guide.required && (
-                        <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
-                          Requis
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-700 leading-relaxed mb-2">
-                      {guide.description}
-                    </p>
-                    {guide.example && (
-                      <div className="bg-gray-100 rounded px-2 py-1.5 mt-2">
-                        <p className="text-xs text-gray-700 italic">
-                          {guide.example}
-                        </p>
-                      </div>
-                    )}
-                    {guide.rules && guide.rules.length > 0 && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        {guide.rules.map((rule, ruleIndex) => (
-                          <div key={ruleIndex} className="flex items-start gap-1.5">
-                            <span className="text-amber-600 mt-0.5">•</span>
-                            <span>{rule}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <p className={`text-sm ${descriptionColors[colorIndex]}`}>
+                {guide.description}
+              </p>
             </div>
-          ))}
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-3">
-          <p className="text-xs text-blue-800">
-            <strong>Astuce:</strong> Les champs marqués "Requis" doivent être remplis avant de soumettre.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

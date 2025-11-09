@@ -1,179 +1,125 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║              🔧 FIX EMPTY MINING COMPANIES DROPDOWN - ONE STEP               ║
+║                   🔧 FIX MINING COMPANIES DROPDOWN                           ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 
-THE PROBLEM:
-  Mining companies dropdown shows "No active mining companies found"
-  or is empty.
-
-
-THE FIX (1 STEP):
-  Run CHECK_MINING_COMPANIES_SIMPLE.sql in Supabase SQL Editor
-  (Fixed version with no syntax errors!)
+PROBLEM: Mining companies dropdown is empty on license form
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- 🚀 RUN THIS NOW
+ 🚀 QUICK FIX (30 SECONDS)
 ═══════════════════════════════════════════════════════════════════════════════
 
-  1. Open Supabase Dashboard → SQL Editor
-  2. Open file: CHECK_MINING_COMPANIES_SIMPLE.sql  ← FIXED VERSION
-  3. Copy all (CTRL+A, CTRL+C)
-  4. Paste in SQL Editor
-  5. Click RUN
-  6. Wait 5 seconds
+  USE THIS FILE: CHECK_MINING_COMPANIES_SIMPLE.sql
 
-  DONE! ✅
+  Steps:
+    1. Open Supabase Dashboard
+    2. Click "SQL Editor"
+    3. Copy CHECK_MINING_COMPANIES_SIMPLE.sql
+    4. Paste and click "RUN"
+    5. Done! ✅
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- 📊 WHAT IT DOES
+ 📝 WHAT IT DOES
 ═══════════════════════════════════════════════════════════════════════════════
 
-  ✓ Checks if mining_companies table exists
-  ✓ Counts how many companies you have
-  ✓ Shows their status (active/inactive)
-  ✓ If empty, automatically inserts 5 sample companies
-  ✓ If inactive, tells you how to activate them
-  ✓ Shows final count of active companies
+  ✓ Checks how many companies exist
+  ✓ If ZERO → Automatically inserts 5 sample companies
+  ✓ If exists but inactive → Tells you how to activate
+  ✓ Shows list of active companies
+  ✓ Confirms dropdown should work
 
 
 ═══════════════════════════════════════════════════════════════════════════════
  ✅ EXPECTED OUTPUT
 ═══════════════════════════════════════════════════════════════════════════════
 
-  ✓ Table mining_companies EXISTS
+  📊 CURRENT STATUS
+  Total companies: 0
+  Active companies: 0
 
-  📊 CURRENT DATA:
-    Total companies: 0
-    Active companies: 0
-
-  📝 No mining companies found. Inserting samples...
+  📝 Inserting sample mining companies...
   ✓ Inserted 5 sample mining companies
 
-  📊 FINAL STATUS:
+  📊 FINAL STATUS
   Active companies: 5
-
-  ✅ Dropdown should show 5 companies
+  ✅ Success! Dropdown should show 5 companies
 
   Results:
-   id          | name                      | status
-  -------------+---------------------------+--------
-   xxx-xxx...  | African Gold Group        | active
-   xxx-xxx...  | Gold Fields Guinea        | active
-   xxx-xxx...  | Mansa Resources SARL      | active
-   xxx-xxx...  | SAG Mining Company        | active
-   xxx-xxx...  | West African Minerals     | active
+   id          | name                      | status  | country
+  -------------+---------------------------+---------+-----------------
+   xxx-xxx...  | African Gold Group        | active  | Cote d'Ivoire
+   xxx-xxx...  | Gold Fields Guinea        | active  | Guinea
+   xxx-xxx...  | Mansa Resources SARL      | active  | Guinea
+   xxx-xxx...  | SAG Mining Company        | active  | Guinea
+   xxx-xxx...  | West African Minerals     | active  | Mali
 
 
 ═══════════════════════════════════════════════════════════════════════════════
  🔄 AFTER RUNNING SCRIPT
 ═══════════════════════════════════════════════════════════════════════════════
 
-  1. Go to: http://localhost:5173/licenses/requests/new
-
-  2. Open browser console (F12)
-
-  3. Look for: "Loaded 5 mining companies: [...]"
-
-  4. Check dropdown - should show 5 companies
-
-  5. Should see green message: "✓ Loaded 5 active mining companies"
+  1. Refresh your browser
+  2. Go to: /licenses/requests/new
+  3. Check the "Mining Company" dropdown
+  4. Should show 5 companies ✓
+  5. Should see message: "✓ Loaded 5 active mining companies"
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- 🩺 IF STILL EMPTY AFTER SCRIPT
+ 📁 FILES AVAILABLE
 ═══════════════════════════════════════════════════════════════════════════════
 
-  Check browser console output (F12 → Console)
+  RECOMMENDED:
+    ✅ CHECK_MINING_COMPANIES_SIMPLE.sql  ← USE THIS (fixed syntax)
 
-  CASE 1: Shows "No active mining companies found"
-    → Run this in SQL Editor:
-      UPDATE mining_companies SET status = 'active';
-
-  CASE 2: Shows database error
-    → Check RLS policies:
-      SELECT * FROM pg_policies WHERE tablename = 'mining_companies';
-
-    → Add policy if missing:
-      CREATE POLICY "authenticated_select" ON mining_companies
-      FOR SELECT TO authenticated USING (true);
-
-  CASE 3: Shows connection error
-    → Check .env file has:
-      VITE_SUPABASE_URL=...
-      VITE_SUPABASE_ANON_KEY=...
+  ALTERNATIVE (more detailed):
+    ✅ CHECK_MINING_COMPANIES.sql         ← Comprehensive diagnostic
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- 💡 QUICK TEST IN BROWSER CONSOLE
+ 🩺 TROUBLESHOOTING
 ═══════════════════════════════════════════════════════════════════════════════
 
-  After running the SQL script, test directly in browser:
+  IF DROPDOWN STILL EMPTY:
 
-  // Paste this in browser console (F12)
-  const { data, error } = await supabase
-    .from('mining_companies')
-    .select('id, name')
-    .eq('status', 'active');
+  1. Check browser console (F12)
+     - Should see: "Loaded X mining companies"
+     - If error shown, read the message
 
-  console.log('Companies:', data);
-  console.log('Error:', error);
+  2. Try this query in SQL Editor:
+     SELECT COUNT(*) FROM mining_companies WHERE status = 'active';
+     - Should return 5 or more
 
-  Expected: Companies array with 5 items, Error is null
+  3. Activate all companies manually:
+     UPDATE mining_companies SET status = 'active';
 
-
-═══════════════════════════════════════════════════════════════════════════════
- 📋 COMPANIES THAT WILL BE INSERTED
-═══════════════════════════════════════════════════════════════════════════════
-
-  1. Mansa Resources SARL        (Guinea)
-  2. SAG Mining Company           (Guinea)
-  3. Gold Fields Guinea           (Guinea)
-  4. African Gold Group           (Côte d'Ivoire)
-  5. West African Minerals        (Mali)
-
-  All set to status = 'active'
+  4. Check RLS policies:
+     SELECT * FROM pg_policies WHERE tablename = 'mining_companies';
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- 🎯 BOTTOM LINE
+ 💡 WHY WAS IT EMPTY?
 ═══════════════════════════════════════════════════════════════════════════════
 
-  The script is SMART:
-    ✓ Checks everything
-    ✓ Fixes common issues automatically
-    ✓ Tells you exactly what's wrong if it can't fix
-    ✓ Inserts samples if table is empty
-    ✓ Shows clear next steps
+  Common reasons:
+    1. ❌ No companies in database (most common)
+    2. ❌ All companies have status != 'active'
+    3. ❌ RLS policy blocking access
 
-  Just run it and follow the output!
+  The script fixes #1 automatically!
 
 
 ═══════════════════════════════════════════════════════════════════════════════
- ✨ ENHANCED FORM FEATURES (ALREADY ADDED)
+ 🎯 DO IT NOW
 ═══════════════════════════════════════════════════════════════════════════════
 
-  The form now shows:
-    ✓ "Loading mining companies..." while fetching
-    ✓ Warning alert if no companies found
-    ✓ Green success message when companies loaded
-    ✓ Helpful error messages with solution links
-    ✓ Console logs for debugging
+  → Run CHECK_MINING_COMPANIES_SIMPLE.sql in Supabase SQL Editor
 
-  So you'll know immediately if something is wrong!
-
-
-═══════════════════════════════════════════════════════════════════════════════
- 🚀 DO IT NOW
-═══════════════════════════════════════════════════════════════════════════════
-
-  Open Supabase → SQL Editor → Run CHECK_MINING_COMPANIES.sql
-
-  That's it! ✅
+  That's it! Dropdown will work! ✅
 
 
 ═══════════════════════════════════════════════════════════════════════════════

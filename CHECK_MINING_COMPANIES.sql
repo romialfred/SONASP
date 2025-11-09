@@ -135,13 +135,17 @@ BEGIN
 END $$;
 
 -- Step 9: Show what the query returns (same as form query)
-RAISE NOTICE '';
-RAISE NOTICE '🔍 Query used by form:';
-RAISE NOTICE '   SELECT id, name FROM mining_companies';
-RAISE NOTICE '   WHERE status = ''active''';
-RAISE NOTICE '   ORDER BY name';
-RAISE NOTICE '';
-RAISE NOTICE 'Results:';
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '🔍 QUERY USED BY FORM:';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '   SELECT id, name FROM mining_companies';
+  RAISE NOTICE '   WHERE status = ''active''';
+  RAISE NOTICE '   ORDER BY name';
+  RAISE NOTICE '';
+END $$;
 
 SELECT
   id,

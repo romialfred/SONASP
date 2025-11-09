@@ -18,6 +18,10 @@ interface Batch {
     name: string;
     country?: string;
   };
+  license?: {
+    license_number: string;
+    status: string;
+  };
   sale_id?: string;
 }
 
@@ -134,6 +138,19 @@ export function BatchSections({ batches, onBatchClick, onValidateTransport, vali
           <span className="text-sm text-gray-400">N/A</span>
         )}
       </td>
+      <td
+        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+        onClick={() => onBatchClick?.(batch.id)}
+      >
+        {batch.license ? (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-blue-900">{batch.license.license_number}</span>
+            <span className="text-xs text-gray-500">{batch.license.status}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">No License</span>
+        )}
+      </td>
       {showActions && (
         <td className="px-4 py-3 whitespace-nowrap text-right">
           {batch.status === BATCH_STATUSES.PENDING_FACTORY_APPROVAL && onValidateTransport && (
@@ -218,6 +235,9 @@ export function BatchSections({ batches, onBatchClick, onValidateTransport, vali
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Société Minière
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Licence d'Export
                     </th>
                     {showActions && (
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">

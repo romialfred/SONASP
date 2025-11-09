@@ -11,6 +11,7 @@ export interface BatchData {
 
 export interface CreateBatchData {
   mining_company_id: string;
+  license_id: string;
   weight_grams: number;
   metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
   shipping_date: string;
@@ -66,6 +67,7 @@ export async function createBatch(data: CreateBatchData) {
         weight_ounces: weightOunces,
         metal_type: data.metal_type,
         mining_company_id: data.mining_company_id,
+        license_id: data.license_id,
         mine_to_airport_transport_id: data.mine_to_airport_transport_id,
         airport_to_refinery_transport_id: data.airport_to_refinery_transport_id,
         destination_refinery_id: data.destination_refinery_id,

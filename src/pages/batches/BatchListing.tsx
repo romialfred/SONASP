@@ -19,6 +19,14 @@ interface MiningCompany {
   country?: string;
 }
 
+interface License {
+  id: string;
+  license_number: string;
+  status: string;
+  authorized_qty_oz: number;
+  remaining_qty_oz: number;
+}
+
 interface Batch {
   id: string;
   batch_number: string;
@@ -30,6 +38,8 @@ interface Batch {
   created_at: string;
   mining_company_id?: string;
   mining_company?: MiningCompany;
+  license_id?: string;
+  license?: License;
   sale_id?: string;
 }
 
@@ -59,6 +69,7 @@ export function BatchListing() {
           .select(`
             *,
             mining_company:mining_companies(id, name, country),
+            license:licenses(id, license_number, status, authorized_qty_oz, remaining_qty_oz),
             sales!left(id)
           `)
           .order('created_at', { ascending: false }),

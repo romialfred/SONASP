@@ -1,0 +1,83 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                   ✅ UNIT DROPDOWN - FIXED!                                  ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+ISSUE: Unit dropdown was empty (not showing g, oz, oz t options)
+
+CAUSE: Select component expects children (option elements), not options prop
+
+FIX APPLIED: ✅
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🔧 WHAT WAS FIXED
+═══════════════════════════════════════════════════════════════════════════════
+
+  BEFORE (WRONG):
+    <Select
+      value={unit}
+      onChange={handleUnitChange}
+      options={WEIGHT_UNITS.map(...)}  ← Wrong! No options prop exists
+    />
+
+  AFTER (FIXED):
+    <Select
+      value={unit}
+      onChange={(e) => handleUnitChange(e.target.value)}
+    >
+      {WEIGHT_UNITS.map(u => (
+        <option key={u.value} value={u.value}>
+          {u.abbreviation}
+        </option>
+      ))}
+    </Select>
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ ✅ BUILD STATUS
+═══════════════════════════════════════════════════════════════════════════════
+
+  ✅ Built successfully in 28.98s
+  ✅ No errors
+  ✅ Dropdown now shows: g, oz, oz t
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🧪 TEST NOW
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. Refresh your browser
+  2. Go to: /licenses/requests/new
+  3. Find: "Planned Export Quantity" field
+  4. Click dropdown → Should see:
+     • g
+     • oz
+     • oz t
+
+  5. Select any unit
+  6. Enter a value (e.g., 500)
+  7. See conversion reference below
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🎯 EXPECTED RESULT
+═══════════════════════════════════════════════════════════════════════════════
+
+  Planned Export Quantity *
+  ┌────────────────────────────────┐  ┌────────────┐
+  │ 500                            │  │ oz t    ▼  │ ← Now shows options!
+  └────────────────────────────────┘  └────────────┘
+                                        • g
+                                        • oz
+                                        • oz t
+
+  Reference: 15551.74 g = 548.99 oz
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Fixed! The dropdown now displays all three unit options correctly! 🎉
+

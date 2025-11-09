@@ -109,13 +109,15 @@ export function WeightInputWithUnit({
         <div className="w-32">
           <Select
             value={unit}
-            onChange={handleUnitChange}
+            onChange={(e) => handleUnitChange(e.target.value)}
             disabled={disabled}
-            options={WEIGHT_UNITS.map(u => ({
-              value: u.value,
-              label: u.abbreviation,
-            }))}
-          />
+          >
+            {WEIGHT_UNITS.map(u => (
+              <option key={u.value} value={u.value}>
+                {u.abbreviation}
+              </option>
+            ))}
+          </Select>
         </div>
       </div>
 

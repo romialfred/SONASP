@@ -35,6 +35,8 @@ export function LicenseRequestForm() {
   const [requestId, setRequestId] = useState<string | null>(null);
 
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [companiesError, setCompaniesError] = useState('');
   const [formData, setFormData] = useState({
     mine_id: '',
     mine_name: '',
@@ -68,15 +70,33 @@ export function LicenseRequestForm() {
 
   const loadMiningCompanies = async () => {
     try {
-      const { data } = await supabase
+      setLoadingCompanies(true);
+      setCompaniesError('');
+
+      const { data, error: queryError } = await supabase
         .from('mining_companies')
         .select('id, name')
         .eq('status', 'active')
         .order('name');
 
-      setMiningCompanies(data || []);
-    } catch (err) {
+      if (queryError) {
+        console.error('Error loading mining companies:', queryError);
+        setCompaniesError(`Database error: ${queryError.message}`);
+        setMiningCompanies([]);
+      } else if (!data || data.length === 0) {
+        console.warn('No active mining companies found');
+        setCompaniesError('No active mining companies found. Please contact administrator.');
+        setMiningCompanies([]);
+      } else {
+        console.log(`Loaded ${data.length} mining companies:`, data);
+        setMiningCompanies(data);
+      }
+    } catch (err: any) {
       console.error('Error loading mining companies:', err);
+      setCompaniesError(err.message || 'Failed to load mining companies');
+      setMiningCompanies([]);
+    } finally {
+      setLoadingCompanies(false);
     }
   };
 
@@ -384,19 +404,45 @@ export function LicenseRequestForm() {
                 required
               />
 
-              <Select
-                label="Mining Company"
-                value={formData.mine_id}
-                onChange={(e) => handleMineChange(e.target.value)}
-                required
-              >
-                <option value="">Select a mining company</option>
-                {miningCompanies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
+              <div className="space-y-2">
+                <Select
+                  label="Mining Company"
+                  value={formData.mine_id}
+                  onChange={(e) => handleMineChange(e.target.value)}
+                  required
+                  disabled={loadingCompanies}
+                >
+                  <option value="">
+                    {loadingCompanies
+                      ? 'Loading mining companies...'
+                      : miningCompanies.length === 0
+                      ? 'No active mining companies found'
+                      : 'Select a mining company'}
                   </option>
-                ))}
-              </Select>
+                  {miningCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </Select>
+                {companiesError && (
+                  <Alert variant="warning" className="text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <div>
+                      <p className="font-medium">Mining Companies Issue</p>
+                      <p className="text-xs mt-1">{companiesError}</p>
+                      <p className="text-xs mt-1">
+                        Please run the diagnostic script: <code className="bg-yellow-100 px-1 rounded">CHECK_MINING_COMPANIES.sql</code>
+                      </p>
+                    </div>
+                  </Alert>
+                )}
+                {!loadingCompanies && miningCompanies.length > 0 && (
+                  <p className="text-sm text-green-600">
+                    ✓ Loaded {miningCompanies.length} active mining {miningCompanies.length === 1 ? 'company' : 'companies'}
+                  </p>
+                )}
+              </div>
 
               <Input
                 label="Planned Export Quantity (oz)"

@@ -1,12 +1,3 @@
-/*
-  ═══════════════════════════════════════════════════════════════════════════
-  🔍 CHECK CURRENT DATABASE STATUS
-  ═══════════════════════════════════════════════════════════════════════════
-  
-  This will show you EXACTLY what exists in your database right now.
-  Run this to understand the current state.
-*/
-
 DO $$
 DECLARE
   v_tables TEXT[];
@@ -26,14 +17,14 @@ BEGIN
   INTO v_tables
   FROM information_schema.tables
   WHERE table_schema = 'public'
-  AND table_name IN (
-    'licenses',
-    'license_requests',
-    'license_request_documents',
-    'license_quota_transactions',
-    'license_events',
-    'license_kpi_thresholds'
-  );
+    AND table_name IN (
+      'licenses',
+      'license_requests',
+      'license_request_documents',
+      'license_quota_transactions',
+      'license_events',
+      'license_kpi_thresholds'
+    );
   
   RAISE NOTICE '📋 TABLES:';
   IF v_tables IS NOT NULL THEN
@@ -48,10 +39,12 @@ BEGIN
   
   -- Check view
   SELECT EXISTS (
-    SELECT 1 FROM pg_views
+    SELECT 1
+    FROM pg_views
     WHERE schemaname = 'public'
-    AND viewname = 'licenses_with_computed_fields'
-  ) INTO v_view_exists;
+      AND viewname = 'licenses_with_computed_fields'
+  )
+  INTO v_view_exists;
   
   RAISE NOTICE '👁️  VIEW:';
   IF v_view_exists THEN
@@ -61,20 +54,23 @@ BEGIN
   END IF;
   RAISE NOTICE '';
   
-  -- Check triggers
-  SELECT ARRAY_AGG(DISTINCT t.tgname::TEXT ORDER BY t.tgname)
-  INTO v_triggers
-  FROM pg_trigger t
-  JOIN pg_class c ON t.tgrelid = c.oid
-  WHERE c.relname IN (
-    'licenses',
-    'license_requests',
-    'license_request_documents',
-    'license_quota_transactions',
-    'license_events',
-    'license_kpi_thresholds'
+  -- Check triggers (DISTINCT + ORDER BY must match select list)
+  SELECT ARRAY(
+    SELECT DISTINCT t.tgname::TEXT
+    FROM pg_trigger t
+    JOIN pg_class c ON t.tgrelid = c.oid
+    WHERE c.relname IN (
+      'licenses',
+      'license_requests',
+      'license_request_documents',
+      'license_quota_transactions',
+      'license_events',
+      'license_kpi_thresholds'
+    )
+      AND t.tgname NOT LIKE 'RI_%'
+    ORDER BY 1
   )
-  AND t.tgname NOT LIKE 'RI_%';
+  INTO v_triggers;
   
   RAISE NOTICE '⚡ TRIGGERS:';
   IF v_triggers IS NOT NULL THEN
@@ -87,13 +83,16 @@ BEGIN
   END IF;
   RAISE NOTICE '';
   
-  -- Check functions
-  SELECT ARRAY_AGG(DISTINCT p.proname::TEXT ORDER BY p.proname)
-  INTO v_functions
-  FROM pg_proc p
-  JOIN pg_namespace n ON p.pronamespace = n.oid
-  WHERE n.nspname = 'public'
-  AND (p.proname LIKE '%license%' OR p.proname LIKE '%quota%');
+  -- Check functions (DISTINCT + ORDER BY must match select list)
+  SELECT ARRAY(
+    SELECT DISTINCT p.proname::TEXT
+    FROM pg_proc p
+    JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE n.nspname = 'public'
+      AND (p.proname LIKE '%license%' OR p.proname LIKE '%quota%')
+    ORDER BY 1
+  )
+  INTO v_functions;
   
   RAISE NOTICE '⚙️  FUNCTIONS:';
   IF v_functions IS NOT NULL THEN
@@ -106,18 +105,21 @@ BEGIN
   END IF;
   RAISE NOTICE '';
   
-  -- Check policies
-  SELECT ARRAY_AGG(DISTINCT tablename || '.' || policyname ORDER BY tablename, policyname)
-  INTO v_policies
-  FROM pg_policies
-  WHERE tablename IN (
-    'licenses',
-    'license_requests',
-    'license_request_documents',
-    'license_quota_transactions',
-    'license_events',
-    'license_kpi_thresholds'
-  );
+  -- Check policies (DISTINCT + ORDER BY must match select list)
+  SELECT ARRAY(
+    SELECT DISTINCT (tablename || '.' || policyname)
+    FROM pg_policies
+    WHERE tablename IN (
+      'licenses',
+      'license_requests',
+      'license_request_documents',
+      'license_quota_transactions',
+      'license_events',
+      'license_kpi_thresholds'
+    )
+    ORDER BY 1
+  )
+  INTO v_policies;
   
   RAISE NOTICE '🔒 POLICIES:';
   IF v_policies IS NOT NULL THEN
@@ -183,4 +185,4 @@ BEGIN
   END IF;
   
   RAISE NOTICE '═══════════════════════════════════════════════════════════';
-END $$;
+END $$ LANGUAGE plpgsql;

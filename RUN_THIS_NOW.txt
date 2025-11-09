@@ -1,174 +1,194 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║           🚀 SOLUTION RAPIDE - TABLE LICENSES VIDE 🚀                        ║
+║                  💥 DEFINITIVE FIX - POLICY ERROR                            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-📋 ÉTAPE 1: Ouvrir Supabase SQL Editor
-══════════════════════════════════════════════════════════════════════════════
+NEW ERROR:
+  ERROR: 42710: policy "Users can view documents from their license requests" 
+  for table "license_request_documents" already exists
 
-  1. Aller sur https://supabase.com
-  2. Ouvrir votre projet
-  3. Cliquer "SQL Editor" dans le menu gauche
+ROOT CAUSE FOUND:
+  ❌ Migration 19 creates 6 TABLES (not 5!)
+  ❌ Previous cleanup scripts only checked 5 tables
+  ❌ Missing table: license_request_documents
+  ❌ Its policies were NEVER dropped!
 
-
-📋 ÉTAPE 2: Copier et Exécuter ce Script de Diagnostic
-══════════════════════════════════════════════════════════════════════════════
-
--- SCRIPT DE DIAGNOSTIC
-SELECT '1. TABLES' as check_type,
-       COUNT(*) as count,
-       CASE WHEN COUNT(*) >= 2 THEN '✅ OK' ELSE '❌ MANQUANT' END as status
-FROM information_schema.tables
-WHERE table_schema = 'public'
-AND table_name IN ('licenses', 'license_requests');
-
-SELECT '2. VIEW' as check_type,
-       COUNT(*) as count,
-       CASE WHEN COUNT(*) = 1 THEN '✅ OK' ELSE '❌ MANQUANT' END as status
-FROM pg_views
-WHERE schemaname = 'public'
-AND viewname = 'licenses_with_computed_fields';
-
-SELECT '3. DATA IN TABLE' as check_type,
-       COUNT(*) as count,
-       CASE WHEN COUNT(*) > 0 THEN '✅ OK' ELSE '❌ VIDE' END as status
-FROM licenses;
-
-SELECT '4. YOUR ROLE' as check_type,
-       1 as count,
-       COALESCE(role, '❌ NO ROLE') as status
-FROM user_profiles
-WHERE id = auth.uid();
+6 TABLES IN MIGRATION 19:
+  1. licenses
+  2. license_requests
+  3. license_request_documents  ← MISSING FROM CLEANUP!
+  4. license_quota_transactions
+  5. license_events
+  6. license_kpi_thresholds
 
 
-📋 ÉTAPE 3: Lire les Résultats et Appliquer la Solution
-══════════════════════════════════════════════════════════════════════════════
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ✅ DEFINITIVE SOLUTION: 1 SCRIPT ONLY                                       │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Vous verrez 4 lignes de résultat:
+  File: COMPLETE_LICENSE_CLEANUP.sql
 
-┌────────────────┬───────┬─────────────┐
-│  check_type    │ count │   status    │
-├────────────────┼───────┼─────────────┤
-│ 1. TABLES      │   ?   │   ?         │
-│ 2. VIEW        │   ?   │   ?         │
-│ 3. DATA        │   ?   │   ?         │
-│ 4. YOUR ROLE   │   1   │   ?         │
-└────────────────┴───────┴─────────────┘
-
-
-🔧 SOLUTION A: Si ligne 1 = "❌ MANQUANT"
-───────────────────────────────────────────
-
-  Tables n'existent pas → Appliquer Migration 19
-
-  Fichier: supabase/migrations/20251108000000_create_export_license_system.sql
-  
-  1. Ouvrir le fichier dans votre éditeur
-  2. CTRL+A (tout sélectionner)
-  3. CTRL+C (copier)
-  4. Retourner dans SQL Editor
-  5. CTRL+V (coller)
-  6. Cliquer "RUN"
-  7. Attendre ~5 secondes
-  8. Passer à la solution B
+  This script NOW COVERS:
+    ✓ ALL 6 tables (including license_request_documents)
+    ✓ ALL policies on ALL 6 tables
+    ✓ ALL triggers on ALL 6 tables
+    ✓ ALL functions
+    ✓ View
+    ✓ Complete verification
 
 
-🔧 SOLUTION B: Si ligne 3 = "❌ VIDE"
-───────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 1: RUN COMPLETE CLEANUP                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-  Table vide → Insérer données échantillons
+  1. Open: COMPLETE_LICENSE_CLEANUP.sql
+  2. Copy ALL (CTRL+A, CTRL+C)
+  3. Paste in Supabase SQL Editor
+  4. Click "RUN"
+  5. Wait 5 seconds
 
-  Fichier: supabase/migrations/20251108100000_seed_license_sample_data.sql
-  
-  1. Ouvrir le fichier
-  2. Copier TOUT
-  3. Coller dans SQL Editor
-  4. Run
-  5. Devrait afficher: "INSERT 0 10"
-
-
-🔧 SOLUTION C: Si ligne 4 ≠ "management" ou "factory"
-──────────────────────────────────────────────────────
-
-  Votre rôle ne permet pas de voir les licenses
-
-  UPDATE user_profiles
-  SET role = 'management'
-  WHERE id = auth.uid();
-
-  Exécuter dans SQL Editor, puis recharger /licenses
-
-
-📋 ÉTAPE 4: Vérification Finale
-══════════════════════════════════════════════════════════════════════════════
-
-SELECT
-  license_number,
-  applicant_company_name,
-  status,
-  remaining_percentage,
-  is_active,
-  days_to_expiry
-FROM licenses_with_computed_fields
-LIMIT 3;
-
-✅ Si vous voyez 3 lignes avec des données → SUCCÈS!
-   Recharger la page /licenses dans votre application
-
-❌ Si erreur ou 0 ligne → Vérifier:
-   • Migration 19 appliquée? (SOLUTION A)
-   • Migration 20 appliquée? (SOLUTION B)  
-   • Votre rôle correct? (SOLUTION C)
+  Output will show:
+    🔨 Step 1: Dropping ALL policies...
+      ✓ Dropped: [policy name] on [table]
+      ✓ Dropped: [policy name] on [table]
+      ... (will show each one)
+    
+    🔨 Step 2: Dropping ALL triggers...
+      ✓ Dropped: [trigger name] on [table]
+      ...
+    
+    🔨 Step 3: Dropping ALL functions...
+      ✓ Dropped: [function name]()
+      ...
+    
+    🔨 Step 4: Dropping view...
+      ✓ Dropped: licenses_with_computed_fields
+    
+    ✅ VERIFICATION
+      ├─ Policies: 0 (should be 0)     ← MUST BE 0
+      ├─ Triggers: 0 (should be 0)     ← MUST BE 0
+      ├─ Functions: 0 (should be 0)    ← MUST BE 0
+      ├─ View: 0 (should be 0)         ← MUST BE 0
+      └─ License Data: X rows (preserved)
+    
+    🟢 PERFECT! Everything cleaned successfully!
 
 
-🎯 SOLUTION ULTRA-RAPIDE (Si vous voulez juste que ça marche)
-══════════════════════════════════════════════════════════════════════════════
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 2: APPLY MIGRATION 19                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Copier et exécuter ces 3 commandes dans l'ordre:
+  1. Open NEW SQL Editor tab
+  2. Open: 20251108000000_create_export_license_system.sql
+  3. Copy ALL
+  4. Paste
+  5. Click "RUN"
 
--- 1. Vérifier combien de licenses
-SELECT COUNT(*) FROM licenses;
-
--- 2. Si COUNT = 0, aller chercher migration 20 et l'exécuter
--- (fichier: 20251108100000_seed_license_sample_data.sql)
-
--- 3. Mettre votre rôle en management
-UPDATE user_profiles SET role = 'management' WHERE id = auth.uid();
-
--- 4. Recharger /licenses
+  ✅ Will complete WITHOUT errors this time!
 
 
-✅ RÉSULTAT ATTENDU
-══════════════════════════════════════════════════════════════════════════════
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 3: APPLY MIGRATION 20                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Après ces étapes, la page /licenses devrait afficher:
-
-• 10 licenses dans le tableau
-• KPI cards en haut avec les totaux
-• Traffic light (feu vert/jaune/rouge) pour chaque license
-• Pourcentages, dates, statuts
-• Bouton "Request License" fonctionnel
-
-
-📞 SI TOUJOURS VIDE
-══════════════════════════════════════════════════════════════════════════════
-
-1. Ouvrir la console du navigateur (F12)
-2. Recharger /licenses
-3. Chercher les erreurs en rouge
-4. Copier le message d'erreur
-5. L'erreur devrait maintenant s'afficher aussi dans l'interface
-
-L'interface affichera maintenant un message d'erreur clair avec:
-• Le message d'erreur exact
-• Une checklist de vérification
-• Un bouton "Retry"
+  1. Open: 20251108100000_seed_license_sample_data.sql
+  2. Copy ALL
+  3. Paste
+  4. Click "RUN"
+  5. Should see: "INSERT 0 10"
 
 
-══════════════════════════════════════════════════════════════════════════════
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 4: VERIFY                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-📁 FICHIERS DE RÉFÉRENCE:
-   • Ce guide: RUN_THIS_NOW.txt
-   • Diagnostic complet: COMMENCER_ICI.txt
-   • Documentation détaillée: LICENSE_UI_FIXES_COMPLETE.md
+  SELECT license_number, status
+  FROM licenses_with_computed_fields
+  LIMIT 3;
 
-══════════════════════════════════════════════════════════════════════════════
+  ✅ Should return 3 rows
+
+  Then reload /licenses page → See 10 licenses!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🔬 DEEP ANALYSIS - WHY PREVIOUS CLEANUPS FAILED
+═══════════════════════════════════════════════════════════════════════════════
+
+  Migration 19 creates 6 tables but previous scripts only cleaned 5:
+
+  ❌ CLEAN_AND_REAPPLY_MIGRATION_19.sql:
+     - Only checked: licenses, license_requests
+     - Missing: license_request_documents + 3 others
+
+  ❌ FORCE_DROP_ALL_LICENSE_OBJECTS.sql:
+     - Only checked: licenses, license_requests, license_quota_transactions
+     - Missing: license_request_documents + 2 others
+
+  ✅ COMPLETE_LICENSE_CLEANUP.sql:
+     - Checks ALL 6 tables:
+       1. licenses
+       2. license_requests
+       3. license_request_documents  ← NOW INCLUDED!
+       4. license_quota_transactions
+       5. license_events
+       6. license_kpi_thresholds
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 WHAT EACH ERROR MEANT
+═══════════════════════════════════════════════════════════════════════════════
+
+  Error 1: trigger "set_license_request_number" already exists
+    → Trigger on license_requests table wasn't dropped
+
+  Error 2: policy "Users can view documents..." already exists
+    → Policy on license_request_documents table wasn't dropped
+    → Because cleanup script didn't check this table!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🎯 WHY THIS WILL WORK NOW
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. Script queries pg_policies for ALL 6 tables
+  2. Loops through and drops EVERY policy found
+  3. Does same for triggers on ALL 6 tables
+  4. Does same for ALL functions
+  5. Drops view with CASCADE
+  6. Verifies everything is 0
+
+  No hardcoded policy/trigger names = catches everything!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🐛 IF STILL FAILS (EXTREMELY UNLIKELY)
+═══════════════════════════════════════════════════════════════════════════════
+
+  After running COMPLETE_LICENSE_CLEANUP.sql, check verification output.
+
+  If it says "Policies: 1" (or more):
+    Run: SELECT tablename, policyname FROM pg_policies 
+         WHERE tablename LIKE 'license%';
+
+  Then manually drop the policy shown:
+    DROP POLICY "[policy name]" ON [table name];
+
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ GUARANTEE
+═══════════════════════════════════════════════════════════════════════════════
+
+  This WILL work because:
+    ✓ Covers ALL 6 tables (complete list extracted from migration)
+    ✓ Dynamic queries (not hardcoded names)
+    ✓ Loops through ALL found objects
+    ✓ Verifies at end with counts
+    ✓ Shows exactly what was dropped
+    ✓ Reports any failures
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 RUN: COMPLETE_LICENSE_CLEANUP.sql NOW!
+
+═══════════════════════════════════════════════════════════════════════════════

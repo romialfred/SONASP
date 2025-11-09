@@ -10,10 +10,12 @@ import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { Select } from '@/components/ui/Select';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Alert } from '@/components/ui/Alert';
+import { WeightInputWithUnit } from '@/components/ui/WeightInputWithUnit';
 import { licenseRequestService } from '@/services/licenseRequestService';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle, FileText, Save, Send, Plus, X, Calendar, TrendingUp, Package } from 'lucide-react';
 import type { DocumentType } from '@/types/license';
+import { convertWeight, type WeightUnit } from '@/utils/weightConversion';
 
 interface MiningCompany {
   id: string;
@@ -47,6 +49,8 @@ export function LicenseRequestForm() {
     comments: '',
     priority: 'NORMAL',
   });
+
+  const [quantityUnit, setQuantityUnit] = useState<'g' | 'oz' | 'ozt'>('ozt');
 
   const [durationInfo, setDurationInfo] = useState<{
     days: number;
@@ -117,6 +121,20 @@ export function LicenseRequestForm() {
     }
     if (field === 'planned_quantity_oz') {
       calculateDuration({ ...formData, [field]: value });
+    }
+  };
+
+  const handleQuantityChange = (value: string, unit: WeightUnit) => {
+    setQuantityUnit(unit);
+
+    // Convert to troy ounces for storage (database stores in oz t)
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 0) {
+      const ozValue = convertWeight(numValue, unit, 'ozt');
+      setFormData({ ...formData, planned_quantity_oz: ozValue.toString() });
+      calculateDuration({ ...formData, planned_quantity_oz: ozValue.toString() });
+    } else {
+      setFormData({ ...formData, planned_quantity_oz: value });
     }
   };
 
@@ -452,13 +470,12 @@ export function LicenseRequestForm() {
                 )}
               </div>
 
-              <Input
-                label="Planned Export Quantity (oz)"
-                type="number"
-                step="0.001"
+              <WeightInputWithUnit
+                label="Planned Export Quantity"
                 value={formData.planned_quantity_oz}
-                onChange={(e) => handleInputChange('planned_quantity_oz', e.target.value)}
-                placeholder="Enter quantity in troy ounces"
+                onChange={handleQuantityChange}
+                placeholder="Enter quantity"
+                defaultUnit="ozt"
                 required
               />
 

@@ -2,22 +2,83 @@
  * Weight Conversion Utilities
  * Default unit: Troy Ounces (oz)
  * 1 troy oz = 31.1034768 grams
+ * 1 regular oz = 28.3495 grams
  */
 
-export const GRAMS_PER_OZ = 31.1034768;
+export const GRAMS_PER_TROY_OZ = 31.1034768;
+export const GRAMS_PER_OZ = 28.3495;
+export const GRAMS_PER_OZ_TROY = GRAMS_PER_TROY_OZ; // Alias for clarity
+
+export type WeightUnit = 'g' | 'oz' | 'ozt';
+
+export const WEIGHT_UNITS: { value: WeightUnit; label: string; abbreviation: string }[] = [
+  { value: 'g', label: 'Grams', abbreviation: 'g' },
+  { value: 'oz', label: 'Ounces', abbreviation: 'oz' },
+  { value: 'ozt', label: 'Troy Ounces', abbreviation: 'oz t' },
+];
 
 /**
  * Convert grams to troy ounces
  */
 export function gramsToOz(grams: number): number {
-  return grams / GRAMS_PER_OZ;
+  return grams / GRAMS_PER_TROY_OZ;
 }
 
 /**
  * Convert troy ounces to grams
  */
 export function ozToGrams(oz: number): number {
-  return oz * GRAMS_PER_OZ;
+  return oz * GRAMS_PER_TROY_OZ;
+}
+
+/**
+ * Convert between any weight units
+ */
+export function convertWeight(value: number, fromUnit: WeightUnit, toUnit: WeightUnit): number {
+  if (fromUnit === toUnit) return value;
+
+  // First convert to grams
+  let grams: number;
+  switch (fromUnit) {
+    case 'g':
+      grams = value;
+      break;
+    case 'oz':
+      grams = value * GRAMS_PER_OZ;
+      break;
+    case 'ozt':
+      grams = value * GRAMS_PER_TROY_OZ;
+      break;
+    default:
+      grams = value;
+  }
+
+  // Then convert from grams to target unit
+  switch (toUnit) {
+    case 'g':
+      return grams;
+    case 'oz':
+      return grams / GRAMS_PER_OZ;
+    case 'ozt':
+      return grams / GRAMS_PER_TROY_OZ;
+    default:
+      return grams;
+  }
+}
+
+/**
+ * Get all conversions for a given weight
+ */
+export function getAllConversions(value: number, unit: WeightUnit): {
+  grams: number;
+  ounces: number;
+  troyOunces: number;
+} {
+  return {
+    grams: convertWeight(value, unit, 'g'),
+    ounces: convertWeight(value, unit, 'oz'),
+    troyOunces: convertWeight(value, unit, 'ozt'),
+  };
 }
 
 /**

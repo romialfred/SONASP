@@ -1,0 +1,63 @@
+═══════════════════════════════════════════════════════════════════════════════
+                        📋 COPY/PASTE ORDER - 3 FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+
+ERROR FIXED! ✅
+
+Old file had error: COMPLETE_LICENSE_CLEANUP.sql (DON'T USE!)
+New fixed file: FIX_CLEANUP_SCRIPT.sql (USE THIS!)
+
+
+─────────────────────────────────────────────────────────────────────────────
+FILE 1: FIX_CLEANUP_SCRIPT.sql
+─────────────────────────────────────────────────────────────────────────────
+
+Location: Root of project
+Action: Copy ALL → Paste in Supabase SQL Editor → RUN
+Time: 5 seconds
+Result: Cleans all old triggers/policies/functions/view
+
+
+─────────────────────────────────────────────────────────────────────────────
+FILE 2: supabase/migrations/20251108000000_create_export_license_system.sql
+─────────────────────────────────────────────────────────────────────────────
+
+Location: supabase/migrations/ folder
+Action: Copy ALL (722 lines) → Paste in NEW SQL Editor tab → RUN
+Time: 10-15 seconds
+Result: Creates 6 tables, 4 ENUMs, 5 functions, 5 triggers, 11 policies, 1 view
+
+
+─────────────────────────────────────────────────────────────────────────────
+FILE 3: supabase/migrations/20251108100000_seed_license_sample_data.sql
+─────────────────────────────────────────────────────────────────────────────
+
+Location: supabase/migrations/ folder
+Action: Copy ALL → Paste in NEW SQL Editor tab → RUN
+Time: 5 seconds
+Result: Adds 10 sample licenses for testing
+
+Note: Skip if you get "no mining companies" error
+
+
+─────────────────────────────────────────────────────────────────────────────
+VERIFY
+─────────────────────────────────────────────────────────────────────────────
+
+Run this query:
+
+SELECT license_number, status, remaining_qty_oz
+FROM licenses_with_computed_fields
+LIMIT 3;
+
+Expected: 3 rows!
+
+Then open: http://localhost:5173/licenses
+
+Expected: Page shows 10 licenses!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                                 THAT'S IT!
+═══════════════════════════════════════════════════════════════════════════════

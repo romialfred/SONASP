@@ -13,6 +13,7 @@ import { Alert } from '@/components/ui/Alert';
 import { WeightInputWithUnit } from '@/components/ui/WeightInputWithUnit';
 import { licenseRequestService } from '@/services/licenseRequestService';
 import { supabase } from '@/lib/supabase';
+import { useNotification } from '@/contexts/NotificationContext';
 import { AlertCircle, FileText, Save, Send, Plus, X, Calendar, TrendingUp, Package } from 'lucide-react';
 import type { DocumentType } from '@/types/license';
 import { convertWeight, type WeightUnit } from '@/utils/weightConversion';
@@ -31,6 +32,7 @@ interface Document {
 
 export function LicenseRequestForm() {
   const navigate = useNavigate();
+  const { showSuccess, showError, showWarning } = useNotification();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
@@ -254,10 +256,18 @@ export function LicenseRequestForm() {
       }
 
       setError('');
-      alert('Draft saved successfully');
+      showSuccess(
+        'Draft Saved',
+        'Your license request has been saved as a draft. You can continue editing or come back later to complete it.'
+      );
       return savedRequestId;
     } catch (err: any) {
-      setError(err.message || 'Failed to save draft');
+      const errorMsg = err.message || 'Failed to save draft';
+      setError(errorMsg);
+      showError(
+        'Save Failed',
+        errorMsg + '. Please check your internet connection and try again.'
+      );
       return null;
     } finally {
       setLoading(false);
@@ -306,7 +316,12 @@ export function LicenseRequestForm() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to upload documents');
+      const errorMsg = err.message || 'Failed to upload documents';
+      setError(errorMsg);
+      showError(
+        'Document Upload Failed',
+        errorMsg + '. Please check your files and try again.'
+      );
       throw err;
     } finally {
       setLoading(false);
@@ -326,9 +341,20 @@ export function LicenseRequestForm() {
         applicant_certification_text: 'I certify that all information provided is accurate and complete.',
       });
 
-      navigate('/licenses/requests');
+      showSuccess(
+        'Request Submitted Successfully',
+        'Your export license request has been submitted to the Ministry of Mines for review. You will be notified once it has been processed.',
+        {
+          confirmText: 'View My Requests',
+          onConfirm: () => navigate('/licenses/requests')
+        }
+      );
     } catch (err: any) {
       setError(err.message || 'Failed to submit request');
+      showError(
+        'Submission Failed',
+        err.message || 'An error occurred while submitting your request. Please try again.'
+      );
     } finally {
       setLoading(false);
     }

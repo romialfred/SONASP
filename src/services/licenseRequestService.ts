@@ -10,6 +10,7 @@ import {
 export interface CreateLicenseRequestData {
   mine_id: string;
   mine_name: string;
+  title: string;
   planned_quantity_oz: number;
   planned_start_date?: string;
   planned_end_date?: string;

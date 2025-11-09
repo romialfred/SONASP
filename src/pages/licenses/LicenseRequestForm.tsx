@@ -213,8 +213,8 @@ export function LicenseRequestForm() {
     return true;
   };
 
-  const saveAsDraft = async () => {
-    if (!validateStep1()) return;
+  const saveAsDraft = async (): Promise<string | null> => {
+    if (!validateStep1()) return null;
 
     setLoading(true);
     setError('');
@@ -225,17 +225,22 @@ export function LicenseRequestForm() {
         planned_quantity_oz: parseFloat(formData.planned_quantity_oz),
       };
 
+      let savedRequestId = requestId;
+
       if (requestId) {
         await licenseRequestService.updateRequest(requestId, data);
       } else {
         const request = await licenseRequestService.createRequest(data);
+        savedRequestId = request.id;
         setRequestId(request.id);
       }
 
       setError('');
       alert('Draft saved successfully');
+      return savedRequestId;
     } catch (err: any) {
       setError(err.message || 'Failed to save draft');
+      return null;
     } finally {
       setLoading(false);
     }
@@ -246,8 +251,11 @@ export function LicenseRequestForm() {
 
     if (step === 1) {
       if (!validateStep1()) return;
-      await saveAsDraft();
-      if (!requestId) return;
+      const savedId = await saveAsDraft();
+      if (!savedId) {
+        setError('Failed to save draft. Please try again.');
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
       if (!validateStep2()) return;

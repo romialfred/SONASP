@@ -1,102 +1,199 @@
 /*
-  QUICK START: Apply License System
-
-  Copy this entire file and paste into Supabase SQL Editor.
-  This will check if migrations need to be applied and show you the status.
-
-  IMPORTANT: This is just a verification script.
-  You must apply the actual migration files from supabase/migrations/
+  ═══════════════════════════════════════════════════════════════════════════
+  🚨 LICENSE MODULE DIAGNOSTIC & FIX
+  ═══════════════════════════════════════════════════════════════════════════
+  
+  COPY THIS ENTIRE FILE AND RUN IN SUPABASE SQL EDITOR
+  
+  This will show you EXACTLY what's missing and what to do.
 */
 
--- Check if license system tables exist
+-- ═══════════════════════════════════════════════════════════════════════════
+-- DIAGNOSTIC
+-- ═══════════════════════════════════════════════════════════════════════════
+
 DO $$
+DECLARE
+  v_tables INT;
+  v_view INT;
+  v_licenses INT;
+  v_mines INT;
+  v_role TEXT;
+  v_rls BOOLEAN;
 BEGIN
-  RAISE NOTICE '=== LICENSE SYSTEM STATUS CHECK ===';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '🔍 LICENSE MODULE DIAGNOSTIC';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
   RAISE NOTICE '';
-
-  -- Check licenses table
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'licenses') THEN
-    RAISE NOTICE '✓ licenses table EXISTS';
-    EXECUTE 'SELECT COUNT(*) FROM licenses' INTO @count;
-    RAISE NOTICE '  → Contains % licenses', @count;
+  
+  -- Check tables
+  SELECT COUNT(*) INTO v_tables
+  FROM information_schema.tables
+  WHERE table_schema = 'public'
+  AND table_name IN ('licenses', 'license_requests');
+  
+  RAISE NOTICE '1. TABLES (licenses, license_requests): %', v_tables;
+  IF v_tables >= 2 THEN
+    RAISE NOTICE '   ✅ Tables exist';
   ELSE
-    RAISE NOTICE '✗ licenses table MISSING';
-    RAISE NOTICE '  → Apply migration: 20251108000000_create_export_license_system.sql';
+    RAISE NOTICE '   ❌ MISSING! Need to apply MIGRATION 19';
+    RAISE NOTICE '   File: 20251108000000_create_export_license_system.sql';
   END IF;
-
-  -- Check license_requests table
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'license_requests') THEN
-    RAISE NOTICE '✓ license_requests table EXISTS';
+  RAISE NOTICE '';
+  
+  -- Check view
+  SELECT COUNT(*) INTO v_view
+  FROM pg_views
+  WHERE schemaname = 'public'
+  AND viewname = 'licenses_with_computed_fields';
+  
+  RAISE NOTICE '2. VIEW (licenses_with_computed_fields): %', v_view;
+  IF v_view = 1 THEN
+    RAISE NOTICE '   ✅ View exists';
   ELSE
-    RAISE NOTICE '✗ license_requests table MISSING';
+    RAISE NOTICE '   ❌ MISSING! This is why list is empty!';
+    RAISE NOTICE '   Need to apply MIGRATION 19';
   END IF;
-
-  -- Check license_quota_transactions table
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'license_quota_transactions') THEN
-    RAISE NOTICE '✓ license_quota_transactions table EXISTS';
+  RAISE NOTICE '';
+  
+  -- Check data
+  IF v_tables >= 2 THEN
+    EXECUTE 'SELECT COUNT(*) FROM licenses' INTO v_licenses;
+    RAISE NOTICE '3. LICENSE DATA: % rows', v_licenses;
+    IF v_licenses > 0 THEN
+      RAISE NOTICE '   ✅ Has % licenses', v_licenses;
+    ELSE
+      RAISE NOTICE '   ❌ TABLE EMPTY! Need to apply MIGRATION 20';
+      RAISE NOTICE '   File: 20251108100000_seed_license_sample_data.sql';
+    END IF;
   ELSE
-    RAISE NOTICE '✗ license_quota_transactions table MISSING';
+    RAISE NOTICE '3. LICENSE DATA: N/A (table missing)';
+    v_licenses := 0;
   END IF;
-
-  -- Check if sample data exists
-  IF EXISTS (SELECT 1 FROM licenses WHERE license_number LIKE 'LIC-2024-%') THEN
+  RAISE NOTICE '';
+  
+  -- Check mining companies
+  BEGIN
+    SELECT COUNT(*) INTO v_mines
+    FROM mining_companies
+    WHERE status = 'active';
+    
+    RAISE NOTICE '4. MINING COMPANIES (active): % rows', v_mines;
+    IF v_mines > 0 THEN
+      RAISE NOTICE '   ✅ Has % mining companies', v_mines;
+      RAISE NOTICE '   If dropdown empty, check RLS policies';
+    ELSE
+      RAISE NOTICE '   ⚠️  No active mining companies';
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '4. MINING COMPANIES: Table might not exist';
+    v_mines := 0;
+  END;
+  RAISE NOTICE '';
+  
+  -- Check user role
+  BEGIN
+    SELECT role INTO v_role FROM user_profiles WHERE id = auth.uid();
+    RAISE NOTICE '5. YOUR ROLE: %', COALESCE(v_role, 'NULL');
+    IF v_role IN ('management', 'factory') THEN
+      RAISE NOTICE '   ✅ Role is correct';
+    ELSE
+      RAISE NOTICE '   ❌ WRONG ROLE! Should be management or factory';
+      RAISE NOTICE '   Run: UPDATE user_profiles SET role = ''management'' WHERE id = auth.uid();';
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '5. YOUR ROLE: ERROR (user_profiles table issue)';
+    v_role := NULL;
+  END;
+  RAISE NOTICE '';
+  
+  -- Check RLS
+  IF v_tables >= 2 THEN
+    SELECT relrowsecurity INTO v_rls
+    FROM pg_class
+    WHERE relname = 'licenses' AND relnamespace = 'public'::regnamespace;
+    
+    RAISE NOTICE '6. RLS ON LICENSES: %', CASE WHEN v_rls THEN 'ENABLED' ELSE 'DISABLED' END;
+  END IF;
+  RAISE NOTICE '';
+  
+  -- Summary
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '📋 WHAT TO DO:';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '';
+  
+  IF v_tables < 2 OR v_view < 1 THEN
+    RAISE NOTICE '🔴 STEP 1: APPLY MIGRATION 19';
     RAISE NOTICE '';
-    RAISE NOTICE '✓ Sample data EXISTS';
-    EXECUTE 'SELECT COUNT(*) FROM licenses WHERE license_number LIKE ''LIC-2024-%''' INTO @count;
-    RAISE NOTICE '  → Found % sample licenses', @count;
-  ELSE
+    RAISE NOTICE 'File: supabase/migrations/20251108000000_create_export_license_system.sql';
     RAISE NOTICE '';
-    RAISE NOTICE '✗ Sample data MISSING';
-    RAISE NOTICE '  → Apply migration: 20251108100000_seed_license_sample_data.sql';
+    RAISE NOTICE '1. Open the file';
+    RAISE NOTICE '2. Select ALL (CTRL+A)';
+    RAISE NOTICE '3. Copy (CTRL+C)';
+    RAISE NOTICE '4. Open NEW SQL Editor tab';
+    RAISE NOTICE '5. Paste (CTRL+V)';
+    RAISE NOTICE '6. Click RUN';
+    RAISE NOTICE '7. Wait 10 seconds';
+    RAISE NOTICE '8. Then run STEP 2';
+    RAISE NOTICE '';
   END IF;
-
-  -- Check if license_id column exists on batches
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'batches' AND column_name = 'license_id'
-  ) THEN
+  
+  IF v_licenses = 0 AND v_tables >= 2 THEN
+    RAISE NOTICE '🟡 STEP 2: APPLY MIGRATION 20';
     RAISE NOTICE '';
-    RAISE NOTICE '✓ batches.license_id column EXISTS';
-    EXECUTE 'SELECT COUNT(*) FROM batches WHERE license_id IS NOT NULL' INTO @count;
-    RAISE NOTICE '  → % batches linked to licenses', @count;
-  ELSE
+    RAISE NOTICE 'File: supabase/migrations/20251108100000_seed_license_sample_data.sql';
     RAISE NOTICE '';
-    RAISE NOTICE '✗ batches.license_id column MISSING';
+    RAISE NOTICE '1. Open the file';
+    RAISE NOTICE '2. Copy ALL';
+    RAISE NOTICE '3. Paste in SQL Editor';
+    RAISE NOTICE '4. Click RUN';
+    RAISE NOTICE '5. Should see: "INSERT 0 10"';
+    RAISE NOTICE '';
   END IF;
-
-  RAISE NOTICE '';
-  RAISE NOTICE '=== NEXT STEPS ===';
-  RAISE NOTICE '';
-  RAISE NOTICE 'If any items above show ✗ MISSING:';
-  RAISE NOTICE '1. Open Supabase SQL Editor';
-  RAISE NOTICE '2. Copy contents of migration file';
-  RAISE NOTICE '3. Paste and execute';
-  RAISE NOTICE '';
-  RAISE NOTICE 'Migration files location:';
-  RAISE NOTICE '  supabase/migrations/20251108000000_create_export_license_system.sql';
-  RAISE NOTICE '  supabase/migrations/20251108100000_seed_license_sample_data.sql';
-  RAISE NOTICE '';
+  
+  IF v_role IS NULL OR v_role NOT IN ('management', 'factory') THEN
+    RAISE NOTICE '🟡 STEP 3: FIX YOUR ROLE';
+    RAISE NOTICE '';
+    RAISE NOTICE 'UPDATE user_profiles SET role = ''management'' WHERE id = auth.uid();';
+    RAISE NOTICE '';
+  END IF;
+  
+  IF v_tables >= 2 AND v_view >= 1 AND v_licenses > 0 AND v_role IN ('management', 'factory') THEN
+    RAISE NOTICE '🟢 ALL GOOD! If page still empty:';
+    RAISE NOTICE '';
+    RAISE NOTICE '1. Check browser console (F12) for errors';
+    RAISE NOTICE '2. Hard reload page (CTRL+SHIFT+R)';
+    RAISE NOTICE '3. Test query below';
+    RAISE NOTICE '';
+  END IF;
+  
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
 END $$;
 
--- Show sample license summary if data exists
+-- ═══════════════════════════════════════════════════════════════════════════
+-- TEST QUERIES (Run after fixing)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+/*
+-- Test 1: Can you see licenses?
 SELECT
   license_number,
+  applicant_company_name,
   status,
-  issue_date,
-  expiry_date,
-  ROUND(authorized_quantity_oz::numeric, 2) as authorized_oz,
-  ROUND(used_quantity_oz::numeric, 2) as used_oz,
-  ROUND(remaining_qty_oz::numeric, 2) as remaining_oz,
-  ROUND(remaining_percentage::numeric, 1) as remaining_pct,
-  days_to_expiry,
-  CASE
-    WHEN status = 'EXPIRED' THEN '🔴 RED'
-    WHEN days_to_expiry < 10 OR remaining_percentage < 10 THEN '🔴 RED'
-    WHEN days_to_expiry < 30 OR remaining_percentage < 25 THEN '🟡 YELLOW'
-    WHEN status = 'ACTIVE' THEN '🟢 GREEN'
-    ELSE '⚫ GRAY'
-  END as traffic_light
-FROM licenses
-WHERE license_number LIKE 'LIC-2024-%'
-ORDER BY created_at
-LIMIT 20;
+  remaining_percentage
+FROM licenses_with_computed_fields
+LIMIT 3;
+
+-- Test 2: Can you see mining companies?
+SELECT id, name, status
+FROM mining_companies
+WHERE status = 'active'
+ORDER BY name
+LIMIT 5;
+
+-- Test 3: Count everything
+SELECT
+  (SELECT COUNT(*) FROM licenses) as total_licenses,
+  (SELECT COUNT(*) FROM mining_companies WHERE status = 'active') as active_mines;
+*/

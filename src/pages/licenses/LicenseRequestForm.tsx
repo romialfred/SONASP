@@ -171,6 +171,17 @@ export function LicenseRequestForm() {
     const updated = [...documents];
     updated[index] = { ...updated[index], [field]: value };
     setDocuments(updated);
+
+    if (field === 'file') {
+      console.log(`Document ${index} file updated:`, {
+        fileName: value?.name,
+        fileSize: value?.size,
+        fileType: value?.type,
+        hasFile: !!value
+      });
+    }
+
+    console.log(`Updated documents state (field: ${field}):`, updated);
   };
 
   const addDocument = () => {
@@ -214,10 +225,24 @@ export function LicenseRequestForm() {
 
   const validateStep2 = (): boolean => {
     const validDocs = documents.filter(doc => doc.title && doc.file);
+
     if (validDocs.length === 0) {
-      setError('Please upload at least one document');
+      const missingTitles = documents.filter(doc => doc.file && !doc.title);
+      const missingFiles = documents.filter(doc => doc.title && !doc.file);
+
+      if (missingTitles.length > 0) {
+        setError('Please enter a title for all uploaded documents');
+      } else if (missingFiles.length > 0) {
+        setError('Please upload a file for all document entries');
+      } else {
+        setError('Please complete at least one document (title + file)');
+      }
+
+      console.log('Validation failed - documents state:', documents);
       return false;
     }
+
+    console.log('Validation passed - valid documents:', validDocs.length);
     return true;
   };
 
@@ -649,7 +674,7 @@ export function LicenseRequestForm() {
 
                     <FileUpload
                       accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(files) => {
+                      onFileSelect={(files) => {
                         if (files && files.length > 0) {
                           handleDocumentChange(index, 'file', files[0]);
                         }

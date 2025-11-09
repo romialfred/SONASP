@@ -76,7 +76,7 @@ export function LicenseRequestForm() {
       const { data, error: queryError } = await supabase
         .from('mining_companies')
         .select('id, name')
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('name');
 
       if (queryError) {

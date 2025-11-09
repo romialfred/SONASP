@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { Select } from '@/components/ui/Select';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Alert } from '@/components/ui/Alert';
 import { licenseRequestService } from '@/services/licenseRequestService';
 import { supabase } from '@/lib/supabase';
-import { AlertCircle, FileText, Save, Send, Plus, X } from 'lucide-react';
+import { AlertCircle, FileText, Save, Send, Plus, X, Calendar, TrendingUp, Package } from 'lucide-react';
 import type { DocumentType } from '@/types/license';
 
 interface MiningCompany {
@@ -36,12 +38,19 @@ export function LicenseRequestForm() {
   const [formData, setFormData] = useState({
     mine_id: '',
     mine_name: '',
+    title: '',
     planned_quantity_oz: '',
     planned_start_date: '',
     planned_end_date: '',
     comments: '',
     priority: 'NORMAL',
   });
+
+  const [durationInfo, setDurationInfo] = useState<{
+    days: number;
+    estimatedShipments: number;
+    avgQuantityPerShipment: number;
+  } | null>(null);
 
   const [documents, setDocuments] = useState<Document[]>([
     { title: '', type: 'APPLICATION_FORM', description: '', file: null },
@@ -82,6 +91,40 @@ export function LicenseRequestForm() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
+
+    if (field === 'planned_start_date' || field === 'planned_end_date') {
+      calculateDuration({ ...formData, [field]: value });
+    }
+    if (field === 'planned_quantity_oz') {
+      calculateDuration({ ...formData, [field]: value });
+    }
+  };
+
+  const calculateDuration = (data: typeof formData) => {
+    if (!data.planned_start_date || !data.planned_end_date || !data.planned_quantity_oz) {
+      setDurationInfo(null);
+      return;
+    }
+
+    const startDate = new Date(data.planned_start_date);
+    const endDate = new Date(data.planned_end_date);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    const weeks = diffDays / 7;
+    const shipmentsPerWeek = 3;
+    const estimatedShipments = Math.ceil(weeks * shipmentsPerWeek);
+
+    const totalQuantity = parseFloat(data.planned_quantity_oz);
+    const avgQuantityPerShipment = estimatedShipments > 0
+      ? totalQuantity / estimatedShipments
+      : 0;
+
+    setDurationInfo({
+      days: diffDays,
+      estimatedShipments,
+      avgQuantityPerShipment,
+    });
   };
 
   const handleDocumentChange = (index: number, field: keyof Document, value: any) => {
@@ -102,6 +145,10 @@ export function LicenseRequestForm() {
   };
 
   const validateStep1 = (): boolean => {
+    if (!formData.title) {
+      setError('Please enter a license title');
+      return false;
+    }
     if (!formData.mine_id) {
       setError('Please select a mining company');
       return false;
@@ -110,11 +157,17 @@ export function LicenseRequestForm() {
       setError('Please enter a valid planned quantity');
       return false;
     }
-    if (formData.planned_start_date && formData.planned_end_date) {
-      if (formData.planned_start_date > formData.planned_end_date) {
-        setError('Start date must be before end date');
-        return false;
-      }
+    if (!formData.planned_start_date) {
+      setError('Please select a start date');
+      return false;
+    }
+    if (!formData.planned_end_date) {
+      setError('Please select an end date');
+      return false;
+    }
+    if (formData.planned_start_date > formData.planned_end_date) {
+      setError('Start date must be before end date');
+      return false;
     }
     return true;
   };
@@ -235,9 +288,49 @@ export function LicenseRequestForm() {
     }
   };
 
+  const fieldGuides = [
+    {
+      field: 'title',
+      title: 'License Title',
+      description: 'A descriptive title for this export license request that helps identify its purpose.',
+      examples: ['Q1 2025 Export License', 'Monthly Export - January 2025', 'Special Export Authorization']
+    },
+    {
+      field: 'mine_id',
+      title: 'Mining Company',
+      description: 'Select the mining company that will be exporting gold under this license. Only active mining companies are shown.',
+      examples: ['Mansa Resources', 'SAG Mining Co.', 'Gold Fields Ltd.']
+    },
+    {
+      field: 'planned_quantity_oz',
+      title: 'Planned Export Quantity',
+      description: 'The total quantity of gold (in troy ounces) you plan to export during the license period. This should match your available inventory.',
+      examples: ['1000', '2500.5', '500']
+    },
+    {
+      field: 'planned_dates',
+      title: 'License Period',
+      description: 'The start and end dates for this export license. The system will calculate the duration and estimate shipment requirements based on 3 shipments per week.',
+      examples: ['Start: 01/01/2025, End: 31/01/2025 (31 days)']
+    },
+    {
+      field: 'priority',
+      title: 'Request Priority',
+      description: 'Set the urgency level for this license request. Normal: Standard processing time. High: Expedited review. Urgent: Immediate attention required.',
+      examples: ['Normal', 'High', 'Urgent']
+    },
+    {
+      field: 'comments',
+      title: 'Additional Information',
+      description: 'Use the rich text editor to provide detailed information about this license request. You can format text, add lists, and structure your content with headings.',
+      examples: ['Customer commitments, special requirements, supporting details']
+    }
+  ];
+
   return (
     <MainLayout>
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="p-8 flex gap-6">
+        <div className="flex-1 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">New Export License Request</h1>
           <p className="text-gray-600 mt-2">
@@ -283,6 +376,14 @@ export function LicenseRequestForm() {
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">Request Information</h2>
 
+              <Input
+                label="License Title"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="e.g., Q1 2025 Export License"
+                required
+              />
+
               <Select
                 label="Mining Company"
                 value={formData.mine_id}
@@ -313,6 +414,7 @@ export function LicenseRequestForm() {
                   type="date"
                   value={formData.planned_start_date}
                   onChange={(e) => handleInputChange('planned_start_date', e.target.value)}
+                  required
                 />
 
                 <Input
@@ -320,8 +422,57 @@ export function LicenseRequestForm() {
                   type="date"
                   value={formData.planned_end_date}
                   onChange={(e) => handleInputChange('planned_end_date', e.target.value)}
+                  required
                 />
               </div>
+
+              {durationInfo && (
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-blue-900">
+                      <Calendar className="w-5 h-5" />
+                      <h3 className="font-semibold">License Duration Information</h3>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-blue-200">
+                        <div className="text-sm text-gray-600 mb-1">Duration</div>
+                        <div className="text-2xl font-bold text-blue-700">
+                          {durationInfo.days}
+                        </div>
+                        <div className="text-xs text-gray-500">days</div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-3 border border-blue-200">
+                        <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          Est. Shipments
+                        </div>
+                        <div className="text-2xl font-bold text-green-700">
+                          {durationInfo.estimatedShipments}
+                        </div>
+                        <div className="text-xs text-gray-500">@ 3 per week</div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-3 border border-blue-200">
+                        <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                          <Package className="w-3 h-3" />
+                          Avg per Shipment
+                        </div>
+                        <div className="text-2xl font-bold text-amber-700">
+                          {durationInfo.avgQuantityPerShipment.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-500">oz</div>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-blue-700 bg-blue-100 rounded p-2">
+                      <strong>Note:</strong> Estimates based on {durationInfo.estimatedShipments} shipments over {durationInfo.days} days.
+                      Actual shipments may vary based on operational requirements.
+                    </div>
+                  </div>
+                </Card>
+              )}
 
               <Select
                 label="Priority"
@@ -333,12 +484,12 @@ export function LicenseRequestForm() {
                 <option value="URGENT">Urgent</option>
               </Select>
 
-              <TextArea
-                label="Comments"
+              <RichTextEditor
+                label="Additional Information"
                 value={formData.comments}
-                onChange={(e) => handleInputChange('comments', e.target.value)}
-                placeholder="Additional information about this license request"
-                rows={4}
+                onChange={(value) => handleInputChange('comments', value)}
+                placeholder="Provide detailed information about this license request. Use formatting tools to structure your content..."
+                minHeight="200px"
               />
             </div>
           )}
@@ -497,6 +648,16 @@ export function LicenseRequestForm() {
             </div>
           </div>
         </Card>
+        </div>
+
+        <div className="w-96 shrink-0">
+          <div className="sticky top-8">
+            <FieldGuidePanel
+              title="Field Guide"
+              guides={fieldGuides}
+            />
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

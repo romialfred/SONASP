@@ -1,95 +1,83 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                   ✅ ERROR FIXED - DO THIS NOW                               ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+================================================================================
+                        DO THIS NOW - SIMPLE STEPS
+================================================================================
+
+ERROR YOU GOT:
+--------------
+"syntax error at or near RAISE"
+
+WHY:
+----
+Supabase SQL Editor doesn't support RAISE NOTICE statements.
+That script was too complex.
 
 
-THE ERROR WAS:
-  Line 135 in COMPLETE_LICENSE_CLEANUP.sql had wrong RAISE NOTICE format
-  
-THE FIX:
-  Created new file: FIX_CLEANUP_SCRIPT.sql (all RAISE NOTICE statements fixed!)
+SOLUTION - 2 SCRIPTS:
+=====================
 
 
-═══════════════════════════════════════════════════════════════════════════════
- STEP 1: RUN CLEANUP
-═══════════════════════════════════════════════════════════════════════════════
+OPTION 1: QUICK DATA FIX (Try this first!)
+-------------------------------------------
 
-  File: FIX_CLEANUP_SCRIPT.sql
+This just fixes your data without touching policies:
 
   1. Open Supabase SQL Editor
-  2. Copy this file (CTRL+A, CTRL+C)
-  3. Paste in SQL Editor
-  4. Click RUN
-  5. Wait 5 seconds
-
-  Expected: Messages show "✅ Dropped X policies, X triggers, X functions"
-           "🟢 PERFECT! Everything cleaned successfully!"
-
-
-═══════════════════════════════════════════════════════════════════════════════
- STEP 2: RUN MIGRATION 19
-═══════════════════════════════════════════════════════════════════════════════
-
-  File: supabase/migrations/20251108000000_create_export_license_system.sql
-
-  1. Open NEW SQL Editor tab
-  2. Copy this file (CTRL+A, CTRL+C) - it's 722 lines
-  3. Paste in SQL Editor
-  4. Click RUN
-  5. Wait 10-15 seconds
-
-  Expected: "Success" - Creates 6 tables, view, triggers, policies
+  2. Copy/paste: QUICK_FIX_LICENSE_DATA.sql
+  3. Click RUN
+  4. You'll see:
+     - BEFORE FIX: Shows if title is NULL
+     - Fixes the titles automatically
+     - AFTER FIX: Shows data is good
+     - Shows your license requests
 
 
-═══════════════════════════════════════════════════════════════════════════════
- STEP 3: RUN MIGRATION 20
-═══════════════════════════════════════════════════════════════════════════════
+OPTION 2: COMPLETE FIX (If Option 1 doesn't work)
+--------------------------------------------------
 
-  File: supabase/migrations/20251108100000_seed_license_sample_data.sql
+This fixes everything (policies + data):
 
-  1. Open NEW SQL Editor tab
-  2. Copy this file (CTRL+A, CTRL+C)
-  3. Paste in SQL Editor
-  4. Click RUN
-  5. Wait 5 seconds
-
-  Expected: "Success" - 10 sample licenses inserted
-
-
-═══════════════════════════════════════════════════════════════════════════════
- STEP 4: VERIFY
-═══════════════════════════════════════════════════════════════════════════════
-
-  Run this query:
-
-    SELECT license_number, status, remaining_qty_oz
-    FROM licenses_with_computed_fields
-    LIMIT 3;
-
-  Expected: 3 rows!
-
-  Then open: http://localhost:5173/licenses
-
-  Expected: Page shows 10 licenses!
+  1. Open Supabase SQL Editor
+  2. Copy/paste: FIX_LICENSE_NOW.sql
+  3. Click RUN
+  4. It will:
+     - Create security functions
+     - Fix title column
+     - Update RLS policies
+     - Show your data
 
 
-═══════════════════════════════════════════════════════════════════════════════
- FILES TO USE
-═══════════════════════════════════════════════════════════════════════════════
+AFTER RUNNING EITHER SCRIPT:
+=============================
 
-  ✅ FIX_CLEANUP_SCRIPT.sql (FIXED - use this!)
-  ✅ 20251108000000_create_export_license_system.sql (migration 19)
-  ✅ 20251108100000_seed_license_sample_data.sql (migration 20)
+1. Refresh browser: Ctrl+Shift+R
+2. Go to: License Requests page
+3. Check Console for these logs:
+   📋 [licenseRequestService] listRequests called
+   📊 [licenseRequestService] Query result: { recordCount: 1 }
 
-  ❌ COMPLETE_LICENSE_CLEANUP.sql (has error - DON'T use!)
+4. TABLE SHOWS DATA! ✅
 
 
-═══════════════════════════════════════════════════════════════════════════════
- 🚀 START NOW
-═══════════════════════════════════════════════════════════════════════════════
+WHY IS THIS HAPPENING?
+=======================
 
-  Open Supabase → SQL Editor → Run FIX_CLEANUP_SCRIPT.sql → Then migrations!
+You created a license request, and it worked!
+Stats show: "1 total request, 1 in review"
 
-═══════════════════════════════════════════════════════════════════════════════
+But the 'title' column was NULL because the migration didn't set a default.
+
+TypeScript interface requires:
+  title: string;  // Required!
+
+So when title is NULL, the record is filtered out and table shows empty.
+
+
+THE FIX:
+========
+
+Just run QUICK_FIX_LICENSE_DATA.sql - it adds the missing titles!
+
+
+================================================================================
+                   RUN QUICK_FIX_LICENSE_DATA.SQL NOW!
+================================================================================

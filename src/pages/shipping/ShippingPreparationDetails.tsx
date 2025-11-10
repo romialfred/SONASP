@@ -44,6 +44,7 @@ export default function ShippingPreparationDetails() {
     if (id) {
       loadPreparationDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadPreparationDetails = async () => {
@@ -98,6 +99,7 @@ export default function ShippingPreparationDetails() {
       console.error('Error loading preparation:', error);
       setErrorMessage('Erreur lors du chargement des détails. Veuillez réessayer.');
       setShowError(true);
+    } finally {
       setLoading(false);
     }
   };

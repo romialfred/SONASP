@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Target, Calendar } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -87,7 +88,8 @@ export function ForecastManagementPage() {
   }, {} as Record<string, ProductionForecast[]>);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <MainLayout>
+      <div className="max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -318,6 +320,7 @@ export function ForecastManagementPage() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

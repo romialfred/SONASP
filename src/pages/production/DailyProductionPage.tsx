@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Download, Filter, X } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
@@ -107,86 +108,88 @@ export function DailyProductionPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Daily Production</h1>
-          <p className="text-gray-600 mt-1">
-            Production journalière et analyses de laboratoire préliminaires
-          </p>
-        </div>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Button
-            onClick={exportToCSV}
-            variant="outline"
-            disabled={productions.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-          {!showForm && (
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Daily Production</h1>
+            <p className="text-gray-600 mt-1">
+              Production journalière et analyses de laboratoire préliminaires
+            </p>
+          </div>
+          <div className="flex gap-3 mt-4 md:mt-0">
             <Button
-              onClick={() => {
-                setSelectedProduction(null);
-                setShowForm(true);
-              }}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={exportToCSV}
+              variant="outline"
+              disabled={productions.length === 0}
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle Production
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
             </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Form Section - Inline */}
-      {showForm && (
-        <DailyProductionForm
-          production={selectedProduction}
-          onCancel={handleFormCancel}
-          onSuccess={handleFormSuccess}
-        />
-      )}
-
-      {/* Metrics */}
-      <ProductionMetrics productions={productions} dateRange={dateRange} />
-
-      {/* Production Table */}
-      <Card>
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Historique de Production
-            </h2>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <input
-                  type="date"
-                  value={dateRange.startDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-                <span className="text-gray-500">à</span>
-                <input
-                  type="date"
-                  value={dateRange.endDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-            </div>
+            {!showForm && (
+              <Button
+                onClick={() => {
+                  setSelectedProduction(null);
+                  setShowForm(true);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvelle Production
+              </Button>
+            )}
           </div>
         </div>
 
-        <ProductionTable
-          productions={productions}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </Card>
-    </div>
+        {/* Form Section - Inline */}
+        {showForm && (
+          <DailyProductionForm
+            production={selectedProduction}
+            onCancel={handleFormCancel}
+            onSuccess={handleFormSuccess}
+          />
+        )}
+
+        {/* Metrics */}
+        <ProductionMetrics productions={productions} dateRange={dateRange} />
+
+        {/* Production Table */}
+        <Card>
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Historique de Production
+              </h2>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-500" />
+                  <input
+                    type="date"
+                    value={dateRange.startDate}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                  <span className="text-gray-500">à</span>
+                  <input
+                    type="date"
+                    value={dateRange.endDate}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ProductionTable
+            productions={productions}
+            loading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </Card>
+      </div>
+    </MainLayout>
   );
 }

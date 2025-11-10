@@ -74,6 +74,7 @@ import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsList
 import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
+import ShippingPreparation from './pages/shipping/ShippingPreparation';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -211,6 +212,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <BatchDetailsWorkflow />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shipping/preparation"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                  <ShippingPreparation />
                 </ProtectedRoute>
               }
             />

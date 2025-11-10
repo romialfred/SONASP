@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Package, ArrowLeft, Download, FileText, Calendar, Building2, Truck,
-  User, CheckCircle, Clock, MapPin, Weight, Box, Printer, FolderOpen, File
+  Package, ArrowLeft, FileText, Calendar, Building2, Truck,
+  User, CheckCircle, Clock, MapPin, Weight, Box, FolderOpen, File, Eye, Download
 } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -102,18 +102,6 @@ export default function ShippingPreparationDetails() {
     }
   };
 
-  const handleDownloadPackingList = async () => {
-    if (!preparation?.packing_list_url) {
-      setErrorMessage('Packing List non disponible. Le document sera généré lors de la prochaine sauvegarde.');
-      setShowError(true);
-      return;
-    }
-    window.open(preparation.packing_list_url, '_blank');
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   if (loading) {
     return (
@@ -172,23 +160,6 @@ export default function ShippingPreparationDetails() {
                 <h1 className="text-2xl font-bold text-gray-900">Détails de l'Expédition</h1>
                 <p className="text-sm text-gray-600">{preparation.expedition_lot_number}</p>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handlePrint}
-                variant="outline"
-                className="gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                Imprimer
-              </Button>
-              <Button
-                onClick={handleDownloadPackingList}
-                className="gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white"
-              >
-                <Download className="w-4 h-4" />
-                Packing List
-              </Button>
             </div>
           </div>
 
@@ -470,6 +441,19 @@ export default function ShippingPreparationDetails() {
                           <div className="flex items-center gap-2">
                             <Button
                               onClick={() => window.open(doc.document_url, '_blank')}
+                              size="sm"
+                              className="gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Voir
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.document_url;
+                                link.download = doc.file_name;
+                                link.click();
+                              }}
                               variant="outline"
                               size="sm"
                               className="gap-2 hover:bg-yellow-50 hover:border-yellow-500 hover:text-yellow-800"

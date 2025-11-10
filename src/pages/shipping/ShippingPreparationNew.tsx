@@ -422,10 +422,15 @@ export default function ShippingPreparationNew() {
         await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
 
-      // Generate and upload Packing List PDF (non-blocking)
-      generateAndUploadPackingList(prepId, expeditionLotNumber).catch(err => {
+      // Generate and upload Packing List PDF
+      console.log('Starting Packing List generation...');
+      try {
+        await generateAndUploadPackingList(prepId, expeditionLotNumber);
+        console.log('Packing List generated successfully');
+      } catch (err) {
         console.error('Failed to generate packing list, but preparation saved:', err);
-      });
+        // Continue anyway - the PDF can be regenerated later
+      }
 
       setSavedPreparationId(prepId);
       setShowSuccessDialog(true);

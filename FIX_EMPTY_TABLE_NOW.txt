@@ -1,0 +1,75 @@
+================================================================================
+                   FIX EMPTY TABLE - RUN THIS NOW
+================================================================================
+
+SITUATION:
+----------
+✅ Stats show: 1 total request, 1 in review  
+❌ Table shows: Empty (no rows displayed)
+
+This means:
+- Data EXISTS in database ✅
+- RLS allows access to count ✅
+- But SELECT * query returns empty array ❌
+
+LIKELY CAUSES:
+--------------
+1. The 'title' column has NULL values (TypeScript interface requires it)
+2. RLS policy blocks SELECT * but allows SELECT status
+3. Data doesn't match TypeScript interface structure
+
+
+SOLUTION - RUN 2 SQL SCRIPTS:
+==============================
+
+STEP 1: Diagnose the Problem
+-----------------------------
+1. Open Supabase SQL Editor
+2. Copy/paste: DIAGNOSE_LICENSE_DATA.sql
+3. Click RUN
+4. Read the output - it will tell you exactly what's wrong
+5. If it finds NULL titles, it AUTO-FIXES them!
+
+
+STEP 2: Apply Complete Fix (if needed)
+---------------------------------------
+1. In Supabase SQL Editor
+2. Copy/paste: FIX_LICENSE_REQUESTS_COMPLETE.sql
+3. Click RUN
+4. Wait for "MIGRATION COMPLETE!"
+
+
+STEP 3: Refresh Browser
+------------------------
+1. Press: Ctrl+Shift+R
+2. Go to License Requests
+3. TABLE SHOWS DATA! ✅
+
+
+QUICK TEST (Without SQL):
+==========================
+Open Browser DevTools Console and type:
+
+  const { data } = await supabase.from('license_requests').select('*');
+  console.log('Data:', data);
+
+If this returns empty array [] but stats work, it's definitely RLS on SELECT *.
+
+
+IF TABLE IS STILL EMPTY:
+=========================
+The issue is in the frontend, not database. Check:
+
+1. Console log shows: requestsData.length
+   - If it's 0, the service returned empty array
+   - If it's > 0, the Table component isn't rendering
+
+2. Check Network tab:
+   - Find request to /rest/v1/license_requests
+   - Check Response body
+   - If empty [], RLS is blocking
+   - If has data, frontend issue
+
+
+RUN THE DIAGNOSTIC NOW!
+========================

@@ -62,7 +62,7 @@ export default function ShippingPreparationNew() {
 
   // Form state
   const [expeditionLotNumber, setExpeditionLotNumber] = useState('');
-  const [sealNumber, setSealNumber] = useState('');
+  const [productionSealNumbers, setProductionSealNumbers] = useState<{[key: string]: string}>({});
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
 
@@ -191,11 +191,23 @@ export default function ShippingPreparationNew() {
   const handleAddProduction = (productionId: string) => {
     if (!selectedProductionIds.includes(productionId)) {
       setSelectedProductionIds([...selectedProductionIds, productionId]);
+      // Initialize seal number for this production
+      setProductionSealNumbers(prev => ({ ...prev, [productionId]: '' }));
     }
   };
 
   const handleRemoveProduction = (productionId: string) => {
     setSelectedProductionIds(selectedProductionIds.filter(id => id !== productionId));
+    // Remove seal number for this production
+    setProductionSealNumbers(prev => {
+      const newSeals = { ...prev };
+      delete newSeals[productionId];
+      return newSeals;
+    });
+  };
+
+  const handleSealNumberChange = (productionId: string, sealNumber: string) => {
+    setProductionSealNumbers(prev => ({ ...prev, [productionId]: sealNumber }));
   };
 
   const handleCancel = () => {
@@ -215,8 +227,10 @@ export default function ShippingPreparationNew() {
       return;
     }
 
-    if (!sealNumber.trim()) {
-      alert('Veuillez saisir un Seal Number');
+    // Check if all productions have seal numbers
+    const missingSealNumbers = selectedProductionIds.filter(id => !productionSealNumbers[id]?.trim());
+    if (missingSealNumbers.length > 0) {
+      alert('Veuillez saisir les numéros de scellé pour toutes les productions');
       return;
     }
 
@@ -408,7 +422,7 @@ export default function ShippingPreparationNew() {
                         <div className="flex-shrink-0 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
                           {index + 1}
                         </div>
-                        <div className="flex-1 grid grid-cols-4 gap-4 text-sm">
+                        <div className="flex-1 grid grid-cols-5 gap-3 text-sm">
                           <div>
                             <div className="text-xs text-gray-600">Date</div>
                             <div className="font-semibold">{new Date(production.production_date).toLocaleDateString('fr-FR')}</div>
@@ -424,6 +438,15 @@ export default function ShippingPreparationNew() {
                           <div>
                             <div className="text-xs text-gray-600">Pure Gold</div>
                             <div className="font-semibold text-yellow-800">{production.pure_gold_grams.toFixed(2)} g</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-600 mb-1">Seal Number *</div>
+                            <Input
+                              value={productionSealNumbers[production.id] || ''}
+                              onChange={(e) => handleSealNumberChange(production.id, e.target.value)}
+                              placeholder="ex: 0097099"
+                              className="w-full text-sm h-8"
+                            />
                           </div>
                         </div>
                         <Button
@@ -502,7 +525,7 @@ export default function ShippingPreparationNew() {
                       </select>
                     </div>
 
-                    <div>
+                    <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Expedition / Lot Number
                       </label>
@@ -511,193 +534,100 @@ export default function ShippingPreparationNew() {
                         onChange={(e) => setExpeditionLotNumber(e.target.value)}
                         placeholder="HUM-SMK-380/2025"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Seal Number *
-                      </label>
-                      <Input
-                        value={sealNumber}
-                        onChange={(e) => setSealNumber(e.target.value)}
-                        placeholder="0097099"
-                      />
+                      <p className="text-xs text-gray-500 mt-1">Les numéros de scellé sont associés à chaque production ci-dessus</p>
                     </div>
               </div>
             </Card>
 
-            {/* Supporting Documents Section - Always show */}
+            {/* Signatories Section - Always show */}
             <Card className="p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-4">Documents de Support</h2>
+              <h2 className="text-base font-bold text-gray-900 mb-4">Signataires</h2>
 
-              {preparation ? (
-                <>
-                  <div className="mb-4">
-                    <Button
-                      onClick={() => setShowDocumentModal(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-yellow-600 text-yellow-800 hover:bg-yellow-50"
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
+                    <select
+                      value={newSignatoryPosition}
+                      onChange={(e) => setNewSignatoryPosition(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter Document
-                    </Button>
+                      <option value="">-- Sélectionner --</option>
+                      {commonPositions.map((pos) => (
+                        <option key={pos} value={pos}>{pos}</option>
+                      ))}
+                    </select>
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium text-yellow-800 mb-1">Nom</label>
+                    <Input
+                      value={newSignatoryName}
+                      onChange={(e) => setNewSignatoryName(e.target.value)}
+                      placeholder="Nom complet"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleAddSignatory}
+                  variant="outline"
+                  size="sm"
+                  className="border-yellow-500 text-yellow-800 hover:bg-yellow-50"
+                  disabled={!preparation || !newSignatoryPosition.trim() || !newSignatoryName.trim()}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Ajouter Signataire
+                </Button>
+                {!preparation && (
+                  <p className="text-xs text-yellow-700 mt-2">Enregistrez d'abord la préparation pour ajouter des signataires</p>
+                )}
+              </div>
 
-                  {documents.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse text-sm">
-                        <thead>
-                          <tr className="bg-gray-700 text-white">
-                            <th className="p-3 text-left font-semibold text-xs uppercase">#</th>
-                            <th className="p-3 text-left font-semibold text-xs uppercase">Titre</th>
-                            <th className="p-3 text-left font-semibold text-xs uppercase">Nom Fichier</th>
-                            <th className="p-3 text-left font-semibold text-xs uppercase">Taille</th>
-                            <th className="p-3 text-center font-semibold text-xs uppercase w-32">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {documents.map((doc, index) => (
-                            <tr key={doc.id} className="hover:bg-gray-50">
-                              <td className="p-3 text-gray-600">{index + 1}</td>
-                              <td className="p-3">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-yellow-700" />
-                                  <span className="font-medium text-gray-900">{doc.title}</span>
-                                </div>
-                              </td>
-                              <td className="p-3 text-gray-700 text-xs">{doc.file_name}</td>
-                              <td className="p-3 text-gray-600 text-xs">
-                                {doc.file_size ? `${(doc.file_size / 1024).toFixed(2)} KB` : 'N/A'}
-                              </td>
-                              <td className="p-3">
-                                <div className="flex items-center justify-center gap-2">
-                                  <a
-                                    href={doc.document_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </a>
-                                  <Button
-                                    onClick={() => handleDeleteDocument(doc.id, doc.document_url)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-300 text-red-600 hover:bg-red-50 p-1"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                      <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                      <p className="text-gray-600 font-medium text-sm">Aucun document ajouté</p>
-                    </div>
-                  )}
-                </>
+              {signatories.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">#</th>
+                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Position</th>
+                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Nom</th>
+                        <th className="p-4 text-center font-semibold text-sm uppercase tracking-wide w-24">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {signatories.map((signatory, index) => (
+                        <tr key={signatory.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="p-4 text-gray-600 font-medium">{index + 1}</td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-yellow-700" />
+                              <span className="font-medium text-gray-900">{signatory.position}</span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-blue-900 font-semibold">{signatory.name}</span>
+                          </td>
+                          <td className="p-4 text-center">
+                            <Button
+                              onClick={() => handleDeleteSignatory(signatory.id)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-300 text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
-                <div className="text-center py-8 bg-blue-50 rounded-lg border-2 border-dashed border-blue-300">
-                  <FileText className="w-12 h-12 mx-auto mb-2 text-blue-400" />
-                  <p className="text-blue-700 font-medium text-sm">Enregistrez d'abord la préparation pour ajouter des documents</p>
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <User className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p className="text-gray-600 font-medium text-sm">Aucun signataire ajouté</p>
                 </div>
               )}
             </Card>
-
-            {/* Signatories Section */}
-            {preparation && (
-                  <Card className="p-6">
-                    <h2 className="text-base font-bold text-gray-900 mb-4">Signataires</h2>
-
-                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
-                          <select
-                            value={newSignatoryPosition}
-                            onChange={(e) => setNewSignatoryPosition(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                          >
-                            <option value="">-- Sélectionner --</option>
-                            {commonPositions.map((pos) => (
-                              <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-yellow-800 mb-1">Nom</label>
-                          <Input
-                            value={newSignatoryName}
-                            onChange={(e) => setNewSignatoryName(e.target.value)}
-                            placeholder="Nom complet"
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        onClick={handleAddSignatory}
-                        variant="outline"
-                        size="sm"
-                        className="border-yellow-500 text-yellow-800 hover:bg-yellow-50"
-                        disabled={!newSignatoryPosition.trim() || !newSignatoryName.trim()}
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Ajouter Signataire
-                      </Button>
-                    </div>
-
-                    {signatories.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                              <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">#</th>
-                              <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Position</th>
-                              <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Nom</th>
-                              <th className="p-4 text-center font-semibold text-sm uppercase tracking-wide w-24">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {signatories.map((signatory, index) => (
-                              <tr key={signatory.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4 text-gray-600 font-medium">{index + 1}</td>
-                                <td className="p-4">
-                                  <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-yellow-700" />
-                                    <span className="font-medium text-gray-900">{signatory.position}</span>
-                                  </div>
-                                </td>
-                                <td className="p-4">
-                                  <span className="text-blue-900 font-semibold">{signatory.name}</span>
-                                </td>
-                                <td className="p-4 text-center">
-                                  <Button
-                                    onClick={() => handleDeleteSignatory(signatory.id)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-300 text-red-600 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <User className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-                        <p className="text-gray-600 font-medium">Aucun signataire ajouté</p>
-                      </div>
-                    )}
-              </Card>
-            )}
 
             {/* Action Buttons - Refined without frame */}
             <div className="flex items-center justify-end gap-3 py-4">
@@ -711,7 +641,7 @@ export default function ShippingPreparationNew() {
               </Button>
               <Button
                 onClick={handleSavePreparation}
-                disabled={saving || !sealNumber.trim() || !selectedFreightCompanyId || !selectedRefineryId || selectedProductionIds.length === 0}
+                disabled={saving || !selectedFreightCompanyId || !selectedRefineryId || selectedProductionIds.length === 0 || selectedProductionIds.some(id => !productionSealNumbers[id]?.trim())}
                 className="gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
@@ -746,8 +676,8 @@ export default function ShippingPreparationNew() {
                       ingotBoxNumber: prod.bar_reference || `BOX-${idx + 1}`,
                       netWeight: prod.pure_gold_grams,
                       grossWeight: prod.bullion_grams,
-                      sealNumber1: sealNumber,
-                      sealNumber2: sealNumber ? `${parseInt(sealNumber) + idx}` : '',
+                      sealNumber1: productionSealNumbers[prod.id] || '',
+                      sealNumber2: '',
                     }))}
                     signatories={signatories.map(s => ({
                       position: s.position,

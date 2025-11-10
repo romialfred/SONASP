@@ -98,8 +98,12 @@ export default function ShippingPreparationDetails() {
     }
   };
 
-  const handleDownloadPackingList = () => {
-    alert('Téléchargement du Packing List - Fonctionnalité à implémenter');
+  const handleDownloadPackingList = async () => {
+    if (!preparation?.packing_list_url) {
+      alert('Packing List non disponible');
+      return;
+    }
+    window.open(preparation.packing_list_url, '_blank');
   };
 
   const handlePrint = () => {

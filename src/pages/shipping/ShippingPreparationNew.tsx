@@ -9,6 +9,8 @@ import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface DailyProduction {
   id: string;
@@ -259,6 +261,93 @@ export default function ShippingPreparationNew() {
     }
   };
 
+  const generateAndUploadPackingList = async (preparationId: string, expeditionLotNumber: string) => {
+    try {
+      // Create a temporary container for the packing list
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '210mm'; // A4 width
+      tempContainer.style.background = 'white';
+      document.body.appendChild(tempContainer);
+
+      // Render the packing list into the container
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(tempContainer);
+
+      await new Promise<void>((resolve) => {
+        root.render(
+          <DynamicPackingList
+            expeditionLotNumber={expeditionLotNumber}
+            productionDate={selectedProductions[0]?.production.production_date || new Date().toISOString()}
+            miningCompany={selectedProductions[0]?.production.mining_company?.name || 'N/A'}
+            refineryName={selectedRefinery?.name || 'N/A'}
+            refineryAddress={selectedRefinery?.location || 'N/A'}
+            refineryCountry={selectedRefinery?.country || 'N/A'}
+            freightCompany={selectedFreightCompany?.name || 'N/A'}
+            ingots={selectedProductions.map(sp => ({
+              ingotBoxNumber: sp.production.bar_reference || 'N/A',
+              netWeight: sp.production.pure_gold_grams,
+              grossWeight: sp.production.bullion_grams,
+              sealNumber1: sp.sealNumber1,
+              sealNumber2: sp.sealNumber2 || '',
+            }))}
+            signatories={signatories.map(s => ({
+              position: s.position,
+              name: s.name,
+            }))}
+          />
+        );
+        setTimeout(resolve, 500); // Wait for render
+      });
+
+      // Capture as canvas
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      // Convert to PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+      // Convert PDF to Blob
+      const pdfBlob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], `Packing-List-${expeditionLotNumber}.pdf`, { type: 'application/pdf' });
+
+      // Upload to Supabase
+      await shippingPreparationService.uploadDocument(
+        preparationId,
+        pdfFile,
+        `Packing List - ${expeditionLotNumber}`
+      );
+
+      // Update the preparation with packing list URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('shipping-documents')
+        .getPublicUrl(`${preparationId}/${pdfFile.name}`);
+
+      await shippingPreparationService.updatePreparation(preparationId, {
+        packing_list_url: publicUrl,
+      });
+
+      // Cleanup
+      root.unmount();
+      document.body.removeChild(tempContainer);
+
+      console.log('Packing List generated and uploaded successfully');
+    } catch (error) {
+      console.error('Error generating packing list:', error);
+      // Don't fail the whole save if packing list generation fails
+    }
+  };
+
   const handleSavePreparation = async () => {
     if (selectedProductions.length === 0) {
       alert('Veuillez sélectionner au moins une production');
@@ -332,6 +421,9 @@ export default function ShippingPreparationNew() {
       for (const doc of pendingDocuments) {
         await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
+
+      // Generate and upload Packing List PDF
+      await generateAndUploadPackingList(prepId, expeditionLotNumber);
 
       setSavedPreparationId(prepId);
       setShowSuccessDialog(true);

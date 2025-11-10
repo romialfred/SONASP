@@ -76,6 +76,7 @@ import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import ShippingDashboard from './pages/shipping/ShippingDashboard';
 import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
+import ShippingPreparationDetails from './pages/shipping/ShippingPreparationDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -237,6 +238,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <ShippingPreparationNew />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shipping/preparation/:id"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                  <ShippingPreparationDetails />
                 </ProtectedRoute>
               }
             />

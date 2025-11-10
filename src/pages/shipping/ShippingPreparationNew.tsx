@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
+import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
 
@@ -68,6 +69,8 @@ export default function ShippingPreparationNew() {
   const [refineries, setRefineries] = useState<Refinery[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [savedPreparationId, setSavedPreparationId] = useState<string>('');
 
   // Form state
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
@@ -330,8 +333,8 @@ export default function ShippingPreparationNew() {
         await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
 
-      alert('Préparation enregistrée avec succès');
-      navigate('/shipping/preparation');
+      setSavedPreparationId(prepId);
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error saving preparation:', error);
       alert('Erreur lors de la sauvegarde');
@@ -766,6 +769,26 @@ export default function ShippingPreparationNew() {
           </div>
         </div>
       </div>
+
+      {/* Success Dialog */}
+      <SuccessDialog
+        isOpen={showSuccessDialog}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          navigate('/shipping/preparation');
+        }}
+        onViewDetails={() => {
+          setShowSuccessDialog(false);
+          navigate(`/shipping/preparation/${savedPreparationId}`);
+        }}
+        expeditionNumber={generateExpeditionLotNumber()}
+        totalBoxes={selectedProductions.length}
+        totalNetWeight={totalNetWeight}
+        totalGrossWeight={totalGrossWeight}
+        refineryName={selectedRefinery?.name || ''}
+        freightCompany={selectedFreightCompany?.name || ''}
+        productionDate={selectedProductions[0]?.production.production_date || ''}
+      />
     </MainLayout>
   );
 }

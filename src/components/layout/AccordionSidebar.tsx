@@ -64,25 +64,33 @@ const useMenuGroups = (): MenuGroup[] => {
       ],
     },
     {
-      id: 'batches',
-      label: t('batch.title'),
+      id: 'shipping',
+      label: 'Shipping Management',
       groupIconColor: 'text-emerald-600',
-      groupIcon: Package,
+      groupIcon: Truck,
       items: [
-        { label: t('nav.batches'), path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
-        { label: 'Assay Certificates', path: '/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
-        { label: t('shipping.title'), path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
-        { label: t('refining.title'), path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
+        { label: 'Daily Production', path: '/batches', icon: Package, iconColor: 'text-emerald-600' },
+        { label: 'Shipping Preparation', path: '/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
+        { label: 'Freight & Customs', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
       ],
     },
     {
-      id: 'inventory',
-      label: t('inventory.title'),
+      id: 'refinery-inventory',
+      label: 'Refinery & Inventory Management',
       groupIconColor: 'text-amber-600',
       groupIcon: Warehouse,
       items: [
         { label: t('inventory.goldInventory'), path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
         { label: t('inventory.silverInventory'), path: '/inventory/silver', icon: Sparkles, iconColor: 'text-slate-500' },
+      ],
+    },
+    {
+      id: 'refining',
+      label: t('refining.title'),
+      groupIconColor: 'text-teal-600',
+      groupIcon: FlaskConical,
+      items: [
+        { label: 'Refining Process', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
       ],
     },
     {

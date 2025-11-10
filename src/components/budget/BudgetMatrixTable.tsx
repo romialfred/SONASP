@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, Calculator, Info } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Calculator, Info } from 'lucide-react';
 import { annualBudgetService, MonthlyBudget, QuarterlyForecast } from '../../services/annualBudgetService';
 
 interface BudgetMatrixTableProps {
@@ -25,172 +25,140 @@ export function BudgetMatrixTable({
 }: BudgetMatrixTableProps) {
   const year = new Date().getFullYear();
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
-  const [localValues, setLocalValues] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const values: Record<string, number> = {};
-    monthlyBudgets.forEach(mb => {
-      values[`budget-${mb.month}`] = mb.budget_oz;
-    });
-    quarterlyForecasts.forEach(qf => {
-      values[`forecast-${qf.month}`] = qf.forecast_oz;
-    });
-    setLocalValues(values);
-  }, [monthlyBudgets, quarterlyForecasts]);
 
   const getBudgetValue = (month: number): number => {
-    return localValues[`budget-${month}`] || 0;
+    if (pendingBudgets[month] !== undefined) {
+      return pendingBudgets[month];
+    }
+    const budget = monthlyBudgets.find(mb => mb.month === month);
+    return budget?.budget_oz || 0;
   };
 
-  const getForecastValue = (month: number): number | null => {
-    return localValues[`forecast-${month}`] || null;
-  };
-
-  const handleBudgetInput = (month: number, value: string) => {
-    const numValue = parseFloat(value) || 0;
-    setLocalValues(prev => ({ ...prev, [`budget-${month}`]: numValue }));
-  };
-
-  const handleBudgetBlur = (month: number) => {
-    const value = localValues[`budget-${month}`] || 0;
-    onBudgetChange(month, value);
-  };
-
-  const handleForecastInput = (month: number, value: string) => {
-    const numValue = parseFloat(value) || 0;
-    setLocalValues(prev => ({ ...prev, [`forecast-${month}`]: numValue }));
-  };
-
-  const handleForecastBlur = (month: number) => {
-    const value = localValues[`forecast-${month}`] || 0;
-    const quarter = annualBudgetService.getQuarterFromMonth(month);
-    onForecastChange(quarter, month, value);
+  const getForecastValue = (month: number): number => {
+    const key = `${selectedQuarter}-${month}`;
+    if (pendingForecasts[key] !== undefined) {
+      return pendingForecasts[key];
+    }
+    const forecast = quarterlyForecasts.find(
+      qf => qf.quarter === selectedQuarter && qf.month === month
+    );
+    return forecast?.forecast_oz || getBudgetValue(month);
   };
 
   const getDailyBudget = (month: number): number => {
     const budget = getBudgetValue(month);
     const days = annualBudgetService.getDaysInMonth(month, year);
-    return budget / days;
+    return days > 0 ? budget / days : 0;
   };
 
-  const getDailyForecast = (month: number): number | null => {
+  const getDailyForecast = (month: number): number => {
     const forecast = getForecastValue(month);
-    if (forecast === null) return null;
     const days = annualBudgetService.getDaysInMonth(month, year);
-    return forecast / days;
+    return days > 0 ? forecast / days : 0;
   };
 
-  const getQuarterTotal = (quarter: number): { budget: number; forecast: number | null } => {
+  const getQuarterTotal = (quarter: number): { budget: number; forecast: number } => {
     const months = annualBudgetService.getQuarterMonths(quarter);
     const budget = months.reduce((sum, m) => sum + getBudgetValue(m), 0);
-    const forecasts = months.map(m => getForecastValue(m));
-    const forecast = forecasts.some(f => f !== null)
-      ? forecasts.reduce((sum, f) => sum + (f || 0), 0)
-      : null;
-    return { budget, forecast };
-  };
-
-  const getYearTotal = (): { budget: number; forecast: number | null } => {
-    const budget = Array.from({ length: 12 }, (_, i) => i + 1)
-      .reduce((sum, m) => sum + getBudgetValue(m), 0);
-
-    const allForecasts = Array.from({ length: 12 }, (_, i) => i + 1)
-      .map(m => getForecastValue(m));
-
-    const forecast = allForecasts.some(f => f !== null)
-      ? allForecasts.reduce((sum, f) => sum + (f || 0), 0)
-      : null;
-
+    const forecast = mode === 'forecast' && selectedQuarter === quarter
+      ? months.reduce((sum, m) => sum + getForecastValue(m), 0)
+      : budget;
     return { budget, forecast };
   };
 
   const isMonthEditable = (month: number): boolean => {
-    if (readOnly) return false;
-    if (!showForecasts) return true;
-    if (activeQuarter === null) return false;
-    const quarterMonths = annualBudgetService.getQuarterMonths(activeQuarter);
-    return quarterMonths.includes(month);
+    if (mode === 'budget') return true;
+    if (mode === 'forecast' && selectedQuarter) {
+      const quarterMonths = annualBudgetService.getQuarterMonths(selectedQuarter);
+      return quarterMonths.includes(month);
+    }
+    return false;
   };
 
-  const getVariance = (budget: number, forecast: number | null): number | null => {
-    if (forecast === null) return null;
+  const getVariance = (budget: number, forecast: number): number => {
     return forecast - budget;
   };
 
-  const getVariancePercentage = (budget: number, forecast: number | null): number | null => {
-    if (forecast === null || budget === 0) return null;
+  const getVariancePercentage = (budget: number, forecast: number): number => {
+    if (budget === 0) return 0;
     return ((forecast - budget) / budget) * 100;
   };
 
   const renderQuarter = (quarter: number) => {
     const months = annualBudgetService.getQuarterMonths(quarter);
     const quarterTotals = getQuarterTotal(quarter);
-    const isActive = activeQuarter === quarter;
+    const isActive = selectedQuarter === quarter;
+    const showForecastColumns = mode === 'forecast' && isActive;
 
     return (
-      <div key={quarter} className="mb-6">
+      <div key={quarter} className="mb-6 last:mb-0">
         {/* Quarter Header */}
         <div className={`
-          flex items-center justify-between p-3 rounded-t-lg border-b-2
+          flex items-center justify-between p-4 rounded-t-xl border-b-2 transition-all
           ${isActive
-            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-500'
-            : 'bg-gray-50 border-gray-300'
+            ? 'bg-gradient-to-r from-indigo-50 via-indigo-100 to-purple-50 border-indigo-400 shadow-md'
+            : 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-300'
           }
         `}>
-          <div className="flex items-center gap-2">
-            <Calendar className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
-            <span className={`font-semibold ${isActive ? 'text-blue-900' : 'text-gray-700'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`
+              p-2 rounded-lg
+              ${isActive ? 'bg-indigo-500 shadow-lg' : 'bg-slate-400'}
+            `}>
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
+            <span className={`text-lg font-bold ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}>
               Trimestre {quarter}
             </span>
           </div>
-          <div className="flex gap-6 text-sm">
-            <div>
-              <span className="text-gray-600">Budget: </span>
-              <span className="font-semibold text-gray-900">{quarterTotals.budget.toFixed(2)} oz</span>
+          <div className="flex gap-8 text-sm">
+            <div className="text-right">
+              <span className="text-slate-600 font-medium block">Budget</span>
+              <span className="font-bold text-xl text-slate-900">{quarterTotals.budget.toFixed(2)} <span className="text-sm">oz</span></span>
             </div>
-            {quarterTotals.forecast !== null && (
-              <div>
-                <span className="text-gray-600">Forecast: </span>
-                <span className="font-semibold text-indigo-600">{quarterTotals.forecast.toFixed(2)} oz</span>
+            {showForecastColumns && (
+              <div className="text-right">
+                <span className="text-indigo-600 font-medium block">Forecast</span>
+                <span className="font-bold text-xl text-indigo-700">{quarterTotals.forecast.toFixed(2)} <span className="text-sm">oz</span></span>
               </div>
             )}
           </div>
         </div>
 
         {/* Months Table */}
-        <div className="border border-t-0 border-gray-200 rounded-b-lg overflow-hidden">
+        <div className="border-x-2 border-b-2 border-slate-200 rounded-b-xl overflow-hidden bg-white shadow-sm">
           <table className="w-full">
-            <thead className="bg-gray-100 border-b border-gray-200">
+            <thead className="bg-gradient-to-r from-slate-100 to-slate-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase w-32">
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Mois
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase w-32">
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Jours
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase w-40">
-                  Budget (oz)
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Budget (OZ)
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase w-32">
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Budget/Jour
                 </th>
-                {showForecasts && (
+                {showForecastColumns && (
                   <>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-indigo-600 uppercase w-40">
-                      Forecast (oz)
+                    <th className="px-4 py-3 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50">
+                      Forecast (OZ)
                     </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-indigo-600 uppercase w-32">
+                    <th className="px-4 py-3 text-right text-xs font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50">
                       Forecast/Jour
                     </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-600 uppercase w-32">
-                      Variance
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider bg-gradient-to-r from-indigo-50 to-slate-50">
+                      Écart
                     </th>
                   </>
                 )}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {months.map(month => {
+            <tbody className="divide-y divide-slate-100">
+              {months.map((month, idx) => {
                 const budget = getBudgetValue(month);
                 const forecast = getForecastValue(month);
                 const dailyBudget = getDailyBudget(month);
@@ -202,91 +170,90 @@ export function BudgetMatrixTable({
                 const editable = isMonthEditable(month);
 
                 return (
-                  <tr key={month} className={`
-                    transition-colors
-                    ${editable ? 'hover:bg-blue-50' : 'hover:bg-gray-50'}
-                  `}>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <tr
+                    key={month}
+                    className={`
+                      transition-all duration-150
+                      ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
+                      ${editable ? 'hover:bg-indigo-50/50' : 'hover:bg-slate-100/50'}
+                    `}
+                  >
+                    <td className="px-4 py-3 text-sm font-bold text-slate-900 capitalize">
                       {monthName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-600">
+                    <td className="px-4 py-3 text-sm text-center text-slate-600 font-semibold">
                       {days}
                     </td>
                     <td className="px-4 py-3">
-                      {!showForecasts ? (
+                      {mode === 'budget' ? (
                         <input
                           type="number"
                           step="0.01"
                           value={budget || ''}
-                          onChange={e => handleBudgetInput(month, e.target.value)}
-                          onBlur={() => handleBudgetBlur(month)}
+                          onChange={e => onBudgetChange(month, parseFloat(e.target.value) || 0)}
                           onFocus={() => setFocusedCell(`budget-${month}`)}
-                          disabled={readOnly}
+                          onBlur={() => setFocusedCell(null)}
                           className={`
-                            w-full px-3 py-1.5 text-right text-sm rounded border
+                            w-full px-3 py-2 text-right text-sm font-semibold rounded-lg border-2 transition-all
                             ${focusedCell === `budget-${month}`
-                              ? 'border-blue-500 ring-2 ring-blue-100'
-                              : 'border-gray-200'
+                              ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50'
+                              : 'border-slate-200 hover:border-slate-300'
                             }
-                            ${readOnly
-                              ? 'bg-gray-50 text-gray-600 cursor-not-allowed'
-                              : 'bg-white text-gray-900 hover:border-gray-300 focus:outline-none'
-                            }
+                            bg-white text-slate-900 focus:outline-none
                           `}
                           placeholder="0.00"
                         />
                       ) : (
-                        <div className="text-right text-sm text-gray-600 px-3 py-1.5">
+                        <div className="text-right text-sm font-semibold text-slate-700 px-3 py-2">
                           {budget.toFixed(2)}
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-500">
+                    <td className="px-4 py-3 text-sm text-right text-slate-500 font-medium">
                       {dailyBudget.toFixed(4)}
                     </td>
-                    {showForecasts && (
+                    {showForecastColumns && (
                       <>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 bg-indigo-50/30">
                           <input
                             type="number"
                             step="0.01"
                             value={forecast || ''}
-                            onChange={e => handleForecastInput(month, e.target.value)}
-                            onBlur={() => handleForecastBlur(month)}
+                            onChange={e => {
+                              if (selectedQuarter) {
+                                onForecastChange(selectedQuarter, month, parseFloat(e.target.value) || 0);
+                              }
+                            }}
                             onFocus={() => setFocusedCell(`forecast-${month}`)}
+                            onBlur={() => setFocusedCell(null)}
                             disabled={!editable}
                             className={`
-                              w-full px-3 py-1.5 text-right text-sm rounded border
+                              w-full px-3 py-2 text-right text-sm font-semibold rounded-lg border-2 transition-all
                               ${focusedCell === `forecast-${month}`
-                                ? 'border-indigo-500 ring-2 ring-indigo-100'
-                                : 'border-gray-200'
+                                ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-100'
+                                : 'border-indigo-200 hover:border-indigo-300'
                               }
                               ${!editable
-                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                                : 'bg-white text-indigo-900 hover:border-indigo-300 focus:outline-none'
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-white text-indigo-900'
                               }
+                              focus:outline-none
                             `}
                             placeholder={budget.toFixed(2)}
                           />
                         </td>
-                        <td className="px-4 py-3 text-sm text-right text-indigo-600">
-                          {dailyForecast !== null ? dailyForecast.toFixed(4) : '-'}
+                        <td className="px-4 py-3 text-sm text-right text-indigo-600 font-semibold bg-indigo-50/30">
+                          {dailyForecast.toFixed(4)}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right">
-                          {variance !== null ? (
-                            <div className="flex flex-col items-end">
-                              <span className={variance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                {variance >= 0 ? '+' : ''}{variance.toFixed(2)}
-                              </span>
-                              {variancePercentage !== null && (
-                                <span className={`text-xs ${variance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                  ({variancePercentage >= 0 ? '+' : ''}{variancePercentage.toFixed(1)}%)
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
+                        <td className="px-4 py-3 bg-gradient-to-r from-indigo-50/30 to-slate-50">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className={`text-sm font-bold ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {variance >= 0 ? '+' : ''}{variance.toFixed(2)} oz
+                            </span>
+                            <span className={`text-xs font-semibold ${variance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                              {variancePercentage >= 0 ? '+' : ''}{variancePercentage.toFixed(1)}%
+                            </span>
+                          </div>
                         </td>
                       </>
                     )}
@@ -300,48 +267,43 @@ export function BudgetMatrixTable({
     );
   };
 
-  const yearTotals = getYearTotal();
+  const calculateYearTotal = (): number => {
+    return Array.from({ length: 12 }, (_, i) => i + 1)
+      .reduce((sum, m) => sum + getBudgetValue(m), 0);
+  };
+
+  const yearTotal = calculateYearTotal();
 
   return (
     <div className="space-y-6">
       {/* Year Summary */}
-      <div className="bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 rounded-lg p-4">
+      <div className="bg-gradient-to-br from-slate-100 via-slate-50 to-white border-2 border-slate-200 rounded-2xl p-6 shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white rounded-lg shadow-sm">
-              <Calculator className="w-6 h-6 text-gray-700" />
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl shadow-md">
+              <Calculator className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Annuel {year}</h3>
-              <p className="text-2xl font-bold text-gray-900">{yearTotals.budget.toFixed(2)} oz</p>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Total Annuel {year}</h3>
+              <p className="text-3xl font-black text-slate-900 mt-1">
+                {yearTotal.toFixed(2)} <span className="text-lg font-semibold">oz</span>
+              </p>
             </div>
           </div>
-          {yearTotals.forecast !== null && (
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-600">Forecast Total</p>
-              <p className="text-2xl font-bold text-indigo-600">{yearTotals.forecast.toFixed(2)} oz</p>
-              {yearTotals.budget > 0 && (
-                <p className={`text-sm ${
-                  (yearTotals.forecast - yearTotals.budget) >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {((yearTotals.forecast - yearTotals.budget) >= 0 ? '+' : '')}
-                  {(yearTotals.forecast - yearTotals.budget).toFixed(2)} oz
-                  ({((yearTotals.forecast - yearTotals.budget) / yearTotals.budget * 100).toFixed(1)}%)
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Info Banner */}
-      {showForecasts && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-900">
-            <p className="font-medium mb-1">Mode Forecast - Révision Trimestrielle</p>
-            <p className="text-blue-700">
-              Modifiez uniquement les mois du trimestre sélectionné. Le forecast journalier est calculé automatiquement.
+      {mode === 'forecast' && selectedQuarter && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 flex items-start gap-4 shadow-sm">
+          <div className="bg-blue-500 rounded-full p-2 mt-0.5 flex-shrink-0">
+            <Info className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-blue-900 mb-1">Mode Forecast - Révision T{selectedQuarter}</p>
+            <p className="text-sm text-blue-700 leading-relaxed">
+              Modifiez les prévisions pour les 3 mois du trimestre sélectionné.
+              Les calculs journaliers et les écarts sont automatiques.
             </p>
           </div>
         </div>

@@ -213,6 +213,8 @@ export const licenseRequestService = {
   },
 
   async listRequests(filters?: LicenseRequestFilters): Promise<LicenseRequest[]> {
+    console.log('📋 [licenseRequestService] listRequests called with filters:', filters);
+
     let query = supabase
       .from('license_requests')
       .select('*')
@@ -246,7 +248,18 @@ export const licenseRequestService = {
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    console.log('📊 [licenseRequestService] Query result:', {
+      success: !error,
+      error: error?.message,
+      recordCount: data?.length || 0,
+      records: data,
+    });
+
+    if (error) {
+      console.error('❌ [licenseRequestService] Query error:', error);
+      throw error;
+    }
+
     return data || [];
   },
 

@@ -6,9 +6,8 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
-import { DocumentUploadModal } from '@/components/shipping/DocumentUploadModal';
 import { supabase } from '@/lib/supabase';
-import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem, ShippingDocument } from '@/services/shippingPreparationService';
+import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
 
 interface DailyProduction {
   id: string;
@@ -43,32 +42,45 @@ interface Refinery {
   is_active: boolean;
 }
 
+interface SelectedProductionData {
+  production: DailyProduction;
+  sealNumber1: string;
+  sealNumber2: string;
+}
+
+interface PendingDocument {
+  file: File;
+  title: string;
+  tempId: string;
+}
+
 export default function ShippingPreparationNew() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
 
   const [productions, setProductions] = useState<DailyProduction[]>([]);
-  const [selectedProductionIds, setSelectedProductionIds] = useState<string[]>([]);
-  const [productionItems, setProductionItems] = useState<ShippingProductionItem[]>([]);
+  const [selectedProductions, setSelectedProductions] = useState<SelectedProductionData[]>([]);
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
-  const [signatories, setSignatories] = useState<ShippingSignatory[]>([]);
-  const [documents, setDocuments] = useState<ShippingDocument[]>([]);
+  const [signatories, setSignatories] = useState<{position: string; name: string; tempId: string}[]>([]);
+  const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([]);
   const [freightCompanies, setFreightCompanies] = useState<TransportCompany[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   // Form state
-  const [expeditionLotNumber, setExpeditionLotNumber] = useState('');
-  const [productionSealNumbers, setProductionSealNumbers] = useState<{[key: string]: string}>({});
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
 
   // Signatory form
   const [newSignatoryPosition, setNewSignatoryPosition] = useState('');
   const [newSignatoryName, setNewSignatoryName] = useState('');
+
+  // Document form
+  const [showDocumentForm, setShowDocumentForm] = useState(false);
+  const [newDocumentTitle, setNewDocumentTitle] = useState('');
+  const [newDocumentFile, setNewDocumentFile] = useState<File | null>(null);
 
   const commonPositions = [
     'Gold Room Operator',
@@ -89,12 +101,6 @@ export default function ShippingPreparationNew() {
       loadPreparation(id);
     }
   }, [isEditMode, id]);
-
-  useEffect(() => {
-    if (selectedProductionIds.length > 0) {
-      generateExpeditionLotNumber();
-    }
-  }, [selectedProductionIds]);
 
   const loadInitialData = async () => {
     try {
@@ -152,20 +158,8 @@ export default function ShippingPreparationNew() {
       const prep = await shippingPreparationService.getPreparationById(prepId);
       if (prep) {
         setPreparation(prep);
-        setExpeditionLotNumber(prep.expedition_lot_number || '');
-        setSealNumber(prep.seal_number || '');
         setSelectedFreightCompanyId(prep.shipped_to_company || '');
         setSelectedRefineryId(prep.shipped_to_address || '');
-
-        const items = await shippingPreparationService.getProductionItems(prepId);
-        setProductionItems(items);
-        setSelectedProductionIds(items.map(i => i.daily_production_id));
-
-        const sigs = await shippingPreparationService.getSignatories(prepId);
-        setSignatories(sigs);
-
-        const docs = await shippingPreparationService.getDocuments(prepId);
-        setDocuments(docs);
       }
     } catch (error) {
       console.error('Error loading preparation:', error);
@@ -173,41 +167,87 @@ export default function ShippingPreparationNew() {
   };
 
   const generateExpeditionLotNumber = () => {
-    if (selectedProductionIds.length === 0) return;
+    if (selectedProductions.length === 0) return '';
 
-    const firstProduction = productions.find(p => p.id === selectedProductionIds[0]);
-    if (!firstProduction) return;
-
+    const firstProduction = selectedProductions[0].production;
     const date = new Date(firstProduction.production_date);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const companyCode = firstProduction.mining_company?.code || 'XXX';
 
-    const lotNumber = `HUM-${companyCode}-${month}${day}/${year}`;
-    setExpeditionLotNumber(lotNumber);
+    return `HUM-${companyCode}-${month}${day}/${year}`;
   };
 
   const handleAddProduction = (productionId: string) => {
-    if (!selectedProductionIds.includes(productionId)) {
-      setSelectedProductionIds([...selectedProductionIds, productionId]);
-      // Initialize seal number for this production
-      setProductionSealNumbers(prev => ({ ...prev, [productionId]: '' }));
-    }
+    const production = productions.find(p => p.id === productionId);
+    if (!production) return;
+
+    const alreadySelected = selectedProductions.some(sp => sp.production.id === productionId);
+    if (alreadySelected) return;
+
+    setSelectedProductions([...selectedProductions, {
+      production,
+      sealNumber1: '',
+      sealNumber2: ''
+    }]);
   };
 
   const handleRemoveProduction = (productionId: string) => {
-    setSelectedProductionIds(selectedProductionIds.filter(id => id !== productionId));
-    // Remove seal number for this production
-    setProductionSealNumbers(prev => {
-      const newSeals = { ...prev };
-      delete newSeals[productionId];
-      return newSeals;
-    });
+    setSelectedProductions(selectedProductions.filter(sp => sp.production.id !== productionId));
   };
 
-  const handleSealNumberChange = (productionId: string, sealNumber: string) => {
-    setProductionSealNumbers(prev => ({ ...prev, [productionId]: sealNumber }));
+  const handleSealNumber1Change = (productionId: string, value: string) => {
+    setSelectedProductions(selectedProductions.map(sp =>
+      sp.production.id === productionId ? { ...sp, sealNumber1: value } : sp
+    ));
+  };
+
+  const handleSealNumber2Change = (productionId: string, value: string) => {
+    setSelectedProductions(selectedProductions.map(sp =>
+      sp.production.id === productionId ? { ...sp, sealNumber2: value } : sp
+    ));
+  };
+
+  const handleAddSignatory = () => {
+    if (!newSignatoryPosition.trim() || !newSignatoryName.trim()) {
+      alert('Veuillez remplir la position et le nom');
+      return;
+    }
+
+    setSignatories([...signatories, {
+      position: newSignatoryPosition,
+      name: newSignatoryName,
+      tempId: `temp-${Date.now()}`
+    }]);
+
+    setNewSignatoryPosition('');
+    setNewSignatoryName('');
+  };
+
+  const handleRemoveSignatory = (tempId: string) => {
+    setSignatories(signatories.filter(s => s.tempId !== tempId));
+  };
+
+  const handleAddDocument = () => {
+    if (!newDocumentTitle.trim() || !newDocumentFile) {
+      alert('Veuillez remplir le titre et sélectionner un fichier');
+      return;
+    }
+
+    setPendingDocuments([...pendingDocuments, {
+      file: newDocumentFile,
+      title: newDocumentTitle,
+      tempId: `temp-doc-${Date.now()}`
+    }]);
+
+    setNewDocumentTitle('');
+    setNewDocumentFile(null);
+    setShowDocumentForm(false);
+  };
+
+  const handleRemoveDocument = (tempId: string) => {
+    setPendingDocuments(pendingDocuments.filter(d => d.tempId !== tempId));
   };
 
   const handleCancel = () => {
@@ -217,7 +257,7 @@ export default function ShippingPreparationNew() {
   };
 
   const handleSavePreparation = async () => {
-    if (selectedProductionIds.length === 0) {
+    if (selectedProductions.length === 0) {
       alert('Veuillez sélectionner au moins une production');
       return;
     }
@@ -227,19 +267,21 @@ export default function ShippingPreparationNew() {
       return;
     }
 
-    // Check if all productions have seal numbers
-    const missingSealNumbers = selectedProductionIds.filter(id => !productionSealNumbers[id]?.trim());
+    // Check if all productions have at least seal number 1
+    const missingSealNumbers = selectedProductions.filter(sp => !sp.sealNumber1.trim());
     if (missingSealNumbers.length > 0) {
-      alert('Veuillez saisir les numéros de scellé pour toutes les productions');
+      alert('Veuillez saisir au moins le Seal Number 1 pour toutes les productions');
       return;
     }
 
     try {
       setSaving(true);
 
+      const expeditionLotNumber = generateExpeditionLotNumber();
+
       const prepData = {
         expedition_lot_number: expeditionLotNumber,
-        seal_number: sealNumber,
+        seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
         status: 'prepared' as const,
@@ -258,33 +300,36 @@ export default function ShippingPreparationNew() {
       }
 
       // Add production items
-      for (const [index, productionId] of selectedProductionIds.entries()) {
-        const production = productions.find(p => p.id === productionId);
-        if (production) {
-          const existingItem = productionItems.find(i => i.daily_production_id === productionId);
-          if (!existingItem) {
-            await shippingPreparationService.addProductionItem({
-              shipping_preparation_id: prepId,
-              daily_production_id: productionId,
-              ingot_box_number: production.bar_reference || `BOX-${index + 1}`,
-              net_weight_grams: production.pure_gold_grams,
-              gross_weight_grams: production.bullion_grams,
-              fineness_pct: production.estimated_fineness_pct,
-              pure_gold_grams: production.pure_gold_grams,
-              order_index: index,
-            });
-          }
-        }
+      for (const [index, sp] of selectedProductions.entries()) {
+        await shippingPreparationService.addProductionItem({
+          shipping_preparation_id: prepId,
+          daily_production_id: sp.production.id,
+          ingot_box_number: sp.production.bar_reference || `BOX-${index + 1}`,
+          net_weight_grams: sp.production.pure_gold_grams,
+          gross_weight_grams: sp.production.bullion_grams,
+          fineness_pct: sp.production.estimated_fineness_pct,
+          pure_gold_grams: sp.production.pure_gold_grams,
+          order_index: index,
+        });
+      }
+
+      // Add signatories
+      for (const [index, sig] of signatories.entries()) {
+        await shippingPreparationService.createSignatory({
+          shipping_preparation_id: prepId,
+          position: sig.position,
+          name: sig.name,
+          order_index: index,
+        });
+      }
+
+      // Upload documents
+      for (const doc of pendingDocuments) {
+        await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
 
       alert('Préparation enregistrée avec succès');
-
-      // Reload to get updated data
-      if (!isEditMode) {
-        navigate(`/shipping/preparation/edit/${prepId}`);
-      } else {
-        await loadPreparation(prepId);
-      }
+      navigate('/shipping/preparation');
     } catch (error) {
       console.error('Error saving preparation:', error);
       alert('Erreur lors de la sauvegarde');
@@ -293,80 +338,17 @@ export default function ShippingPreparationNew() {
     }
   };
 
-  const handleAddSignatory = async () => {
-    if (!preparation || !newSignatoryPosition.trim() || !newSignatoryName.trim()) {
-      alert('Veuillez enregistrer la préparation et remplir la position et le nom');
-      return;
-    }
-
-    try {
-      const newSignatory = await shippingPreparationService.createSignatory({
-        shipping_preparation_id: preparation.id,
-        position: newSignatoryPosition,
-        name: newSignatoryName,
-        order_index: signatories.length,
-      });
-
-      setSignatories([...signatories, newSignatory]);
-      setNewSignatoryPosition('');
-      setNewSignatoryName('');
-    } catch (error) {
-      console.error('Error adding signatory:', error);
-      alert('Erreur lors de l\'ajout du signataire');
-    }
-  };
-
-  const handleDeleteSignatory = async (sigId: string) => {
-    if (!confirm('Supprimer ce signataire ?')) return;
-
-    try {
-      await shippingPreparationService.deleteSignatory(sigId);
-      setSignatories(signatories.filter(s => s.id !== sigId));
-    } catch (error) {
-      console.error('Error deleting signatory:', error);
-      alert('Erreur lors de la suppression');
-    }
-  };
-
-  const handleUploadDocument = async (file: File, title: string) => {
-    if (!preparation) {
-      alert('Veuillez enregistrer la préparation d\'abord');
-      return;
-    }
-
-    try {
-      const newDoc = await shippingPreparationService.uploadDocument(preparation.id, file, title);
-      setDocuments([...documents, newDoc]);
-    } catch (error) {
-      console.error('Error uploading document:', error);
-      throw error;
-    }
-  };
-
-  const handleDeleteDocument = async (docId: string, documentUrl: string) => {
-    if (!confirm('Supprimer ce document ?')) return;
-
-    try {
-      await shippingPreparationService.deleteDocument(docId, documentUrl);
-      setDocuments(documents.filter(d => d.id !== docId));
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      alert('Erreur lors de la suppression du document');
-    }
-  };
-
-  const selectedProductions = productions.filter(p => selectedProductionIds.includes(p.id));
-  const selectedFreightCompany = freightCompanies.find(fc => fc.id === selectedFreightCompanyId);
   const selectedRefinery = refineries.find(r => r.id === selectedRefineryId);
-  const totalNetWeight = selectedProductions.reduce((sum, p) => sum + p.pure_gold_grams, 0);
-  const totalGrossWeight = selectedProductions.reduce((sum, p) => sum + p.bullion_grams, 0);
+  const selectedFreightCompany = freightCompanies.find(fc => fc.id === selectedFreightCompanyId);
+  const totalNetWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
+  const totalGrossWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
 
   return (
     <MainLayout>
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-gray-50">
         {/* Form Section */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+          <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -383,168 +365,155 @@ export default function ShippingPreparationNew() {
                   <Package className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-base font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-gray-900">
                     {isEditMode ? 'Modifier Expédition' : 'Nouvelle Expédition'}
                   </h1>
-                  <p className="text-gray-600">Préparez les barres pour l'expédition</p>
+                  <p className="text-sm text-gray-600">Préparez les barres pour l'expédition</p>
                 </div>
               </div>
             </div>
 
-            {/* Production Selector with Multi-Select */}
+            {/* Production Selection & Table */}
             <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
-              <h3 className="text-base font-bold text-yellow-900 mb-4">
-                Sélectionner Productions ({selectedProductionIds.length} sélectionnée{selectedProductionIds.length > 1 ? 's' : ''})
-              </h3>
-
-              <div className="space-y-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-yellow-900">
+                  Sélectionner Productions ({selectedProductions.length})
+                </h3>
                 <select
-                  onChange={(e) => handleAddProduction(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                  onChange={(e) => {
+                    handleAddProduction(e.target.value);
+                    e.target.value = '';
+                  }}
+                  className="px-4 py-2 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
                   disabled={loading}
                   value=""
                 >
                   <option value="">-- Ajouter une production --</option>
                   {productions
-                    .filter(p => !selectedProductionIds.includes(p.id))
+                    .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
                     .map((production) => (
                       <option key={production.id} value={production.id}>
-                        {new Date(production.production_date).toLocaleDateString('fr-FR')} - {production.bar_reference} - {production.bullion_grams.toFixed(2)}g - {production.mining_company?.name}
+                        {new Date(production.production_date).toLocaleDateString('fr-FR')} - {production.bar_reference} - {production.bullion_grams.toFixed(2)}g
                       </option>
                     ))}
                 </select>
+              </div>
 
-                {/* Selected Productions List */}
-                {selectedProductions.length > 0 && (
-                  <div className="space-y-2">
-                    {selectedProductions.map((production, index) => (
-                      <div key={production.id} className="flex items-center gap-3 bg-white p-4 rounded-lg border-2 border-yellow-200 shadow-sm">
-                        <div className="flex-shrink-0 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 grid grid-cols-5 gap-3 text-sm">
-                          <div>
-                            <div className="text-xs text-gray-600">Date</div>
-                            <div className="font-semibold">{new Date(production.production_date).toLocaleDateString('fr-FR')}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-600">Bar Ref</div>
-                            <div className="font-semibold font-mono">{production.bar_reference}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-600">Bullion</div>
-                            <div className="font-semibold">{production.bullion_grams.toFixed(2)} g</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-600">Pure Gold</div>
-                            <div className="font-semibold text-yellow-800">{production.pure_gold_grams.toFixed(2)} g</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-600 mb-1">Seal Number *</div>
+              {selectedProductions.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">#</th>
+                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Date</th>
+                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Bar Ref</th>
+                        <th className="px-3 py-3 text-right text-xs font-bold uppercase">Bullion (g)</th>
+                        <th className="px-3 py-3 text-right text-xs font-bold uppercase">Pure Gold (g)</th>
+                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Seal 1 *</th>
+                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Seal 2</th>
+                        <th className="px-3 py-3 text-center text-xs font-bold uppercase">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {selectedProductions.map((sp, index) => (
+                        <tr key={sp.production.id} className="hover:bg-yellow-50 transition-colors">
+                          <td className="px-3 py-3 text-sm font-bold text-gray-600">{index + 1}</td>
+                          <td className="px-3 py-3 text-sm">{new Date(sp.production.production_date).toLocaleDateString('fr-FR')}</td>
+                          <td className="px-3 py-3 text-sm font-mono font-semibold">{sp.production.bar_reference}</td>
+                          <td className="px-3 py-3 text-sm text-right font-semibold">{sp.production.bullion_grams.toFixed(2)}</td>
+                          <td className="px-3 py-3 text-sm text-right font-semibold text-yellow-800">{sp.production.pure_gold_grams.toFixed(2)}</td>
+                          <td className="px-3 py-3">
                             <Input
-                              value={productionSealNumbers[production.id] || ''}
-                              onChange={(e) => handleSealNumberChange(production.id, e.target.value)}
-                              placeholder="ex: 0097099"
-                              className="w-full text-sm h-8"
+                              value={sp.sealNumber1}
+                              onChange={(e) => handleSealNumber1Change(sp.production.id, e.target.value)}
+                              placeholder="0097099"
+                              className="w-28 text-xs h-8"
                             />
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleRemoveProduction(production.id)}
-                          variant="outline"
-                          size="sm"
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <Input
+                              value={sp.sealNumber2}
+                              onChange={(e) => handleSealNumber2Change(sp.production.id, e.target.value)}
+                              placeholder="0097100"
+                              className="w-28 text-xs h-8"
+                            />
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <Button
+                              onClick={() => handleRemoveProduction(sp.production.id)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-300 text-red-600 hover:bg-red-50 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Totals Row */}
+                      <tr className="bg-gradient-to-r from-yellow-100 to-amber-100 font-bold border-t-2 border-yellow-400">
+                        <td colSpan={3} className="px-3 py-3 text-sm text-yellow-900">TOTAL ({selectedProductions.length} boxes)</td>
+                        <td className="px-3 py-3 text-sm text-right text-yellow-900">{totalGrossWeight.toFixed(2)}</td>
+                        <td className="px-3 py-3 text-sm text-right text-yellow-900">{totalNetWeight.toFixed(2)}</td>
+                        <td colSpan={3}></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            {/* Expedition Details */}
+            <Card className="p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Détails d'Expédition</h2>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Truck className="w-4 h-4 inline mr-1" />
+                    Freight Company *
+                  </label>
+                  <select
+                    value={selectedFreightCompanyId}
+                    onChange={(e) => setSelectedFreightCompanyId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {freightCompanies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
                     ))}
+                  </select>
+                </div>
 
-                    {/* Totals - Compact */}
-                    <div className="bg-gradient-to-r from-yellow-100 to-amber-100 p-3 rounded-lg border border-yellow-300">
-                      <div className="grid grid-cols-3 gap-3 text-center">
-                        <div>
-                          <div className="text-xs text-yellow-700 font-medium">Total Boxes</div>
-                          <div className="text-lg font-bold text-yellow-900">{selectedProductions.length}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-yellow-700 font-medium">Total Gross Weight</div>
-                          <div className="text-lg font-bold text-yellow-900">{totalGrossWeight.toFixed(2)} g</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-yellow-700 font-medium">Total Net Weight</div>
-                          <div className="text-lg font-bold text-yellow-900">{totalNetWeight.toFixed(2)} g</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Building2 className="w-4 h-4 inline mr-1" />
+                    Refinery *
+                  </label>
+                  <select
+                    value={selectedRefineryId}
+                    onChange={(e) => setSelectedRefineryId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {refineries.map((refinery) => (
+                      <option key={refinery.id} value={refinery.id}>
+                        {refinery.name} - {refinery.country}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </Card>
 
-            {/* Expedition Details - Always show */}
+            {/* Signatories Section */}
             <Card className="p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-4">Détails d'Expédition</h2>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Truck className="w-4 h-4 inline mr-1" />
-                        Freight Company *
-                      </label>
-                      <select
-                        value={selectedFreightCompanyId}
-                        onChange={(e) => setSelectedFreightCompanyId(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      >
-                        <option value="">-- Sélectionner --</option>
-                        {freightCompanies.map((company) => (
-                          <option key={company.id} value={company.id}>
-                            {company.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Building2 className="w-4 h-4 inline mr-1" />
-                        Refinery *
-                      </label>
-                      <select
-                        value={selectedRefineryId}
-                        onChange={(e) => setSelectedRefineryId(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      >
-                        <option value="">-- Sélectionner --</option>
-                        {refineries.map((refinery) => (
-                          <option key={refinery.id} value={refinery.id}>
-                            {refinery.name} - {refinery.country}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Expedition / Lot Number
-                      </label>
-                      <Input
-                        value={expeditionLotNumber}
-                        onChange={(e) => setExpeditionLotNumber(e.target.value)}
-                        placeholder="HUM-SMK-380/2025"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Les numéros de scellé sont associés à chaque production ci-dessus</p>
-                    </div>
-              </div>
-            </Card>
-
-            {/* Signatories Section - Always show */}
-            <Card className="p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-4">Signataires</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Signataires</h2>
 
               <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
                     <select
@@ -564,6 +533,7 @@ export default function ShippingPreparationNew() {
                       value={newSignatoryName}
                       onChange={(e) => setNewSignatoryName(e.target.value)}
                       placeholder="Nom complet"
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -572,46 +542,41 @@ export default function ShippingPreparationNew() {
                   variant="outline"
                   size="sm"
                   className="border-yellow-500 text-yellow-800 hover:bg-yellow-50"
-                  disabled={!preparation || !newSignatoryPosition.trim() || !newSignatoryName.trim()}
+                  disabled={!newSignatoryPosition.trim() || !newSignatoryName.trim()}
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Ajouter Signataire
                 </Button>
-                {!preparation && (
-                  <p className="text-xs text-yellow-700 mt-2">Enregistrez d'abord la préparation pour ajouter des signataires</p>
-                )}
               </div>
 
-              {signatories.length > 0 ? (
+              {signatories.length > 0 && (
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                  <table className="w-full border-collapse bg-white rounded-lg overflow-hidden">
                     <thead>
                       <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">#</th>
-                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Position</th>
-                        <th className="p-4 text-left font-semibold text-sm uppercase tracking-wide">Nom</th>
-                        <th className="p-4 text-center font-semibold text-sm uppercase tracking-wide w-24">Action</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">Position</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">Nom</th>
+                        <th className="px-4 py-3 text-center text-xs font-bold uppercase">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200">
                       {signatories.map((signatory, index) => (
-                        <tr key={signatory.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-4 text-gray-600 font-medium">{index + 1}</td>
-                          <td className="p-4">
+                        <tr key={signatory.tempId} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-600 font-medium">{index + 1}</td>
+                          <td className="px-4 py-3 text-sm">
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4 text-yellow-700" />
                               <span className="font-medium text-gray-900">{signatory.position}</span>
                             </div>
                           </td>
-                          <td className="p-4">
-                            <span className="text-blue-900 font-semibold">{signatory.name}</span>
-                          </td>
-                          <td className="p-4 text-center">
+                          <td className="px-4 py-3 text-sm font-semibold text-blue-900">{signatory.name}</td>
+                          <td className="px-4 py-3 text-center">
                             <Button
-                              onClick={() => handleDeleteSignatory(signatory.id)}
+                              onClick={() => handleRemoveSignatory(signatory.tempId)}
                               variant="outline"
                               size="sm"
-                              className="border-red-300 text-red-600 hover:bg-red-50"
+                              className="border-red-300 text-red-600 hover:bg-red-50 h-8 w-8 p-0"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -621,15 +586,115 @@ export default function ShippingPreparationNew() {
                     </tbody>
                   </table>
                 </div>
+              )}
+            </Card>
+
+            {/* Documents Section */}
+            <Card className="p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Documents de Support</h2>
+
+              {!showDocumentForm ? (
+                <Button
+                  onClick={() => setShowDocumentForm(true)}
+                  variant="outline"
+                  size="sm"
+                  className="border-yellow-600 text-yellow-800 hover:bg-yellow-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter Document
+                </Button>
               ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <User className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p className="text-gray-600 font-medium text-sm">Aucun signataire ajouté</p>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-medium text-blue-800 mb-1">Titre du Document</label>
+                      <Input
+                        value={newDocumentTitle}
+                        onChange={(e) => setNewDocumentTitle(e.target.value)}
+                        placeholder="Ex: Certificat d'origine"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-blue-800 mb-1">Fichier</label>
+                      <input
+                        type="file"
+                        onChange={(e) => setNewDocumentFile(e.target.files?.[0] || null)}
+                        className="w-full text-sm border border-blue-300 rounded-lg p-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleAddDocument}
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-500 text-blue-800 hover:bg-blue-50"
+                      disabled={!newDocumentTitle.trim() || !newDocumentFile}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Ajouter
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowDocumentForm(false);
+                        setNewDocumentTitle('');
+                        setNewDocumentFile(null);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {pendingDocuments.length > 0 && (
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full border-collapse bg-white rounded-lg overflow-hidden">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">Titre</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">Fichier</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold uppercase">Taille</th>
+                        <th className="px-4 py-3 text-center text-xs font-bold uppercase">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {pendingDocuments.map((doc, index) => (
+                        <tr key={doc.tempId} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-yellow-700" />
+                              <span className="font-medium text-gray-900">{doc.title}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{doc.file.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{(doc.file.size / 1024).toFixed(2)} KB</td>
+                          <td className="px-4 py-3 text-center">
+                            <Button
+                              onClick={() => handleRemoveDocument(doc.tempId)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-300 text-red-600 hover:bg-red-50 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </Card>
 
-            {/* Action Buttons - Refined without frame */}
+            {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 py-4">
               <Button
                 onClick={handleCancel}
@@ -641,7 +706,7 @@ export default function ShippingPreparationNew() {
               </Button>
               <Button
                 onClick={handleSavePreparation}
-                disabled={saving || !selectedFreightCompanyId || !selectedRefineryId || selectedProductionIds.length === 0 || selectedProductionIds.some(id => !productionSealNumbers[id]?.trim())}
+                disabled={saving || !selectedFreightCompanyId || !selectedRefineryId || selectedProductions.length === 0 || selectedProductions.some(sp => !sp.sealNumber1.trim())}
                 className="gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
@@ -651,63 +716,54 @@ export default function ShippingPreparationNew() {
           </div>
         </div>
 
-        {/* Dynamic PDF Preview - Always visible */}
-        {
-          <div className="w-[650px] bg-white border-l-4 border-yellow-500 flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 bg-gradient-to-r from-yellow-500 to-amber-600 border-b-4 border-yellow-800">
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Packing List Preview
-              </h3>
-              <p className="text-sm text-yellow-100">Mise à jour en temps réel</p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {selectedProductions.length > 0 ? (
-                <div className="bg-white rounded-lg shadow-xl">
-                  <DynamicPackingList
-                    expeditionLotNumber={expeditionLotNumber}
-                    productionDate={selectedProductions[0].production_date}
-                    miningCompany={selectedProductions[0].mining_company?.name || ''}
-                    refineryName={selectedRefinery?.name || ''}
-                    refineryAddress={selectedRefinery?.location || ''}
-                    refineryCountry={selectedRefinery?.country || ''}
-                    freightCompany={selectedFreightCompany?.name || ''}
-                    ingots={selectedProductions.map((prod, idx) => ({
-                      ingotBoxNumber: prod.bar_reference || `BOX-${idx + 1}`,
-                      netWeight: prod.pure_gold_grams,
-                      grossWeight: prod.bullion_grams,
-                      sealNumber1: productionSealNumbers[prod.id] || '',
-                      sealNumber2: '',
-                    }))}
-                    signatories={signatories.map(s => ({
-                      position: s.position,
-                      name: s.name,
-                    }))}
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center py-12 px-6 bg-white rounded-lg border-2 border-dashed border-gray-300 shadow-lg">
-                    <Package className="w-20 h-20 mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Packing List Preview</h3>
-                    <p className="text-sm text-gray-500 mb-4">Sélectionnez une production pour voir la facture</p>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-xs text-yellow-800">Le PDF sera généré automatiquement au fur et à mesure que vous remplissez le formulaire</p>
-                    </div>
+        {/* Dynamic PDF Preview */}
+        <div className="w-[650px] bg-white border-l-4 border-yellow-500 flex flex-col overflow-hidden shadow-2xl">
+          <div className="p-4 bg-gradient-to-r from-yellow-500 to-amber-600 border-b-4 border-yellow-800">
+            <h3 className="font-bold text-white text-base flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Packing List Preview
+            </h3>
+            <p className="text-sm text-yellow-100">Mise à jour en temps réel</p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            {selectedProductions.length > 0 ? (
+              <div className="bg-white rounded-lg shadow-xl">
+                <DynamicPackingList
+                  expeditionLotNumber={generateExpeditionLotNumber()}
+                  productionDate={selectedProductions[0].production.production_date}
+                  miningCompany={selectedProductions[0].production.mining_company?.name || ''}
+                  refineryName={selectedRefinery?.name || ''}
+                  refineryAddress={selectedRefinery?.location || ''}
+                  refineryCountry={selectedRefinery?.country || ''}
+                  freightCompany={selectedFreightCompany?.name || ''}
+                  ingots={selectedProductions.map((sp, idx) => ({
+                    ingotBoxNumber: sp.production.bar_reference || `BOX-${idx + 1}`,
+                    netWeight: sp.production.pure_gold_grams,
+                    grossWeight: sp.production.bullion_grams,
+                    sealNumber1: sp.sealNumber1,
+                    sealNumber2: sp.sealNumber2,
+                  }))}
+                  signatories={signatories.map(s => ({
+                    position: s.position,
+                    name: s.name,
+                  }))}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12 px-6 bg-white rounded-lg border-2 border-dashed border-gray-300 shadow-lg">
+                  <Package className="w-20 h-20 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Packing List Preview</h3>
+                  <p className="text-sm text-gray-500 mb-4">Sélectionnez une production pour voir la facture</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-xs text-yellow-800">Le PDF sera généré automatiquement au fur et à mesure que vous remplissez le formulaire</p>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        }
+        </div>
       </div>
-
-      {/* Document Upload Modal */}
-      <DocumentUploadModal
-        isOpen={showDocumentModal}
-        onClose={() => setShowDocumentModal(false)}
-        onUpload={handleUploadDocument}
-      />
     </MainLayout>
   );
 }

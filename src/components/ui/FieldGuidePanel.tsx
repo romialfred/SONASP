@@ -52,7 +52,7 @@ export function FieldGuidePanel({
   return (
     <div className="sticky top-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg p-4">
+      <div className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-t-lg p-4">
         <div className="flex items-center gap-2">
           <Info className="w-5 h-5" />
           <h2 className="text-lg font-semibold">{title}</h2>

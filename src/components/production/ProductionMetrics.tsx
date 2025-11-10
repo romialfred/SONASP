@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Package, Coins, Activity, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Coins, Activity, Target, Calendar, CalendarRange } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { DailyProduction, dailyProductionService } from '@/services/dailyProductionService';
+import { DailyProduction, dailyProductionService, ProductionSummary } from '@/services/dailyProductionService';
 
 interface ProductionMetricsProps {
   productions: DailyProduction[];
@@ -9,26 +9,29 @@ interface ProductionMetricsProps {
     startDate: string;
     endDate: string;
   };
+  miningCompanyId?: string;
 }
 
-export function ProductionMetrics({ productions, dateRange }: ProductionMetricsProps) {
-  const [variance, setVariance] = useState<any>(null);
+export function ProductionMetrics({ productions, dateRange, miningCompanyId }: ProductionMetricsProps) {
+  const [wtdSummary, setWtdSummary] = useState<ProductionSummary | null>(null);
+  const [mtdSummary, setMtdSummary] = useState<ProductionSummary | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadVariance();
-  }, [dateRange.endDate]);
+    loadSummaries();
+  }, [dateRange.endDate, miningCompanyId]);
 
-  const loadVariance = async () => {
+  const loadSummaries = async () => {
     try {
       setLoading(true);
-      const data = await dailyProductionService.getProductionVariance(
-        dateRange.endDate,
-        'daily'
-      );
-      setVariance(data);
+      const [wtd, mtd] = await Promise.all([
+        dailyProductionService.getWTDSummary(dateRange.endDate, miningCompanyId),
+        dailyProductionService.getMTDSummary(dateRange.endDate, miningCompanyId)
+      ]);
+      setWtdSummary(wtd);
+      setMtdSummary(mtd);
     } catch (error) {
-      console.error('Error loading variance:', error);
+      console.error('Error loading summaries:', error);
     } finally {
       setLoading(false);
     }
@@ -76,8 +79,121 @@ export function ProductionMetrics({ productions, dateRange }: ProductionMetricsP
     },
   ];
 
+  const renderVarianceCard = (title: string, summary: ProductionSummary | null, icon: any, period: string) => {
+    if (!summary) return null;
+
+    const Icon = icon;
+    const varianceForecast = summary.variance_vs_forecast || 0;
+    const varianceBudget = summary.variance_vs_budget || 0;
+
+    return (
+      <Card className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Icon className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+            </div>
+            <p className="text-xs text-gray-500">{period}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {/* Actual vs Forecast */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-600">Actual:</span>
+              <span className="text-sm font-bold text-gray-900">
+                {summary.total_estimated_oz?.toFixed(2)} oz
+              </span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-600">Forecast:</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {summary.forecast_oz?.toFixed(2) || '0.00'} oz
+              </span>
+            </div>
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  {varianceForecast >= 0 ? (
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-600" />
+                  )}
+                  <span className="text-xs font-medium text-gray-700">vs Forecast:</span>
+                </div>
+                <span className={`text-sm font-bold ${
+                  varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {varianceForecast >= 0 ? '+' : ''}
+                  {varianceForecast.toFixed(2)} oz
+                  <span className="text-xs ml-1">
+                    ({summary.forecast_oz && summary.forecast_oz > 0
+                      ? `${((varianceForecast / summary.forecast_oz) * 100).toFixed(1)}%`
+                      : '—'})
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actual vs Budget */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-600">Budget:</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {summary.budget_oz?.toFixed(2) || '0.00'} oz
+              </span>
+            </div>
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  {varianceBudget >= 0 ? (
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-600" />
+                  )}
+                  <span className="text-xs font-medium text-gray-700">vs Budget:</span>
+                </div>
+                <span className={`text-sm font-bold ${
+                  varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {varianceBudget >= 0 ? '+' : ''}
+                  {varianceBudget.toFixed(2)} oz
+                  <span className="text-xs ml-1">
+                    ({summary.budget_oz && summary.budget_oz > 0
+                      ? `${((varianceBudget / summary.budget_oz) * 100).toFixed(1)}%`
+                      : '—'})
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Metrics */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="text-gray-600">Avg Fineness:</span>
+              <div className="font-semibold text-gray-900">
+                {summary.avg_fineness_pct?.toFixed(2)}%
+              </div>
+            </div>
+            <div>
+              <span className="text-gray-600">Records:</span>
+              <div className="font-semibold text-gray-900">
+                {summary.record_count}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-4">
+      {/* Period Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
           <Card key={index} className="p-4">
@@ -106,124 +222,28 @@ export function ProductionMetrics({ productions, dateRange }: ProductionMetricsP
         ))}
       </div>
 
-      {/* Variance Cards */}
-      {variance && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Variance vs Forecast */}
-          <Card className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700">
-                  Variance vs Forecast
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Comparison with daily forecast
-                </p>
-              </div>
-              {variance.variance_vs_forecast >= 0 ? (
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-              ) : (
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <TrendingDown className="w-5 h-5 text-red-600" />
-                </div>
-              )}
-            </div>
+      {/* WTD and MTD Variance Cards */}
+      {(wtdSummary || mtdSummary) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {wtdSummary && renderVarianceCard(
+            'Week-To-Date (WTD)',
+            wtdSummary,
+            Calendar,
+            'Semaine en cours'
+          )}
+          {mtdSummary && renderVarianceCard(
+            'Month-To-Date (MTD)',
+            mtdSummary,
+            CalendarRange,
+            'Mois en cours'
+          )}
+        </div>
+      )}
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Actual:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {variance.actual_oz.toFixed(2)} oz
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Forecast:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {variance.forecast_oz.toFixed(2)} oz
-                </span>
-              </div>
-              <div className="pt-2 border-t border-gray-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Variance:</span>
-                  <span className={`text-lg font-bold ${
-                    variance.variance_vs_forecast >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {variance.variance_vs_forecast >= 0 ? '+' : ''}
-                    {variance.variance_vs_forecast.toFixed(2)} oz
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className={`text-xs ${
-                    variance.variance_vs_forecast >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {variance.forecast_oz > 0
-                      ? `${((variance.variance_vs_forecast / variance.forecast_oz) * 100).toFixed(1)}%`
-                      : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Variance vs Budget */}
-          <Card className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700">
-                  Variance vs Budget
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Comparison with daily budget
-                </p>
-              </div>
-              {variance.variance_vs_budget >= 0 ? (
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-              ) : (
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <TrendingDown className="w-5 h-5 text-red-600" />
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Actual:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {variance.actual_oz.toFixed(2)} oz
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Budget:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {variance.budget_oz.toFixed(2)} oz
-                </span>
-              </div>
-              <div className="pt-2 border-t border-gray-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Variance:</span>
-                  <span className={`text-lg font-bold ${
-                    variance.variance_vs_budget >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {variance.variance_vs_budget >= 0 ? '+' : ''}
-                    {variance.variance_vs_budget.toFixed(2)} oz
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className={`text-xs ${
-                    variance.variance_vs_budget >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {variance.budget_oz > 0
-                      ? `${((variance.variance_vs_budget / variance.budget_oz) * 100).toFixed(1)}%`
-                      : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
+      {loading && (
+        <div className="text-center py-4">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <p className="text-sm text-gray-600 mt-2">Chargement des statistiques...</p>
         </div>
       )}
     </div>

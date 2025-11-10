@@ -10,6 +10,7 @@ export interface DailyProduction {
   bar_reference: string | null;
   notes: string | null;
   site_id: string;
+  mining_company_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,10 @@ export interface ProductionSummary {
   total_estimated_oz: number;
   avg_fineness_pct: number;
   record_count: number;
+  forecast_oz?: number;
+  budget_oz?: number;
+  variance_vs_forecast?: number;
+  variance_vs_budget?: number;
 }
 
 export interface ProductionVariance {
@@ -284,11 +289,55 @@ class DailyProductionService {
     return {
       total_oz: productions.reduce((sum, p) => sum + p.estimated_oz, 0),
       total_grams: productions.reduce((sum, p) => sum + p.bullion_grams, 0),
-      avg_fineness: productions.length > 0 
-        ? productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length 
+      avg_fineness: productions.length > 0
+        ? productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length
         : 0,
       count: productions.length
     };
+  }
+
+  // New methods for WTD and MTD
+  async getWTDSummary(
+    referenceDate: string = new Date().toISOString().split('T')[0],
+    miningCompanyId?: string,
+    siteId: string = 'guinea'
+  ): Promise<ProductionSummary> {
+    const { data, error } = await supabase.rpc('get_wtd_summary', {
+      reference_date: referenceDate,
+      company_id: miningCompanyId || null,
+      site: siteId
+    });
+
+    if (error) throw error;
+    return data[0] as ProductionSummary;
+  }
+
+  async getMTDSummary(
+    referenceDate: string = new Date().toISOString().split('T')[0],
+    miningCompanyId?: string,
+    siteId: string = 'guinea'
+  ): Promise<ProductionSummary> {
+    const { data, error } = await supabase.rpc('get_mtd_summary', {
+      reference_date: referenceDate,
+      company_id: miningCompanyId || null,
+      site: siteId
+    });
+
+    if (error) throw error;
+    return data[0] as ProductionSummary;
+  }
+
+  async generateBarReference(
+    companyName?: string,
+    productionDate: string = new Date().toISOString().split('T')[0]
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc('generate_bar_reference', {
+      company_name: companyName || null,
+      production_date: productionDate
+    });
+
+    if (error) throw error;
+    return data as string;
   }
 }
 

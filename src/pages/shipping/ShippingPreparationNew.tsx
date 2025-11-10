@@ -437,20 +437,20 @@ export default function ShippingPreparationNew() {
                       </div>
                     ))}
 
-                    {/* Totals */}
-                    <div className="bg-gradient-to-r from-yellow-100 to-amber-100 p-4 rounded-lg border-2 border-yellow-300">
-                      <div className="grid grid-cols-3 gap-4 text-center">
+                    {/* Totals - Compact */}
+                    <div className="bg-gradient-to-r from-yellow-100 to-amber-100 p-3 rounded-lg border border-yellow-300">
+                      <div className="grid grid-cols-3 gap-3 text-center">
                         <div>
-                          <div className="text-xs text-yellow-800 mb-1">Total Boxes</div>
-                          <div className="text-base font-bold text-yellow-900">{selectedProductions.length}</div>
+                          <div className="text-xs text-yellow-700 font-medium">Total Boxes</div>
+                          <div className="text-lg font-bold text-yellow-900">{selectedProductions.length}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-yellow-800 mb-1">Total Gross Weight</div>
-                          <div className="text-base font-bold text-yellow-900">{totalGrossWeight.toFixed(2)} g</div>
+                          <div className="text-xs text-yellow-700 font-medium">Total Gross Weight</div>
+                          <div className="text-lg font-bold text-yellow-900">{totalGrossWeight.toFixed(2)} g</div>
                         </div>
                         <div>
-                          <div className="text-xs text-yellow-800 mb-1">Total Net Weight</div>
-                          <div className="text-base font-bold text-yellow-900">{totalNetWeight.toFixed(2)} g</div>
+                          <div className="text-xs text-yellow-700 font-medium">Total Net Weight</div>
+                          <div className="text-lg font-bold text-yellow-900">{totalNetWeight.toFixed(2)} g</div>
                         </div>
                       </div>
                     </div>
@@ -459,11 +459,9 @@ export default function ShippingPreparationNew() {
               </div>
             </Card>
 
-            {selectedProductions.length > 0 && (
-              <>
-                {/* Expedition Details */}
-                <Card className="p-6">
-                  <h2 className="text-base font-bold text-gray-900 mb-4">Détails d'Expédition</h2>
+            {/* Expedition Details - Always show */}
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-4">Détails d'Expédition</h2>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -525,11 +523,95 @@ export default function ShippingPreparationNew() {
                         placeholder="0097099"
                       />
                     </div>
-                  </div>
-                </Card>
+              </div>
+            </Card>
 
-                {/* Signatories Section */}
-                {preparation && (
+            {/* Supporting Documents Section - Always show */}
+            <Card className="p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-4">Documents de Support</h2>
+
+              {preparation ? (
+                <>
+                  <div className="mb-4">
+                    <Button
+                      onClick={() => setShowDocumentModal(true)}
+                      variant="outline"
+                      size="sm"
+                      className="border-yellow-600 text-yellow-800 hover:bg-yellow-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter Document
+                    </Button>
+                  </div>
+
+                  {documents.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-gray-700 text-white">
+                            <th className="p-3 text-left font-semibold text-xs uppercase">#</th>
+                            <th className="p-3 text-left font-semibold text-xs uppercase">Titre</th>
+                            <th className="p-3 text-left font-semibold text-xs uppercase">Nom Fichier</th>
+                            <th className="p-3 text-left font-semibold text-xs uppercase">Taille</th>
+                            <th className="p-3 text-center font-semibold text-xs uppercase w-32">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {documents.map((doc, index) => (
+                            <tr key={doc.id} className="hover:bg-gray-50">
+                              <td className="p-3 text-gray-600">{index + 1}</td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-yellow-700" />
+                                  <span className="font-medium text-gray-900">{doc.title}</span>
+                                </div>
+                              </td>
+                              <td className="p-3 text-gray-700 text-xs">{doc.file_name}</td>
+                              <td className="p-3 text-gray-600 text-xs">
+                                {doc.file_size ? `${(doc.file_size / 1024).toFixed(2)} KB` : 'N/A'}
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center justify-center gap-2">
+                                  <a
+                                    href={doc.document_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </a>
+                                  <Button
+                                    onClick={() => handleDeleteDocument(doc.id, doc.document_url)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-red-300 text-red-600 hover:bg-red-50 p-1"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                      <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p className="text-gray-600 font-medium text-sm">Aucun document ajouté</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 bg-blue-50 rounded-lg border-2 border-dashed border-blue-300">
+                  <FileText className="w-12 h-12 mx-auto mb-2 text-blue-400" />
+                  <p className="text-blue-700 font-medium text-sm">Enregistrez d'abord la préparation pour ajouter des documents</p>
+                </div>
+              )}
+            </Card>
+
+            {/* Signatories Section */}
+            {preparation && (
                   <Card className="p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-4">Signataires</h2>
 
@@ -614,116 +696,33 @@ export default function ShippingPreparationNew() {
                         <p className="text-gray-600 font-medium">Aucun signataire ajouté</p>
                       </div>
                     )}
-                  </Card>
-                )}
-                {/* Supporting Documents Section */}
-                {preparation && (
-                  <Card className="p-6">
-                    <h2 className="text-base font-bold text-gray-900 mb-4">Documents de Support</h2>
-
-                    <div className="mb-4">
-                      <Button
-                        onClick={() => setShowDocumentModal(true)}
-                        variant="outline"
-                        size="sm"
-                        className="border-yellow-600 text-yellow-800 hover:bg-yellow-50"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Ajouter Document
-                      </Button>
-                    </div>
-
-                    {documents.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-sm">
-                          <thead>
-                            <tr className="bg-gray-700 text-white">
-                              <th className="p-3 text-left font-semibold text-xs uppercase">#</th>
-                              <th className="p-3 text-left font-semibold text-xs uppercase">Titre</th>
-                              <th className="p-3 text-left font-semibold text-xs uppercase">Nom Fichier</th>
-                              <th className="p-3 text-left font-semibold text-xs uppercase">Taille</th>
-                              <th className="p-3 text-center font-semibold text-xs uppercase w-32">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {documents.map((doc, index) => (
-                              <tr key={doc.id} className="hover:bg-gray-50">
-                                <td className="p-3 text-gray-600">{index + 1}</td>
-                                <td className="p-3">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-yellow-700" />
-                                    <span className="font-medium text-gray-900">{doc.title}</span>
-                                  </div>
-                                </td>
-                                <td className="p-3 text-gray-700 text-xs">{doc.file_name}</td>
-                                <td className="p-3 text-gray-600 text-xs">
-                                  {doc.file_size ? `${(doc.file_size / 1024).toFixed(2)} KB` : 'N/A'}
-                                </td>
-                                <td className="p-3">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <a
-                                      href={doc.document_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800"
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </a>
-                                    <Button
-                                      onClick={() => handleDeleteDocument(doc.id, doc.document_url)}
-                                      variant="outline"
-                                      size="sm"
-                                      className="border-red-300 text-red-600 hover:bg-red-50 p-1"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <FileText className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-                        <p className="text-gray-600 font-medium text-sm">Aucun document ajouté</p>
-                      </div>
-                    )}
-                  </Card>
-                )}
-
-
-                {/* Action Buttons - Bottom of Form */}
-                <Card className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-300 sticky bottom-0 z-10">
-                  <div className="flex items-center justify-end gap-4">
-                    <Button
-                      onClick={handleCancel}
-                      variant="outline"
-                      size="lg"
-                      className="gap-2 border-gray-400 text-gray-700 hover:bg-gray-200"
-                    >
-                      <X className="w-5 h-5" />
-                      Annuler
-                    </Button>
-                    <Button
-                      onClick={handleSavePreparation}
-                      disabled={saving || !sealNumber.trim() || !selectedFreightCompanyId || !selectedRefineryId || selectedProductionIds.length === 0}
-                      className="gap-2 px-8 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-700 hover:to-amber-700"
-                      size="lg"
-                    >
-                      <Save className="w-5 h-5" />
-                      {saving ? 'Enregistrement...' : 'Enregistrer Préparation'}
-                    </Button>
-                  </div>
-                </Card>
-              </>
+              </Card>
             )}
+
+            {/* Action Buttons - Refined without frame */}
+            <div className="flex items-center justify-end gap-3 py-4">
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                className="gap-2 px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm"
+              >
+                <X className="w-4 h-4" />
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSavePreparation}
+                disabled={saving || !sealNumber.trim() || !selectedFreightCompanyId || !selectedRefineryId || selectedProductionIds.length === 0}
+                className="gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? 'Enregistrement...' : 'Enregistrer Préparation'}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Dynamic PDF Preview */}
-        {selectedProductions.length > 0 && selectedRefinery && (
+        {/* Dynamic PDF Preview - Always visible */}
+        {
           <div className="w-[650px] bg-white border-l-4 border-yellow-500 flex flex-col overflow-hidden shadow-2xl">
             <div className="p-4 bg-gradient-to-r from-yellow-500 to-amber-600 border-b-4 border-yellow-800">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
@@ -733,31 +732,44 @@ export default function ShippingPreparationNew() {
               <p className="text-sm text-yellow-100">Mise à jour en temps réel</p>
             </div>
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              <div className="bg-white rounded-lg shadow-xl">
-                <DynamicPackingList
-                  expeditionLotNumber={expeditionLotNumber}
-                  productionDate={selectedProductions[0].production_date}
-                  miningCompany={selectedProductions[0].mining_company?.name || ''}
-                  refineryName={selectedRefinery.name}
-                  refineryAddress={selectedRefinery.location}
-                  refineryCountry={selectedRefinery.country}
-                  freightCompany={selectedFreightCompany?.name || ''}
-                  ingots={selectedProductions.map((prod, idx) => ({
-                    ingotBoxNumber: prod.bar_reference || `BOX-${idx + 1}`,
-                    netWeight: prod.pure_gold_grams,
-                    grossWeight: prod.bullion_grams,
-                    sealNumber1: sealNumber,
-                    sealNumber2: sealNumber ? `${parseInt(sealNumber) + idx}` : '',
-                  }))}
-                  signatories={signatories.map(s => ({
-                    position: s.position,
-                    name: s.name,
-                  }))}
-                />
-              </div>
+              {selectedProductions.length > 0 ? (
+                <div className="bg-white rounded-lg shadow-xl">
+                  <DynamicPackingList
+                    expeditionLotNumber={expeditionLotNumber}
+                    productionDate={selectedProductions[0].production_date}
+                    miningCompany={selectedProductions[0].mining_company?.name || ''}
+                    refineryName={selectedRefinery?.name || ''}
+                    refineryAddress={selectedRefinery?.location || ''}
+                    refineryCountry={selectedRefinery?.country || ''}
+                    freightCompany={selectedFreightCompany?.name || ''}
+                    ingots={selectedProductions.map((prod, idx) => ({
+                      ingotBoxNumber: prod.bar_reference || `BOX-${idx + 1}`,
+                      netWeight: prod.pure_gold_grams,
+                      grossWeight: prod.bullion_grams,
+                      sealNumber1: sealNumber,
+                      sealNumber2: sealNumber ? `${parseInt(sealNumber) + idx}` : '',
+                    }))}
+                    signatories={signatories.map(s => ({
+                      position: s.position,
+                      name: s.name,
+                    }))}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center py-12 px-6 bg-white rounded-lg border-2 border-dashed border-gray-300 shadow-lg">
+                    <Package className="w-20 h-20 mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Packing List Preview</h3>
+                    <p className="text-sm text-gray-500 mb-4">Sélectionnez une production pour voir la facture</p>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-xs text-yellow-800">Le PDF sera généré automatiquement au fur et à mesure que vous remplissez le formulaire</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        }
       </div>
 
       {/* Document Upload Modal */}

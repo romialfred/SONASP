@@ -2,10 +2,11 @@ import { supabase } from '@/lib/supabase';
 
 export interface ShippingPreparation {
   id: string;
-  daily_production_id: string;
+  daily_production_id: string | null;
   expedition_lot_number: string | null;
   seal_number: string | null;
   packing_list_url: string | null;
+  packing_list_document_id: string | null;
   shipped_to_company: string | null;
   shipped_to_address: string | null;
   shipped_to_country: string | null;
@@ -13,9 +14,25 @@ export interface ShippingPreparation {
   prepared_at: string | null;
   shipped_at: string | null;
   notes: string | null;
+  total_net_weight_grams: number;
+  total_gross_weight_grams: number;
+  total_boxes: number;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+}
+
+export interface ShippingProductionItem {
+  id: string;
+  shipping_preparation_id: string;
+  daily_production_id: string;
+  ingot_box_number: string;
+  net_weight_grams: number;
+  gross_weight_grams: number;
+  fineness_pct: number;
+  pure_gold_grams: number;
+  order_index: number;
+  created_at: string;
 }
 
 export interface ShippingSignatory {
@@ -121,6 +138,47 @@ class ShippingPreparationService {
       .eq('id', id);
 
     if (error) throw error;
+  }
+
+  async getProductionItems(preparationId: string): Promise<ShippingProductionItem[]> {
+    const { data, error } = await supabase
+      .from('shipping_production_items')
+      .select('*')
+      .eq('shipping_preparation_id', preparationId)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async addProductionItem(item: Partial<ShippingProductionItem>): Promise<ShippingProductionItem> {
+    const { data, error } = await supabase
+      .from('shipping_production_items')
+      .insert(item)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async removeProductionItem(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('shipping_production_items')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async getAllPreparations(): Promise<ShippingPreparation[]> {
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   }
 
   async getIngots(preparationId: string): Promise<ShippingIngot[]> {

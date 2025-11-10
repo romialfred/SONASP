@@ -1,13 +1,14 @@
-import { HelpCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 export interface FieldGuideItem {
-  field: string;
+  field?: string;
   title?: string;
   label?: string;
   description: string;
   example?: string;
   examples?: string[];
   required?: boolean;
+  readOnly?: boolean;
   rules?: string[];
   section?: string;
 }
@@ -23,65 +24,103 @@ interface FieldGuidePanelProps {
   guides?: FieldGuideItem[];
   sections?: FieldGuideSection[];
   currentField?: string;
+  activeField?: string | null;
+  fields?: Record<string, FieldGuideItem>;
 }
 
-export function FieldGuidePanel({ title = 'Field Guide', guides = [], sections = [], currentField }: FieldGuidePanelProps) {
-  const colors = [
-    'bg-blue-50 border-blue-200',
-    'bg-green-50 border-green-200',
-    'bg-orange-50 border-orange-200',
-    'bg-purple-50 border-purple-200',
-    'bg-teal-50 border-teal-200',
-    'bg-pink-50 border-pink-200',
-    'bg-cyan-50 border-cyan-200',
-  ];
+export function FieldGuidePanel({
+  title = 'Production Guide',
+  guides = [],
+  sections = [],
+  currentField,
+  activeField,
+  fields
+}: FieldGuidePanelProps) {
+  // Convert fields object to guides array if provided
+  const guidesArray = fields
+    ? Object.entries(fields).map(([key, value]) => ({
+        field: key,
+        ...value
+      }))
+    : guides;
 
-  const textColors = [
-    'text-blue-900',
-    'text-green-900',
-    'text-orange-900',
-    'text-purple-900',
-    'text-teal-900',
-    'text-pink-900',
-    'text-cyan-900',
-  ];
-
-  const descriptionColors = [
-    'text-blue-700',
-    'text-green-700',
-    'text-orange-700',
-    'text-purple-700',
-    'text-teal-700',
-    'text-pink-700',
-    'text-cyan-700',
-  ];
+  // Get the active guide based on activeField
+  const activeGuide = activeField
+    ? guidesArray.find(g => g.field === activeField)
+    : null;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <HelpCircle className="w-5 h-5 text-blue-600" />
-        <h2 className="text-lg font-semibold text-blue-600">{title}</h2>
+    <div className="sticky top-4">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg p-4">
+        <div className="flex items-center gap-2">
+          <Info className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {guides.map((guide, index) => {
-          const colorIndex = index % colors.length;
-          const displayTitle = guide.title || guide.label || guide.field;
-
-          return (
-            <div
-              key={guide.field}
-              className={`border rounded-lg p-4 ${colors[colorIndex]}`}
-            >
-              <h3 className={`font-semibold mb-2 ${textColors[colorIndex]}`}>
-                {displayTitle}
+      {/* Content */}
+      <div className="bg-white border border-gray-200 rounded-b-lg p-4 shadow-sm">
+        {activeGuide ? (
+          <div className="space-y-4">
+            {/* Active Field Title */}
+            <div className="pb-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-blue-900 mb-1">
+                {activeGuide.title}
               </h3>
-              <p className={`text-sm ${descriptionColors[colorIndex]}`}>
-                {guide.description}
+              {activeGuide.required && (
+                <span className="text-xs text-red-600 font-medium">* Champ requis</span>
+              )}
+              {activeGuide.readOnly && (
+                <span className="text-xs text-gray-500 font-medium">Lecture seule</span>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {activeGuide.description}
               </p>
             </div>
-          );
-        })}
+          </div>
+        ) : (
+          /* Show all guides when no field is active */
+          <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto">
+            {guidesArray.length > 0 ? (
+              guidesArray.map((guide, index) => {
+                const colors = [
+                  { bg: 'bg-blue-50', border: 'border-blue-400', text: 'text-blue-900' },
+                  { bg: 'bg-emerald-50', border: 'border-emerald-400', text: 'text-emerald-900' },
+                  { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-900' },
+                  { bg: 'bg-purple-50', border: 'border-purple-400', text: 'text-purple-900' },
+                  { bg: 'bg-teal-50', border: 'border-teal-400', text: 'text-teal-900' },
+                  { bg: 'bg-rose-50', border: 'border-rose-400', text: 'text-rose-900' },
+                ];
+
+                const color = colors[index % colors.length];
+
+                return (
+                  <div
+                    key={guide.field || index}
+                    className={`${color.bg} border-l-4 ${color.border} rounded-lg p-3`}
+                  >
+                    <h4 className={`font-semibold text-sm mb-1 ${color.text}`}>
+                      {guide.title}
+                    </h4>
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      {guide.description}
+                    </p>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Info className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Cliquez sur un champ pour voir son guide</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

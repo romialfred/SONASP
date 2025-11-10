@@ -60,7 +60,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIcon: Factory,
       items: [
         { label: 'Daily Production', path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
-        { label: 'Production Forecasts', path: '/performance/forecasts', icon: TrendingUp, iconColor: 'text-blue-600' },
+        { label: 'Budget & Forecasts', path: '/performance/budgets', icon: TrendingUp, iconColor: 'text-blue-600' },
         { label: 'Performance Analysis', path: '/performance/analysis', icon: BarChart3, iconColor: 'text-purple-600' },
       ],
     },

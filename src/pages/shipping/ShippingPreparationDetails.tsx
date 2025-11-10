@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Package, ArrowLeft, Download, FileText, Calendar, Building2, Truck,
-  User, CheckCircle, Clock, MapPin, Weight, Box, Printer
+  User, CheckCircle, Clock, MapPin, Weight, Box, Printer, FolderOpen, File
 } from 'lucide-react';
+import { Tabs } from '@/components/ui/Tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -35,6 +36,7 @@ export default function ShippingPreparationDetails() {
   const [documents, setDocuments] = useState<ShippingDocument[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [transportCompany, setTransportCompany] = useState<TransportCompany | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (id) {
@@ -224,10 +226,25 @@ export default function ShippingPreparationDetails() {
             </Card>
           </div>
 
-          {/* Expedition Info */}
-          <Card className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Informations d'Expédition</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Tabs Navigation */}
+          <Tabs
+            value={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: 'overview', label: 'Vue d\'ensemble', icon: Package },
+              { id: 'productions', label: 'Productions', icon: Box },
+              { id: 'signatories', label: 'Signataires', icon: User },
+              { id: 'documents', label: 'Documents', icon: FolderOpen },
+            ]}
+          />
+
+          {/* Tab Content: Overview */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Expedition Info */}
+              <Card className="p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Informations d'Expédition</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Building2 className="w-5 h-5 text-yellow-600 mt-1" />
@@ -291,12 +308,23 @@ export default function ShippingPreparationDetails() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          {/* Production Items */}
-          <Card className="p-6">
+            {/* Notes */}
+            {preparation.notes && (
+              <Card className="p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Notes</h2>
+                <p className="text-gray-700 whitespace-pre-wrap">{preparation.notes}</p>
+              </Card>
+            )}
+          </>
+          )}
+
+          {/* Tab Content: Productions */}
+          {activeTab === 'productions' && (
+            <Card className="p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Productions Incluses</h2>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -327,9 +355,10 @@ export default function ShippingPreparationDetails() {
               </table>
             </div>
           </Card>
+          )}
 
-          {/* Signatories */}
-          {signatories.length > 0 && (
+          {/* Tab Content: Signatories */}
+          {activeTab === 'signatories' && (
             <Card className="p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Signataires</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -349,43 +378,134 @@ export default function ShippingPreparationDetails() {
                   </div>
                 ))}
               </div>
+
+              {signatories.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>Aucun signataire enregistré</p>
+                </div>
+              )}
             </Card>
           )}
 
-          {/* Documents */}
-          {documents.length > 0 && (
+          {/* Tab Content: Documents */}
+          {activeTab === 'documents' && (
             <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Documents de Support</h2>
-              <div className="space-y-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-yellow-600" />
-                      <div>
-                        <p className="font-semibold text-gray-900">{doc.title}</p>
-                        <p className="text-sm text-gray-600">{doc.file_name}</p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => window.open(doc.document_url, '_blank')}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      Télécharger
-                    </Button>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Documents Relatifs</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Tous les documents associés à cette expédition
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <FolderOpen className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-900">
+                    {documents.length} {documents.length > 1 ? 'documents' : 'document'}
+                  </span>
+                </div>
               </div>
-            </Card>
-          )}
 
-          {/* Notes */}
-          {preparation.notes && (
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Notes</h2>
-              <p className="text-gray-700 whitespace-pre-wrap">{preparation.notes}</p>
+              {documents.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {documents.map((doc, index) => {
+                    const fileExtension = doc.file_name.split('.').pop()?.toUpperCase() || 'FILE';
+                    const fileSize = doc.file_size ? `${(doc.file_size / 1024).toFixed(2)} KB` : 'N/A';
+                    const uploadDate = new Date(doc.created_at).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+
+                    return (
+                      <div
+                        key={doc.id}
+                        className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border-2 border-gray-200 hover:border-yellow-400 hover:shadow-lg transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* File Icon */}
+                          <div className="relative">
+                            <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                              <File className="w-7 h-7 text-white" />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-gray-800 text-white text-[10px] font-bold rounded">
+                              {fileExtension}
+                            </div>
+                          </div>
+
+                          {/* File Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded">
+                                #{index + 1}
+                              </span>
+                              <h3 className="font-bold text-gray-900 truncate">
+                                {doc.title}
+                              </h3>
+                            </div>
+                            <p className="text-sm text-gray-600 truncate mb-2">
+                              {doc.file_name}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {uploadDate}
+                              </span>
+                              <span>•</span>
+                              <span>{fileSize}</span>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => window.open(doc.document_url, '_blank')}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 hover:bg-yellow-50 hover:border-yellow-500 hover:text-yellow-800"
+                            >
+                              <Download className="w-4 h-4" />
+                              Télécharger
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-16 text-gray-400">
+                  <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg font-medium mb-2">Aucun document disponible</p>
+                  <p className="text-sm">Les documents associés à cette expédition apparaîtront ici</p>
+                </div>
+              )}
+
+              {/* Document Stats */}
+              {documents.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-900">{documents.length}</p>
+                      <p className="text-xs text-blue-700 font-medium">Total Documents</p>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <p className="text-2xl font-bold text-green-900">
+                        {(documents.reduce((sum, doc) => sum + (doc.file_size || 0), 0) / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                      <p className="text-xs text-green-700 font-medium">Taille Totale</p>
+                    </div>
+                    <div className="p-3 bg-yellow-50 rounded-lg">
+                      <p className="text-2xl font-bold text-yellow-900">
+                        {new Set(documents.map(d => d.file_name.split('.').pop())).size}
+                      </p>
+                      <p className="text-xs text-yellow-700 font-medium">Types de Fichiers</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
           )}
         </div>

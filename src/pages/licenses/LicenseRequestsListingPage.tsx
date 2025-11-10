@@ -194,14 +194,26 @@ export function LicenseRequestsListingPage() {
     {
       header: 'Actions',
       accessor: (request: LicenseRequest) => (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => navigate(`/licenses/requests/${request.id}`)}
-        >
-          <Eye className="w-4 h-4 mr-1" />
-          View
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => navigate(`/licenses/requests/${request.id}`)}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            View
+          </Button>
+          {request.status === 'APPROVED' && (
+            <Button
+              size="sm"
+              onClick={() => navigate(`/licenses/requests/${request.id}/approve`)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Create License
+            </Button>
+          )}
+        </div>
       ),
     },
   ];

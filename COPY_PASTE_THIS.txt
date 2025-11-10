@@ -1,0 +1,134 @@
+================================================================================
+  HOW TO FIX THE 400 ERROR - STEP BY STEP
+================================================================================
+
+STEP 1: Open the SQL File
+--------------------------
+  In VS Code (left sidebar):
+    1. Find file: APPLY_THIS_SQL_NOW.sql
+    2. Click to open it
+    3. You should see SQL code with comments
+
+
+STEP 2: Copy Everything
+--------------------------
+  In VS Code:
+    1. Click inside the APPLY_THIS_SQL_NOW.sql file
+    2. Press: Ctrl+A (or Cmd+A on Mac)
+       This selects ALL text
+    3. Press: Ctrl+C (or Cmd+C on Mac)
+       This copies everything
+
+
+STEP 3: Open Supabase Dashboard
+--------------------------
+  In your browser:
+    1. Go to: https://supabase.com/dashboard
+    2. Sign in if needed
+    3. Select your project: "Gold Sales Management"
+    4. Click "SQL Editor" in the left sidebar
+
+
+STEP 4: Create New Query
+--------------------------
+  In Supabase SQL Editor:
+    1. Click the "+ New Query" button (top left)
+    2. A blank editor will open
+
+
+STEP 5: Paste the SQL
+--------------------------
+  In the blank SQL editor:
+    1. Click inside the editor area
+    2. Press: Ctrl+V (or Cmd+V on Mac)
+    3. You should see all the SQL code appear
+
+
+STEP 6: Run the SQL
+--------------------------
+  In Supabase SQL Editor:
+    1. Click the "Run" button (or press Ctrl+Enter)
+    2. Wait 2-3 seconds
+    3. Look at the "Results" panel below
+
+
+STEP 7: Check the Output
+--------------------------
+  You should see messages like:
+    - "CHECKING LICENSE_REQUESTS SCHEMA..."
+    - "ADDING title COLUMN..."
+    - "SUCCESS: title column added"
+    - "MIGRATION COMPLETE!"
+    - Then a table showing your data
+
+
+STEP 8: Refresh Your App
+--------------------------
+  In your app browser:
+    1. Press: Ctrl+Shift+R (or Cmd+Shift+R on Mac)
+    2. Navigate to: License Management > License Requests
+    3. See your data in the table!
+
+
+================================================================================
+  QUICK CHECKLIST
+================================================================================
+
+  [ ] Open APPLY_THIS_SQL_NOW.sql in VS Code
+  [ ] Copy all content (Ctrl+A, Ctrl+C)
+  [ ] Open Supabase Dashboard
+  [ ] Go to SQL Editor
+  [ ] Click "New Query"
+  [ ] Paste content (Ctrl+V)
+  [ ] Click "Run"
+  [ ] See success messages
+  [ ] Refresh app browser
+  [ ] See data in License Requests page
+
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+  If file shows "cannot be displayed" in VS Code:
+    1. Right-click on APPLY_THIS_SQL_NOW.sql
+    2. Choose "Open With..."
+    3. Select "Text Editor"
+    4. Or copy content from below
+
+
+  If you can't open the file, copy this SQL directly:
+    ---------------------------------------------------------------
+    (Go to Supabase SQL Editor and paste this)
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'license_requests' AND column_name = 'title'
+  ) THEN
+    ALTER TABLE license_requests
+    ADD COLUMN title text NOT NULL DEFAULT 'Export License Request';
+
+    UPDATE license_requests
+    SET title = 'Export License Request for ' || mine_name
+    WHERE title = 'Export License Request';
+
+    ALTER TABLE license_requests
+    ALTER COLUMN title DROP DEFAULT;
+
+    RAISE NOTICE 'SUCCESS: Title column added!';
+  ELSE
+    RAISE NOTICE 'INFO: Title column already exists';
+  END IF;
+END $$;
+
+SELECT * FROM license_requests ORDER BY created_at DESC;
+    ---------------------------------------------------------------
+
+
+================================================================================
+
+  DONE! After running the SQL, refresh your browser and check License Requests!
+
+================================================================================

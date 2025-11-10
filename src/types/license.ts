@@ -56,6 +56,7 @@ export type TrafficLight = 'GREEN' | 'YELLOW' | 'RED' | 'GRAY';
 export interface LicenseRequest {
   id: string;
   request_number: string;
+  title: string;
   mine_id: string;
   mine_name: string;
   request_date: string;

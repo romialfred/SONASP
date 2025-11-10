@@ -9,6 +9,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
+import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
 import { supabase } from '@/lib/supabase';
 
@@ -36,6 +37,8 @@ export default function ShippingPreparationDetails() {
   const [documents, setDocuments] = useState<ShippingDocument[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [transportCompany, setTransportCompany] = useState<TransportCompany | null>(null);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -53,8 +56,9 @@ export default function ShippingPreparationDetails() {
 
       if (!prep) {
         console.error('Preparation not found for ID:', id);
-        alert('Préparation non trouvée');
-        navigate('/shipping/preparation');
+        setErrorMessage('Préparation non trouvée. Elle a peut-être été supprimée ou vous n\'avez pas accès.');
+        setShowError(true);
+        setLoading(false);
         return;
       }
 
@@ -92,15 +96,16 @@ export default function ShippingPreparationDetails() {
 
     } catch (error) {
       console.error('Error loading preparation:', error);
-      alert('Erreur lors du chargement des détails');
-    } finally {
+      setErrorMessage('Erreur lors du chargement des détails. Veuillez réessayer.');
+      setShowError(true);
       setLoading(false);
     }
   };
 
   const handleDownloadPackingList = async () => {
     if (!preparation?.packing_list_url) {
-      alert('Packing List non disponible');
+      setErrorMessage('Packing List non disponible. Le document sera généré lors de la prochaine sauvegarde.');
+      setShowError(true);
       return;
     }
     window.open(preparation.packing_list_url, '_blank');
@@ -516,6 +521,17 @@ export default function ShippingPreparationDetails() {
           </Tabs>
         </div>
       </div>
+
+      <ErrorDialog
+        isOpen={showError}
+        onClose={() => {
+          setShowError(false);
+          if (!preparation) {
+            navigate('/shipping/preparation');
+          }
+        }}
+        message={errorMessage}
+      />
     </MainLayout>
   );
 }

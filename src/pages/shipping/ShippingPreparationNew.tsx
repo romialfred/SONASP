@@ -422,14 +422,16 @@ export default function ShippingPreparationNew() {
         await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
 
-      // Generate and upload Packing List PDF
-      await generateAndUploadPackingList(prepId, expeditionLotNumber);
+      // Generate and upload Packing List PDF (non-blocking)
+      generateAndUploadPackingList(prepId, expeditionLotNumber).catch(err => {
+        console.error('Failed to generate packing list, but preparation saved:', err);
+      });
 
       setSavedPreparationId(prepId);
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error saving preparation:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert('Erreur lors de la sauvegarde: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     } finally {
       setSaving(false);
     }

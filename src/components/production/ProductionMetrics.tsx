@@ -85,103 +85,125 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
     const Icon = icon;
     const varianceForecast = summary.variance_vs_forecast || 0;
     const varianceBudget = summary.variance_vs_budget || 0;
+    const forecastPct = summary.forecast_oz && summary.forecast_oz > 0
+      ? ((varianceForecast / summary.forecast_oz) * 100)
+      : 0;
+    const budgetPct = summary.budget_oz && summary.budget_oz > 0
+      ? ((varianceBudget / summary.budget_oz) * 100)
+      : 0;
 
     return (
-      <Card className="p-4">
-        <div className="flex items-start justify-between mb-3">
+      <Card className="p-5 hover:shadow-lg transition-shadow duration-200 border-l-4" style={{
+        borderLeftColor: varianceForecast >= 0 ? '#10b981' : '#ef4444'
+      }}>
+        <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Icon className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
-            </div>
-            <p className="text-xs text-gray-500">{period}</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {/* Actual vs Forecast */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-gray-600">Actual:</span>
-              <span className="text-sm font-bold text-gray-900">
-                {summary.total_estimated_oz?.toFixed(2)} oz
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-gray-600">Forecast:</span>
-              <span className="text-sm font-semibold text-gray-700">
-                {summary.forecast_oz?.toFixed(2) || '0.00'} oz
-              </span>
-            </div>
-            <div className="pt-2 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1">
-                  {varianceForecast >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className="text-xs font-medium text-gray-700">vs Forecast:</span>
-                </div>
-                <span className={`text-sm font-bold ${
-                  varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {varianceForecast >= 0 ? '+' : ''}
-                  {varianceForecast.toFixed(2)} oz
-                  <span className="text-xs ml-1">
-                    ({summary.forecast_oz && summary.forecast_oz > 0
-                      ? `${((varianceForecast / summary.forecast_oz) * 100).toFixed(1)}%`
-                      : '—'})
-                  </span>
-                </span>
+              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                <Icon className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">{title}</h3>
+                <p className="text-xs text-gray-500">{period}</p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Actual vs Budget */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-gray-600">Budget:</span>
-              <span className="text-sm font-semibold text-gray-700">
-                {summary.budget_oz?.toFixed(2) || '0.00'} oz
+        <div className="space-y-4">
+          {/* Actual Production */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm font-medium text-gray-700">Actual Production</span>
+              <span className="text-2xl font-bold text-blue-600">
+                {summary.total_estimated_oz?.toFixed(2)} <span className="text-sm text-gray-600">oz</span>
               </span>
             </div>
-            <div className="pt-2 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1">
-                  {varianceBudget >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className="text-xs font-medium text-gray-700">vs Budget:</span>
-                </div>
-                <span className={`text-sm font-bold ${
-                  varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {varianceBudget >= 0 ? '+' : ''}
-                  {varianceBudget.toFixed(2)} oz
-                  <span className="text-xs ml-1">
-                    ({summary.budget_oz && summary.budget_oz > 0
-                      ? `${((varianceBudget / summary.budget_oz) * 100).toFixed(1)}%`
-                      : '—'})
-                  </span>
+
+            {/* Forecast Comparison */}
+            <div className="bg-white/80 rounded-lg p-3 mb-2">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-600">Forecast Target</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {summary.forecast_oz?.toFixed(2) || '0.00'} oz
                 </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <div className="flex items-center gap-1.5">
+                  {varianceForecast >= 0 ? (
+                    <div className="p-1 rounded bg-green-100">
+                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="p-1 rounded bg-red-100">
+                      <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                    </div>
+                  )}
+                  <span className="text-xs font-semibold text-gray-700">vs Forecast</span>
+                </div>
+                <div className="text-right">
+                  <span className={`text-base font-bold ${
+                    varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {varianceForecast >= 0 ? '+' : ''}{varianceForecast.toFixed(2)}
+                  </span>
+                  <span className={`text-xs ml-1 font-semibold ${
+                    varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    ({forecastPct >= 0 ? '+' : ''}{forecastPct.toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Budget Comparison */}
+            <div className="bg-white/80 rounded-lg p-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-600">Budget Target</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {summary.budget_oz?.toFixed(2) || '0.00'} oz
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <div className="flex items-center gap-1.5">
+                  {varianceBudget >= 0 ? (
+                    <div className="p-1 rounded bg-green-100">
+                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="p-1 rounded bg-red-100">
+                      <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                    </div>
+                  )}
+                  <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+                </div>
+                <div className="text-right">
+                  <span className={`text-base font-bold ${
+                    varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {varianceBudget >= 0 ? '+' : ''}{varianceBudget.toFixed(2)}
+                  </span>
+                  <span className={`text-xs ml-1 font-semibold ${
+                    varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    ({budgetPct >= 0 ? '+' : ''}{budgetPct.toFixed(1)}%)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Additional Metrics */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-gray-600">Avg Fineness:</span>
-              <div className="font-semibold text-gray-900">
-                {summary.avg_fineness_pct?.toFixed(2)}%
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
+            <div className="text-center p-2 bg-gray-50 rounded-lg">
+              <span className="text-xs text-gray-600 block mb-1">Avg Fineness</span>
+              <div className="text-lg font-bold text-gray-900">
+                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-gray-600">%</span>
               </div>
             </div>
-            <div>
-              <span className="text-gray-600">Records:</span>
-              <div className="font-semibold text-gray-900">
+            <div className="text-center p-2 bg-gray-50 rounded-lg">
+              <span className="text-xs text-gray-600 block mb-1">Records</span>
+              <div className="text-lg font-bold text-gray-900">
                 {summary.record_count}
               </div>
             </div>

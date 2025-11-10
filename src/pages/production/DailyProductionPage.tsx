@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Plus, Download, Filter, X } from 'lucide-react';
+import { Plus, Download, Filter } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
-import { DailyProductionForm } from '@/components/production/DailyProductionForm';
+import { DailyProductionFormEnhanced } from '@/components/production/DailyProductionFormEnhanced';
 import { ProductionMetrics } from '@/components/production/ProductionMetrics';
 import { ProductionTable } from '@/components/production/ProductionTable';
+import { ProductionChart } from '@/components/production/ProductionChart';
 
 export function DailyProductionPage() {
   const [productions, setProductions] = useState<DailyProduction[]>([]);
@@ -144,7 +145,7 @@ export function DailyProductionPage() {
 
         {/* Form Section - Inline */}
         {showForm && (
-          <DailyProductionForm
+          <DailyProductionFormEnhanced
             production={selectedProduction}
             onCancel={handleFormCancel}
             onSuccess={handleFormSuccess}
@@ -152,7 +153,10 @@ export function DailyProductionPage() {
         )}
 
         {/* Metrics */}
-        <ProductionMetrics productions={productions} dateRange={dateRange} />
+        {!showForm && <ProductionMetrics productions={productions} dateRange={dateRange} />}
+
+        {/* Production Chart - Last 30 Days */}
+        {!showForm && <ProductionChart productions={productions} dateRange={dateRange} />}
 
         {/* Production Table */}
         <Card>

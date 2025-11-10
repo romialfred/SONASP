@@ -57,6 +57,18 @@ export interface ShippingIngot {
   created_at: string;
 }
 
+export interface ShippingDocument {
+  id: string;
+  shipping_preparation_id: string;
+  title: string;
+  document_url: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
 class ShippingPreparationService {
   async getPreparationByProduction(productionId: string): Promise<ShippingPreparation | null> {
     const { data, error } = await supabase
@@ -218,6 +230,70 @@ class ShippingPreparationService {
   async deleteIngot(id: string): Promise<void> {
     const { error } = await supabase
       .from('shipping_ingots')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async getDocuments(preparationId: string): Promise<ShippingDocument[]> {
+    const { data, error } = await supabase
+      .from('shipping_documents')
+      .select('*')
+      .eq('shipping_preparation_id', preparationId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async uploadDocument(preparationId: string, file: File, title: string): Promise<ShippingDocument> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Upload file to storage
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${preparationId}/${Date.now()}.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('shipping-documents')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('shipping-documents')
+      .getPublicUrl(fileName);
+
+    // Create document record
+    const { data, error } = await supabase
+      .from('shipping_documents')
+      .insert({
+        shipping_preparation_id: preparationId,
+        title,
+        document_url: publicUrl,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        uploaded_by: user?.id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteDocument(id: string, documentUrl: string): Promise<void> {
+    // Delete from storage
+    const fileName = documentUrl.split('/').slice(-2).join('/');
+    await supabase.storage
+      .from('shipping-documents')
+      .remove([fileName]);
+
+    // Delete record
+    const { error } = await supabase
+      .from('shipping_documents')
       .delete()
       .eq('id', id);
 

@@ -54,19 +54,18 @@ export function DynamicPackingList({
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-2xl font-bold mb-2">RAND REFINERY</h1>
+          <h1 className="text-xl font-bold mb-2 uppercase">{refineryName}</h1>
           <div className="text-xs">
             <div><strong>Shipped to:</strong></div>
-            <div>{refineryName}</div>
             <div>{refineryAddress}</div>
             <div>{refineryCountry}</div>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="bg-emerald-50 p-3 rounded-lg border-2 border-emerald-500">
-            <div className="text-emerald-800 font-bold text-lg">{miningCompany}</div>
-            <div className="text-xs text-emerald-700">HUMMINGBIRD RESOURCES</div>
+          <div className="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-600">
+            <div className="text-yellow-900 font-bold text-base">{miningCompany}</div>
+            <div className="text-xs text-yellow-800">HUMMINGBIRD RESOURCES</div>
           </div>
           <div className="mt-3 text-xs">
             <div><strong>From:</strong></div>
@@ -129,16 +128,16 @@ export function DynamicPackingList({
               </td>
             </tr>
           )}
-          {/* Empty rows for padding */}
-          {Array.from({ length: Math.max(0, 5 - ingots.length) }).map((_, i) => (
-            <tr key={`empty-${i}`}>
+          {/* Single empty row */}
+          {ingots.length > 0 && (
+            <tr>
               <td className="border border-gray-400 p-2">&nbsp;</td>
               <td className="border border-gray-400 p-2">&nbsp;</td>
               <td className="border border-gray-400 p-2">&nbsp;</td>
               <td className="border border-gray-400 p-2">&nbsp;</td>
               <td className="border border-gray-400 p-2">&nbsp;</td>
             </tr>
-          ))}
+          )}
           {/* Totals */}
           <tr className="font-bold bg-gray-50">
             <td className="border-2 border-gray-800 p-2">TOTAL</td>
@@ -181,14 +180,14 @@ export function DynamicPackingList({
               </td>
             </tr>
           )}
-          {/* Empty rows for standard signatories */}
-          {Array.from({ length: Math.max(0, 5 - signatories.length) }).map((_, i) => (
-            <tr key={`empty-sig-${i}`}>
+          {/* Single empty row */}
+          {signatories.length > 0 && (
+            <tr>
               <td className="border border-gray-400 p-3">&nbsp;</td>
               <td className="border border-gray-400 p-3">&nbsp;</td>
               <td className="border border-gray-400 p-3">&nbsp;</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

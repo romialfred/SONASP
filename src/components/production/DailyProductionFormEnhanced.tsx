@@ -30,6 +30,8 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     notes: production?.notes || '',
   });
 
+  const [weightUnit, setWeightUnit] = useState<'grams' | 'oz'>('grams');
+
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatingBarRef, setGeneratingBarRef] = useState(false);
@@ -106,8 +108,19 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     }
   };
 
+  // Conversion helpers
+  const gramsToOz = (grams: number) => grams / 31.1035;
+  const ozToGrams = (oz: number) => oz * 31.1035;
+
+  // Calcul du bullion en fonction de l'unité
+  const bullionInGrams = weightUnit === 'grams'
+    ? parseFloat(formData.bullion_grams) || 0
+    : ozToGrams(parseFloat(formData.bullion_grams) || 0);
+
+  const bullionInOz = gramsToOz(bullionInGrams);
+
   const pureGoldGrams = formData.bullion_grams && formData.estimated_fineness_pct
-    ? (parseFloat(formData.bullion_grams) * parseFloat(formData.estimated_fineness_pct) / 100).toFixed(2)
+    ? (bullionInGrams * parseFloat(formData.estimated_fineness_pct) / 100).toFixed(2)
     : '0.00';
 
   const estimatedOz = pureGoldGrams !== '0.00'
@@ -227,9 +240,14 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     try {
       setLoading(true);
 
+      // Toujours sauvegarder en grammes
+      const bullionGramsToSave = weightUnit === 'oz'
+        ? ozToGrams(parseFloat(formData.bullion_grams))
+        : parseFloat(formData.bullion_grams);
+
       const data = {
         production_date: formData.production_date,
-        bullion_grams: parseFloat(formData.bullion_grams),
+        bullion_grams: bullionGramsToSave,
         estimated_fineness_pct: parseFloat(formData.estimated_fineness_pct),
         bar_reference: formData.bar_reference || undefined,
         mining_company_id: formData.mining_company_id || undefined,
@@ -418,53 +436,62 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                 )}
               </div>
 
-              {/* Bar Reference with Auto-Generate */}
+              {/* Bar Reference - Read Only */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bar Reference
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={formData.bar_reference}
-                    onChange={(e) => handleChange('bar_reference', e.target.value)}
-                    onFocus={() => setActiveField('bar_reference')}
-                    placeholder="Auto-généré"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleGenerateBarReference}
-                    disabled={generatingBarRef || !formData.mining_company_id}
-                    variant="outline"
-                    size="sm"
-                    title="Générer automatiquement"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${generatingBarRef ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Laissez vide pour génération automatique
-                </p>
+                <Input
+                  type="text"
+                  value={formData.bar_reference}
+                  onFocus={() => setActiveField('bar_reference')}
+                  placeholder="Auto-généré"
+                  className="bg-gray-50 cursor-not-allowed"
+                  readOnly
+                  disabled
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Bullion Grams */}
+              {/* Bullion with Unit Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bullion (g) *
+                  Bullion *
                 </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.bullion_grams}
-                  onChange={(e) => handleChange('bullion_grams', e.target.value)}
-                  onFocus={() => setActiveField('bullion_grams')}
-                  placeholder="ex: 11270"
-                  error={errors.bullion_grams}
-                  required
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={weightUnit}
+                    onChange={(e) => setWeightUnit(e.target.value as 'grams' | 'oz')}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                  >
+                    <option value="grams">g</option>
+                    <option value="oz">oz</option>
+                  </select>
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.bullion_grams}
+                      onChange={(e) => handleChange('bullion_grams', e.target.value)}
+                      onFocus={() => setActiveField('bullion_grams')}
+                      placeholder={weightUnit === 'grams' ? 'ex: 11270' : 'ex: 362.31'}
+                      error={errors.bullion_grams}
+                      required
+                    />
+                  </div>
+                </div>
+                {/* Conversion display */}
+                {formData.bullion_grams && (
+                  <div className="mt-2 space-y-1">
+                    {weightUnit === 'grams' ? (
+                      <p className="text-sm text-gray-600">= {bullionInOz.toFixed(2)} oz</p>
+                    ) : (
+                      <p className="text-sm text-gray-600">= {bullionInGrams.toFixed(2)} g</p>
+                    )}
+                    <p className="text-xs text-gray-500">Reference: 1 oz = 31.10 g</p>
+                  </div>
+                )}
               </div>
 
               {/* Estimated Fineness */}

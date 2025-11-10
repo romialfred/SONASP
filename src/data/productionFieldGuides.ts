@@ -2,41 +2,49 @@ export const dailyProductionFieldGuides = {
   production_date: {
     title: 'Production Date',
     description: 'Date exacte de la production journalière',
+    example: '2025-11-10',
     required: true
   },
   mining_company_id: {
     title: 'Mining Company',
-    description: 'Société minière source du bullion',
+    description: 'Société minière source du bullion. Sélectionnez la société pour générer automatiquement la Bar Reference.',
+    example: 'Société des Mines de Komana (SMK)',
     required: true
   },
+  bar_reference: {
+    title: 'Bar Reference',
+    description: 'Généré automatiquement après sélection de la société (Format: HUM[CODE]-NNNN). Ce champ est en lecture seule.',
+    example: 'HUMSMK-0001, HUMKGM-0015, HUMDUG-0328',
+    readOnly: true
+  },
   bullion_grams: {
-    title: 'Bullion (g)',
-    description: 'Poids total du bullion produit',
+    title: 'Bullion',
+    description: 'Poids total du bullion produit. Choisissez l\'unité (grammes ou onces) et entrez la valeur. La conversion s\'affiche automatiquement.',
+    example: '11270 g ou 362.31 oz',
     required: true
   },
   estimated_fineness_pct: {
     title: 'Estimated Fineness (%)',
-    description: 'Pourcentage estimé de pureté',
+    description: 'Pourcentage estimé de pureté du bullion (entre 0 et 100%)',
+    example: '92.1%',
     required: true
   },
   pure_gold_grams: {
     title: 'Pure Gold (g)',
-    description: 'Calcul automatique de l\'or pur',
+    description: 'Calcul automatique: Bullion × Finesse ÷ 100',
+    example: '10377.67 g',
     readOnly: true
   },
   estimated_oz: {
     title: 'Estimated Oz',
-    description: 'Conversion automatique en onces troy',
-    readOnly: true
-  },
-  bar_reference: {
-    title: 'Bar Reference',
-    description: 'Généré automatiquement après sélection de la société (Format: HUM[CODE]-NNNN)',
+    description: 'Conversion automatique en onces troy: Pure Gold ÷ 31.1035',
+    example: '333.5741 oz',
     readOnly: true
   },
   notes: {
     title: 'Notes',
-    description: 'Observations ou remarques importantes',
+    description: 'Observations ou remarques importantes sur cette production',
+    example: 'Production exceptionnelle',
     required: false
   }
 };

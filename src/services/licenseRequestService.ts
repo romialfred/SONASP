@@ -33,21 +33,55 @@ export interface ReviewLicenseRequestData {
 export const licenseRequestService = {
   async createRequest(data: CreateLicenseRequestData): Promise<LicenseRequest> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) {
+      console.error('❌ License Request Creation Failed: User not authenticated');
+      throw new Error('Not authenticated');
+    }
+
+    console.log('📝 Creating license request:', {
+      user_id: user.id,
+      mine_id: data.mine_id,
+      mine_name: data.mine_name,
+      title: data.title,
+    });
+
+    const insertData = {
+      ...data,
+      status: 'DRAFT' as const,
+      request_date: new Date().toISOString().split('T')[0],
+      created_by: user.id,
+      updated_by: user.id,
+    };
+
+    console.log('📤 Sending to database:', insertData);
 
     const { data: request, error } = await supabase
       .from('license_requests')
-      .insert({
-        ...data,
-        status: 'DRAFT',
-        request_date: new Date().toISOString().split('T')[0],
-        created_by: user.id,
-        updated_by: user.id,
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Database error creating license request:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw error;
+    }
+
+    if (!request) {
+      console.error('❌ No data returned from insert');
+      throw new Error('Failed to create license request - no data returned');
+    }
+
+    console.log('✅ License request created successfully:', {
+      id: request.id,
+      request_number: request.request_number,
+      status: request.status,
+    });
+
     return request;
   },
 
@@ -78,7 +112,16 @@ export const licenseRequestService = {
     signatureData: SubmitLicenseRequestData
   ): Promise<LicenseRequest> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) {
+      console.error('❌ License Request Submission Failed: User not authenticated');
+      throw new Error('Not authenticated');
+    }
+
+    console.log('📤 Submitting license request:', {
+      request_id: id,
+      user_id: user.id,
+      signatory: signatureData.applicant_signatory_name,
+    });
 
     const { data: request, error } = await supabase
       .from('license_requests')
@@ -95,7 +138,27 @@ export const licenseRequestService = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Database error submitting license request:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw error;
+    }
+
+    if (!request) {
+      console.error('❌ No data returned from update - request may not exist or is not in DRAFT status');
+      throw new Error('Failed to submit license request - request not found or already submitted');
+    }
+
+    console.log('✅ License request submitted successfully:', {
+      id: request.id,
+      request_number: request.request_number,
+      status: request.status,
+    });
+
     return request;
   },
 

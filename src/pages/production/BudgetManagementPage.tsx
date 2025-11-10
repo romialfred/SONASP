@@ -15,6 +15,7 @@ import {
   Info,
   Clock
 } from 'lucide-react';
+import { MainLayout } from '../../components/layout/MainLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Loading } from '../../components/ui/Loading';
@@ -236,10 +237,11 @@ export function BudgetManagementPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-8">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <MainLayout>
+      <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto pb-8">
+          <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -537,5 +539,6 @@ export function BudgetManagementPage() {
         </div>
       </div>
     </div>
+    </MainLayout>
   );
 }

@@ -14,6 +14,7 @@ import {
   Shield,
   GitBranch,
   Award,
+  FileCheck,
   X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -31,7 +32,8 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
   const menuItems = {
     factory: [
       { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/dashboard' },
-      { icon: Award, label: 'License Management', href: '/licenses' },
+      { icon: FileCheck, label: 'License Requests', href: '/licenses/requests' },
+      { icon: Award, label: 'Issued Licenses', href: '/licenses' },
       { icon: Package, label: t('nav.batches'), href: '/batches' },
       { icon: Truck, label: t('nav.shipments'), href: '/shipments' },
       { icon: FileText, label: t('nav.reports'), href: '/reports' },
@@ -55,7 +57,8 @@ export function Sidebar({ isOpen, onClose, userRole = 'management' }: SidebarPro
     ],
     management: [
       { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/dashboard' },
-      { icon: Award, label: 'License Management', href: '/licenses' },
+      { icon: FileCheck, label: 'License Requests', href: '/licenses/requests' },
+      { icon: Award, label: 'Issued Licenses', href: '/licenses' },
       { icon: BarChart3, label: t('nav.analytics'), href: '/analytics' },
       { icon: DollarSign, label: t('nav.sales'), href: '/sales' },
       { icon: Users, label: t('nav.customers'), href: '/customers' },

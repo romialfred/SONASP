@@ -165,40 +165,68 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Update RLS policies to include mining company access
-DROP POLICY IF EXISTS "Mining companies can view own production" ON daily_production;
-CREATE POLICY "Mining companies can view own production"
+-- Update RLS policies to allow factory and management access
+DROP POLICY IF EXISTS "Factory and management can view production" ON daily_production;
+CREATE POLICY "Factory and management can view production"
   ON daily_production
   FOR SELECT
   TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM user_profiles up
-      LEFT JOIN mining_companies mc ON up.mining_company_id = mc.id
       WHERE up.id = auth.uid()
         AND up.is_active = true
-        AND (
-          up.role IN ('factory', 'management')
-          OR (up.role = 'mining_company' AND daily_production.mining_company_id = mc.id)
-        )
+        AND up.role IN ('factory', 'management')
     )
   );
 
-DROP POLICY IF EXISTS "Mining companies can insert own production" ON daily_production;
-CREATE POLICY "Mining companies can insert own production"
+DROP POLICY IF EXISTS "Factory and management can insert production" ON daily_production;
+CREATE POLICY "Factory and management can insert production"
   ON daily_production
   FOR INSERT
   TO authenticated
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM user_profiles up
-      LEFT JOIN mining_companies mc ON up.mining_company_id = mc.id
       WHERE up.id = auth.uid()
         AND up.is_active = true
-        AND (
-          up.role IN ('factory', 'management')
-          OR (up.role = 'mining_company' AND daily_production.mining_company_id = mc.id)
-        )
+        AND up.role IN ('factory', 'management')
+    )
+  );
+
+DROP POLICY IF EXISTS "Factory and management can update production" ON daily_production;
+CREATE POLICY "Factory and management can update production"
+  ON daily_production
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+        AND up.is_active = true
+        AND up.role IN ('factory', 'management')
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+        AND up.is_active = true
+        AND up.role IN ('factory', 'management')
+    )
+  );
+
+DROP POLICY IF EXISTS "Management can delete production" ON daily_production;
+CREATE POLICY "Management can delete production"
+  ON daily_production
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+        AND up.is_active = true
+        AND up.role = 'management'
     )
   );
 

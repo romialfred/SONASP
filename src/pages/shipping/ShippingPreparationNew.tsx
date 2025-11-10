@@ -309,6 +309,8 @@ export default function ShippingPreparationNew() {
           gross_weight_grams: sp.production.bullion_grams,
           fineness_pct: sp.production.estimated_fineness_pct,
           pure_gold_grams: sp.production.pure_gold_grams,
+          seal_number_1: sp.sealNumber1,
+          seal_number_2: sp.sealNumber2 || undefined,
           order_index: index,
         });
       }

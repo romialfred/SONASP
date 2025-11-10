@@ -54,6 +54,17 @@ const useMenuGroups = (): MenuGroup[] => {
 
   return useMemo(() => [
     {
+      id: 'production',
+      label: 'Production Management',
+      groupIconColor: 'text-emerald-600',
+      groupIcon: Factory,
+      items: [
+        { label: 'Daily Production', path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
+        { label: 'Production Forecasts', path: '/performance/forecasts', icon: TrendingUp, iconColor: 'text-blue-600' },
+        { label: 'Performance Analysis', path: '/performance/analysis', icon: BarChart3, iconColor: 'text-purple-600' },
+      ],
+    },
+    {
       id: 'licenses',
       label: 'License Management',
       groupIconColor: 'text-amber-600',
@@ -66,10 +77,9 @@ const useMenuGroups = (): MenuGroup[] => {
     {
       id: 'shipping',
       label: 'Shipping Management',
-      groupIconColor: 'text-emerald-600',
+      groupIconColor: 'text-blue-600',
       groupIcon: Truck,
       items: [
-        { label: 'Daily Production', path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
         { label: 'Batch Management', path: '/batches', icon: Package, iconColor: 'text-blue-600' },
         { label: 'Shipping Preparation', path: '/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
         { label: 'Freight & Customs', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
@@ -92,16 +102,6 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIcon: FlaskConical,
       items: [
         { label: 'Refining Process', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
-      ],
-    },
-    {
-      id: 'performance',
-      label: 'Budget & Forecast',
-      groupIconColor: 'text-blue-600',
-      groupIcon: TrendingUp,
-      items: [
-        { label: 'Production Forecasts', path: '/performance/forecasts', icon: TrendingUp, iconColor: 'text-blue-600' },
-        { label: 'Performance Analysis', path: '/performance/analysis', icon: BarChart3, iconColor: 'text-purple-600' },
       ],
     },
     {

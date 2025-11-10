@@ -562,14 +562,6 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/production/budget"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <BudgetManagementPage />
-                </ProtectedRoute>
-              }
-            />
 
             {/* Performance Management Routes */}
             <Route
@@ -577,6 +569,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ForecastManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/performance/budgets"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <BudgetManagementPage />
                 </ProtectedRoute>
               }
             />

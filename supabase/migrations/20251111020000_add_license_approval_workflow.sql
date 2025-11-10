@@ -1,17 +1,49 @@
 /*
   # Add License Approval Workflow
 
-  1. New Function
+  1. Changes
+    - Add approved_at and approved_by columns to license_requests
+    - Add request_id column to licenses
+
+  2. New Function
     - approve_license_request: Converts an approved license request into an active license
 
-  2. Changes
-    - Add link from licenses to license_requests
-    - Add workflow function for seamless conversion
+  3. Views
+    - v_approved_license_requests: Shows approved requests ready for conversion
 
-  3. Purpose
+  4. Purpose
     - Bridge the gap between license requests and active licenses
     - Automate license creation from approved requests
 */
+
+-- Add approval tracking columns to license_requests if they don't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'license_requests' AND column_name = 'approved_at'
+  ) THEN
+    ALTER TABLE license_requests ADD COLUMN approved_at timestamptz;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'license_requests' AND column_name = 'approved_by'
+  ) THEN
+    ALTER TABLE license_requests ADD COLUMN approved_by uuid REFERENCES auth.users(id);
+  END IF;
+END $$;
+
+-- Add request_id link to licenses if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'licenses' AND column_name = 'request_id'
+  ) THEN
+    ALTER TABLE licenses ADD COLUMN request_id uuid REFERENCES license_requests(id);
+  END IF;
+END $$;
 
 -- Function to approve and convert a license request into an active license
 CREATE OR REPLACE FUNCTION approve_license_request(
@@ -159,7 +191,8 @@ SELECT
   lr.planned_quantity_oz,
   lr.planned_start_date,
   lr.planned_end_date,
-  lr.justification,
+  lr.comments,
+  lr.priority,
   lr.status,
   lr.approved_at,
   lr.approved_by,

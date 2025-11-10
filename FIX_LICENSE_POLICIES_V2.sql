@@ -1,107 +1,88 @@
--- ============================================
--- FIX LICENSE REQUESTS RLS POLICIES (VERSION 2)
--- ============================================
--- This version drops ALL existing policies first
--- ============================================
+/*
+  Script de Correction: Colonnes Manquantes dans license_requests
+  
+  Problème: 
+  - La migration 20251111020000 référence des colonnes qui n'existent pas
+  - justification → n'existe pas (utiliser comments)
+  - approved_at → n'existe pas (à ajouter)
+  - approved_by → n'existe pas (à ajouter)
+  
+  Solution:
+  Ce script ajoute les colonnes manquantes et corrige les références
+*/
 
--- Step 1: Drop ALL existing policies on license_requests (no IF EXISTS check)
+-- 1. Ajouter les colonnes d'approbation à license_requests
 DO $$
-DECLARE
-    r RECORD;
 BEGIN
-    FOR r IN (
-        SELECT policyname
-        FROM pg_policies
-        WHERE tablename = 'license_requests'
-    ) LOOP
-        EXECUTE 'DROP POLICY IF EXISTS "' || r.policyname || '" ON license_requests';
-    END LOOP;
+  -- Ajouter approved_at
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'license_requests' AND column_name = 'approved_at'
+  ) THEN
+    ALTER TABLE license_requests ADD COLUMN approved_at timestamptz;
+    RAISE NOTICE 'Colonne approved_at ajoutée à license_requests';
+  ELSE
+    RAISE NOTICE 'Colonne approved_at existe déjà';
+  END IF;
+
+  -- Ajouter approved_by
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'license_requests' AND column_name = 'approved_by'
+  ) THEN
+    ALTER TABLE license_requests ADD COLUMN approved_by uuid REFERENCES auth.users(id);
+    RAISE NOTICE 'Colonne approved_by ajoutée à license_requests';
+  ELSE
+    RAISE NOTICE 'Colonne approved_by existe déjà';
+  END IF;
 END $$;
 
--- Step 2: Drop ALL existing policies on license_request_documents
+-- 2. Ajouter le lien request_id à licenses
 DO $$
-DECLARE
-    r RECORD;
 BEGIN
-    FOR r IN (
-        SELECT policyname
-        FROM pg_policies
-        WHERE tablename = 'license_request_documents'
-    ) LOOP
-        EXECUTE 'DROP POLICY IF EXISTS "' || r.policyname || '" ON license_request_documents';
-    END LOOP;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'licenses' AND column_name = 'request_id'
+  ) THEN
+    ALTER TABLE licenses ADD COLUMN request_id uuid REFERENCES license_requests(id);
+    RAISE NOTICE 'Colonne request_id ajoutée à licenses';
+  ELSE
+    RAISE NOTICE 'Colonne request_id existe déjà';
+  END IF;
 END $$;
 
--- Step 3: Create new PERMISSIVE policies for license_requests
+-- 3. Vérifier les colonnes
+SELECT 
+  'license_requests' as table_name,
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_name = 'license_requests'
+  AND column_name IN ('title', 'comments', 'priority', 'approved_at', 'approved_by')
+ORDER BY column_name;
 
--- Allow ALL authenticated users to VIEW all license requests
-CREATE POLICY "Authenticated users can view all license requests"
-  ON license_requests
-  FOR SELECT
-  TO authenticated
-  USING (true);
+SELECT 
+  'licenses' as table_name,
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_name = 'licenses'
+  AND column_name = 'request_id'
+ORDER BY column_name;
 
--- Allow ALL authenticated users to CREATE license requests
-CREATE POLICY "Authenticated users can create license requests"
-  ON license_requests
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
+-- 4. Résultat attendu
+/*
+Vous devriez voir:
 
--- Allow ALL authenticated users to UPDATE license requests
-CREATE POLICY "Authenticated users can update license requests"
-  ON license_requests
-  FOR UPDATE
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+license_requests:
+- approved_at (timestamptz, YES)
+- approved_by (uuid, YES)
+- comments (text, YES)
+- priority (text, YES)
+- title (text, NO)
 
--- Allow management to DELETE license requests
-CREATE POLICY "Management can delete license requests"
-  ON license_requests
-  FOR DELETE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = auth.uid()
-      AND user_profiles.role = 'management'
-    )
-  );
-
--- Step 4: Create new policies for license_request_documents
-
-CREATE POLICY "Authenticated users can view all license documents"
-  ON license_request_documents
-  FOR SELECT
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can upload license documents"
-  ON license_request_documents
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can update license documents"
-  ON license_request_documents
-  FOR UPDATE
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can delete license documents"
-  ON license_request_documents
-  FOR DELETE
-  TO authenticated
-  USING (true);
-
--- ============================================
--- VERIFICATION
--- ============================================
--- Run this to verify policies are correct:
-SELECT schemaname, tablename, policyname, permissive, roles, cmd
-FROM pg_policies
-WHERE tablename IN ('license_requests', 'license_request_documents')
-ORDER BY tablename, policyname;
--- ============================================
+licenses:
+- request_id (uuid, YES)
+*/

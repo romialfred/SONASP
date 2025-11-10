@@ -19,7 +19,8 @@ interface LicenseRequest {
   planned_quantity_oz: number;
   planned_start_date: string;
   planned_end_date: string;
-  justification: string;
+  comments: string;
+  priority: string;
   status: string;
   has_license: boolean;
   license_id: string | null;

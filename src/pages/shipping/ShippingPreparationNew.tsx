@@ -771,24 +771,27 @@ export default function ShippingPreparationNew() {
       </div>
 
       {/* Success Dialog */}
-      <SuccessDialog
-        isOpen={showSuccessDialog}
-        onClose={() => {
-          setShowSuccessDialog(false);
-          navigate('/shipping/preparation');
-        }}
-        onViewDetails={() => {
-          setShowSuccessDialog(false);
-          navigate(`/shipping/preparation/${savedPreparationId}`);
-        }}
-        expeditionNumber={generateExpeditionLotNumber()}
-        totalBoxes={selectedProductions.length}
-        totalNetWeight={totalNetWeight}
-        totalGrossWeight={totalGrossWeight}
-        refineryName={selectedRefinery?.name || ''}
-        freightCompany={selectedFreightCompany?.name || ''}
-        productionDate={selectedProductions[0]?.production.production_date || ''}
-      />
+      {showSuccessDialog && selectedProductions.length > 0 && (
+        <SuccessDialog
+          isOpen={showSuccessDialog}
+          onClose={() => {
+            setShowSuccessDialog(false);
+            navigate('/shipping/preparation');
+          }}
+          onViewDetails={() => {
+            console.log('Navigating to details page with ID:', savedPreparationId);
+            setShowSuccessDialog(false);
+            navigate(`/shipping/preparation/${savedPreparationId}`);
+          }}
+          expeditionNumber={generateExpeditionLotNumber()}
+          totalBoxes={selectedProductions.length}
+          totalNetWeight={totalNetWeight}
+          totalGrossWeight={totalGrossWeight}
+          refineryName={selectedRefinery?.name || 'N/A'}
+          freightCompany={selectedFreightCompany?.name || 'N/A'}
+          productionDate={selectedProductions[0]?.production.production_date || new Date().toISOString()}
+        />
+      )}
     </MainLayout>
   );
 }

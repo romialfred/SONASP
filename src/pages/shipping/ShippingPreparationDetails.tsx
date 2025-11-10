@@ -46,8 +46,12 @@ export default function ShippingPreparationDetails() {
     try {
       setLoading(true);
 
+      console.log('Loading preparation with ID:', id);
       const prep = await shippingPreparationService.getPreparationById(id!);
+      console.log('Preparation loaded:', prep);
+
       if (!prep) {
+        console.error('Preparation not found for ID:', id);
         alert('Préparation non trouvée');
         navigate('/shipping/preparation');
         return;

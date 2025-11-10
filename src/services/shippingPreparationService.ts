@@ -31,7 +31,7 @@ export interface ShippingProductionItem {
   gross_weight_grams: number;
   fineness_pct: number;
   pure_gold_grams: number;
-  seal_number_1: string;
+  seal_number_1?: string;
   seal_number_2?: string;
   order_index: number;
   created_at: string;
@@ -72,6 +72,17 @@ export interface ShippingDocument {
 }
 
 class ShippingPreparationService {
+  async getPreparationById(id: string): Promise<ShippingPreparation | null> {
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
   async getPreparationByProduction(productionId: string): Promise<ShippingPreparation | null> {
     const { data, error } = await supabase
       .from('shipping_preparations')

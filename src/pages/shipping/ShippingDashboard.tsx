@@ -238,7 +238,7 @@ export default function ShippingDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <Button
-                          onClick={() => navigate(`/shipping/preparation/edit/${prep.id}`)}
+                          onClick={() => navigate(`/shipping/preparation/${prep.id}`)}
                           variant="outline"
                           size="sm"
                           className="hover:bg-yellow-50 hover:border-yellow-500 hover:text-yellow-800"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Download, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Download, Filter, TrendingUp } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -10,6 +11,7 @@ import { ProductionTable } from '@/components/production/ProductionTable';
 import { ProductionChart } from '@/components/production/ProductionChart';
 
 export function DailyProductionPage() {
+  const navigate = useNavigate();
   const [productions, setProductions] = useState<DailyProduction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -120,6 +122,14 @@ export function DailyProductionPage() {
             </p>
           </div>
           <div className="flex gap-3 mt-4 md:mt-0">
+            <Button
+              onClick={() => navigate('/production/budget')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Budget & Forecast
+            </Button>
             <Button
               onClick={exportToCSV}
               variant="outline"

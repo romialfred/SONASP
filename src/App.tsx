@@ -73,6 +73,7 @@ import { LicenseRequestForm } from './pages/licenses/LicenseRequestForm';
 import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsListingPage';
 import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
+import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import ShippingDashboard from './pages/shipping/ShippingDashboard';
 import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
@@ -558,6 +559,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['factory', 'management']}>
                   <DailyProductionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/production/budget"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <BudgetManagementPage />
                 </ProtectedRoute>
               }
             />

@@ -3,26 +3,27 @@ import { Calendar, TrendingUp, Calculator, Info } from 'lucide-react';
 import { annualBudgetService, MonthlyBudget, QuarterlyForecast } from '../../services/annualBudgetService';
 
 interface BudgetMatrixTableProps {
-  year: number;
+  mode: 'budget' | 'forecast';
+  selectedQuarter: number | null;
   monthlyBudgets: MonthlyBudget[];
   quarterlyForecasts: QuarterlyForecast[];
+  pendingBudgets: Record<number, number>;
+  pendingForecasts: Record<string, number>;
   onBudgetChange: (month: number, value: number) => void;
   onForecastChange: (quarter: number, month: number, value: number) => void;
-  readOnly?: boolean;
-  showForecasts?: boolean;
-  activeQuarter?: number | null;
 }
 
 export function BudgetMatrixTable({
-  year,
+  mode,
+  selectedQuarter,
   monthlyBudgets,
   quarterlyForecasts,
+  pendingBudgets,
+  pendingForecasts,
   onBudgetChange,
-  onForecastChange,
-  readOnly = false,
-  showForecasts = false,
-  activeQuarter = null
+  onForecastChange
 }: BudgetMatrixTableProps) {
+  const year = new Date().getFullYear();
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [localValues, setLocalValues] = useState<Record<string, number>>({});
 

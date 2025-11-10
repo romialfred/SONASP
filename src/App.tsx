@@ -72,6 +72,8 @@ import { LicensesListingPage } from './pages/licenses/LicensesListingPage';
 import { LicenseRequestForm } from './pages/licenses/LicenseRequestForm';
 import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsListingPage';
 import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
+import { DailyProductionPage } from './pages/production/DailyProductionPage';
+import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -511,6 +513,26 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'factory']}>
                   <LicenseDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Production Routes */}
+            <Route
+              path="/production/daily"
+              element={
+                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                  <DailyProductionPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Performance Management Routes */}
+            <Route
+              path="/performance/forecasts"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ForecastManagementPage />
                 </ProtectedRoute>
               }
             />

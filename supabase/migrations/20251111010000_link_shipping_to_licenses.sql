@@ -102,48 +102,26 @@ ORDER BY l.expiry_date ASC, l.remaining_qty_oz DESC;
 -- Grant access to view
 GRANT SELECT ON v_active_licenses TO authenticated;
 
--- Create shipping_preparation_items table to link productions to shipments
-CREATE TABLE IF NOT EXISTS shipping_preparation_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  shipping_preparation_id uuid REFERENCES shipping_preparations(id) ON DELETE CASCADE NOT NULL,
-  daily_production_id uuid REFERENCES daily_production(id) ON DELETE CASCADE NOT NULL,
-  seal_number_1 text NOT NULL,
-  seal_number_2 text,
-  created_at timestamptz DEFAULT now() NOT NULL,
-  UNIQUE(shipping_preparation_id, daily_production_id)
-);
+-- NOTE: Using existing table 'shipping_production_items' (created in migration 20251110141000)
+-- No need to create a new table - shipping_production_items already links productions to shipments
 
--- Create index for performance
-CREATE INDEX IF NOT EXISTS idx_shipping_preparation_items_prep
-  ON shipping_preparation_items(shipping_preparation_id);
+-- Add seal_number columns to shipping_production_items if they don't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'shipping_production_items' AND column_name = 'seal_number_1'
+  ) THEN
+    ALTER TABLE shipping_production_items ADD COLUMN seal_number_1 text;
+  END IF;
 
-CREATE INDEX IF NOT EXISTS idx_shipping_preparation_items_production
-  ON shipping_preparation_items(daily_production_id);
-
--- Enable RLS
-ALTER TABLE shipping_preparation_items ENABLE ROW LEVEL SECURITY;
-
--- Policies for shipping_preparation_items
-CREATE POLICY "Users can view shipping preparation items"
-  ON shipping_preparation_items FOR SELECT
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Users can create shipping preparation items"
-  ON shipping_preparation_items FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Users can update shipping preparation items"
-  ON shipping_preparation_items FOR UPDATE
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
-
-CREATE POLICY "Users can delete shipping preparation items"
-  ON shipping_preparation_items FOR DELETE
-  TO authenticated
-  USING (true);
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'shipping_production_items' AND column_name = 'seal_number_2'
+  ) THEN
+    ALTER TABLE shipping_production_items ADD COLUMN seal_number_2 text;
+  END IF;
+END $$;
 
 -- View: Available productions grouped by mining company
 CREATE OR REPLACE VIEW v_available_productions AS
@@ -163,7 +141,7 @@ SELECT
   -- Check if already shipped
   CASE
     WHEN EXISTS (
-      SELECT 1 FROM shipping_preparation_items spi
+      SELECT 1 FROM shipping_production_items spi
       JOIN shipping_preparations sp ON spi.shipping_preparation_id = sp.id
       WHERE spi.daily_production_id = dp.id
     ) THEN true
@@ -172,7 +150,7 @@ SELECT
   -- Get shipping preparation if exists
   (
     SELECT sp.id
-    FROM shipping_preparation_items spi
+    FROM shipping_production_items spi
     JOIN shipping_preparations sp ON spi.shipping_preparation_id = sp.id
     WHERE spi.daily_production_id = dp.id
     LIMIT 1
@@ -438,9 +416,8 @@ CREATE TRIGGER trg_release_shipping_quota
   EXECUTE FUNCTION trigger_release_shipping_quota();
 
 -- Add comments for documentation
-COMMENT ON TABLE shipping_preparation_items IS 'Links daily productions to shipping preparations with seal numbers';
-COMMENT ON COLUMN shipping_preparation_items.seal_number_1 IS 'Primary seal number for this production item';
-COMMENT ON COLUMN shipping_preparation_items.seal_number_2 IS 'Optional secondary seal number for this production item';
+COMMENT ON COLUMN shipping_production_items.seal_number_1 IS 'Primary seal number for this production item';
+COMMENT ON COLUMN shipping_production_items.seal_number_2 IS 'Optional secondary seal number for this production item';
 
 COMMENT ON COLUMN shipping_preparations.license_id IS 'Export license used for this shipment';
 COMMENT ON COLUMN shipping_preparations.mining_company_id IS 'Mining company whose production is being shipped';

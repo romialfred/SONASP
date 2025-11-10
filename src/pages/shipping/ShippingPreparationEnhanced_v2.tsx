@@ -280,10 +280,15 @@ export default function ShippingPreparationEnhanced() {
 
       for (const sp of selectedProductions) {
         const { error: itemError } = await supabase
-          .from('shipping_preparation_items')
+          .from('shipping_production_items')
           .insert([{
             shipping_preparation_id: preparation.id,
             daily_production_id: sp.production.id,
+            ingot_box_number: sp.production.bar_reference || 'N/A',
+            net_weight_grams: sp.production.pure_gold_grams,
+            gross_weight_grams: sp.production.bullion_grams,
+            fineness_pct: sp.production.estimated_fineness_pct,
+            pure_gold_grams: sp.production.pure_gold_grams,
             seal_number_1: sp.sealNumber1,
             seal_number_2: sp.sealNumber2 || null,
           }]);

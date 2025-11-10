@@ -77,7 +77,7 @@ const useMenuGroups = (): MenuGroup[] => {
     },
     {
       id: 'refinery-inventory',
-      label: 'Refinery & Inventory Management',
+      label: 'Inventory Monitoring',
       groupIconColor: 'text-amber-600',
       groupIcon: Warehouse,
       items: [
@@ -96,7 +96,7 @@ const useMenuGroups = (): MenuGroup[] => {
     },
     {
       id: 'performance',
-      label: 'Performance Management',
+      label: 'Budget & Forecast',
       groupIconColor: 'text-blue-600',
       groupIcon: TrendingUp,
       items: [

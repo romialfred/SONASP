@@ -70,6 +70,7 @@ import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage'
 import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
 import { LicensesListingPage } from './pages/licenses/LicensesListingPage';
 import { LicenseRequestForm } from './pages/licenses/LicenseRequestForm';
+import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsListingPage';
 import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
@@ -486,6 +487,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'factory']}>
                   <LicensesListingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/licenses/requests"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'factory']}>
+                  <LicenseRequestsListingPage />
                 </ProtectedRoute>
               }
             />

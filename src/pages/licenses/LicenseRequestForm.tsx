@@ -374,6 +374,10 @@ export function LicenseRequestForm() {
           onConfirm: () => navigate('/licenses/requests')
         }
       );
+
+      setTimeout(() => {
+        navigate('/licenses/requests');
+      }, 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to submit request');
       showError(

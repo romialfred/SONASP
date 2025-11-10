@@ -36,7 +36,6 @@ export default function ShippingPreparationDetails() {
   const [documents, setDocuments] = useState<ShippingDocument[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [transportCompany, setTransportCompany] = useState<TransportCompany | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (id) {
@@ -228,18 +227,18 @@ export default function ShippingPreparationDetails() {
 
           {/* Tabs Navigation */}
           <Tabs
-            value={activeTab}
-            onChange={setActiveTab}
+            defaultTab="overview"
             tabs={[
               { id: 'overview', label: 'Vue d\'ensemble', icon: Package },
               { id: 'productions', label: 'Productions', icon: Box },
               { id: 'signatories', label: 'Signataires', icon: User },
               { id: 'documents', label: 'Documents', icon: FolderOpen },
             ]}
-          />
-
-          {/* Tab Content: Overview */}
-          {activeTab === 'overview' && (
+          >
+            {(currentTab) => (
+              <>
+                {/* Tab Content: Overview */}
+                {currentTab === 'overview' && (
             <>
               {/* Expedition Info */}
               <Card className="p-6">
@@ -322,8 +321,8 @@ export default function ShippingPreparationDetails() {
           </>
           )}
 
-          {/* Tab Content: Productions */}
-          {activeTab === 'productions' && (
+                {/* Tab Content: Productions */}
+                {currentTab === 'productions' && (
             <Card className="p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Productions Incluses</h2>
             <div className="overflow-x-auto">
@@ -357,8 +356,8 @@ export default function ShippingPreparationDetails() {
           </Card>
           )}
 
-          {/* Tab Content: Signatories */}
-          {activeTab === 'signatories' && (
+                {/* Tab Content: Signatories */}
+                {currentTab === 'signatories' && (
             <Card className="p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Signataires</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,8 +387,8 @@ export default function ShippingPreparationDetails() {
             </Card>
           )}
 
-          {/* Tab Content: Documents */}
-          {activeTab === 'documents' && (
+                {/* Tab Content: Documents */}
+                {currentTab === 'documents' && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -507,7 +506,10 @@ export default function ShippingPreparationDetails() {
                 </div>
               )}
             </Card>
-          )}
+                )}
+              </>
+            )}
+          </Tabs>
         </div>
       </div>
     </MainLayout>

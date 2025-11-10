@@ -236,9 +236,9 @@ export function BudgetManagementPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto pb-8">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -412,7 +412,7 @@ export function BudgetManagementPage() {
       </div>
 
       {/* Right Sidebar - Always Visible */}
-      <div className="w-80 bg-white border-l border-slate-200 shadow-2xl overflow-auto">
+      <div className="w-80 bg-white border-l border-slate-200 shadow-2xl overflow-y-auto sticky top-0 h-screen">
         <div className="p-6 space-y-6">
           {/* Total Section */}
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-xl">

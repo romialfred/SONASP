@@ -1,0 +1,176 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║              ⚠️  LICENSE REQUESTS - 400 ERROR FIX                           ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🔍 THE PROBLEM
+═══════════════════════════════════════════════════════════════════════════════
+
+  Your screenshot shows:
+    ✅ Page loads correctly
+    ✅ Statistics show: Total: 1, In Review: 1
+    ❌ Console errors: "Failed to load resource: 400"
+    ❌ Table is empty (no data displayed)
+
+  Root Cause:
+    The `title` column is MISSING from the license_requests table!
+
+    • Your code expects: id, request_number, title, mine_name, ...
+    • Database has: id, request_number, mine_name, ...  (NO TITLE!)
+    • Query fails with 400 error
+    • Statistics query works because it only selects 'status'
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ ✅ THE FIX (2 MINUTES)
+═══════════════════════════════════════════════════════════════════════════════
+
+  STEP 1: Open Supabase Dashboard
+  ────────────────────────────────────
+    1. Go to: https://supabase.com/dashboard
+    2. Select your project: "Gold Sales Management"
+    3. Click "SQL Editor" in left sidebar
+
+
+  STEP 2: Run the Fix Script
+  ────────────────────────────────────
+    1. Click "New Query" button
+    2. Open file: FIX_LICENSE_REQUESTS_NOW.sql
+    3. Copy ENTIRE contents
+    4. Paste into SQL Editor
+    5. Click "Run" button (or press Ctrl+Enter)
+
+
+  STEP 3: Verify Success
+  ────────────────────────────────────
+    You should see output like:
+      ✅ title column added successfully
+      ✅ Updated existing records
+      ✅ MIGRATION COMPLETE!
+      📊 Total license requests: 1
+
+    Then at bottom, see your data:
+      id | request_number | title | mine_name | status
+
+
+  STEP 4: Refresh Browser
+  ────────────────────────────────────
+    1. Go back to your app
+    2. Press: Ctrl+Shift+R (or Cmd+Shift+R)
+    3. Navigate to: License Requests page
+    4. See your data in table! ✅
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 📋 WHAT THE FIX DOES
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. Checks if `title` column exists
+  2. If missing:
+     • Adds `title` column to license_requests table
+     • Sets default: "Export License Request"
+     • Updates existing records with: "Export License Request for [mine_name]"
+     • Removes default (new records must provide title)
+  3. If exists:
+     • Shows message "already exists"
+     • No changes made
+  4. Displays your data for verification
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🎯 WHY THIS HAPPENED
+═══════════════════════════════════════════════════════════════════════════════
+
+  Timeline:
+    1. Created license_requests table (migration 20251108000000)
+       • Table created WITHOUT title column
+
+    2. Added License Request Form
+       • Form includes title field
+       • Code expects title in database
+
+    3. Created title migration (migration 20251109000000)
+       • Migration EXISTS in your codebase
+       • But NOT applied to database yet!
+
+    4. You submitted a request
+       • Form tried to save with title
+       • Database rejected it or saved without title
+       • Now query expects title but it doesn't exist
+       • 400 error!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 📊 AFTER THE FIX
+═══════════════════════════════════════════════════════════════════════════════
+
+  Your License Requests page will show:
+
+    ┌──────────────────────────────────────────────────────────────────┐
+    │  Total Requests: 1       In Review: 1                            │
+    ├──────────────────────────────────────────────────────────────────┤
+    │                                                                   │
+    │  Request #  │ Title                          │ Company │ Status  │
+    │  ──────────────────────────────────────────────────────────────  │
+    │  LR-2025... │ Export License for Mansa Corp  │ Mansa   │ IN_REVIEW
+    │                                                                   │
+    └──────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 🔍 ALTERNATIVE: CHECK FIRST
+═══════════════════════════════════════════════════════════════════════════════
+
+  If you want to check if title column exists first:
+
+  1. Open Supabase SQL Editor
+  2. Run this query:
+
+     SELECT column_name
+     FROM information_schema.columns
+     WHERE table_name = 'license_requests'
+     ORDER BY ordinal_position;
+
+  3. Look for 'title' in the results:
+     • If present: Title column exists (different issue)
+     • If missing: Apply FIX_LICENSE_REQUESTS_NOW.sql
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ ⚡ QUICK STEPS SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. Open Supabase Dashboard → SQL Editor
+  2. Copy/paste: FIX_LICENSE_REQUESTS_NOW.sql
+  3. Click Run
+  4. See success messages
+  5. Refresh browser
+  6. Go to License Requests page
+  7. See your data! ✅
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ 📁 FILES TO USE
+═══════════════════════════════════════════════════════════════════════════════
+
+  ✅ FIX_LICENSE_REQUESTS_NOW.sql
+     • Complete fix script
+     • Safe to run multiple times
+     • Shows verification output
+
+  ℹ️  CHECK_TITLE_COLUMN.sql
+     • Check if column exists
+     • View current data
+     • Run this first if unsure
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                    👉 RUN FIX_LICENSE_REQUESTS_NOW.sql NOW! 👈
+
+              Open Supabase → SQL Editor → Paste → Run → Refresh! ✅
+
+═══════════════════════════════════════════════════════════════════════════════

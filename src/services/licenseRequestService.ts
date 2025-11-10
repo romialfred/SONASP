@@ -240,7 +240,7 @@ export const licenseRequestService = {
 
     if (filters?.search) {
       query = query.or(
-        `request_number.ilike.%${filters.search}%,mine_name.ilike.%${filters.search}%,comments.ilike.%${filters.search}%`
+        `request_number.ilike.%${filters.search}%,mine_name.ilike.%${filters.search}%,title.ilike.%${filters.search}%,comments.ilike.%${filters.search}%`
       );
     }
 

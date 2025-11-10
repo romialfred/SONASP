@@ -31,8 +31,8 @@ export const dailyProductionFieldGuides = {
   },
   bar_reference: {
     title: 'Bar Reference',
-    description: 'Code unique d\'identification',
-    required: false
+    description: 'Généré automatiquement après sélection de la société (Format: HUM[CODE]-NNNN)',
+    readOnly: true
   },
   notes: {
     title: 'Notes',

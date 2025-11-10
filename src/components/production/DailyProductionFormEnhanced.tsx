@@ -46,6 +46,18 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     }
   }, []);
 
+  // Générer automatiquement la bar reference quand une société est sélectionnée
+  useEffect(() => {
+    if (formData.mining_company_id && !production) {
+      generateBarReference(formData.mining_company_id, formData.production_date)
+        .then(barRef => {
+          if (barRef) {
+            setFormData(prev => ({ ...prev, bar_reference: barRef }));
+          }
+        });
+    }
+  }, [formData.mining_company_id, miningCompanies]);
+
   const loadSummaries = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -102,12 +114,75 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     ? (parseFloat(pureGoldGrams) / 31.1035).toFixed(4)
     : '0.0000';
 
+  // Fonction pour obtenir le préfixe de la société
+  const getCompanyPrefix = (companyName: string): string => {
+    const name = companyName.toLowerCase();
+
+    // Société des Mines de Komana (SMK) -> HUMSMK
+    if (name.includes('komana') || name.includes('smk')) {
+      return 'HUMSMK';
+    }
+    // Kourousa -> HUMKGM
+    if (name.includes('kourousa') || name.includes('kgm')) {
+      return 'HUMKGM';
+    }
+    // Dugbe -> HUMDUG
+    if (name.includes('dugbe') || name.includes('dug')) {
+      return 'HUMDUG';
+    }
+    // Mansa Resource -> HUMMRL
+    if (name.includes('mansa') || name.includes('mrl')) {
+      return 'HUMMRL';
+    }
+
+    // Par défaut, utiliser les 3 premières lettres après HUM
+    return 'HUM' + companyName.substring(0, 3).toUpperCase();
+  };
+
+  const generateBarReference = async (companyId: string, productionDate: string) => {
+    try {
+      const company = miningCompanies.find(c => c.id === companyId);
+      if (!company) return '';
+
+      const prefix = getCompanyPrefix(company.name);
+
+      // Obtenir le dernier numéro pour ce préfixe
+      const { data, error } = await supabase
+        .from('daily_production')
+        .select('bar_reference')
+        .like('bar_reference', `${prefix}-%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      let nextNumber = 1;
+      if (data && data.length > 0 && data[0].bar_reference) {
+        const lastRef = data[0].bar_reference;
+        const match = lastRef.match(/-(\d+)$/);
+        if (match) {
+          nextNumber = parseInt(match[1], 10) + 1;
+        }
+      }
+
+      // Format: HUMSMK-0001, HUMKGM-0002, etc.
+      return `${prefix}-${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating bar reference:', error);
+      return '';
+    }
+  };
+
   const handleGenerateBarReference = async () => {
+    if (!formData.mining_company_id) {
+      alert('Veuillez sélectionner une société minière');
+      return;
+    }
+
     try {
       setGeneratingBarRef(true);
-      const companyName = miningCompanies.find(c => c.id === formData.mining_company_id)?.name;
-      const barRef = await dailyProductionService.generateBarReference(
-        companyName,
+      const barRef = await generateBarReference(
+        formData.mining_company_id,
         formData.production_date
       );
       setFormData(prev => ({ ...prev, bar_reference: barRef }));

@@ -1,0 +1,170 @@
+import { supabase } from '@/lib/supabase';
+
+export interface ShippingPreparation {
+  id: string;
+  daily_production_id: string;
+  expedition_lot_number: string | null;
+  seal_number: string | null;
+  packing_list_url: string | null;
+  shipped_to_company: string | null;
+  shipped_to_address: string | null;
+  shipped_to_country: string | null;
+  status: 'pending' | 'prepared' | 'shipped';
+  prepared_at: string | null;
+  shipped_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface ShippingSignatory {
+  id: string;
+  shipping_preparation_id: string;
+  position: string;
+  name: string;
+  signature_data: string | null;
+  signed_at: string | null;
+  order_index: number;
+  created_at: string;
+}
+
+export interface ShippingIngot {
+  id: string;
+  shipping_preparation_id: string;
+  ingot_box_number: string;
+  net_weight_grams: number;
+  gross_weight_grams: number;
+  seal_number_1: string | null;
+  seal_number_2: string | null;
+  created_at: string;
+}
+
+class ShippingPreparationService {
+  async getPreparationByProduction(productionId: string): Promise<ShippingPreparation | null> {
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .select('*')
+      .eq('daily_production_id', productionId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async createPreparation(preparation: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .insert({
+        ...preparation,
+        created_by: user?.id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getSignatories(preparationId: string): Promise<ShippingSignatory[]> {
+    const { data, error } = await supabase
+      .from('shipping_signatories')
+      .select('*')
+      .eq('shipping_preparation_id', preparationId)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async createSignatory(signatory: Partial<ShippingSignatory>): Promise<ShippingSignatory> {
+    const { data, error } = await supabase
+      .from('shipping_signatories')
+      .insert(signatory)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateSignatory(id: string, updates: Partial<ShippingSignatory>): Promise<ShippingSignatory> {
+    const { data, error } = await supabase
+      .from('shipping_signatories')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteSignatory(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('shipping_signatories')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async getIngots(preparationId: string): Promise<ShippingIngot[]> {
+    const { data, error } = await supabase
+      .from('shipping_ingots')
+      .select('*')
+      .eq('shipping_preparation_id', preparationId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async createIngot(ingot: Partial<ShippingIngot>): Promise<ShippingIngot> {
+    const { data, error } = await supabase
+      .from('shipping_ingots')
+      .insert(ingot)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateIngot(id: string, updates: Partial<ShippingIngot>): Promise<ShippingIngot> {
+    const { data, error } = await supabase
+      .from('shipping_ingots')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteIngot(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('shipping_ingots')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+}
+
+export const shippingPreparationService = new ShippingPreparationService();

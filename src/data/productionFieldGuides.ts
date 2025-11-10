@@ -2,48 +2,48 @@ export const dailyProductionFieldGuides = {
   production_date: {
     title: 'Production Date',
     description: 'Date exacte de la production journalière',
-    example: '2025-11-10',
+    example: 'Société des Mines de Komana (SMK)',
     required: true
   },
   mining_company_id: {
     title: 'Mining Company',
-    description: 'Société minière source du bullion. Sélectionnez la société pour générer automatiquement la Bar Reference.',
+    description: 'Société minière source du bullion. Génère automatiquement la Bar Reference.',
     example: 'Société des Mines de Komana (SMK)',
     required: true
   },
   bar_reference: {
     title: 'Bar Reference',
-    description: 'Généré automatiquement après sélection de la société (Format: HUM[CODE]-NNNN). Ce champ est en lecture seule.',
-    example: 'HUMSMK-0001, HUMKGM-0015, HUMDUG-0328',
+    description: 'Généré automatiquement (Format: HUM[CODE]-NNNN)',
+    example: 'HUMSMK-0001, HUMKGM-0015',
     readOnly: true
   },
   bullion_grams: {
     title: 'Bullion',
-    description: 'Poids total du bullion produit. Choisissez l\'unité (grammes ou onces) et entrez la valeur. La conversion s\'affiche automatiquement.',
-    example: '11270 g ou 362.31 oz',
+    description: 'Poids total du bullion. Conversion automatique g ⇄ oz.',
+    example: '11270 g = 362.31 oz',
     required: true
   },
   estimated_fineness_pct: {
     title: 'Estimated Fineness (%)',
-    description: 'Pourcentage estimé de pureté du bullion (entre 0 et 100%)',
+    description: 'Pourcentage de pureté estimé (0 à 100%)',
     example: '92.1%',
     required: true
   },
   pure_gold_grams: {
     title: 'Pure Gold (g)',
-    description: 'Calcul automatique: Bullion × Finesse ÷ 100',
+    description: 'Calcul auto: Bullion × Finesse ÷ 100',
     example: '10377.67 g',
     readOnly: true
   },
   estimated_oz: {
     title: 'Estimated Oz',
-    description: 'Conversion automatique en onces troy: Pure Gold ÷ 31.1035',
-    example: '333.5741 oz',
+    description: 'Calcul auto: Pure Gold ÷ 31.1035',
+    example: '333.57 oz',
     readOnly: true
   },
   notes: {
     title: 'Notes',
-    description: 'Observations ou remarques importantes sur cette production',
+    description: 'Observations sur cette production',
     example: 'Production exceptionnelle',
     required: false
   }

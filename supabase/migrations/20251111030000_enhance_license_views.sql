@@ -112,7 +112,7 @@ SELECT
     WHERE sp.license_id = l.id
   ) as shipment_count,
   (
-    SELECT COALESCE(SUM(spi.quantity_oz), 0)
+    SELECT COALESCE(SUM(spi.pure_gold_grams / 31.1035), 0)
     FROM shipping_preparations sp
     JOIN shipping_production_items spi ON sp.id = spi.shipping_preparation_id
     WHERE sp.license_id = l.id

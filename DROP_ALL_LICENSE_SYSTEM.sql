@@ -124,13 +124,10 @@ DROP TYPE IF EXISTS license_event_type CASCADE;
 -- Note: Le bucket 'license-documents' doit être supprimé manuellement
 -- depuis Supabase Dashboard → Storage
 
-DROP POLICY IF EXISTS "Authenticated users can view license documents" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload license documents" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update own license documents" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete own license documents" ON storage.objects;
-
--- Supprimer les politiques spécifiques au bucket license-documents
-DELETE FROM storage.policies WHERE bucket_id = 'license-documents';
+-- Supprimer les politiques de storage sur le bucket license-documents
+-- Note: Ces politiques doivent être supprimées via le Dashboard Supabase
+-- Storage → license-documents → Policies → Delete each policy
+-- ou via l'API Supabase Management si disponible
 
 -- ============================================================================
 -- ÉTAPE 9: NETTOYAGE DES PERMISSIONS (si applicable)

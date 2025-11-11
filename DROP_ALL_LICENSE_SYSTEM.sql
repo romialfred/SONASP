@@ -137,9 +137,22 @@ DROP TYPE IF EXISTS license_event_type CASCADE;
 -- (si cette table existe et contient des permissions de licences)
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_permissions') THEN
-    DELETE FROM user_permissions WHERE permission LIKE '%license%';
-    RAISE NOTICE 'Permissions de licences supprimées';
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'user_permissions'
+  ) THEN
+    -- Vérifier si la colonne 'permission' existe
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'user_permissions' AND column_name = 'permission'
+    ) THEN
+      DELETE FROM user_permissions WHERE permission LIKE '%license%';
+      RAISE NOTICE 'Permissions de licences supprimées';
+    ELSE
+      RAISE NOTICE 'Table user_permissions existe mais sans colonne permission - aucune action';
+    END IF;
+  ELSE
+    RAISE NOTICE 'Table user_permissions n''existe pas - aucune action';
   END IF;
 END $$;
 

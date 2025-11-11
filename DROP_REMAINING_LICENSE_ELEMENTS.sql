@@ -29,12 +29,21 @@ DROP FUNCTION IF EXISTS update_license_timestamp();
 -- ÉTAPE 2: SUPPRIMER LES POLITIQUES RLS SUR license_kpi_thresholds
 -- ============================================================================
 
-DROP POLICY IF EXISTS "Management can manage KPI thresholds" ON license_kpi_thresholds;
-DROP POLICY IF EXISTS "Users can view KPI thresholds" ON license_kpi_thresholds;
-DROP POLICY IF EXISTS "Authenticated users can view KPI thresholds" ON license_kpi_thresholds;
-DROP POLICY IF EXISTS "Management can create KPI thresholds" ON license_kpi_thresholds;
-DROP POLICY IF EXISTS "Management can update KPI thresholds" ON license_kpi_thresholds;
-DROP POLICY IF EXISTS "Management can delete KPI thresholds" ON license_kpi_thresholds;
+-- Note: Politiques supprimées uniquement si la table existe
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'license_kpi_thresholds' AND table_schema = 'public') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Management can manage KPI thresholds" ON license_kpi_thresholds';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view KPI thresholds" ON license_kpi_thresholds';
+    EXECUTE 'DROP POLICY IF EXISTS "Authenticated users can view KPI thresholds" ON license_kpi_thresholds';
+    EXECUTE 'DROP POLICY IF EXISTS "Management can create KPI thresholds" ON license_kpi_thresholds';
+    EXECUTE 'DROP POLICY IF EXISTS "Management can update KPI thresholds" ON license_kpi_thresholds';
+    EXECUTE 'DROP POLICY IF EXISTS "Management can delete KPI thresholds" ON license_kpi_thresholds';
+    RAISE NOTICE 'Politiques RLS supprimées de license_kpi_thresholds';
+  ELSE
+    RAISE NOTICE 'Table license_kpi_thresholds n''existe pas - politiques RLS ignorées';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- ÉTAPE 3: SUPPRIMER LA TABLE license_kpi_thresholds
@@ -51,10 +60,12 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'batches' AND column_name = 'license_id'
+    WHERE table_name = 'batches' AND column_name = 'license_id' AND table_schema = 'public'
   ) THEN
     ALTER TABLE batches DROP COLUMN license_id CASCADE;
     RAISE NOTICE 'Colonne license_id supprimée de batches';
+  ELSE
+    RAISE NOTICE 'Colonne license_id n''existe pas dans batches';
   END IF;
 END $$;
 
@@ -63,22 +74,12 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'freight_companies' AND column_name = 'license_number'
+    WHERE table_name = 'freight_companies' AND column_name = 'license_number' AND table_schema = 'public'
   ) THEN
     ALTER TABLE freight_companies DROP COLUMN license_number CASCADE;
     RAISE NOTICE 'Colonne license_number supprimée de freight_companies';
-  END IF;
-END $$;
-
--- Supprimer license_type de license_kpi_thresholds (si la table existe encore)
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'license_kpi_thresholds' AND column_name = 'license_type'
-  ) THEN
-    ALTER TABLE license_kpi_thresholds DROP COLUMN license_type CASCADE;
-    RAISE NOTICE 'Colonne license_type supprimée de license_kpi_thresholds';
+  ELSE
+    RAISE NOTICE 'Colonne license_number n''existe pas dans freight_companies';
   END IF;
 END $$;
 
@@ -87,10 +88,12 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'transportation_details' AND column_name = 'license_plate'
+    WHERE table_name = 'transportation_details' AND column_name = 'license_plate' AND table_schema = 'public'
   ) THEN
     ALTER TABLE transportation_details DROP COLUMN license_plate CASCADE;
     RAISE NOTICE 'Colonne license_plate supprimée de transportation_details';
+  ELSE
+    RAISE NOTICE 'Colonne license_plate n''existe pas dans transportation_details';
   END IF;
 END $$;
 

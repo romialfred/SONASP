@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AlertCircle, Calendar, TrendingDown, CheckCircle, FileText, Building2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
+import { supabase } from '@/lib/supabase';
 
 interface License {
   id: string;
@@ -67,9 +68,6 @@ export function LicenseSelectorCard({
   const loadLicenses = async () => {
     try {
       setLoading(true);
-      const { createClient } = await import('@/lib/supabase');
-      const supabase = createClient();
-
       const { data, error } = await supabase
         .from('v_active_licenses')
         .select('*')

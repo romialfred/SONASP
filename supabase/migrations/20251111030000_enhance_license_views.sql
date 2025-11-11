@@ -179,7 +179,7 @@ SELECT
   -- Daily consumption rate (last 30 days)
   CASE
     WHEN l.issue_date >= CURRENT_DATE - INTERVAL '30 days' THEN
-      l.consumed_qty_oz / GREATEST(EXTRACT(day FROM (CURRENT_DATE - l.issue_date)), 1)
+      l.consumed_qty_oz / GREATEST((CURRENT_DATE - l.issue_date)::integer, 1)
     ELSE
       (
         SELECT COALESCE(SUM(lqt.quantity_oz), 0) / 30.0
@@ -196,7 +196,7 @@ SELECT
     ELSE
       ROUND(
         l.remaining_qty_oz / NULLIF(
-          (l.consumed_qty_oz / GREATEST(EXTRACT(day FROM (CURRENT_DATE - l.issue_date)), 1)),
+          (l.consumed_qty_oz / GREATEST((CURRENT_DATE - l.issue_date)::integer, 1)),
           0
         )
       )::integer

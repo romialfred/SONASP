@@ -30,6 +30,7 @@ import type { LicenseRequest, LicenseRequestStatus } from '@/types/license';
 interface LicenseRequestDetailed extends LicenseRequest {
   mine_code?: string;
   mine_country?: string;
+  mine_contact?: string;
   has_license?: boolean;
   license_id?: string;
   license_number?: string;
@@ -431,9 +432,13 @@ export default function LicenseRequestDetailsPage() {
                   <label className="text-sm text-gray-600">Code</label>
                   <p className="font-mono text-gray-900">{request.mine_code || 'N/A'}</p>
                 </div>
-                <div className="col-span-2">
+                <div>
                   <label className="text-sm text-gray-600">Pays</label>
                   <p className="font-medium text-gray-900">{request.mine_country || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Contact</label>
+                  <p className="font-medium text-gray-900">{request.mine_contact || 'N/A'}</p>
                 </div>
               </div>
             </Card>

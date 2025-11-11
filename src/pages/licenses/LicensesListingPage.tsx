@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Table } from '@/components/ui/Table';
+import type { Column } from '@/components/ui/Table';
 import { Alert } from '@/components/ui/Alert';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { licenseService } from '@/services/licenseService';
@@ -108,80 +109,90 @@ export function LicensesListingPage() {
     }
   };
 
-  const columns = [
+  const columns: Column<License>[] = [
     {
-      header: 'Evaluation',
-      accessor: (license: License) => (
+      key: 'evaluation',
+      label: 'Evaluation',
+      render: (_, license) => (
         <div className="flex items-center">
           <div className={`w-3 h-3 rounded-full ${getTrafficLight(license)}`} />
         </div>
       ),
     },
     {
-      header: 'Mine',
-      accessor: (license: License) => (
+      key: 'applicant_company_name',
+      label: 'Mine',
+      render: (_, license) => (
         <div className="font-medium text-gray-900">{license.applicant_company_name}</div>
       ),
     },
     {
-      header: 'License Number',
-      accessor: (license: License) => (
+      key: 'license_number',
+      label: 'License Number',
+      render: (_, license) => (
         <div className="font-mono text-sm text-blue-600">{license.license_number}</div>
       ),
     },
     {
-      header: 'Issue Date',
-      accessor: (license: License) => (
-        <div className="text-sm text-gray-600">{license.issue_date}</div>
-      ),
+      key: 'issue_date',
+      label: 'Issue Date',
+      render: (_, license) => <div className="text-sm text-gray-600">{license.issue_date}</div>,
     },
     {
-      header: 'Expiry Date',
-      accessor: (license: License) => (
-        <div className="text-sm text-gray-600">{license.expiry_date}</div>
-      ),
+      key: 'expiry_date',
+      label: 'Expiry Date',
+      render: (_, license) => <div className="text-sm text-gray-600">{license.expiry_date}</div>,
     },
     {
-      header: 'Authorized (oz)',
-      accessor: (license: License) => (
-        <div className="text-right font-mono">{license.authorized_qty_oz.toFixed(3)}</div>
-      ),
-    },
-    {
-      header: 'Consumed (oz)',
-      accessor: (license: License) => (
-        <div className="text-right font-mono">{license.consumed_qty_oz.toFixed(3)}</div>
-      ),
-    },
-    {
-      header: 'Remaining (oz)',
-      accessor: (license: License) => (
-        <div className="text-right font-mono font-semibold">
-          {license.remaining_qty_oz.toFixed(3)}
+      key: 'authorized_qty_oz',
+      label: 'Authorized (oz)',
+      render: (_, license) => (
+        <div className="text-right font-mono">
+          {Number(license.authorized_qty_oz || 0).toFixed(3)}
         </div>
       ),
     },
     {
-      header: '% Remaining',
-      accessor: (license: License) => (
+      key: 'consumed_qty_oz',
+      label: 'Consumed (oz)',
+      render: (_, license) => (
+        <div className="text-right font-mono">
+          {Number(license.consumed_qty_oz || 0).toFixed(3)}
+        </div>
+      ),
+    },
+    {
+      key: 'remaining_qty_oz',
+      label: 'Remaining (oz)',
+      render: (_, license) => (
+        <div className="text-right font-mono font-semibold">
+          {Number(license.remaining_qty_oz || 0).toFixed(3)}
+        </div>
+      ),
+    },
+    {
+      key: 'remaining_percentage',
+      label: '% Remaining',
+      render: (_, license) => (
         <div className="text-right">
           <span
             className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${
-              license.remaining_percentage <= 10
+              (license.remaining_percentage || 0) <= 10
                 ? 'bg-red-100 text-red-800'
-                : license.remaining_percentage <= 25
+                : (license.remaining_percentage || 0) <= 25
                 ? 'bg-yellow-100 text-yellow-800'
                 : 'bg-green-100 text-green-800'
             }`}
           >
-            {license.remaining_percentage.toFixed(1)}%
+            {Number(license.remaining_percentage || 0).toFixed(1)}%
           </span>
         </div>
       ),
     },
     {
-      header: 'Days to Expiry',
-      accessor: (license: License) => (
+      key: 'days_to_expiry',
+      label: 'Days to Expiry',
+      render: (_, license) => (
         <div className="text-right">
           {license.days_to_expiry < 0 ? (
             <span className="text-red-600 font-semibold">Expired</span>
@@ -202,14 +213,16 @@ export function LicensesListingPage() {
       ),
     },
     {
-      header: 'Status',
-      accessor: (license: License) => (
+      key: 'status',
+      label: 'Status',
+      render: (_, license) => (
         <StatusBadge status={license.status} variant={getStatusColor(license.status)} />
       ),
     },
     {
-      header: 'Actions',
-      accessor: (license: License) => (
+      key: 'actions',
+      label: 'Actions',
+      render: (_, license) => (
         <Button
           size="sm"
           variant="secondary"

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Table } from '@/components/ui/Table';
+import type { Column } from '@/components/ui/Table';
 import { Alert } from '@/components/ui/Alert';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { licenseRequestService } from '@/services/licenseRequestService';
@@ -120,42 +121,46 @@ export function LicenseRequestsListingPage() {
     });
   };
 
-  const columns = [
+  const columns: Column<LicenseRequest>[] = [
     {
-      header: 'Request Number',
-      accessor: (request: LicenseRequest) => (
+      key: 'request_number',
+      label: 'Request Number',
+      render: (_, request) => (
         <div className="font-mono text-sm text-blue-600">
           {request.request_number || 'PENDING'}
         </div>
       ),
     },
     {
-      header: 'Title',
-      accessor: (request: LicenseRequest) => (
-        <div className="font-medium text-gray-900">{request.title}</div>
-      ),
+      key: 'title',
+      label: 'Title',
+      render: (_, request) => <div className="font-medium text-gray-900">{request.title}</div>,
     },
     {
-      header: 'Mining Company',
-      accessor: (request: LicenseRequest) => (
-        <div className="text-sm text-gray-600">{request.mine_name}</div>
-      ),
+      key: 'mine_name',
+      label: 'Mining Company',
+      render: (_, request) => <div className="text-sm text-gray-600">{request.mine_name}</div>,
     },
     {
-      header: 'Request Date',
-      accessor: (request: LicenseRequest) => (
+      key: 'request_date',
+      label: 'Request Date',
+      render: (_, request) => (
         <div className="text-sm text-gray-600">{formatDate(request.request_date)}</div>
       ),
     },
     {
-      header: 'Quantity (oz)',
-      accessor: (request: LicenseRequest) => (
-        <div className="text-right font-mono">{request.planned_quantity_oz.toFixed(3)}</div>
+      key: 'planned_quantity_oz',
+      label: 'Quantity (oz)',
+      render: (_, request) => (
+        <div className="text-right font-mono">
+          {Number(request.planned_quantity_oz || 0).toFixed(3)}
+        </div>
       ),
     },
     {
-      header: 'Period',
-      accessor: (request: LicenseRequest) => (
+      key: 'planned_start_date',
+      label: 'Period',
+      render: (_, request) => (
         <div className="text-sm text-gray-600">
           {request.planned_start_date && request.planned_end_date ? (
             <>
@@ -170,30 +175,33 @@ export function LicenseRequestsListingPage() {
       ),
     },
     {
-      header: 'Priority',
-      accessor: (request: LicenseRequest) => (
+      key: 'priority',
+      label: 'Priority',
+      render: (priority: LicenseRequest['priority']) => (
         <span
           className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${
-            request.priority === 'URGENT'
+            priority === 'URGENT'
               ? 'bg-red-100 text-red-800'
-              : request.priority === 'HIGH'
+              : priority === 'HIGH'
               ? 'bg-orange-100 text-orange-800'
               : 'bg-gray-100 text-gray-800'
           }`}
         >
-          {request.priority}
+          {priority}
         </span>
       ),
     },
     {
-      header: 'Status',
-      accessor: (request: LicenseRequest) => (
+      key: 'status',
+      label: 'Status',
+      render: (_, request) => (
         <StatusBadge status={request.status} variant={getStatusColor(request.status)} />
       ),
     },
     {
-      header: 'Actions',
-      accessor: (request: LicenseRequest) => (
+      key: 'actions',
+      label: 'Actions',
+      render: (_, request) => (
         <div className="flex items-center gap-2">
           <Button
             size="sm"

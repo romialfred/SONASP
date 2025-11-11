@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Table } from '@/components/ui/Table';
+import type { Column } from '@/components/ui/Table';
 import { licenseService } from '@/services/licenseService';
 import {
   FileText,
@@ -132,25 +133,27 @@ export function LicenseDetailsPage() {
     }
   };
 
-  const transactionColumns = [
+  const transactionColumns: Column<LicenseQuotaTransaction>[] = [
     {
-      header: 'Date',
-      accessor: (tx: LicenseQuotaTransaction) => (
+      key: 'transaction_date',
+      label: 'Date',
+      render: (_, tx) => (
         <div className="text-sm text-gray-600">
           {new Date(tx.transaction_date).toLocaleDateString()} {new Date(tx.transaction_date).toLocaleTimeString()}
         </div>
       ),
     },
     {
-      header: 'Type',
-      accessor: (tx: LicenseQuotaTransaction) => (
+      key: 'transaction_type',
+      label: 'Type',
+      render: (type, tx) => (
         <span
           className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
-            tx.transaction_type === 'CONSUME'
+            type === 'CONSUME'
               ? 'bg-green-100 text-green-800'
-              : tx.transaction_type === 'RESERVE'
+              : type === 'RESERVE'
               ? 'bg-blue-100 text-blue-800'
-              : tx.transaction_type === 'RELEASE'
+              : type === 'RELEASE'
               ? 'bg-yellow-100 text-yellow-800'
               : 'bg-gray-100 text-gray-800'
           }`}
@@ -160,8 +163,9 @@ export function LicenseDetailsPage() {
       ),
     },
     {
-      header: 'Quantity (oz)',
-      accessor: (tx: LicenseQuotaTransaction) => (
+      key: 'quantity_oz',
+      label: 'Quantity (oz)',
+      render: (_, tx) => (
         <div className="text-right font-mono">
           {tx.transaction_type === 'CONSUME' || tx.transaction_type === 'RESERVE' ? '-' : '+'}
           {tx.quantity_oz.toFixed(3)}
@@ -169,37 +173,40 @@ export function LicenseDetailsPage() {
       ),
     },
     {
-      header: 'Remaining After',
-      accessor: (tx: LicenseQuotaTransaction) => (
+      key: 'remaining_qty_after',
+      label: 'Remaining After',
+      render: (_, tx) => (
         <div className="text-right font-mono font-semibold">{tx.remaining_qty_after.toFixed(3)}</div>
       ),
     },
     {
-      header: 'Batch',
-      accessor: (tx: LicenseQuotaTransaction) => (
-        <div className="text-sm text-gray-600">{tx.batch_number || '-'}</div>
-      ),
+      key: 'batch_number',
+      label: 'Batch',
+      render: (_, tx) => <div className="text-sm text-gray-600">{tx.batch_number || '-'}</div>,
     },
     {
-      header: 'Performed By',
-      accessor: (tx: LicenseQuotaTransaction) => (
+      key: 'performed_by_name',
+      label: 'Performed By',
+      render: (_, tx) => (
         <div className="text-sm text-gray-600">{tx.performed_by_name || 'System'}</div>
       ),
     },
   ];
 
-  const eventColumns = [
+  const eventColumns: Column<LicenseEvent>[] = [
     {
-      header: 'Time',
-      accessor: (event: LicenseEvent) => (
+      key: 'event_at',
+      label: 'Time',
+      render: (_, event) => (
         <div className="text-sm text-gray-600">
           {new Date(event.event_at).toLocaleDateString()} {new Date(event.event_at).toLocaleTimeString()}
         </div>
       ),
     },
     {
-      header: 'Event',
-      accessor: (event: LicenseEvent) => (
+      key: 'event_type',
+      label: 'Event',
+      render: (_, event) => (
         <div>
           <div className="font-medium text-gray-900">{event.event_type}</div>
           <div className="text-sm text-gray-600">{event.event_description}</div>
@@ -207,8 +214,9 @@ export function LicenseDetailsPage() {
       ),
     },
     {
-      header: 'User',
-      accessor: (event: LicenseEvent) => (
+      key: 'user_name',
+      label: 'User',
+      render: (_, event) => (
         <div className="text-sm text-gray-600">{event.user_name || 'System'}</div>
       ),
     },

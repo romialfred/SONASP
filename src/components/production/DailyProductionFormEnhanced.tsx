@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Save, X, RefreshCw, Calendar, CalendarRange, CalendarClock } from 'lucide-react';
+import { Save, X, RefreshCw, Calendar, CalendarRange, CalendarClock, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Card } from '@/components/ui/Card';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { dailyProductionService, DailyProduction, ProductionSummary } from '@/services/dailyProductionService';
+import { productionDocumentService } from '@/services/productionDocumentService';
+import { ProductionDocumentUpload } from './ProductionDocumentUpload';
+import { ProductionDocumentsList, ProductionDocument } from './ProductionDocumentsList';
 import { supabase } from '@/lib/supabase';
 import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
 
@@ -40,12 +43,18 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   const [mtdSummary, setMtdSummary] = useState<ProductionSummary | null>(null);
   const [ytdSummary, setYtdSummary] = useState<ProductionSummary | null>(null);
   const [activeField, setActiveField] = useState<string | null>(null);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [documents, setDocuments] = useState<ProductionDocument[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   useEffect(() => {
     loadMiningCompanies();
     if (!production) {
       loadSummaries();
+    } else if (production.id) {
+      loadDocuments(production.id);
     }
+    productionDocumentService.ensureBucketExists();
   }, []);
 
   // Générer automatiquement la bar reference quand une société est sélectionnée
@@ -269,6 +278,59 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     }
   };
 
+  const loadDocuments = async (productionId: string) => {
+    try {
+      setLoadingDocuments(true);
+      const docs = await productionDocumentService.listDocuments(productionId);
+      setDocuments(docs);
+    } catch (error: any) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleDocumentUpload = async (file: File, documentName: string) => {
+    if (!production?.id) {
+      throw new Error('Veuillez d\'abord enregistrer la production avant d\'ajouter des documents');
+    }
+
+    try {
+      await productionDocumentService.uploadDocument(production.id, file, documentName);
+      await loadDocuments(production.id);
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleDocumentView = async (doc: ProductionDocument) => {
+    try {
+      const url = await productionDocumentService.getDocumentUrl(doc.file_path);
+      window.open(url, '_blank');
+    } catch (error: any) {
+      alert(error.message || 'Erreur lors de l\'ouverture du document');
+    }
+  };
+
+  const handleDocumentDownload = async (doc: ProductionDocument) => {
+    try {
+      await productionDocumentService.downloadDocument(doc);
+    } catch (error: any) {
+      alert(error.message || 'Erreur lors du téléchargement');
+    }
+  };
+
+  const handleDocumentDelete = async (documentId: string) => {
+    if (!production?.id) return;
+
+    try {
+      await productionDocumentService.deleteDocument(documentId);
+      await loadDocuments(production.id);
+    } catch (error: any) {
+      alert(error.message || 'Erreur lors de la suppression');
+    }
+  };
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -277,6 +339,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   };
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Production Form - 3 columns */}
       <div className="lg:col-span-3">
@@ -559,6 +622,44 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               />
             </div>
 
+            {/* Documents Section - Only show for existing production */}
+            {production?.id && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Documents Attachés
+                    </h3>
+                    <span className="text-xs text-gray-500">({documents.length})</span>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => setShowDocumentUpload(true)}
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Ajouter un Document
+                  </Button>
+                </div>
+
+                {loadingDocuments ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto" />
+                  </div>
+                ) : (
+                  <ProductionDocumentsList
+                    documents={documents}
+                    onView={handleDocumentView}
+                    onDownload={handleDocumentDownload}
+                    onDelete={handleDocumentDelete}
+                    canDelete={true}
+                  />
+                )}
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex gap-3 pt-4 border-t border-gray-200">
               <Button
@@ -590,5 +691,15 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         />
       </div>
     </div>
+
+    {/* Document Upload Modal */}
+    {production?.id && (
+      <ProductionDocumentUpload
+        isOpen={showDocumentUpload}
+        onClose={() => setShowDocumentUpload(false)}
+        onUpload={handleDocumentUpload}
+      />
+    )}
+    </>
   );
 }

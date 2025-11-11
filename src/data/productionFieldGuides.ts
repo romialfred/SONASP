@@ -1,49 +1,49 @@
 export const dailyProductionFieldGuides = {
   production_date: {
     title: 'Production Date',
-    description: 'Date exacte de la production journalière',
-    example: 'Société des Mines de Komana (SMK)',
+    description: 'Date de la production journalière.',
+    example: '15/11/2025',
     required: true
   },
   mining_company_id: {
     title: 'Mining Company',
-    description: 'Société minière source du bullion. Génère automatiquement la Bar Reference.',
+    description: 'Société minière source du bullion.\nGénère automatiquement la référence du bar.',
     example: 'Société des Mines de Komana (SMK)',
     required: true
   },
   bar_reference: {
     title: 'Bar Reference',
-    description: 'Généré automatiquement (Format: HUM[CODE]-NNNN)',
+    description: 'Référence unique générée automatiquement.\nFormat: HUM[CODE]-NNNN',
     example: 'HUMSMK-0001, HUMKGM-0015',
     readOnly: true
   },
   bullion_grams: {
     title: 'Bullion',
-    description: 'Poids total du bullion. Conversion automatique g ⇄ oz.',
+    description: 'Poids total du bullion en grammes.\nConversion automatique en onces.',
     example: '11270 g = 362.31 oz',
     required: true
   },
   estimated_fineness_pct: {
     title: 'Estimated Fineness (%)',
-    description: 'Pourcentage de pureté estimé (0 à 100%)',
+    description: 'Pourcentage de pureté estimé du bullion.\nDoit être entre 0 et 100%.',
     example: '92.1%',
     required: true
   },
   pure_gold_grams: {
     title: 'Pure Gold (g)',
-    description: 'Calcul auto: Bullion × Finesse ÷ 100',
+    description: 'Calcul automatique: Bullion × Finesse ÷ 100.\nQuantité d\'or pur en grammes.',
     example: '10377.67 g',
     readOnly: true
   },
   estimated_oz: {
     title: 'Estimated Oz',
-    description: 'Calcul auto: Pure Gold ÷ 31.1035',
+    description: 'Calcul automatique: Pure Gold ÷ 31.1035.\nQuantité d\'or pur en onces troy.',
     example: '333.57 oz',
     readOnly: true
   },
   notes: {
     title: 'Notes',
-    description: 'Observations sur cette production',
+    description: 'Observations ou commentaires sur cette production.\nChamp optionnel.',
     example: 'Production exceptionnelle',
     required: false
   }

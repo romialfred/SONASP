@@ -4,26 +4,69 @@ import { Plus, Download, Filter, TrendingUp } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Tabs } from '@/components/ui/Tabs';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { DailyProductionFormEnhanced } from '@/components/production/DailyProductionFormEnhanced';
 import { ProductionMetrics } from '@/components/production/ProductionMetrics';
 import { ProductionTable } from '@/components/production/ProductionTable';
 import { ProductionChart } from '@/components/production/ProductionChart';
+import { supabase } from '@/lib/supabase';
+
+interface MiningCompany {
+  id: string;
+  name: string;
+}
 
 export function DailyProductionPage() {
   const navigate = useNavigate();
   const [productions, setProductions] = useState<DailyProduction[]>([]);
+  const [filteredProductions, setFilteredProductions] = useState<DailyProduction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedProduction, setSelectedProduction] = useState<DailyProduction | null>(null);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
+  const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
+    loadMiningCompanies();
+  }, []);
+
+  useEffect(() => {
     loadProductions();
   }, [dateRange]);
+
+  useEffect(() => {
+    filterProductions();
+  }, [productions, selectedCompanyFilter]);
+
+  const loadMiningCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mining_companies')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setMiningCompanies(data || []);
+    } catch (error) {
+      console.error('Error loading mining companies:', error);
+    }
+  };
+
+  const filterProductions = () => {
+    if (selectedCompanyFilter === 'all') {
+      setFilteredProductions(productions);
+    } else {
+      setFilteredProductions(
+        productions.filter(p => p.mining_company_id === selectedCompanyFilter)
+      );
+    }
+  };
 
   const loadProductions = async () => {
     try {
@@ -162,11 +205,29 @@ export function DailyProductionPage() {
           />
         )}
 
+        {/* Company Filter Tabs */}
+        {!showForm && miningCompanies.length > 0 && (
+          <Card className="p-4">
+            <Tabs
+              tabs={[
+                { id: 'all', label: 'Toutes les Sociétés', count: productions.length },
+                ...miningCompanies.map(company => ({
+                  id: company.id,
+                  label: company.name,
+                  count: productions.filter(p => p.mining_company_id === company.id).length
+                }))
+              ]}
+              activeTab={selectedCompanyFilter}
+              onChange={setSelectedCompanyFilter}
+            />
+          </Card>
+        )}
+
         {/* Metrics */}
-        {!showForm && <ProductionMetrics productions={productions} dateRange={dateRange} />}
+        {!showForm && <ProductionMetrics productions={filteredProductions} dateRange={dateRange} />}
 
         {/* Production Chart - Last 30 Days */}
-        {!showForm && <ProductionChart productions={productions} dateRange={dateRange} />}
+        {!showForm && <ProductionChart productions={filteredProductions} dateRange={dateRange} />}
 
         {/* Production Table - Only show when form is not visible */}
         {!showForm && <Card>
@@ -197,7 +258,7 @@ export function DailyProductionPage() {
           </div>
 
           <ProductionTable
-            productions={productions}
+            productions={filteredProductions}
             loading={loading}
             onEdit={handleEdit}
             onDelete={handleDelete}

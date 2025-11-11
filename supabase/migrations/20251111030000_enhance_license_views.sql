@@ -119,10 +119,10 @@ SELECT
   ) as total_shipped_oz,
   -- Latest shipment
   (
-    SELECT sp.shipping_date
+    SELECT COALESCE(sp.shipped_at, sp.prepared_at, sp.created_at)
     FROM shipping_preparations sp
     WHERE sp.license_id = l.id
-    ORDER BY sp.shipping_date DESC
+    ORDER BY COALESCE(sp.shipped_at, sp.prepared_at, sp.created_at) DESC
     LIMIT 1
   ) as last_shipment_date,
   -- Timestamps

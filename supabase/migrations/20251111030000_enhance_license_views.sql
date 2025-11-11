@@ -90,7 +90,6 @@ SELECT
   -- Status
   l.status,
   l.suspension_reason,
-  l.closure_reason,
   -- Computed fields
   CASE
     WHEN l.remaining_qty_oz <= 0 THEN 'EXHAUSTED'

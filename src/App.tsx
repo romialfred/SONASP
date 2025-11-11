@@ -71,6 +71,7 @@ import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
 import { LicensesListingPage } from './pages/licenses/LicensesListingPage';
 import { LicenseRequestForm } from './pages/licenses/LicenseRequestForm';
 import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsListingPage';
+import LicenseRequestDetailsPage from './pages/licenses/LicenseRequestDetailsPage';
 import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
 import ApproveLicenseRequestPage from './pages/licenses/ApproveLicenseRequestPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
@@ -550,6 +551,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ApproveLicenseRequestPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/licenses/requests/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'factory']}>
+                  <LicenseRequestDetailsPage />
                 </ProtectedRoute>
               }
             />

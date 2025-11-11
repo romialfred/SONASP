@@ -197,22 +197,12 @@ export function LicenseRequestsListingPage() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant="secondary"
             onClick={() => navigate(`/licenses/requests/${request.id}`)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Eye className="w-4 h-4 mr-1" />
-            View
+            Details
           </Button>
-          {request.status === 'APPROVED' && (
-            <Button
-              size="sm"
-              onClick={() => navigate(`/licenses/requests/${request.id}/approve`)}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Create License
-            </Button>
-          )}
         </div>
       ),
     },

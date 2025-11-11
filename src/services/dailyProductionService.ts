@@ -11,6 +11,7 @@ export interface DailyProduction {
   notes: string | null;
   site_id: string;
   mining_company_id: string | null;
+  status: 'prepared' | 'shipped' | 'refined' | 'sold';
   created_by: string;
   created_at: string;
   updated_at: string;

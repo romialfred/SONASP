@@ -1,6 +1,9 @@
-import { Edit, Trash2, Calendar } from 'lucide-react';
+import { Edit, Trash2, Calendar, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { DailyProduction } from '@/services/dailyProductionService';
+import { ProductionStatusBadge } from './ProductionStatusBadge';
+import { ProductionStatus } from '@/constants/productionStatuses';
 
 interface ProductionTableProps {
   productions: DailyProduction[];
@@ -10,6 +13,7 @@ interface ProductionTableProps {
 }
 
 export function ProductionTable({ productions, loading, onEdit, onDelete }: ProductionTableProps) {
+  const navigate = useNavigate();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -65,6 +69,9 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Bar Reference
             </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Statut
+            </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Actions
             </th>
@@ -118,8 +125,18 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
                   {production.bar_reference || '-'}
                 </span>
               </td>
+              <td className="px-4 py-4 whitespace-nowrap">
+                <ProductionStatusBadge status={production.status as ProductionStatus} size="sm" showIcon />
+              </td>
               <td className="px-4 py-4 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => navigate(`/production/${production.id}`)}
+                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                    title="Voir détails"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => onEdit(production)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -166,7 +183,7 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
                 maximumFractionDigits: 4
               })}
             </td>
-            <td colSpan={2} className="px-4 py-3 text-sm text-gray-600">
+            <td colSpan={3} className="px-4 py-3 text-sm text-gray-600">
               {productions.length} enregistrement(s)
             </td>
           </tr>

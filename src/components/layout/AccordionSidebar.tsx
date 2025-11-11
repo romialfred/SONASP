@@ -29,8 +29,6 @@ import {
   Store,
   Activity,
   ScanText,
-  Award,
-  FileCheck,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -61,16 +59,6 @@ const useMenuGroups = (): MenuGroup[] => {
       items: [
         { label: 'Daily Production', path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
         { label: 'Budget & Forecasts', path: '/performance/budgets', icon: TrendingUp, iconColor: 'text-blue-600' },
-      ],
-    },
-    {
-      id: 'licenses',
-      label: 'License Management',
-      groupIconColor: 'text-amber-600',
-      groupIcon: Award,
-      items: [
-        { label: 'License Requests', path: '/licenses/requests', icon: FileCheck, iconColor: 'text-blue-600' },
-        { label: 'Issued Licenses', path: '/licenses', icon: Award, iconColor: 'text-amber-600' },
       ],
     },
     {

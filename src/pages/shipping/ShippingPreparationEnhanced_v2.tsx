@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { LicenseSelectorCard } from '@/components/licenses/LicenseSelectorCard';
 import { supabase } from '@/lib/supabase';
 
 interface MiningCompany {
@@ -23,30 +22,6 @@ interface MiningCompany {
   code: string;
   country: string;
   is_active: boolean;
-}
-
-interface License {
-  id: string;
-  license_number: string;
-  license_type: string;
-  applicant_mine_id: string;
-  applicant_company_name: string;
-  mining_company_name: string;
-  mining_company_code: string;
-  issue_date: string;
-  start_date: string | null;
-  expiry_date: string;
-  authorized_qty_oz: number;
-  reserved_qty_oz: number;
-  consumed_qty_oz: number;
-  remaining_qty_oz: number;
-  remaining_percentage: number;
-  status: string;
-  issuer_country: string;
-  theoretical_price_usd_per_oz: number | null;
-  days_until_expiry: number;
-  is_expiring_soon: boolean;
-  is_low_quantity: boolean;
 }
 
 interface DailyProduction {
@@ -95,8 +70,6 @@ export default function ShippingPreparationEnhanced() {
   const [step, setStep] = useState(1);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
-  const [selectedLicenseId, setSelectedLicenseId] = useState('');
-  const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
   const [productions, setProductions] = useState<DailyProduction[]>([]);
   const [selectedProductions, setSelectedProductions] = useState<SelectedProductionData[]>([]);
   const [freightCompanies, setFreightCompanies] = useState<TransportCompany[]>([]);
@@ -201,20 +174,6 @@ export default function ShippingPreparationEnhanced() {
     if (isSelected) {
       setSelectedProductions(selectedProductions.filter(sp => sp.production.id !== productionId));
     } else {
-      const totalOz = getTotalSelectedOz() + production.estimated_oz;
-
-      if (selectedLicense && totalOz > selectedLicense.remaining_qty_oz) {
-        alert(
-          `Impossible d'ajouter cette production.\n\n` +
-          `Quantité licence restante: ${selectedLicense.remaining_qty_oz.toFixed(3)} oz\n` +
-          `Quantité déjà sélectionnée: ${getTotalSelectedOz().toFixed(3)} oz\n` +
-          `Quantité de cette production: ${production.estimated_oz.toFixed(3)} oz\n` +
-          `Total: ${totalOz.toFixed(3)} oz\n\n` +
-          `Dépassement: ${(totalOz - selectedLicense.remaining_qty_oz).toFixed(3)} oz`
-        );
-        return;
-      }
-
       setSelectedProductions([...selectedProductions, {
         production,
         sealNumber1: '',
@@ -238,7 +197,7 @@ export default function ShippingPreparationEnhanced() {
   };
 
   const canProceedToStep2 = () => {
-    return selectedMiningCompanyId && selectedLicenseId && selectedProductions.length > 0;
+    return selectedMiningCompanyId && selectedProductions.length > 0;
   };
 
   const canProceedToStep3 = () => {
@@ -262,7 +221,6 @@ export default function ShippingPreparationEnhanced() {
 
       const preparationData = {
         mining_company_id: selectedMiningCompanyId,
-        license_id: selectedLicenseId,
         total_weight_oz: totalWeightOz,
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
@@ -403,14 +361,7 @@ export default function ShippingPreparationEnhanced() {
               </div>
             </Card>
 
-            <LicenseSelectorCard
-              selectedLicenseId={selectedLicenseId}
-              onLicenseChange={handleLicenseChange}
-              miningCompanyId={selectedMiningCompanyId}
-              requiredQuantityOz={getTotalSelectedOz()}
-            />
-
-            {selectedMiningCompanyId && selectedLicenseId && (
+            {selectedMiningCompanyId && (
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-slate-600" />
@@ -624,12 +575,6 @@ export default function ShippingPreparationEnhanced() {
                   <span className="text-blue-700">Société Minière:</span>
                   <span className="font-medium text-blue-900">
                     {miningCompanies.find(c => c.id === selectedMiningCompanyId)?.name}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-blue-700">Licence:</span>
-                  <span className="font-medium text-blue-900">
-                    {selectedLicense?.license_number}
                   </span>
                 </div>
                 <div className="flex justify-between">

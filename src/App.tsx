@@ -68,12 +68,6 @@ import { MiningCompanyForm } from './pages/stakeholders/MiningCompanyForm';
 import { MiningCompanyDetails } from './pages/stakeholders/MiningCompanyDetails';
 import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage';
 import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
-import { LicensesListingPage } from './pages/licenses/LicensesListingPage';
-import { LicenseRequestForm } from './pages/licenses/LicenseRequestForm';
-import { LicenseRequestsListingPage } from './pages/licenses/LicenseRequestsListingPage';
-import LicenseRequestDetailsPage from './pages/licenses/LicenseRequestDetailsPage';
-import { LicenseDetailsPage } from './pages/licenses/LicenseDetailsPage';
-import ApproveLicenseRequestPage from './pages/licenses/ApproveLicenseRequestPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
@@ -517,56 +511,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
                   <ReportsDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* License Routes */}
-            <Route
-              path="/licenses"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'factory']}>
-                  <LicensesListingPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/licenses/requests"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'factory']}>
-                  <LicenseRequestsListingPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/licenses/requests/new"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'factory']}>
-                  <LicenseRequestForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/licenses/requests/:id/approve"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ApproveLicenseRequestPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/licenses/requests/:id"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'factory']}>
-                  <LicenseRequestDetailsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/licenses/:id"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'factory']}>
-                  <LicenseDetailsPage />
                 </ProtectedRoute>
               }
             />

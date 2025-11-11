@@ -14,21 +14,18 @@ import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel';
 import { WeightInput } from '@/components/ui/WeightInput';
-import { LicenseSelector } from '@/components/licenses/LicenseSelector';
 import { generateBatchNumber, gramsToOunces } from '@/utils/batchUtils';
 import { createBatch, getSites, getTransportCompanies, getRefineries } from '@/services/batchCreationService';
 import type { CreateBatchData } from '@/services/batchCreationService';
 import { supabase } from '@/lib/supabase';
 import { extractArrayData } from '@/utils/arrayUtils';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
-import type { LicenseValidationResult } from '@/types/license';
 
 interface FormData {
   shipping_date: string;
   weight_grams: string;
   metal_type: 'gold' | 'silver' | 'zinc' | 'diamond' | 'other';
   mining_company_id: string;
-  license_id: string;
   mine_to_airport_transport_id: string;
   airport_to_refinery_transport_id: string;
   destination_refinery_id: string;
@@ -40,7 +37,6 @@ interface FormErrors {
   weight_grams?: string;
   metal_type?: string;
   mining_company_id?: string;
-  license_id?: string;
   mine_to_airport_transport_id?: string;
   airport_to_refinery_transport_id?: string;
   destination_refinery_id?: string;
@@ -63,7 +59,6 @@ export function BatchCreate() {
     weight_grams: '',
     metal_type: 'gold',
     mining_company_id: '',
-    license_id: '',
     mine_to_airport_transport_id: '',
     airport_to_refinery_transport_id: '',
     destination_refinery_id: '',
@@ -80,7 +75,6 @@ export function BatchCreate() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string>('');
-  const [licenseValidation, setLicenseValidation] = useState<LicenseValidationResult | null>(null);
 
   const fieldGuides: FieldGuideItem[] = [
     {
@@ -255,14 +249,6 @@ export function BatchCreate() {
 
     if (!formData.mining_company_id) {
       newErrors.mining_company_id = 'Mining company is required';
-    }
-
-    if (!formData.license_id) {
-      newErrors.license_id = 'Export license is required';
-    }
-
-    if (licenseValidation && !licenseValidation.valid) {
-      newErrors.license_id = 'Selected license is not valid for this export';
     }
 
     if (!formData.mine_to_airport_transport_id) {
@@ -559,23 +545,6 @@ export function BatchCreate() {
                     ))}
                   </Select>
                 </FormField>
-
-                {/* Row 2.5: Export License */}
-                {formData.mining_company_id && (
-                  <div className="mt-4">
-                    <LicenseSelector
-                      mineId={formData.mining_company_id}
-                      exportQuantityOz={parseFloat(formData.weight_grams) ? gramsToOunces(parseFloat(formData.weight_grams)) : 0}
-                      exportDate={formData.shipping_date}
-                      selectedLicenseId={formData.license_id}
-                      onChange={(licenseId) => handleInputChange('license_id', licenseId || '')}
-                      onValidationChange={setLicenseValidation}
-                    />
-                    {errors.license_id && (
-                      <p className="text-red-600 text-sm mt-1">{errors.license_id}</p>
-                    )}
-                  </div>
-                )}
 
                 {/* Row 3: Weight */}
                 <div className="grid grid-cols-1 gap-4">

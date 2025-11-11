@@ -72,7 +72,7 @@ import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import ShippingDashboard from './pages/shipping/ShippingDashboard';
-import ShippingPreparationEnhanced from './pages/shipping/ShippingPreparationEnhanced_v2';
+import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
 import ShippingPreparationDetails from './pages/shipping/ShippingPreparationDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
@@ -226,7 +226,7 @@ function AppRoutes() {
               path="/shipping/preparation/new"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
-                  <ShippingPreparationEnhanced />
+                  <ShippingPreparationNew />
                 </ProtectedRoute>
               }
             />
@@ -234,7 +234,7 @@ function AppRoutes() {
               path="/shipping/preparation/edit/:id"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
-                  <ShippingPreparationEnhanced />
+                  <ShippingPreparationNew />
                 </ProtectedRoute>
               }
             />

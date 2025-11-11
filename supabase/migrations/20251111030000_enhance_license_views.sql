@@ -22,7 +22,6 @@ SELECT
   lr.mine_name,
   mc.code as mine_code,
   mc.country as mine_country,
-  mc.contact_person as mine_contact,
   lr.request_date,
   lr.planned_quantity_oz,
   lr.planned_start_date,

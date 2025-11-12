@@ -13,7 +13,9 @@ import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { Modal } from '@/components/ui/Modal';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
 import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
+import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
 import { supabase } from '@/lib/supabase';
+import type { AssayCertificate } from '@/services/assayCertificateService';
 
 interface Refinery {
   id: string;
@@ -37,6 +39,7 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [productionItems, setProductionItems] = useState<ShippingProductionItem[]>([]);
   const [signatories, setSignatories] = useState<ShippingSignatory[]>([]);
   const [documents, setDocuments] = useState<ShippingDocument[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [freightCompany, setFreightCompany] = useState<FreightCompany | null>(null);
 
@@ -55,6 +58,33 @@ export default function ShippingPreparationDetailsEnhanced() {
     }
   }, [id]);
 
+  const loadAssayCertificates = async (shippingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('assay_certificates')
+        .select(`
+          *,
+          parsed_data:assay_certificate_data (
+            laboratory_name,
+            sample_weight_g,
+            gold_purity_percentage
+          )
+        `)
+        .eq('shipping_preparation_id', shippingId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data?.map((cert: any) => ({
+        ...cert,
+        parsed_data: cert.parsed_data?.[0] || null,
+      })) || [];
+    } catch (error) {
+      console.error('Error loading certificates:', error);
+      return [];
+    }
+  };
+
   const loadPreparationDetails = async () => {
     try {
       setLoading(true);
@@ -70,15 +100,17 @@ export default function ShippingPreparationDetailsEnhanced() {
 
       setPreparation(prep);
 
-      const [items, sigs, docs] = await Promise.all([
+      const [items, sigs, docs, certs] = await Promise.all([
         shippingPreparationService.getProductionItems(id!),
         shippingPreparationService.getSignatories(id!),
         shippingPreparationService.getDocuments(id!),
+        loadAssayCertificates(id!),
       ]);
 
       setProductionItems(items);
       setSignatories(sigs);
       setDocuments(docs);
+      setCertificates(certs || []);
 
       // Load refinery if ID exists
       if (prep.shipped_to_address) {
@@ -431,21 +463,53 @@ export default function ShippingPreparationDetailsEnhanced() {
 
               {/* Tab Content: Documents */}
               {activeTab === 'documents' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5 text-blue-600" />
-                      Documents ({documents.length})
-                    </h2>
-                    <Button
-                      onClick={() => setShowUploadModal(true)}
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Upload Certificat
-                    </Button>
+                <div className="space-y-6">
+                  {/* Assay Certificates Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-amber-600" />
+                        Assay Certificates ({certificates.length})
+                      </h2>
+                      <Button
+                        onClick={() => setShowUploadModal(true)}
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Certificat
+                      </Button>
+                    </div>
+                    {certificates.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 bg-amber-50 rounded-lg border-2 border-dashed border-amber-200">
+                        <FileText className="w-10 h-10 mx-auto mb-3 text-amber-400" />
+                        <p className="font-medium text-gray-700 mb-1">Aucun certificat d'assay</p>
+                        <p className="text-sm text-gray-600">Uploadez un certificat pour commencer</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                          {certificates.length} certificat(s) uploadé(s)
+                        </p>
+                        {certificates.map((cert: any) => (
+                          <AssayCertificateCard
+                            key={cert.id}
+                            certificate={cert}
+                            showActions={false}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Other Documents Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-blue-600" />
+                        Autres Documents ({documents.length})
+                      </h2>
+                    </div>
                   {documents.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -508,6 +572,7 @@ export default function ShippingPreparationDetailsEnhanced() {
                       ))}
                     </div>
                   )}
+                  </div>
                 </div>
               )}
             </div>

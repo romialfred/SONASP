@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Eye, CheckCircle, XCircle, Search, MapPin, Calendar, Scale, ChevronDown, ChevronUp, Building2, Ship, Package } from 'lucide-react';
+import { FileText, Eye, CheckCircle, XCircle, Search, MapPin, Calendar, Scale, ChevronDown, ChevronUp, Building2, Ship, Package, Upload, Plus } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
 import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
+import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
 import { useAlert } from '@/hooks/useAlert';
 import { supabase } from '@/lib/supabase';
 import type { AssayCertificate } from '@/services/assayCertificateService';
@@ -43,6 +44,7 @@ export function AssayCertificatesPage() {
   const [filteredGroups, setFilteredGroups] = useState<ShippingWithCertificates[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
+  const [uploadingForShipping, setUploadingForShipping] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterApproval, setFilterApproval] = useState<string>('all');
@@ -194,14 +196,16 @@ export function AssayCertificatesPage() {
     <MainLayout>
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FileText className="w-8 h-8 text-blue-600" />
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <FileText className="w-8 h-8 text-blue-600" />
+                </div>
                 Assay Certificates
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-2">
                 Gestion des certificats d'assay par expédition
               </p>
             </div>
@@ -209,50 +213,58 @@ export function AssayCertificatesPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Expéditions</p>
-                <p className="text-2xl font-bold text-gray-900">{shippingGroups.length}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Expéditions</p>
+                <p className="text-3xl font-bold text-gray-900">{shippingGroups.length}</p>
               </div>
-              <Ship className="w-8 h-8 text-blue-500" />
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Ship className="w-8 h-8 text-blue-600" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 border-l-4 border-gray-500 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Certificats</p>
-                <p className="text-2xl font-bold text-gray-900">{getTotalCertificates()}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Certificats</p>
+                <p className="text-3xl font-bold text-gray-900">{getTotalCertificates()}</p>
               </div>
-              <FileText className="w-8 h-8 text-gray-500" />
+              <div className="p-3 bg-gray-100 rounded-xl">
+                <FileText className="w-8 h-8 text-gray-600" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 border-l-4 border-orange-500 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">En Attente</p>
-                <p className="text-2xl font-bold text-orange-600">{getPendingCertificates()}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">En Attente</p>
+                <p className="text-3xl font-bold text-orange-600">{getPendingCertificates()}</p>
               </div>
-              <XCircle className="w-8 h-8 text-orange-500" />
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <XCircle className="w-8 h-8 text-orange-600" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Approuvés</p>
-                <p className="text-2xl font-bold text-green-600">{getApprovedCertificates()}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Approuvés</p>
+                <p className="text-3xl font-bold text-green-600">{getApprovedCertificates()}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <div className="p-3 bg-green-100 rounded-xl">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
             </div>
           </Card>
         </div>
 
         {/* Filters */}
-        <Card className="p-4 mb-6">
+        <Card className="p-6 mb-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -314,16 +326,18 @@ export function AssayCertificatesPage() {
             </Card>
           ) : (
             filteredGroups.map((group) => (
-              <Card key={group.id} className="overflow-hidden">
+              <Card key={group.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Shipping Header */}
                 <div
-                  className="p-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition-colors"
                   onClick={() => toggleShipping(group.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-4">
-                        <Ship className="w-6 h-6 text-blue-600" />
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                          <Ship className="w-6 h-6 text-blue-600" />
+                        </div>
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">
                             {group.expedition_lot_number}
@@ -348,7 +362,7 @@ export function AssayCertificatesPage() {
 
                     <div className="flex items-center gap-4">
                       <StatusBadge status={group.status} />
-                      <div className="text-center">
+                      <div className="text-center px-4">
                         <p className="text-2xl font-bold text-gray-900">
                           {group.certificates.length}
                         </p>
@@ -369,83 +383,113 @@ export function AssayCertificatesPage() {
 
                 {/* Certificates List */}
                 {expandedShippings.has(group.id) && (
-                  <div className="p-4">
+                  <div className="p-6 bg-white">
                     {group.certificates.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>Aucun certificat uploadé pour cette expédition</p>
+                      <div className="text-center py-12 text-gray-500">
+                        <div className="p-4 bg-gray-50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                          <FileText className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <p className="text-lg font-medium text-gray-700 mb-2">
+                          Aucun certificat uploadé
+                        </p>
+                        <p className="text-sm text-gray-500 mb-6">
+                          Uploadez le premier certificat d'assay pour cette expédition
+                        </p>
                         <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() =>
-                            navigate(`/shipping/preparations/${group.id}/details`)
-                          }
+                          variant="primary"
+                          size="md"
+                          onClick={() => setUploadingForShipping(group.id)}
+                          className="gap-2"
                         >
+                          <Plus className="w-5 h-5" />
                           Ajouter un certificat
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {group.certificates.map((cert) => (
-                          <div
-                            key={cert.id}
-                            className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-sm font-medium text-gray-700">
+                            {group.certificates.length} certificat(s) uploadé(s)
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setUploadingForShipping(group.id)}
+                            className="gap-2"
                           >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3">
-                                <FileText className="w-5 h-5 text-gray-400" />
-                                <div>
-                                  <p className="font-medium text-gray-900">{cert.file_name}</p>
-                                  <div className="flex items-center gap-3 text-xs text-gray-600 mt-1">
-                                    {cert.parsed_data?.laboratory_name && (
-                                      <span>{cert.parsed_data.laboratory_name}</span>
-                                    )}
-                                    {cert.parsed_data?.gold_content_gpt && (
-                                      <span>Au: {cert.parsed_data.gold_content_gpt} g/t</span>
-                                    )}
-                                    {cert.certificate_date && (
-                                      <span>
-                                        <Calendar className="w-3 h-3 inline mr-1" />
-                                        {new Date(cert.certificate_date).toLocaleDateString('fr-FR')}
-                                      </span>
-                                    )}
+                            <Plus className="w-4 h-4" />
+                            Ajouter un certificat
+                          </Button>
+                        </div>
+                        <div className="space-y-3">
+                          {group.certificates.map((cert) => (
+                            <div
+                              key={cert.id}
+                              className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-white rounded-lg">
+                                    <FileText className="w-5 h-5 text-gray-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900">{cert.file_name}</p>
+                                    <div className="flex items-center gap-3 text-xs text-gray-600 mt-1">
+                                      {cert.parsed_data?.laboratory_name && (
+                                        <span className="flex items-center gap-1">
+                                          <Building2 className="w-3 h-3" />
+                                          {cert.parsed_data.laboratory_name}
+                                        </span>
+                                      )}
+                                      {cert.parsed_data?.gold_content_gpt && (
+                                        <span className="flex items-center gap-1">
+                                          <Scale className="w-3 h-3" />
+                                          Au: {cert.parsed_data.gold_content_gpt} g/t
+                                        </span>
+                                      )}
+                                      {cert.certificate_date && (
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="w-3 h-3" />
+                                          {new Date(cert.certificate_date).toLocaleDateString('fr-FR')}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                              <StatusBadge
-                                status={cert.parsing_status}
-                                variant={
-                                  cert.parsing_status === 'completed'
-                                    ? 'success'
-                                    : cert.parsing_status === 'failed'
-                                    ? 'danger'
-                                    : 'warning'
-                                }
-                              />
-                              <StatusBadge
-                                status={cert.approval_status}
-                                variant={
-                                  cert.approval_status === 'approved'
-                                    ? 'success'
-                                    : cert.approval_status === 'rejected'
-                                    ? 'danger'
-                                    : 'warning'
-                                }
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedCertificate(cert)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center gap-3">
+                                <StatusBadge
+                                  status={cert.parsing_status}
+                                  variant={
+                                    cert.parsing_status === 'completed'
+                                      ? 'success'
+                                      : cert.parsing_status === 'failed'
+                                      ? 'danger'
+                                      : 'warning'
+                                  }
+                                />
+                                <StatusBadge
+                                  status={cert.approval_status}
+                                  variant={
+                                    cert.approval_status === 'approved'
+                                      ? 'success'
+                                      : cert.approval_status === 'rejected'
+                                      ? 'danger'
+                                      : 'warning'
+                                  }
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedCertificate(cert)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -469,6 +513,40 @@ export function AssayCertificatesPage() {
             onClose={() => setSelectedCertificate(null)}
             onUpdate={loadCertificatesByShipping}
           />
+        </Modal>
+      )}
+
+      {/* Upload Modal */}
+      {uploadingForShipping && (
+        <Modal
+          isOpen={true}
+          onClose={() => setUploadingForShipping(null)}
+          title="Ajouter un Certificat d'Assay"
+          size="lg"
+        >
+          <div className="p-6">
+            <div className="mb-6">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                <Upload className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Expédition: {shippingGroups.find(g => g.id === uploadingForShipping)?.expedition_lot_number}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Uploadez un fichier PDF du certificat d'assay
+                  </p>
+                </div>
+              </div>
+            </div>
+            <AssayCertificateUploadForShipping
+              shippingPreparationId={uploadingForShipping}
+              onUploadComplete={() => {
+                setUploadingForShipping(null);
+                loadCertificatesByShipping();
+                alert.success('Certificat uploadé avec succès');
+              }}
+            />
+          </div>
         </Modal>
       )}
     </MainLayout>

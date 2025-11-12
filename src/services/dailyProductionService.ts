@@ -125,14 +125,26 @@ class DailyProductionService {
     notes?: string;
     site_id?: string;
   }) {
-    const { data, error } = await supabase
-      .from('daily_production')
-      .insert([production])
-      .select()
-      .single();
+    try {
+      console.log('🚀 Creating production with data:', production);
 
-    if (error) throw error;
-    return data as DailyProduction;
+      const { data, error } = await supabase
+        .from('daily_production')
+        .insert([production])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        throw new Error(`Erreur d'enregistrement: ${error.message}`);
+      }
+
+      console.log('✅ Production created successfully:', data);
+      return data as DailyProduction;
+    } catch (error: any) {
+      console.error('❌ Service error:', error);
+      throw new Error(error.message || 'Impossible de créer la production');
+    }
   }
 
   async updateProduction(id: string, updates: Partial<DailyProduction>) {

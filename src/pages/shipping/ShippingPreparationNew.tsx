@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
+import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
@@ -84,6 +85,11 @@ export default function ShippingPreparationNew() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedPreparationId, setSavedPreparationId] = useState<string>('');
   const [licenseWarning, setLicenseWarning] = useState<string>('');
+
+  // Error dialog state
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState('Erreur');
 
   // Form state
   const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
@@ -315,7 +321,9 @@ export default function ShippingPreparationNew() {
 
   const handleAddSignatory = () => {
     if (!newSignatoryPosition.trim() || !newSignatoryName.trim()) {
-      alert('Veuillez remplir la position et le nom');
+      setErrorTitle('Informations manquantes');
+      setErrorMessage('Veuillez remplir la position et le nom du signataire.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -335,7 +343,9 @@ export default function ShippingPreparationNew() {
 
   const handleAddDocument = () => {
     if (!newDocumentTitle.trim() || !newDocumentFile) {
-      alert('Veuillez remplir le titre et sélectionner un fichier');
+      setErrorTitle('Informations manquantes');
+      setErrorMessage('Veuillez remplir le titre et sélectionner un fichier pour le document.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -449,17 +459,23 @@ export default function ShippingPreparationNew() {
 
   const handleSavePreparation = async () => {
     if (!selectedMiningCompanyId) {
-      alert('Veuillez sélectionner une compagnie minière');
+      setErrorTitle('Compagnie minière requise');
+      setErrorMessage('Veuillez sélectionner une compagnie minière avant de continuer.');
+      setShowErrorDialog(true);
       return;
     }
 
     if (!selectedLicenseId) {
-      alert('Veuillez sélectionner une licence d\'exportation');
+      setErrorTitle('Licence d\'exportation requise');
+      setErrorMessage('Veuillez sélectionner une licence d\'exportation valide.');
+      setShowErrorDialog(true);
       return;
     }
 
     if (selectedProductions.length === 0) {
-      alert('Veuillez sélectionner au moins une production');
+      setErrorTitle('Production requise');
+      setErrorMessage('Veuillez sélectionner au moins une production à expédier.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -469,24 +485,32 @@ export default function ShippingPreparationNew() {
       const availability = await exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight);
 
       if (!availability.is_available) {
-        alert(`Impossible de créer l'expédition:\n\n${availability.message}`);
+        setErrorTitle('Licence insuffisante');
+        setErrorMessage(availability.message);
+        setShowErrorDialog(true);
         return;
       }
     } catch (error) {
       console.error('Error checking license:', error);
-      alert('Erreur lors de la vérification de la licence');
+      setErrorTitle('Erreur de vérification');
+      setErrorMessage('Impossible de vérifier la disponibilité de la licence. Veuillez réessayer.');
+      setShowErrorDialog(true);
       return;
     }
 
     if (!selectedFreightCompanyId || !selectedRefineryId) {
-      alert('Veuillez sélectionner une Freight Company et une Refinery');
+      setErrorTitle('Informations de transport requises');
+      setErrorMessage('Veuillez sélectionner une Freight Company et une Refinery (destination).');
+      setShowErrorDialog(true);
       return;
     }
 
     // Check if all productions have at least seal number 1
     const missingSealNumbers = selectedProductions.filter(sp => !sp.sealNumber1.trim());
     if (missingSealNumbers.length > 0) {
-      alert('Veuillez saisir au moins le Seal Number 1 pour toutes les productions');
+      setErrorTitle('Seal Numbers manquants');
+      setErrorMessage('Veuillez saisir au moins le Seal Number 1 pour toutes les productions sélectionnées.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -495,6 +519,11 @@ export default function ShippingPreparationNew() {
 
       const expeditionLotNumber = generateExpeditionLotNumber();
 
+      // Calculate total weights
+      const totalNetWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
+      const totalGrossWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
+      const totalNetWeightOz = totalNetWeightGrams / 31.1035;
+
       const prepData = {
         expedition_lot_number: expeditionLotNumber,
         seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
@@ -502,6 +531,9 @@ export default function ShippingPreparationNew() {
         license_id: selectedLicenseId,
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
+        total_net_weight_grams: totalNetWeightGrams,
+        total_gross_weight_grams: totalGrossWeightGrams,
+        total_weight_oz: totalNetWeightOz,
         status: 'prepared' as const,
         prepared_at: new Date().toISOString(),
       };
@@ -581,9 +613,13 @@ export default function ShippingPreparationNew() {
         errorMessage = 'Le bucket de stockage "shipping-documents" n\'existe pas. Veuillez le créer via le Dashboard Supabase (Storage section).';
       } else if (errorMessage.includes('policy') || errorMessage.includes('RLS')) {
         errorMessage = 'Erreur de permissions (RLS). Vérifiez que les politiques RLS sont configurées correctement.';
+      } else if (errorMessage.includes('no field')) {
+        errorMessage = 'Erreur de structure de données. Veuillez vérifier que la migration SQL a été appliquée correctement. Détails : ' + errorMessage;
       }
 
-      alert('Erreur lors de la sauvegarde:\n\n' + errorMessage + '\n\nConsultez la console pour plus de détails.');
+      setErrorTitle('Erreur lors de la sauvegarde');
+      setErrorMessage(errorMessage + '\n\nConsultez la console pour plus de détails.');
+      setShowErrorDialog(true);
     } finally {
       setSaving(false);
     }
@@ -1123,6 +1159,14 @@ export default function ShippingPreparationNew() {
           productionDate={selectedProductions[0]?.production.production_date || new Date().toISOString()}
         />
       )}
+
+      {/* Error Dialog */}
+      <ErrorDialog
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        title={errorTitle}
+        message={errorMessage}
+      />
     </MainLayout>
   );
 }

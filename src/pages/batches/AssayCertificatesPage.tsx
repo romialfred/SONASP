@@ -544,11 +544,11 @@ export function AssayCertificatesPage() {
                                   <div className="flex items-center gap-2 mb-3">
                                     <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform" />
                                     <p className="font-medium text-gray-900 text-sm group-hover:text-blue-700 transition-colors">
-                                      {certificate.file_name}
+                                      {parsedData?.laboratory_name || 'Laboratory N/A'}
                                     </p>
-                                    {certificate.certificate_number && (
-                                      <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        #{certificate.certificate_number}
+                                    {certificate.certificate_date && (
+                                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded font-medium flex-shrink-0">
+                                        {new Date(certificate.certificate_date).toLocaleDateString('fr-FR')}
                                       </span>
                                     )}
                                   </div>

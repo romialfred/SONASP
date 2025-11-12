@@ -59,7 +59,9 @@ export function AssayCertificateCard({
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
               <p className="font-medium text-gray-900">
-                {certificate.parsed_data?.laboratory_name || 'Laboratory N/A'}
+                {certificate.parsed_data?.laboratory_name
+                  ? certificate.parsed_data.laboratory_name.substring(0, 100) + (certificate.parsed_data.laboratory_name.length > 100 ? '...' : '')
+                  : 'Laboratory N/A'}
               </p>
               {getStatusBadge()}
             </div>

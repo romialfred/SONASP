@@ -435,7 +435,9 @@ export function AssayCertificatesPage() {
                                   <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
                                       <p className="font-medium text-gray-900">
-                                        {cert.parsed_data?.laboratory_name || 'N/A'}
+                                        {cert.parsed_data?.laboratory_name
+                                          ? cert.parsed_data.laboratory_name.substring(0, 100) + (cert.parsed_data.laboratory_name.length > 100 ? '...' : '')
+                                          : 'Laboratory N/A'}
                                       </p>
                                       {cert.approval_status === 'pending' && (
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">

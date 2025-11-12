@@ -75,6 +75,8 @@ export function DailyProductionPage() {
   const loadProductions = async () => {
     try {
       setLoading(true);
+      // Note: listProduction charge toutes les productions sans filtre site_id
+      // pour permettre la vue multi-sites pour les managers
       const data = await dailyProductionService.listProduction(dateRange);
       setProductions(data);
     } catch (error) {

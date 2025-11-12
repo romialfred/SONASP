@@ -121,6 +121,7 @@ class DailyProductionService {
     bullion_grams: number;
     estimated_fineness_pct: number;
     bar_reference?: string;
+    mining_company_id?: string;
     notes?: string;
     site_id?: string;
   }) {

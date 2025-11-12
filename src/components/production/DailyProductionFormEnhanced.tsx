@@ -8,6 +8,7 @@ import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { CustomConfirm } from '@/components/ui/CustomConfirm';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useAuth } from '@/contexts/AuthContext';
 import { dailyProductionService, DailyProduction, ProductionSummary } from '@/services/dailyProductionService';
 import { productionDocumentService } from '@/services/productionDocumentService';
 import { ProductionDocumentUpload } from './ProductionDocumentUpload';
@@ -27,6 +28,7 @@ interface MiningCompany {
 }
 
 export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }: DailyProductionFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     production_date: production?.production_date || new Date().toISOString().split('T')[0],
     bullion_grams: production?.bullion_grams?.toString() || '',
@@ -258,6 +260,9 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         ? ozToGrams(parseFloat(formData.bullion_grams))
         : parseFloat(formData.bullion_grams);
 
+      // Récupérer le site_id de l'utilisateur connecté
+      const userSiteId = user?.site_ids?.[0] || 'guinea';
+
       const data = {
         production_date: formData.production_date,
         bullion_grams: bullionGramsToSave,
@@ -265,14 +270,21 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         bar_reference: formData.bar_reference || undefined,
         mining_company_id: formData.mining_company_id || undefined,
         notes: formData.notes || undefined,
+        site_id: userSiteId,
       };
 
+      console.log('📊 Données de production à enregistrer:', data);
+      console.log('👤 Utilisateur site_id:', userSiteId);
+      console.log('🏢 Mining company ID:', formData.mining_company_id);
+
       if (production?.id) {
-        await dailyProductionService.updateProduction(production.id, data);
+        const updated = await dailyProductionService.updateProduction(production.id, data);
+        console.log('✅ Production mise à jour:', updated);
         showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
       } else {
         const newProduction = await dailyProductionService.createProduction(data);
-        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}`, 'Production créée');
+        console.log('✅ Production créée:', newProduction);
+        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
       }
 
       onSuccess();

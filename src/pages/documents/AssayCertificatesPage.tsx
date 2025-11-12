@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Eye, CheckCircle, XCircle, Search, MapPin, Calendar, Scale,
-  Building2, Ship, Package, Upload, Plus, Download, ChevronDown, ChevronRight
+  Building2, Ship, Package, Upload, Plus, Download, ChevronDown, ChevronRight,
+  ChevronLeft, PanelRightClose, PanelRightOpen
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -56,6 +57,7 @@ export function AssayCertificatesPage() {
   const [filterApproval, setFilterApproval] = useState<string>('all');
   const [showCertificateViewer, setShowCertificateViewer] = useState(false);
   const [expandedShipping, setExpandedShipping] = useState<string | null>(null);
+  const [pdfPanelCollapsed, setPdfPanelCollapsed] = useState(false);
 
   useEffect(() => {
     loadCertificatesByShipping();
@@ -68,8 +70,10 @@ export function AssayCertificatesPage() {
   useEffect(() => {
     if (selectedCertificate) {
       loadPdfUrl(selectedCertificate);
+      setPdfPanelCollapsed(false);
     } else {
       setPdfUrl(null);
+      setPdfPanelCollapsed(true);
     }
   }, [selectedCertificate]);
 
@@ -333,9 +337,13 @@ export function AssayCertificatesPage() {
         </div>
 
         {/* 2 Panel Layout */}
-        <div className="flex-1 flex gap-4 min-h-0">
+        <div className="flex-1 flex gap-4 min-h-0 relative">
           {/* Left Panel - Expeditions Accordion */}
-          <div className="w-1/2 overflow-y-auto pr-2">
+          <div
+            className={`overflow-y-auto pr-2 transition-all duration-300 ${
+              pdfPanelCollapsed ? 'w-full' : 'w-1/2'
+            }`}
+          >
             {filteredGroups.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center">
@@ -545,94 +553,128 @@ export function AssayCertificatesPage() {
             )}
           </div>
 
-          {/* Right Panel - PDF Viewer */}
-          <div className="w-1/2 overflow-hidden">
-            <Card className="h-full flex flex-col">
-              {selectedCertificate ? (
-                <>
-                  {/* PDF Header */}
-                  <div className="flex-shrink-0 p-3 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {selectedCertificate.file_name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <StatusBadge
-                            status={selectedCertificate.approval_status}
-                            label={selectedCertificate.approval_status}
-                            color={getApprovalStatusColor(selectedCertificate.approval_status)}
-                            size="sm"
-                          />
-                          {selectedCertificate.certificate_number && (
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                              {selectedCertificate.certificate_number}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setShowCertificateViewer(true)}
-                          className="h-7 px-2 text-xs"
-                        >
-                          <Eye className="h-3.5 w-3.5 mr-1" />
-                          Détails
-                        </Button>
-                        {pdfUrl && (
-                          <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
-                            <Button
-                              variant="secondary"
+          {/* Right Panel - PDF Viewer (Collapsible) */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              pdfPanelCollapsed ? 'w-0' : 'w-1/2'
+            }`}
+          >
+            {!pdfPanelCollapsed && (
+              <Card className="h-full flex flex-col">
+                {selectedCertificate ? (
+                  <>
+                    {/* PDF Header */}
+                    <div className="flex-shrink-0 p-3 border-b border-gray-200 bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {selectedCertificate.file_name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge
+                              status={selectedCertificate.approval_status}
+                              label={selectedCertificate.approval_status}
+                              color={getApprovalStatusColor(selectedCertificate.approval_status)}
                               size="sm"
-                              className="h-7 px-2 text-xs"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                            </Button>
-                          </a>
-                        )}
+                            />
+                            {selectedCertificate.certificate_number && (
+                              <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
+                                {selectedCertificate.certificate_number}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowCertificateViewer(true)}
+                            className="h-7 px-2 text-xs"
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            Détails
+                          </Button>
+                          {pdfUrl && (
+                            <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            </a>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPdfPanelCollapsed(true)}
+                            className="h-7 w-7 p-0"
+                            title="Masquer le panneau"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* PDF Content */}
-                  <div className="flex-1 bg-gray-100 overflow-hidden">
-                    {loadingPdf ? (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <Loading />
-                          <p className="text-sm text-gray-500 mt-2">Chargement du PDF...</p>
+                    {/* PDF Content */}
+                    <div className="flex-1 bg-gray-100 overflow-hidden">
+                      {loadingPdf ? (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <Loading />
+                            <p className="text-sm text-gray-500 mt-2">Chargement du PDF...</p>
+                          </div>
                         </div>
-                      </div>
-                    ) : pdfUrl ? (
-                      <PDFViewer url={pdfUrl} />
-                    ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                          <p className="text-sm text-gray-500 font-medium">Impossible de charger le PDF</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Le fichier est peut-être manquant ou corrompu
-                          </p>
+                      ) : pdfUrl ? (
+                        <PDFViewer url={pdfUrl} />
+                      ) : (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                            <p className="text-sm text-gray-500 font-medium">Impossible de charger le PDF</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Le fichier est peut-être manquant ou corrompu
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-full flex items-center justify-center bg-gray-50">
+                    <div className="text-center">
+                      <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                      <p className="text-sm text-gray-500 font-medium">Aucun certificat sélectionné</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Cliquez sur un certificat pour voir son PDF
+                      </p>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="h-full flex items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-sm text-gray-500 font-medium">Aucun certificat sélectionné</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Cliquez sur un certificat pour voir son PDF
-                    </p>
-                  </div>
-                </div>
-              )}
-            </Card>
+                )}
+              </Card>
+            )}
           </div>
+
+          {/* Floating Toggle Button - Only show when collapsed */}
+          {pdfPanelCollapsed && selectedCertificate && (
+            <button
+              onClick={() => setPdfPanelCollapsed(false)}
+              className="fixed right-6 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-l-lg shadow-xl transition-all duration-200 hover:pr-4 group"
+              title="Afficher le PDF"
+            >
+              <PanelRightOpen className="h-5 w-5" />
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-semibold whitespace-nowrap rotate-0 writing-mode-vertical">
+                  View
+                </span>
+                <span className="text-xs font-semibold whitespace-nowrap rotate-0 writing-mode-vertical">
+                  Certificate
+                </span>
+              </div>
+            </button>
+          )}
         </div>
       </div>
 

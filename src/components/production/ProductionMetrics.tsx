@@ -93,30 +93,32 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
       : 0;
 
     return (
-      <Card className="p-5 hover:shadow-lg transition-shadow duration-200 border-l-4" style={{
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-l-4" style={{
         borderLeftColor: varianceForecast >= 0 ? '#10b981' : '#ef4444'
       }}>
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
-                <Icon className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="card-title">{title}</h3>
-                <p className="card-subtitle">{period}</p>
-              </div>
+        {/* Header with Background Color */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
+              <Icon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">{title}</h3>
+              <p className="text-sm text-blue-100">{period}</p>
             </div>
           </div>
         </div>
 
+        {/* Content */}
+        <div className="p-5">
+
         <div className="space-y-4">
-          {/* Actual Production */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
+          {/* Actual Production - Total with Background */}
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border-2 border-emerald-200">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-medium text-gray-700">Actual Production</span>
-              <span className="metric-card-value text-blue-600">
-                {summary.total_estimated_oz?.toFixed(2)} <span className="metric-card-unit">oz</span>
+              <span className="text-sm font-semibold text-emerald-900">Actual Production</span>
+              <span className="text-2xl font-bold text-emerald-700">
+                {summary.total_estimated_oz?.toFixed(2)} <span className="text-base font-medium text-emerald-600">oz</span>
               </span>
             </div>
 
@@ -193,21 +195,22 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
             </div>
           </div>
 
-          {/* Additional Metrics */}
+          {/* Additional Metrics with Background */}
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
-            <div className="text-center p-2 bg-gray-50 rounded-lg">
-              <span className="text-xs text-gray-600 block mb-1">Avg Fineness</span>
-              <div className="text-lg font-normal text-gray-900 tabular-nums">
-                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-gray-600 font-normal">%</span>
+            <div className="text-center p-3 bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg">
+              <span className="text-xs font-medium text-amber-900 block mb-1">Avg Fineness</span>
+              <div className="text-lg font-bold text-amber-700 tabular-nums">
+                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-amber-600 font-medium">%</span>
               </div>
             </div>
-            <div className="text-center p-2 bg-gray-50 rounded-lg">
-              <span className="text-xs text-gray-600 block mb-1">Records</span>
-              <div className="text-lg font-normal text-gray-900 tabular-nums">
+            <div className="text-center p-3 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-lg">
+              <span className="text-xs font-medium text-slate-900 block mb-1">Records</span>
+              <div className="text-lg font-bold text-slate-700 tabular-nums">
                 {summary.record_count}
               </div>
             </div>
           </div>
+        </div>
         </div>
       </Card>
     );

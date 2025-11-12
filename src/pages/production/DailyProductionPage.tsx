@@ -227,10 +227,7 @@ export function DailyProductionPage() {
           </Card>
         )}
 
-        {/* Metrics */}
-        {!showForm && <ProductionMetrics productions={filteredProductions} dateRange={dateRange} />}
-
-        {/* Production Table - MOVED UP BEFORE CHART */}
+        {/* Production Table - MOVED UP BEFORE METRICS */}
         {!showForm && <Card>
           <div className="p-4 border-b border-gray-200">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -281,15 +278,16 @@ export function DailyProductionPage() {
           />
         </Card>}
 
-        {/* Production Chart - NOW BELOW TABLE */}
+        {/* Metrics - NOW AFTER TABLE */}
+        {!showForm && <ProductionMetrics productions={filteredProductions} dateRange={dateRange} />}
+
+        {/* Production Chart - NOW BELOW METRICS */}
         {!showForm && <ProductionChart
           productions={filteredProductions}
           dateRange={dateRange}
           groupByCompany={selectedCompanyFilter === 'all'}
           miningCompanies={miningCompanies}
         />}
-
-        {/* OLD PRODUCTION TABLE REMOVED - NOW ABOVE */}
       </div>
     </MainLayout>
   );

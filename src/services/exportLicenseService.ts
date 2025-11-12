@@ -120,27 +120,41 @@ class ExportLicenseService {
    * Créer une nouvelle licence
    */
   async createLicense(licenseData: CreateLicenseData): Promise<ExportLicense> {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
+    try {
+      console.log('🚀 Creating export license:', licenseData);
 
-    // Exclude generated columns
-    const { remaining_quantity_grams, used_quantity_grams, ...insertData } = licenseData as any;
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
 
-    const { data, error } = await supabase
-      .from('export_licenses')
-      .insert({
-        ...insertData,
-        created_by: userId,
-        updated_by: userId,
-      })
-      .select(`
-        *,
-        mining_company:mining_companies(id, name, code)
-      `)
-      .single();
+      console.log('👤 User ID:', userId);
 
-    if (error) throw error;
-    return data;
+      // Exclude generated columns
+      const { remaining_quantity_grams, used_quantity_grams, ...insertData } = licenseData as any;
+
+      const { data, error } = await supabase
+        .from('export_licenses')
+        .insert({
+          ...insertData,
+          created_by: userId,
+          updated_by: userId,
+        })
+        .select(`
+          *,
+          mining_company:mining_companies(id, name, code)
+        `)
+        .single();
+
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        throw new Error(`Erreur d'enregistrement de licence: ${error.message}`);
+      }
+
+      console.log('✅ License created successfully:', data);
+      return data;
+    } catch (error: any) {
+      console.error('❌ Service error:', error);
+      throw new Error(error.message || 'Impossible de créer la licence');
+    }
   }
 
   /**

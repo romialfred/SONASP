@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Calendar, AlertCircle } from 'lucide-react';
+import { Plus, FileText, Calendar, AlertCircle, TrendingUp, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -32,18 +32,42 @@ export function ExportLicensesPage() {
     const percentage = (license.used_quantity_grams / license.authorized_quantity_grams) * 100;
 
     if (license.status === 'exhausted') {
-      return <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded">Épuisée</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full shadow-sm">
+          <XCircle className="w-3.5 h-3.5" />
+          Épuisée
+        </span>
+      );
     }
     if (new Date(license.end_date) < new Date()) {
-      return <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded">Expirée</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full shadow-sm">
+          <Clock className="w-3.5 h-3.5" />
+          Expirée
+        </span>
+      );
     }
     if (percentage >= 90) {
-      return <span className="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded">Presque épuisée</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-sm animate-pulse">
+          <AlertCircle className="w-3.5 h-3.5" />
+          Presque épuisée
+        </span>
+      );
     }
     if (license.status === 'active') {
-      return <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">Active</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full shadow-sm">
+          <CheckCircle className="w-3.5 h-3.5" />
+          Active
+        </span>
+      );
     }
-    return <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">{license.status}</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full shadow-sm">
+        {license.status}
+      </span>
+    );
   };
 
   const filteredLicenses = licenses.filter(license => {
@@ -53,126 +77,278 @@ export function ExportLicensesPage() {
     return true;
   });
 
+  // Calculate summary stats
+  const activeLicenses = licenses.filter(l => l.status === 'active' && new Date(l.end_date) >= new Date());
+  const totalAuthorized = activeLicenses.reduce((sum, l) => sum + l.authorized_quantity_grams, 0);
+  const totalUsed = activeLicenses.reduce((sum, l) => sum + l.used_quantity_grams, 0);
+  const totalRemaining = activeLicenses.reduce((sum, l) => sum + l.remaining_quantity_grams, 0);
+
   return (
     <MainLayout>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Licences d'Exportation</h1>
-            <p className="text-sm text-gray-600">Gestion des licences d'exportation d'or</p>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Licences d'Exportation</h1>
+            <p className="text-sm text-gray-600 mt-1">Gestion et suivi des licences d'exportation d'or</p>
           </div>
-          <Button onClick={() => navigate('/production/licenses/new')} className="gap-2">
-            <Plus className="w-4 h-4" />
+          <Button
+            onClick={() => navigate('/production/licenses/new')}
+            className="gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            <Plus className="w-5 h-5" />
             Nouvelle Licence
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={filter === 'all' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('all')}
-          >
-            Toutes ({licenses.length})
-          </Button>
-          <Button
-            variant={filter === 'active' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('active')}
-          >
-            Actives ({licenses.filter(l => l.status === 'active' && new Date(l.end_date) >= new Date()).length})
-          </Button>
-          <Button
-            variant={filter === 'expired' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('expired')}
-          >
-            Expirées ({licenses.filter(l => new Date(l.end_date) < new Date()).length})
-          </Button>
-          <Button
-            variant={filter === 'exhausted' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('exhausted')}
-          >
-            Épuisées ({licenses.filter(l => l.status === 'exhausted').length})
-          </Button>
-        </div>
+        {/* Summary Cards */}
+        {activeLicenses.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-600 rounded-xl shadow-md">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-blue-700">Licences Actives</p>
+                  <p className="text-2xl font-bold text-blue-900">{activeLicenses.length}</p>
+                </div>
+              </div>
+            </Card>
 
-        {loading ? (
-          <div className="text-center py-12">Chargement...</div>
-        ) : filteredLicenses.length === 0 ? (
-          <Card className="p-12 text-center">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune licence</h3>
-            <p className="text-gray-600 mb-4">Commencez par créer une nouvelle licence d'exportation</p>
-            <Button onClick={() => navigate('/production/licenses/new')} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nouvelle Licence
+            <Card className="p-5 bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-600 rounded-xl shadow-md">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-emerald-700">Total Autorisé</p>
+                  <p className="text-2xl font-bold text-emerald-900">{(totalAuthorized / 1000).toFixed(1)} kg</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-600 rounded-xl shadow-md">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-amber-700">Utilisé</p>
+                  <p className="text-2xl font-bold text-amber-900">{(totalUsed / 1000).toFixed(1)} kg</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-600 rounded-xl shadow-md">
+                  <AlertCircle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-green-700">Disponible</p>
+                  <p className="text-2xl font-bold text-green-900">{(totalRemaining / 1000).toFixed(1)} kg</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Filters */}
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant={filter === 'all' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('all')}
+              className={`transition-all duration-300 ${
+                filter === 'all'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 shadow-md'
+                  : 'hover:bg-gray-100 hover:shadow-sm'
+              }`}
+            >
+              <span className="font-semibold">Toutes</span>
+              <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">{licenses.length}</span>
             </Button>
+            <Button
+              variant={filter === 'active' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('active')}
+              className={`transition-all duration-300 ${
+                filter === 'active'
+                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 shadow-md'
+                  : 'hover:bg-emerald-50 hover:shadow-sm'
+              }`}
+            >
+              <span className="font-semibold">Actives</span>
+              <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                {licenses.filter(l => l.status === 'active' && new Date(l.end_date) >= new Date()).length}
+              </span>
+            </Button>
+            <Button
+              variant={filter === 'expired' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('expired')}
+              className={`transition-all duration-300 ${
+                filter === 'expired'
+                  ? 'bg-gradient-to-r from-gray-600 to-gray-700 shadow-md'
+                  : 'hover:bg-gray-50 hover:shadow-sm'
+              }`}
+            >
+              <span className="font-semibold">Expirées</span>
+              <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                {licenses.filter(l => new Date(l.end_date) < new Date()).length}
+              </span>
+            </Button>
+            <Button
+              variant={filter === 'exhausted' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('exhausted')}
+              className={`transition-all duration-300 ${
+                filter === 'exhausted'
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 shadow-md'
+                  : 'hover:bg-red-50 hover:shadow-sm'
+              }`}
+            >
+              <span className="font-semibold">Épuisées</span>
+              <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                {licenses.filter(l => l.status === 'exhausted').length}
+              </span>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Licenses List */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Chargement des licences...</p>
+            </div>
+          </div>
+        ) : filteredLicenses.length === 0 ? (
+          <Card className="p-16 text-center bg-gradient-to-br from-gray-50 to-white">
+            <div className="max-w-md mx-auto">
+              <div className="mb-6 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-200 to-blue-200 rounded-full blur-3xl opacity-30"></div>
+                <FileText className="w-24 h-24 mx-auto text-gray-300 relative" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Aucune licence trouvée</h3>
+              <p className="text-gray-600 mb-6">Commencez par créer votre première licence d'exportation</p>
+              <Button
+                onClick={() => navigate('/production/licenses/new')}
+                className="gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Nouvelle Licence
+              </Button>
+            </div>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {filteredLicenses.map((license) => (
-              <Card
-                key={license.id}
-                className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(`/production/licenses/${license.id}`)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">{license.license_number}</h3>
-                      {getStatusBadge(license)}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">
-                      {license.mining_company?.name} ({license.mining_company?.code})
-                    </p>
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Institution:</span>
-                        <p className="font-medium">{license.issuing_institution}</p>
+          <div className="grid gap-5">
+            {filteredLicenses.map((license) => {
+              const percentage = (license.used_quantity_grams / license.authorized_quantity_grams) * 100;
+              const isExpiring = new Date(license.end_date).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
+
+              return (
+                <Card
+                  key={license.id}
+                  className="group relative p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-white to-gray-50 border-2 border-transparent hover:border-emerald-200 transform hover:scale-[1.02]"
+                  onClick={() => navigate(`/production/licenses/${license.id}`)}
+                >
+                  {/* Background gradient effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/0 via-blue-50/0 to-purple-50/0 group-hover:from-emerald-50/30 group-hover:via-blue-50/20 group-hover:to-purple-50/10 rounded-lg transition-all duration-500"></div>
+
+                  <div className="relative">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-3">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors duration-300">
+                            {license.license_number}
+                          </h3>
+                          {getStatusBadge(license)}
+                          {isExpiring && license.status === 'active' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full animate-pulse">
+                              <Clock className="w-3 h-3" />
+                              Expire bientôt
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <span className="font-semibold">{license.mining_company?.name}</span>
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-mono rounded">
+                            {license.mining_company?.code}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Période:</span>
-                        <p className="font-medium">
-                          {new Date(license.start_date).toLocaleDateString('fr-FR')} - {new Date(license.end_date).toLocaleDateString('fr-FR')}
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-5">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Institution</p>
+                        <p className="font-bold text-gray-900">{license.issuing_institution}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Période</p>
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {new Date(license.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} - {new Date(license.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Autorisée:</span>
-                        <p className="font-medium">{license.authorized_quantity_grams.toLocaleString()} g</p>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Autorisée</p>
+                        <p className="font-bold text-blue-700 text-lg">{(license.authorized_quantity_grams / 1000).toFixed(2)} kg</p>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Restante:</span>
-                        <p className="font-medium text-green-600">{license.remaining_quantity_grams.toLocaleString()} g</p>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Disponible</p>
+                        <p className="font-bold text-emerald-700 text-lg">{(license.remaining_quantity_grams / 1000).toFixed(2)} kg</p>
                       </div>
                     </div>
-                    {/* Progress bar */}
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>Utilisation</span>
-                        <span>{Math.round((license.used_quantity_grams / license.authorized_quantity_grams) * 100)}%</span>
+
+                    {/* Enhanced Progress bar */}
+                    <div className="mt-5 pt-5 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-gray-600" />
+                          <span className="font-semibold text-gray-700">Utilisation</span>
+                        </div>
+                        <span className={`font-bold text-lg ${
+                          percentage >= 90 ? 'text-red-600' :
+                          percentage >= 70 ? 'text-orange-600' :
+                          'text-emerald-600'
+                        }`}>
+                          {Math.round(percentage)}%
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                         <div
-                          className={`h-2 rounded-full ${
-                            (license.used_quantity_grams / license.authorized_quantity_grams) * 100 >= 90
-                              ? 'bg-red-500'
-                              : (license.used_quantity_grams / license.authorized_quantity_grams) * 100 >= 70
-                              ? 'bg-orange-500'
-                              : 'bg-green-500'
+                          className={`h-full rounded-full transition-all duration-700 relative ${
+                            percentage >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                            percentage >= 70 ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                            'bg-gradient-to-r from-emerald-500 to-emerald-600'
                           }`}
                           style={{
-                            width: `${Math.min((license.used_quantity_grams / license.authorized_quantity_grams) * 100, 100)}%`,
+                            width: `${Math.min(percentage, 100)}%`,
                           }}
-                        />
+                        >
+                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>{(license.used_quantity_grams / 1000).toFixed(2)} kg utilisés</span>
+                        <span>{(license.remaining_quantity_grams / 1000).toFixed(2)} kg restants</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+
+                  {/* Hover indicator */}
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="p-2 bg-emerald-600 rounded-full shadow-lg">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

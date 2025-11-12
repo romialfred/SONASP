@@ -70,35 +70,35 @@ export function ProductionTable({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-200">
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Date
+          <tr className="bg-gradient-to-r from-amber-700 to-orange-700">
+            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
+              DATE
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Bullion (g)
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              BULLION (G)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Fineness (%)
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              FINESSE (%)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Pure Gold (g)
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              OR PUR (G)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Est. Oz
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              OZ ESTIMÉES
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Bar Reference
+            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
+              RÉFÉRENCE
             </th>
             {showMiningCompany && (
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Société Minière
+              <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
+                SOCIÉTÉ
               </th>
             )}
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Statut
+            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
+              STATUT
             </th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Actions
+            <th className="px-4 py-3.5 text-center text-xs font-bold text-white uppercase tracking-wider">
+              ACTIONS
             </th>
           </tr>
         </thead>
@@ -188,35 +188,34 @@ export function ProductionTable({
             </tr>
           ))}
         </tbody>
-        <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+        <tfoot className="bg-gradient-to-r from-amber-700 to-orange-700">
           <tr>
-            <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+            <td className="px-4 py-3.5 text-sm font-bold text-white uppercase">
               TOTAL
             </td>
-            <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
               {productions.reduce((sum, p) => sum + p.bullion_grams, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </td>
-            <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
               {(productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length).toFixed(2)}%
-              <span className="text-xs text-gray-500 ml-1">(avg)</span>
             </td>
-            <td className="px-4 py-3 text-right text-sm font-bold text-yellow-700">
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
               {productions.reduce((sum, p) => sum + p.pure_gold_grams, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </td>
-            <td className="px-4 py-3 text-right text-sm font-bold text-emerald-700">
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
               {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 4,
                 maximumFractionDigits: 4
               })}
             </td>
-            <td colSpan={showMiningCompany ? 4 : 3} className="px-4 py-3 text-sm text-gray-600">
-              {productions.length} enregistrement(s)
+            <td colSpan={showMiningCompany ? 4 : 3} className="px-4 py-3.5 text-sm text-white">
+              {productions.length} barres · {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toFixed(2)} oz total
             </td>
           </tr>
         </tfoot>

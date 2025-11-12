@@ -79,7 +79,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
     },
   ];
 
-  const renderVarianceCard = (title: string, summary: ProductionSummary | null, icon: any, period: string) => {
+  const renderVarianceCard = (title: string, summary: ProductionSummary | null, icon: any, period: string, colorScheme: 'blue' | 'purple' | 'teal') => {
     if (!summary) return null;
 
     const Icon = icon;
@@ -92,19 +92,27 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
       ? ((varianceBudget / summary.budget_oz) * 100)
       : 0;
 
+    const colorConfig = {
+      blue: { from: 'from-blue-500', to: 'to-blue-600', light: 'text-blue-100' },
+      purple: { from: 'from-purple-500', to: 'to-purple-600', light: 'text-purple-100' },
+      teal: { from: 'from-teal-500', to: 'to-teal-600', light: 'text-teal-100' }
+    };
+
+    const colors = colorConfig[colorScheme];
+
     return (
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-l-4" style={{
-        borderLeftColor: varianceForecast >= 0 ? '#10b981' : '#ef4444'
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-t-4" style={{
+        borderTopColor: colorScheme === 'blue' ? '#3b82f6' : colorScheme === 'purple' ? '#a855f7' : '#14b8a6'
       }}>
         {/* Header with Background Color */}
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-4">
+        <div className={`bg-gradient-to-r ${colors.from} ${colors.to} px-5 py-4`}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
               <Icon className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">{title}</h3>
-              <p className="text-sm text-blue-100">{period}</p>
+              <p className={`text-sm ${colors.light}`}>{period}</p>
             </div>
           </div>
         </div>
@@ -114,99 +122,91 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
 
         <div className="space-y-4">
           {/* Actual Production - Total with Background */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border-2 border-emerald-200">
+          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-4 border-2 border-cyan-200">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-semibold text-emerald-900">Actual Production</span>
-              <span className="text-2xl font-bold text-emerald-700">
-                {summary.total_estimated_oz?.toFixed(2)} <span className="text-base font-medium text-emerald-600">oz</span>
+              <span className="text-sm font-semibold text-cyan-900">Réalisé</span>
+              <span className="text-3xl font-bold text-cyan-700">
+                {summary.total_estimated_oz?.toFixed(2)} <span className="text-base font-medium text-cyan-600">oz</span>
               </span>
             </div>
 
             {/* Forecast Comparison */}
-            <div className="bg-white/80 rounded-lg p-3 mb-2">
+            <div className="bg-white rounded-lg p-3 mb-2 border border-gray-200">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-gray-600">Forecast Target</span>
-                <span className="table-cell-number">
+                <span className="text-xs font-medium text-gray-700">Prévision</span>
+                <span className="text-sm font-semibold text-gray-900">
                   {summary.forecast_oz?.toFixed(2) || '0.00'} oz
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                 <div className="flex items-center gap-1.5">
                   {varianceForecast >= 0 ? (
-                    <div className="p-1 rounded bg-green-100">
-                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                    </div>
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
                   ) : (
-                    <div className="p-1 rounded bg-red-100">
-                      <TrendingDown className="w-3.5 h-3.5 text-red-600" />
-                    </div>
+                    <TrendingDown className="w-4 h-4 text-orange-600" />
                   )}
-                  <span className="text-xs font-semibold text-gray-700">vs Forecast</span>
+                  <span className="text-xs font-medium text-gray-600">vs Prévision</span>
                 </div>
                 <div className="text-right">
-                  <span className={`text-base font-normal tabular-nums ${
-                    varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
+                  <span className={`text-base font-bold tabular-nums ${
+                    varianceForecast >= 0 ? 'text-orange-600' : 'text-orange-600'
                   }`}>
-                    {varianceForecast >= 0 ? '+' : ''}{varianceForecast.toFixed(2)}
+                    {varianceForecast >= 0 ? '+' : ''}{varianceForecast.toFixed(0)}
                   </span>
                   <span className={`text-xs ml-1 font-medium ${
-                    varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
+                    varianceForecast >= 0 ? 'text-orange-600' : 'text-orange-600'
                   }`}>
-                    ({forecastPct >= 0 ? '+' : ''}{forecastPct.toFixed(1)}%)
+                    ({forecastPct >= 0 ? '' : ''}{forecastPct.toFixed(1)}%)
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Budget Comparison */}
-            <div className="bg-white/80 rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-gray-600">Budget Target</span>
-                <span className="table-cell-number">
+                <span className="text-xs font-medium text-gray-700">Budget</span>
+                <span className="text-sm font-semibold text-gray-900">
                   {summary.budget_oz?.toFixed(2) || '0.00'} oz
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                 <div className="flex items-center gap-1.5">
                   {varianceBudget >= 0 ? (
-                    <div className="p-1 rounded bg-green-100">
-                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                    </div>
+                    <TrendingUp className="w-4 h-4 text-amber-600" />
                   ) : (
-                    <div className="p-1 rounded bg-red-100">
-                      <TrendingDown className="w-3.5 h-3.5 text-red-600" />
-                    </div>
+                    <TrendingDown className="w-4 h-4 text-amber-600" />
                   )}
-                  <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+                  <span className="text-xs font-medium text-gray-600">vs Budget</span>
                 </div>
                 <div className="text-right">
-                  <span className={`text-base font-normal tabular-nums ${
-                    varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
+                  <span className={`text-base font-bold tabular-nums ${
+                    varianceBudget >= 0 ? 'text-amber-600' : 'text-amber-600'
                   }`}>
-                    {varianceBudget >= 0 ? '+' : ''}{varianceBudget.toFixed(2)}
+                    {varianceBudget >= 0 ? '+' : ''}{varianceBudget.toFixed(0)}
                   </span>
                   <span className={`text-xs ml-1 font-medium ${
-                    varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
+                    varianceBudget >= 0 ? 'text-amber-600' : 'text-amber-600'
                   }`}>
-                    ({budgetPct >= 0 ? '+' : ''}{budgetPct.toFixed(1)}%)
+                    ({budgetPct >= 0 ? '' : ''}{budgetPct.toFixed(1)}%)
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Additional Metrics with Background */}
+          {/* Additional Metrics - Same style as Production in Safe */}
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
-            <div className="text-center p-3 bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg">
-              <span className="text-xs font-medium text-amber-900 block mb-1">Avg Fineness</span>
-              <div className="text-lg font-bold text-amber-700 tabular-nums">
-                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-amber-600 font-medium">%</span>
+            <div className="text-center p-3 bg-gradient-to-br from-yellow-50 to-amber-100 border border-amber-200 rounded-lg">
+              <span className="text-xs font-medium text-gray-600 block mb-1">Prévision</span>
+              <div className="text-lg font-bold text-gray-900 tabular-nums">
+                {summary.forecast_oz?.toFixed(0) || '0'} <span className="text-xs text-gray-600 font-medium">oz</span>
               </div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-lg">
-              <span className="text-xs font-medium text-slate-900 block mb-1">Records</span>
-              <div className="text-lg font-bold text-slate-700 tabular-nums">
-                {summary.record_count}
+            <div className="text-center p-3 bg-gradient-to-br from-yellow-50 to-amber-100 border border-amber-200 rounded-lg">
+              <span className="text-xs font-medium text-gray-600 block mb-1">Budget</span>
+              <div className="text-lg font-bold text-gray-900 tabular-nums">
+                {summary.budget_oz?.toFixed(0) || '0'} <span className="text-xs text-gray-600 font-medium">oz</span>
               </div>
             </div>
           </div>
@@ -247,20 +247,29 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
         ))}
       </div>
 
-      {/* WTD and MTD Variance Cards */}
+      {/* WTD, MTD and YTD Variance Cards - Style similaire à Production in Safe */}
       {(wtdSummary || mtdSummary) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {wtdSummary && renderVarianceCard(
-            'Week-To-Date (WTD)',
+            'Performance Hebdomadaire',
             wtdSummary,
             Calendar,
-            'Semaine en cours'
+            'Week to Date',
+            'blue'
           )}
           {mtdSummary && renderVarianceCard(
-            'Month-To-Date (MTD)',
+            'Performance Mensuelle',
             mtdSummary,
             CalendarRange,
-            'Mois en cours'
+            'Month to Date',
+            'purple'
+          )}
+          {mtdSummary && renderVarianceCard(
+            'Performance Annuelle',
+            mtdSummary,
+            CalendarRange,
+            'Year to Date',
+            'teal'
           )}
         </div>
       )}

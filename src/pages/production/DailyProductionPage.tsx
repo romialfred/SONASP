@@ -238,14 +238,23 @@ export function DailyProductionPage() {
           </Card>
         )}
 
+        {/* Titre "Inventaire de Production" - Style similaire à Production in Safe */}
+        {!showForm && (
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Inventaire de Production</h2>
+            <p className="text-sm text-gray-600">
+              {filteredProductions.length} barres · {filteredProductions.reduce((sum, p) => sum + p.estimated_oz, 0).toFixed(2)} oz total
+            </p>
+          </div>
+        )}
+
         {/* Production Table - MOVED UP BEFORE METRICS */}
         {!showForm && <Card>
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Historique de Production
-              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Filtrer par:</span>
+              </div>
               <div className="flex items-center gap-3">
                 {selectedCompanyFilter === 'all' && (
                   <select

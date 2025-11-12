@@ -49,28 +49,30 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
     percentage: ((value / totalOz) * 100).toFixed(1)
   })).sort((a, b) => b.value - a.value);
 
-  const CustomLabel = ({ cx, cy }: any) => {
+  // Label sur chaque segment du Pie Chart
+  const renderCustomLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, value, name, percentage } = props;
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    // Afficher uniquement si le segment est assez grand (> 5%)
+    if (parseFloat(percentage) < 5) {
+      return null;
+    }
+
     return (
-      <g>
-        <text
-          x={cx}
-          y={cy - 10}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="fill-gray-700 text-xl font-bold"
-        >
-          {totalOz.toFixed(2)} oz
-        </text>
-        <text
-          x={cx}
-          y={cy + 15}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="fill-gray-500 text-xs"
-        >
-          Total Production
-        </text>
-      </g>
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        className="font-bold text-xs"
+      >
+        {`${value} oz`}
+      </text>
     );
   };
 
@@ -136,34 +138,39 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
         </div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={80}
-                outerRadius={140}
-                paddingAngle={2}
-                dataKey="value"
-                label={false}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="middle"
-                dominantBaseline="central"
-              >
-                <CustomLabel cx="50%" cy="50%" />
-              </text>
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={450}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={90}
+                  outerRadius={160}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={renderCustomLabel}
+                  labelLine={false}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend content={<CustomLegend />} />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Total au centre - Position absolue */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none" style={{ marginTop: '-60px' }}>
+              <div className="text-3xl font-bold text-gray-800">
+                {totalOz.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-500 mt-1 font-medium">
+                oz
+              </div>
+            </div>
+          </div>
 
           <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div className="text-center">

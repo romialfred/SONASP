@@ -15,14 +15,12 @@ import type { AssayCertificate } from '@/services/assayCertificateService';
 
 interface ShippingWithCertificates {
   id: string;
-  preparation_number: string;
+  expedition_lot_number: string;
   status: string;
-  total_weight_grams: number;
+  total_net_weight_grams: number;
   mining_company_name: string;
   mining_company_country: string;
-  freight_company_name: string;
-  destination_refinery_name: string;
-  shipping_date: string;
+  shipped_to_company: string;
   created_at: string;
   certificates: CertificateWithData[];
 }
@@ -69,12 +67,6 @@ export function AssayCertificatesPage() {
           mining_company:mining_companies (
             name,
             country
-          ),
-          freight_company:freight_companies (
-            name
-          ),
-          destination_refinery:refineries (
-            name
           )
         `)
         .order('created_at', { ascending: false });
@@ -106,14 +98,12 @@ export function AssayCertificatesPage() {
 
         return {
           id: shipping.id,
-          preparation_number: shipping.preparation_number,
+          expedition_lot_number: shipping.expedition_lot_number || 'N/A',
           status: shipping.status,
-          total_weight_grams: shipping.total_weight_grams,
+          total_net_weight_grams: shipping.total_net_weight_grams || 0,
           mining_company_name: shipping.mining_company?.name || 'N/A',
           mining_company_country: shipping.mining_company?.country || 'N/A',
-          freight_company_name: shipping.freight_company?.name || 'N/A',
-          destination_refinery_name: shipping.destination_refinery?.name || 'N/A',
-          shipping_date: shipping.shipping_date,
+          shipped_to_company: shipping.shipped_to_company || 'N/A',
           created_at: shipping.created_at,
           certificates: shippingCerts.map((cert: any) => ({
             ...cert,
@@ -139,9 +129,9 @@ export function AssayCertificatesPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (group) =>
-          group.preparation_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          group.expedition_lot_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
           group.mining_company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          group.freight_company_name.toLowerCase().includes(searchTerm.toLowerCase())
+          group.shipped_to_company.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -336,7 +326,7 @@ export function AssayCertificatesPage() {
                         <Ship className="w-6 h-6 text-blue-600" />
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">
-                            {group.preparation_number}
+                            {group.expedition_lot_number}
                           </h3>
                           <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                             <span className="flex items-center gap-1">
@@ -345,11 +335,11 @@ export function AssayCertificatesPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Package className="w-4 h-4" />
-                              {group.total_weight_grams.toFixed(2)}g
+                              {group.total_net_weight_grams.toFixed(2)}g
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
-                              {new Date(group.shipping_date).toLocaleDateString('fr-FR')}
+                              {new Date(group.created_at).toLocaleDateString('fr-FR')}
                             </span>
                           </div>
                         </div>

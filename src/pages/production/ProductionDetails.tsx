@@ -40,22 +40,28 @@ export function ProductionDetails() {
   }, [id]);
 
   const loadProductionDetails = async () => {
-    if (!id) return;
+    if (!id) {
+      setError({
+        title: 'ID Invalide',
+        message: 'L\'identifiant de la production est manquant.'
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
 
-      const [prodData, historyData, docsData] = await Promise.all([
-        dailyProductionService.getProductionById(id),
-        productionStatusService.getStatusHistory(id),
-        productionDocumentService.listDocuments(id)
-      ]);
+      // Load production data first
+      const prodData = await dailyProductionService.getProductionById(id);
 
       if (!prodData) {
         setError({
           title: 'Production introuvable',
           message: 'La production demandée n\'existe pas ou a été supprimée.'
         });
+        setLoading(false);
         return;
       }
 
@@ -65,18 +71,38 @@ export function ProductionDetails() {
       }
 
       setProduction(prodData);
-      setStatusHistory(historyData);
-      setDocuments(docsData);
 
+      // Load additional data (non-blocking)
+      const [historyData, docsData] = await Promise.allSettled([
+        productionStatusService.getStatusHistory(id),
+        productionDocumentService.listDocuments(id)
+      ]);
+
+      // Set status history (default to empty array if failed)
+      setStatusHistory(
+        historyData.status === 'fulfilled' ? historyData.value : []
+      );
+
+      // Set documents (default to empty array if failed)
+      setDocuments(
+        docsData.status === 'fulfilled' ? docsData.value : []
+      );
+
+      // Load mining company if available
       if (prodData.mining_company_id) {
-        const { data: companyData } = await supabase
-          .from('mining_companies')
-          .select('id, name')
-          .eq('id', prodData.mining_company_id)
-          .single();
+        try {
+          const { data: companyData } = await supabase
+            .from('mining_companies')
+            .select('id, name')
+            .eq('id', prodData.mining_company_id)
+            .maybeSingle();
 
-        if (companyData) {
-          setMiningCompany(companyData);
+          if (companyData) {
+            setMiningCompany(companyData);
+          }
+        } catch (companyError) {
+          console.warn('Could not load mining company:', companyError);
+          // Non-critical, continue without company data
         }
       }
     } catch (error: any) {

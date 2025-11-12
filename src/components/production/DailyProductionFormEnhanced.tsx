@@ -265,8 +265,10 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
       if (production?.id) {
         await dailyProductionService.updateProduction(production.id, data);
+        alert('✅ Production mise à jour avec succès!');
       } else {
-        await dailyProductionService.createProduction(data);
+        const newProduction = await dailyProductionService.createProduction(data);
+        alert(`✅ Production créée avec succès!\nID: ${newProduction.id}\nDate: ${newProduction.production_date}`);
       }
 
       onSuccess();

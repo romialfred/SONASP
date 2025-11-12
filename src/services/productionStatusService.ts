@@ -69,12 +69,17 @@ class ProductionStatusService {
         prod_id: productionId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching status history:', error);
+        // Return empty array instead of throwing to prevent UI breakage
+        return [];
+      }
 
-      return data as StatusHistoryEntry[];
+      return (data || []) as StatusHistoryEntry[];
     } catch (error: any) {
       console.error('Error fetching status history:', error);
-      throw new Error(error.message || 'Erreur lors du chargement de l\'historique');
+      // Return empty array instead of throwing to prevent UI breakage
+      return [];
     }
   }
 

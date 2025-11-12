@@ -72,12 +72,17 @@ class ProductionDocumentService {
         .eq('production_id', productionId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error listing documents:', error);
+        // Return empty array instead of throwing to prevent UI breakage
+        return [];
+      }
 
-      return data as ProductionDocument[];
+      return (data || []) as ProductionDocument[];
     } catch (error: any) {
       console.error('Error listing documents:', error);
-      throw new Error(error.message || 'Erreur lors du chargement des documents');
+      // Return empty array instead of throwing to prevent UI breakage
+      return [];
     }
   }
 

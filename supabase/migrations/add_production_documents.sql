@@ -91,3 +91,69 @@ CREATE TRIGGER production_documents_updated_at
   BEFORE UPDATE ON production_documents
   FOR EACH ROW
   EXECUTE FUNCTION update_production_documents_updated_at();
+
+-- ========================================
+-- STORAGE BUCKET POLICIES
+-- ========================================
+-- Note: Ces policies contrôlent l'accès aux FICHIERS dans le bucket Storage
+-- (différent des policies RLS pour la TABLE production_documents)
+
+-- Policy SELECT: Voir/Télécharger les fichiers
+INSERT INTO storage.policies (name, bucket_id, operation, definition)
+VALUES (
+  'Authenticated users can view production documents',
+  'production-documents',
+  'SELECT',
+  '(auth.role() = ''authenticated'')'
+)
+ON CONFLICT (bucket_id, name) DO UPDATE SET
+  operation = EXCLUDED.operation,
+  definition = EXCLUDED.definition;
+
+-- Policy INSERT: Upload des fichiers
+INSERT INTO storage.policies (name, bucket_id, operation, definition)
+VALUES (
+  'Authenticated users can upload production documents',
+  'production-documents',
+  'INSERT',
+  '(auth.role() = ''authenticated'')'
+)
+ON CONFLICT (bucket_id, name) DO UPDATE SET
+  operation = EXCLUDED.operation,
+  definition = EXCLUDED.definition;
+
+-- Policy UPDATE: Modifier les métadonnées (optionnel)
+INSERT INTO storage.policies (name, bucket_id, operation, definition)
+VALUES (
+  'Authenticated users can update production documents',
+  'production-documents',
+  'UPDATE',
+  '(auth.role() = ''authenticated'')'
+)
+ON CONFLICT (bucket_id, name) DO UPDATE SET
+  operation = EXCLUDED.operation,
+  definition = EXCLUDED.definition;
+
+-- Policy DELETE: Supprimer les fichiers
+INSERT INTO storage.policies (name, bucket_id, operation, definition)
+VALUES (
+  'Authenticated users can delete production documents',
+  'production-documents',
+  'DELETE',
+  '(auth.role() = ''authenticated'')'
+)
+ON CONFLICT (bucket_id, name) DO UPDATE SET
+  operation = EXCLUDED.operation,
+  definition = EXCLUDED.definition;
+
+-- Vérifier que les storage policies sont créées
+DO $$
+DECLARE
+  policy_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO policy_count
+  FROM storage.policies
+  WHERE bucket_id = 'production-documents';
+
+  RAISE NOTICE 'Storage policies créées: % policies pour production-documents', policy_count;
+END $$;

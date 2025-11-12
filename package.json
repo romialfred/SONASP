@@ -16,7 +16,9 @@
     "deploy:full": "npm run deploy:cleanup && npm run build",
     "create-buckets": "node scripts/create-storage-buckets.js",
     "cleanup:prepared-shipments": "node scripts/cleanup-prepared-shipments.js",
-    "cleanup:prepared-shipments:preview": "node scripts/cleanup-prepared-shipments.js --dry-run"
+    "cleanup:prepared-shipments:preview": "node scripts/cleanup-prepared-shipments.js --dry-run",
+    "cleanup:shipping": "node scripts/cleanup-all-shipping-data.js",
+    "cleanup:shipping:preview": "node scripts/cleanup-all-shipping-data.js --dry-run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

@@ -259,70 +259,84 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-white/30 backdrop-blur-md h-screen border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300 flex-shrink-0',
+        'bg-gradient-to-b from-slate-50 via-white to-slate-50 h-screen border-r border-slate-200/80 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0',
         collapsed ? 'w-[70px]' : 'w-[280px]'
       )}
     >
       {/* Sidebar Header */}
-      <div className="p-3 border-b border-gray-200">
+      <div className="p-4 border-b border-slate-200/60 bg-white/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <img
-                src="/image.png"
-                alt="Mansa Logo"
-                className="w-10 h-10 object-contain"
-              />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
+                <img
+                  src="/image.png"
+                  alt="Mansa Logo"
+                  className="w-10 h-10 object-contain relative rounded-xl"
+                />
+              </div>
               <div>
-                <h2 className="text-gray-900 font-bold text-sm leading-tight">
+                <h2 className="text-slate-900 font-semibold text-sm leading-tight tracking-tight">
                   Mansa Resources
                 </h2>
-                <span className="block text-xs font-normal text-gray-600">
+                <span className="block text-xs text-slate-500">
                   Gold Tracker
                 </span>
               </div>
             </div>
           )}
           {collapsed && (
-            <img
-              src="/image.png"
-              alt="Mansa Logo"
-              className="w-10 h-10 object-contain mx-auto"
-            />
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
+              <img
+                src="/image.png"
+                alt="Mansa Logo"
+                className="w-10 h-10 object-contain mx-auto relative rounded-xl"
+              />
+            </div>
           )}
         </div>
       </div>
 
       {/* Toggle Button with "My Applications" */}
-      <div className="px-3 py-2 border-b border-gray-200">
+      <div className="px-3 py-3 border-b border-slate-200/60 bg-white/30">
         <button
           onClick={toggleCollapse}
-          className="w-full flex items-center justify-between p-2 text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors group"
+          className="w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent rounded-xl transition-all duration-300 group"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {!collapsed && (
-            <span className="text-base font-bold">My Applications</span>
+            <span className="text-sm font-medium tracking-wide">My Applications</span>
           )}
-          <Menu className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+          <Menu className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
         {/* Dashboard - Direct Link (Not in Group) */}
         <Link
           to="/dashboard"
           className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
             isDashboardActive
-              ? 'bg-blue-500 text-white font-semibold shadow-md'
-              : 'text-gray-700 hover:bg-gray-100/70'
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30'
+              : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:shadow-sm'
           )}
         >
-          <LayoutDashboard className={cn('w-5 h-5', isDashboardActive ? 'text-white' : 'text-blue-500')} />
+          {isDashboardActive && (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent animate-pulse"></div>
+          )}
+          <div className={cn(
+            'p-1.5 rounded-lg transition-all duration-300',
+            isDashboardActive ? 'bg-white/20' : 'bg-blue-50 group-hover:bg-blue-100'
+          )}>
+            <LayoutDashboard className={cn('w-4 h-4', isDashboardActive ? 'text-white' : 'text-blue-600')} />
+          </div>
           {!collapsed && (
-            <span className="text-sm">
+            <span className="text-sm font-medium relative z-10">
               {t('nav.dashboard')}
             </span>
           )}
@@ -335,36 +349,56 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
           const hasActiveItem = groupItems.some(item => isActive(item.path));
 
           return (
-            <div key={group.id} className="space-y-0.5">
+            <div key={group.id} className="space-y-1">
               {/* Group Header */}
               <button
                 onClick={() => !collapsed && toggleGroup(group.id)}
                 className={cn(
-                  'group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 text-gray-900',
-                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
+                  'group w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 relative overflow-hidden',
+                  'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2',
                   isOpen || hasActiveItem
-                    ? 'bg-gray-100/70 font-semibold'
-                    : 'hover:bg-gray-100/50'
+                    ? 'bg-gradient-to-r from-slate-100/80 to-transparent shadow-sm'
+                    : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/60 hover:to-transparent'
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 relative z-10">
                   {group.groupIcon && (
-                    <group.groupIcon className={cn('w-5 h-5', group.groupIconColor)} />
+                    <div className={cn(
+                      'p-1.5 rounded-lg transition-all duration-300',
+                      isOpen || hasActiveItem ? 'bg-white shadow-sm' : 'bg-slate-50 group-hover:bg-white'
+                    )}>
+                      <group.groupIcon className={cn('w-4 h-4', group.groupIconColor)} />
+                    </div>
                   )}
-                  {!collapsed && <span className="text-sm">{group.label}</span>}
+                  {!collapsed && (
+                    <span className={cn(
+                      'text-sm transition-all duration-300',
+                      isOpen || hasActiveItem ? 'font-medium text-slate-900' : 'font-normal text-slate-700'
+                    )}>
+                      {group.label}
+                    </span>
+                  )}
                 </div>
                 {!collapsed && (
-                  isOpen ? (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-500" />
-                  )
+                  <div className={cn(
+                    'p-1 rounded-lg transition-all duration-300',
+                    isOpen ? 'bg-slate-200/50' : 'group-hover:bg-slate-200/30'
+                  )}>
+                    {isOpen ? (
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    )}
+                  </div>
                 )}
               </button>
 
               {/* Group Items */}
               {isOpen && !collapsed && (
-                <div className="ml-2 space-y-0.5 border-l-2 border-gray-200 pl-2">
+                <div className="ml-3 pl-4 space-y-1 border-l-2 border-slate-200/60 relative">
+                  {/* Gradient line on hover */}
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
                   {groupItems.map((item) => {
                     const active = isActive(item.path);
                     return (
@@ -372,15 +406,28 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                         key={item.path}
                         to={item.path}
                         className={cn(
-                          'flex items-center gap-3 px-2 py-1.5 rounded-lg transition-all duration-200 text-sm',
-                          'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
+                          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden',
+                          'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2',
                           active
-                            ? 'bg-emerald-50 text-emerald-900 font-semibold shadow-sm border border-emerald-200'
-                            : 'text-gray-700 hover:bg-gray-100/50'
+                            ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/50 text-emerald-900 shadow-sm border border-emerald-200/50'
+                            : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-transparent hover:translate-x-1'
                         )}
                       >
-                        <item.icon className={cn('w-4 h-4', active ? 'text-emerald-600' : item.iconColor)} />
-                        <span>{item.label}</span>
+                        {active && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-r-full"></div>
+                        )}
+                        <div className={cn(
+                          'p-1 rounded-md transition-all duration-300 relative z-10',
+                          active ? 'bg-emerald-100/80' : 'bg-slate-50 group-hover:bg-slate-100'
+                        )}>
+                          <item.icon className={cn('w-3.5 h-3.5', active ? 'text-emerald-600' : item.iconColor)} />
+                        </div>
+                        <span className={cn(
+                          'text-sm transition-all duration-300 relative z-10',
+                          active ? 'font-medium' : 'font-normal'
+                        )}>
+                          {item.label}
+                        </span>
                       </Link>
                     );
                   })}
@@ -392,9 +439,9 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-gray-200">
+      <div className="px-4 py-3 border-t border-slate-200/60 bg-white/30">
         {!collapsed && (
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-slate-500 text-center font-medium">
             © 2025 Mansa Resources
           </p>
         )}

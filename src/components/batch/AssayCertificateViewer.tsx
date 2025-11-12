@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { FormField } from '@/components/ui/FormField';
 import { Loading } from '@/components/ui/Loading';
 import { PDFViewer } from '@/components/ui/PDFViewer';
+import { RejectCertificateModal } from '@/components/ui/RejectCertificateModal';
 import { useAlert } from '@/hooks/useAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -43,6 +44,7 @@ export function AssayCertificateViewer({
   const [editing, setEditing] = useState(false);
   const [editedData, setEditedData] = useState<Partial<AssayCertificateData>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -120,18 +122,20 @@ export function AssayCertificateViewer({
     }
   };
 
-  const handleReject = async () => {
-    if (!user?.id) return;
+  const handleRejectClick = () => {
+    setShowRejectModal(true);
+  };
 
-    const notes = prompt('Please provide a reason for rejection:');
-    if (!notes) return;
+  const handleRejectConfirm = async (rejectionNotes: string) => {
+    if (!user?.id) return;
 
     setSubmitting(true);
     try {
-      const result = await rejectCertificateData(certificate.id, user.id, notes);
+      const result = await rejectCertificateData(certificate.id, user.id, rejectionNotes);
 
       if (result.success) {
-        alert.success('Certificate data rejected');
+        alert.success('Certificat rejeté avec succès');
+        setShowRejectModal(false);
         onReject?.();
         onDataUpdate?.();
 
@@ -140,10 +144,10 @@ export function AssayCertificateViewer({
           onClose?.();
         }, 500);
       } else {
-        alert.error(result.error || 'Failed to reject');
+        alert.error(result.error || 'Échec du rejet');
       }
     } catch (error: any) {
-      alert.error('Error rejecting: ' + error.message);
+      alert.error('Erreur lors du rejet: ' + error.message);
     } finally {
       setSubmitting(false);
     }
@@ -474,7 +478,7 @@ export function AssayCertificateViewer({
             certificate.approval_status === 'pending' && (
               <div className="flex gap-3 justify-center p-4 bg-gradient-to-r from-green-50 to-red-50 border-t border-gray-200 -mx-3 -mb-3 rounded-b-lg">
                 <Button
-                  onClick={handleReject}
+                  onClick={handleRejectClick}
                   disabled={submitting}
                   size="lg"
                   className="bg-red-600 hover:bg-red-700 text-white px-8"
@@ -513,6 +517,15 @@ export function AssayCertificateViewer({
           </div>
         </Card>
       )}
+
+      {/* Reject Certificate Modal */}
+      <RejectCertificateModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={handleRejectConfirm}
+        certificateName={certificate.file_name}
+        isSubmitting={submitting}
+      />
     </div>
   );
 }

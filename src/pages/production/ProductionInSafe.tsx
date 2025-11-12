@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Download, TrendingUp, TrendingDown, Shield, AlertCircle, CheckCircle, Eye } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Shield, AlertCircle, CheckCircle, Eye } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 interface MiningCompany {
   id: string;
@@ -44,9 +48,11 @@ interface StatusCount {
 
 export function ProductionInSafe() {
   const navigate = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
   const [productions, setProductions] = useState<DailyProduction[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -229,6 +235,218 @@ export function ProductionInSafe() {
     link.href = URL.createObjectURL(blob);
     link.download = `production_in_safe_${dateRange.startDate}_to_${dateRange.endDate}.csv`;
     link.click();
+    setShowExportMenu(false);
+  };
+
+  const exportToExcel = () => {
+    if (productions.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+
+    const summaryData = [
+      ['Production en Coffre-Fort - Rapport Exécutif'],
+      [''],
+      ['Période:', `${dateRange.startDate} à ${dateRange.endDate}`],
+      ['Date d\'export:', new Date().toLocaleDateString('fr-FR')],
+      [''],
+      ['RÉSUMÉ'],
+      [generateSummaryText()],
+      [''],
+      ['INDICATEURS DE PERFORMANCE'],
+      [''],
+      ['Hebdomadaire (WTD)', '', ''],
+      ['Prévision', forecasts.wtd_forecast, 'oz'],
+      ['Budget', forecasts.wtd_budget, 'oz'],
+      ['Réalisé', forecasts.wtd_actual.toFixed(2), 'oz'],
+      ['Écart vs Prévision', calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast).toFixed(2), 'oz'],
+      [''],
+      ['Mensuelle (MTD)', '', ''],
+      ['Prévision', forecasts.mtd_forecast, 'oz'],
+      ['Budget', forecasts.mtd_budget, 'oz'],
+      ['Réalisé', forecasts.mtd_actual.toFixed(2), 'oz'],
+      ['Écart vs Prévision', calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast).toFixed(2), 'oz'],
+      [''],
+      ['Annuelle (YTD)', '', ''],
+      ['Prévision', forecasts.ytd_forecast, 'oz'],
+      ['Budget', forecasts.ytd_budget, 'oz'],
+      ['Réalisé', forecasts.ytd_actual.toFixed(2), 'oz'],
+      ['Écart vs Prévision', calculateVariance(forecasts.ytd_actual, forecasts.ytd_forecast).toFixed(2), 'oz'],
+      [''],
+    ];
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Résumé');
+
+    const tableData = [
+      ['Date', 'Bullion (g)', 'Finesse (%)', 'Or Pur (g)', 'Oz Estimées', 'Référence', 'Société Minière', 'Statut'],
+      ...productions.map(p => [
+        new Date(p.production_date).toLocaleDateString('fr-FR'),
+        p.bullion_grams.toFixed(2),
+        p.estimated_fineness_pct.toFixed(1),
+        p.pure_gold_grams.toFixed(2),
+        p.estimated_oz.toFixed(4),
+        p.bar_reference || '',
+        getCompanyName(p.mining_company_id),
+        p.status || 'N/A'
+      ]),
+      ['TOTAL', summary.total_bullion_grams.toFixed(2), '', summary.total_pure_gold_grams.toFixed(2), summary.total_estimated_oz.toFixed(4), '', '', '']
+    ];
+
+    const dataSheet = XLSX.utils.aoa_to_sheet(tableData);
+    XLSX.utils.book_append_sheet(workbook, dataSheet, 'Inventaire');
+
+    XLSX.writeFile(workbook, `production_in_safe_${dateRange.startDate}_to_${dateRange.endDate}.xlsx`);
+    setShowExportMenu(false);
+  };
+
+  const exportToPDF = async () => {
+    if (productions.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.setFillColor(218, 165, 32);
+      pdf.rect(0, 0, pageWidth, 35, 'F');
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Production en Coffre-Fort', pageWidth / 2, 15, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Période: ${dateRange.startDate} à ${dateRange.endDate}`, pageWidth / 2, 23, { align: 'center' });
+      pdf.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 30, { align: 'center' });
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Résumé de la situation', 14, 45);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      const summaryText = generateSummaryText();
+      const splitSummary = pdf.splitTextToSize(summaryText, pageWidth - 28);
+      pdf.text(splitSummary, 14, 52);
+
+      const startY = 52 + (splitSummary.length * 5) + 10;
+
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(14, startY, 85, 8, 'F');
+      pdf.rect(104, startY, 85, 8, 'F');
+      pdf.rect(194, startY, 85, 8, 'F');
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.text('Performance Hebdomadaire (WTD)', 56, startY + 5, { align: 'center' });
+      pdf.text('Performance Mensuelle (MTD)', 146, startY + 5, { align: 'center' });
+      pdf.text('Performance Annuelle (YTD)', 236, startY + 5, { align: 'center' });
+
+      const metricsY = startY + 12;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+
+      pdf.text(`Prévision: ${forecasts.wtd_forecast} oz`, 16, metricsY);
+      pdf.text(`Réalisé: ${forecasts.wtd_actual.toFixed(0)} oz`, 16, metricsY + 5);
+      pdf.text(`Écart: ${calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast).toFixed(0)} oz`, 16, metricsY + 10);
+
+      pdf.text(`Prévision: ${forecasts.mtd_forecast} oz`, 106, metricsY);
+      pdf.text(`Réalisé: ${forecasts.mtd_actual.toFixed(0)} oz`, 106, metricsY + 5);
+      pdf.text(`Écart: ${calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast).toFixed(0)} oz`, 106, metricsY + 10);
+
+      pdf.text(`Prévision: ${forecasts.ytd_forecast} oz`, 196, metricsY);
+      pdf.text(`Réalisé: ${forecasts.ytd_actual.toFixed(0)} oz`, 196, metricsY + 5);
+      pdf.text(`Écart: ${calculateVariance(forecasts.ytd_actual, forecasts.ytd_forecast).toFixed(0)} oz`, 196, metricsY + 10);
+
+      const tableStartY = metricsY + 20;
+
+      const tableData = productions.map(p => [
+        new Date(p.production_date).toLocaleDateString('fr-FR'),
+        p.bullion_grams.toFixed(2),
+        p.estimated_fineness_pct.toFixed(1) + '%',
+        p.pure_gold_grams.toFixed(2),
+        p.estimated_oz.toFixed(4),
+        p.bar_reference || '-',
+        getCompanyName(p.mining_company_id),
+        p.status || 'N/A'
+      ]);
+
+      tableData.push([
+        'TOTAL',
+        summary.total_bullion_grams.toFixed(2),
+        '',
+        summary.total_pure_gold_grams.toFixed(2),
+        summary.total_estimated_oz.toFixed(4),
+        '',
+        '',
+        ''
+      ]);
+
+      autoTable(pdf, {
+        startY: tableStartY,
+        head: [['Date', 'Bullion (g)', 'Finesse', 'Or Pur (g)', 'Oz Estimées', 'Référence', 'Société', 'Statut']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [184, 134, 11],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8
+        },
+        bodyStyles: {
+          fontSize: 7
+        },
+        footStyles: {
+          fillColor: [184, 134, 11],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8
+        },
+        alternateRowStyles: {
+          fillColor: [255, 250, 230]
+        },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 25, halign: 'right' },
+          2: { cellWidth: 20, halign: 'right' },
+          3: { cellWidth: 25, halign: 'right' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 30 },
+          6: { cellWidth: 40 },
+          7: { cellWidth: 25 }
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fillColor = [184, 134, 11];
+            data.cell.styles.textColor = [255, 255, 255];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        },
+        margin: { top: 10, left: 14, right: 14 }
+      });
+
+      const finalY = (pdf as any).lastAutoTable.finalY || tableStartY + 50;
+
+      if (finalY + 10 < pageHeight - 20) {
+        pdf.setFontSize(7);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Généré le ${new Date().toLocaleString('fr-FR')}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      }
+
+      pdf.save(`production_in_safe_${dateRange.startDate}_to_${dateRange.endDate}.pdf`);
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'export PDF:', error);
+      alert('Erreur lors de la génération du PDF');
+    }
   };
 
   const getCompanyName = (companyId: string | null) => {
@@ -255,7 +473,7 @@ export function ProductionInSafe() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6" ref={pageRef}>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -266,9 +484,27 @@ export function ProductionInSafe() {
             </div>
             <p className="text-sm text-gray-600">Suivi et analyse des barres d'or</p>
           </div>
-          <Button onClick={exportToCSV} variant="outline" className="border-slate-300 hover:bg-slate-50">
-            <Download className="w-4 h-4 mr-2" />Exporter
-          </Button>
+          <div className="relative">
+            <Button onClick={() => setShowExportMenu(!showExportMenu)} variant="outline" className="border-slate-300 hover:bg-slate-50">
+              <Download className="w-4 h-4 mr-2" />Exporter
+            </Button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <button onClick={exportToCSV} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100">
+                  <FileText className="w-4 h-4 text-green-600" />
+                  <span className="font-medium">Exporter en CSV</span>
+                </button>
+                <button onClick={exportToExcel} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span className="font-medium">Exporter en XLSX</span>
+                </button>
+                <button onClick={exportToPDF} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                  <Download className="w-4 h-4 text-red-600" />
+                  <span className="font-medium">Exporter en PDF</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <Card className="border-l-4 border-l-slate-700 bg-gradient-to-r from-slate-50 to-white">
@@ -329,7 +565,7 @@ export function ProductionInSafe() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
+              <thead className="bg-gradient-to-r from-amber-700 to-yellow-700 text-white">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Bullion (g)</th>
@@ -368,7 +604,7 @@ export function ProductionInSafe() {
                 )}
               </tbody>
               {!loading && productions.length > 0 && (
-                <tfoot className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
+                <tfoot className="bg-gradient-to-r from-amber-700 to-yellow-700 text-white">
                   <tr>
                     <td className="px-4 py-3 text-xs font-semibold uppercase">Total</td>
                     <td className="px-4 py-3 text-sm text-right font-bold">{summary.total_bullion_grams.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</td>

@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
+import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { productionStatusService, StatusHistoryEntry } from '@/services/productionStatusService';
 import { productionDocumentService } from '@/services/productionDocumentService';
@@ -30,6 +31,7 @@ export function ProductionDetails() {
   const [documents, setDocuments] = useState<ProductionDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -49,6 +51,19 @@ export function ProductionDetails() {
         productionDocumentService.listDocuments(id)
       ]);
 
+      if (!prodData) {
+        setError({
+          title: 'Production introuvable',
+          message: 'La production demandée n\'existe pas ou a été supprimée.'
+        });
+        return;
+      }
+
+      // Ensure status exists with default value
+      if (!prodData.status) {
+        prodData.status = 'prepared';
+      }
+
       setProduction(prodData);
       setStatusHistory(historyData);
       setDocuments(docsData);
@@ -66,7 +81,10 @@ export function ProductionDetails() {
       }
     } catch (error: any) {
       console.error('Error loading production details:', error);
-      alert('Erreur lors du chargement des détails');
+      setError({
+        title: 'Erreur de chargement',
+        message: error.message || 'Impossible de charger les détails de la production. Veuillez réessayer.'
+      });
     } finally {
       setLoading(false);
     }
@@ -79,7 +97,12 @@ export function ProductionDetails() {
       await productionDocumentService.uploadDocument(id, file, documentName);
       const docsData = await productionDocumentService.listDocuments(id);
       setDocuments(docsData);
+      setShowDocumentUpload(false);
     } catch (error: any) {
+      setError({
+        title: 'Erreur d\'upload',
+        message: error.message || 'Impossible de télécharger le document. Veuillez réessayer.'
+      });
       throw error;
     }
   };
@@ -89,7 +112,10 @@ export function ProductionDetails() {
       const url = await productionDocumentService.getDocumentUrl(doc.file_path);
       window.open(url, '_blank');
     } catch (error: any) {
-      alert(error.message || 'Erreur lors de l\'ouverture du document');
+      setError({
+        title: 'Erreur',
+        message: error.message || 'Impossible d\'ouvrir le document. Veuillez réessayer.'
+      });
     }
   };
 
@@ -97,7 +123,10 @@ export function ProductionDetails() {
     try {
       await productionDocumentService.downloadDocument(doc);
     } catch (error: any) {
-      alert(error.message || 'Erreur lors du téléchargement');
+      setError({
+        title: 'Erreur de téléchargement',
+        message: error.message || 'Impossible de télécharger le document. Veuillez réessayer.'
+      });
     }
   };
 
@@ -109,7 +138,10 @@ export function ProductionDetails() {
       const docsData = await productionDocumentService.listDocuments(id);
       setDocuments(docsData);
     } catch (error: any) {
-      alert(error.message || 'Erreur lors de la suppression');
+      setError({
+        title: 'Erreur de suppression',
+        message: error.message || 'Impossible de supprimer le document. Veuillez réessayer.'
+      });
     }
   };
 
@@ -393,6 +425,14 @@ export function ProductionDetails() {
         isOpen={showDocumentUpload}
         onClose={() => setShowDocumentUpload(false)}
         onUpload={handleDocumentUpload}
+      />
+
+      {/* Error Dialog */}
+      <ErrorDialog
+        isOpen={!!error}
+        onClose={() => setError(null)}
+        title={error?.title}
+        message={error?.message || ''}
       />
     </MainLayout>
   );

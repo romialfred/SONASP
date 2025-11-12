@@ -126,7 +126,7 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
                 </span>
               </td>
               <td className="px-4 py-4 whitespace-nowrap">
-                <ProductionStatusBadge status={production.status as ProductionStatus} size="sm" showIcon />
+                <ProductionStatusBadge status={(production.status || 'prepared') as ProductionStatus} size="sm" showIcon />
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-2">

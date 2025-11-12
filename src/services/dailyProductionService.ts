@@ -81,15 +81,28 @@ class DailyProductionService {
     return data as DailyProduction[];
   }
 
-  async getProductionById(id: string) {
-    const { data, error } = await supabase
-      .from('daily_production')
-      .select('*')
-      .eq('id', id)
-      .single();
+  async getProductionById(id: string): Promise<DailyProduction | null> {
+    try {
+      const { data, error } = await supabase
+        .from('daily_production')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-    if (error) throw error;
-    return data as DailyProduction;
+      if (error) {
+        console.error('Error fetching production by ID:', error);
+        throw new Error(`Impossible de charger la production: ${error.message}`);
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return data as DailyProduction;
+    } catch (error: any) {
+      console.error('Error in getProductionById:', error);
+      throw error;
+    }
   }
 
   async getProductionByDate(date: string, siteId: string = 'guinea') {

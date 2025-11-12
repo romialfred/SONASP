@@ -376,7 +376,6 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE VIEW shipments_for_refinery AS
 SELECT
   sp.*,
-  dp.mining_company_id,
   dp.production_date,
   dp.bullion_grams,
   dp.pure_gold_grams,
@@ -388,7 +387,6 @@ WHERE sp.status = 'validated_for_refinery';
 CREATE OR REPLACE VIEW shipments_for_presale AS
 SELECT
   sp.*,
-  dp.mining_company_id,
   dp.production_date,
   dp.bullion_grams,
   dp.pure_gold_grams,

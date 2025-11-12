@@ -313,6 +313,46 @@ class ShippingPreparationService {
 
     if (error) throw error;
   }
+
+  /**
+   * Reserve quota on an export license for a shipping preparation
+   */
+  async reserveLicenseQuota(
+    licenseId: string,
+    shippingId: string,
+    quantity: number
+  ): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase.rpc('reserve_license_quota', {
+      p_license_id: licenseId,
+      p_shipping_id: shippingId,
+      p_quantity: quantity,
+      p_user_id: user?.id || null,
+    });
+
+    if (error) throw error;
+    return data as boolean;
+  }
+
+  /**
+   * Release quota from an export license (in case of cancellation)
+   */
+  async releaseLicenseQuota(
+    licenseId: string,
+    quantity: number
+  ): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase.rpc('release_license_quota', {
+      p_license_id: licenseId,
+      p_quantity: quantity,
+      p_user_id: user?.id || null,
+    });
+
+    if (error) throw error;
+    return data as boolean;
+  }
 }
 
 export const shippingPreparationService = new ShippingPreparationService();

@@ -84,18 +84,21 @@ BEGIN
 
   -- Vérifier la quantité disponible
   IF v_license.remaining_quantity_grams < p_required_quantity THEN
-    RETURN QUERY SELECT 
-      FALSE, 
-      v_license.remaining_quantity_grams, 
-      format('Quantité insuffisante. Disponible: %.2fg, Requis: %.2fg', v_license.remaining_quantity_grams, p_required_quantity)::TEXT;
+    RETURN QUERY SELECT
+      FALSE,
+      v_license.remaining_quantity_grams,
+      format('Quantité insuffisante. Disponible: %sg, Requis: %sg',
+        ROUND(v_license.remaining_quantity_grams::NUMERIC, 2)::TEXT,
+        ROUND(p_required_quantity::NUMERIC, 2)::TEXT)::TEXT;
     RETURN;
   END IF;
 
   -- Tout est OK
-  RETURN QUERY SELECT 
-    TRUE, 
-    v_license.remaining_quantity_grams, 
-    format('✅ Quantité disponible: %.2fg', v_license.remaining_quantity_grams)::TEXT;
+  RETURN QUERY SELECT
+    TRUE,
+    v_license.remaining_quantity_grams,
+    format('✅ Quantité disponible: %sg',
+      ROUND(v_license.remaining_quantity_grams::NUMERIC, 2)::TEXT)::TEXT;
 END;
 $$;
 
@@ -130,8 +133,8 @@ BEGIN
 
   -- Si pas disponible, lever une erreur
   IF v_remaining < p_quantity THEN
-    RAISE EXCEPTION 'Quota insuffisant sur la licence %: disponible %.2fg, requis %.2fg', 
-      v_license_number, v_remaining, p_quantity;
+    RAISE EXCEPTION 'Quota insuffisant sur la licence %: disponible %g, requis %g',
+      v_license_number, ROUND(v_remaining::NUMERIC, 2), ROUND(p_quantity::NUMERIC, 2);
   END IF;
 
   -- Mettre à jour la licence

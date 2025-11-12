@@ -580,6 +580,21 @@ export default function ShippingPreparationNew() {
         await shippingPreparationService.uploadDocument(prepId, doc.file, doc.title);
       }
 
+      // Reserve license quota
+      console.log('Reserving license quota...');
+      try {
+        await shippingPreparationService.reserveLicenseQuota(
+          selectedLicenseId,
+          prepId,
+          totalNetWeightGrams
+        );
+        console.log('License quota reserved successfully');
+      } catch (err) {
+        console.error('Failed to reserve license quota:', err);
+        // Rollback - delete the preparation since we couldn't reserve quota
+        throw new Error(`Impossible de réserver le quota de licence: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+      }
+
       // Generate and upload Packing List PDF
       console.log('Starting Packing List generation...');
       try {

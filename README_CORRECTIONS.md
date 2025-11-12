@@ -9,12 +9,18 @@ Fichier: supabase/migrations/fix_daily_production_rls_and_permissions.sql
 ```
 
 **Comment:**
-1. Supabase Dashboard → SQL Editor
-2. Copier-coller le fichier migration
-3. Run
-4. Vérifier: "✅ All policies created successfully!"
+1. Supabase Dashboard → SQL Editor → **New Query**
+2. Copier-coller le **CONTENU COMPLET** du fichier
+3. **Run** (Exécuter)
+4. Vérifier messages:
+   - ✅ "All policies created successfully!"
+   - ✅ Aucune erreur 42P13
+
+**⚠️ NOTE:** Migration contient `DROP FUNCTION` pour éviter conflits.
 
 **❌ Sans cette migration = système ne fonctionne pas!**
+
+**📚 Détails techniques:** `MIGRATION_FIX_NOTES.md`
 
 ---
 
@@ -60,6 +66,7 @@ Fichier: supabase/migrations/fix_daily_production_rls_and_permissions.sql
 | **PRODUCTION_SYSTEM_FIXES.md** | Analyse technique détaillée |
 | **DEMO_QUICKSTART.md** | Guide démo Management |
 | **TECHNICAL_CORRECTIONS_SUMMARY.md** | Corrections code |
+| **MIGRATION_FIX_NOTES.md** | Correction erreur 42P13 |
 | **docs/STORAGE_POLICIES_SETUP.md** | Config storage |
 
 ---

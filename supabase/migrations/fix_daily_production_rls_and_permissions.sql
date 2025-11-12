@@ -70,14 +70,16 @@ CREATE POLICY "Users can delete productions"
   USING (true);
 
 -- ========================================
--- 4. VERIFY STATUS HISTORY FUNCTION
+-- 4. FIX STATUS HISTORY FUNCTION
 -- ========================================
 
--- Recreate the status history function to ensure SECURITY DEFINER is set
-CREATE OR REPLACE FUNCTION get_production_status_history(prod_id uuid)
+-- Drop existing function to avoid signature conflicts
+DROP FUNCTION IF EXISTS get_production_status_history(uuid);
+
+-- Recreate with same signature as original but improved
+CREATE FUNCTION get_production_status_history(prod_id uuid)
 RETURNS TABLE (
   id uuid,
-  production_id uuid,
   old_status text,
   new_status text,
   changed_by uuid,
@@ -93,7 +95,6 @@ BEGIN
   RETURN QUERY
   SELECT
     psh.id,
-    psh.production_id,
     psh.old_status::text,
     psh.new_status::text,
     psh.changed_by,
@@ -134,7 +135,18 @@ DECLARE
   dp_rls_enabled boolean;
   dp_policy_count integer;
   psh_policy_count integer;
+  table_exists boolean;
 BEGIN
+  -- Check if table exists
+  SELECT EXISTS (
+    SELECT 1 FROM pg_class WHERE relname = 'daily_production'
+  ) INTO table_exists;
+
+  IF NOT table_exists THEN
+    RAISE NOTICE 'Table daily_production does not exist yet. Skipping verification.';
+    RETURN;
+  END IF;
+
   -- Check if RLS is enabled on daily_production
   SELECT relrowsecurity INTO dp_rls_enabled
   FROM pg_class
@@ -150,15 +162,18 @@ BEGIN
   WHERE tablename = 'production_status_history';
 
   RAISE NOTICE '=== Daily Production RLS Status ===';
-  RAISE NOTICE 'RLS Enabled: %', dp_rls_enabled;
+  RAISE NOTICE 'RLS Enabled: %', COALESCE(dp_rls_enabled, false);
   RAISE NOTICE 'Policies Count: %', dp_policy_count;
   RAISE NOTICE 'Status History Policies: %', psh_policy_count;
 
   IF dp_policy_count < 4 THEN
     RAISE WARNING 'Expected 4 policies on daily_production, found %', dp_policy_count;
   ELSE
-    RAISE NOTICE 'All policies created successfully!';
+    RAISE NOTICE '✅ All policies created successfully!';
   END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING 'Error during verification: %', SQLERRM;
 END $$;
 
 -- ========================================

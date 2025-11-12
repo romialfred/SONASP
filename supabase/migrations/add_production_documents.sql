@@ -43,6 +43,12 @@ CREATE INDEX IF NOT EXISTS idx_production_documents_uploaded_by
 -- Enable RLS
 ALTER TABLE production_documents ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view production documents" ON production_documents;
+DROP POLICY IF EXISTS "Users can upload production documents" ON production_documents;
+DROP POLICY IF EXISTS "Users can update their own documents" ON production_documents;
+DROP POLICY IF EXISTS "Users can delete their own documents" ON production_documents;
+
 -- Policies for production_documents
 CREATE POLICY "Users can view production documents"
   ON production_documents
@@ -77,6 +83,9 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Drop trigger if exists
+DROP TRIGGER IF EXISTS production_documents_updated_at ON production_documents;
 
 CREATE TRIGGER production_documents_updated_at
   BEFORE UPDATE ON production_documents

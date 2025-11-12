@@ -425,20 +425,28 @@ DO $$
 DECLARE
   v_production RECORD;
   v_count INTEGER := 0;
+  v_status_text TEXT;
 BEGIN
   FOR v_production IN
-    SELECT id, status_old_backup, created_by, created_at
+    SELECT id, status_old_backup::text as status_text, created_by, created_at
     FROM daily_production
     WHERE status_old_backup IS NOT NULL
   LOOP
-    IF v_production.status_old_backup IN ('prepared', 'shipped') THEN
+    v_status_text := v_production.status_text;
+
+    IF v_status_text = 'prepared' THEN
       UPDATE daily_production
-      SET status = v_production.status_old_backup::production_status_v2
+      SET status = 'prepared'::production_status_v2
+      WHERE id = v_production.id;
+      v_count := v_count + 1;
+    ELSIF v_status_text = 'shipped' THEN
+      UPDATE daily_production
+      SET status = 'shipped'::production_status_v2
       WHERE id = v_production.id;
       v_count := v_count + 1;
     ELSE
       UPDATE daily_production
-      SET status = 'prepared'
+      SET status = 'prepared'::production_status_v2
       WHERE id = v_production.id;
       v_count := v_count + 1;
     END IF;

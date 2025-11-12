@@ -72,6 +72,9 @@ import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { ProductionDetails } from './pages/production/ProductionDetails';
 import { ProductionInSafe } from './pages/production/ProductionInSafe';
 import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
+import { ExportLicensesPage } from './pages/production/ExportLicensesPage';
+import { ExportLicenseForm } from './pages/production/ExportLicenseForm';
+import { ExportLicenseDetails } from './pages/production/ExportLicenseDetails';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import ShippingDashboard from './pages/shipping/ShippingDashboard';
 import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
@@ -539,6 +542,40 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['factory', 'management']}>
                   <ProductionInSafe />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Export Licenses Routes */}
+            <Route
+              path="/production/licenses"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ExportLicensesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/production/licenses/new"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ExportLicenseForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/production/licenses/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ExportLicenseForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/production/licenses/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ExportLicenseDetails />
                 </ProtectedRoute>
               }
             />

@@ -30,6 +30,7 @@ import {
   Activity,
   ScanText,
   Lock,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -60,6 +61,7 @@ const useMenuGroups = (): MenuGroup[] => {
       items: [
         { label: 'Daily Production', path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
         { label: 'Production In Safe', path: '/production/in-safe', icon: Lock, iconColor: 'text-yellow-600' },
+        { label: 'Export Licenses', path: '/production/licenses', icon: Award, iconColor: 'text-purple-600' },
         { label: 'Budget & Forecasts', path: '/performance/budgets', icon: TrendingUp, iconColor: 'text-blue-600' },
       ],
     },

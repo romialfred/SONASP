@@ -30,8 +30,7 @@ interface SafeProductionSummary {
 interface StatusCount {
   prepared: number;
   shipped: number;
-  refined: number;
-  sold: number;
+  cancelled: number;
 }
 
 export function ProductionInSafe() {
@@ -59,8 +58,7 @@ export function ProductionInSafe() {
   const [statusCounts, setStatusCounts] = useState<StatusCount>({
     prepared: 0,
     shipped: 0,
-    refined: 0,
-    sold: 0
+    cancelled: 0
   });
 
   const [performanceData, setPerformanceData] = useState<PerformanceData>({
@@ -128,8 +126,7 @@ export function ProductionInSafe() {
       const counts: StatusCount = {
         prepared: productionData.filter(p => p.status === 'prepared').length,
         shipped: productionData.filter(p => p.status === 'shipped').length,
-        refined: productionData.filter(p => p.status === 'refined').length,
-        sold: productionData.filter(p => p.status === 'sold').length
+        cancelled: productionData.filter(p => p.status === 'cancelled').length
       };
       setStatusCounts(counts);
 
@@ -163,8 +160,7 @@ export function ProductionInSafe() {
     const statuses = [];
     if (statusCounts.prepared > 0) statuses.push(`${statusCounts.prepared} en préparation`);
     if (statusCounts.shipped > 0) statuses.push(`${statusCounts.shipped} expédiées`);
-    if (statusCounts.refined > 0) statuses.push(`${statusCounts.refined} raffinées`);
-    if (statusCounts.sold > 0) statuses.push(`${statusCounts.sold} vendues`);
+    if (statusCounts.cancelled > 0) statuses.push(`${statusCounts.cancelled} annulées`);
 
     const wtdVariance = calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast);
     const mtdVariance = calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast);
@@ -667,8 +663,7 @@ export function ProductionInSafe() {
                   <option value="all">Tous</option>
                   <option value="prepared">Préparé</option>
                   <option value="shipped">Expédié</option>
-                  <option value="refined">Raffiné</option>
-                  <option value="sold">Vendu</option>
+                  <option value="cancelled">Annulé</option>
                 </select>
               </div>
               <div>

@@ -132,10 +132,18 @@ export function ProductionStatusWorkflow({
         />
       )}
 
-      {!nextStatus && currentStatus === 'sold' && (
+      {!nextStatus && currentStatus === 'shipped' && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
           <p className="text-sm text-emerald-800 font-medium">
-            ✓ Cette production a atteint son statut final
+            ✓ Cette production a été expédiée. La suite du processus se fait dans le module Expédition/Raffinerie.
+          </p>
+        </div>
+      )}
+
+      {currentStatus === 'cancelled' && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800 font-medium">
+            ✗ Cette production a été annulée
           </p>
         </div>
       )}

@@ -41,21 +41,14 @@ class ProductionStatusService {
       if (updateError) throw updateError;
 
       if (notes) {
-        const { data: history } = await supabase
-          .from('production_status_history')
-          .select('id')
-          .eq('production_id', productionId)
+        await supabase
+          .from('unified_status_history')
+          .update({ notes })
+          .eq('entity_type', 'production')
+          .eq('entity_id', productionId)
           .eq('new_status', newStatus)
           .order('changed_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (history) {
-          await supabase
-            .from('production_status_history')
-            .update({ notes })
-            .eq('id', history.id);
-        }
+          .limit(1);
       }
     } catch (error: any) {
       console.error('Error updating production status:', error);
@@ -65,20 +58,39 @@ class ProductionStatusService {
 
   async getStatusHistory(productionId: string): Promise<StatusHistoryEntry[]> {
     try {
-      const { data, error } = await supabase.rpc('get_production_status_history', {
-        prod_id: productionId
-      });
+      const { data, error } = await supabase
+        .from('unified_status_history')
+        .select(`
+          id,
+          entity_id,
+          old_status,
+          new_status,
+          changed_by,
+          changed_at,
+          notes,
+          profiles:changed_by(email)
+        `)
+        .eq('entity_type', 'production')
+        .eq('entity_id', productionId)
+        .order('changed_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching status history:', error);
-        // Return empty array instead of throwing to prevent UI breakage
         return [];
       }
 
-      return (data || []) as StatusHistoryEntry[];
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        production_id: item.entity_id,
+        old_status: item.old_status,
+        new_status: item.new_status,
+        changed_by: item.changed_by,
+        changed_at: item.changed_at,
+        notes: item.notes,
+        user_email: item.profiles?.email
+      }));
     } catch (error: any) {
       console.error('Error fetching status history:', error);
-      // Return empty array instead of throwing to prevent UI breakage
       return [];
     }
   }
@@ -125,8 +137,7 @@ class ProductionStatusService {
       const counts: Record<ProductionStatus, number> = {
         prepared: 0,
         shipped: 0,
-        refined: 0,
-        sold: 0
+        cancelled: 0
       };
 
       if (data) {
@@ -143,8 +154,7 @@ class ProductionStatusService {
       return {
         prepared: 0,
         shipped: 0,
-        refined: 0,
-        sold: 0
+        cancelled: 0
       };
     }
   }

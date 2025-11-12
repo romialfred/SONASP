@@ -246,7 +246,8 @@ class AnnualBudgetService {
   }
 
   getRevisionMonth(quarter: number): number {
-    return quarter * 3;
+    const lastMonthOfQuarter = quarter * 3;
+    return lastMonthOfQuarter - 2;
   }
 
   canReviseQuarter(quarter: number, currentMonth: number): boolean {

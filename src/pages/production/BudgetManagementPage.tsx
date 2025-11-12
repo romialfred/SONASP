@@ -278,12 +278,12 @@ export function BudgetManagementPage() {
             <Button
               onClick={mode === 'budget' ? handleSaveBudgets : handleSaveForecasts}
               disabled={saving || !hasPendingChanges()}
-              className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
+              className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Enregistrement...' : 'Enregistrer'}
               {hasPendingChanges() && (
-                <span className="bg-white text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                <span className="bg-white text-slate-800 px-2 py-0.5 rounded-full text-xs font-bold">
                   {Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}
                 </span>
               )}
@@ -425,20 +425,20 @@ export function BudgetManagementPage() {
       <div className="w-80 bg-white border-l border-slate-200 shadow-2xl overflow-y-auto sticky top-0 h-screen">
         <div className="p-4 space-y-4">
           {/* Total Section */}
-          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white shadow-lg border border-slate-600">
             <div className="flex items-center gap-2 mb-2">
-              <div className="bg-white/20 rounded-full p-1.5">
+              <div className="bg-white/15 rounded-lg p-1.5">
                 <Target className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-200">
                 {mode === 'budget' ? 'Total Annuel' : `Total T${selectedQuarter}`}
               </h3>
             </div>
-            <div className="text-3xl font-black mb-1">
+            <div className="text-3xl font-black mb-1 text-white">
               {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-              <span className="text-base ml-1.5 font-semibold">oz</span>
+              <span className="text-base ml-1.5 font-semibold text-slate-300">oz</span>
             </div>
-            <p className="text-amber-100 text-xs">
+            <p className="text-slate-300 text-xs font-medium">
               {mode === 'budget' ? '12 mois' : '3 mois'}
             </p>
           </div>
@@ -457,19 +457,19 @@ export function BudgetManagementPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border border-indigo-200">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-3 border border-slate-200">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-indigo-700 font-medium">Mode</span>
-                <span className="text-xs font-bold text-indigo-900">
+                <span className="text-xs text-slate-600 font-medium">Mode</span>
+                <span className="text-xs font-bold text-slate-900">
                   {mode === 'budget' ? 'Budget' : `Forecast T${selectedQuarter}`}
                 </span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-3 border border-emerald-200">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-purple-700 font-medium">Modifications</span>
-                <span className="text-base font-bold text-purple-900">
+                <span className="text-xs text-emerald-700 font-medium">Modifications</span>
+                <span className="text-base font-bold text-emerald-900">
                   {Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}
                 </span>
               </div>

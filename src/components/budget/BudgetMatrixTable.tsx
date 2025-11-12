@@ -106,7 +106,7 @@ export function BudgetMatrixTable({
           className={`
             flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md
             ${isActive
-              ? 'bg-gradient-to-r from-blue-50 via-blue-100 to-indigo-50 border-blue-300 shadow-sm'
+              ? 'bg-gradient-to-r from-slate-100 to-slate-200 border-slate-300 shadow-sm'
               : 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200'
             }
           `}
@@ -120,11 +120,11 @@ export function BudgetMatrixTable({
             )}
             <div className={`
               p-1.5 rounded-md
-              ${isActive ? 'bg-blue-500 shadow-sm' : 'bg-slate-400'}
+              ${isActive ? 'bg-slate-700 shadow-sm' : 'bg-slate-400'}
             `}>
               <Calendar className="w-4 h-4 text-white" />
             </div>
-            <span className={`text-sm font-semibold ${isActive ? 'text-blue-900' : 'text-slate-700'}`}>
+            <span className={`text-sm font-semibold ${isActive ? 'text-slate-900' : 'text-slate-700'}`}>
               Trimestre {quarter}
             </span>
 
@@ -236,9 +236,9 @@ export function BudgetMatrixTable({
                             onFocus={() => setFocusedCell(`budget-${month}`)}
                             onBlur={() => setFocusedCell(null)}
                             className={`
-                              w-full px-2 py-1.5 text-right text-xs font-semibold rounded-md border transition-all
+                              w-32 px-2 py-1 text-right text-sm font-semibold rounded border transition-all
                               ${focusedCell === `budget-${month}`
-                                ? 'border-blue-400 ring-2 ring-blue-100 bg-blue-50'
+                                ? 'border-slate-400 ring-1 ring-slate-300 bg-slate-50'
                                 : 'border-slate-200 hover:border-slate-300'
                               }
                               bg-white text-slate-900 focus:outline-none
@@ -246,7 +246,7 @@ export function BudgetMatrixTable({
                             placeholder="0.00"
                           />
                         ) : (
-                          <div className="text-right text-xs font-semibold text-slate-700 px-2 py-1.5">
+                          <div className="text-right text-sm font-semibold text-slate-700 px-2 py-1">
                             {budget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
                           </div>
                         )}
@@ -270,14 +270,14 @@ export function BudgetMatrixTable({
                               onBlur={() => setFocusedCell(null)}
                               disabled={!editable}
                               className={`
-                                w-full px-2 py-1.5 text-right text-xs font-semibold rounded-md border transition-all
+                                w-32 px-2 py-1 text-right text-sm font-semibold rounded border transition-all
                                 ${focusedCell === `forecast-${month}`
-                                  ? 'border-blue-400 ring-2 ring-blue-100 bg-blue-100'
+                                  ? 'border-blue-500 ring-1 ring-blue-300 bg-blue-50'
                                   : 'border-blue-200 hover:border-blue-300'
                                 }
                                 ${!editable
                                   ? 'bg-slate-50 text-slate-400 cursor-not-allowed'
-                                  : 'bg-white text-blue-900'
+                                  : 'bg-white text-slate-900'
                                 }
                                 focus:outline-none
                               `}

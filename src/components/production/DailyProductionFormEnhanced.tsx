@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Card } from '@/components/ui/Card';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
+import { CustomAlert } from '@/components/ui/CustomAlert';
+import { CustomConfirm } from '@/components/ui/CustomConfirm';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { dailyProductionService, DailyProduction, ProductionSummary } from '@/services/dailyProductionService';
 import { productionDocumentService } from '@/services/productionDocumentService';
 import { ProductionDocumentUpload } from './ProductionDocumentUpload';
@@ -46,6 +49,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [documents, setDocuments] = useState<ProductionDocument[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const { alertState, confirmState, showSuccess, showError, showConfirm, closeAlert, closeConfirm } = useCustomAlert();
 
   useEffect(() => {
     loadMiningCompanies();
@@ -197,7 +201,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   const handleGenerateBarReference = async () => {
     if (!formData.mining_company_id) {
-      alert('Veuillez sélectionner une société minière');
+      showError('Veuillez sélectionner une société minière');
       return;
     }
 
@@ -210,7 +214,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       setFormData(prev => ({ ...prev, bar_reference: barRef }));
     } catch (error) {
       console.error('Error generating bar reference:', error);
-      alert('Erreur lors de la génération de la référence');
+      showError('Erreur lors de la génération de la référence');
     } finally {
       setGeneratingBarRef(false);
     }
@@ -265,16 +269,16 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
       if (production?.id) {
         await dailyProductionService.updateProduction(production.id, data);
-        alert('✅ Production mise à jour avec succès!');
+        showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
       } else {
         const newProduction = await dailyProductionService.createProduction(data);
-        alert(`✅ Production créée avec succès!\nID: ${newProduction.id}\nDate: ${newProduction.production_date}`);
+        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}`, 'Production créée');
       }
 
       onSuccess();
     } catch (error: any) {
       console.error('Error saving production:', error);
-      alert(error.message || 'Erreur lors de la sauvegarde');
+      showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
     } finally {
       setLoading(false);
     }
@@ -702,6 +706,27 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         onUpload={handleDocumentUpload}
       />
     )}
+
+    {/* Custom Alert */}
+    <CustomAlert
+      isOpen={alertState.isOpen}
+      onClose={closeAlert}
+      title={alertState.title}
+      message={alertState.message}
+      type={alertState.type}
+    />
+
+    {/* Custom Confirm */}
+    <CustomConfirm
+      isOpen={confirmState.isOpen}
+      onConfirm={confirmState.onConfirm}
+      onCancel={closeConfirm}
+      title={confirmState.title}
+      message={confirmState.message}
+      type={confirmState.type}
+      confirmText={confirmState.confirmText}
+      cancelText={confirmState.cancelText}
+    />
     </>
   );
 }

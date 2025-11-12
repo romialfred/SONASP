@@ -5,6 +5,9 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tabs } from '@/components/ui/Tabs';
+import { CustomAlert } from '@/components/ui/CustomAlert';
+import { CustomConfirm } from '@/components/ui/CustomConfirm';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { DailyProductionFormEnhanced } from '@/components/production/DailyProductionFormEnhanced';
 import { ProductionMetrics } from '@/components/production/ProductionMetrics';
@@ -30,6 +33,7 @@ export function DailyProductionPage() {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
+  const { alertState, confirmState, showError, showConfirm, closeAlert, closeConfirm } = useCustomAlert();
 
   useEffect(() => {
     loadMiningCompanies();
@@ -75,7 +79,7 @@ export function DailyProductionPage() {
       setProductions(data);
     } catch (error) {
       console.error('Error loading productions:', error);
-      alert('Erreur lors du chargement des données');
+      showError('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -100,22 +104,29 @@ export function DailyProductionPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette production?')) {
-      return;
-    }
-
-    try {
-      await dailyProductionService.deleteProduction(id);
-      loadProductions();
-    } catch (error) {
-      console.error('Error deleting production:', error);
-      alert('Erreur lors de la suppression');
-    }
+    showConfirm(
+      'Êtes-vous sûr de vouloir supprimer cette production?',
+      async () => {
+        try {
+          await dailyProductionService.deleteProduction(id);
+          loadProductions();
+        } catch (error) {
+          console.error('Error deleting production:', error);
+          showError('Erreur lors de la suppression');
+        }
+      },
+      {
+        title: 'Confirmer la suppression',
+        type: 'danger',
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler'
+      }
+    );
   };
 
   const exportToCSV = () => {
     if (productions.length === 0) {
-      alert('Aucune donnée à exporter');
+      showError('Aucune donnée à exporter');
       return;
     }
 
@@ -289,6 +300,27 @@ export function DailyProductionPage() {
           miningCompanies={miningCompanies}
         />}
       </div>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        isOpen={alertState.isOpen}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
+
+      {/* Custom Confirm */}
+      <CustomConfirm
+        isOpen={confirmState.isOpen}
+        onConfirm={confirmState.onConfirm}
+        onCancel={closeConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        type={confirmState.type}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+      />
     </MainLayout>
   );
 }

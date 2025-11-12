@@ -89,28 +89,28 @@ export function FieldGuidePanel({
                     ${isActive ? 'scale-105 shadow-lg ring-2 ring-offset-2 ring-' + color.border.replace('border-', '') : 'scale-100'}
                   `}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className={`font-semibold ${isActive ? 'text-base' : 'text-sm'} ${color.text} transition-all duration-300`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h4 className={`font-semibold ${isActive ? 'text-sm' : 'text-xs'} ${color.text} transition-all duration-300`}>
                       {guide.title}
                     </h4>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       {guide.required && (
                         <span className="text-xs text-red-600 font-medium">* Requis</span>
                       )}
                       {guide.readOnly && (
-                        <span className="text-xs text-gray-500 font-medium bg-gray-200 px-2 py-0.5 rounded">
+                        <span className="text-xs text-gray-500 font-medium bg-gray-200 px-1.5 py-0.5 rounded">
                           Lecture seule
                         </span>
                       )}
                     </div>
                   </div>
-                  <p className={`${isActive ? 'text-sm' : 'text-xs'} text-gray-700 leading-relaxed transition-all duration-300`}>
+                  <p className={`${isActive ? 'text-xs' : 'text-xs'} text-gray-600 leading-tight transition-all duration-300`}>
                     {guide.description}
                   </p>
                   {isActive && guide.example && (
-                    <div className="mt-2 pt-2 border-t border-gray-200">
-                      <p className="text-xs text-gray-600">
-                        <span className="font-medium">Exemple:</span> {guide.example}
+                    <div className="mt-1 pt-1 border-t border-gray-200">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-medium">Ex:</span> {guide.example}
                       </p>
                     </div>
                   )}

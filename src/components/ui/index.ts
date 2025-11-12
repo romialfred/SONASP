@@ -47,3 +47,6 @@ export type { DatePickerProps } from './DatePicker';
 
 export { FileUpload } from './FileUpload';
 export type { FileUploadProps } from './FileUpload';
+
+export { CustomAlert } from './CustomAlert';
+export { CustomConfirm } from './CustomConfirm';

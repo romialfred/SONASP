@@ -1,49 +1,49 @@
 export const dailyProductionFieldGuides = {
   production_date: {
     title: 'Production Date',
-    description: 'Date de la production journalière.',
+    description: 'Date de production',
     example: '15/11/2025',
     required: true
   },
   mining_company_id: {
     title: 'Mining Company',
-    description: 'Société minière source du bullion.\nGénère automatiquement la référence du bar.',
-    example: 'Société des Mines de Komana (SMK)',
+    description: 'Source du bullion',
+    example: 'SMK',
     required: true
   },
   bar_reference: {
     title: 'Bar Reference',
-    description: 'Référence unique générée automatiquement.\nFormat: HUM[CODE]-NNNN',
-    example: 'HUMSMK-0001, HUMKGM-0015',
+    description: 'Référence auto (HUM[CODE]-NNNN)',
+    example: 'HUMSMK-0001',
     readOnly: true
   },
   bullion_grams: {
     title: 'Bullion',
-    description: 'Poids total du bullion en grammes.\nConversion automatique en onces.',
-    example: '11270 g = 362.31 oz',
+    description: 'Poids total (auto converti en oz)',
+    example: '11270 g',
     required: true
   },
   estimated_fineness_pct: {
     title: 'Estimated Fineness (%)',
-    description: 'Pourcentage de pureté estimé du bullion.\nDoit être entre 0 et 100%.',
+    description: 'Pureté estimée (0-100%)',
     example: '92.1%',
     required: true
   },
   pure_gold_grams: {
     title: 'Pure Gold (g)',
-    description: 'Calcul automatique: Bullion × Finesse ÷ 100.\nQuantité d\'or pur en grammes.',
+    description: 'Auto: Bullion × Finesse ÷ 100',
     example: '10377.67 g',
     readOnly: true
   },
   estimated_oz: {
     title: 'Estimated Oz',
-    description: 'Calcul automatique: Pure Gold ÷ 31.1035.\nQuantité d\'or pur en onces troy.',
+    description: 'Auto: Pure Gold ÷ 31.1035',
     example: '333.57 oz',
     readOnly: true
   },
   notes: {
     title: 'Notes',
-    description: 'Observations ou commentaires sur cette production.\nChamp optionnel.',
+    description: 'Commentaires (optionnel)',
     example: 'Production exceptionnelle',
     required: false
   }

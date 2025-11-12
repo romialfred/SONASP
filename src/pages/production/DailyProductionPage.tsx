@@ -157,18 +157,19 @@ export function DailyProductionPage() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between page-header">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Daily Production</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="page-title">Daily Production</h1>
+            <p className="page-subtitle">
               Production journalière et analyses de laboratoire préliminaires
             </p>
           </div>
-          <div className="flex gap-3 mt-4 md:mt-0">
+          <div className="flex gap-2 mt-4 md:mt-0">
             <Button
               onClick={() => navigate('/production/budget')}
               variant="outline"
-              className="flex items-center gap-2"
+              size="sm"
+              className="flex items-center gap-2 btn-text-base"
             >
               <TrendingUp className="w-4 h-4" />
               Budget & Forecast
@@ -176,9 +177,11 @@ export function DailyProductionPage() {
             <Button
               onClick={exportToCSV}
               variant="outline"
+              size="sm"
               disabled={productions.length === 0}
+              className="btn-text-base"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 mr-1.5" />
               Export CSV
             </Button>
             {!showForm && (
@@ -187,9 +190,10 @@ export function DailyProductionPage() {
                   setSelectedProduction(null);
                   setShowForm(true);
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 btn-text-base"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-1.5" />
                 Nouvelle Production
               </Button>
             )}

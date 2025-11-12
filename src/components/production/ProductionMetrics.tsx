@@ -103,8 +103,8 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
                 <Icon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">{title}</h3>
-                <p className="text-xs text-gray-500">{period}</p>
+                <h3 className="card-title">{title}</h3>
+                <p className="card-subtitle">{period}</p>
               </div>
             </div>
           </div>
@@ -115,8 +115,8 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-medium text-gray-700">Actual Production</span>
-              <span className="text-2xl font-bold text-blue-600">
-                {summary.total_estimated_oz?.toFixed(2)} <span className="text-sm text-gray-600">oz</span>
+              <span className="metric-card-value text-blue-600">
+                {summary.total_estimated_oz?.toFixed(2)} <span className="metric-card-unit">oz</span>
               </span>
             </div>
 
@@ -124,7 +124,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
             <div className="bg-white/80 rounded-lg p-3 mb-2">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-gray-600">Forecast Target</span>
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="table-cell-number">
                   {summary.forecast_oz?.toFixed(2) || '0.00'} oz
                 </span>
               </div>
@@ -142,12 +142,12 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
                   <span className="text-xs font-semibold text-gray-700">vs Forecast</span>
                 </div>
                 <div className="text-right">
-                  <span className={`text-base font-bold ${
+                  <span className={`text-base font-normal tabular-nums ${
                     varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {varianceForecast >= 0 ? '+' : ''}{varianceForecast.toFixed(2)}
                   </span>
-                  <span className={`text-xs ml-1 font-semibold ${
+                  <span className={`text-xs ml-1 font-medium ${
                     varianceForecast >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     ({forecastPct >= 0 ? '+' : ''}{forecastPct.toFixed(1)}%)
@@ -160,7 +160,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
             <div className="bg-white/80 rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-gray-600">Budget Target</span>
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="table-cell-number">
                   {summary.budget_oz?.toFixed(2) || '0.00'} oz
                 </span>
               </div>
@@ -178,12 +178,12 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
                   <span className="text-xs font-semibold text-gray-700">vs Budget</span>
                 </div>
                 <div className="text-right">
-                  <span className={`text-base font-bold ${
+                  <span className={`text-base font-normal tabular-nums ${
                     varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {varianceBudget >= 0 ? '+' : ''}{varianceBudget.toFixed(2)}
                   </span>
-                  <span className={`text-xs ml-1 font-semibold ${
+                  <span className={`text-xs ml-1 font-medium ${
                     varianceBudget >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     ({budgetPct >= 0 ? '+' : ''}{budgetPct.toFixed(1)}%)
@@ -197,13 +197,13 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
             <div className="text-center p-2 bg-gray-50 rounded-lg">
               <span className="text-xs text-gray-600 block mb-1">Avg Fineness</span>
-              <div className="text-lg font-bold text-gray-900">
-                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-gray-600">%</span>
+              <div className="text-lg font-normal text-gray-900 tabular-nums">
+                {summary.avg_fineness_pct?.toFixed(2)}<span className="text-xs text-gray-600 font-normal">%</span>
               </div>
             </div>
             <div className="text-center p-2 bg-gray-50 rounded-lg">
               <span className="text-xs text-gray-600 block mb-1">Records</span>
-              <div className="text-lg font-bold text-gray-900">
+              <div className="text-lg font-normal text-gray-900 tabular-nums">
                 {summary.record_count}
               </div>
             </div>
@@ -221,18 +221,18 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <Card key={index} className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="metric-card-title">
                   {metric.label}
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="metric-card-value">
                     {metric.value}
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="metric-card-unit">
                     {metric.unit}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="metric-card-subtitle">
                   {productions.length} enregistrement(s)
                 </p>
               </div>

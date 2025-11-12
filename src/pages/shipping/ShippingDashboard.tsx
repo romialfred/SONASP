@@ -66,22 +66,22 @@ export default function ShippingDashboard() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between page-header">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl shadow-lg">
-              <Package className="w-8 h-8 text-white" />
+            <div className="p-2.5 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg">
+              <Package className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Shipping Preparation</h1>
-              <p className="text-gray-600 mt-1">Gérez vos expéditions d'or</p>
+              <h1 className="page-title">Shipping Preparation</h1>
+              <p className="page-subtitle">Gérez vos expéditions d'or</p>
             </div>
           </div>
           <Button
             onClick={() => navigate('/shipping/preparation/new')}
-            className="gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white shadow-lg"
-            size="lg"
+            className="gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white btn-text-base"
+            size="sm"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Nouvelle Expédition
           </Button>
         </div>
@@ -91,8 +91,8 @@ export default function ShippingDashboard() {
           <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-blue-600 mb-1">Total</div>
-                <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
+                <div className="metric-card-title text-blue-600">Total</div>
+                <div className="metric-card-value text-blue-900">{stats.total}</div>
               </div>
               <div className="p-3 bg-blue-500 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
@@ -103,8 +103,8 @@ export default function ShippingDashboard() {
           <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-yellow-600 mb-1">En attente</div>
-                <div className="text-3xl font-bold text-yellow-900">{stats.pending}</div>
+                <div className="metric-card-title text-yellow-600">En attente</div>
+                <div className="metric-card-value text-yellow-900">{stats.pending}</div>
               </div>
               <div className="p-3 bg-yellow-500 rounded-lg">
                 <Clock className="w-6 h-6 text-white" />
@@ -115,8 +115,8 @@ export default function ShippingDashboard() {
           <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-blue-600 mb-1">Préparés</div>
-                <div className="text-3xl font-bold text-blue-900">{stats.prepared}</div>
+                <div className="metric-card-title text-blue-600">Préparés</div>
+                <div className="metric-card-value text-blue-900">{stats.prepared}</div>
               </div>
               <div className="p-3 bg-blue-500 rounded-lg">
                 <Box className="w-6 h-6 text-white" />
@@ -127,8 +127,8 @@ export default function ShippingDashboard() {
           <Card className="p-6 bg-gradient-to-br from-green-50 to-yellow-50 border-2 border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-green-600 mb-1">Expédiés</div>
-                <div className="text-3xl font-bold text-green-900">{stats.shipped}</div>
+                <div className="metric-card-title text-green-600">Expédiés</div>
+                <div className="metric-card-value text-green-900">{stats.shipped}</div>
               </div>
               <div className="p-3 bg-green-500 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-white" />
@@ -139,9 +139,9 @@ export default function ShippingDashboard() {
           <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-purple-600 mb-1">Poids Total</div>
-                <div className="text-2xl font-bold text-purple-900">
-                  {(stats.totalWeight / 1000).toFixed(2)} kg
+                <div className="metric-card-title text-purple-600">Poids Total</div>
+                <div className="text-2xl font-normal text-purple-900 tabular-nums">
+                  <span className="number-display">{(stats.totalWeight / 1000).toFixed(2)}</span> <span className="metric-card-unit">kg</span>
                 </div>
               </div>
               <div className="p-3 bg-purple-500 rounded-lg">

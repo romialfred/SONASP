@@ -12,92 +12,23 @@ Si votre bucket `production-documents` montre **0 policies**, les utilisateurs n
 ### Cause
 Les policies SQL créées par `add_production_documents.sql` concernent la **table** `production_documents`, mais **PAS le bucket Storage**.
 
-## 🔧 Solution Rapide (SQL)
+## ⚠️ IMPORTANT: SQL Ne Fonctionne PAS pour Storage Policies!
 
-Exécutez ce script dans **Supabase SQL Editor**:
+**Les Storage Policies NE PEUVENT PAS être créées via SQL!**
 
+Si vous essayez:
 ```sql
--- ========================================
--- STORAGE POLICIES pour production-documents
--- ========================================
-
--- 1. Policy SELECT: Voir/Télécharger les fichiers
-INSERT INTO storage.policies (name, bucket_id, operation, definition)
-VALUES (
-  'Authenticated users can view production documents',
-  'production-documents',
-  'SELECT',
-  '(auth.role() = ''authenticated'')'
-)
-ON CONFLICT (bucket_id, name) DO UPDATE SET
-  operation = EXCLUDED.operation,
-  definition = EXCLUDED.definition;
-
--- 2. Policy INSERT: Upload des fichiers
-INSERT INTO storage.policies (name, bucket_id, operation, definition)
-VALUES (
-  'Authenticated users can upload production documents',
-  'production-documents',
-  'INSERT',
-  '(auth.role() = ''authenticated'')'
-)
-ON CONFLICT (bucket_id, name) DO UPDATE SET
-  operation = EXCLUDED.operation,
-  definition = EXCLUDED.definition;
-
--- 3. Policy UPDATE: Modifier les métadonnées (optionnel)
-INSERT INTO storage.policies (name, bucket_id, operation, definition)
-VALUES (
-  'Authenticated users can update production documents',
-  'production-documents',
-  'UPDATE',
-  '(auth.role() = ''authenticated'')'
-)
-ON CONFLICT (bucket_id, name) DO UPDATE SET
-  operation = EXCLUDED.operation,
-  definition = EXCLUDED.definition;
-
--- 4. Policy DELETE: Supprimer les fichiers
-INSERT INTO storage.policies (name, bucket_id, operation, definition)
-VALUES (
-  'Authenticated users can delete production documents',
-  'production-documents',
-  'DELETE',
-  '(auth.role() = ''authenticated'')'
-)
-ON CONFLICT (bucket_id, name) DO UPDATE SET
-  operation = EXCLUDED.operation,
-  definition = EXCLUDED.definition;
-
--- ========================================
--- VÉRIFICATION
--- ========================================
-
-SELECT
-  name,
-  operation,
-  definition,
-  CASE
-    WHEN definition LIKE '%authenticated%' THEN '✅ Utilisateurs authentifiés'
-    ELSE '❌ Configuration à vérifier'
-  END as access_level
-FROM storage.policies
-WHERE bucket_id = 'production-documents'
-ORDER BY operation;
+INSERT INTO storage.policies ...
 ```
 
-### Résultat Attendu
-
+Vous obtiendrez:
 ```
-name                                              | operation | definition                        | access_level
---------------------------------------------------|-----------|-----------------------------------|---------------------------
-Authenticated users can delete production doc...  | DELETE    | (auth.role() = 'authenticated')  | ✅ Utilisateurs authentifiés
-Authenticated users can upload production doc...  | INSERT    | (auth.role() = 'authenticated')  | ✅ Utilisateurs authentifiés
-Authenticated users can view production docum...  | SELECT    | (auth.role() = 'authenticated')  | ✅ Utilisateurs authentifiés
-Authenticated users can update production doc...  | UPDATE    | (auth.role() = 'authenticated')  | ✅ Utilisateurs authentifiés
-
-(4 rows)
+❌ ERROR: relation "storage.policies" does not exist
 ```
+
+**Raison:** Supabase Storage utilise son propre système de policies géré par l'API Supabase, pas par PostgreSQL directement.
+
+**Solution:** Utiliser l'interface Supabase Dashboard (voir section suivante)
 
 ## 🖱️ Solution via Interface Supabase
 

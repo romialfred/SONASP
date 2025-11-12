@@ -84,6 +84,52 @@ ORDER BY status;
 
 **Guide détaillé:** Voir `docs/SUPABASE_STORAGE_CONFIGURATION.md`
 
+### Étape 3bis: Créer les Storage Policies (OBLIGATOIRE!)
+
+**⚠️ CRITIQUE:** Le bucket seul ne suffit pas! Sans policies Storage, il sera **inaccessible** (0 policies).
+
+**Création via Interface Supabase (2 minutes):**
+
+1. **Storage** → Cliquer sur `production-documents` → **Policies**
+2. Créer **4 policies** avec ces paramètres:
+
+#### Policy 1: SELECT (Voir les fichiers)
+```
+Name: Authenticated users can view production documents
+Operation: SELECT
+Target roles: authenticated
+USING expression: true
+```
+
+#### Policy 2: INSERT (Upload)
+```
+Name: Authenticated users can upload production documents
+Operation: INSERT
+Target roles: authenticated
+WITH CHECK: true
+```
+
+#### Policy 3: UPDATE (Modifier)
+```
+Name: Authenticated users can update production documents
+Operation: UPDATE
+Target roles: authenticated
+USING: true
+WITH CHECK: true
+```
+
+#### Policy 4: DELETE (Supprimer)
+```
+Name: Authenticated users can delete production documents
+Operation: DELETE
+Target roles: authenticated
+USING: true
+```
+
+**Vérification:** Bucket doit maintenant montrer **4** dans la colonne POLICIES (pas 0)
+
+**Guide détaillé:** `docs/STORAGE_POLICIES_SETUP.md`
+
 ### Étape 4: Vérifier l'Installation
 
 Exécutez ce script de vérification:

@@ -168,7 +168,10 @@ CREATE INDEX IF NOT EXISTS idx_daily_production_status_v2
 -- ==============================
 
 -- ÉTAPE 1: Drop les objets dépendants
-RAISE NOTICE 'Dropping dependent objects on shipping_preparations.status...';
+DO $$
+BEGIN
+  RAISE NOTICE 'Dropping dependent objects on shipping_preparations.status...';
+END $$;
 
 -- Drop les triggers qui dépendent de la colonne status
 DROP TRIGGER IF EXISTS trg_update_license_quantity_on_update ON shipping_preparations;
@@ -178,7 +181,10 @@ DROP TRIGGER IF EXISTS trg_update_license_quantity_on_delete ON shipping_prepara
 -- Drop la vue qui dépend de la colonne status
 DROP VIEW IF EXISTS assay_certificates_with_shipping CASCADE;
 
-RAISE NOTICE 'Dependent objects dropped successfully';
+DO $$
+BEGIN
+  RAISE NOTICE 'Dependent objects dropped successfully';
+END $$;
 
 -- ÉTAPE 2: Backup et conversion du status
 DO $$
@@ -213,7 +219,10 @@ ALTER TABLE shipping_preparations
 CREATE INDEX IF NOT EXISTS idx_shipping_preparations_status_v2
   ON shipping_preparations(status);
 
-RAISE NOTICE 'New status column created with proper enum type';
+DO $$
+BEGIN
+  RAISE NOTICE 'New status column created with proper enum type';
+END $$;
 
 -- =====================================================
 -- 4. RECRÉER LES OBJETS DÉPENDANTS
@@ -267,7 +276,10 @@ FOR EACH ROW
 WHEN (OLD.license_id IS NOT NULL)
 EXECUTE FUNCTION update_license_used_quantity();
 
-RAISE NOTICE 'Dependent objects recreated successfully';
+DO $$
+BEGIN
+  RAISE NOTICE 'Dependent objects recreated successfully';
+END $$;
 
 -- =====================================================
 -- 5. FONCTION: Log Status Change (Universel)

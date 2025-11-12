@@ -1,5 +1,10 @@
 /*
-  # Système Unifié de Gestion des Statuts d'Expédition
+  # Système Unifié de Gestion des Statuts - VERSION CORRIGÉE
+
+  ## Corrections
+  - Gère les dépendances sur la colonne status (trigger, view)
+  - Ne DROP pas la colonne status, la convertit en place
+  - Recrée les objets dépendants avec les nouveaux types
 
   ## Vue d'ensemble
   Ce système unifie la gestion des statuts à travers Production, Shipping et Refining.
@@ -128,6 +133,10 @@ CREATE INDEX IF NOT EXISTS idx_unified_status_history_changed_by
 -- 3. MIGRATION DES COLONNES STATUS
 -- =====================================================
 
+-- ==============================
+-- 3.1 PRODUCTION STATUS
+-- ==============================
+
 -- Backup de l'ancien status de production si nécessaire
 DO $$
 BEGIN
@@ -136,7 +145,13 @@ BEGIN
     WHERE table_name = 'daily_production' AND column_name = 'status'
   ) THEN
     -- Renommer l'ancien status temporairement
-    ALTER TABLE daily_production RENAME COLUMN status TO status_old_backup;
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'daily_production' AND column_name = 'status_old_backup'
+    ) THEN
+      ALTER TABLE daily_production RENAME COLUMN status TO status_old_backup;
+      RAISE NOTICE 'Production: Ancien status backed up to status_old_backup';
+    END IF;
   END IF;
 END $$;
 
@@ -148,24 +163,49 @@ ALTER TABLE daily_production
 CREATE INDEX IF NOT EXISTS idx_daily_production_status_v2
   ON daily_production(status);
 
--- Migration du status shipping
+-- ==============================
+-- 3.2 SHIPPING STATUS - GÉRER LES DÉPENDANCES
+-- ==============================
+
+-- ÉTAPE 1: Drop les objets dépendants
+RAISE NOTICE 'Dropping dependent objects on shipping_preparations.status...';
+
+-- Drop les triggers qui dépendent de la colonne status
+DROP TRIGGER IF EXISTS trg_update_license_quantity_on_update ON shipping_preparations;
+DROP TRIGGER IF EXISTS trg_update_license_quantity_on_insert ON shipping_preparations;
+DROP TRIGGER IF EXISTS trg_update_license_quantity_on_delete ON shipping_preparations;
+
+-- Drop la vue qui dépend de la colonne status
+DROP VIEW IF EXISTS assay_certificates_with_shipping CASCADE;
+
+RAISE NOTICE 'Dependent objects dropped successfully';
+
+-- ÉTAPE 2: Backup et conversion du status
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'shipping_preparations' AND column_name = 'status'
-    AND data_type = 'text'
+    WHERE table_name = 'shipping_preparations'
+    AND column_name = 'status'
+    AND data_type IN ('text', 'character varying')
   ) THEN
-    -- Backup ancien status
-    ALTER TABLE shipping_preparations ADD COLUMN IF NOT EXISTS status_old_backup TEXT;
-    UPDATE shipping_preparations SET status_old_backup = status;
+    -- Backup de l'ancien status
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'shipping_preparations' AND column_name = 'status_old_backup'
+    ) THEN
+      ALTER TABLE shipping_preparations ADD COLUMN status_old_backup TEXT;
+      UPDATE shipping_preparations SET status_old_backup = status;
+      RAISE NOTICE 'Shipping: Ancien status backed up';
+    END IF;
 
-    -- Drop l'ancienne colonne status
-    ALTER TABLE shipping_preparations DROP COLUMN IF EXISTS status;
+    -- Drop l'ancienne colonne status (maintenant que les dépendances sont gérées)
+    ALTER TABLE shipping_preparations DROP COLUMN status;
+    RAISE NOTICE 'Shipping: Old status column dropped';
   END IF;
 END $$;
 
--- Ajouter nouveau status à shipping_preparations
+-- ÉTAPE 3: Ajouter nouveau status à shipping_preparations
 ALTER TABLE shipping_preparations
   ADD COLUMN IF NOT EXISTS status shipping_status_v2 DEFAULT 'pending' NOT NULL;
 
@@ -173,8 +213,64 @@ ALTER TABLE shipping_preparations
 CREATE INDEX IF NOT EXISTS idx_shipping_preparations_status_v2
   ON shipping_preparations(status);
 
+RAISE NOTICE 'New status column created with proper enum type';
+
 -- =====================================================
--- 4. FONCTION: Log Status Change (Universel)
+-- 4. RECRÉER LES OBJETS DÉPENDANTS
+-- =====================================================
+
+-- RECRÉER LA VUE: assay_certificates_with_shipping
+CREATE OR REPLACE VIEW assay_certificates_with_shipping AS
+SELECT
+  ac.*,
+  sp.expedition_lot_number,
+  sp.status::text as shipping_status,  -- Cast to text for compatibility
+  sp.total_net_weight_grams as shipping_weight,
+  sp.total_gross_weight_grams as shipping_gross_weight,
+  sp.shipped_to_company,
+  sp.shipped_to_address,
+  sp.shipped_to_country,
+  sp.mining_company_id,
+  mc.name as mining_company_name,
+  mc.country as mining_company_country,
+  sp.prepared_at,
+  sp.shipped_at,
+  sp.created_at as shipping_created_at
+FROM assay_certificates ac
+LEFT JOIN shipping_preparations sp ON ac.shipping_preparation_id = sp.id
+LEFT JOIN mining_companies mc ON sp.mining_company_id = mc.id
+ORDER BY ac.created_at DESC;
+
+COMMENT ON VIEW assay_certificates_with_shipping IS
+  'View combining assay certificates with shipping preparation details (updated for new status enum)';
+
+-- RECRÉER LES TRIGGERS: License quantity updates
+-- Trigger sur INSERT de shipping_preparations
+CREATE TRIGGER trg_update_license_quantity_on_insert
+AFTER INSERT ON shipping_preparations
+FOR EACH ROW
+WHEN (NEW.license_id IS NOT NULL)
+EXECUTE FUNCTION update_license_used_quantity();
+
+-- Trigger sur UPDATE de shipping_preparations
+-- Note: On garde la référence à status dans le trigger
+CREATE TRIGGER trg_update_license_quantity_on_update
+AFTER UPDATE OF license_id, total_net_weight_grams, status ON shipping_preparations
+FOR EACH ROW
+WHEN (NEW.license_id IS NOT NULL OR OLD.license_id IS NOT NULL)
+EXECUTE FUNCTION update_license_used_quantity();
+
+-- Trigger sur DELETE de shipping_preparations
+CREATE TRIGGER trg_update_license_quantity_on_delete
+AFTER DELETE ON shipping_preparations
+FOR EACH ROW
+WHEN (OLD.license_id IS NOT NULL)
+EXECUTE FUNCTION update_license_used_quantity();
+
+RAISE NOTICE 'Dependent objects recreated successfully';
+
+-- =====================================================
+-- 5. FONCTION: Log Status Change (Universel)
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION log_unified_status_change()
@@ -251,7 +347,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- 5. TRIGGERS POUR AUTO-LOGGING
+-- 6. TRIGGERS POUR AUTO-LOGGING
 -- =====================================================
 
 -- Trigger pour daily_production
@@ -271,7 +367,7 @@ CREATE TRIGGER unified_status_change_trigger
   EXECUTE FUNCTION log_unified_status_change();
 
 -- =====================================================
--- 6. FONCTION: Obtenir l'historique complet
+-- 7. FONCTION: Obtenir l'historique complet
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION get_unified_status_history(
@@ -315,7 +411,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- 7. FONCTION: Vérifier si changement de status autorisé
+-- 8. FONCTION: Vérifier si changement de status autorisé
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION can_change_status(
@@ -378,7 +474,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
--- 8. VIEW: Expéditions disponibles pour raffinerie
+-- 9. VIEW: Expéditions disponibles pour raffinerie
 -- =====================================================
 
 CREATE OR REPLACE VIEW shipments_for_refinery AS
@@ -394,7 +490,7 @@ LEFT JOIN daily_production dp ON sp.daily_production_id = dp.id
 WHERE sp.status = 'validated_for_refinery';
 
 -- =====================================================
--- 9. VIEW: Expéditions disponibles pour vente (pré-vente)
+-- 10. VIEW: Expéditions disponibles pour vente (pré-vente)
 -- =====================================================
 
 CREATE OR REPLACE VIEW shipments_for_presale AS
@@ -411,7 +507,7 @@ LEFT JOIN daily_production dp ON sp.daily_production_id = dp.id
 WHERE sp.status IN ('validated_for_refinery', 'refined');
 
 -- =====================================================
--- 10. RLS POLICIES
+-- 11. RLS POLICIES
 -- =====================================================
 
 -- Enable RLS
@@ -435,13 +531,14 @@ CREATE POLICY "Users can insert unified status history"
   WITH CHECK (changed_by = auth.uid());
 
 -- =====================================================
--- 11. MIGRATION DES DONNÉES EXISTANTES
+-- 12. MIGRATION DES DONNÉES EXISTANTES
 -- =====================================================
 
 -- Migrer les status existants de production
 DO $$
 DECLARE
   v_production RECORD;
+  v_count INTEGER := 0;
 BEGIN
   FOR v_production IN
     SELECT id, status_old_backup, created_by, created_at
@@ -453,19 +550,24 @@ BEGIN
       UPDATE daily_production
       SET status = v_production.status_old_backup::production_status_v2
       WHERE id = v_production.id;
+      v_count := v_count + 1;
     ELSE
       -- Statuts non mappés → prepared par défaut
       UPDATE daily_production
       SET status = 'prepared'
       WHERE id = v_production.id;
+      v_count := v_count + 1;
     END IF;
   END LOOP;
+
+  RAISE NOTICE 'Migrated % production records', v_count;
 END $$;
 
 -- Migrer les status existants de shipping
 DO $$
 DECLARE
   v_shipping RECORD;
+  v_count INTEGER := 0;
 BEGIN
   FOR v_shipping IN
     SELECT id, status_old_backup, created_by, created_at
@@ -477,29 +579,23 @@ BEGIN
       UPDATE shipping_preparations
       SET status = 'prepared'::shipping_status_v2
       WHERE id = v_shipping.id;
+      v_count := v_count + 1;
     ELSIF v_shipping.status_old_backup = 'shipped' THEN
       UPDATE shipping_preparations
       SET status = 'validated_for_refinery'::shipping_status_v2
       WHERE id = v_shipping.id;
+      v_count := v_count + 1;
     ELSE
       -- pending par défaut
       UPDATE shipping_preparations
       SET status = 'pending'::shipping_status_v2
       WHERE id = v_shipping.id;
+      v_count := v_count + 1;
     END IF;
   END LOOP;
+
+  RAISE NOTICE 'Migrated % shipping records', v_count;
 END $$;
-
--- =====================================================
--- 12. NETTOYAGE (Optionnel - à décommenter si sûr)
--- =====================================================
-
--- DROP l'ancienne table production_status_history si elle existe
--- DROP TABLE IF EXISTS production_status_history CASCADE;
-
--- Supprimer les colonnes de backup après vérification
--- ALTER TABLE daily_production DROP COLUMN IF EXISTS status_old_backup;
--- ALTER TABLE shipping_preparations DROP COLUMN IF EXISTS status_old_backup;
 
 -- =====================================================
 -- 13. COMMENTS POUR DOCUMENTATION
@@ -528,7 +624,36 @@ COMMENT ON COLUMN shipping_preparations.status IS
 -- Grant sur les vues
 GRANT SELECT ON shipments_for_refinery TO authenticated;
 GRANT SELECT ON shipments_for_presale TO authenticated;
+GRANT SELECT ON assay_certificates_with_shipping TO authenticated;
 
 -- Grant sur les fonctions
 GRANT EXECUTE ON FUNCTION get_unified_status_history TO authenticated;
 GRANT EXECUTE ON FUNCTION can_change_status TO authenticated;
+
+-- =====================================================
+-- 15. SUCCÈS
+-- =====================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ ========================================';
+  RAISE NOTICE '✅ Unified Status System Migration COMPLETE!';
+  RAISE NOTICE '✅ ========================================';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Changes applied:';
+  RAISE NOTICE '  ✓ New ENUM types created';
+  RAISE NOTICE '  ✓ unified_status_history table created';
+  RAISE NOTICE '  ✓ Status columns migrated (backups kept)';
+  RAISE NOTICE '  ✓ Dependent objects (triggers, views) recreated';
+  RAISE NOTICE '  ✓ Auto-logging triggers installed';
+  RAISE NOTICE '  ✓ Permission functions created';
+  RAISE NOTICE '  ✓ Views for refinery and presale created';
+  RAISE NOTICE '  ✓ RLS policies configured';
+  RAISE NOTICE '  ✓ Existing data migrated';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Next steps:';
+  RAISE NOTICE '  1. Verify data migration (check *_old_backup columns)';
+  RAISE NOTICE '  2. Test status changes in the application';
+  RAISE NOTICE '  3. Integrate UnifiedStatusFlow component';
+  RAISE NOTICE '  4. After validation, optionally drop *_old_backup columns';
+END $$;

@@ -13,6 +13,20 @@
 */
 
 -- =====================================================
+-- 0. NETTOYAGE DES ANCIENS OBJETS
+-- =====================================================
+
+-- Drop ancien trigger production qui utilise ancien ENUM
+DROP TRIGGER IF EXISTS production_status_change_trigger ON daily_production;
+DROP FUNCTION IF EXISTS log_production_status_change() CASCADE;
+DROP FUNCTION IF EXISTS get_production_status_history(uuid) CASCADE;
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Old production status triggers and functions dropped';
+END $$;
+
+-- =====================================================
 -- 1. NOUVEAUX ENUMS POUR STATUS
 -- =====================================================
 

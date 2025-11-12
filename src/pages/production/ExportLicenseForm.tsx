@@ -19,6 +19,8 @@ interface DocumentEntry {
   id: string;
   name: string;
   type: string;
+  file?: File;
+  fileUrl?: string;
 }
 
 interface FieldHelp {
@@ -235,7 +237,8 @@ export function ExportLicenseForm() {
       {
         id: `temp-${Date.now()}`,
         name: '',
-        type: 'document',
+        type: 'license',
+        file: undefined,
       },
     ]);
   };
@@ -248,6 +251,14 @@ export function ExportLicenseForm() {
     setDocuments(
       documents.map((doc) =>
         doc.id === id ? { ...doc, [field]: value } : doc
+      )
+    );
+  };
+
+  const handleFileChange = (id: string, file: File | null) => {
+    setDocuments(
+      documents.map((doc) =>
+        doc.id === id ? { ...doc, file: file || undefined, name: file?.name || doc.name } : doc
       )
     );
   };
@@ -284,13 +295,40 @@ export function ExportLicenseForm() {
         licenseId = newLicense.id;
       }
 
+      // Upload documents
       for (const doc of documents) {
-        if (doc.id.startsWith('temp-') && doc.name.trim()) {
-          await exportLicenseService.addDocument({
-            license_id: licenseId,
-            document_name: doc.name,
-            document_type: doc.type,
-          });
+        if (doc.id.startsWith('temp-') && doc.file && doc.name.trim()) {
+          try {
+            // Upload file to storage
+            const fileExt = doc.file.name.split('.').pop();
+            const fileName = `${licenseId}/${Date.now()}.${fileExt}`;
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('export-license-documents')
+              .upload(fileName, doc.file);
+
+            if (uploadError) {
+              console.error('Error uploading file:', uploadError);
+              continue;
+            }
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('export-license-documents')
+              .getPublicUrl(fileName);
+
+            // Save document record
+            await exportLicenseService.addDocument({
+              license_id: licenseId,
+              document_name: doc.name,
+              document_type: doc.type,
+              file_url: publicUrl,
+              file_path: fileName,
+              file_size_kb: Math.round(doc.file.size / 1024),
+            });
+          } catch (error) {
+            console.error('Error processing document:', error);
+          }
         }
       }
 
@@ -599,38 +637,82 @@ export function ExportLicenseForm() {
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex gap-3 items-center p-3 bg-gray-50 rounded-lg"
+                        className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                       >
-                        <Input
-                          value={doc.name}
-                          onChange={(e) =>
-                            handleDocumentChange(doc.id, 'name', e.target.value)
-                          }
-                          placeholder="Nom du document"
-                          className="flex-1"
-                        />
-                        <select
-                          value={doc.type}
-                          onChange={(e) =>
-                            handleDocumentChange(doc.id, 'type', e.target.value)
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-                          <option value="license">Licence</option>
-                          <option value="authorization">Autorisation</option>
-                          <option value="certificate">Certificat</option>
-                          <option value="annex">Annexe</option>
-                          <option value="other">Autre</option>
-                        </select>
-                        <Button
-                          type="button"
-                          onClick={() => handleRemoveDocument(doc.id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:bg-red-50"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-3 items-start">
+                          {/* File Upload */}
+                          <div className="flex-1 space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Fichier *
+                              </label>
+                              <input
+                                type="file"
+                                onChange={(e) => handleFileChange(doc.id, e.target.files?.[0] || null)}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                required={doc.id.startsWith('temp-')}
+                              />
+                              {doc.file && (
+                                <p className="text-xs text-green-600 mt-1">
+                                  ✓ {doc.file.name} ({Math.round(doc.file.size / 1024)} KB)
+                                </p>
+                              )}
+                              {doc.fileUrl && !doc.file && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  ✓ Document existant
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Nom du document
+                                </label>
+                                <Input
+                                  value={doc.name}
+                                  onChange={(e) =>
+                                    handleDocumentChange(doc.id, 'name', e.target.value)
+                                  }
+                                  placeholder="Ex: Licence officielle"
+                                  className="text-sm"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Type
+                                </label>
+                                <select
+                                  value={doc.type}
+                                  onChange={(e) =>
+                                    handleDocumentChange(doc.id, 'type', e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  required
+                                >
+                                  <option value="license">Licence</option>
+                                  <option value="authorization">Autorisation</option>
+                                  <option value="certificate">Certificat</option>
+                                  <option value="annex">Annexe</option>
+                                  <option value="other">Autre</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Remove Button */}
+                          <Button
+                            type="button"
+                            onClick={() => handleRemoveDocument(doc.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:bg-red-50 mt-5"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

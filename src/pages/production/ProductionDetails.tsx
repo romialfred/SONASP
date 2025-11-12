@@ -13,8 +13,10 @@ import { ProductionStatusBadge } from '@/components/production/ProductionStatusB
 import { ProductionStatusWorkflow } from '@/components/production/ProductionStatusWorkflow';
 import { ProductionDocumentsList, ProductionDocument } from '@/components/production/ProductionDocumentsList';
 import { ProductionDocumentUpload } from '@/components/production/ProductionDocumentUpload';
+import { ProductionStatusHistory } from '@/components/production/ProductionStatusHistory';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MiningCompany {
   id: string;
@@ -24,6 +26,7 @@ interface MiningCompany {
 export function ProductionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [production, setProduction] = useState<DailyProduction | null>(null);
   const [miningCompany, setMiningCompany] = useState<MiningCompany | null>(null);
@@ -32,6 +35,7 @@ export function ProductionDetails() {
   const [loading, setLoading] = useState(true);
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [siteCountry, setSiteCountry] = useState<string>('Guinée');
 
   useEffect(() => {
     if (id) {
@@ -214,33 +218,40 @@ export function ProductionDetails() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/production/daily-production')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Production {production.bar_reference || `#${production.id.slice(0, 8)}`}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {formatDate(production.production_date)}
-              </p>
+        <div className="bg-gradient-to-r from-white to-blue-50 border-b-2 border-blue-100 -mx-6 px-6 py-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/production/daily-production')}
+                className="shadow-sm hover:shadow-md transition-all"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour
+              </Button>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Production {production.bar_reference || `KOURO-${production.id.slice(0, 8)}`}
+                  </h1>
+                  <ProductionStatusBadge status={production.status as ProductionStatus} size="lg" showIcon />
+                </div>
+                <p className="text-gray-600 mt-1 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {formatDate(production.production_date)}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <ProductionStatusBadge status={production.status as ProductionStatus} size="lg" showIcon />
-            <Button
-              onClick={() => navigate(`/production/daily-production`)}
-              variant="outline"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Modifier
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => navigate(`/production/daily-production`)}
+                variant="outline"
+                className="shadow-sm hover:shadow-md transition-all"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Modifier
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -341,13 +352,26 @@ export function ProductionDetails() {
             </Card>
 
             {/* Status Workflow Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <Card className="p-6 shadow-md">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
                 Workflow de Statut
               </h2>
               <ProductionStatusWorkflow
                 productionId={production.id}
                 currentStatus={production.status as ProductionStatus}
+                production={{
+                  id: production.id,
+                  bar_reference: production.bar_reference,
+                  production_date: production.production_date,
+                  bullion_grams: production.bullion_grams,
+                  estimated_fineness_pct: production.estimated_fineness_pct,
+                  pure_gold_grams: production.pure_gold_grams,
+                  estimated_oz: production.estimated_oz,
+                  mining_company_name: miningCompany?.name,
+                  site_country: siteCountry
+                }}
+                userEmail={user?.email}
                 onStatusChanged={loadProductionDetails}
               />
             </Card>
@@ -383,64 +407,18 @@ export function ProductionDetails() {
 
           {/* Right Column - History */}
           <div className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <History className="w-5 h-5 text-gray-600" />
+            <Card className="p-6 shadow-md">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b-2 border-gray-200">
+                <History className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
                   Historique des Changements
                 </h2>
               </div>
 
-              <div className="space-y-3">
-                {statusHistory.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    Aucun changement enregistré
-                  </p>
-                ) : (
-                  statusHistory.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="border-l-2 border-gray-300 pl-4 pb-3 relative"
-                    >
-                      <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-emerald-500" />
-
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2">
-                          {entry.old_status && (
-                            <>
-                              <ProductionStatusBadge
-                                status={entry.old_status as ProductionStatus}
-                                size="sm"
-                              />
-                              <span className="text-gray-400">→</span>
-                            </>
-                          )}
-                          <ProductionStatusBadge
-                            status={entry.new_status as ProductionStatus}
-                            size="sm"
-                          />
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-gray-600 mb-1">
-                        {formatDateTime(entry.changed_at)}
-                      </p>
-
-                      {entry.user_email && (
-                        <p className="text-xs text-gray-500">
-                          Par: {entry.user_email}
-                        </p>
-                      )}
-
-                      {entry.notes && (
-                        <p className="text-sm text-gray-700 mt-2 bg-gray-50 rounded p-2">
-                          {entry.notes}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
+              <ProductionStatusHistory
+                history={statusHistory}
+                siteCountry={siteCountry}
+              />
             </Card>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Check, ArrowRight, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { TextArea } from '@/components/ui/TextArea';
 import {
   PRODUCTION_STATUSES,
   ProductionStatus,
@@ -9,41 +8,52 @@ import {
   getNextAllowedStatus
 } from '@/constants/productionStatuses';
 import { productionStatusService } from '@/services/productionStatusService';
+import { ProductionStatusConfirmationModal } from './ProductionStatusConfirmationModal';
+
+interface ProductionDetails {
+  id: string;
+  bar_reference: string | null;
+  production_date: string;
+  bullion_grams: number;
+  estimated_fineness_pct: number;
+  pure_gold_grams: number;
+  estimated_oz: number;
+  mining_company_name?: string;
+  site_country?: string;
+}
 
 interface ProductionStatusWorkflowProps {
   productionId: string;
   currentStatus: ProductionStatus;
+  production: ProductionDetails;
+  userEmail?: string;
   onStatusChanged: () => void;
 }
 
 export function ProductionStatusWorkflow({
   productionId,
   currentStatus,
+  production,
+  userEmail,
   onStatusChanged
 }: ProductionStatusWorkflowProps) {
-  const [updating, setUpdating] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [showNotesInput, setShowNotesInput] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const nextStatus = getNextAllowedStatus(currentStatus);
 
-  const handleUpdateStatus = async () => {
+  const handleUpdateStatus = async (notes?: string) => {
     if (!nextStatus) return;
 
     try {
-      setUpdating(true);
       await productionStatusService.updateStatus(
         productionId,
         nextStatus,
-        notes || undefined
+        notes
       );
-      setNotes('');
-      setShowNotesInput(false);
       onStatusChanged();
     } catch (error: any) {
       alert(error.message || 'Erreur lors de la mise à jour du statut');
-    } finally {
-      setUpdating(false);
+      throw error;
     }
   };
 
@@ -98,76 +108,28 @@ export function ProductionStatusWorkflow({
       {/* Action Button */}
       {nextStatus && (
         <div className="space-y-3">
-          {!showNotesInput ? (
-            <div className="flex gap-2">
-              <Button
-                onClick={handleUpdateStatus}
-                disabled={updating}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-              >
-                {updating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight className="w-4 h-4 mr-2" />
-                    Passer à: {PRODUCTION_STATUSES[nextStatus].label}
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowNotesInput(true)}
-                disabled={updating}
-              >
-                Ajouter des notes
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Notes (optionnel)
-              </label>
-              <TextArea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ajouter des détails sur ce changement de statut..."
-                rows={3}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleUpdateStatus}
-                  disabled={updating}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {updating ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Mise à jour...
-                    </>
-                  ) : (
-                    <>
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                      Confirmer: {PRODUCTION_STATUSES[nextStatus].label}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowNotesInput(false);
-                    setNotes('');
-                  }}
-                  disabled={updating}
-                >
-                  Annuler
-                </Button>
-              </div>
-            </div>
-          )}
+          <Button
+            onClick={() => setShowConfirmModal(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
+            size="lg"
+          >
+            <ArrowRight className="w-5 h-5 mr-2" />
+            Passer à: {PRODUCTION_STATUSES[nextStatus].label}
+          </Button>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {nextStatus && (
+        <ProductionStatusConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleUpdateStatus}
+          currentStatus={currentStatus}
+          nextStatus={nextStatus}
+          production={production}
+          userEmail={userEmail}
+        />
       )}
 
       {!nextStatus && currentStatus === 'sold' && (

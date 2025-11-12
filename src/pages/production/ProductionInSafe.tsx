@@ -492,22 +492,19 @@ export function ProductionInSafe() {
           </div>
         </div>
 
-        <Card className="border-l-4 border-l-slate-700 bg-gradient-to-r from-slate-50 to-white">
+        <Card className="border-l-4 border-l-amber-600 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 shadow-md">
           <div className="p-5">
             <div className="flex items-start gap-3">
               {getStatusIcon()}
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Résumé de la situation</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">{generateSummaryText()}</p>
+                <h3 className="text-sm font-bold text-amber-900 mb-1.5 tracking-wide">Résumé de la situation</h3>
+                <p className="text-sm text-gray-800 leading-relaxed font-medium">{generateSummaryText()}</p>
               </div>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900">Filtres</h3>
-          </div>
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>

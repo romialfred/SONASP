@@ -15,6 +15,7 @@ import { ProductionDocumentUpload } from './ProductionDocumentUpload';
 import { ProductionDocumentsList, ProductionDocument } from './ProductionDocumentsList';
 import { supabase } from '@/lib/supabase';
 import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
+import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 
 interface DailyProductionFormProps {
   production?: DailyProduction | null;
@@ -117,7 +118,9 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         .order('name');
 
       if (error) throw error;
-      setMiningCompanies(data || []);
+
+      // Exclure la société mère des sociétés opérationnelles
+      setMiningCompanies(filterOperationalMiningCompanies(data || []));
     } catch (error) {
       console.error('Error loading mining companies:', error);
     }
@@ -252,48 +255,90 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       return;
     }
 
-    try {
-      setLoading(true);
+    // Toujours sauvegarder en grammes
+    const bullionGramsToSave = weightUnit === 'oz'
+      ? ozToGrams(parseFloat(formData.bullion_grams))
+      : parseFloat(formData.bullion_grams);
 
-      // Toujours sauvegarder en grammes
-      const bullionGramsToSave = weightUnit === 'oz'
-        ? ozToGrams(parseFloat(formData.bullion_grams))
-        : parseFloat(formData.bullion_grams);
+    // Récupérer le site_id de l'utilisateur connecté
+    const userSiteId = user?.site_ids?.[0] || 'guinea';
 
-      // Récupérer le site_id de l'utilisateur connecté
-      const userSiteId = user?.site_ids?.[0] || 'guinea';
+    // Trouver le nom de la société
+    const companyName = miningCompanies.find(c => c.id === formData.mining_company_id)?.name || 'N/A';
 
-      const data = {
-        production_date: formData.production_date,
-        bullion_grams: bullionGramsToSave,
-        estimated_fineness_pct: parseFloat(formData.estimated_fineness_pct),
-        bar_reference: formData.bar_reference || undefined,
-        mining_company_id: formData.mining_company_id || undefined,
-        notes: formData.notes || undefined,
-        site_id: userSiteId,
-      };
+    // Créer le message de confirmation récapitulatif
+    const confirmationMessage = `
+📋 RÉCAPITULATIF DE LA PRODUCTION
 
-      console.log('📊 Données de production à enregistrer:', data);
-      console.log('👤 Utilisateur site_id:', userSiteId);
-      console.log('🏢 Mining company ID:', formData.mining_company_id);
+📅 Date: ${new Date(formData.production_date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}
 
-      if (production?.id) {
-        const updated = await dailyProductionService.updateProduction(production.id, data);
-        console.log('✅ Production mise à jour:', updated);
-        showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
-      } else {
-        const newProduction = await dailyProductionService.createProduction(data);
-        console.log('✅ Production créée:', newProduction);
-        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+🏢 Société: ${companyName}
+📦 Bar Reference: ${formData.bar_reference || 'Auto-généré'}
+
+⚖️ POIDS ET FINESSE:
+   • Bullion: ${bullionGramsToSave.toFixed(2)} g (${bullionInOz.toFixed(2)} oz)
+   • Finesse estimée: ${formData.estimated_fineness_pct}%
+
+💎 CALCULS AUTOMATIQUES:
+   • Or pur: ${pureGoldGrams} g
+   • Onces estimées: ${estimatedOz} oz
+
+${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
+
+⚠️ Voulez-vous confirmer l'enregistrement de cette production ?
+    `.trim();
+
+    // Afficher la confirmation
+    showConfirm(
+      confirmationMessage,
+      async () => {
+        try {
+          setLoading(true);
+
+          const data = {
+            production_date: formData.production_date,
+            bullion_grams: bullionGramsToSave,
+            estimated_fineness_pct: parseFloat(formData.estimated_fineness_pct),
+            bar_reference: formData.bar_reference || undefined,
+            mining_company_id: formData.mining_company_id || undefined,
+            notes: formData.notes || undefined,
+            site_id: userSiteId,
+          };
+
+          console.log('📊 Données de production à enregistrer:', data);
+          console.log('👤 Utilisateur site_id:', userSiteId);
+          console.log('🏢 Mining company ID:', formData.mining_company_id);
+
+          if (production?.id) {
+            const updated = await dailyProductionService.updateProduction(production.id, data);
+            console.log('✅ Production mise à jour:', updated);
+            showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
+          } else {
+            const newProduction = await dailyProductionService.createProduction(data);
+            console.log('✅ Production créée:', newProduction);
+            showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+          }
+
+          onSuccess();
+        } catch (error: any) {
+          console.error('Error saving production:', error);
+          showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
+        } finally {
+          setLoading(false);
+        }
+      },
+      {
+        title: production ? '✏️ Confirmer la Mise à Jour' : '✅ Confirmer l\'Enregistrement',
+        type: 'warning',
+        confirmText: production ? 'Mettre à jour' : 'Enregistrer',
+        cancelText: 'Annuler'
       }
-
-      onSuccess();
-    } catch (error: any) {
-      console.error('Error saving production:', error);
-      showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const loadDocuments = async (productionId: string) => {

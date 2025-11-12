@@ -58,7 +58,7 @@ export function CustomConfirm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-      <div className={`relative max-w-md w-full ${config.bgColor} rounded-2xl shadow-2xl border-2 ${config.borderColor} overflow-hidden animate-in fade-in zoom-in duration-300`}>
+      <div className={`relative max-w-2xl w-full ${config.bgColor} rounded-2xl shadow-2xl border-2 ${config.borderColor} overflow-hidden animate-in fade-in zoom-in duration-300`}>
         <div className="p-8 text-center">
           <div className={`inline-flex items-center justify-center ${config.iconColor} mb-4`}>
             {config.icon}
@@ -68,9 +68,9 @@ export function CustomConfirm({
             {title || config.defaultTitle}
           </h3>
 
-          <p className="text-gray-700 text-base leading-relaxed whitespace-pre-line mb-6">
+          <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line mb-6 text-left bg-white/60 rounded-lg p-4 max-h-96 overflow-y-auto font-mono">
             {message}
-          </p>
+          </div>
 
           <div className="flex gap-3 justify-center">
             <Button

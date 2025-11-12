@@ -45,6 +45,13 @@ interface Refinery {
   is_active: boolean;
 }
 
+interface MiningCompany {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+}
+
 interface SelectedProductionData {
   production: DailyProduction;
   sealNumber1: string;
@@ -69,12 +76,14 @@ export default function ShippingPreparationNew() {
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([]);
   const [freightCompanies, setFreightCompanies] = useState<TransportCompany[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedPreparationId, setSavedPreparationId] = useState<string>('');
 
   // Form state
+  const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
 
@@ -111,7 +120,7 @@ export default function ShippingPreparationNew() {
     try {
       setLoading(true);
       await Promise.all([
-        loadProductions(),
+        loadMiningCompanies(),
         loadFreightCompanies(),
         loadRefineries(),
       ]);
@@ -122,13 +131,30 @@ export default function ShippingPreparationNew() {
     }
   };
 
-  const loadProductions = async () => {
+  const loadMiningCompanies = async () => {
+    const { data, error } = await supabase
+      .from('mining_companies')
+      .select('id, name, code, is_active')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+    setMiningCompanies(data || []);
+  };
+
+  const loadProductions = async (miningCompanyId: string) => {
+    if (!miningCompanyId) {
+      setProductions([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('daily_production')
       .select(`
         *,
         mining_company:mining_companies(id, name, code)
       `)
+      .eq('mining_company_id', miningCompanyId)
       .order('production_date', { ascending: false })
       .limit(100);
 
@@ -182,6 +208,16 @@ export default function ShippingPreparationNew() {
     const companyCode = firstProduction.mining_company?.code || 'XXX';
 
     return `HUM-${companyCode}-${month}${day}/${year}`;
+  };
+
+  const handleMiningCompanyChange = async (companyId: string) => {
+    setSelectedMiningCompanyId(companyId);
+    setSelectedProductions([]);
+    if (companyId) {
+      await loadProductions(companyId);
+    } else {
+      setProductions([]);
+    }
   };
 
   const handleAddProduction = (productionId: string) => {
@@ -349,6 +385,11 @@ export default function ShippingPreparationNew() {
   };
 
   const handleSavePreparation = async () => {
+    if (!selectedMiningCompanyId) {
+      alert('Veuillez sélectionner une compagnie minière');
+      return;
+    }
+
     if (selectedProductions.length === 0) {
       alert('Veuillez sélectionner au moins une production');
       return;
@@ -374,6 +415,7 @@ export default function ShippingPreparationNew() {
       const prepData = {
         expedition_lot_number: expeditionLotNumber,
         seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
+        mining_company_id: selectedMiningCompanyId,
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
         status: 'prepared' as const,
@@ -498,6 +540,32 @@ export default function ShippingPreparationNew() {
               </div>
             </div>
 
+            {/* Mining Company Selection */}
+            <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+              <h3 className="text-lg font-bold text-blue-900 mb-4">
+                <Building2 className="w-5 h-5 inline mr-2" />
+                Compagnie Minière *
+              </h3>
+              <select
+                value={selectedMiningCompanyId}
+                onChange={(e) => handleMiningCompanyChange(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-medium"
+                disabled={loading}
+              >
+                <option value="">-- Sélectionner une compagnie minière --</option>
+                {miningCompanies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.code})
+                  </option>
+                ))}
+              </select>
+              {selectedMiningCompanyId && (
+                <p className="mt-2 text-xs text-blue-600">
+                  ✓ Seules les productions de cette compagnie seront disponibles
+                </p>
+              )}
+            </Card>
+
             {/* Production Selection & Table */}
             <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
               <div className="flex items-center justify-between mb-4">
@@ -510,10 +578,14 @@ export default function ShippingPreparationNew() {
                     e.target.value = '';
                   }}
                   className="px-4 py-2 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
-                  disabled={loading}
+                  disabled={loading || !selectedMiningCompanyId}
                   value=""
                 >
-                  <option value="">-- Ajouter une production --</option>
+                  <option value="">
+                    {!selectedMiningCompanyId
+                      ? '-- Sélectionner d\'abord une compagnie minière --'
+                      : '-- Ajouter une production --'}
+                  </option>
                   {productions
                     .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
                     .map((production) => (
@@ -523,6 +595,12 @@ export default function ShippingPreparationNew() {
                     ))}
                 </select>
               </div>
+              {!selectedMiningCompanyId && (
+                <div className="text-center py-8 text-yellow-700 bg-yellow-100 rounded-lg border border-yellow-300">
+                  <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">Veuillez d'abord sélectionner une compagnie minière</p>
+                </div>
+              )}
 
               {selectedProductions.length > 0 && (
                 <div className="overflow-x-auto">

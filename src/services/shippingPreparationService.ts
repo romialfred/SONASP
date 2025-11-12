@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface ShippingPreparation {
   id: string;
   daily_production_id: string | null;
+  mining_company_id: string | null;
   expedition_lot_number: string | null;
   seal_number: string | null;
   packing_list_url: string | null;

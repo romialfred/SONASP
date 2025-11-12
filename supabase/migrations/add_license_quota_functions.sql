@@ -137,16 +137,15 @@ BEGIN
       v_license_number, ROUND(v_remaining::NUMERIC, 2), ROUND(p_quantity::NUMERIC, 2);
   END IF;
 
-  -- Mettre à jour la licence
+  -- Mettre à jour la licence (remaining_quantity_grams est calculé automatiquement)
   UPDATE export_licenses
-  SET 
+  SET
     used_quantity_grams = used_quantity_grams + p_quantity,
-    remaining_quantity_grams = remaining_quantity_grams - p_quantity,
     updated_at = NOW(),
     updated_by = p_user_id
   WHERE id = p_license_id;
 
-  -- Vérifier si la licence est épuisée
+  -- Vérifier si la licence est épuisée (remaining_quantity_grams est recalculé automatiquement)
   UPDATE export_licenses
   SET status = 'exhausted'
   WHERE id = p_license_id
@@ -177,14 +176,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  -- Remettre la quantité dans le quota disponible
+  -- Remettre la quantité dans le quota disponible (remaining_quantity_grams est calculé automatiquement)
   UPDATE export_licenses
-  SET 
+  SET
     used_quantity_grams = GREATEST(0, used_quantity_grams - p_quantity),
-    remaining_quantity_grams = LEAST(
-      authorized_quantity_grams,
-      remaining_quantity_grams + p_quantity
-    ),
     updated_at = NOW(),
     updated_by = p_user_id
   WHERE id = p_license_id;

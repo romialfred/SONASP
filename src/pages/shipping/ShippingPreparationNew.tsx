@@ -436,7 +436,28 @@ export default function ShippingPreparationNew() {
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error saving preparation:', error);
-      alert('Erreur lors de la sauvegarde: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+      let errorMessage = 'Erreur inconnue';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        const err = error as any;
+        if (err.message) errorMessage = err.message;
+        else if (err.error_description) errorMessage = err.error_description;
+        else if (err.hint) errorMessage = err.hint;
+        else errorMessage = JSON.stringify(error);
+      }
+
+      // Check for specific database errors
+      if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+        errorMessage = 'Les tables de shipping n\'existent pas dans la base de données. Veuillez appliquer la migration add_shipping_system.sql via le Dashboard Supabase.';
+      } else if (errorMessage.includes('storage') || errorMessage.includes('bucket')) {
+        errorMessage = 'Le bucket de stockage "shipping-documents" n\'existe pas. Veuillez le créer via le Dashboard Supabase (Storage section).';
+      } else if (errorMessage.includes('policy') || errorMessage.includes('RLS')) {
+        errorMessage = 'Erreur de permissions (RLS). Vérifiez que les politiques RLS sont configurées correctement.';
+      }
+
+      alert('Erreur lors de la sauvegarde:\n\n' + errorMessage + '\n\nConsultez la console pour plus de détails.');
     } finally {
       setSaving(false);
     }

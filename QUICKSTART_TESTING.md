@@ -61,19 +61,28 @@ ORDER BY status;
 
 ✅ **Attendu:** Toutes les productions ont maintenant `status = 'prepared'`
 
-### Étape 3: Créer le Bucket Storage (Optionnel)
+### Étape 3: Créer le Bucket Storage (Recommandé)
 
-**Le bucket sera créé automatiquement lors du premier upload.**
-
-Si vous préférez le créer manuellement:
+**Important: Configuration Sécurisée avec PDF Uniquement**
 
 1. Dashboard Supabase → **Storage**
 2. Cliquer **"New bucket"**
 3. Configuration:
-   - Name: `production-documents`
-   - Public: ❌ NON coché
-   - File size limit: `10485760` (10MB)
+   - **Bucket name**: `production-documents`
+   - **Public bucket**: ❌ NON coché (décoché)
+   - **Restrict file size**: ✅ OUI coché
+     - File size limit: `10` MB
+   - **Restrict MIME types**: ✅ OUI coché ← **IMPORTANT!**
+     - Allowed MIME types: `application/pdf`
 4. Cliquer **"Create bucket"**
+
+**Pourquoi PDF uniquement?**
+- ✅ Sécurité maximale (pas d'exécution de code)
+- ✅ Format standard pour documents officiels
+- ✅ Visualisation universelle dans navigateurs
+- ✅ Idéal pour archivage et audit
+
+**Guide détaillé:** Voir `docs/SUPABASE_STORAGE_CONFIGURATION.md`
 
 ### Étape 4: Vérifier l'Installation
 

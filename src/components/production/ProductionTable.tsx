@@ -5,14 +5,28 @@ import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatusBadge } from './ProductionStatusBadge';
 import { ProductionStatus } from '@/constants/productionStatuses';
 
+interface MiningCompany {
+  id: string;
+  name: string;
+}
+
 interface ProductionTableProps {
   productions: DailyProduction[];
   loading: boolean;
   onEdit: (production: DailyProduction) => void;
   onDelete: (id: string) => void;
+  showMiningCompany?: boolean;
+  miningCompanies?: MiningCompany[];
 }
 
-export function ProductionTable({ productions, loading, onEdit, onDelete }: ProductionTableProps) {
+export function ProductionTable({
+  productions,
+  loading,
+  onEdit,
+  onDelete,
+  showMiningCompany = false,
+  miningCompanies = []
+}: ProductionTableProps) {
   const navigate = useNavigate();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -21,6 +35,12 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return 'N/A';
+    const company = miningCompanies.find(c => c.id === companyId);
+    return company?.name || 'N/A';
   };
 
   if (loading) {
@@ -69,6 +89,11 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Bar Reference
             </th>
+            {showMiningCompany && (
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Société Minière
+              </th>
+            )}
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Statut
             </th>
@@ -125,6 +150,13 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
                   {production.bar_reference || '-'}
                 </span>
               </td>
+              {showMiningCompany && (
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-700 font-medium">
+                    {getCompanyName(production.mining_company_id)}
+                  </span>
+                </td>
+              )}
               <td className="px-4 py-4 whitespace-nowrap">
                 <ProductionStatusBadge status={(production.status || 'prepared') as ProductionStatus} size="sm" showIcon />
               </td>
@@ -183,7 +215,7 @@ export function ProductionTable({ productions, loading, onEdit, onDelete }: Prod
                 maximumFractionDigits: 4
               })}
             </td>
-            <td colSpan={3} className="px-4 py-3 text-sm text-gray-600">
+            <td colSpan={showMiningCompany ? 4 : 3} className="px-4 py-3 text-sm text-gray-600">
               {productions.length} enregistrement(s)
             </td>
           </tr>

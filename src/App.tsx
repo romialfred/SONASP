@@ -70,6 +70,7 @@ import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage'
 import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { ProductionDetails } from './pages/production/ProductionDetails';
+import { ProductionInSafe } from './pages/production/ProductionInSafe';
 import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
 import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
 import ShippingDashboard from './pages/shipping/ShippingDashboard';
@@ -530,6 +531,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['factory', 'management']}>
                   <ProductionDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/production/in-safe"
+              element={
+                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                  <ProductionInSafe />
                 </ProtectedRoute>
               }
             />

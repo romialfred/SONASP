@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Download, Filter, TrendingUp } from 'lucide-react';
+import { Plus, Download, Filter, TrendingUp, FileText } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -226,17 +226,27 @@ export function DailyProductionPage() {
         {/* Metrics */}
         {!showForm && <ProductionMetrics productions={filteredProductions} dateRange={dateRange} />}
 
-        {/* Production Chart - Last 30 Days */}
-        {!showForm && <ProductionChart productions={filteredProductions} dateRange={dateRange} />}
-
-        {/* Production Table - Only show when form is not visible */}
+        {/* Production Table - MOVED UP BEFORE CHART */}
         {!showForm && <Card>
           <div className="p-4 border-b border-gray-200">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
                 Historique de Production
               </h2>
               <div className="flex items-center gap-3">
+                {selectedCompanyFilter === 'all' && (
+                  <select
+                    value={selectedCompanyFilter}
+                    onChange={(e) => setSelectedCompanyFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <option value="all">Toutes les Sociétés</option>
+                    {miningCompanies.map(company => (
+                      <option key={company.id} value={company.id}>{company.name}</option>
+                    ))}
+                  </select>
+                )}
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-500" />
                   <input
@@ -262,8 +272,20 @@ export function DailyProductionPage() {
             loading={loading}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            showMiningCompany={selectedCompanyFilter === 'all'}
+            miningCompanies={miningCompanies}
           />
         </Card>}
+
+        {/* Production Chart - NOW BELOW TABLE */}
+        {!showForm && <ProductionChart
+          productions={filteredProductions}
+          dateRange={dateRange}
+          groupByCompany={selectedCompanyFilter === 'all'}
+          miningCompanies={miningCompanies}
+        />}
+
+        {/* OLD PRODUCTION TABLE REMOVED - NOW ABOVE */}
       </div>
     </MainLayout>
   );

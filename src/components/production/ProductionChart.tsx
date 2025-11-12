@@ -3,24 +3,75 @@ import { Card } from '@/components/ui/Card';
 import { TrendingUp, Calendar } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';
 
+interface MiningCompany {
+  id: string;
+  name: string;
+}
+
 interface ProductionChartProps {
   productions: DailyProduction[];
   dateRange: {
     startDate: string;
     endDate: string;
   };
+  groupByCompany?: boolean;
+  miningCompanies?: MiningCompany[];
 }
 
-export function ProductionChart({ productions }: ProductionChartProps) {
-  const chartData = productions
-    .sort((a, b) => new Date(a.production_date).getTime() - new Date(b.production_date).getTime())
-    .map(p => ({
-      date: new Date(p.production_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
-      fullDate: p.production_date,
-      bullion: parseFloat(p.bullion_grams.toFixed(2)),
-      pureGold: parseFloat(p.pure_gold_grams.toFixed(2)),
-      oz: parseFloat(p.estimated_oz.toFixed(4)),
-    }));
+export function ProductionChart({ productions, groupByCompany = false, miningCompanies = [] }: ProductionChartProps) {
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return 'N/A';
+    const company = miningCompanies.find(c => c.id === companyId);
+    return company?.name || 'Unknown';
+  };
+
+  const getCompanyColor = (index: number) => {
+    const colors = [
+      '#3b82f6', // blue
+      '#10b981', // emerald
+      '#f59e0b', // amber
+      '#8b5cf6', // violet
+      '#ec4899', // pink
+      '#14b8a6', // teal
+      '#f97316', // orange
+      '#6366f1', // indigo
+    ];
+    return colors[index % colors.length];
+  };
+
+  let chartData: any[];
+  let companyKeys: string[] = [];
+
+  if (groupByCompany && miningCompanies.length > 0) {
+    // Group data by date and company
+    const groupedByDate = productions.reduce((acc, p) => {
+      const date = new Date(p.production_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      if (!acc[date]) {
+        acc[date] = { date, fullDate: p.production_date };
+      }
+      const companyName = getCompanyName(p.mining_company_id);
+      acc[date][companyName] = (acc[date][companyName] || 0) + parseFloat(p.estimated_oz.toFixed(4));
+      return acc;
+    }, {} as Record<string, any>);
+
+    chartData = Object.values(groupedByDate).sort((a, b) =>
+      new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
+    );
+
+    // Get all unique company names
+    companyKeys = miningCompanies.map(c => c.name);
+  } else {
+    // Original single-series data
+    chartData = productions
+      .sort((a, b) => new Date(a.production_date).getTime() - new Date(b.production_date).getTime())
+      .map(p => ({
+        date: new Date(p.production_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+        fullDate: p.production_date,
+        bullion: parseFloat(p.bullion_grams.toFixed(2)),
+        pureGold: parseFloat(p.pure_gold_grams.toFixed(2)),
+        oz: parseFloat(p.estimated_oz.toFixed(4)),
+      }));
+  }
 
   const totalOz = productions.reduce((sum, p) => sum + p.estimated_oz, 0);
   const avgDaily = chartData.length > 0 ? totalOz / chartData.length : 0;
@@ -34,7 +85,9 @@ export function ProductionChart({ productions }: ProductionChartProps) {
             <TrendingUp className="w-5 h-5 text-blue-600" />
             <h3 className="text-lg font-bold text-gray-900">Production Trends</h3>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Last 30 Days Daily Production (Ounces)</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {groupByCompany ? 'Production by Mining Company (Ounces)' : 'Last 30 Days Daily Production (Ounces)'}
+          </p>
         </div>
         <div className="text-right">
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -98,12 +151,24 @@ export function ProductionChart({ productions }: ProductionChartProps) {
                   return labels[value] || value;
                 }}
               />
-              <Bar
-                dataKey="oz"
-                fill="#3b82f6"
-                radius={[8, 8, 0, 0]}
-                name="oz"
-              />
+              {groupByCompany ? (
+                companyKeys.map((companyName, index) => (
+                  <Bar
+                    key={companyName}
+                    dataKey={companyName}
+                    fill={getCompanyColor(index)}
+                    radius={[8, 8, 0, 0]}
+                    name={companyName}
+                  />
+                ))
+              ) : (
+                <Bar
+                  dataKey="oz"
+                  fill="#3b82f6"
+                  radius={[8, 8, 0, 0]}
+                  name="oz"
+                />
+              )}
             </BarChart>
           </ResponsiveContainer>
 

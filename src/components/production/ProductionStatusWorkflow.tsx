@@ -132,10 +132,10 @@ export function ProductionStatusWorkflow({
         />
       )}
 
-      {!nextStatus && currentStatus === 'shipped' && (
+      {!nextStatus && currentStatus === 'validated_for_refinery' && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
           <p className="text-sm text-emerald-800 font-medium">
-            ✓ Cette production a été expédiée. La suite du processus se fait dans le module Expédition/Raffinerie.
+            ✓ Cette production a été validée pour la raffinerie. La suite du processus se fait dans le module Expédition/Raffinerie.
           </p>
         </div>
       )}

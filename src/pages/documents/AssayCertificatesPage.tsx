@@ -333,7 +333,7 @@ export function AssayCertificatesPage() {
                   <option value="all">Tous Statuts</option>
                   <option value="draft">Brouillon</option>
                   <option value="prepared">Préparée</option>
-                  <option value="shipped">Expédiée</option>
+                  <option value="validated_for_refinery">Validée pour Raffinerie</option>
                   <option value="delivered">Livrée</option>
                 </select>
               </div>

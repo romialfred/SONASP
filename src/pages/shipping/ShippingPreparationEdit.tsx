@@ -45,7 +45,7 @@ export default function ShippingPreparationEdit() {
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [shippedToCountry, setShippedToCountry] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'pending' | 'prepared' | 'shipped'>('pending');
+  const [status, setStatus] = useState<'pending' | 'prepared' | 'validated_for_refinery'>('pending');
 
   useEffect(() => {
     loadData();
@@ -229,12 +229,12 @@ export default function ShippingPreparationEdit() {
                   </label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as 'pending' | 'prepared' | 'shipped')}
+                    onChange={(e) => setStatus(e.target.value as 'pending' | 'prepared' | 'validated_for_refinery')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="pending">En Attente</option>
                     <option value="prepared">Préparée</option>
-                    <option value="shipped">Expédiée</option>
+                    <option value="validated_for_refinery">Validée pour Raffinerie</option>
                   </select>
                 </div>
               </div>

@@ -31,7 +31,7 @@ export default function ShippingDashboard() {
     total: preparations.length,
     pending: preparations.filter(p => p.status === 'pending').length,
     prepared: preparations.filter(p => p.status === 'prepared').length,
-    shipped: preparations.filter(p => p.status === 'shipped').length,
+    validated_for_refinery: preparations.filter(p => p.status === 'validated_for_refinery').length,
     totalWeight: preparations.reduce((sum, p) => sum + (p.total_net_weight_grams || 0), 0),
   };
 
@@ -39,12 +39,12 @@ export default function ShippingDashboard() {
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       prepared: 'bg-blue-100 text-blue-800 border-blue-300',
-      shipped: 'bg-green-100 text-green-800 border-green-300',
+      validated_for_refinery: 'bg-green-100 text-green-800 border-green-300',
     };
     const labels = {
       pending: 'En attente',
       prepared: 'Préparé',
-      shipped: 'Expédié',
+      validated_for_refinery: 'Validé pour Raffinerie',
     };
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status as keyof typeof styles]}`}>
@@ -57,7 +57,7 @@ export default function ShippingDashboard() {
     switch (status) {
       case 'pending': return <Clock className="w-4 h-4 text-yellow-600" />;
       case 'prepared': return <Box className="w-4 h-4 text-blue-600" />;
-      case 'shipped': return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'validated_for_refinery': return <CheckCircle className="w-4 h-4 text-green-600" />;
       default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
     }
   };

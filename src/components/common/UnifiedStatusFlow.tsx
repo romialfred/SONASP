@@ -327,7 +327,7 @@ export function UnifiedStatusFlow({
               <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
               <p className="text-xs text-yellow-800">
                 Le statut ne peut pas être modifié depuis ce module.
-                {entityType === 'production' && currentStatus === 'shipped' && (
+                {entityType === 'production' && currentStatus === 'validated_for_refinery' && (
                   <span> Utilisez le module <strong>Shipping Management</strong> pour modifier le statut.</span>
                 )}
               </p>

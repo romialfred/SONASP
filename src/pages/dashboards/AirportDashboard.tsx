@@ -117,7 +117,7 @@ export function AirportDashboard() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm text-gray-900">{batch.id}</p>
-                        <StatusBadge status="shipped" size="sm" />
+                        <StatusBadge status="validated_for_refinery" size="sm" />
                       </div>
                       <p className="text-xs text-gray-600 mt-1">{batch.origin}</p>
                       <p className="text-xs text-gray-500">Weight: {batch.weight} • ETA: {batch.eta}</p>

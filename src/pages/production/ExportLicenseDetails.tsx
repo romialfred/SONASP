@@ -249,7 +249,7 @@ export function ExportLicenseDetails() {
                           {shipment.total_net_weight_grams.toLocaleString()}g
                         </p>
                         <span className={`text-xs px-2 py-1 rounded ${
-                          shipment.status === 'shipped'
+                          shipment.status === 'validated_for_refinery'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-blue-100 text-blue-800'
                         }`}>

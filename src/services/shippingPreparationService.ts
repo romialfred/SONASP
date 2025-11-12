@@ -12,7 +12,7 @@ export interface ShippingPreparation {
   shipped_to_company: string | null;
   shipped_to_address: string | null;
   shipped_to_country: string | null;
-  status: 'pending' | 'prepared' | 'shipped';
+  status: 'pending' | 'prepared' | 'validated_for_refinery' | 'in_refining' | 'refined' | 'in_sale' | 'sold' | 'cancelled';
   prepared_at: string | null;
   shipped_at: string | null;
   notes: string | null;

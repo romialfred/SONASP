@@ -125,7 +125,7 @@ export function ProductionInSafe() {
 
       const counts: StatusCount = {
         prepared: productionData.filter(p => p.status === 'prepared').length,
-        shipped: productionData.filter(p => p.status === 'shipped').length,
+        validated_for_refinery: productionData.filter(p => p.status === 'validated_for_refinery').length,
         cancelled: productionData.filter(p => p.status === 'cancelled').length
       };
       setStatusCounts(counts);
@@ -662,7 +662,7 @@ export function ProductionInSafe() {
                 <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
                   <option value="all">Tous</option>
                   <option value="prepared">Préparé</option>
-                  <option value="shipped">Expédié</option>
+                  <option value="validated_for_refinery">Validé pour Raffinerie</option>
                   <option value="cancelled">Annulé</option>
                 </select>
               </div>

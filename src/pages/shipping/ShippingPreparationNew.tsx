@@ -9,6 +9,7 @@ import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
+import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -77,13 +78,16 @@ export default function ShippingPreparationNew() {
   const [freightCompanies, setFreightCompanies] = useState<TransportCompany[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
+  const [availableLicenses, setAvailableLicenses] = useState<ExportLicense[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedPreparationId, setSavedPreparationId] = useState<string>('');
+  const [licenseWarning, setLicenseWarning] = useState<string>('');
 
   // Form state
   const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
+  const [selectedLicenseId, setSelectedLicenseId] = useState('');
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
 
@@ -212,11 +216,56 @@ export default function ShippingPreparationNew() {
 
   const handleMiningCompanyChange = async (companyId: string) => {
     setSelectedMiningCompanyId(companyId);
+    setSelectedLicenseId('');
     setSelectedProductions([]);
+    setLicenseWarning('');
+
     if (companyId) {
       await loadProductions(companyId);
+      await loadActiveLicenses(companyId);
     } else {
       setProductions([]);
+      setAvailableLicenses([]);
+    }
+  };
+
+  const loadActiveLicenses = async (companyId: string) => {
+    try {
+      const licenses = await exportLicenseService.getActiveLicensesByCompany(companyId);
+      setAvailableLicenses(licenses);
+
+      if (licenses.length === 0) {
+        setLicenseWarning('⚠️ Aucune licence active disponible pour cette compagnie');
+      }
+    } catch (error) {
+      console.error('Error loading licenses:', error);
+    }
+  };
+
+  const handleLicenseChange = async (licenseId: string) => {
+    setSelectedLicenseId(licenseId);
+    setLicenseWarning('');
+
+    if (licenseId && selectedProductions.length > 0) {
+      await validateLicenseQuantity(licenseId);
+    }
+  };
+
+  const validateLicenseQuantity = async (licenseId: string) => {
+    const totalNetWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
+
+    if (totalNetWeight > 0) {
+      try {
+        const availability = await exportLicenseService.checkLicenseAvailability(licenseId, totalNetWeight);
+
+        if (!availability.is_available) {
+          setLicenseWarning(`❌ ${availability.message}`);
+        } else {
+          setLicenseWarning(`✅ Quantité disponible: ${availability.remaining_quantity.toLocaleString()}g`);
+        }
+      } catch (error) {
+        console.error('Error checking license:', error);
+      }
     }
   };
 
@@ -227,11 +276,25 @@ export default function ShippingPreparationNew() {
     const alreadySelected = selectedProductions.some(sp => sp.production.id === productionId);
     if (alreadySelected) return;
 
-    setSelectedProductions([...selectedProductions, {
+    const newSelections = [...selectedProductions, {
       production,
       sealNumber1: '',
       sealNumber2: ''
-    }]);
+    }];
+
+    setSelectedProductions(newSelections);
+
+    // Re-validate license if selected
+    if (selectedLicenseId) {
+      const totalNetWeight = newSelections.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
+      exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight).then(availability => {
+        if (!availability.is_available) {
+          setLicenseWarning(`❌ ${availability.message}`);
+        } else {
+          setLicenseWarning(`✅ Quantité disponible: ${availability.remaining_quantity.toLocaleString()}g`);
+        }
+      });
+    }
   };
 
   const handleRemoveProduction = (productionId: string) => {
@@ -390,8 +453,28 @@ export default function ShippingPreparationNew() {
       return;
     }
 
+    if (!selectedLicenseId) {
+      alert('Veuillez sélectionner une licence d\'exportation');
+      return;
+    }
+
     if (selectedProductions.length === 0) {
       alert('Veuillez sélectionner au moins une production');
+      return;
+    }
+
+    // Validate license availability
+    const totalNetWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
+    try {
+      const availability = await exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight);
+
+      if (!availability.is_available) {
+        alert(`Impossible de créer l'expédition:\n\n${availability.message}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking license:', error);
+      alert('Erreur lors de la vérification de la licence');
       return;
     }
 
@@ -416,6 +499,7 @@ export default function ShippingPreparationNew() {
         expedition_lot_number: expeditionLotNumber,
         seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
         mining_company_id: selectedMiningCompanyId,
+        license_id: selectedLicenseId,
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
         status: 'prepared' as const,
@@ -565,6 +649,55 @@ export default function ShippingPreparationNew() {
                 </p>
               )}
             </Card>
+
+            {/* License Selection */}
+            {selectedMiningCompanyId && (
+              <Card className="p-6 border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <h3 className="text-lg font-bold text-green-900 mb-4">
+                  <FileText className="w-5 h-5 inline mr-2" />
+                  Licence d'Exportation *
+                </h3>
+                <select
+                  value={selectedLicenseId}
+                  onChange={(e) => handleLicenseChange(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-sm font-medium"
+                  disabled={loading || availableLicenses.length === 0}
+                >
+                  <option value="">
+                    {availableLicenses.length === 0
+                      ? '-- Aucune licence active disponible --'
+                      : '-- Sélectionner une licence --'}
+                  </option>
+                  {availableLicenses.map((license) => (
+                    <option key={license.id} value={license.id}>
+                      {license.license_number} - Restant: {license.remaining_quantity_grams.toLocaleString()}g
+                      (Expire: {new Date(license.end_date).toLocaleDateString('fr-FR')})
+                    </option>
+                  ))}
+                </select>
+                {licenseWarning && (
+                  <div className={`mt-3 p-3 rounded-lg text-sm ${
+                    licenseWarning.startsWith('❌')
+                      ? 'bg-red-100 text-red-800 border border-red-300'
+                      : licenseWarning.startsWith('⚠️')
+                      ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                      : 'bg-green-100 text-green-800 border border-green-300'
+                  }`}>
+                    {licenseWarning}
+                  </div>
+                )}
+                {!selectedLicenseId && availableLicenses.length === 0 && (
+                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800 font-medium">
+                      ⚠️ Aucune licence d'exportation active pour cette compagnie.
+                    </p>
+                    <p className="text-xs text-red-600 mt-2">
+                      Veuillez créer une licence dans le module "Production Management" avant de préparer une expédition.
+                    </p>
+                  </div>
+                )}
+              </Card>
+            )}
 
             {/* Production Selection & Table */}
             <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
@@ -909,7 +1042,7 @@ export default function ShippingPreparationNew() {
               </Button>
               <Button
                 onClick={handleSavePreparation}
-                disabled={saving || !selectedFreightCompanyId || !selectedRefineryId || selectedProductions.length === 0 || selectedProductions.some(sp => !sp.sealNumber1.trim())}
+                disabled={saving || !selectedMiningCompanyId || !selectedLicenseId || !selectedFreightCompanyId || !selectedRefineryId || selectedProductions.length === 0 || selectedProductions.some(sp => !sp.sealNumber1.trim()) || licenseWarning.startsWith('❌')}
                 className="gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />

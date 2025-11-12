@@ -292,66 +292,207 @@ export function ProductionInSafe() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.setFillColor(218, 165, 32);
-      pdf.rect(0, 0, pageWidth, 35, 'F');
+      pdf.setFillColor(212, 175, 55);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+
+      try {
+        const logoImg = await fetch('/image.png');
+        const logoBlob = await logoImg.blob();
+        const logoDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logoBlob);
+        });
+        pdf.addImage(logoDataUrl, 'PNG', 15, 8, 25, 25);
+      } catch (error) {
+        console.log('Logo non chargé:', error);
+      }
 
       pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(20);
+      pdf.setFontSize(22);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Production en Coffre-Fort', pageWidth / 2, 15, { align: 'center' });
+      pdf.text('Production en Coffre-Fort', pageWidth / 2, 17, { align: 'center' });
 
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Période: ${dateRange.startDate} à ${dateRange.endDate}`, pageWidth / 2, 23, { align: 'center' });
-      pdf.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 30, { align: 'center' });
-
-      pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Période: ${dateRange.startDate} à ${dateRange.endDate}`, pageWidth / 2, 25, { align: 'center' });
+      pdf.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 32, { align: 'center' });
+
+      pdf.setFillColor(255, 251, 235);
+      pdf.rect(14, 47, pageWidth - 28, 20, 'F');
+      pdf.setDrawColor(212, 175, 55);
+      pdf.setLineWidth(0.5);
+      pdf.rect(14, 47, pageWidth - 28, 20, 'S');
+
+      pdf.setTextColor(120, 53, 15);
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Résumé de la situation', 14, 45);
+      pdf.text('Résumé de la situation', 18, 53);
 
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
+      pdf.setTextColor(60, 60, 60);
       const summaryText = generateSummaryText();
-      const splitSummary = pdf.splitTextToSize(summaryText, pageWidth - 28);
-      pdf.text(splitSummary, 14, 52);
+      const splitSummary = pdf.splitTextToSize(summaryText, pageWidth - 36);
+      pdf.text(splitSummary, 18, 59);
 
-      const startY = 52 + (splitSummary.length * 5) + 10;
+      const startY = 74;
 
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(14, startY, 85, 8, 'F');
-      pdf.rect(104, startY, 85, 8, 'F');
-      pdf.rect(194, startY, 85, 8, 'F');
+      const colWidth = 88;
+      const colHeight = 42;
+
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(14, startY, colWidth, 8, 2, 2, 'F');
+      pdf.roundedRect(108, startY, colWidth, 8, 2, 2, 'F');
+      pdf.roundedRect(202, startY, colWidth, 8, 2, 2, 'F');
 
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.text('Performance Hebdomadaire (WTD)', 56, startY + 5, { align: 'center' });
-      pdf.text('Performance Mensuelle (MTD)', 146, startY + 5, { align: 'center' });
-      pdf.text('Performance Annuelle (YTD)', 236, startY + 5, { align: 'center' });
+      pdf.setFontSize(9);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Performance Hebdomadaire (WTD)', 14 + colWidth / 2, startY + 5.5, { align: 'center' });
+      pdf.text('Performance Mensuelle (MTD)', 108 + colWidth / 2, startY + 5.5, { align: 'center' });
+      pdf.text('Performance Annuelle (YTD)', 202 + colWidth / 2, startY + 5.5, { align: 'center' });
 
-      const metricsY = startY + 12;
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(14, startY + 10, colWidth, colHeight - 10, 2, 2, 'FD');
+      pdf.roundedRect(108, startY + 10, colWidth, colHeight - 10, 2, 2, 'FD');
+      pdf.roundedRect(202, startY + 10, colWidth, colHeight - 10, 2, 2, 'FD');
+
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
 
-      pdf.text(`Prévision: ${performanceData.wtd.forecast.toFixed(0)} oz`, 16, metricsY);
-      pdf.text(`Budget: ${performanceData.wtd.budget.toFixed(0)} oz`, 16, metricsY + 5);
-      pdf.text(`Réalisé: ${performanceData.wtd.actual.toFixed(0)} oz`, 16, metricsY + 10);
-      pdf.text(`vs Prév: ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast).toFixed(0)} oz`, 16, metricsY + 15);
-      pdf.text(`vs Budget: ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget).toFixed(0)} oz`, 16, metricsY + 20);
+      let yPos = startY + 16;
+      pdf.text('Prévision:', 18, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.wtd.forecast.toFixed(0)} oz`, 18 + colWidth - 8, yPos, { align: 'right' });
 
-      pdf.text(`Prévision: ${performanceData.mtd.forecast.toFixed(0)} oz`, 106, metricsY);
-      pdf.text(`Budget: ${performanceData.mtd.budget.toFixed(0)} oz`, 106, metricsY + 5);
-      pdf.text(`Réalisé: ${performanceData.mtd.actual.toFixed(0)} oz`, 106, metricsY + 10);
-      pdf.text(`vs Prév: ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast).toFixed(0)} oz`, 106, metricsY + 15);
-      pdf.text(`vs Budget: ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget).toFixed(0)} oz`, 106, metricsY + 20);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      yPos += 5;
+      pdf.text('Budget:', 18, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.wtd.budget.toFixed(0)} oz`, 18 + colWidth - 8, yPos, { align: 'right' });
 
-      pdf.text(`Prévision: ${performanceData.ytd.forecast.toFixed(0)} oz`, 196, metricsY);
-      pdf.text(`Budget: ${performanceData.ytd.budget.toFixed(0)} oz`, 196, metricsY + 5);
-      pdf.text(`Réalisé: ${performanceData.ytd.actual.toFixed(0)} oz`, 196, metricsY + 10);
-      pdf.text(`vs Prév: ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast).toFixed(0)} oz`, 196, metricsY + 15);
-      pdf.text(`vs Budget: ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget).toFixed(0)} oz`, 196, metricsY + 20);
+      yPos += 6;
+      pdf.setFillColor(59, 130, 246);
+      pdf.roundedRect(18, yPos - 4, colWidth - 8, 6, 1, 1, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('Réalisé:', 20, yPos);
+      pdf.text(`${performanceData.wtd.actual.toFixed(0)} oz`, 18 + colWidth - 10, yPos, { align: 'right' });
 
-      const tableStartY = metricsY + 20;
+      yPos += 6;
+      const wtdVsPrev = calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast);
+      pdf.setFillColor(wtdVsPrev >= 0 ? 16 : 239, wtdVsPrev >= 0 ? 185 : 68, wtdVsPrev >= 0 ? 129 : 68);
+      pdf.roundedRect(18, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Prévision:', 20, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${wtdVsPrev >= 0 ? '+' : ''}${wtdVsPrev.toFixed(0)} oz`, 18 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos += 5;
+      const wtdVsBudget = calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget);
+      pdf.setFillColor(wtdVsBudget >= 0 ? 16 : 251, wtdVsBudget >= 0 ? 185 : 146, wtdVsBudget >= 0 ? 129 : 60);
+      pdf.roundedRect(18, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Budget:', 20, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${wtdVsBudget >= 0 ? '+' : ''}${wtdVsBudget.toFixed(0)} oz`, 18 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos = startY + 16;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Prévision:', 112, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.mtd.forecast.toFixed(0)} oz`, 112 + colWidth - 8, yPos, { align: 'right' });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      yPos += 5;
+      pdf.text('Budget:', 112, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.mtd.budget.toFixed(0)} oz`, 112 + colWidth - 8, yPos, { align: 'right' });
+
+      yPos += 6;
+      pdf.setFillColor(147, 51, 234);
+      pdf.roundedRect(112, yPos - 4, colWidth - 8, 6, 1, 1, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('Réalisé:', 114, yPos);
+      pdf.text(`${performanceData.mtd.actual.toFixed(0)} oz`, 112 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos += 6;
+      const mtdVsPrev = calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast);
+      pdf.setFillColor(mtdVsPrev >= 0 ? 16 : 251, mtdVsPrev >= 0 ? 185 : 146, mtdVsPrev >= 0 ? 129 : 60);
+      pdf.roundedRect(112, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Prévision:', 114, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${mtdVsPrev >= 0 ? '+' : ''}${mtdVsPrev.toFixed(0)} oz`, 112 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos += 5;
+      const mtdVsBudget = calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget);
+      pdf.setFillColor(mtdVsBudget >= 0 ? 16 : 251, mtdVsBudget >= 0 ? 185 : 146, mtdVsBudget >= 0 ? 129 : 60);
+      pdf.roundedRect(112, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Budget:', 114, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${mtdVsBudget >= 0 ? '+' : ''}${mtdVsBudget.toFixed(0)} oz`, 112 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos = startY + 16;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Prévision:', 206, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.ytd.forecast.toFixed(0)} oz`, 206 + colWidth - 8, yPos, { align: 'right' });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      yPos += 5;
+      pdf.text('Budget:', 206, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${performanceData.ytd.budget.toFixed(0)} oz`, 206 + colWidth - 8, yPos, { align: 'right' });
+
+      yPos += 6;
+      pdf.setFillColor(16, 185, 129);
+      pdf.roundedRect(206, yPos - 4, colWidth - 8, 6, 1, 1, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('Réalisé:', 208, yPos);
+      pdf.text(`${performanceData.ytd.actual.toFixed(0)} oz`, 206 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos += 6;
+      const ytdVsPrev = calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast);
+      pdf.setFillColor(ytdVsPrev >= 0 ? 16 : 251, ytdVsPrev >= 0 ? 185 : 146, ytdVsPrev >= 0 ? 129 : 60);
+      pdf.roundedRect(206, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Prévision:', 208, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${ytdVsPrev >= 0 ? '+' : ''}${ytdVsPrev.toFixed(0)} oz`, 206 + colWidth - 10, yPos, { align: 'right' });
+
+      yPos += 5;
+      const ytdVsBudget = calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget);
+      pdf.setFillColor(ytdVsBudget >= 0 ? 16 : 251, ytdVsBudget >= 0 ? 185 : 146, ytdVsBudget >= 0 ? 129 : 60);
+      pdf.roundedRect(206, yPos - 3.5, colWidth - 8, 5, 1, 1, 'F');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('vs Budget:', 208, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${ytdVsBudget >= 0 ? '+' : ''}${ytdVsBudget.toFixed(0)} oz`, 206 + colWidth - 10, yPos, { align: 'right' });
+
+      const tableStartY = startY + colHeight + 8;
 
       const tableData = productions.map(p => [
         new Date(p.production_date).toLocaleDateString('fr-FR'),
@@ -379,40 +520,42 @@ export function ProductionInSafe() {
         startY: tableStartY,
         head: [['Date', 'Bullion (g)', 'Finesse', 'Or Pur (g)', 'Oz Estimées', 'Référence', 'Société', 'Statut']],
         body: tableData,
-        theme: 'striped',
+        theme: 'grid',
         headStyles: {
-          fillColor: [184, 134, 11],
+          fillColor: [180, 83, 9],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 8
+          fontSize: 8,
+          halign: 'center',
+          valign: 'middle',
+          lineWidth: 0.1,
+          lineColor: [212, 175, 55]
         },
         bodyStyles: {
-          fontSize: 7
-        },
-        footStyles: {
-          fillColor: [184, 134, 11],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 8
+          fontSize: 7.5,
+          textColor: [60, 60, 60],
+          lineWidth: 0.1,
+          lineColor: [220, 220, 220]
         },
         alternateRowStyles: {
-          fillColor: [255, 250, 230]
+          fillColor: [254, 252, 232]
         },
         columnStyles: {
-          0: { cellWidth: 22 },
-          1: { cellWidth: 25, halign: 'right' },
-          2: { cellWidth: 20, halign: 'right' },
-          3: { cellWidth: 25, halign: 'right' },
-          4: { cellWidth: 25, halign: 'right' },
-          5: { cellWidth: 30 },
-          6: { cellWidth: 40 },
-          7: { cellWidth: 25 }
+          0: { cellWidth: 22, halign: 'center' },
+          1: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
+          2: { cellWidth: 20, halign: 'center', textColor: [37, 99, 235] },
+          3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
+          4: { cellWidth: 25, halign: 'right', fontStyle: 'bold', textColor: [16, 185, 129] },
+          5: { cellWidth: 30, halign: 'center', fontStyle: 'mono' },
+          6: { cellWidth: 40, halign: 'left' },
+          7: { cellWidth: 25, halign: 'center' }
         },
         didParseCell: function(data) {
           if (data.row.index === tableData.length - 1) {
-            data.cell.styles.fillColor = [184, 134, 11];
+            data.cell.styles.fillColor = [180, 83, 9];
             data.cell.styles.textColor = [255, 255, 255];
             data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = 8;
           }
         },
         margin: { top: 10, left: 14, right: 14 }

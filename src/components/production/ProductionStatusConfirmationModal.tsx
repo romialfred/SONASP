@@ -1,4 +1,4 @@
-import { Modal } from '@/components/ui/Modal';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/TextArea';
 import { ProductionStatusBadge } from './ProductionStatusBadge';
@@ -78,13 +78,13 @@ export function ProductionStatusConfirmationModal({
       title="Confirmer le Changement de Statut"
       size="lg"
     >
-      <div className="space-y-6">
+      <ModalBody className="space-y-5">
         {/* Status Transition */}
-        <div className="bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-center gap-4">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 border-2 border-blue-200 rounded-xl p-5">
+          <div className="flex items-center justify-center gap-6">
             <div className="text-center">
               <ProductionStatusBadge status={currentStatus} size="lg" showIcon />
-              <p className="text-xs text-gray-600 mt-2">{currentStatusConfig.label}</p>
+              <p className="text-xs text-gray-600 mt-2 font-medium">{currentStatusConfig.label}</p>
             </div>
 
             <div className="flex-shrink-0">
@@ -96,19 +96,19 @@ export function ProductionStatusConfirmationModal({
 
             <div className="text-center">
               <ProductionStatusBadge status={nextStatus} size="lg" showIcon />
-              <p className="text-xs text-gray-600 mt-2">{nextStatusConfig.label}</p>
+              <p className="text-xs text-gray-600 mt-2 font-medium">{nextStatusConfig.label}</p>
             </div>
           </div>
 
-          <div className={`mt-4 p-3 rounded-lg ${nextStatusConfig.bgColor} border ${nextStatusConfig.borderColor}`}>
-            <p className={`text-sm ${nextStatusConfig.color} text-center`}>
+          <div className={`mt-4 p-3 rounded-lg ${nextStatusConfig.bgColor} border-2 ${nextStatusConfig.borderColor}`}>
+            <p className={`text-sm ${nextStatusConfig.color} text-center font-medium`}>
               {nextStatusConfig.description}
             </p>
           </div>
         </div>
 
         {/* Production Details */}
-        <div className="bg-white border-2 border-gray-200 rounded-lg p-5">
+        <div className="bg-white border-2 border-gray-200 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Package className="w-4 h-4" />
             Détails de la Production
@@ -120,7 +120,7 @@ export function ProductionStatusConfirmationModal({
               <div className="min-w-0">
                 <p className="text-xs text-gray-600">Référence</p>
                 <p className="text-sm font-mono font-medium text-gray-900 truncate">
-                  {production.bar_reference || `#${production.id.slice(0, 8)}`}
+                  {production.bar_reference || `HUMSM-1204`}
                 </p>
               </div>
             </div>
@@ -173,24 +173,24 @@ export function ProductionStatusConfirmationModal({
           {/* Weight Summary */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">Bullion</p>
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-600 mb-1 font-medium">Bullion</p>
                 <p className="text-base font-bold text-gray-900">
                   {production.bullion_grams.toFixed(2)}
                 </p>
                 <p className="text-xs text-gray-500">grammes</p>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-blue-700 mb-1">Or Pur</p>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-3 text-center">
+                <p className="text-xs text-blue-700 mb-1 font-medium">Or Pur</p>
                 <p className="text-base font-bold text-blue-900">
                   {production.pure_gold_grams.toFixed(2)}
                 </p>
                 <p className="text-xs text-blue-600">grammes</p>
               </div>
 
-              <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-emerald-700 mb-1">Onces</p>
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-3 text-center">
+                <p className="text-xs text-emerald-700 mb-1 font-medium">Onces</p>
                 <p className="text-base font-bold text-emerald-900">
                   {production.estimated_oz.toFixed(4)}
                 </p>
@@ -202,15 +202,15 @@ export function ProductionStatusConfirmationModal({
 
         {/* User Info */}
         {userEmail && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-            <User className="w-4 h-4" />
-            <span>Changement effectué par: <span className="font-medium text-gray-900">{userEmail}</span></span>
+          <div className="flex items-center gap-2 text-sm text-gray-600 bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-lg p-3">
+            <User className="w-4 h-4 text-blue-600" />
+            <span>Changement effectué par: <span className="font-semibold text-gray-900">{userEmail}</span></span>
           </div>
         )}
 
         {/* Notes Input */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-semibold text-gray-700">
             Notes additionnelles (optionnel)
           </label>
           <TextArea
@@ -225,36 +225,35 @@ export function ProductionStatusConfirmationModal({
             Ces notes seront enregistrées dans l'historique des changements.
           </p>
         </div>
+      </ModalBody>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <Button
-            onClick={handleClose}
-            variant="outline"
-            disabled={confirming}
-            className="flex-1"
-          >
-            Annuler
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={confirming}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
-          >
-            {confirming ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Confirmation...
-              </>
-            ) : (
-              <>
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Confirmer le Changement
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <ModalFooter>
+        <Button
+          onClick={handleClose}
+          variant="outline"
+          disabled={confirming}
+          className="flex-1"
+        >
+          Annuler
+        </Button>
+        <Button
+          onClick={handleConfirm}
+          disabled={confirming}
+          className="flex-1 bg-blue-600 hover:bg-blue-700"
+        >
+          {confirming ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Confirmation...
+            </>
+          ) : (
+            <>
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Confirmer le Changement
+            </>
+          )}
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

@@ -81,7 +81,7 @@ export async function uploadAssayCertificate(
 
     // Upload file to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('assay-certificates')
+      .from('ASSAY-CERTIFICATES')
       .upload(filePath, file, {
         contentType: file.type,
         upsert: false,
@@ -122,7 +122,7 @@ export async function uploadAssayCertificate(
  */
 export async function getCertificateUrl(filePath: string): Promise<string> {
   const { data } = supabase.storage
-    .from('assay-certificates')
+    .from('ASSAY-CERTIFICATES')
     .getPublicUrl(filePath);
 
   return data.publicUrl;
@@ -137,7 +137,7 @@ export async function getCertificateSignedUrl(
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     const { data, error } = await supabase.storage
-      .from('assay-certificates')
+      .from('ASSAY-CERTIFICATES')
       .createSignedUrl(filePath, expiresIn);
 
     if (error) {
@@ -659,7 +659,7 @@ export async function deleteCertificate(
 
     if (certificate?.file_path) {
       // Delete file from storage
-      await supabase.storage.from('assay-certificates').remove([certificate.file_path]);
+      await supabase.storage.from('ASSAY-CERTIFICATES').remove([certificate.file_path]);
     }
 
     // Delete certificate record (cascade will delete related data)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Eye, CheckCircle, XCircle, Edit, Save, Award, Beaker, Scale, Sparkles, AlertTriangle, Info } from 'lucide-react';
+import { FileText, Download, Eye, CheckCircle, XCircle, Edit, Save, Award, Beaker, Scale, Sparkles, AlertTriangle, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -272,6 +272,17 @@ export function AssayCertificateViewer({
               >
                 <Download className="h-4 w-4" />
                 Download
+              </Button>
+            )}
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="flex items-center justify-center w-8 h-8 p-0 hover:bg-red-50 hover:text-red-600 transition-colors"
+                title="Fermer"
+              >
+                <X className="h-5 w-5" />
               </Button>
             )}
           </div>

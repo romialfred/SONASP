@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +26,7 @@ interface MiningCompany {
 export function ProductionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const [production, setProduction] = useState<DailyProduction | null>(null);
@@ -36,6 +37,9 @@ export function ProductionDetails() {
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
   const [siteCountry, setSiteCountry] = useState<string>('Guinée');
+
+  // Determine return path - check where we came from
+  const returnPath = location.state?.from || '/production/in-safe';
 
   useEffect(() => {
     if (id) {
@@ -57,7 +61,6 @@ export function ProductionDetails() {
       setLoading(true);
       setError(null);
 
-      // Load production data first
       const prodData = await dailyProductionService.getProductionById(id);
 
       if (!prodData) {
@@ -69,30 +72,31 @@ export function ProductionDetails() {
         return;
       }
 
-      // Ensure status exists with default value
       if (!prodData.status) {
         prodData.status = 'prepared';
       }
 
       setProduction(prodData);
 
-      // Load additional data (non-blocking)
-      const [historyData, docsData] = await Promise.allSettled([
-        productionStatusService.getStatusHistory(id),
-        productionDocumentService.listDocuments(id)
-      ]);
+      // Load status history with direct database query as fallback
+      try {
+        const history = await loadStatusHistory(id);
+        setStatusHistory(history);
+      } catch (historyError) {
+        console.warn('Could not load status history:', historyError);
+        setStatusHistory([]);
+      }
 
-      // Set status history (default to empty array if failed)
-      setStatusHistory(
-        historyData.status === 'fulfilled' ? historyData.value : []
-      );
+      // Load documents
+      try {
+        const docsData = await productionDocumentService.listDocuments(id);
+        setDocuments(docsData);
+      } catch (docsError) {
+        console.warn('Could not load documents:', docsError);
+        setDocuments([]);
+      }
 
-      // Set documents (default to empty array if failed)
-      setDocuments(
-        docsData.status === 'fulfilled' ? docsData.value : []
-      );
-
-      // Load mining company if available
+      // Load mining company
       if (prodData.mining_company_id) {
         try {
           const { data: companyData } = await supabase
@@ -106,7 +110,6 @@ export function ProductionDetails() {
           }
         } catch (companyError) {
           console.warn('Could not load mining company:', companyError);
-          // Non-critical, continue without company data
         }
       }
     } catch (error: any) {
@@ -117,6 +120,45 @@ export function ProductionDetails() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStatusHistory = async (productionId: string): Promise<StatusHistoryEntry[]> => {
+    try {
+      // Try RPC function first
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_production_status_history', {
+        prod_id: productionId
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        return rpcData as StatusHistoryEntry[];
+      }
+
+      // Fallback: Direct query to production_status_history table
+      const { data: directData, error: directError } = await supabase
+        .from('production_status_history')
+        .select(`
+          id,
+          production_id,
+          old_status,
+          new_status,
+          changed_by,
+          changed_at,
+          notes,
+          user_email
+        `)
+        .eq('production_id', productionId)
+        .order('changed_at', { ascending: false });
+
+      if (directError) {
+        console.warn('Direct query error:', directError);
+        return [];
+      }
+
+      return (directData || []) as StatusHistoryEntry[];
+    } catch (error) {
+      console.error('Error in loadStatusHistory:', error);
+      return [];
     }
   };
 
@@ -183,16 +225,6 @@ export function ProductionDetails() {
     });
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   if (loading) {
     return (
       <MainLayout>
@@ -205,8 +237,8 @@ export function ProductionDetails() {
     return (
       <MainLayout>
         <div className="text-center py-12">
-          <p className="text-gray-600">Production introuvable</p>
-          <Button onClick={() => navigate('/production/daily-production')} className="mt-4">
+          <p className="text-sm text-gray-600">Production introuvable</p>
+          <Button onClick={() => navigate(returnPath)} className="mt-4" size="sm">
             Retour à la liste
           </Button>
         </div>
@@ -216,145 +248,148 @@ export function ProductionDetails() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-white to-blue-50 border-b-2 border-blue-100 -mx-6 px-6 py-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/production/daily-production')}
-                className="shadow-sm hover:shadow-md transition-all"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour
-              </Button>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Production {production.bar_reference || `KOURO-${production.id.slice(0, 8)}`}
-                  </h1>
-                  <ProductionStatusBadge status={production.status as ProductionStatus} size="lg" showIcon />
-                </div>
-                <p className="text-gray-600 mt-1 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(production.production_date)}
-                </p>
+      <div className="space-y-4">
+        {/* Header - Refined */}
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate(returnPath)}
+              size="sm"
+              className="text-xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+              Retour
+            </Button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-gray-900">
+                  Production {production.bar_reference || `KOURO-${production.id.slice(0, 8)}`}
+                </h1>
+                <ProductionStatusBadge status={production.status as ProductionStatus} size="sm" showIcon />
               </div>
+              <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1.5">
+                <Calendar className="w-3 h-3" />
+                {formatDate(production.production_date)}
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => navigate(`/production/daily-production`)}
-                variant="outline"
-                className="shadow-sm hover:shadow-md transition-all"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Modifier
-              </Button>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => navigate(`/production/daily-production`)}
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              <Edit className="w-3.5 h-3.5 mr-1.5" />
+              Modifier
+            </Button>
           </div>
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Production Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Production Details Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Production Details Card - Refined */}
+            <Card className="p-4">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">
                 Détails de Production
               </h2>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Date de Production</p>
-                    <p className="text-base font-medium text-gray-900">
+                    <p className="text-xs text-gray-600">Date de Production</p>
+                    <p className="text-sm font-medium text-gray-900">
                       {formatDate(production.production_date)}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Building className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-2">
+                  <Building className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Mining Company</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {miningCompany?.name || 'N/A'}
+                    <p className="text-xs text-gray-600">Mining Company</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {miningCompany?.name || 'Kourousa'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Package className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-2">
+                  <Package className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Bar Reference</p>
-                    <p className="text-base font-medium text-gray-900 font-mono">
-                      {production.bar_reference || 'N/A'}
+                    <p className="text-xs text-gray-600">Bar Reference</p>
+                    <p className="text-sm font-medium text-gray-900 font-mono">
+                      {production.bar_reference || 'KOURO-2511-1000'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <TrendingUp className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-2">
+                  <TrendingUp className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Finesse Estimée</p>
-                    <p className="text-base font-medium text-gray-900">
+                    <p className="text-xs text-gray-600">Finesse Estimée</p>
+                    <p className="text-sm font-medium text-gray-900">
                       {production.estimated_fineness_pct.toFixed(2)}%
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-900 mb-2">
                   Poids et Conversions
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-gray-50 rounded-lg p-2">
                     <p className="text-xs text-gray-600">Bullion</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-bold text-gray-900">
                       {production.bullion_grams.toFixed(2)} g
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {(production.bullion_grams / 31.1035).toFixed(2)} oz
                     </p>
                   </div>
 
-                  <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="bg-blue-50 rounded-lg p-2">
                     <p className="text-xs text-blue-700">Pure Gold</p>
-                    <p className="text-lg font-bold text-blue-900">
+                    <p className="text-sm font-bold text-blue-900">
                       {production.pure_gold_grams.toFixed(2)} g
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-blue-600 mt-0.5">
                       {production.estimated_oz.toFixed(4)} oz
                     </p>
                   </div>
 
-                  <div className="bg-emerald-50 rounded-lg p-3 col-span-2">
+                  <div className="bg-emerald-50 rounded-lg p-2">
                     <p className="text-xs text-emerald-700">Calcul</p>
-                    <p className="text-sm text-emerald-900 mt-1">
-                      {production.bullion_grams.toFixed(2)} g × {production.estimated_fineness_pct.toFixed(2)}% = {production.pure_gold_grams.toFixed(2)} g
+                    <p className="text-xs text-emerald-900 mt-1">
+                      {production.bullion_grams.toFixed(0)} g × {production.estimated_fineness_pct.toFixed(0)}%
+                    </p>
+                    <p className="text-xs text-emerald-900">
+                      = {production.pure_gold_grams.toFixed(0)} g
                     </p>
                   </div>
                 </div>
               </div>
 
               {production.notes && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Notes</h3>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-1">Notes</h3>
+                  <p className="text-xs text-gray-700 whitespace-pre-wrap">
                     {production.notes}
                   </p>
                 </div>
               )}
             </Card>
 
-            {/* Status Workflow Card */}
-            <Card className="p-6 shadow-md">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
+            {/* Status Workflow Card - Refined */}
+            <Card className="p-4">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-600" />
                 Workflow de Statut
               </h2>
               <ProductionStatusWorkflow
@@ -376,20 +411,20 @@ export function ProductionDetails() {
               />
             </Card>
 
-            {/* Documents Card */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            {/* Documents Card - Refined */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <FileText className="w-4 h-4 text-gray-600" />
+                  <h2 className="text-sm font-semibold text-gray-900">
                     Documents Attachés
                   </h2>
-                  <span className="text-sm text-gray-500">({documents.length})</span>
+                  <span className="text-xs text-gray-500">({documents.length})</span>
                 </div>
                 <Button
                   onClick={() => setShowDocumentUpload(true)}
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-xs"
                 >
                   Ajouter
                 </Button>
@@ -405,12 +440,12 @@ export function ProductionDetails() {
             </Card>
           </div>
 
-          {/* Right Column - History */}
-          <div className="space-y-6">
-            <Card className="p-6 shadow-md">
-              <div className="flex items-center gap-2 mb-6 pb-4 border-b-2 border-gray-200">
-                <History className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">
+          {/* Right Column - History - Refined */}
+          <div className="space-y-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                <History className="w-4 h-4 text-blue-600" />
+                <h2 className="text-sm font-semibold text-gray-900">
                   Historique des Changements
                 </h2>
               </div>

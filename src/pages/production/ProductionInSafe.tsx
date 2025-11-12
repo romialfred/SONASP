@@ -250,7 +250,7 @@ export function ProductionInSafe() {
   };
 
   const handleRowClick = (productionId: string) => {
-    navigate(`/production/${productionId}`);
+    navigate(`/production/${productionId}`, { state: { from: '/production/in-safe' } });
   };
 
   return (

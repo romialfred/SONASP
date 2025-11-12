@@ -50,6 +50,7 @@ export function AssayCertificatesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<AssayCertificate | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [uploadingForShipping, setUploadingForShipping] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,7 +73,12 @@ export function AssayCertificatesPage() {
       loadPdfUrl(selectedCertificate);
       setPdfPanelCollapsed(false);
     } else {
+      // Clean up blob URL
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
       setPdfUrl(null);
+      setPdfBlobUrl(null);
       setPdfPanelCollapsed(true);
     }
   }, [selectedCertificate]);
@@ -80,18 +86,30 @@ export function AssayCertificatesPage() {
   const loadPdfUrl = async (certificate: AssayCertificate) => {
     setLoadingPdf(true);
     try {
+      // Get signed URL
       const result = await getCertificateSignedUrl(certificate.file_path);
       if (result.success && result.url) {
         setPdfUrl(result.url);
+
+        // Fetch as blob to avoid CORS issues
+        const response = await fetch(result.url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch PDF');
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setPdfBlobUrl(blobUrl);
       } else {
         console.error('Failed to load PDF:', result.error);
         alert.showAlert('Impossible de charger le PDF', 'error');
         setPdfUrl(null);
+        setPdfBlobUrl(null);
       }
     } catch (error: any) {
       console.error('Error loading PDF:', error);
       alert.showAlert('Erreur lors du chargement du PDF: ' + error.message, 'error');
       setPdfUrl(null);
+      setPdfBlobUrl(null);
     } finally {
       setLoadingPdf(false);
     }
@@ -462,7 +480,14 @@ export function AssayCertificatesPage() {
                               return (
                                 <div
                                   key={certificate.id}
-                                  onClick={() => setSelectedCertificate(certificate)}
+                                  onClick={() => {
+                                    // Toggle selection - click again to deselect
+                                    if (selectedCertificate?.id === certificate.id) {
+                                      setSelectedCertificate(null);
+                                    } else {
+                                      setSelectedCertificate(certificate);
+                                    }
+                                  }}
                                   className={`
                                     group relative p-2.5 rounded-lg border transition-all cursor-pointer
                                     ${isSelected
@@ -525,7 +550,6 @@ export function AssayCertificatesPage() {
                                         size="sm"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setSelectedCertificate(certificate);
                                           setShowCertificateViewer(true);
                                         }}
                                         className="h-6 w-6 p-0"
@@ -627,8 +651,8 @@ export function AssayCertificatesPage() {
                             <p className="text-sm text-gray-500 mt-2">Chargement du PDF...</p>
                           </div>
                         </div>
-                      ) : pdfUrl ? (
-                        <PDFViewer url={pdfUrl} />
+                      ) : pdfBlobUrl ? (
+                        <PDFViewer url={pdfBlobUrl} />
                       ) : (
                         <div className="h-full flex items-center justify-center">
                           <div className="text-center">

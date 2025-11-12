@@ -744,154 +744,112 @@ export function ProductionInSafe() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="border-t-4 border-t-slate-700 shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 bg-gradient-to-r from-slate-700 to-slate-800">
-              <h3 className="text-sm font-bold text-white tracking-wide">Week-To-Date (WTD)</h3>
-              <p className="text-xs text-slate-300 mt-0.5">Semaine en cours</p>
+          <Card className="border-t-4 border-t-blue-600">
+            <div className="p-3 border-b border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-900">Performance Hebdomadaire</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Week to Date</p>
             </div>
-            <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-50">
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg p-3 border border-slate-200">
-                  <div className="text-sm font-bold text-emerald-700 mb-2">Actual Production</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900">{performanceData.wtd.actual.toFixed(2)}</span>
-                    <span className="text-sm text-slate-600">oz</span>
-                  </div>
+            <div className="p-3 space-y-2">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Prévision</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.wtd.forecast.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Budget</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.wtd.budget.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center py-2 bg-blue-50 rounded-lg px-3">
+                <span className="text-xs font-semibold text-blue-900">Réalisé</span>
+                <span className="text-base font-bold text-blue-900">{performanceData.wtd.actual.toFixed(0)} oz</span>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>({calculatePercentage(performanceData.wtd.actual, performanceData.wtd.forecast).toFixed(1)}%)</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Forecast Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.wtd.forecast.toFixed(2)} oz</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Budget Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.wtd.budget.toFixed(2)} oz</div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-emerald-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Forecast</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.forecast) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>({calculatePercentage(performanceData.wtd.actual, performanceData.wtd.forecast).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-amber-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Budget</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.wtd.actual, performanceData.wtd.budget).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.wtd.actual, performanceData.wtd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.wtd.actual, performanceData.wtd.budget).toFixed(1)}%)</span>
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card className="border-t-4 border-t-slate-600 shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 bg-gradient-to-r from-slate-600 to-slate-700">
-              <h3 className="text-sm font-bold text-white tracking-wide">Month-To-Date (MTD)</h3>
-              <p className="text-xs text-slate-300 mt-0.5">Mois en cours</p>
+          <Card className="border-t-4 border-t-purple-600">
+            <div className="p-3 border-b border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-900">Performance Mensuelle</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Month to Date</p>
             </div>
-            <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-50">
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg p-3 border border-slate-200">
-                  <div className="text-sm font-bold text-emerald-700 mb-2">Actual Production</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900">{performanceData.mtd.actual.toFixed(2)}</span>
-                    <span className="text-sm text-slate-600">oz</span>
-                  </div>
+            <div className="p-3 space-y-2">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Prévision</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.mtd.forecast.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Budget</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.mtd.budget.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center py-2 bg-purple-50 rounded-lg px-3">
+                <span className="text-xs font-semibold text-purple-900">Réalisé</span>
+                <span className="text-base font-bold text-purple-900">{performanceData.mtd.actual.toFixed(0)} oz</span>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.mtd.actual, performanceData.mtd.forecast).toFixed(1)}%)</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Forecast Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.mtd.forecast.toFixed(2)} oz</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Budget Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.mtd.budget.toFixed(2)} oz</div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-emerald-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Forecast</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.forecast) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>({calculatePercentage(performanceData.mtd.actual, performanceData.mtd.forecast).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-amber-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Budget</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.mtd.actual, performanceData.mtd.budget).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.mtd.actual, performanceData.mtd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.mtd.actual, performanceData.mtd.budget).toFixed(1)}%)</span>
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card className="border-t-4 border-t-slate-500 shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 bg-gradient-to-r from-slate-500 to-slate-600">
-              <h3 className="text-sm font-bold text-white tracking-wide">Year-To-Date (YTD)</h3>
-              <p className="text-xs text-slate-300 mt-0.5">Année en cours</p>
+          <Card className="border-t-4 border-t-emerald-600">
+            <div className="p-3 border-b border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-900">Performance Annuelle</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Year to Date</p>
             </div>
-            <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-50">
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg p-3 border border-slate-200">
-                  <div className="text-sm font-bold text-emerald-700 mb-2">Actual Production</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900">{performanceData.ytd.actual.toFixed(2)}</span>
-                    <span className="text-sm text-slate-600">oz</span>
-                  </div>
+            <div className="p-3 space-y-2">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Prévision</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.ytd.forecast.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-xs text-gray-600">Budget</span>
+                <span className="text-sm font-semibold text-gray-900">{performanceData.ytd.budget.toFixed(0)} oz</span>
+              </div>
+              <div className="flex justify-between items-center py-2 bg-emerald-50 rounded-lg px-3">
+                <span className="text-xs font-semibold text-emerald-900">Réalisé</span>
+                <span className="text-base font-bold text-emerald-900">{performanceData.ytd.actual.toFixed(0)} oz</span>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.ytd.actual, performanceData.ytd.forecast).toFixed(1)}%)</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Forecast Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.ytd.forecast.toFixed(2)} oz</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-slate-200">
-                    <div className="text-xs text-slate-600 mb-1">Budget Target</div>
-                    <div className="text-base font-semibold text-slate-900">{performanceData.ytd.budget.toFixed(2)} oz</div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-emerald-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Forecast</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? '+' : ''}{calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.forecast) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>({calculatePercentage(performanceData.ytd.actual, performanceData.ytd.forecast).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border-l-4 border-l-amber-600">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700">vs Budget</span>
-                      <div className="flex items-center gap-1.5">
-                        {calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
-                        <span className={`text-base font-bold ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget).toFixed(2)}</span>
-                        <span className={`text-xs font-medium ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.ytd.actual, performanceData.ytd.budget).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+              <div className={`flex justify-between items-center py-2 px-3 rounded-lg ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+                <div className="flex items-center gap-1.5">
+                  {calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-amber-600" />}
+                  <span className={`text-sm font-bold ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? '+' : ''}{calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget).toFixed(0)}</span>
+                  <span className={`text-xs ${calculateVariance(performanceData.ytd.actual, performanceData.ytd.budget) >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>({calculatePercentage(performanceData.ytd.actual, performanceData.ytd.budget).toFixed(1)}%)</span>
                 </div>
               </div>
             </div>

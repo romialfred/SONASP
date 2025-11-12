@@ -137,13 +137,16 @@ BEGIN
       v_license_number, ROUND(v_remaining::NUMERIC, 2), ROUND(p_quantity::NUMERIC, 2);
   END IF;
 
-  -- Mettre à jour la licence (remaining_quantity_grams est calculé automatiquement)
+  -- Mettre à jour la licence (remaining_quantity_grams est calculé automatiquement via GENERATED COLUMN)
   UPDATE export_licenses
   SET
     used_quantity_grams = used_quantity_grams + p_quantity,
     updated_at = NOW(),
     updated_by = p_user_id
   WHERE id = p_license_id;
+
+  -- Note: remaining_quantity_grams = authorized_quantity_grams - used_quantity_grams
+  -- Cette colonne est GENERATED ALWAYS et se met à jour automatiquement
 
   -- Vérifier si la licence est épuisée (remaining_quantity_grams est recalculé automatiquement)
   UPDATE export_licenses

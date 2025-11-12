@@ -123,10 +123,13 @@ class ExportLicenseService {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
 
+    // Exclude generated columns
+    const { remaining_quantity_grams, used_quantity_grams, ...insertData } = licenseData as any;
+
     const { data, error } = await supabase
       .from('export_licenses')
       .insert({
-        ...licenseData,
+        ...insertData,
         created_by: userId,
         updated_by: userId,
       })
@@ -147,10 +150,13 @@ class ExportLicenseService {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
 
+    // Exclude generated columns
+    const { remaining_quantity_grams, used_quantity_grams, ...updateData } = updates as any;
+
     const { data, error } = await supabase
       .from('export_licenses')
       .update({
-        ...updates,
+        ...updateData,
         updated_by: userId,
       })
       .eq('id', id)

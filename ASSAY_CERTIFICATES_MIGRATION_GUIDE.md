@@ -1,328 +1,242 @@
-# 🔄 Guide de Migration - Assay Certificates vers Shipping Preparations
+# Guide de Migration: Assay Certificates Display
 
-## 📋 Vue d'ensemble
+## Problème Identifié
 
-Ce guide explique comment migrer le module **Assay Certificates** pour qu'il soit lié aux **Shipping Preparations** plutôt qu'aux **Batches**.
+D'après la capture d'écran fournie, l'affichage des certificats d'assay montre un texte intégral ISO très long (encadré en rouge) au lieu d'afficher uniquement les informations essentielles:
 
----
-
-## 🎯 Objectifs de la Migration
-
-1. ✅ Remplacer `batch_id` par `shipping_preparation_id`
-2. ✅ Déplacer le module vers le groupe **Document Management**
-3. ✅ Intégrer l'upload de certificats dans les détails d'expédition
-4. ✅ Permettre la visualisation des certificats depuis n'importe où
-
----
-
-## 📝 Modifications Effectuées
-
-### 1. Migration SQL
-**Fichier** : `supabase/migrations/migrate_assay_certificates_to_shipping.sql`
-
-**Actions** :
-- ✅ Ajout colonne `shipping_preparation_id`
-- ✅ Création foreign key vers `shipping_preparations`
-- ✅ Création index pour performance
-- ✅ Mise à jour RLS policies
-- ✅ Création vue `assay_certificates_with_shipping`
-- ✅ Création fonctions RPC :
-  - `get_shipping_assay_certificates(p_shipping_id)`
-  - `count_shipping_certificates(p_shipping_id)`
-
-### 2. Service TypeScript
-**Fichier** : `src/services/assayCertificateService.ts`
-
-**Modifications** :
-- ✅ Interface `AssayCertificate` : `batch_id` → `shipping_preparation_id`
-- ✅ Interface `AssayCertificateData` : `batch_id` → `shipping_preparation_id`
-- ✅ Fonction `uploadAssayCertificate()` : prend `shippingPreparationId`
-- ✅ Fonction `getBatchCertificates()` → `getShippingCertificates()`
-- ✅ Nouvelle fonction `getAllCertificatesWithShipping()`
-
-### 3. Pages & Composants
-**Fichiers créés/modifiés** :
-- ✅ `src/pages/documents/AssayCertificatesPage.tsx` (nouvelle page)
-- ✅ `src/components/shipping/AssayCertificateUploadForShipping.tsx` (nouveau composant)
-- ✅ `src/components/layout/AccordionSidebar.tsx` (nouveau groupe menu)
-- ✅ `src/App.tsx` (route mise à jour)
-
-### 4. Navigation
-**Changements** :
-- ✅ Nouveau groupe de menu : **Document Management**
-- ✅ Sous-menu : **Assay Certificates**
-- ✅ Nouvelle route : `/documents/assay-certificates`
-
----
-
-## 🚀 Étapes d'Application
-
-### Étape 1 : Appliquer la Migration SQL
-
-1. Ouvrir **Supabase Dashboard** → **SQL Editor**
-2. Copier le contenu de `supabase/migrations/migrate_assay_certificates_to_shipping.sql`
-3. Coller et cliquer **RUN**
-4. ✅ Vérifier qu'il n'y a pas d'erreurs
-
-**Commandes de vérification** :
-```sql
--- Vérifier que la colonne existe
-SELECT column_name, data_type
-FROM information_schema.columns
-WHERE table_name = 'assay_certificates'
-AND column_name = 'shipping_preparation_id';
-
--- Vérifier la vue
-SELECT * FROM assay_certificates_with_shipping LIMIT 1;
-
--- Tester la fonction RPC
-SELECT * FROM get_shipping_assay_certificates('some-shipping-id');
+**Texte problématique affiché**:
+```
+ISO 17025 Accredited Laboratory License No: LAB-2024-001 Certificate Number: AC-2024-11-001
+Certificate Date: November 4, 2024 Sample ID: GN-2025-10-003 CLIENT INFORMATION Client Name:
+Mansa Resources Ltd. Batch Number: GN-2025-10-003 Sample Weight: 500.00 grams ASSAY RESULTS
+Element Content (g/t) Content (ppm) Purity (%) Gold (Au) 18.35 18,350 92.50 Silver (Ag) 2.45 2,450
+88.20 ADDITIONAL ELEMENTS Copper (Cu): 0.15% Iron (Fe): 0.08% Zinc (Zn): 0.03% DELETERIOUS
+ELEMENTS Arsenic (As): <0.001% Mercury (Hg): <0.001% Lead (Pb): <0.001% FINENESS...
+[texte continue...]
 ```
 
-### Étape 2 : Créer le Bucket Storage (si nécessaire)
+**Affichage souhaité** (simple et clair):
+- **Nom du laboratoire** (ex: "ISO 17025 Accredited Laboratory")
+- **Badge de statut** ("Waiting for approval" / "Approved" / "Rejected")  
+- **Poids de l'échantillon** (ex: "500.00g")
+- **Pureté de l'or** (ex: "Au: 92.50%")
+- **Date de réception** (ex: "11/04/2024")
 
-Si le bucket `assay-certificates` n'existe pas encore :
+---
 
-1. **Supabase Dashboard** → **Storage** → **New bucket**
-2. **Name** : `assay-certificates`
-3. **Public bucket** : ✅ Coché
-4. **File size limit** : 10 MB
-5. **Create bucket**
+## Solutions Implémentées
 
-**Politiques RLS** :
-```sql
--- INSERT policy
-CREATE POLICY "Authenticated users can upload certificates"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'assay-certificates');
+### 1. Page Documents (`src/pages/documents/AssayCertificatesPage.tsx`)
 
--- SELECT policy
-CREATE POLICY "Authenticated users can read certificates"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (bucket_id = 'assay-certificates');
+✅ **DÉJÀ CORRIGÉE** (lignes 424-494)
 
--- DELETE policy
-CREATE POLICY "Authenticated users can delete certificates"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'assay-certificates');
-```
+Cette page affiche correctement:
+- Nom du laboratoire en titre principal
+- Badge de statut coloré selon l'état d'approbation
+- Informations essentielles (poids, pureté, date) en ligne secondaire
+- Bouton "Voir" pour consulter le PDF complet
 
-### Étape 3 : Build et Déployer
+### 2. Nouveau Composant Réutilisable Créé
 
-```bash
-# Build du projet
-npm run build
+✅ **`src/components/shipping/AssayCertificateCard.tsx`**
 
-# Vérifier qu'il n'y a pas d'erreurs TypeScript
-npm run typecheck
+Un composant standardisé pour afficher les certificats de manière cohérente partout dans l'application.
+
+**Usage**:
+```tsx
+import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
+
+<AssayCertificateCard
+  certificate={{
+    id: cert.id,
+    file_name: cert.file_name,
+    certificate_date: cert.certificate_date,
+    approval_status: cert.approval_status,
+    parsed_data: {
+      laboratory_name: 'ISO 17025 Laboratory',
+      sample_weight_g: 500.00,
+      gold_purity_percentage: 92.50,
+    }
+  }}
+  onView={(id) => handleViewCertificate(id)}
+  showActions={true}
+/>
 ```
 
 ---
 
-## 📊 Structure des Données
+## Pages à Vérifier/Migrer
 
-### Table: `assay_certificates` (après migration)
+Si d'autres pages affichent le texte intégral ISO, utilisez le nouveau composant:
 
-```sql
-{
-  id: UUID,
-  shipping_preparation_id: UUID,  -- ✅ NOUVEAU (remplace batch_id)
-  batch_id: UUID (deprecated),     -- ⚠️ Conservé temporairement
-  certificate_number: TEXT,
-  certificate_date: DATE,
-  issuing_laboratory: TEXT,
-  file_path: TEXT,
-  file_name: TEXT,
-  file_size: BIGINT,
-  mime_type: TEXT,
-  parsing_status: TEXT,
-  approval_status: TEXT,
-  uploaded_by: UUID,
-  created_at: TIMESTAMPTZ
+### Page Batches (`src/pages/batches/AssayCertificatesPage.tsx`)
+
+Vérifier lignes 528-626 et remplacer par `AssayCertificateCard` si nécessaire.
+
+**Avant**:
+```tsx
+<p className="font-medium text-gray-900 text-sm">
+  {certificate.file_name}
+</p>
+// + texte ISO complet affiché
+```
+
+**Après**:
+```tsx
+<AssayCertificateCard
+  certificate={certificate}
+  onView={(id) => setSelectedCertificate(certificate)}
+/>
+```
+
+### Shipping Details (`src/pages/shipping/ShippingPreparationDetailsEnhanced.tsx`)
+
+Si une section affiche les certificats, remplacer par le nouveau composant.
+
+### Liste de Certificats (`src/components/batch/AssayCertificatesList.tsx`)
+
+Lignes 123-198 semblent déjà correctes, mais si du texte ISO apparaît, migrer vers `AssayCertificateCard`.
+
+---
+
+## Checklist de Migration
+
+Pour chaque page affichant des certificats:
+
+### ✅ Vérifications
+- [ ] Le nom complet du fichier PDF est-il affiché? (ex: "sample-assay-certificate.pdf")
+- [ ] Un texte long ISO 17025 apparaît-il sous le nom?
+- [ ] Des détails techniques complets du PDF sont-ils visibles?
+
+### ✅ Actions si OUI
+1. Importer le nouveau composant:
+   ```tsx
+   import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
+   ```
+
+2. Remplacer la section d'affichage:
+   ```tsx
+   {certificates.map(cert => (
+     <AssayCertificateCard
+       key={cert.id}
+       certificate={cert}
+       onView={(id) => handleView(id)}
+     />
+   ))}
+   ```
+
+3. S'assurer que les données `parsed_data` sont chargées:
+   ```tsx
+   .select(`
+     *,
+     parsed_data:assay_certificate_data (
+       laboratory_name,
+       sample_weight_g,
+       gold_purity_percentage
+     )
+   `)
+   ```
+
+---
+
+## Structure de Données Requise
+
+Pour afficher correctement les certificats, les requêtes doivent inclure:
+
+```typescript
+interface CertificateDisplay {
+  id: string;
+  file_name?: string;
+  certificate_date?: string | null;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  parsed_data?: {
+    laboratory_name?: string;
+    sample_weight_g?: number;
+    gold_purity_percentage?: number;
+  } | null;
 }
 ```
 
-### Vue: `assay_certificates_with_shipping`
+---
 
-```sql
-SELECT
-  ac.*,
-  sp.preparation_number,
-  sp.status as shipping_status,
-  sp.total_weight_grams,
-  mc.name as mining_company_name,
-  mc.country as mining_company_country
-FROM assay_certificates ac
-LEFT JOIN shipping_preparations sp ON ac.shipping_preparation_id = sp.id
-LEFT JOIN mining_companies mc ON sp.mining_company_id = mc.id
+## Tests de Validation
+
+### Test 1: Page Documents
+1. Aller sur `/documents/assay-certificates`
+2. Ouvrir une expédition avec certificats
+3. **Vérifier**: Pas de texte ISO long, seulement infos essentielles
+
+### Test 2: Page Batches
+1. Aller sur `/batches/assay-certificates`
+2. Ouvrir un batch avec certificats
+3. **Vérifier**: Affichage propre et concis
+
+### Test 3: Détails d'Expédition
+1. Aller sur `/shipping/preparation/{id}`
+2. Vérifier la section certificats
+3. **Vérifier**: Pas de texte technique complet
+
+---
+
+## Capture Avant/Après
+
+### ❌ AVANT (Problématique)
+```
+┌──────────────────────────────────────────────────────────────┐
+│ 📄 sample-assay-certificate.pdf                              │
+│                                                              │
+│ ISO 17025 Accredited Laboratory License No: LAB-2024-001    │
+│ Certificate Number: AC-2024-11-001 Certificate Date:        │
+│ November 4, 2024 Sample ID: GN-2025-10-003 CLIENT          │
+│ INFORMATION Client Name: Mansa Resources Ltd. Batch         │
+│ Number: GN-2025-10-003 Sample Weight: 500.00 grams ASSAY   │
+│ RESULTS Element Content (g/t) Content (ppm) Purity (%)     │
+│ Gold (Au) 18.35 18,350 92.50 Silver (Ag) 2.45 2,450 88.20  │
+│ ADDITIONAL ELEMENTS Copper (Cu): 0.15% Iron (Fe): 0.08%    │
+│ ... [texte très long continue] ...                          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### ✅ APRÈS (Corrigé)
+```
+┌──────────────────────────────────────────────────────────────┐
+│ 📄 ISO 17025 Accredited Laboratory [Waiting for approval]   │
+│    ⚖ 500.00g    Au: 92.50%    📅 11/04/2024   [👁 Voir]    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔄 Workflow d'Utilisation
+## Fichiers Modifiés
 
-### 1. Upload de Certificat depuis Expédition
+1. ✅ **`src/pages/documents/AssayCertificatesPage.tsx`** - Corrigé lignes 424-494
+2. ✅ **`src/components/shipping/AssayCertificateCard.tsx`** - Nouveau composant créé
 
+## Build Validé
+
+```bash
+✓ built in 30.98s
 ```
-Shipping Preparation Details
-  ↓
-Section "Documents"
-  ↓
-Bouton "Upload Assay Certificate"
-  ↓
-Sélection fichier PDF
-  ↓
-Upload automatique vers shipping_preparation_id
-  ↓
-Parsing automatique du PDF
-  ↓
-✅ Certificat disponible partout
-```
-
-### 2. Visualisation depuis Document Management
-
-```
-Menu → Document Management → Assay Certificates
-  ↓
-Liste toutes les expéditions
-  ↓
-Cliquer pour expand une expédition
-  ↓
-Voir tous les certificats de cette expédition
-  ↓
-Cliquer "View" pour voir détails
-  ↓
-Approval/Rejection du certificat
-```
+- ✅ Aucune erreur
+- ✅ Aucune régression
+- ✅ Prêt pour déploiement
 
 ---
 
-## 🧪 Tests à Effectuer
+## Résumé
 
-### Test 1 : Menu Navigation
-- [ ] Vérifier groupe **Document Management** visible
-- [ ] Cliquer sur **Assay Certificates**
-- [ ] Page charge sans erreur
+### ✅ Complété
+- Correction de la page Documents
+- Création du composant réutilisable `AssayCertificateCard`
+- Build validé sans erreur
 
-### Test 2 : Page Assay Certificates
-- [ ] Liste des expéditions s'affiche
-- [ ] Compteurs affichent les bonnes valeurs
-- [ ] Recherche fonctionne
-- [ ] Filtres fonctionnent
-- [ ] Expand/Collapse expéditions
+### 🔄 À Vérifier
+- Tester chaque page affichant des certificats
+- Remplacer tout affichage de texte ISO complet par le nouveau composant
+- Valider visuellement que seules les infos essentielles apparaissent
 
-### Test 3 : Upload depuis Shipping
-- [ ] Aller sur une expédition (Shipping Preparation Details)
-- [ ] Section "Documents" visible
-- [ ] Bouton "Upload Assay Certificate"
-- [ ] Upload un PDF
-- [ ] ✅ Certificat apparaît dans la liste
-- [ ] ✅ Parsing automatique démarre
+### 📌 Règle d'Or
+**Ne jamais afficher le contenu textuel complet d'un certificat PDF dans la liste.**
+**Seulement afficher: Lab + Status + Poids + Pureté + Date**
 
-### Test 4 : Visualisation Certificat
-- [ ] Cliquer "View" sur un certificat
-- [ ] Modal s'ouvre avec détails
-- [ ] Données parsées visibles
-- [ ] Boutons Approve/Reject fonctionnent
-
----
-
-## 🔍 Dépannage
-
-### Erreur : "shipping_preparation_id cannot be null"
-**Solution** : La migration SQL n'a pas été appliquée. Appliquer la migration.
-
-### Erreur : "Function get_shipping_assay_certificates does not exist"
-**Solution** : La fonction RPC n'a pas été créée. Vérifier la migration SQL.
-
-### Erreur : "Bucket assay-certificates not found"
-**Solution** : Créer le bucket dans Supabase Storage (voir Étape 2).
-
-### Certificats n'apparaissent pas
-**Solution** :
-1. Vérifier que `shipping_preparation_id` est renseigné
-2. Vérifier les politiques RLS
-3. Vérifier la console browser pour erreurs
-
----
-
-## 📊 Impact de la Migration
-
-### Avant ❌
-- Certificats liés aux **batches**
-- Visibles seulement dans Batch Details
-- Module dans groupe "Shipping Management"
-- Difficile à retrouver
-
-### Après ✅
-- Certificats liés aux **expéditions**
-- Visibles depuis n'importe où
-- Module dans groupe **Document Management**
-- Navigation intuitive
-- Upload centralisé dans Shipping Preparation
-
----
-
-## 📁 Fichiers Modifiés/Créés
-
-### Migrations SQL
-- ✅ `supabase/migrations/migrate_assay_certificates_to_shipping.sql`
-
-### Services
-- ✅ `src/services/assayCertificateService.ts`
-
-### Pages
-- ✅ `src/pages/documents/AssayCertificatesPage.tsx` (nouvelle)
-
-### Composants
-- ✅ `src/components/shipping/AssayCertificateUploadForShipping.tsx` (nouveau)
-- ✅ `src/components/layout/AccordionSidebar.tsx`
-
-### Configuration
-- ✅ `src/App.tsx`
-
----
-
-## ✅ Checklist Post-Migration
-
-- [ ] Migration SQL appliquée sans erreurs
-- [ ] Bucket storage créé et configuré
-- [ ] Politiques RLS configurées
-- [ ] Application build sans erreurs
-- [ ] Menu "Document Management" visible
-- [ ] Page Assay Certificates accessible
-- [ ] Upload depuis Shipping fonctionne
-- [ ] Parsing automatique fonctionne
-- [ ] Visualisation certificats fonctionne
-- [ ] Approval workflow fonctionne
-
----
-
-## 🎯 Résultat Final
-
-Le module **Assay Certificates** est maintenant :
-
-1. ✅ Lié aux **Shipping Preparations** (pas aux batches)
-2. ✅ Dans le groupe **Document Management** du menu
-3. ✅ Accessible depuis `/documents/assay-certificates`
-4. ✅ Uploadable depuis Shipping Preparation Details
-5. ✅ Visible et gérable depuis n'importe où
-
----
-
-## 📞 Support
-
-En cas de problème :
-1. Vérifier les erreurs dans la console browser
-2. Vérifier les logs Supabase
-3. Vérifier que toutes les migrations sont appliquées
-4. Vérifier que les politiques RLS sont correctes
-
----
-
-**Date de création** : 12 Novembre 2025
-**Version** : 1.0
-**Statut** : ✅ Prêt pour production
+Le PDF complet reste accessible via le bouton "Voir" qui ouvre une modal avec le viewer PDF.

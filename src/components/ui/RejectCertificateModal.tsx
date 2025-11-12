@@ -51,9 +51,9 @@ export function RejectCertificateModal({
       title="Rejeter le Certificat"
       size="md"
     >
-      <div className="space-y-4">
+      <div className="space-y-6 p-2">
         {/* Warning Banner */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-5">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -69,15 +69,15 @@ export function RejectCertificateModal({
 
         {/* Certificate Name */}
         {certificateName && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <p className="text-xs font-medium text-gray-600 mb-1">Certificat</p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-xs font-medium text-gray-600 mb-2">Certificat</p>
             <p className="text-sm font-semibold text-gray-900">{certificateName}</p>
           </div>
         )}
 
         {/* Rejection Reason Input */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+        <div className="pt-1">
+          <label className="block text-sm font-semibold text-gray-900 mb-3">
             Raison du Rejet <span className="text-red-500">*</span>
           </label>
           <TextArea
@@ -92,23 +92,24 @@ export function RejectCertificateModal({
             disabled={isSubmitting}
           />
           {error && (
-            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+            <p className="mt-3 text-sm text-red-600 flex items-center gap-1">
               <XCircle className="w-4 h-4" />
               {error}
             </p>
           )}
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-gray-500">
             {rejectionReason.length} / 500 caractères
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+        <div className="flex gap-4 justify-end pt-6 mt-2 border-t border-gray-200">
           <Button
             variant="secondary"
             onClick={handleClose}
             disabled={isSubmitting}
             size="lg"
+            className="px-6"
           >
             Annuler
           </Button>
@@ -117,7 +118,7 @@ export function RejectCertificateModal({
             disabled={isSubmitting || !rejectionReason.trim()}
             loading={isSubmitting}
             size="lg"
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white px-6"
           >
             <XCircle className="w-5 h-5 mr-2" />
             Confirmer le Rejet

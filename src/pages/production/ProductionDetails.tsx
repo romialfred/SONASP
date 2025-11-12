@@ -125,37 +125,67 @@ export function ProductionDetails() {
 
   const loadStatusHistory = async (productionId: string): Promise<StatusHistoryEntry[]> => {
     try {
-      // Try RPC function first
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_production_status_history', {
-        prod_id: productionId
-      });
-
-      if (!rpcError && rpcData && rpcData.length > 0) {
-        return rpcData as StatusHistoryEntry[];
-      }
-
-      // Fallback: Direct query to production_status_history table
-      const { data: directData, error: directError } = await supabase
-        .from('production_status_history')
+      // Query unified_status_history table with user email join
+      const { data: historyData, error: historyError } = await supabase
+        .from('unified_status_history')
         .select(`
           id,
-          production_id,
+          entity_id,
           old_status,
           new_status,
           changed_by,
           changed_at,
           notes,
-          user_email
+          action_description
         `)
-        .eq('production_id', productionId)
+        .eq('entity_type', 'production')
+        .eq('entity_id', productionId)
         .order('changed_at', { ascending: false });
 
-      if (directError) {
-        console.warn('Direct query error:', directError);
+      if (historyError) {
+        console.error('Error loading unified status history:', historyError);
         return [];
       }
 
-      return (directData || []) as StatusHistoryEntry[];
+      if (!historyData || historyData.length === 0) {
+        return [];
+      }
+
+      // Fetch user emails for each entry
+      const historyWithEmails = await Promise.all(
+        historyData.map(async (entry) => {
+          let userEmail = 'Système';
+
+          if (entry.changed_by) {
+            try {
+              const { data: userData } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('id', entry.changed_by)
+                .maybeSingle();
+
+              if (userData?.email) {
+                userEmail = userData.email;
+              }
+            } catch (err) {
+              console.warn('Could not fetch user email:', err);
+            }
+          }
+
+          return {
+            id: entry.id,
+            production_id: entry.entity_id,
+            old_status: entry.old_status,
+            new_status: entry.new_status,
+            changed_by: entry.changed_by || '',
+            changed_at: entry.changed_at,
+            notes: entry.notes || entry.action_description,
+            user_email: userEmail
+          } as StatusHistoryEntry;
+        })
+      );
+
+      return historyWithEmails;
     } catch (error) {
       console.error('Error in loadStatusHistory:', error);
       return [];

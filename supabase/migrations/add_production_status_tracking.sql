@@ -67,6 +67,10 @@ CREATE INDEX IF NOT EXISTS idx_production_status_history_changed_at
 -- Enable RLS on production_status_history
 ALTER TABLE production_status_history ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view status history" ON production_status_history;
+DROP POLICY IF EXISTS "Users can insert status history" ON production_status_history;
+
 -- Policies for production_status_history
 CREATE POLICY "Users can view status history"
   ON production_status_history

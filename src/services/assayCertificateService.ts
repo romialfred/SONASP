@@ -3,7 +3,7 @@ import { extractTextFromPDF, extractAssayData, type ExtractedAssayData } from '.
 
 export interface AssayCertificate {
   id: string;
-  batch_id: string;
+  shipping_preparation_id: string;
   certificate_number: string | null;
   certificate_date: string | null;
   issuing_laboratory: string | null;
@@ -26,7 +26,7 @@ export interface AssayCertificate {
 export interface AssayCertificateData {
   id: string;
   certificate_id: string;
-  batch_id: string | null;
+  shipping_preparation_id: string | null;
   certificate_number: string | null;
   certificate_date: string | null;
   laboratory_name: string | null;
@@ -70,14 +70,14 @@ export interface ParsedCertificateResult {
  * Upload assay certificate PDF
  */
 export async function uploadAssayCertificate(
-  batchId: string,
+  shippingPreparationId: string,
   file: File,
   userId: string
 ): Promise<{ success: boolean; data?: AssayCertificate; error?: string }> {
   try {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${batchId}_${Date.now()}.${fileExt}`;
-    const filePath = `${batchId}/${fileName}`;
+    const fileName = `${shippingPreparationId}_${Date.now()}.${fileExt}`;
+    const filePath = `${shippingPreparationId}/${fileName}`;
 
     // Upload file to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -95,7 +95,7 @@ export async function uploadAssayCertificate(
     const { data: certificate, error: dbError } = await supabase
       .from('assay_certificates')
       .insert({
-        batch_id: batchId,
+        shipping_preparation_id: shippingPreparationId,
         file_path: uploadData.path,
         file_name: file.name,
         file_size: file.size,
@@ -378,10 +378,10 @@ export async function parseCertificate(
       })
       .eq('id', certificateId);
 
-    // Get certificate to get batch_id
+    // Get certificate to get shipping_preparation_id
     const { data: certificate } = await supabase
       .from('assay_certificates')
-      .select('batch_id')
+      .select('shipping_preparation_id')
       .eq('id', certificateId)
       .single();
 
@@ -390,7 +390,7 @@ export async function parseCertificate(
       .from('assay_certificate_data')
       .insert({
         certificate_id: certificateId,
-        batch_id: certificate?.batch_id,
+        shipping_preparation_id: certificate?.shipping_preparation_id,
         ...extractedData,
       })
       .select()
@@ -436,16 +436,65 @@ export async function parseCertificate(
 }
 
 /**
- * Get certificates for a batch
+ * Get certificates for a shipping preparation
  */
-export async function getBatchCertificates(
-  batchId: string
+export async function getShippingCertificates(
+  shippingPreparationId: string
 ): Promise<{ success: boolean; data?: AssayCertificate[]; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('assay_certificates')
       .select('*')
+      .eq('shipping_preparation_id', shippingPreparationId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * @deprecated Use getShippingCertificates instead
+ * Legacy function for backwards compatibility
+ */
+export async function getBatchCertificates(
+  batchId: string
+): Promise<{ success: boolean; data?: AssayCertificate[]; error?: string }> {
+  console.warn('getBatchCertificates is deprecated. Use getShippingCertificates instead.');
+  try {
+    const { data, error } = await supabase
+      .from('assay_certificates')
+      .select('*')
       .eq('batch_id', batchId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get all certificates with shipping preparation details
+ */
+export async function getAllCertificatesWithShipping(): Promise<{
+  success: boolean;
+  data?: any[];
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('assay_certificates_with_shipping')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {

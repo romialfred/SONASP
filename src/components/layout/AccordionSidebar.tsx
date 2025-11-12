@@ -73,8 +73,16 @@ const useMenuGroups = (): MenuGroup[] => {
       items: [
         { label: 'Batch Management', path: '/batches', icon: Package, iconColor: 'text-blue-600' },
         { label: 'Shipping Preparation', path: '/shipping/preparation', icon: PackagePlus, iconColor: 'text-emerald-600' },
-        { label: 'Assay Certificates', path: '/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
         { label: 'Freight & Customs', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
+      ],
+    },
+    {
+      id: 'documents',
+      label: 'Document Management',
+      groupIconColor: 'text-violet-600',
+      groupIcon: FileText,
+      items: [
+        { label: 'Assay Certificates', path: '/documents/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
       ],
     },
     {

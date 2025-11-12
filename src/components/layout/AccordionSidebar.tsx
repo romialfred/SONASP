@@ -375,11 +375,11 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                           'flex items-center gap-3 px-2 py-1.5 rounded-lg transition-all duration-200 text-sm',
                           'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
                           active
-                            ? 'bg-white text-gray-900 font-semibold shadow-sm'
+                            ? 'bg-emerald-50 text-emerald-900 font-semibold shadow-sm border border-emerald-200'
                             : 'text-gray-700 hover:bg-gray-100/50'
                         )}
                       >
-                        <item.icon className={cn('w-4 h-4', item.iconColor)} />
+                        <item.icon className={cn('w-4 h-4', active ? 'text-emerald-600' : item.iconColor)} />
                         <span>{item.label}</span>
                       </Link>
                     );

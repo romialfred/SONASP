@@ -150,8 +150,55 @@ export function ProductionInSafe() {
   };
 
   const exportToCSV = () => {
-    // Implementation similar to DailyProductionPage
-    alert('Export CSV fonctionnalité à implémenter');
+    if (productions.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    const headers = [
+      'Date',
+      'Bullion (g)',
+      'Estimated Fineness (%)',
+      'Pure Gold (g)',
+      'Estimated Oz',
+      'Bar Reference',
+      'Société Minière',
+      'Statut'
+    ];
+
+    const rows = productions.map(p => [
+      new Date(p.production_date).toLocaleDateString('fr-FR'),
+      p.bullion_grams.toFixed(2),
+      p.estimated_fineness_pct.toFixed(1),
+      p.pure_gold_grams.toFixed(2),
+      p.estimated_oz.toFixed(4),
+      p.bar_reference || '',
+      getCompanyName(p.mining_company_id),
+      p.status || 'N/A'
+    ]);
+
+    // Add total row
+    rows.push([
+      'TOTAL',
+      summary.total_bullion_grams.toFixed(2),
+      '',
+      summary.total_pure_gold_grams.toFixed(2),
+      summary.total_estimated_oz.toFixed(4),
+      '',
+      '',
+      ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `production_in_safe_${dateRange.startDate}_to_${dateRange.endDate}.csv`;
+    link.click();
   };
 
   const getCompanyName = (companyId: string | null) => {
@@ -387,16 +434,23 @@ export function ProductionInSafe() {
                 calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? 'bg-green-100' : 'bg-red-100'
               }`}>
                 <span className="text-sm font-bold">WEEK ACTUAL VS FORECAST</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                  )}
-                  <span className={`text-lg font-bold ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? 'text-green-700' : 'text-red-700'
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? (
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <TrendingDown className="w-5 h-5 text-red-600" />
+                    )}
+                    <span className={`text-lg font-bold ${
+                      calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {Math.abs(calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast)).toFixed(0)} Oz
+                    </span>
+                  </div>
+                  <span className={`text-xs font-semibold ${
+                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {Math.abs(calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast)).toFixed(0)} Oz
+                    ({calculatePercentage(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? '+' : ''}{calculatePercentage(forecasts.wtd_actual, forecasts.wtd_forecast).toFixed(1)}%)
                   </span>
                 </div>
               </div>
@@ -406,16 +460,23 @@ export function ProductionInSafe() {
                 calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? 'bg-green-100' : 'bg-red-100'
               }`}>
                 <span className="text-sm font-bold">WEEK ACTUAL VS BUDGET</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                  )}
-                  <span className={`text-lg font-bold ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? 'text-green-700' : 'text-red-700'
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? (
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <TrendingDown className="w-5 h-5 text-red-600" />
+                    )}
+                    <span className={`text-lg font-bold ${
+                      calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {Math.abs(calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget)).toFixed(0)} Oz
+                    </span>
+                  </div>
+                  <span className={`text-xs font-semibold ${
+                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {Math.abs(calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget)).toFixed(0)} Oz
+                    ({calculatePercentage(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? '+' : ''}{calculatePercentage(forecasts.wtd_actual, forecasts.wtd_budget).toFixed(1)}%)
                   </span>
                 </div>
               </div>
@@ -451,16 +512,23 @@ export function ProductionInSafe() {
                 calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? 'bg-green-100' : 'bg-yellow-100'
               }`}>
                 <span className="text-sm font-bold">MTD ACTUAL vs MTD FORECAST</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-yellow-600" />
-                  )}
-                  <span className={`text-lg font-bold ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? (
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <TrendingDown className="w-5 h-5 text-yellow-600" />
+                    )}
+                    <span className={`text-lg font-bold ${
+                      calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                    }`}>
+                      {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast)).toFixed(0)} Oz
+                    </span>
+                  </div>
+                  <span className={`text-xs font-semibold ${
+                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? 'text-green-600' : 'text-yellow-600'
                   }`}>
-                    {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast)).toFixed(0)} Oz
+                    ({calculatePercentage(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? '+' : ''}{calculatePercentage(forecasts.mtd_actual, forecasts.mtd_forecast).toFixed(1)}%)
                   </span>
                 </div>
               </div>
@@ -470,16 +538,23 @@ export function ProductionInSafe() {
                 calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? 'bg-green-100' : 'bg-yellow-100'
               }`}>
                 <span className="text-sm font-bold">MTD ACTUAL vs MTD BUDGET</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-yellow-600" />
-                  )}
-                  <span className={`text-lg font-bold ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? (
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <TrendingDown className="w-5 h-5 text-yellow-600" />
+                    )}
+                    <span className={`text-lg font-bold ${
+                      calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                    }`}>
+                      {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget)).toFixed(0)} Oz
+                    </span>
+                  </div>
+                  <span className={`text-xs font-semibold ${
+                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? 'text-green-600' : 'text-yellow-600'
                   }`}>
-                    {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget)).toFixed(0)} Oz
+                    ({calculatePercentage(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? '+' : ''}{calculatePercentage(forecasts.mtd_actual, forecasts.mtd_budget).toFixed(1)}%)
                   </span>
                 </div>
               </div>
@@ -511,16 +586,23 @@ export function ProductionInSafe() {
           }`}>
             <div className="flex justify-between items-center">
               <span className="text-sm font-bold">MONTH FORCAST vs ACTUAL</span>
-              <div className="flex items-center gap-2">
-                {calculateVariance(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? (
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-6 h-6 text-yellow-600" />
-                )}
-                <span className={`text-2xl font-bold ${
-                  calculateVariance(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? 'text-green-700' : 'text-yellow-700'
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  {calculateVariance(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? (
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-6 h-6 text-yellow-600" />
+                  )}
+                  <span className={`text-2xl font-bold ${
+                    calculateVariance(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.month_forecast)).toFixed(0)} Oz
+                  </span>
+                </div>
+                <span className={`text-sm font-semibold ${
+                  calculateVariance(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? 'text-green-600' : 'text-yellow-600'
                 }`}>
-                  {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.month_forecast)).toFixed(0)} Oz
+                  ({calculatePercentage(forecasts.mtd_actual, forecasts.month_forecast) >= 0 ? '+' : ''}{calculatePercentage(forecasts.mtd_actual, forecasts.month_forecast).toFixed(1)}%)
                 </span>
               </div>
             </div>
@@ -531,16 +613,23 @@ export function ProductionInSafe() {
           }`}>
             <div className="flex justify-between items-center">
               <span className="text-sm font-bold">MONTH BUDGET vs MONTH ACTUAL</span>
-              <div className="flex items-center gap-2">
-                {calculateVariance(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? (
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-6 h-6 text-yellow-600" />
-                )}
-                <span className={`text-2xl font-bold ${
-                  calculateVariance(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? 'text-green-700' : 'text-yellow-700'
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  {calculateVariance(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? (
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-6 h-6 text-yellow-600" />
+                  )}
+                  <span className={`text-2xl font-bold ${
+                    calculateVariance(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.month_budget)).toFixed(0)} Oz
+                  </span>
+                </div>
+                <span className={`text-sm font-semibold ${
+                  calculateVariance(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? 'text-green-600' : 'text-yellow-600'
                 }`}>
-                  {Math.abs(calculateVariance(forecasts.mtd_actual, forecasts.month_budget)).toFixed(0)} Oz
+                  ({calculatePercentage(forecasts.mtd_actual, forecasts.month_budget) >= 0 ? '+' : ''}{calculatePercentage(forecasts.mtd_actual, forecasts.month_budget).toFixed(1)}%)
                 </span>
               </div>
             </div>

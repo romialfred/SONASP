@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { SuccessDialog } from '@/components/ui/SuccessDialog';
+import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { exportLicenseService, CreateLicenseData } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
 
@@ -141,6 +143,12 @@ export function ExportLicenseForm() {
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [activeField, setActiveField] = useState<string>('license_number');
 
+  // Dialog states
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState('Erreur');
+
   // Form state
   const [formData, setFormData] = useState<CreateLicenseData>({
     license_number: '',
@@ -172,7 +180,9 @@ export function ExportLicenseForm() {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      alert('Erreur lors du chargement des données');
+      setErrorTitle('Erreur de chargement');
+      setErrorMessage('Impossible de charger les données. Veuillez réessayer.');
+      setShowErrorDialog(true);
     } finally {
       setLoading(false);
     }
@@ -220,7 +230,9 @@ export function ExportLicenseForm() {
 
   const handleGenerateLicenseNumber = async () => {
     if (!formData.mining_company_id) {
-      alert('Veuillez d\'abord sélectionner une compagnie minière');
+      setErrorTitle('Compagnie requise');
+      setErrorMessage('Veuillez d\'abord sélectionner une compagnie minière pour générer le numéro de licence.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -268,17 +280,23 @@ export function ExportLicenseForm() {
 
     // Validation
     if (!formData.license_number || !formData.mining_company_id) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      setErrorTitle('Champs requis');
+      setErrorMessage('Veuillez remplir tous les champs obligatoires (numéro de licence et compagnie minière).');
+      setShowErrorDialog(true);
       return;
     }
 
     if (formData.authorized_quantity_grams <= 0) {
-      alert('La quantité autorisée doit être supérieure à 0');
+      setErrorTitle('Quantité invalide');
+      setErrorMessage('La quantité autorisée doit être supérieure à 0 grammes.');
+      setShowErrorDialog(true);
       return;
     }
 
     if (new Date(formData.end_date) < new Date(formData.start_date)) {
-      alert('La date de fin doit être après la date de début');
+      setErrorTitle('Dates invalides');
+      setErrorMessage('La date de fin doit être postérieure à la date de début.');
+      setShowErrorDialog(true);
       return;
     }
 
@@ -332,15 +350,15 @@ export function ExportLicenseForm() {
         }
       }
 
-      alert(
-        isEditMode
-          ? 'Licence mise à jour avec succès'
-          : 'Licence créée avec succès'
-      );
-      navigate('/production/licenses');
+      setShowSuccessDialog(true);
+      setTimeout(() => {
+        navigate('/production/licenses');
+      }, 1500);
     } catch (error: any) {
       console.error('Error saving license:', error);
-      alert('Erreur lors de la sauvegarde: ' + error.message);
+      setErrorTitle('Erreur de sauvegarde');
+      setErrorMessage('Impossible de sauvegarder la licence: ' + (error.message || 'Erreur inconnue'));
+      setShowErrorDialog(true);
     } finally {
       setSaving(false);
     }
@@ -790,6 +808,26 @@ export function ExportLicenseForm() {
           </div>
         </div>
       </div>
+
+      {/* Success Dialog */}
+      <SuccessDialog
+        isOpen={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        title={isEditMode ? "Licence Mise à Jour" : "Licence Créée"}
+        message={
+          isEditMode
+            ? "La licence d'exportation a été mise à jour avec succès."
+            : "La nouvelle licence d'exportation a été créée avec succès."
+        }
+      />
+
+      {/* Error Dialog */}
+      <ErrorDialog
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        title={errorTitle}
+        message={errorMessage}
+      />
     </MainLayout>
   );
 }

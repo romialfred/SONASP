@@ -183,22 +183,83 @@ class ExportLicenseService {
     licenseId: string,
     requiredQuantity: number
   ): Promise<LicenseAvailability> {
-    const { data, error } = await supabase.rpc('check_license_availability', {
-      p_license_id: licenseId,
-      p_required_quantity: requiredQuantity,
-    });
+    try {
+      const { data, error } = await supabase.rpc('check_license_availability', {
+        p_license_id: licenseId,
+        p_required_quantity: requiredQuantity,
+      });
 
-    if (error) throw error;
+      if (error) {
+        console.error('RPC error:', error);
+        // If function doesn't exist, provide manual check
+        if (error.message.includes('does not exist')) {
+          return await this.manualLicenseCheck(licenseId, requiredQuantity);
+        }
+        throw error;
+      }
 
-    if (!data || data.length === 0) {
+      if (!data || data.length === 0) {
+        return {
+          is_available: false,
+          remaining_quantity: 0,
+          message: 'Impossible de vérifier la disponibilité',
+        };
+      }
+
+      return data[0];
+    } catch (error: any) {
+      console.error('License check error:', error);
+      // Fallback to manual check
+      return await this.manualLicenseCheck(licenseId, requiredQuantity);
+    }
+  }
+
+  /**
+   * Vérification manuelle si la fonction RPC n'existe pas
+   */
+  private async manualLicenseCheck(
+    licenseId: string,
+    requiredQuantity: number
+  ): Promise<LicenseAvailability> {
+    const license = await this.getLicenseById(licenseId);
+
+    if (!license) {
       return {
         is_available: false,
         remaining_quantity: 0,
-        message: 'Impossible de vérifier la disponibilité',
+        message: 'Licence introuvable',
       };
     }
 
-    return data[0];
+    if (license.status !== 'active') {
+      return {
+        is_available: false,
+        remaining_quantity: license.remaining_quantity_grams,
+        message: `Licence ${license.license_number} : statut "${license.status}" (doit être "active")`,
+      };
+    }
+
+    if (new Date(license.end_date) < new Date()) {
+      return {
+        is_available: false,
+        remaining_quantity: license.remaining_quantity_grams,
+        message: `Licence ${license.license_number} expirée le ${license.end_date}`,
+      };
+    }
+
+    if (license.remaining_quantity_grams < requiredQuantity) {
+      return {
+        is_available: false,
+        remaining_quantity: license.remaining_quantity_grams,
+        message: `Quantité insuffisante. Disponible: ${license.remaining_quantity_grams.toFixed(2)}g, Requis: ${requiredQuantity.toFixed(2)}g`,
+      };
+    }
+
+    return {
+      is_available: true,
+      remaining_quantity: license.remaining_quantity_grams,
+      message: `✅ Quantité disponible: ${license.remaining_quantity_grams.toFixed(2)}g`,
+    };
   }
 
   /**

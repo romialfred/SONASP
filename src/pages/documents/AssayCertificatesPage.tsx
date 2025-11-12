@@ -432,24 +432,44 @@ export function AssayCertificatesPage() {
                                   <div className="p-2 bg-white rounded-lg">
                                     <FileText className="w-5 h-5 text-gray-600" />
                                   </div>
-                                  <div>
-                                    <p className="font-medium text-gray-900">{cert.file_name}</p>
-                                    <div className="flex items-center gap-3 text-xs text-gray-600 mt-1">
-                                      {cert.parsed_data?.laboratory_name && (
-                                        <span className="flex items-center gap-1">
-                                          <Building2 className="w-3 h-3" />
-                                          {cert.parsed_data.laboratory_name}
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-1">
+                                      <p className="font-medium text-gray-900">
+                                        {cert.parsed_data?.laboratory_name || 'N/A'}
+                                      </p>
+                                      {cert.approval_status === 'pending' && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                          Waiting for approval
                                         </span>
                                       )}
-                                      {cert.parsed_data?.gold_content_gpt && (
+                                      {cert.approval_status === 'approved' && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                          <CheckCircle className="w-3 h-3 mr-1" />
+                                          Approved
+                                        </span>
+                                      )}
+                                      {cert.approval_status === 'rejected' && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                          <XCircle className="w-3 h-3 mr-1" />
+                                          Rejected
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                                      {cert.parsed_data?.sample_weight_g && (
                                         <span className="flex items-center gap-1">
-                                          <Scale className="w-3 h-3" />
-                                          Au: {cert.parsed_data.gold_content_gpt} g/t
+                                          <Scale className="w-3.5 h-3.5" />
+                                          {cert.parsed_data.sample_weight_g.toFixed(2)}g
+                                        </span>
+                                      )}
+                                      {cert.parsed_data?.gold_purity_percentage && (
+                                        <span className="flex items-center gap-1">
+                                          Au: {cert.parsed_data.gold_purity_percentage.toFixed(2)}%
                                         </span>
                                       )}
                                       {cert.certificate_date && (
                                         <span className="flex items-center gap-1">
-                                          <Calendar className="w-3 h-3" />
+                                          <Calendar className="w-3.5 h-3.5" />
                                           {new Date(cert.certificate_date).toLocaleDateString('fr-FR')}
                                         </span>
                                       )}
@@ -458,33 +478,15 @@ export function AssayCertificatesPage() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
-                                <StatusBadge
-                                  status={cert.parsing_status}
-                                  variant={
-                                    cert.parsing_status === 'completed'
-                                      ? 'success'
-                                      : cert.parsing_status === 'failed'
-                                      ? 'danger'
-                                      : 'warning'
-                                  }
-                                />
-                                <StatusBadge
-                                  status={cert.approval_status}
-                                  variant={
-                                    cert.approval_status === 'approved'
-                                      ? 'success'
-                                      : cert.approval_status === 'rejected'
-                                      ? 'danger'
-                                      : 'warning'
-                                  }
-                                />
+                              <div className="flex items-center gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSelectedCertificate(cert)}
+                                  className="gap-2"
                                 >
                                   <Eye className="w-4 h-4" />
+                                  Voir
                                 </Button>
                               </div>
                             </div>

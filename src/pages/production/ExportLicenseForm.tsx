@@ -10,6 +10,7 @@ import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { exportLicenseService, CreateLicenseData } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
+import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 
 interface MiningCompany {
   id: string;
@@ -196,7 +197,9 @@ export function ExportLicenseForm() {
       .order('name');
 
     if (error) throw error;
-    setMiningCompanies(data || []);
+
+    // Exclure la société mère des sociétés opérationnelles
+    setMiningCompanies(filterOperationalMiningCompanies(data || []));
   };
 
   const loadLicense = async (licenseId: string) => {

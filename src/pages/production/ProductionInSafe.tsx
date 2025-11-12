@@ -9,6 +9,7 @@ import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
 import { performanceService, PerformanceData } from '@/services/performanceService';
+import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -82,7 +83,9 @@ export function ProductionInSafe() {
         .order('name');
 
       if (error) throw error;
-      setMiningCompanies(data || []);
+
+      // Exclure la société mère des sociétés opérationnelles
+      setMiningCompanies(filterOperationalMiningCompanies(data || []));
     } catch (error) {
       console.error('Error loading mining companies:', error);
     }

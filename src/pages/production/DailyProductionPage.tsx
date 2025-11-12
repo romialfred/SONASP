@@ -14,6 +14,7 @@ import { ProductionMetrics } from '@/components/production/ProductionMetrics';
 import { ProductionTable } from '@/components/production/ProductionTable';
 import { ProductionChart } from '@/components/production/ProductionChart';
 import { supabase } from '@/lib/supabase';
+import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 
 interface MiningCompany {
   id: string;
@@ -56,7 +57,9 @@ export function DailyProductionPage() {
         .order('name');
 
       if (error) throw error;
-      setMiningCompanies(data || []);
+
+      // Exclure la société mère des sociétés opérationnelles
+      setMiningCompanies(filterOperationalMiningCompanies(data || []));
     } catch (error) {
       console.error('Error loading mining companies:', error);
     }

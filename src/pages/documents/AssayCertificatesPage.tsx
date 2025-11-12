@@ -515,7 +515,9 @@ export function AssayCertificatesPage() {
           <AssayCertificateViewer
             certificate={selectedCertificate}
             onClose={() => setSelectedCertificate(null)}
-            onUpdate={loadCertificatesByShipping}
+            onDataUpdate={loadCertificatesByShipping}
+            onApprove={loadCertificatesByShipping}
+            onReject={loadCertificatesByShipping}
           />
         </Modal>
       )}

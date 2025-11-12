@@ -942,12 +942,11 @@ export function BatchDetailsWorkflow() {
         >
           <AssayCertificateViewer
             certificate={selectedCertificate}
+            onClose={() => setSelectedCertificate(null)}
             onApprove={() => {
-              setSelectedCertificate(null);
               setCertificateRefresh((prev) => prev + 1);
             }}
             onReject={() => {
-              setSelectedCertificate(null);
               setCertificateRefresh((prev) => prev + 1);
             }}
             onDataUpdate={() => {

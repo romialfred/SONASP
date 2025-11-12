@@ -645,12 +645,11 @@ export function AssayCertificatesPage() {
         >
           <AssayCertificateViewer
             certificate={selectedCertificate}
+            onClose={() => setSelectedCertificate(null)}
             onApprove={() => {
-              setSelectedCertificate(null);
               loadCertificatesByBatch();
             }}
             onReject={() => {
-              setSelectedCertificate(null);
               loadCertificatesByBatch();
             }}
             onDataUpdate={() => {

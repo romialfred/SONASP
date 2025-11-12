@@ -23,6 +23,7 @@ interface AssayCertificateViewerProps {
   onApprove?: () => void;
   onReject?: () => void;
   onDataUpdate?: () => void;
+  onClose?: () => void;
 }
 
 export function AssayCertificateViewer({
@@ -30,6 +31,7 @@ export function AssayCertificateViewer({
   onApprove,
   onReject,
   onDataUpdate,
+  onClose,
 }: AssayCertificateViewerProps) {
   const { user } = useAuth();
   const alert = useAlert();
@@ -102,6 +104,12 @@ export function AssayCertificateViewer({
       if (result.success) {
         alert.success('Certificate data approved!');
         onApprove?.();
+        onDataUpdate?.();
+
+        // Close modal after successful approval
+        setTimeout(() => {
+          onClose?.();
+        }, 500);
       } else {
         alert.error(result.error || 'Failed to approve');
       }
@@ -125,6 +133,12 @@ export function AssayCertificateViewer({
       if (result.success) {
         alert.success('Certificate data rejected');
         onReject?.();
+        onDataUpdate?.();
+
+        // Close modal after successful rejection
+        setTimeout(() => {
+          onClose?.();
+        }, 500);
       } else {
         alert.error(result.error || 'Failed to reject');
       }

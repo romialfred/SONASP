@@ -660,116 +660,109 @@ export default function ShippingPreparationNew() {
               </div>
             </div>
 
-            {/* Mining Company Selection */}
+            {/* Mining Company & License Selection - Same Row */}
             <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <h3 className="text-lg font-bold text-blue-900 mb-4">
-                <Building2 className="w-5 h-5 inline mr-2" />
-                Compagnie Minière *
-              </h3>
-              <select
-                value={selectedMiningCompanyId}
-                onChange={(e) => handleMiningCompanyChange(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-medium"
-                disabled={loading}
-              >
-                <option value="">-- Sélectionner une compagnie minière --</option>
-                {miningCompanies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name} ({company.code})
-                  </option>
-                ))}
-              </select>
-              {selectedMiningCompanyId && (
-                <p className="mt-2 text-xs text-blue-600">
-                  ✓ Seules les productions de cette compagnie seront disponibles
-                </p>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Mining Company */}
+                <div>
+                  <h3 className="text-lg font-bold text-blue-900 mb-4">
+                    <Building2 className="w-5 h-5 inline mr-2" />
+                    Compagnie Minière *
+                  </h3>
+                  <select
+                    value={selectedMiningCompanyId}
+                    onChange={(e) => handleMiningCompanyChange(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-medium"
+                    disabled={loading}
+                  >
+                    <option value="">-- Sélectionner une compagnie minière --</option>
+                    {miningCompanies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name} ({company.code})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedMiningCompanyId && (
+                    <p className="mt-2 text-xs text-blue-600">
+                      ✓ Seules les productions de cette compagnie seront disponibles
+                    </p>
+                  )}
+                </div>
+
+                {/* License Selection */}
+                <div>
+                  <h3 className="text-lg font-bold text-green-900 mb-4">
+                    <FileText className="w-5 h-5 inline mr-2" />
+                    Licence d'Exportation *
+                  </h3>
+                  <select
+                    value={selectedLicenseId}
+                    onChange={(e) => handleLicenseChange(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-sm font-medium"
+                    disabled={loading || !selectedMiningCompanyId || availableLicenses.length === 0}
+                  >
+                    <option value="">
+                      {!selectedMiningCompanyId
+                        ? '-- Sélectionner d\'abord une compagnie --'
+                        : availableLicenses.length === 0
+                        ? '-- Aucune licence active disponible --'
+                        : '-- Sélectionner une licence --'}
+                    </option>
+                    {availableLicenses.map((license) => (
+                      <option key={license.id} value={license.id}>
+                        {license.license_number} - Restant: {license.remaining_quantity_grams.toLocaleString()}g
+                        (Expire: {new Date(license.end_date).toLocaleDateString('fr-FR')})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedMiningCompanyId && availableLicenses.length === 0 && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
+                      ⚠️ Aucune licence d'exportation active pour cette compagnie.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* License Warning - Full Width */}
+              {licenseWarning && (
+                <div className={`mt-4 p-3 rounded-lg text-sm ${
+                  licenseWarning.startsWith('❌')
+                    ? 'bg-red-100 text-red-800 border border-red-300'
+                    : licenseWarning.startsWith('⚠️')
+                    ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                    : 'bg-green-100 text-green-800 border border-green-300'
+                }`}>
+                  {licenseWarning}
+                </div>
               )}
             </Card>
 
-            {/* License Selection */}
-            {selectedMiningCompanyId && (
-              <Card className="p-6 border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
-                <h3 className="text-lg font-bold text-green-900 mb-4">
-                  <FileText className="w-5 h-5 inline mr-2" />
-                  Licence d'Exportation *
-                </h3>
-                <select
-                  value={selectedLicenseId}
-                  onChange={(e) => handleLicenseChange(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-sm font-medium"
-                  disabled={loading || availableLicenses.length === 0}
-                >
-                  <option value="">
-                    {availableLicenses.length === 0
-                      ? '-- Aucune licence active disponible --'
-                      : '-- Sélectionner une licence --'}
-                  </option>
-                  {availableLicenses.map((license) => (
-                    <option key={license.id} value={license.id}>
-                      {license.license_number} - Restant: {license.remaining_quantity_grams.toLocaleString()}g
-                      (Expire: {new Date(license.end_date).toLocaleDateString('fr-FR')})
-                    </option>
-                  ))}
-                </select>
-                {licenseWarning && (
-                  <div className={`mt-3 p-3 rounded-lg text-sm ${
-                    licenseWarning.startsWith('❌')
-                      ? 'bg-red-100 text-red-800 border border-red-300'
-                      : licenseWarning.startsWith('⚠️')
-                      ? 'bg-orange-100 text-orange-800 border border-orange-300'
-                      : 'bg-green-100 text-green-800 border border-green-300'
-                  }`}>
-                    {licenseWarning}
-                  </div>
-                )}
-                {!selectedLicenseId && availableLicenses.length === 0 && (
-                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800 font-medium">
-                      ⚠️ Aucune licence d'exportation active pour cette compagnie.
-                    </p>
-                    <p className="text-xs text-red-600 mt-2">
-                      Veuillez créer une licence dans le module "Production Management" avant de préparer une expédition.
-                    </p>
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* Production Selection & Table */}
-            <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-yellow-900">
-                  Sélectionner Productions ({selectedProductions.length})
-                </h3>
-                <select
-                  onChange={(e) => {
-                    handleAddProduction(e.target.value);
-                    e.target.value = '';
-                  }}
-                  className="px-4 py-2 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
-                  disabled={loading || !selectedMiningCompanyId}
-                  value=""
-                >
-                  <option value="">
-                    {!selectedMiningCompanyId
-                      ? '-- Sélectionner d\'abord une compagnie minière --'
-                      : '-- Ajouter une production --'}
-                  </option>
-                  {productions
-                    .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
-                    .map((production) => (
-                      <option key={production.id} value={production.id}>
-                        {new Date(production.production_date).toLocaleDateString('fr-FR')} - {production.bar_reference} - {production.bullion_grams.toFixed(2)}g
-                      </option>
-                    ))}
-                </select>
-              </div>
-              {!selectedMiningCompanyId && (
-                <div className="text-center py-8 text-yellow-700 bg-yellow-100 rounded-lg border border-yellow-300">
-                  <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Veuillez d'abord sélectionner une compagnie minière</p>
+            {/* Production Selection & Table - Only show if license is selected */}
+            {selectedLicenseId && (
+              <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-yellow-900">
+                    Sélectionner Productions ({selectedProductions.length})
+                  </h3>
+                  <select
+                    onChange={(e) => {
+                      handleAddProduction(e.target.value);
+                      e.target.value = '';
+                    }}
+                    className="px-4 py-2 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
+                    disabled={loading}
+                    value=""
+                  >
+                    <option value="">-- Ajouter une production --</option>
+                    {productions
+                      .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
+                      .map((production) => (
+                        <option key={production.id} value={production.id}>
+                          {new Date(production.production_date).toLocaleDateString('fr-FR')} - {production.bar_reference} - {production.bullion_grams.toFixed(2)}g
+                        </option>
+                      ))}
+                  </select>
                 </div>
-              )}
 
               {selectedProductions.length > 0 && (
                 <div className="overflow-x-auto">
@@ -833,7 +826,16 @@ export default function ShippingPreparationNew() {
                   </table>
                 </div>
               )}
-            </Card>
+
+              {selectedProductions.length === 0 && (
+                <div className="text-center py-12 text-yellow-700 bg-yellow-100 rounded-lg border border-yellow-300">
+                  <Package className="w-16 h-16 mx-auto mb-4 opacity-40" />
+                  <p className="font-medium text-lg mb-2">Aucune production sélectionnée</p>
+                  <p className="text-sm">Utilisez le menu déroulant ci-dessus pour ajouter des productions à cette expédition</p>
+                </div>
+              )}
+              </Card>
+            )}
 
             {/* Expedition Details */}
             <Card className="p-6">

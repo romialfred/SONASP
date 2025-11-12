@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Eye, CheckCircle, XCircle, Search, MapPin, Calendar, Scale,
-  Building2, Ship, Package, Upload, Plus, Download, ChevronDown, ChevronRight
+  Building2, Ship, Package, Upload, Plus, Download, ChevronRight
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -55,7 +55,6 @@ export function AssayCertificatesPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterApproval, setFilterApproval] = useState<string>('all');
   const [showCertificateViewer, setShowCertificateViewer] = useState(false);
-  const [expandedShipping, setExpandedShipping] = useState<string | null>(null);
 
   useEffect(() => {
     loadCertificatesByShipping();
@@ -76,18 +75,14 @@ export function AssayCertificatesPage() {
   const loadPdfUrl = async (certificate: AssayCertificate) => {
     setLoadingPdf(true);
     try {
-      const result = await getCertificateSignedUrl(certificate.file_path);
+      const result = await getCertificateSignedUrl(certificate.id);
       if (result.success && result.url) {
         setPdfUrl(result.url);
       } else {
-        console.error('Failed to load PDF:', result.error);
-        alert.showAlert('Impossible de charger le PDF', 'error');
-        setPdfUrl(null);
+        alert.showAlert('Failed to load PDF', 'error');
       }
     } catch (error: any) {
-      console.error('Error loading PDF:', error);
-      alert.showAlert('Erreur lors du chargement du PDF: ' + error.message, 'error');
-      setPdfUrl(null);
+      alert.showAlert('Error loading PDF: ' + error.message, 'error');
     } finally {
       setLoadingPdf(false);
     }
@@ -132,12 +127,12 @@ export function AssayCertificatesPage() {
 
         return {
           id: shipping.id,
-          expedition_lot_number: shipping.expedition_lot_number || 'Sans numéro',
+          expedition_lot_number: shipping.expedition_lot_number || 'N/A',
           status: shipping.status,
           total_net_weight_grams: shipping.total_net_weight_grams || 0,
-          mining_company_name: shipping.mining_company?.name || 'Non spécifiée',
-          mining_company_country: shipping.mining_company?.country || 'Non spécifié',
-          shipped_to_company: shipping.shipped_to_company || 'Non spécifié',
+          mining_company_name: shipping.mining_company?.name || 'N/A',
+          mining_company_country: shipping.mining_company?.country || 'N/A',
+          shipped_to_company: shipping.shipped_to_company || 'N/A',
           created_at: shipping.created_at,
           certificates: shippingCerts.map((cert: any) => ({
             ...cert,
@@ -148,10 +143,6 @@ export function AssayCertificatesPage() {
 
       setShippingGroups(grouped);
       setFilteredGroups(grouped);
-
-      if (grouped.length > 0 && !expandedShipping) {
-        setExpandedShipping(grouped[0].id);
-      }
     } catch (error: any) {
       console.error('Error loading certificates:', error);
       alert.showAlert('Erreur lors du chargement des certificats: ' + error.message, 'error');
@@ -183,10 +174,6 @@ export function AssayCertificatesPage() {
     }
 
     setFilteredGroups(filtered);
-  };
-
-  const toggleShipping = (shippingId: string) => {
-    setExpandedShipping(expandedShipping === shippingId ? null : shippingId);
   };
 
   const getTotalCertificates = () => {
@@ -334,7 +321,7 @@ export function AssayCertificatesPage() {
 
         {/* 2 Panel Layout */}
         <div className="flex-1 flex gap-4 min-h-0">
-          {/* Left Panel - Expeditions Accordion */}
+          {/* Left Panel - Expeditions & Certificates List */}
           <div className="w-1/2 overflow-y-auto pr-2">
             {filteredGroups.length === 0 ? (
               <Card className="p-8">
@@ -347,200 +334,164 @@ export function AssayCertificatesPage() {
                 </div>
               </Card>
             ) : (
-              <div className="space-y-2">
-                {filteredGroups.map((group) => {
-                  const isExpanded = expandedShipping === group.id;
-
-                  return (
-                    <Card key={group.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                      {/* Shipping Header - Clickable Accordion */}
-                      <div
-                        onClick={() => toggleShipping(group.id)}
-                        className={`
-                          cursor-pointer p-3 border-b border-gray-200 transition-colors
-                          ${isExpanded
-                            ? 'bg-gradient-to-r from-blue-100/70 to-indigo-100/70'
-                            : 'bg-gradient-to-r from-slate-50 to-gray-50 hover:from-blue-50/50 hover:to-indigo-50/50'
-                          }
-                        `}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2 flex-1">
-                            {/* Chevron Icon */}
-                            <div className="flex-shrink-0">
-                              {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 text-blue-600" />
-                              ) : (
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
-                              )}
-                            </div>
-
-                            <Ship className="h-4 w-4 text-blue-600 flex-shrink-0" />
-
-                            {/* Expedition Number with colored background */}
-                            <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg backdrop-blur-sm">
-                              <h3 className="text-sm font-bold text-gray-900">
-                                {group.expedition_lot_number}
-                              </h3>
-                            </div>
-
-                            <span className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded-full font-semibold">
-                              {group.certificates.length}
-                            </span>
-                          </div>
-
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setUploadingForShipping(group.id);
-                            }}
-                            className="h-6 px-2 text-xs"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Ajouter
-                          </Button>
+              <div className="space-y-3">
+                {filteredGroups.map((group) => (
+                  <Card key={group.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    {/* Shipping Header - Compact */}
+                    <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-3 border-b border-gray-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Ship className="h-4 w-4 text-blue-600" />
+                          <h3 className="text-sm font-bold text-gray-900">
+                            {group.expedition_lot_number}
+                          </h3>
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">
+                            {group.certificates.length}
+                          </span>
                         </div>
-
-                        {/* Compact Shipping Info */}
-                        <div className="grid grid-cols-3 gap-2 text-xs ml-7">
-                          <div className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                            <span className="text-gray-700 truncate font-medium">
-                              {group.mining_company_name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                            <span className="text-gray-700">
-                              {group.mining_company_country}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Scale className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                            <span className="text-gray-700">
-                              {group.total_net_weight_grams > 0
-                                ? `${group.total_net_weight_grams.toFixed(0)}g`
-                                : 'Non spécifié'
-                              }
-                            </span>
-                          </div>
-                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setUploadingForShipping(group.id)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Ajouter
+                        </Button>
                       </div>
 
-                      {/* Certificate Sub-tiles - Only show when expanded */}
-                      {isExpanded && (
-                        <div className="p-2 bg-white space-y-1.5">
-                          {group.certificates.length === 0 ? (
-                            <div className="text-center py-6">
-                              <FileText className="h-8 w-8 mx-auto text-gray-300 mb-2" />
-                              <p className="text-xs text-gray-500">Aucun certificat</p>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setUploadingForShipping(group.id)}
-                                className="mt-2 h-7 px-2 text-xs"
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Ajouter le premier
-                              </Button>
-                            </div>
-                          ) : (
-                            group.certificates.map((certificate) => {
-                              const parsedData = certificate.parsed_data;
-                              const isSelected = selectedCertificate?.id === certificate.id;
+                      {/* Compact Shipping Info */}
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="flex items-center gap-1">
+                          <Building2 className="h-3 w-3 text-gray-400" />
+                          <span className="text-gray-600 truncate">
+                            {group.mining_company_name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-gray-400" />
+                          <span className="text-gray-600">
+                            {group.mining_company_country}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Scale className="h-3 w-3 text-gray-400" />
+                          <span className="text-gray-600">
+                            {group.total_net_weight_grams.toFixed(0)}g
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-                              return (
-                                <div
-                                  key={certificate.id}
-                                  onClick={() => setSelectedCertificate(certificate)}
-                                  className={`
-                                    group relative p-2.5 rounded-lg border transition-all cursor-pointer
-                                    ${isSelected
-                                      ? 'bg-amber-50/80 border-amber-400 shadow-sm'
-                                      : 'bg-gray-50 border-gray-200 hover:bg-amber-50/40 hover:border-amber-300'
-                                    }
-                                  `}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      {/* Certificate Name */}
-                                      <div className="flex items-center gap-2 mb-1.5">
-                                        <FileText className={`h-3.5 w-3.5 flex-shrink-0 ${isSelected ? 'text-amber-600' : 'text-gray-500'}`} />
-                                        <p className="text-xs font-medium text-gray-900 truncate">
-                                          {certificate.file_name}
-                                        </p>
-                                      </div>
+                    {/* Certificate Sub-tiles */}
+                    <div className="p-2 bg-white space-y-1.5">
+                      {group.certificates.length === 0 ? (
+                        <div className="text-center py-6">
+                          <FileText className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                          <p className="text-xs text-gray-500">Aucun certificat</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUploadingForShipping(group.id)}
+                            className="mt-2 h-7 px-2 text-xs"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Ajouter le premier
+                          </Button>
+                        </div>
+                      ) : (
+                        group.certificates.map((certificate) => {
+                          const parsedData = certificate.parsed_data;
+                          const isSelected = selectedCertificate?.id === certificate.id;
 
-                                      {/* Certificate Data - Horizontal Compact */}
-                                      {parsedData && (
-                                        <div className="flex items-center gap-3 text-xs">
-                                          {parsedData.gold_content_gpt && (
-                                            <div className="flex items-center gap-1">
-                                              <span className="text-gray-500">Au:</span>
-                                              <span className="font-semibold text-yellow-700">
-                                                {parsedData.gold_content_gpt} g/t
-                                              </span>
-                                            </div>
-                                          )}
-                                          {parsedData.gold_purity_percentage && (
-                                            <div className="flex items-center gap-1">
-                                              <span className="text-gray-500">Purity:</span>
-                                              <span className="font-semibold text-amber-700">
-                                                {parsedData.gold_purity_percentage}%
-                                              </span>
-                                            </div>
-                                          )}
-                                          {certificate.certificate_date && (
-                                            <div className="flex items-center gap-1 text-gray-500">
-                                              <Calendar className="h-3 w-3" />
-                                              <span>
-                                                {new Date(certificate.certificate_date).toLocaleDateString('fr-FR')}
-                                              </span>
-                                            </div>
-                                          )}
+                          return (
+                            <div
+                              key={certificate.id}
+                              onClick={() => setSelectedCertificate(certificate)}
+                              className={`
+                                group relative p-2.5 rounded-lg border transition-all cursor-pointer
+                                ${isSelected
+                                  ? 'bg-blue-50 border-blue-400 shadow-sm'
+                                  : 'bg-gray-50 border-gray-200 hover:bg-blue-50/50 hover:border-blue-300'
+                                }
+                              `}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  {/* Certificate Name */}
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <FileText className={`h-3.5 w-3.5 flex-shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                                    <p className="text-xs font-medium text-gray-900 truncate">
+                                      {certificate.file_name}
+                                    </p>
+                                  </div>
+
+                                  {/* Certificate Data - Horizontal Compact */}
+                                  {parsedData && (
+                                    <div className="flex items-center gap-3 text-xs">
+                                      {parsedData.gold_content_gpt && (
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-gray-500">Au:</span>
+                                          <span className="font-semibold text-yellow-700">
+                                            {parsedData.gold_content_gpt} g/t
+                                          </span>
+                                        </div>
+                                      )}
+                                      {parsedData.gold_purity_percentage && (
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-gray-500">Purity:</span>
+                                          <span className="font-semibold text-amber-700">
+                                            {parsedData.gold_purity_percentage}%
+                                          </span>
+                                        </div>
+                                      )}
+                                      {certificate.certificate_date && (
+                                        <div className="flex items-center gap-1 text-gray-500">
+                                          <Calendar className="h-3 w-3" />
+                                          <span>
+                                            {new Date(certificate.certificate_date).toLocaleDateString('fr-FR')}
+                                          </span>
                                         </div>
                                       )}
                                     </div>
-
-                                    {/* Status and Actions */}
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                      <div className={`
-                                        w-2 h-2 rounded-full
-                                        ${certificate.approval_status === 'approved' ? 'bg-green-500' :
-                                          certificate.approval_status === 'rejected' ? 'bg-red-500' :
-                                          'bg-orange-400'}
-                                      `} />
-                                      <Button
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedCertificate(certificate);
-                                          setShowCertificateViewer(true);
-                                        }}
-                                        className="h-6 w-6 p-0"
-                                        title="View details"
-                                      >
-                                        <Eye className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </div>
-                                  </div>
-
-                                  {/* Selected Indicator */}
-                                  {isSelected && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-600 rounded-l-lg" />
                                   )}
                                 </div>
-                              );
-                            })
-                          )}
-                        </div>
+
+                                {/* Status and Actions */}
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <div className={`
+                                    w-2 h-2 rounded-full
+                                    ${certificate.approval_status === 'approved' ? 'bg-green-500' :
+                                      certificate.approval_status === 'rejected' ? 'bg-red-500' :
+                                      'bg-gray-300'}
+                                  `} />
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedCertificate(certificate);
+                                      setShowCertificateViewer(true);
+                                    }}
+                                    className="h-6 w-6 p-0"
+                                    title="View details"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Selected Indicator */}
+                              {isSelected && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-l-lg" />
+                              )}
+                            </div>
+                          );
+                        })
                       )}
-                    </Card>
-                  );
-                })}
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
@@ -600,10 +551,7 @@ export function AssayCertificatesPage() {
                   <div className="flex-1 bg-gray-100 overflow-hidden">
                     {loadingPdf ? (
                       <div className="h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <Loading />
-                          <p className="text-sm text-gray-500 mt-2">Chargement du PDF...</p>
-                        </div>
+                        <Loading />
                       </div>
                     ) : pdfUrl ? (
                       <PDFViewer url={pdfUrl} />
@@ -611,10 +559,7 @@ export function AssayCertificatesPage() {
                       <div className="h-full flex items-center justify-center">
                         <div className="text-center">
                           <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                          <p className="text-sm text-gray-500 font-medium">Impossible de charger le PDF</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Le fichier est peut-être manquant ou corrompu
-                          </p>
+                          <p className="text-sm text-gray-500">Impossible de charger le PDF</p>
                         </div>
                       </div>
                     )}
@@ -626,7 +571,7 @@ export function AssayCertificatesPage() {
                     <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
                     <p className="text-sm text-gray-500 font-medium">Aucun certificat sélectionné</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Cliquez sur un certificat pour voir son PDF
+                      Sélectionnez un certificat pour voir son PDF
                     </p>
                   </div>
                 </div>

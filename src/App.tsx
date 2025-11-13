@@ -80,6 +80,8 @@ import ShippingDashboard from './pages/shipping/ShippingDashboard';
 import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
 import ShippingPreparationDetailsEnhanced from './pages/shipping/ShippingPreparationDetailsEnhanced';
 import ShippingPreparationEdit from './pages/shipping/ShippingPreparationEdit';
+import FreightCustomsDashboard from './pages/freight/FreightCustomsDashboard';
+import FreightCustomsDetails from './pages/freight/FreightCustomsDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -268,6 +270,25 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Freight & Customs Routes */}
+            <Route
+              path="/freight-customs"
+              element={
+                <ProtectedRoute>
+                  <FreightCustomsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/freight-customs/:id"
+              element={
+                <ProtectedRoute>
+                  <FreightCustomsDetails />
+                </ProtectedRoute>
+              }
+            />
+
             <Route
               path="/documents/assay-certificates"
               element={

@@ -179,8 +179,8 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
     return stored === 'true';
   });
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? new Set([stored]) : new Set();
+    // Start with no groups expanded
+    return new Set();
   });
 
   useEffect(() => {
@@ -259,12 +259,12 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-gradient-to-b from-slate-50 via-white to-slate-50 h-screen border-r border-slate-200/80 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0',
+        'bg-gradient-to-b from-amber-50/60 via-transparent to-amber-50/40 h-screen border-r border-amber-200/30 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0 backdrop-blur-sm',
         collapsed ? 'w-[70px]' : 'w-[280px]'
       )}
     >
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-slate-200/60 bg-white/50 backdrop-blur-sm">
+      <div className="p-4 border-b border-amber-200/40 bg-gradient-to-r from-amber-50/50 to-transparent backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       </div>
 
       {/* Toggle Button with "My Applications" */}
-      <div className="px-3 py-3 border-b border-slate-200/60 bg-white/30">
+      <div className="px-3 py-3 border-b border-amber-200/40 bg-gradient-to-r from-amber-50/30 to-transparent">
         <button
           onClick={toggleCollapse}
           className="w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent rounded-xl transition-all duration-300 group"

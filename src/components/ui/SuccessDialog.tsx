@@ -102,7 +102,7 @@ export function SuccessDialog({
                 <span className="text-sm font-medium text-gray-600">Poids Net</span>
               </div>
               <p className="text-lg font-semibold text-gray-900">
-                {totalNetWeight.toFixed(2)} g
+                {(totalNetWeight || 0).toFixed(2)} g
               </p>
             </div>
 
@@ -113,7 +113,7 @@ export function SuccessDialog({
                 <span className="text-sm font-medium text-gray-600">Poids Brut</span>
               </div>
               <p className="text-lg font-semibold text-gray-900">
-                {totalGrossWeight.toFixed(2)} g
+                {(totalGrossWeight || 0).toFixed(2)} g
               </p>
             </div>
           </div>

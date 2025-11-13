@@ -392,6 +392,15 @@ class ShippingPreparationService {
     newStatus: ShippingPreparation['status'],
     notes?: string
   ): Promise<ShippingPreparation> {
+    // Get current preparation to get old status
+    const { data: currentPrep } = await supabase
+      .from('shipping_preparations')
+      .select('status')
+      .eq('id', preparationId)
+      .single();
+
+    const oldStatus = currentPrep?.status;
+
     const updateData: any = { status: newStatus };
 
     // Update prepared_at timestamp when status changes to prepared
@@ -418,6 +427,7 @@ class ShippingPreparationService {
         : statusNote;
     }
 
+    // Update shipping preparation
     const { data, error } = await supabase
       .from('shipping_preparations')
       .update(updateData)
@@ -429,6 +439,29 @@ class ShippingPreparationService {
       console.error('Error updating shipping status:', error);
       throw error;
     }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Create entry in unified_status_history
+    if (oldStatus !== newStatus) {
+      const { error: historyError } = await supabase
+        .from('unified_status_history')
+        .insert({
+          entity_type: 'shipping',
+          entity_id: preparationId,
+          old_status: oldStatus,
+          new_status: newStatus,
+          changed_by: user?.id,
+          notes: notes || null,
+          changed_at: new Date().toISOString()
+        });
+
+      if (historyError) {
+        console.error('Error creating status history:', historyError);
+      }
+    }
+
     return data;
   }
 }

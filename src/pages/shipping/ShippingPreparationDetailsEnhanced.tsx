@@ -137,18 +137,19 @@ export default function ShippingPreparationDetailsEnhanced() {
 
       if (certsData) setCertificates(certsData);
 
-      // Load status history
+      // Load status history from unified_status_history
       const { data: historyData } = await supabase
-        .from('shipping_status_history')
+        .from('unified_status_history')
         .select(`
           id,
           old_status,
           new_status,
           changed_at,
           notes,
-          user_profiles!shipping_status_history_changed_by_fkey(full_name)
+          user_profiles!unified_status_history_changed_by_fkey(full_name)
         `)
-        .eq('shipping_preparation_id', id!)
+        .eq('entity_type', 'shipping')
+        .eq('entity_id', id!)
         .order('changed_at', { ascending: false });
 
       if (historyData) {

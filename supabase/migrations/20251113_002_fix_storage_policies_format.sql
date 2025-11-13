@@ -18,23 +18,37 @@
 -- 1. DROP ALL EXISTING STORAGE POLICIES
 -- ========================================
 
-DO $$
-DECLARE
-  pol record;
-BEGIN
-  FOR pol IN
-    SELECT policyname
-    FROM pg_policies
-    WHERE tablename = 'objects'
-      AND schemaname = 'storage'
-      AND policyname LIKE '%production%'
-      OR policyname LIKE '%shipping%'
-      OR policyname LIKE '%assay%'
-  LOOP
-    EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', pol.policyname);
-    RAISE NOTICE 'Dropped policy: %', pol.policyname;
-  END LOOP;
-END $$;
+-- Production documents policies
+DROP POLICY IF EXISTS "prod_docs_select" ON storage.objects;
+DROP POLICY IF EXISTS "prod_docs_insert" ON storage.objects;
+DROP POLICY IF EXISTS "prod_docs_update" ON storage.objects;
+DROP POLICY IF EXISTS "prod_docs_delete" ON storage.objects;
+
+-- Shipping documents policies
+DROP POLICY IF EXISTS "ship_docs_select" ON storage.objects;
+DROP POLICY IF EXISTS "ship_docs_insert" ON storage.objects;
+DROP POLICY IF EXISTS "ship_docs_update" ON storage.objects;
+DROP POLICY IF EXISTS "ship_docs_delete" ON storage.objects;
+
+-- Assay certificates policies
+DROP POLICY IF EXISTS "assay_certs_select" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certs_insert" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certs_update" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certs_delete" ON storage.objects;
+
+-- Also drop any old policies that might exist
+DROP POLICY IF EXISTS "production_documents_select" ON storage.objects;
+DROP POLICY IF EXISTS "production_documents_insert" ON storage.objects;
+DROP POLICY IF EXISTS "production_documents_update" ON storage.objects;
+DROP POLICY IF EXISTS "production_documents_delete" ON storage.objects;
+DROP POLICY IF EXISTS "shipping_documents_select" ON storage.objects;
+DROP POLICY IF EXISTS "shipping_documents_insert" ON storage.objects;
+DROP POLICY IF EXISTS "shipping_documents_update" ON storage.objects;
+DROP POLICY IF EXISTS "shipping_documents_delete" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certificates_select" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certificates_insert" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certificates_update" ON storage.objects;
+DROP POLICY IF EXISTS "assay_certificates_delete" ON storage.objects;
 
 -- ========================================
 -- 2. ENSURE BUCKETS EXIST

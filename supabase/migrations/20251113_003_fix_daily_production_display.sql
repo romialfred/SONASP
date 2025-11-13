@@ -43,6 +43,7 @@ DROP POLICY IF EXISTS "Users can view productions" ON daily_production;
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON daily_production;
 DROP POLICY IF EXISTS "authenticated_users_select_daily_production" ON daily_production;
 DROP POLICY IF EXISTS "Users can select daily production" ON daily_production;
+DROP POLICY IF EXISTS "authenticated_select_all_productions" ON daily_production;
 
 -- Create a single, clear SELECT policy
 CREATE POLICY "authenticated_select_all_productions"
@@ -55,62 +56,43 @@ COMMENT ON POLICY "authenticated_select_all_productions" ON daily_production IS
 'Allows all authenticated users to view all daily production records';
 
 -- ========================================
--- 3. VERIFY INSERT POLICY EXISTS
+-- 3. ENSURE INSERT POLICY EXISTS
 -- ========================================
 
--- Ensure INSERT policy exists (should have been created by previous migration)
-DO $$
-DECLARE
-  insert_policy_exists boolean;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1
-    FROM pg_policies
-    WHERE tablename = 'daily_production'
-      AND cmd = 'INSERT'
-  ) INTO insert_policy_exists;
+-- Drop any existing INSERT policies first
+DROP POLICY IF EXISTS "authenticated_insert_production" ON daily_production;
+DROP POLICY IF EXISTS "Users can insert productions" ON daily_production;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON daily_production;
 
-  IF NOT insert_policy_exists THEN
-    RAISE NOTICE '⚠️  No INSERT policy found, creating one...';
+-- Create INSERT policy
+CREATE POLICY "authenticated_insert_production"
+  ON daily_production
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() IS NOT NULL);
 
-    CREATE POLICY "authenticated_insert_production"
-      ON daily_production
-      FOR INSERT
-      TO authenticated
-      WITH CHECK (auth.uid() IS NOT NULL);
-  ELSE
-    RAISE NOTICE '✅ INSERT policy exists';
-  END IF;
-END $$;
+COMMENT ON POLICY "authenticated_insert_production" ON daily_production IS
+'Allows authenticated users to insert daily production records';
 
 -- ========================================
--- 4. VERIFY UPDATE POLICY EXISTS
+-- 4. ENSURE UPDATE POLICY EXISTS
 -- ========================================
 
-DO $$
-DECLARE
-  update_policy_exists boolean;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1
-    FROM pg_policies
-    WHERE tablename = 'daily_production'
-      AND cmd = 'UPDATE'
-  ) INTO update_policy_exists;
+-- Drop any existing UPDATE policies first
+DROP POLICY IF EXISTS "authenticated_update_production" ON daily_production;
+DROP POLICY IF EXISTS "Users can update productions" ON daily_production;
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON daily_production;
 
-  IF NOT update_policy_exists THEN
-    RAISE NOTICE '⚠️  No UPDATE policy found, creating one...';
+-- Create UPDATE policy
+CREATE POLICY "authenticated_update_production"
+  ON daily_production
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
-    CREATE POLICY "authenticated_update_production"
-      ON daily_production
-      FOR UPDATE
-      TO authenticated
-      USING (auth.uid() IS NOT NULL)
-      WITH CHECK (auth.uid() IS NOT NULL);
-  ELSE
-    RAISE NOTICE '✅ UPDATE policy exists';
-  END IF;
-END $$;
+COMMENT ON POLICY "authenticated_update_production" ON daily_production IS
+'Allows authenticated users to update daily production records';
 
 -- ========================================
 -- 5. ADD HELPFUL INDEX FOR QUERIES

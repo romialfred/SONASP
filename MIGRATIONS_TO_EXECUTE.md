@@ -2,9 +2,24 @@
 
 ## 🎯 **Migrations pour Corriger Daily Production**
 
-⚠️ **MISE À JOUR:** 3 migrations au total!
+✅ **MISE À JOUR:** 3 migrations au total - **TOUTES IDEMPOTENTES!**
+
+🔄 **Peuvent être exécutées plusieurs fois sans erreur**
 
 Exécuter dans cet ordre **EXACT** via Supabase Dashboard → SQL Editor
+
+---
+
+## 🔄 **IMPORTANT: Migrations Idempotentes**
+
+**Toutes les migrations ont été corrigées et peuvent maintenant être exécutées plusieurs fois!**
+
+- ✅ Pas d'erreur si le trigger existe déjà
+- ✅ Pas d'erreur si les policies existent déjà
+- ✅ Utilisent `DROP ... IF EXISTS` avant chaque `CREATE`
+- ✅ Safe pour réexécution en cas de problème
+
+**Si vous avez eu des erreurs précédemment, vous pouvez réexécuter les migrations maintenant!**
 
 ---
 

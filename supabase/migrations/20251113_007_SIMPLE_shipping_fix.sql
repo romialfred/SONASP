@@ -77,9 +77,9 @@ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_preparations_backup_simple') THEN
     UPDATE shipping_preparations sp
     SET status = CASE
-      WHEN b.status IN ('pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled')
-      THEN b.status::shipping_status_v2
-      WHEN b.status = 'shipped'
+      WHEN b.status::text IN ('pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled')
+      THEN b.status::text::shipping_status_v2
+      WHEN b.status::text = 'shipped'
       THEN 'prepared'::shipping_status_v2
       ELSE 'pending'::shipping_status_v2
     END

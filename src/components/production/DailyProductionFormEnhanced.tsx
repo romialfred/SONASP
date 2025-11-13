@@ -33,7 +33,8 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   const [formData, setFormData] = useState({
     production_date: production?.production_date || new Date().toISOString().split('T')[0],
     bullion_grams: production?.bullion_grams?.toString() || '',
-    estimated_fineness_pct: production?.estimated_fineness_pct?.toString() || '',
+    estimated_gold_pct: production?.estimated_gold_pct?.toString() || production?.estimated_fineness_pct?.toString() || '',
+    estimated_silver_pct: production?.estimated_silver_pct?.toString() || '',
     bar_reference: production?.bar_reference || '',
     mining_company_id: production?.mining_company_id || '',
     notes: production?.notes || '',
@@ -137,9 +138,17 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   const bullionInOz = gramsToOz(bullionInGrams);
 
-  const pureGoldGrams = formData.bullion_grams && formData.estimated_fineness_pct
-    ? (bullionInGrams * parseFloat(formData.estimated_fineness_pct) / 100).toFixed(2)
+  const pureGoldGrams = formData.bullion_grams && formData.estimated_gold_pct
+    ? (bullionInGrams * parseFloat(formData.estimated_gold_pct) / 100).toFixed(2)
     : '0.00';
+
+  const silverContentGrams = formData.bullion_grams && formData.estimated_silver_pct
+    ? (bullionInGrams * parseFloat(formData.estimated_silver_pct) / 100).toFixed(2)
+    : '0.00';
+
+  const silverContentOz = silverContentGrams !== '0.00'
+    ? (parseFloat(silverContentGrams) / 31.1035).toFixed(4)
+    : '0.0000';
 
   const estimatedOz = pureGoldGrams !== '0.00'
     ? (parseFloat(pureGoldGrams) / 31.1035).toFixed(4)
@@ -236,8 +245,12 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       newErrors.bullion_grams = 'Le poids du bullion doit être supérieur à 0';
     }
 
-    if (!formData.estimated_fineness_pct || parseFloat(formData.estimated_fineness_pct) <= 0 || parseFloat(formData.estimated_fineness_pct) > 100) {
-      newErrors.estimated_fineness_pct = 'La finesse doit être entre 0 et 100%';
+    if (!formData.estimated_gold_pct || parseFloat(formData.estimated_gold_pct) <= 0 || parseFloat(formData.estimated_gold_pct) > 100) {
+      newErrors.estimated_gold_pct = 'La finesse or doit être entre 0 et 100%';
+    }
+
+    if (formData.estimated_silver_pct && (parseFloat(formData.estimated_silver_pct) < 0 || parseFloat(formData.estimated_silver_pct) > 100)) {
+      newErrors.estimated_silver_pct = 'La finesse argent doit être entre 0 et 100%';
     }
 
     if (!formData.mining_company_id) {
@@ -282,7 +295,8 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
 ⚖️ POIDS ET FINESSE:
    • Bullion: ${bullionGramsToSave.toFixed(2)} g (${bullionInOz.toFixed(2)} oz)
-   • Finesse estimée: ${formData.estimated_fineness_pct}%
+   • Finesse or: ${formData.estimated_gold_pct}%
+   • Finesse argent: ${formData.estimated_silver_pct || 0}%
 
 💎 CALCULS AUTOMATIQUES:
    • Or pur: ${pureGoldGrams} g
@@ -303,7 +317,9 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
           const data = {
             production_date: formData.production_date,
             bullion_grams: bullionGramsToSave,
-            estimated_fineness_pct: parseFloat(formData.estimated_fineness_pct),
+            estimated_gold_pct: parseFloat(formData.estimated_gold_pct),
+            estimated_silver_pct: formData.estimated_silver_pct ? parseFloat(formData.estimated_silver_pct) : 0,
+            estimated_fineness_pct: parseFloat(formData.estimated_gold_pct),
             bar_reference: formData.bar_reference || undefined,
             mining_company_id: formData.mining_company_id || undefined,
             notes: formData.notes || undefined,
@@ -624,22 +640,40 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 )}
               </div>
 
-              {/* Estimated Fineness */}
+              {/* Estimated Gold Fineness */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Fineness (%) *
+                  Estimated Fineness Gold (%) *
                 </label>
                 <Input
                   type="number"
                   step="0.01"
                   min="0"
                   max="100"
-                  value={formData.estimated_fineness_pct}
-                  onChange={(e) => handleChange('estimated_fineness_pct', e.target.value)}
-                  onFocus={() => setActiveField('estimated_fineness_pct')}
+                  value={formData.estimated_gold_pct}
+                  onChange={(e) => handleChange('estimated_gold_pct', e.target.value)}
+                  onFocus={() => setActiveField('estimated_gold_pct')}
                   placeholder="ex: 92.1"
-                  error={errors.estimated_fineness_pct}
+                  error={errors.estimated_gold_pct}
                   required
+                />
+              </div>
+
+              {/* Estimated Silver Percentage */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estimated Silver (%)
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.estimated_silver_pct}
+                  onChange={(e) => handleChange('estimated_silver_pct', e.target.value)}
+                  onFocus={() => setActiveField('estimated_silver_pct')}
+                  placeholder="ex: 5.2"
+                  error={errors.estimated_silver_pct}
                 />
               </div>
             </div>
@@ -650,28 +684,46 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 Calculs Automatiques
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-blue-700 mb-1">
                     Pure Gold (g)
                   </label>
-                  <div className="text-2xl font-bold text-blue-900">
+                  <div className="text-xl font-bold text-blue-900">
                     {pureGoldGrams}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-blue-700 mb-1">
-                    Estimated Oz
+                    Gold Oz
                   </label>
-                  <div className="text-2xl font-bold text-blue-900">
+                  <div className="text-xl font-bold text-blue-900">
                     {estimatedOz}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Ag Content (g)
+                  </label>
+                  <div className="text-xl font-bold text-gray-700">
+                    {silverContentGrams}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Silver Oz
+                  </label>
+                  <div className="text-xl font-bold text-gray-700">
+                    {silverContentOz}
                   </div>
                 </div>
               </div>
 
               <p className="text-xs text-blue-600 mt-2">
-                Pure Gold = Bullion × Fineness ÷ 100 | Oz = Pure Gold ÷ 31.1035
+                Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1035
               </p>
             </div>
 

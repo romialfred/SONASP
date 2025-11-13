@@ -78,10 +78,16 @@ export function ProductionTable({
               BULLION (G)
             </th>
             <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              FINESSE (%)
+              OR (%)
+            </th>
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              AG (%)
             </th>
             <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
               OR PUR (G)
+            </th>
+            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
+              AG (G)
             </th>
             <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
               OZ ESTIMÉES
@@ -125,13 +131,26 @@ export function ProductionTable({
                 </span>
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  {production.estimated_fineness_pct.toFixed(2)}%
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  {(production.estimated_gold_pct || production.estimated_fineness_pct).toFixed(2)}%
+                </span>
+              </td>
+              <td className="px-4 py-4 whitespace-nowrap text-right">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  {(production.estimated_silver_pct || 0).toFixed(2)}%
                 </span>
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-right">
                 <span className="text-sm font-semibold text-yellow-700">
                   {production.pure_gold_grams.toLocaleString('fr-FR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </span>
+              </td>
+              <td className="px-4 py-4 whitespace-nowrap text-right">
+                <span className="text-sm font-semibold text-gray-700">
+                  {(production.silver_content_grams || 0).toLocaleString('fr-FR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}

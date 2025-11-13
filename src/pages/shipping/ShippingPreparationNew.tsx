@@ -645,6 +645,13 @@ export default function ShippingPreparationNew() {
   const selectedFreightCompany = freightCompanies.find(fc => fc.id === selectedFreightCompanyId);
   const totalNetWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
   const totalGrossWeight = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
+  const totalSilverContent = selectedProductions.reduce((sum, sp) => sum + (sp.production.silver_content_grams || 0), 0);
+  const avgGoldPct = selectedProductions.length > 0
+    ? selectedProductions.reduce((sum, sp) => sum + (sp.production.estimated_gold_pct || sp.production.estimated_fineness_pct), 0) / selectedProductions.length
+    : 0;
+  const avgSilverPct = selectedProductions.length > 0
+    ? selectedProductions.reduce((sum, sp) => sum + (sp.production.estimated_silver_pct || 0), 0) / selectedProductions.length
+    : 0;
 
   return (
     <MainLayout>
@@ -789,7 +796,10 @@ export default function ShippingPreparationNew() {
                         <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Date</th>
                         <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Bar Ref</th>
                         <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Bullion (g)</th>
-                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Pure Gold (g)</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Au%</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Pure Au (g)</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Ag%</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Ag (g)</th>
                         <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Seal 1 *</th>
                         <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Seal 2</th>
                         <th className="px-2 py-2 text-center text-[10px] font-bold uppercase">Action</th>
@@ -802,7 +812,10 @@ export default function ShippingPreparationNew() {
                           <td className="px-2 py-1.5 text-xs">{new Date(sp.production.production_date).toLocaleDateString('fr-FR')}</td>
                           <td className="px-2 py-1.5 text-xs font-mono font-semibold">{sp.production.bar_reference}</td>
                           <td className="px-2 py-1.5 text-xs text-right font-semibold">{sp.production.bullion_grams.toFixed(2)}</td>
+                          <td className="px-2 py-1.5 text-xs text-right font-semibold text-yellow-600">{(sp.production.estimated_gold_pct || sp.production.estimated_fineness_pct).toFixed(2)}%</td>
                           <td className="px-2 py-1.5 text-xs text-right font-semibold text-yellow-800">{sp.production.pure_gold_grams.toFixed(2)}</td>
+                          <td className="px-2 py-1.5 text-xs text-right font-semibold text-gray-600">{(sp.production.estimated_silver_pct || 0).toFixed(2)}%</td>
+                          <td className="px-2 py-1.5 text-xs text-right font-semibold text-gray-700">{(sp.production.silver_content_grams || 0).toFixed(2)}</td>
                           <td className="px-2 py-1.5">
                             <Input
                               value={sp.sealNumber1}
@@ -835,7 +848,10 @@ export default function ShippingPreparationNew() {
                       <tr className="bg-gradient-to-r from-yellow-100 to-amber-100 font-bold border-t-2 border-yellow-400">
                         <td colSpan={3} className="px-2 py-2 text-xs text-yellow-900">TOTAL ({selectedProductions.length} boxes)</td>
                         <td className="px-2 py-2 text-xs text-right text-yellow-900">{totalGrossWeight.toFixed(2)}</td>
+                        <td className="px-2 py-2 text-xs text-right text-yellow-700">{avgGoldPct.toFixed(2)}%</td>
                         <td className="px-2 py-2 text-xs text-right text-yellow-900">{totalNetWeight.toFixed(2)}</td>
+                        <td className="px-2 py-2 text-xs text-right text-gray-600">{avgSilverPct.toFixed(2)}%</td>
+                        <td className="px-2 py-2 text-xs text-right text-gray-700">{totalSilverContent.toFixed(2)}</td>
                         <td colSpan={3}></td>
                       </tr>
                     </tbody>

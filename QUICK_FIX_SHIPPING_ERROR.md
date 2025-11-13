@@ -1,63 +1,42 @@
-# 🚨 FIX RAPIDE - Erreur Expédition
+# ⚡ FIX RAPIDE - Erreur "shipped" persiste
 
-## Problème
-❌ **"Could not find the 'total_weight_oz' column"**
+## 🎯 OPTION RECOMMANDÉE: Migration 009
 
-## Solution en 3 Étapes
+**Fichier:** `supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql`
 
-### 1️⃣ Ouvrir Supabase SQL Editor
-- Aller sur : https://supabase.com/dashboard
-- Sélectionner votre projet
-- Cliquer sur **SQL Editor** (menu gauche)
+**Avantages:**
+- ✅ 100% sûr
+- ✅ Ne touche que les données invalides
+- ✅ Pas de suppression de colonne
+- ✅ Peut être exécuté plusieurs fois
+- ✅ Ultra rapide (quelques ms)
 
-### 2️⃣ Copier/Coller ce SQL
-```sql
--- Ajouter mining_company_id
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'shipping_preparations' AND column_name = 'mining_company_id'
-  ) THEN
-    ALTER TABLE shipping_preparations 
-    ADD COLUMN mining_company_id UUID REFERENCES mining_companies(id) ON DELETE SET NULL;
-    CREATE INDEX IF NOT EXISTS idx_shipping_preparations_mining_company ON shipping_preparations(mining_company_id);
-  END IF;
-END $$;
+**Actions:**
+1. Supabase → SQL Editor
+2. Copier/Coller: 20251113_009_ULTRA_SIMPLE_fix.sql
+3. RUN
+4. Vérifier: "✅ MIGRATION TERMINÉE AVEC SUCCÈS"
 
--- Ajouter license_id
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'shipping_preparations' AND column_name = 'license_id'
-  ) THEN
-    ALTER TABLE shipping_preparations 
-    ADD COLUMN license_id UUID REFERENCES export_licenses(id) ON DELETE SET NULL;
-    CREATE INDEX IF NOT EXISTS idx_shipping_preparations_license ON shipping_preparations(license_id);
-  END IF;
-END $$;
+## 📋 APRÈS LA MIGRATION
 
--- Ajouter total_weight_oz
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'shipping_preparations' AND column_name = 'total_weight_oz'
-  ) THEN
-    ALTER TABLE shipping_preparations ADD COLUMN total_weight_oz DECIMAL(12, 4) DEFAULT 0;
-    UPDATE shipping_preparations SET total_weight_oz = ROUND((total_net_weight_grams / 31.1035)::numeric, 4) WHERE total_net_weight_grams > 0;
-    CREATE INDEX IF NOT EXISTS idx_shipping_preparations_weight_oz ON shipping_preparations(total_weight_oz);
-  END IF;
-END $$;
-```
+1. **Déployer** l'app (build prêt)
+2. **Vider cache** navigateur COMPLÈTEMENT (Ctrl+Shift+Delete)
+3. **Fermer** tous les onglets de l'app
+4. **Ouvrir** nouvel onglet et tester
 
-### 3️⃣ Exécuter
-- Cliquer **RUN** (ou Ctrl+Enter)
-- Attendre "Success"
-- Rafraîchir l'app (F5)
+## 🔍 DIAGNOSTIC (Optionnel)
 
-## ✅ C'est réglé !
+**Avant correction:** `DIAGNOSTIC_SHIPPING_TABLE.sql`
 
-**Fichier migration complet** : `supabase/migrations/fix_shipping_preparations_columns.sql`
-**Documentation détaillée** : `MIGRATION_SHIPPING_FIX_REQUIRED.md`
+## ✅ CHECKLIST
+
+- [ ] Migration 009 exécutée
+- [ ] Application déployée
+- [ ] Cache vidé
+- [ ] Test création expédition
+- [ ] Succès!
+
+**Fichiers disponibles:**
+- `20251113_009_ULTRA_SIMPLE_fix.sql` ← EXÉCUTER CELUI-CI
+- `20251113_008_EMERGENCY_cleanup_shipped.sql` (corrigé, alternative)
+- `DIAGNOSTIC_SHIPPING_TABLE.sql` (diagnostic)

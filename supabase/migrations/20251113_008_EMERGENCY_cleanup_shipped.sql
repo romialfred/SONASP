@@ -61,9 +61,6 @@ DO $$
 DECLARE
   v_updated int := 0;
 BEGIN
-  -- Désactiver temporairement les triggers si nécessaire
-  ALTER TABLE shipping_preparations DISABLE TRIGGER ALL;
-
   -- Méthode 1: UPDATE direct avec default si erreur
   BEGIN
     UPDATE shipping_preparations
@@ -114,9 +111,6 @@ BEGIN
     WHEN OTHERS THEN
       RAISE NOTICE '⚠️ Erreur restauration backup: %', SQLERRM;
   END;
-
-  -- Réactiver les triggers
-  ALTER TABLE shipping_preparations ENABLE TRIGGER ALL;
 
   RAISE NOTICE '========================================';
   RAISE NOTICE '✅ CLEANUP TERMINÉ';

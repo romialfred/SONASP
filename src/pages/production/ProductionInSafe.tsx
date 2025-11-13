@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
 import { performanceService, PerformanceData } from '@/services/performanceService';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
+import { MonthlyProductionBarChart } from '@/components/production/MonthlyProductionBarChart';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -34,6 +35,12 @@ interface StatusCount {
   cancelled: number;
 }
 
+interface MonthlyData {
+  month: string;
+  total_oz: number;
+  monthNum: number;
+}
+
 export function ProductionInSafe() {
   const navigate = useNavigate();
   const pageRef = useRef<HTMLDivElement>(null);
@@ -41,6 +48,7 @@ export function ProductionInSafe() {
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
 
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -73,6 +81,10 @@ export function ProductionInSafe() {
     loadProductions();
     loadPerformanceData();
   }, [dateRange, selectedCompany, selectedStatus]);
+
+  useEffect(() => {
+    calculateMonthlyData();
+  }, [productions]);
 
   const loadMiningCompanies = async () => {
     try {
@@ -147,6 +159,36 @@ export function ProductionInSafe() {
     } catch (error) {
       console.error('Error loading performance data:', error);
     }
+  };
+
+  const calculateMonthlyData = () => {
+    const monthlyMap = new Map<string, { total_oz: number; monthNum: number; year: number }>();
+
+    productions.forEach(prod => {
+      const date = new Date(prod.production_date);
+      const year = date.getFullYear();
+      const month = date.getMonth(); // 0-11
+      const monthKey = `${year}-${month}`;
+
+      if (!monthlyMap.has(monthKey)) {
+        monthlyMap.set(monthKey, { total_oz: 0, monthNum: month, year });
+      }
+
+      const current = monthlyMap.get(monthKey)!;
+      current.total_oz += prod.estimated_oz || 0;
+    });
+
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+    const monthlyArray = Array.from(monthlyMap.entries())
+      .map(([key, value]) => ({
+        month: `${monthNames[value.monthNum]} ${value.year}`,
+        total_oz: value.total_oz,
+        monthNum: value.year * 12 + value.monthNum // Pour le tri
+      }))
+      .sort((a, b) => a.monthNum - b.monthNum);
+
+    setMonthlyData(monthlyArray);
   };
 
   const calculateVariance = (actual: number, target: number) => actual - target;
@@ -858,6 +900,8 @@ export function ProductionInSafe() {
             </div>
           </Card>
         </div>
+
+        <MonthlyProductionBarChart data={monthlyData} />
       </div>
     </MainLayout>
   );

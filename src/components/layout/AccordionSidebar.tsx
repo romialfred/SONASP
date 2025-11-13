@@ -330,13 +330,13 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent animate-pulse"></div>
           )}
           <div className={cn(
-            'p-1.5 rounded-lg transition-all duration-300',
+            'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
             isDashboardActive ? 'bg-white/20' : 'bg-blue-50 group-hover:bg-blue-100'
           )}>
             <LayoutDashboard className={cn('w-4 h-4', isDashboardActive ? 'text-white' : 'text-blue-600')} />
           </div>
           {!collapsed && (
-            <span className="text-sm font-medium relative z-10">
+            <span className="text-sm font-medium relative z-10 whitespace-nowrap overflow-hidden text-ellipsis">
               {t('nav.dashboard')}
             </span>
           )}
@@ -361,10 +361,10 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                     : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/60 hover:to-transparent'
                 )}
               >
-                <div className="flex items-center gap-3 relative z-10">
+                <div className="flex items-center gap-3 relative z-10 min-w-0 flex-1">
                   {group.groupIcon && (
                     <div className={cn(
-                      'p-1.5 rounded-lg transition-all duration-300',
+                      'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
                       isOpen || hasActiveItem ? 'bg-white shadow-sm' : 'bg-slate-50 group-hover:bg-white'
                     )}>
                       <group.groupIcon className={cn('w-4 h-4', group.groupIconColor)} />
@@ -372,7 +372,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                   )}
                   {!collapsed && (
                     <span className={cn(
-                      'text-sm transition-all duration-300',
+                      'text-sm transition-all duration-300 whitespace-nowrap overflow-hidden text-ellipsis',
                       isOpen || hasActiveItem ? 'font-medium text-slate-900' : 'font-normal text-slate-700'
                     )}>
                       {group.label}
@@ -381,7 +381,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 </div>
                 {!collapsed && (
                   <div className={cn(
-                    'p-1 rounded-lg transition-all duration-300',
+                    'p-1 rounded-lg transition-all duration-300 flex-shrink-0',
                     isOpen ? 'bg-slate-200/50' : 'group-hover:bg-slate-200/30'
                   )}>
                     {isOpen ? (
@@ -417,13 +417,13 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-r-full"></div>
                         )}
                         <div className={cn(
-                          'p-1 rounded-md transition-all duration-300 relative z-10',
+                          'p-1 rounded-md transition-all duration-300 relative z-10 flex-shrink-0',
                           active ? 'bg-emerald-100/80' : 'bg-slate-50 group-hover:bg-slate-100'
                         )}>
                           <item.icon className={cn('w-3.5 h-3.5', active ? 'text-emerald-600' : item.iconColor)} />
                         </div>
                         <span className={cn(
-                          'text-sm transition-all duration-300 relative z-10',
+                          'text-sm transition-all duration-300 relative z-10 whitespace-nowrap overflow-hidden text-ellipsis',
                           active ? 'font-medium' : 'font-normal'
                         )}>
                           {item.label}

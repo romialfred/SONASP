@@ -90,10 +90,31 @@ export function DailyProductionPage() {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async () => {
     setShowForm(false);
     setSelectedProduction(null);
-    loadProductions();
+
+    try {
+      setLoading(true);
+
+      const expandedRange = {
+        startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+
+      console.log('🔄 Reloading with expanded 90-day range after create/update');
+      const data = await dailyProductionService.listProduction(expandedRange);
+      setProductions(data);
+
+      setDateRange(expandedRange);
+
+      console.log(`✅ Loaded ${data.length} production(s), date range updated`);
+    } catch (error) {
+      console.error('❌ Error reloading after form success:', error);
+      showError('Erreur lors du rechargement');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFormCancel = () => {

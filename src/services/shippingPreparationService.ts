@@ -124,9 +124,18 @@ class ShippingPreparationService {
   }
 
   async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
+    // CRITICAL FIX: Validate status before UPDATE
+    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled'];
+    const cleanUpdates = { ...updates };
+
+    if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status)) {
+      cleanUpdates.status = 'prepared';
+      console.warn('Invalid status in UPDATE, defaulting to: prepared');
+    }
+
     const { data, error } = await supabase
       .from('shipping_preparations')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('id', id)
       .select()
       .single();

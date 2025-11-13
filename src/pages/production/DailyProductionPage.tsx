@@ -31,7 +31,7 @@ export function DailyProductionPage() {
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
   const { alertState, confirmState, showError, showConfirm, closeAlert, closeConfirm } = useCustomAlert();

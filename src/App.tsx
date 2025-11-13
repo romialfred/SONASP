@@ -82,6 +82,7 @@ import ShippingPreparationDetailsEnhanced from './pages/shipping/ShippingPrepara
 import ShippingPreparationEdit from './pages/shipping/ShippingPreparationEdit';
 import FreightCustomsDashboard from './pages/freight/FreightCustomsDashboard';
 import FreightCustomsDetails from './pages/freight/FreightCustomsDetails';
+import FreightCustomsCreate from './pages/freight/FreightCustomsCreate';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -277,6 +278,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <FreightCustomsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/freight-customs/create"
+              element={
+                <ProtectedRoute>
+                  <FreightCustomsCreate />
                 </ProtectedRoute>
               }
             />

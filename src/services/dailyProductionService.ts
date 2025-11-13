@@ -58,26 +58,53 @@ class DailyProductionService {
     endDate?: string;
     siteId?: string;
   } = {}) {
+    console.log('📊 listProduction called with filters:', filters);
+
     let query = supabase
       .from('daily_production')
       .select('*')
       .order('production_date', { ascending: false });
 
     if (filters.startDate) {
+      console.log('  ├─ Filtering by startDate >=', filters.startDate);
       query = query.gte('production_date', filters.startDate);
     }
-    
+
     if (filters.endDate) {
+      console.log('  ├─ Filtering by endDate <=', filters.endDate);
       query = query.lte('production_date', filters.endDate);
     }
-    
+
     if (filters.siteId) {
+      console.log('  ├─ Filtering by siteId =', filters.siteId);
       query = query.eq('site_id', filters.siteId);
     }
 
+    console.log('  └─ Executing query...');
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Query error:', error);
+      throw error;
+    }
+
+    console.log(`✅ Query successful: ${data?.length || 0} records found`);
+    if (data && data.length > 0) {
+      console.log('  📋 Sample record:', {
+        id: data[0].id.substring(0, 8) + '...',
+        date: data[0].production_date,
+        site_id: data[0].site_id,
+        mining_company_id: data[0].mining_company_id?.substring(0, 8) + '...',
+        bullion_grams: data[0].bullion_grams
+      });
+    } else {
+      console.warn('⚠️  No records returned from query');
+      console.warn('  Check:');
+      console.warn('  1. RLS policies allow SELECT');
+      console.warn('  2. Date range includes existing data');
+      console.warn('  3. site_id filter matches data');
+    }
+
     return data as DailyProduction[];
   }
 

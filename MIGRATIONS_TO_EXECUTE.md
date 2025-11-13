@@ -2,6 +2,8 @@
 
 ## 🎯 **Migrations pour Corriger Daily Production**
 
+⚠️ **MISE À JOUR:** 3 migrations au total!
+
 Exécuter dans cet ordre **EXACT** via Supabase Dashboard → SQL Editor
 
 ---
@@ -85,6 +87,54 @@ TOTAL: 12 storage policies
 
 ---
 
+## ✅ **Migration 3: Fix Data Display (NOUVEAU)**
+
+**Fichier:** `supabase/migrations/20251113_003_fix_daily_production_display.sql`
+
+**Ce qu'elle fait:**
+- **FIX CRITIQUE:** Corrige le problème d'affichage des données
+- Supprime toutes les anciennes policies SELECT conflictuelles
+- Crée UNE policy SELECT claire permettant à tous les utilisateurs authentifiés de voir les données
+- Ajoute des index pour améliorer les performances
+- Affiche des diagnostics complets
+
+**Comment l'appliquer:**
+1. Ouvrir Supabase Dashboard
+2. Aller dans **SQL Editor**
+3. Cliquer **"New Query"**
+4. Copier **TOUT** le contenu du fichier:
+   ```
+   /tmp/cc-agent/59164212/project/supabase/migrations/20251113_003_fix_daily_production_display.sql
+   ```
+5. Coller dans l'éditeur
+6. Cliquer **"Run"** ou appuyer sur `Ctrl+Enter`
+
+**Vérification du succès:**
+```
+✅✅✅ CONFIGURATION LOOKS GOOD!
+
+📊 DATABASE STATUS:
+   Total records: 22
+   SELECT policies: 1
+   INSERT policies: 1
+   UPDATE policies: 1
+
+📅 MOST RECENT RECORD:
+   Date: 2025-11-13
+   Site ID: guinea
+   Company ID: 53cce625-d11d-...
+   Created: 2025-11-13 ...
+
+🔍 NEXT STEPS:
+   1. Refresh the Daily Production page
+   2. Check browser console for errors
+   3. Verify date range filter includes recent dates
+```
+
+**Temps d'exécution:** < 3 secondes
+
+---
+
 ## 🔄 **Résumé de l'Ordre d'Exécution**
 
 ```
@@ -96,10 +146,14 @@ TOTAL: 12 storage policies
    ↓ Corrige les erreurs de storage buckets
    ↓
 
-✅ TERMINÉ
+3️⃣ 20251113_003_fix_daily_production_display.sql  ← NOUVEAU!
+   ↓ Corrige l'affichage des données
+   ↓
+
+✅ TERMINÉ - Données visibles!
 ```
 
-**Temps total:** < 10 secondes
+**Temps total:** < 15 secondes
 **Ordre:** Critique (respecter cet ordre)
 **Réversible:** Oui (les migrations peuvent être réexécutées sans danger)
 
@@ -108,7 +162,7 @@ TOTAL: 12 storage policies
 ## ⚠️ **IMPORTANT**
 
 ### **Ne PAS sauter d'étapes!**
-- Les 2 migrations doivent être exécutées
+- Les 3 migrations doivent être exécutées
 - Dans l'ordre indiqué
 - Via Supabase Dashboard SQL Editor
 

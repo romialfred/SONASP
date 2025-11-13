@@ -374,6 +374,48 @@ class ShippingPreparationService {
     if (error) throw error;
     return data as boolean;
   }
+
+  /**
+   * Update shipping preparation status
+   */
+  async updateStatus(
+    preparationId: string,
+    newStatus: ShippingPreparation['status'],
+    notes?: string
+  ): Promise<ShippingPreparation> {
+    const updateData: any = { status: newStatus };
+
+    if (newStatus === 'prepared' && !updateData.prepared_at) {
+      updateData.prepared_at = new Date().toISOString();
+    }
+
+    if (newStatus === 'validated_for_refinery') {
+      updateData.validated_at = new Date().toISOString();
+    }
+
+    if (notes) {
+      const { data: current } = await supabase
+        .from('shipping_preparations')
+        .select('notes')
+        .eq('id', preparationId)
+        .single();
+
+      const statusNote = `[${new Date().toLocaleString('fr-FR')}] Statut changé vers ${newStatus}${notes ? ': ' + notes : ''}`;
+      updateData.notes = current?.notes
+        ? `${current.notes}\n\n${statusNote}`
+        : statusNote;
+    }
+
+    const { data, error } = await supabase
+      .from('shipping_preparations')
+      .update(updateData)
+      .eq('id', preparationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
 }
 
 export const shippingPreparationService = new ShippingPreparationService();

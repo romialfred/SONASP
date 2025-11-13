@@ -411,3 +411,132 @@ CREATE POLICY "Users can view status history"
 ---
 
 **Règle d'Or:** Une migration doit être exécutable N fois avec le même résultat (idempotence).
+
+## ⚠️ PROBLÈME CRITIQUE: RAISE NOTICE
+
+### **ERREUR TRÈS COURANTE**
+
+```sql
+-- ❌ INCORRECT - Provoque TOUJOURS une erreur de syntaxe
+CREATE INDEX IF NOT EXISTS idx_example ON table_name(column);
+
+RAISE NOTICE '✅ Index créé';  -- ERREUR: syntax error at or near "RAISE"
+```
+
+**Message d'erreur typique:**
+```
+ERROR: 42601: syntax error at or near "RAISE"
+LINE XX: RAISE NOTICE '✅ Index créé';
+```
+
+### **RAISON DU PROBLÈME**
+
+`RAISE NOTICE` ne peut **JAMAIS** être utilisé directement dans le corps d'une migration SQL.
+Il doit **OBLIGATOIREMENT** être à l'intérieur d'un bloc `DO $$ ... END $$` ou d'une fonction PL/pgSQL.
+
+### **✅ SOLUTION 1: Utiliser un bloc DO $$**
+
+```sql
+DO $$
+BEGIN
+  CREATE INDEX IF NOT EXISTS idx_example ON table_name(column);
+  RAISE NOTICE '✅ Index créé';
+END $$;
+```
+
+### **✅ SOLUTION 2: Supprimer RAISE (RECOMMANDÉ)**
+
+**La meilleure pratique est de NE PAS utiliser RAISE NOTICE dans les migrations:**
+
+```sql
+-- ✅ SIMPLE ET SANS ERREUR
+CREATE INDEX IF NOT EXISTS idx_example ON table_name(column);
+
+-- Les commentaires SQL suffisent pour la documentation
+COMMENT ON INDEX idx_example IS 'Index créé pour améliorer les performances';
+```
+
+### **Règle d'Or**
+
+> **Si vous voyez `RAISE` en dehors d'un bloc `DO $$`, c'est une ERREUR!**
+
+### **Vérification Rapide**
+
+```bash
+# Rechercher les RAISE problématiques
+grep -n "^RAISE" migration.sql
+
+# Si cette commande retourne quelque chose, SUPPRIMEZ les RAISE ou mettez-les dans DO $$
+```
+
+### **Commandes Nécessitant un Bloc DO $$**
+
+Ces commandes **NE PEUVENT PAS** être utilisées directement:
+
+- `RAISE NOTICE`
+- `RAISE WARNING`
+- `RAISE EXCEPTION`
+- `DECLARE` (variables)
+- `IF ... THEN ... END IF`
+- `FOR ... LOOP`
+- `GET DIAGNOSTICS`
+
+### **Commandes Utilisables Directement**
+
+Ces commandes **PEUVENT** être utilisées directement (sans bloc):
+
+- `CREATE TABLE`
+- `ALTER TABLE`
+- `DROP TABLE`
+- `CREATE INDEX`
+- `CREATE VIEW`
+- `INSERT`
+- `UPDATE`
+- `DELETE`
+- `GRANT`
+- `COMMENT`
+
+### **Exemple Complet Corrigé**
+
+```sql
+/*
+  # Migration Example - Sans RAISE (Recommandé)
+*/
+
+-- ========================================
+-- 1. CRÉER DES COLONNES
+-- ========================================
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'example' AND column_name = 'new_col'
+  ) THEN
+    ALTER TABLE example ADD COLUMN new_col TEXT;
+  END IF;
+END $$;
+
+-- ========================================
+-- 2. CRÉER DES INDEX
+-- ========================================
+
+CREATE INDEX IF NOT EXISTS idx_example ON example(new_col);
+
+-- ========================================
+-- 3. MIGRER LES DONNÉES
+-- ========================================
+
+UPDATE example SET new_col = 'default' WHERE new_col IS NULL;
+
+-- ========================================
+-- 4. DOCUMENTATION
+-- ========================================
+
+COMMENT ON COLUMN example.new_col IS 'Nouvelle colonne ajoutée le 2025-11-13';
+```
+
+---
+
+**Important:** Cette section a été ajoutée suite à des erreurs récurrentes avec `RAISE NOTICE`.
+**Date:** 2025-11-13

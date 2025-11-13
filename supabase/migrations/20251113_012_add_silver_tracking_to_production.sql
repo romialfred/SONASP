@@ -38,10 +38,6 @@ BEGIN
 
     COMMENT ON COLUMN daily_production.estimated_gold_pct IS
     'Estimated Gold percentage in the bullion (0-100%)';
-
-    RAISE NOTICE '✅ Added estimated_gold_pct column';
-  ELSE
-    RAISE NOTICE '⏭️  estimated_gold_pct column already exists';
   END IF;
 
   -- Add estimated_silver_pct
@@ -54,10 +50,6 @@ BEGIN
 
     COMMENT ON COLUMN daily_production.estimated_silver_pct IS
     'Estimated Silver percentage in the bullion (0-100%)';
-
-    RAISE NOTICE '✅ Added estimated_silver_pct column';
-  ELSE
-    RAISE NOTICE '⏭️  estimated_silver_pct column already exists';
   END IF;
 
   -- Add silver_content_grams
@@ -76,10 +68,6 @@ BEGIN
 
     COMMENT ON COLUMN daily_production.silver_content_grams IS
     'Calculated Silver content in grams (Bullion × Silver %)';
-
-    RAISE NOTICE '✅ Added silver_content_grams column (calculated)';
-  ELSE
-    RAISE NOTICE '⏭️  silver_content_grams column already exists';
   END IF;
 END $$;
 
@@ -88,18 +76,9 @@ END $$;
 -- ========================================
 
 -- Copy estimated_fineness_pct to estimated_gold_pct for existing records
-DO $$
-DECLARE
-  updated_count integer;
-BEGIN
-  UPDATE daily_production
-  SET estimated_gold_pct = estimated_fineness_pct
-  WHERE estimated_gold_pct = 0 OR estimated_gold_pct IS NULL;
-
-  GET DIAGNOSTICS updated_count = ROW_COUNT;
-
-  RAISE NOTICE '✅ Migrated % existing records (fineness → gold_pct)', updated_count;
-END $$;
+UPDATE daily_production
+SET estimated_gold_pct = estimated_fineness_pct
+WHERE estimated_gold_pct = 0 OR estimated_gold_pct IS NULL;
 
 -- ========================================
 -- 3. ADD INDEXES FOR PERFORMANCE
@@ -113,8 +92,6 @@ CREATE INDEX IF NOT EXISTS idx_daily_production_silver
 CREATE INDEX IF NOT EXISTS idx_daily_production_gold
   ON daily_production(estimated_gold_pct)
   WHERE estimated_gold_pct > 0;
-
-RAISE NOTICE '✅ Added indexes for silver and gold percentages';
 
 -- ========================================
 -- 4. ADD CONSTRAINTS (OPTIONAL BUT RECOMMENDED)
@@ -130,8 +107,6 @@ BEGIN
     ALTER TABLE daily_production
     ADD CONSTRAINT check_estimated_gold_pct_range
     CHECK (estimated_gold_pct >= 0 AND estimated_gold_pct <= 100);
-
-    RAISE NOTICE '✅ Added check constraint for gold percentage range';
   END IF;
 
   -- Ensure silver percentage is between 0 and 100
@@ -142,8 +117,6 @@ BEGIN
     ALTER TABLE daily_production
     ADD CONSTRAINT check_estimated_silver_pct_range
     CHECK (estimated_silver_pct >= 0 AND estimated_silver_pct <= 100);
-
-    RAISE NOTICE '✅ Added check constraint for silver percentage range';
   END IF;
 END $$;
 
@@ -172,71 +145,12 @@ FROM daily_production dp;
 COMMENT ON VIEW daily_production_with_metals IS
 'View with calculated gold and silver content for easier reporting';
 
-RAISE NOTICE '✅ Created daily_production_with_metals view';
-
 -- ========================================
--- 6. VERIFICATION AND DIAGNOSTICS
+-- 6. GRANT PERMISSIONS
 -- ========================================
 
-DO $$
-DECLARE
-  total_records integer;
-  records_with_silver integer;
-  records_with_gold integer;
-  avg_gold_pct numeric;
-  avg_silver_pct numeric;
-BEGIN
-  -- Count records
-  SELECT COUNT(*) INTO total_records FROM daily_production;
-
-  SELECT COUNT(*) INTO records_with_silver
-  FROM daily_production
-  WHERE estimated_silver_pct > 0;
-
-  SELECT COUNT(*) INTO records_with_gold
-  FROM daily_production
-  WHERE estimated_gold_pct > 0;
-
-  -- Calculate averages
-  SELECT AVG(estimated_gold_pct) INTO avg_gold_pct
-  FROM daily_production
-  WHERE estimated_gold_pct > 0;
-
-  SELECT AVG(estimated_silver_pct) INTO avg_silver_pct
-  FROM daily_production
-  WHERE estimated_silver_pct > 0;
-
-  RAISE NOTICE '========================================';
-  RAISE NOTICE 'SILVER TRACKING MIGRATION COMPLETE';
-  RAISE NOTICE '========================================';
-  RAISE NOTICE '';
-  RAISE NOTICE '📊 DATABASE STATUS:';
-  RAISE NOTICE '   Total production records: %', total_records;
-  RAISE NOTICE '   Records with gold data: %', records_with_gold;
-  RAISE NOTICE '   Records with silver data: %', records_with_silver;
-  RAISE NOTICE '';
-
-  IF avg_gold_pct IS NOT NULL THEN
-    RAISE NOTICE '📈 AVERAGES:';
-    RAISE NOTICE '   Average gold %%: %.2f%%', avg_gold_pct;
-    IF avg_silver_pct IS NOT NULL AND avg_silver_pct > 0 THEN
-      RAISE NOTICE '   Average silver %%: %.2f%%', avg_silver_pct;
-    ELSE
-      RAISE NOTICE '   Average silver %%: 0.00%% (no data yet)';
-    END IF;
-    RAISE NOTICE '';
-  END IF;
-
-  RAISE NOTICE '✅✅✅ MIGRATION SUCCESSFUL!';
-  RAISE NOTICE '';
-  RAISE NOTICE '🔍 NEXT STEPS:';
-  RAISE NOTICE '   1. Update frontend forms to include silver percentage';
-  RAISE NOTICE '   2. Update production tables to display silver content';
-  RAISE NOTICE '   3. Update shipping preparation to include silver data';
-  RAISE NOTICE '   4. Test calculations with new productions';
-  RAISE NOTICE '';
-  RAISE NOTICE '========================================';
-END $$;
+-- Grant access to the new view
+GRANT SELECT ON daily_production_with_metals TO authenticated;
 
 -- ========================================
 -- 7. EXAMPLE QUERIES
@@ -276,12 +190,3 @@ FROM daily_production_with_metals
 WHERE estimated_silver_pct > 5
 ORDER BY silver_content_grams DESC;
 */
-
--- ========================================
--- 8. GRANT PERMISSIONS
--- ========================================
-
--- Grant access to the new view
-GRANT SELECT ON daily_production_with_metals TO authenticated;
-
-RAISE NOTICE '✅ Granted permissions on daily_production_with_metals view';

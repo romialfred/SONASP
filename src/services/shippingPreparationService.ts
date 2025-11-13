@@ -100,10 +100,20 @@ class ShippingPreparationService {
   async createPreparation(preparation: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
     const { data: { user } } = await supabase.auth.getUser();
 
+    // CRITICAL FIX: Ensure status is valid enum value
+    // Only allow valid shipping_status_v2 values (NO 'shipped'!)
+    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled'];
+    const cleanPreparation = { ...preparation };
+
+    if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status)) {
+      cleanPreparation.status = 'prepared';
+      console.warn('Invalid or missing status, defaulting to: prepared');
+    }
+
     const { data, error } = await supabase
       .from('shipping_preparations')
       .insert({
-        ...preparation,
+        ...cleanPreparation,
         created_by: user?.id,
       })
       .select()

@@ -71,7 +71,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-blue-600',
       groupIcon: Truck,
       items: [
-        { label: 'Batch Management', path: '/batches', icon: Package, iconColor: 'text-blue-600' },
+        // { label: 'Batch Management', path: '/batches', icon: Package, iconColor: 'text-blue-600' }, // Hidden as requested
         { label: 'Shipping Preparation', path: '/shipping/preparation', icon: PackagePlus, iconColor: 'text-emerald-600' },
         { label: 'Freight & Customs', path: '/shipping', icon: Truck, iconColor: 'text-cyan-600' },
       ],

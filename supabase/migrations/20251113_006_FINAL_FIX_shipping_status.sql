@@ -148,7 +148,7 @@ DROP INDEX IF EXISTS idx_shipping_preparations_status_v2;
 CREATE INDEX idx_shipping_preparations_status
   ON shipping_preparations(status);
 
-RAISE NOTICE '✅ Index recréé';
+DO $$ BEGIN RAISE NOTICE '✅ Index recréé'; END $$;
 
 -- =========================================
 -- ÉTAPE 5: VÉRIFICATION FINALE STRICTE

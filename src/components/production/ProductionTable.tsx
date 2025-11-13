@@ -222,7 +222,16 @@ export function ProductionTable({
               {(productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length).toFixed(2)}%
             </td>
             <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+              {(productions.reduce((sum, p) => sum + (p.estimated_silver_pct || 0), 0) / productions.length).toFixed(2)}%
+            </td>
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
               {productions.reduce((sum, p) => sum + p.pure_gold_grams, 0).toLocaleString('fr-FR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </td>
+            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+              {productions.reduce((sum, p) => sum + (p.silver_content_grams || 0), 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
@@ -233,7 +242,11 @@ export function ProductionTable({
                 maximumFractionDigits: 4
               })}
             </td>
-            <td colSpan={showMiningCompany ? 4 : 3} className="px-4 py-3.5 text-sm text-white">
+            <td className="px-4 py-3.5 text-white"></td>
+            {showMiningCompany && (
+              <td className="px-4 py-3.5 text-white"></td>
+            )}
+            <td colSpan={2} className="px-4 py-3.5 text-sm text-white font-medium">
               {productions.length} barres · {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toFixed(2)} oz total
             </td>
           </tr>

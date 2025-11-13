@@ -515,7 +515,7 @@ export function BudgetManagementPage() {
       <div className="w-80 bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
         <div className="p-5 space-y-5">
           {/* Total Section */}
-          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-sky-600 via-sky-700 to-cyan-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
             <div className="relative">
@@ -523,21 +523,21 @@ export function BudgetManagementPage() {
                 <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
                   <Target className="w-5 h-5" />
                 </div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-sky-50">
                   {mode === 'budget' ? 'TOTAL ANNUEL' : `TOTAL T${selectedQuarter}`}
                 </h3>
               </div>
               <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
                 {(selectedCompanyId === 'ALL' && mode === 'budget' ? groupTotals.budget : calculateTotalBudget()).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                <span className="text-lg ml-2 font-bold text-indigo-200">oz</span>
+                <span className="text-lg ml-2 font-bold text-sky-100">oz</span>
               </div>
-              <p className="text-indigo-200 text-sm font-medium flex items-center gap-2">
+              <p className="text-sky-100 text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 {mode === 'budget' ? '12 mois' : '3 mois'}
               </p>
               {selectedCompanyId === 'ALL' && (
                 <div className="mt-3 pt-3 border-t border-white/20">
-                  <div className="flex items-center gap-2 text-xs text-indigo-200">
+                  <div className="flex items-center gap-2 text-xs text-sky-100">
                     <PieChart className="w-3.5 h-3.5" />
                     <span>Groupe Mansa Resources</span>
                   </div>
@@ -584,12 +584,12 @@ export function BudgetManagementPage() {
             </div>
 
             {selectedCompanyId !== 'ALL' && miningCompanies.find(c => c.id === selectedCompanyId) && (
-              <div className="bg-gradient-to-br from-purple-50 via-purple-50 to-purple-100/80 rounded-xl p-4 border border-purple-200/50 shadow-sm">
+              <div className="bg-gradient-to-br from-teal-50 via-teal-50 to-teal-100/80 rounded-xl p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-purple-600" />
+                  <Building2 className="w-4 h-4 text-teal-600" />
                   <div>
-                    <div className="text-[10px] text-purple-600 font-semibold uppercase tracking-wide mb-1">Compagnie</div>
-                    <div className="text-sm font-bold text-purple-900">
+                    <div className="text-[10px] text-teal-600 font-semibold uppercase tracking-wide mb-1">Compagnie</div>
+                    <div className="text-sm font-bold text-teal-900">
                       {miningCompanies.find(c => c.id === selectedCompanyId)?.name}
                     </div>
                   </div>

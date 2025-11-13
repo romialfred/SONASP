@@ -4,6 +4,7 @@ export interface AnnualBudget {
   id: string;
   year: number;
   site_id: string;
+  mining_company_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -16,6 +17,7 @@ export interface MonthlyBudget {
   budget_oz: number;
   days_in_month: number;
   daily_budget_oz: number;
+  mining_company_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +32,7 @@ export interface QuarterlyForecast {
   days_in_month: number;
   daily_forecast_oz: number;
   notes: string | null;
+  mining_company_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -56,19 +59,34 @@ export interface DailyTarget {
 }
 
 class AnnualBudgetService {
-  async getAnnualBudget(year: number, siteId: string = 'guinea'): Promise<AnnualBudget | null> {
-    const { data, error } = await supabase
+  async getAnnualBudget(
+    year: number,
+    siteId: string = 'guinea',
+    miningCompanyId?: string | null
+  ): Promise<AnnualBudget | null> {
+    let query = supabase
       .from('annual_budgets')
       .select('*')
       .eq('year', year)
-      .eq('site_id', siteId)
-      .maybeSingle();
+      .eq('site_id', siteId);
+
+    if (miningCompanyId) {
+      query = query.eq('mining_company_id', miningCompanyId);
+    } else if (miningCompanyId === null) {
+      query = query.is('mining_company_id', null);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     return data;
   }
 
-  async createAnnualBudget(year: number, siteId: string = 'guinea'): Promise<AnnualBudget> {
+  async createAnnualBudget(
+    year: number,
+    siteId: string = 'guinea',
+    miningCompanyId?: string | null
+  ): Promise<AnnualBudget> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -77,6 +95,7 @@ class AnnualBudgetService {
       .insert({
         year,
         site_id: siteId,
+        mining_company_id: miningCompanyId || null,
         created_by: user.id
       })
       .select()
@@ -86,11 +105,15 @@ class AnnualBudgetService {
     return data;
   }
 
-  async getOrCreateAnnualBudget(year: number, siteId: string = 'guinea'): Promise<AnnualBudget> {
-    let budget = await this.getAnnualBudget(year, siteId);
+  async getOrCreateAnnualBudget(
+    year: number,
+    siteId: string = 'guinea',
+    miningCompanyId?: string | null
+  ): Promise<AnnualBudget> {
+    let budget = await this.getAnnualBudget(year, siteId, miningCompanyId);
 
     if (!budget) {
-      budget = await this.createAnnualBudget(year, siteId);
+      budget = await this.createAnnualBudget(year, siteId, miningCompanyId);
     }
 
     return budget;
@@ -109,13 +132,15 @@ class AnnualBudgetService {
 
   async upsertMonthlyBudgets(
     annualBudgetId: string,
-    budgets: MonthlyBudgetInput[]
+    budgets: MonthlyBudgetInput[],
+    miningCompanyId?: string | null
   ): Promise<MonthlyBudget[]> {
     const records = budgets.map(b => ({
       annual_budget_id: annualBudgetId,
       month: b.month,
       budget_oz: b.budget_oz,
-      days_in_month: this.getDaysInMonth(b.month, parseInt(annualBudgetId.substring(0, 4)))
+      days_in_month: this.getDaysInMonth(b.month, parseInt(annualBudgetId.substring(0, 4))),
+      mining_company_id: miningCompanyId || null
     }));
 
     const { data, error } = await supabase
@@ -150,7 +175,8 @@ class AnnualBudgetService {
     annualBudgetId: string,
     quarter: number,
     revisionDate: string,
-    forecasts: QuarterlyForecastInput[]
+    forecasts: QuarterlyForecastInput[],
+    miningCompanyId?: string | null
   ): Promise<QuarterlyForecast[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -163,6 +189,7 @@ class AnnualBudgetService {
       forecast_oz: f.forecast_oz,
       days_in_month: this.getDaysInMonth(f.month, parseInt(annualBudgetId.substring(0, 4))),
       notes: f.notes || null,
+      mining_company_id: miningCompanyId || null,
       created_by: user.id
     }));
 
@@ -204,13 +231,14 @@ class AnnualBudgetService {
 
   async getMonthlyBudgetWithForecasts(
     year: number,
-    siteId: string = 'guinea'
+    siteId: string = 'guinea',
+    miningCompanyId?: string | null
   ): Promise<{
     budget: AnnualBudget | null;
     monthlyBudgets: MonthlyBudget[];
     quarterlyForecasts: QuarterlyForecast[];
   }> {
-    const budget = await this.getAnnualBudget(year, siteId);
+    const budget = await this.getAnnualBudget(year, siteId, miningCompanyId);
 
     if (!budget) {
       return {
@@ -262,6 +290,57 @@ class AnnualBudgetService {
 
   getQuarterName(quarter: number, locale: string = 'fr'): string {
     return locale === 'fr' ? `T${quarter}` : `Q${quarter}`;
+  }
+
+  async getAllCompaniesTotals(
+    year: number,
+    siteId: string = 'guinea'
+  ): Promise<{
+    companies: Array<{
+      id: string;
+      name: string;
+      budget: AnnualBudget | null;
+      monthlyBudgets: MonthlyBudget[];
+      quarterlyForecasts: QuarterlyForecast[];
+      totalBudget: number;
+      totalForecast: number;
+    }>;
+    groupTotal: number;
+    groupForecastTotal: number;
+  }> {
+    const { data: companies, error } = await supabase
+      .from('mining_companies')
+      .select('id, name')
+      .order('name');
+
+    if (error) throw error;
+
+    const companyData = await Promise.all(
+      (companies || []).map(async (company) => {
+        const data = await this.getMonthlyBudgetWithForecasts(year, siteId, company.id);
+        const totalBudget = data.monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
+        const totalForecast = data.quarterlyForecasts.reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0);
+
+        return {
+          id: company.id,
+          name: company.name,
+          budget: data.budget,
+          monthlyBudgets: data.monthlyBudgets,
+          quarterlyForecasts: data.quarterlyForecasts,
+          totalBudget,
+          totalForecast
+        };
+      })
+    );
+
+    const groupTotal = companyData.reduce((sum, c) => sum + c.totalBudget, 0);
+    const groupForecastTotal = companyData.reduce((sum, c) => sum + c.totalForecast, 0);
+
+    return {
+      companies: companyData,
+      groupTotal,
+      groupForecastTotal
+    };
   }
 }
 

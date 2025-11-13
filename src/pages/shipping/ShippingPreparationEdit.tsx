@@ -81,7 +81,7 @@ export default function ShippingPreparationEdit() {
 
       // Load freight companies
       const { data: freightData } = await supabase
-        .from('freight_companies')
+        .from('transport_companies')
         .select('id, name')
         .order('name');
       if (freightData) setFreightCompanies(freightData);

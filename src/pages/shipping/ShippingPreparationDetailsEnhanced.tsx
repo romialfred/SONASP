@@ -173,7 +173,7 @@ export default function ShippingPreparationDetailsEnhanced() {
       // Load freight company if ID exists
       if (prep.shipped_to_company) {
         const { data: companyData } = await supabase
-          .from('freight_companies')
+          .from('transport_companies')
           .select('*')
           .eq('id', prep.shipped_to_company)
           .maybeSingle();

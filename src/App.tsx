@@ -253,7 +253,7 @@ function AppRoutes() {
               }
             />
             <Route
-              path="/shipping/preparations/:id/details"
+              path="/shipping/preparation/:id/details"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <ShippingPreparationDetailsEnhanced />
@@ -261,7 +261,7 @@ function AppRoutes() {
               }
             />
             <Route
-              path="/shipping/preparations/:id/edit"
+              path="/shipping/preparation/:id/edit"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
                   <ShippingPreparationEdit />

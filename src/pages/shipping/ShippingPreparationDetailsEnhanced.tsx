@@ -52,6 +52,17 @@ interface StatusHistory {
   location: string | null;
 }
 
+interface ExportLicense {
+  id: string;
+  license_number: string;
+  issue_date: string;
+  expiry_date: string;
+  issued_by: string;
+  total_weight_authorized_grams: number;
+  weight_used_grams: number;
+  status: string;
+}
+
 const statusLabels: Record<string, string> = {
   pending: 'En Attente',
   prepared: 'Préparée',
@@ -79,6 +90,7 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [freightCompany, setFreightCompany] = useState<FreightCompany | null>(null);
+  const [license, setLicense] = useState<ExportLicense | null>(null);
 
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -167,6 +179,17 @@ export default function ShippingPreparationDetailsEnhanced() {
           .maybeSingle();
 
         if (companyData) setFreightCompany(companyData);
+      }
+
+      // Load export license if ID exists
+      if (prep.export_license_id) {
+        const { data: licenseData } = await supabase
+          .from('export_licenses')
+          .select('*')
+          .eq('id', prep.export_license_id)
+          .maybeSingle();
+
+        if (licenseData) setLicense(licenseData);
       }
 
     } catch (error) {
@@ -366,6 +389,15 @@ export default function ShippingPreparationDetailsEnhanced() {
                                 <div className="text-xs text-slate-500 mt-1">{freightCompany.address}</div>
                               )}
                             </div>
+
+                            <div>
+                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
+                                Numéro de Scellé
+                              </label>
+                              <div className="text-sm font-medium text-slate-900">
+                                {preparation.seal_number || 'N/A'}
+                              </div>
+                            </div>
                           </div>
 
                           <div className="space-y-4">
@@ -379,14 +411,29 @@ export default function ShippingPreparationDetailsEnhanced() {
                               </div>
                             </div>
 
-                            <div>
-                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                Numéro de Scellé
-                              </label>
-                              <div className="text-sm font-medium text-slate-900">
-                                {preparation.seal_number || 'N/A'}
+                            {license && (
+                              <div>
+                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
+                                  Licence d'Exportation
+                                </label>
+                                <div className="text-sm font-medium text-slate-900">
+                                  {license.license_number}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-1">
+                                  Émise par: {license.issued_by}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  Expire le: {formatDate(license.expiry_date)}
+                                </div>
+                                <div className="text-xs mt-1">
+                                  <span className="text-slate-500">Utilisé: </span>
+                                  <span className="font-medium text-slate-900">
+                                    {license.weight_used_grams.toFixed(2)} g
+                                  </span>
+                                  <span className="text-slate-500"> / {license.total_weight_authorized_grams.toFixed(2)} g</span>
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </div>
 

@@ -102,7 +102,7 @@ export default function ShippingDashboard() {
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Total</div>
-                <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
+                <div className="text-2xl font-semibold text-slate-900">{stats.total}</div>
               </div>
               <div className="p-2 bg-slate-500/10 rounded-lg">
                 <FileText className="w-5 h-5 text-slate-600" />
@@ -116,7 +116,7 @@ export default function ShippingDashboard() {
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">En Attente</div>
-                <div className="text-2xl font-bold text-amber-900">{stats.pending}</div>
+                <div className="text-2xl font-semibold text-amber-900">{stats.pending}</div>
               </div>
               <div className="p-2 bg-amber-500/10 rounded-lg">
                 <Clock className="w-5 h-5 text-amber-600" />
@@ -130,7 +130,7 @@ export default function ShippingDashboard() {
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Préparés</div>
-                <div className="text-2xl font-bold text-blue-900">{stats.prepared}</div>
+                <div className="text-2xl font-semibold text-blue-900">{stats.prepared}</div>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-lg">
                 <Box className="w-5 h-5 text-blue-600" />
@@ -144,7 +144,7 @@ export default function ShippingDashboard() {
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Expédiés</div>
-                <div className="text-2xl font-bold text-emerald-900">{stats.shipped}</div>
+                <div className="text-2xl font-semibold text-emerald-900">{stats.shipped}</div>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -158,7 +158,7 @@ export default function ShippingDashboard() {
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-violet-600 uppercase tracking-wide mb-1">Poids Total</div>
-                <div className="text-xl font-bold text-violet-900">
+                <div className="text-xl font-semibold text-violet-900">
                   {(stats.totalWeight / 1000).toFixed(2)}
                   <span className="text-sm font-normal text-violet-600 ml-1">kg</span>
                 </div>
@@ -207,6 +207,9 @@ export default function ShippingDashboard() {
                       Expedition Lot
                     </th>
                     <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                      Mining Company
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                       Seal Number
                     </th>
                     <th className="px-4 py-2.5 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">
@@ -240,6 +243,9 @@ export default function ShippingDashboard() {
                         <div className="text-sm text-slate-900 font-mono">
                           {prep.expedition_lot_number || 'N/A'}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm text-slate-700">{prep.mining_company_name || '-'}</div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="text-sm text-slate-700 font-mono">{prep.seal_number || '-'}</div>

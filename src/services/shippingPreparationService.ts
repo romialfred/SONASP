@@ -5,6 +5,7 @@ export interface ShippingPreparation {
   daily_production_id: string | null;
   mining_company_id: string | null;
   license_id: string | null;
+  export_license_id: string | null;
   expedition_lot_number: string | null;
   seal_number: string | null;
   packing_list_url: string | null;
@@ -23,6 +24,8 @@ export interface ShippingPreparation {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  mining_company_name?: string | null;
+  mining_companies?: { name: string } | null;
 }
 
 export interface ShippingProductionItem {
@@ -221,11 +224,17 @@ class ShippingPreparationService {
   async getAllPreparations(): Promise<ShippingPreparation[]> {
     const { data, error } = await supabase
       .from('shipping_preparations')
-      .select('*')
+      .select(`
+        *,
+        mining_companies!shipping_preparations_mining_company_id_fkey(name)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(prep => ({
+      ...prep,
+      mining_company_name: prep.mining_companies?.name || null
+    }));
   }
 
   async getIngots(preparationId: string): Promise<ShippingIngot[]> {

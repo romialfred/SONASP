@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, Download } from 'lucide-react';
+import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -85,6 +85,7 @@ export default function ShippingPreparationNew() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedPreparationId, setSavedPreparationId] = useState<string>('');
   const [licenseWarning, setLicenseWarning] = useState<string>('');
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
 
   // Error dialog state
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -649,8 +650,8 @@ export default function ShippingPreparationNew() {
     <MainLayout>
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-gray-50">
         {/* Form Section */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="max-w-7xl mx-auto space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -658,36 +659,36 @@ export default function ShippingPreparationNew() {
                   onClick={() => navigate('/shipping/preparation')}
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-1.5 h-8 px-3"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-3.5 h-3.5" />
                   Retour
                 </Button>
-                <div className="p-3 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl shadow-lg">
-                  <Package className="w-8 h-8 text-white" />
+                <div className="p-2 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg shadow">
+                  <Package className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-xl font-bold text-gray-900">
                     {isEditMode ? 'Modifier Expédition' : 'Nouvelle Expédition'}
                   </h1>
-                  <p className="text-sm text-gray-600">Préparez les barres pour l'expédition</p>
+                  <p className="text-xs text-gray-500">Préparez les barres pour l'expédition</p>
                 </div>
               </div>
             </div>
 
             {/* Mining Company & License Selection - Same Row */}
-            <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="grid grid-cols-2 gap-6">
+            <Card className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+              <div className="grid grid-cols-2 gap-4">
                 {/* Mining Company */}
                 <div>
-                  <h3 className="text-lg font-bold text-blue-900 mb-4">
-                    <Building2 className="w-5 h-5 inline mr-2" />
+                  <label className="block text-xs font-semibold text-blue-900 mb-2 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" />
                     Compagnie Minière *
-                  </h3>
+                  </label>
                   <select
                     value={selectedMiningCompanyId}
                     onChange={(e) => handleMiningCompanyChange(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-medium"
+                    className="w-full px-3 py-1.5 border border-blue-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white text-xs font-medium"
                     disabled={loading}
                   >
                     <option value="">-- Sélectionner une compagnie minière --</option>
@@ -706,14 +707,14 @@ export default function ShippingPreparationNew() {
 
                 {/* License Selection */}
                 <div>
-                  <h3 className="text-lg font-bold text-green-900 mb-4">
-                    <FileText className="w-5 h-5 inline mr-2" />
+                  <label className="block text-xs font-semibold text-green-900 mb-2 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" />
                     Licence d'Exportation *
-                  </h3>
+                  </label>
                   <select
                     value={selectedLicenseId}
                     onChange={(e) => handleLicenseChange(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-sm font-medium"
+                    className="w-full px-3 py-1.5 border border-green-300 rounded-md focus:ring-1 focus:ring-green-500 bg-white text-xs font-medium"
                     disabled={loading || !selectedMiningCompanyId || availableLicenses.length === 0}
                   >
                     <option value="">
@@ -754,21 +755,21 @@ export default function ShippingPreparationNew() {
 
             {/* Production Selection & Table - Only show if license is selected */}
             {selectedLicenseId && (
-              <Card className="p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-yellow-900">
-                    Sélectionner Productions ({selectedProductions.length})
+              <Card className="p-4 border border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-yellow-900">
+                    Productions ({selectedProductions.length})
                   </h3>
                   <select
                     onChange={(e) => {
                       handleAddProduction(e.target.value);
                       e.target.value = '';
                     }}
-                    className="px-4 py-2 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
+                    className="px-3 py-1.5 border border-yellow-300 rounded-md focus:ring-1 focus:ring-yellow-500 bg-white text-xs"
                     disabled={loading}
                     value=""
                   >
-                    <option value="">-- Ajouter une production --</option>
+                    <option value="">-- Ajouter --</option>
                     {productions
                       .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
                       .map((production) => (
@@ -781,60 +782,60 @@ export default function ShippingPreparationNew() {
 
               {selectedProductions.length > 0 && (
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+                  <table className="w-full border-collapse bg-white rounded-md overflow-hidden shadow-sm">
                     <thead>
                       <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">#</th>
-                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Date</th>
-                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Bar Ref</th>
-                        <th className="px-3 py-3 text-right text-xs font-bold uppercase">Bullion (g)</th>
-                        <th className="px-3 py-3 text-right text-xs font-bold uppercase">Pure Gold (g)</th>
-                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Seal 1 *</th>
-                        <th className="px-3 py-3 text-left text-xs font-bold uppercase">Seal 2</th>
-                        <th className="px-3 py-3 text-center text-xs font-bold uppercase">Action</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">#</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Date</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Bar Ref</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Bullion (g)</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-bold uppercase">Pure Gold (g)</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Seal 1 *</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase">Seal 2</th>
+                        <th className="px-2 py-2 text-center text-[10px] font-bold uppercase">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {selectedProductions.map((sp, index) => (
                         <tr key={sp.production.id} className="hover:bg-yellow-50 transition-colors">
-                          <td className="px-3 py-3 text-sm font-bold text-gray-600">{index + 1}</td>
-                          <td className="px-3 py-3 text-sm">{new Date(sp.production.production_date).toLocaleDateString('fr-FR')}</td>
-                          <td className="px-3 py-3 text-sm font-mono font-semibold">{sp.production.bar_reference}</td>
-                          <td className="px-3 py-3 text-sm text-right font-semibold">{sp.production.bullion_grams.toFixed(2)}</td>
-                          <td className="px-3 py-3 text-sm text-right font-semibold text-yellow-800">{sp.production.pure_gold_grams.toFixed(2)}</td>
-                          <td className="px-3 py-3">
+                          <td className="px-2 py-1.5 text-xs font-bold text-gray-600">{index + 1}</td>
+                          <td className="px-2 py-1.5 text-xs">{new Date(sp.production.production_date).toLocaleDateString('fr-FR')}</td>
+                          <td className="px-2 py-1.5 text-xs font-mono font-semibold">{sp.production.bar_reference}</td>
+                          <td className="px-2 py-1.5 text-xs text-right font-semibold">{sp.production.bullion_grams.toFixed(2)}</td>
+                          <td className="px-2 py-1.5 text-xs text-right font-semibold text-yellow-800">{sp.production.pure_gold_grams.toFixed(2)}</td>
+                          <td className="px-2 py-1.5">
                             <Input
                               value={sp.sealNumber1}
                               onChange={(e) => handleSealNumber1Change(sp.production.id, e.target.value)}
                               placeholder="0097099"
-                              className="w-28 text-xs h-8"
+                              className="w-24 text-[10px] h-6 px-2"
                             />
                           </td>
-                          <td className="px-3 py-3">
+                          <td className="px-2 py-1.5">
                             <Input
                               value={sp.sealNumber2}
                               onChange={(e) => handleSealNumber2Change(sp.production.id, e.target.value)}
                               placeholder="0097100"
-                              className="w-28 text-xs h-8"
+                              className="w-24 text-[10px] h-6 px-2"
                             />
                           </td>
-                          <td className="px-3 py-3 text-center">
+                          <td className="px-2 py-1.5 text-center">
                             <Button
                               onClick={() => handleRemoveProduction(sp.production.id)}
                               variant="outline"
                               size="sm"
-                              className="border-red-300 text-red-600 hover:bg-red-50 h-8 w-8 p-0"
+                              className="border-red-300 text-red-600 hover:bg-red-50 h-6 w-6 p-0"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           </td>
                         </tr>
                       ))}
                       {/* Totals Row */}
                       <tr className="bg-gradient-to-r from-yellow-100 to-amber-100 font-bold border-t-2 border-yellow-400">
-                        <td colSpan={3} className="px-3 py-3 text-sm text-yellow-900">TOTAL ({selectedProductions.length} boxes)</td>
-                        <td className="px-3 py-3 text-sm text-right text-yellow-900">{totalGrossWeight.toFixed(2)}</td>
-                        <td className="px-3 py-3 text-sm text-right text-yellow-900">{totalNetWeight.toFixed(2)}</td>
+                        <td colSpan={3} className="px-2 py-2 text-xs text-yellow-900">TOTAL ({selectedProductions.length} boxes)</td>
+                        <td className="px-2 py-2 text-xs text-right text-yellow-900">{totalGrossWeight.toFixed(2)}</td>
+                        <td className="px-2 py-2 text-xs text-right text-yellow-900">{totalNetWeight.toFixed(2)}</td>
                         <td colSpan={3}></td>
                       </tr>
                     </tbody>
@@ -853,19 +854,19 @@ export default function ShippingPreparationNew() {
             )}
 
             {/* Expedition Details */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Détails d'Expédition</h2>
+            <Card className="p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3">Détails d'Expédition</h2>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Truck className="w-4 h-4 inline mr-1" />
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5" />
                     Freight Company *
                   </label>
                   <select
                     value={selectedFreightCompanyId}
                     onChange={(e) => setSelectedFreightCompanyId(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-xs"
                   >
                     <option value="">-- Sélectionner --</option>
                     {freightCompanies.map((company) => (
@@ -877,14 +878,14 @@ export default function ShippingPreparationNew() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Building2 className="w-4 h-4 inline mr-1" />
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" />
                     Refinery *
                   </label>
                   <select
                     value={selectedRefineryId}
                     onChange={(e) => setSelectedRefineryId(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-xs"
                   >
                     <option value="">-- Sélectionner --</option>
                     {refineries.map((refinery) => (
@@ -898,10 +899,10 @@ export default function ShippingPreparationNew() {
             </Card>
 
             {/* Signatories Section */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Signataires</h2>
+            <Card className="p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3">Signataires</h2>
 
-              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-md p-3 mb-3">
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
@@ -1084,38 +1085,56 @@ export default function ShippingPreparationNew() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 py-4">
+            <div className="flex items-center justify-end gap-2 py-3">
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="gap-2 px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm"
+                size="sm"
+                className="gap-1.5 px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm text-xs"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
                 Annuler
               </Button>
               <Button
                 onClick={handleSavePreparation}
                 disabled={saving || !selectedMiningCompanyId || !selectedLicenseId || !selectedFreightCompanyId || !selectedRefineryId || selectedProductions.length === 0 || selectedProductions.some(sp => !sp.sealNumber1.trim()) || licenseWarning.startsWith('❌')}
-                className="gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                size="sm"
+                className="gap-1.5 px-6 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
               >
-                <Save className="w-4 h-4" />
-                {saving ? 'Enregistrement...' : 'Enregistrer Préparation'}
+                <Save className="w-3.5 h-3.5" />
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Dynamic PDF Preview */}
-        <div className="w-[650px] bg-white border-l-4 border-yellow-500 flex flex-col overflow-hidden shadow-2xl">
-          <div className="p-4 bg-gradient-to-r from-yellow-500 to-amber-600 border-b-4 border-yellow-800">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Packing List Preview
-            </h3>
-            <p className="text-sm text-yellow-100">Mise à jour en temps réel</p>
+        {/* Dynamic PDF Preview - Collapsible */}
+        <div className={`${isPreviewCollapsed ? 'w-12' : 'w-[650px]'} bg-white border-l-4 border-yellow-500 flex flex-col overflow-hidden shadow-2xl transition-all duration-300`}>
+          <div className="p-3 bg-gradient-to-r from-yellow-500 to-amber-600 border-b-2 border-yellow-700 flex items-center justify-between">
+            {!isPreviewCollapsed && (
+              <div className="flex-1">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Packing List Preview
+                </h3>
+                <p className="text-xs text-yellow-100">Mise à jour en temps réel</p>
+              </div>
+            )}
+            <button
+              onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}
+              className="p-1.5 hover:bg-yellow-600 rounded-md transition-colors"
+              title={isPreviewCollapsed ? 'Ouvrir le preview' : 'Fermer le preview'}
+            >
+              {isPreviewCollapsed ? (
+                <ChevronLeft className="w-5 h-5 text-white" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-white" />
+              )}
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-            {selectedProductions.length > 0 ? (
+          {!isPreviewCollapsed && (
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              {selectedProductions.length > 0 ? (
               <div className="bg-white rounded-lg shadow-xl">
                 <DynamicPackingList
                   expeditionLotNumber={generateExpeditionLotNumber()}
@@ -1150,7 +1169,8 @@ export default function ShippingPreparationNew() {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

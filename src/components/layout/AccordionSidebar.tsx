@@ -77,12 +77,12 @@ const useMenuGroups = (): MenuGroup[] => {
       ],
     },
     {
-      id: 'documents',
-      label: 'Document Management',
-      groupIconColor: 'text-violet-600',
-      groupIcon: FileText,
+      id: 'refining',
+      label: t('refining.title'),
+      groupIconColor: 'text-teal-600',
+      groupIcon: FlaskConical,
       items: [
-        { label: 'Assay Certificates', path: '/documents/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
+        { label: 'Refining Process', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
       ],
     },
     {
@@ -96,12 +96,12 @@ const useMenuGroups = (): MenuGroup[] => {
       ],
     },
     {
-      id: 'refining',
-      label: t('refining.title'),
-      groupIconColor: 'text-teal-600',
-      groupIcon: FlaskConical,
+      id: 'documents',
+      label: 'Document Management',
+      groupIconColor: 'text-violet-600',
+      groupIcon: FileText,
       items: [
-        { label: 'Refining Process', path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
+        { label: 'Assay Certificates', path: '/documents/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
       ],
     },
     {

@@ -71,41 +71,19 @@ export function ProductionTable({
       <table className="w-full">
         <thead>
           <tr className="bg-gradient-to-r from-amber-700 to-orange-700">
-            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
-              DATE
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              BULLION (G)
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              OR (%)
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              AG (%)
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              OR PUR (G)
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              AG (G)
-            </th>
-            <th className="px-4 py-3.5 text-right text-xs font-bold text-white uppercase tracking-wider">
-              OZ ESTIMÉES
-            </th>
-            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
-              RÉFÉRENCE
-            </th>
+            <th className="px-3 py-2.5 text-left text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">DATE</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">BULLION (G)</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">OR (%)</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">AG (%)</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">OR PUR (G)</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">AG (G)</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">OZ ESTIMÉES</th>
+            <th className="px-3 py-2.5 text-left text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">RÉFÉRENCE</th>
             {showMiningCompany && (
-              <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
-                SOCIÉTÉ
-              </th>
+              <th className="px-3 py-2.5 text-left text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">SOCIÉTÉ</th>
             )}
-            <th className="px-4 py-3.5 text-left text-xs font-bold text-white uppercase tracking-wider">
-              STATUT
-            </th>
-            <th className="px-4 py-3.5 text-center text-xs font-bold text-white uppercase tracking-wider">
-              ACTIONS
-            </th>
+            <th className="px-3 py-2.5 text-left text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">STATUT</th>
+            <th className="px-3 py-2.5 text-center text-[10px] font-medium text-white uppercase tracking-wide whitespace-nowrap">ACTIONS</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -114,72 +92,72 @@ export function ProductionTable({
               key={production.id}
               className="hover:bg-gray-50 transition-colors"
             >
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-3 py-3 whitespace-nowrap">
                 <div className="flex items-center">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-sm font-medium text-gray-900">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400 mr-1.5" />
+                  <span className="text-xs text-gray-900">
                     {formatDate(production.production_date)}
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="text-sm text-gray-900 font-medium">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="text-xs text-gray-900">
                   {production.bullion_grams.toLocaleString('fr-FR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800">
                   {(production.estimated_gold_pct || production.estimated_fineness_pct).toFixed(2)}%
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800">
                   {(production.estimated_silver_pct || 0).toFixed(2)}%
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-semibold text-yellow-700">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="text-xs text-yellow-700">
                   {production.pure_gold_grams.toLocaleString('fr-FR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-semibold text-gray-700">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="text-xs text-gray-700">
                   {(production.silver_content_grams || 0).toLocaleString('fr-FR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-bold text-emerald-700">
+              <td className="px-3 py-3 whitespace-nowrap text-right">
+                <span className="text-xs font-medium text-emerald-700">
                   {production.estimated_oz.toLocaleString('fr-FR', {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
                   })}
                 </span>
               </td>
-              <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-700 font-mono">
+              <td className="px-3 py-3 whitespace-nowrap">
+                <span className="text-xs text-gray-700 font-mono">
                   {production.bar_reference || '-'}
                 </span>
               </td>
               {showMiningCompany && (
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-700 font-medium">
+                <td className="px-3 py-3 whitespace-nowrap">
+                  <span className="text-xs text-gray-700">
                     {getCompanyName(production.mining_company_id)}
                   </span>
                 </td>
               )}
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-3 py-3 whitespace-nowrap">
                 <ProductionStatusBadge status={(production.status || 'prepared') as ProductionStatus} size="sm" showIcon />
               </td>
-              <td className="px-4 py-4 whitespace-nowrap text-center">
+              <td className="px-3 py-3 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => navigate(`/production/${production.id}`)}
@@ -209,44 +187,50 @@ export function ProductionTable({
         </tbody>
         <tfoot className="bg-gradient-to-r from-amber-700 to-orange-700">
           <tr>
-            <td className="px-4 py-3.5 text-sm font-bold text-white uppercase">
+            <td className="px-3 py-2.5 text-xs font-medium text-white uppercase">
               TOTAL
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+            <td className="px-3 py-2.5 text-right text-xs text-white">
               {productions.reduce((sum, p) => sum + p.bullion_grams, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
-              {(productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length).toFixed(2)}%
+            <td className="px-3 py-2.5 text-right text-xs text-white">
+              {(() => {
+                const validValues = productions.filter(p => p.estimated_fineness_pct > 0);
+                return validValues.length > 0 ? (validValues.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / validValues.length).toFixed(2) : '0.00';
+              })()}%
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
-              {(productions.reduce((sum, p) => sum + (p.estimated_silver_pct || 0), 0) / productions.length).toFixed(2)}%
+            <td className="px-3 py-2.5 text-right text-xs text-white">
+              {(() => {
+                const validValues = productions.filter(p => (p.estimated_silver_pct || 0) > 0);
+                return validValues.length > 0 ? (validValues.reduce((sum, p) => sum + (p.estimated_silver_pct || 0), 0) / validValues.length).toFixed(2) : '0.00';
+              })()}%
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+            <td className="px-3 py-2.5 text-right text-xs text-white">
               {productions.reduce((sum, p) => sum + p.pure_gold_grams, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+            <td className="px-3 py-2.5 text-right text-xs text-white">
               {productions.reduce((sum, p) => sum + (p.silver_content_grams || 0), 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </td>
-            <td className="px-4 py-3.5 text-right text-sm font-bold text-white">
+            <td className="px-3 py-2.5 text-right text-xs text-white">
               {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 4,
                 maximumFractionDigits: 4
               })}
             </td>
-            <td className="px-4 py-3.5 text-white"></td>
+            <td className="px-3 py-2.5 text-white"></td>
             {showMiningCompany && (
-              <td className="px-4 py-3.5 text-white"></td>
+              <td className="px-3 py-2.5 text-white"></td>
             )}
-            <td colSpan={2} className="px-4 py-3.5 text-sm text-white font-medium">
+            <td colSpan={2} className="px-3 py-2.5 text-xs text-white">
               {productions.length} barres · {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toFixed(2)} oz total
             </td>
           </tr>

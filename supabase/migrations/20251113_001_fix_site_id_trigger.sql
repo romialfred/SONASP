@@ -59,6 +59,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 3. CREATE IMPROVED TRIGGER
 -- ========================================
 
+-- Drop trigger if it exists to avoid conflict
+DROP TRIGGER IF EXISTS set_daily_production_defaults_trigger ON daily_production;
+
+-- Now create the trigger
 CREATE TRIGGER set_daily_production_defaults_trigger
   BEFORE INSERT ON daily_production
   FOR EACH ROW

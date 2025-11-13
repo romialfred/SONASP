@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, X, Clock, Package, Truck, Building2, TrendingUp, DollarSign, XCircle } from 'lucide-react';
+import { Check, X, Clock, Package, Truck, Building2, TrendingUp, DollarSign, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 
@@ -167,7 +167,8 @@ export function ShippingStatusWorkflow({ currentStatus, onStatusChange, disabled
         onClose={() => !loading && setShowModal(false)}
         title="Confirmer le Changement de Statut"
       >
-        <div className="space-y-4">
+        <div className="space-y-6 p-2">
+          {/* New Status Display */}
           <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
             {selectedStatus && (() => {
               const config = getStatusConfig(selectedStatus);
@@ -188,6 +189,33 @@ export function ShippingStatusWorkflow({ currentStatus, onStatusChange, disabled
             })()}
           </div>
 
+          {/* Document Verification Warning */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-amber-900 mb-2">
+                  Veuillez vérifier les documents ci-dessous :
+                </h4>
+                <ul className="text-sm text-amber-800 space-y-1.5">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
+                    Intention d'Exportation
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
+                    Compagnie de Transport
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
+                    Autres documents nécessaires
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes Section */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Notes (optionnel)
@@ -196,22 +224,25 @@ export function ShippingStatusWorkflow({ currentStatus, onStatusChange, disabled
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ajouter des notes sur ce changement de statut..."
             />
           </div>
 
-          <div className="flex gap-3 justify-end">
+          {/* Action Buttons */}
+          <div className="flex gap-3 justify-end pt-2">
             <Button
               variant="secondary"
               onClick={() => setShowModal(false)}
               disabled={loading}
+              className="px-6"
             >
               Annuler
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={loading}
+              className="px-6"
             >
               {loading ? 'Traitement...' : 'Confirmer'}
             </Button>

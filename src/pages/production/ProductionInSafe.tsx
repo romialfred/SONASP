@@ -735,10 +735,10 @@ export function ProductionInSafe() {
                   <tr>
                     <td className="px-4 py-3 text-xs font-semibold uppercase">Total</td>
                     <td className="px-4 py-3 text-sm text-right font-bold">{summary.total_bullion_grams.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-3"></td>
+                    <td className="px-4 py-3 text-sm text-center font-medium">{summary.avg_fineness_pct.toFixed(2)}%</td>
                     <td className="px-4 py-3 text-sm text-right font-bold">{summary.total_pure_gold_grams.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3 text-sm text-right font-bold">{summary.total_estimated_oz.toFixed(2)}</td>
-                    <td colSpan={4} className="px-4 py-3"></td>
+                    <td colSpan={4} className="px-4 py-3 text-sm text-left font-medium">{summary.record_count} barres · {summary.total_estimated_oz.toFixed(2)} oz total</td>
                   </tr>
                 </tfoot>
               )}

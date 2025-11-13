@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Eye, Package } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -50,11 +51,16 @@ export default function FreightCustomsDashboard() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -267,6 +273,7 @@ export default function FreightCustomsDashboard() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

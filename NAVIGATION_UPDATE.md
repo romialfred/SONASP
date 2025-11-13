@@ -1,112 +1,60 @@
-# ✅ Menu "Export Licenses" Ajouté
+# ✅ CORRECTION NAVIGATION - SIDEBAR VISIBLE
 
-**Date** : 2025-11-12
-**Build** : ✅ Réussi (23.80s)
+## Problème Identifié
 
----
+Les pages du module Freight & Customs n'affichaient pas la sidebar à gauche car elles n'étaient pas enveloppées dans le composant `MainLayout`.
 
-## 🎯 Changement Effectué
+## Solution Appliquée
 
-Le menu **"Export Licenses"** a été ajouté dans le sous-menu **Production Management**.
+### Fichiers Modifiés
 
----
+1. **src/pages/freight/FreightCustomsDashboard.tsx**
+   - Ajout de l'import: `import { MainLayout } from '@/components/layout/MainLayout';`
+   - Enveloppement du contenu dans `<MainLayout>...</MainLayout>`
+   - Application au loading state également
 
-## 📍 Où Trouver le Menu
+2. **src/pages/freight/FreightCustomsDetails.tsx**
+   - Ajout de l'import: `import { MainLayout } from '@/components/layout/MainLayout';`
+   - Enveloppement du contenu dans `<MainLayout>...</MainLayout>`
+   - Application à tous les états (loading, erreur, contenu principal)
 
-```
-Production Management
-├── Daily Production
-├── Production In Safe
-├── Export Licenses ◄── NOUVEAU !
-└── Budget & Forecasts
-```
+## Structure Correcte
 
----
+```tsx
+export default function FreightCustomsDashboard() {
+  // ... state et logique
 
-## 🎨 Icône et Couleur
+  if (loading) {
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
+  }
 
-- **Icône** : Award (médaille/badge)
-- **Couleur** : Violet (purple-600)
-- **Position** : Troisième élément du menu Production
-
----
-
-## 🔗 Routes Créées
-
-```
-/production/licenses           → Liste des licences
-/production/licenses/new       → Créer nouvelle licence
-/production/licenses/:id       → Détails d'une licence
-/production/licenses/edit/:id  → Modifier une licence
-```
-
----
-
-## 🔒 Permissions
-
-**Rôle requis** : `management` uniquement
-
-Les autres rôles (factory, airport, refinery, customer) ne verront pas ce menu.
-
----
-
-## ✅ Fichiers Modifiés
-
-1. **src/components/layout/AccordionSidebar.tsx**
-   - Ajout import `Award` icon
-   - Ajout menu item dans Production Management
-
-2. **src/App.tsx**
-   - Ajout imports des pages licences
-   - Ajout 4 routes protégées
-
----
-
-## 🧪 Test du Menu
-
-### Après Rafraîchissement (F5)
-
-1. **Connectez-vous** en tant que Management
-2. **Cliquez sur** "Production Management"
-3. **Vous devriez voir** :
-   ```
-   ✓ Daily Production
-   ✓ Production In Safe
-   ✓ Export Licenses  ◄── NOUVEAU
-   ✓ Budget & Forecasts
-   ```
-
-4. **Cliquez sur "Export Licenses"**
-   → Vous accédez à la page de listing
-
----
-
-## ⚠️ Action Requise
-
-**IMPORTANT** : N'oubliez pas d'appliquer la migration SQL !
-
-Sans la migration, vous verrez toujours l'erreur :
-```
-record "new" has no field "license_id"
+  return (
+    <MainLayout>
+      <div className="p-6 space-y-6">
+        {/* Contenu de la page */}
+      </div>
+    </MainLayout>
+  );
+}
 ```
 
-**Solution** :
-Suivez les instructions dans `README_CORRECTIONS.md`
+## Résultat
 
----
+✅ La sidebar AccordionSidebar est maintenant visible à gauche de toutes les pages Freight & Customs
+✅ Navigation cohérente avec le reste de l'application
+✅ Expérience utilisateur uniforme
+✅ Build réussi en 31.89s sans erreur
 
-## 📋 Étapes Complètes
+## Vérification
 
-1. ✅ Menu ajouté dans navigation
-2. ✅ Routes créées dans App.tsx
-3. ✅ Build réussi
-4. ⚠️ **À FAIRE** : Appliquer migration SQL (2 minutes)
+Le pattern `MainLayout` est utilisé par toutes les pages protégées de l'application:
+- DashboardPage
+- ProductionInSafe
+- ShippingDashboard
+- Et maintenant FreightCustomsDashboard et FreightCustomsDetails
 
----
-
-## 🎉 Résultat
-
-Après avoir rafraîchi votre application, vous verrez le nouveau menu "Export Licenses" dans Production Management !
-
-**Temps d'ajout** : 5 minutes
-**Impact** : Navigation complète vers module de licences
+La structure est maintenant cohérente dans toute l'application.

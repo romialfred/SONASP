@@ -5,6 +5,7 @@ import {
   Calendar, Package, Truck, MapPin, User, Phone, Mail,
   FileCheck, AlertCircle, ChevronRight
 } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
@@ -98,28 +99,35 @@ export default function FreightCustomsDetails() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
 
   if (!operation) {
     return (
-      <div className="p-6">
-        <Card className="p-12 text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Opération non trouvée</h3>
-          <p className="text-sm text-gray-600 mb-4">L'opération demandée n'existe pas ou a été supprimée.</p>
-          <Button onClick={() => navigate('/freight-customs')}>
-            Retour à la liste
-          </Button>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="p-6">
+          <Card className="p-12 text-center">
+            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Opération non trouvée</h3>
+            <p className="text-sm text-gray-600 mb-4">L'opération demandée n'existe pas ou a été supprimée.</p>
+            <Button onClick={() => navigate('/freight-customs')}>
+              Retour à la liste
+            </Button>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
   const shipping = operation.shipping_preparation;
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -431,6 +439,7 @@ export default function FreightCustomsDetails() {
           }}
         />
       )}
-    </div>
+      </div>
+    </MainLayout>
   );
 }

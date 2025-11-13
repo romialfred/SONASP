@@ -423,7 +423,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
       {/* Production Form - 3 columns */}
       <div className="lg:col-span-3">
         <Card className="p-6">
@@ -599,7 +599,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Bullion with Unit Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -802,8 +802,8 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
         </Card>
       </div>
 
-      {/* Field Guide Panel - 1 column */}
-      <div className="lg:col-span-1">
+      {/* Field Guide Panel - 2 columns */}
+      <div className="lg:col-span-2">
         <FieldGuidePanel
           fields={dailyProductionFieldGuides}
           activeField={activeField}

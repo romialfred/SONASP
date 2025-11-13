@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { TrendingUp, Calendar } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionPieChart } from './ProductionPieChart';
+import { MonthlyProductionBarChart } from './MonthlyProductionBarChart';
 
 interface MiningCompany {
   id: string;
@@ -20,9 +21,41 @@ interface ProductionChartProps {
 }
 
 export function ProductionChart({ productions, groupByCompany = false, miningCompanies = [] }: ProductionChartProps) {
-  // Si groupByCompany est true, afficher le Pie Chart
+  // Si groupByCompany est true, afficher le Pie Chart ET le Bar Chart côte à côte
   if (groupByCompany && miningCompanies.length > 0) {
-    return <ProductionPieChart productions={productions} miningCompanies={miningCompanies} />;
+    // Calculer les données mensuelles
+    const monthlyMap = new Map<string, { total_oz: number; monthNum: number; year: number }>();
+
+    productions.forEach(prod => {
+      const date = new Date(prod.production_date);
+      const year = date.getFullYear();
+      const month = date.getMonth(); // 0-11
+      const monthKey = `${year}-${month}`;
+
+      if (!monthlyMap.has(monthKey)) {
+        monthlyMap.set(monthKey, { total_oz: 0, monthNum: month, year });
+      }
+
+      const current = monthlyMap.get(monthKey)!;
+      current.total_oz += prod.estimated_oz || 0;
+    });
+
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+    const monthlyData = Array.from(monthlyMap.entries())
+      .map(([key, value]) => ({
+        month: `${monthNames[value.monthNum]} ${value.year}`,
+        total_oz: value.total_oz,
+        monthNum: value.year * 12 + value.monthNum
+      }))
+      .sort((a, b) => a.monthNum - b.monthNum);
+
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProductionPieChart productions={productions} miningCompanies={miningCompanies} />
+        <MonthlyProductionBarChart data={monthlyData} />
+      </div>
+    );
   }
   // Chart data pour une seule société
   const chartData = productions

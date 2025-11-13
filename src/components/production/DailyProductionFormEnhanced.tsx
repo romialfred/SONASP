@@ -318,10 +318,14 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
             const updated = await dailyProductionService.updateProduction(production.id, data);
             console.log('✅ Production mise à jour:', updated);
             showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
+            // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
+            await new Promise(resolve => setTimeout(resolve, 1500));
           } else {
             const newProduction = await dailyProductionService.createProduction(data);
             console.log('✅ Production créée:', newProduction);
             showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+            // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
+            await new Promise(resolve => setTimeout(resolve, 1500));
           }
 
           onSuccess();

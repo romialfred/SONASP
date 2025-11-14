@@ -320,38 +320,11 @@ export function ProductionDetails() {
           </div>
         </div>
 
-        {/* Workflow Section - At Top */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-          <div className="lg:col-span-2">
-            <ProductionStatusWorkflowEnhanced
-              currentStatus={production.status as ProductionStatus}
-              statusHistory={statusHistory}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Statut &gt; Action
-            </div>
-            <ProductionStatusWorkflow
-              productionId={production.id}
-              currentStatus={production.status as ProductionStatus}
-              production={{
-                id: production.id,
-                bar_reference: production.bar_reference,
-                production_date: production.production_date,
-                bullion_grams: production.bullion_grams,
-                estimated_fineness_pct: production.estimated_fineness_pct,
-                pure_gold_grams: production.pure_gold_grams,
-                estimated_oz: production.estimated_oz,
-                mining_company_name: miningCompany?.name,
-                site_country: siteCountry
-              }}
-              userEmail={user?.email}
-              onStatusChanged={loadProductionDetails}
-              compactButton
-            />
-          </div>
-        </div>
+        {/* Workflow Section - Full Width */}
+        <ProductionStatusWorkflowEnhanced
+          currentStatus={production.status as ProductionStatus}
+          statusHistory={statusHistory}
+        />
 
         {/* Tabs Navigation */}
         <Tabs
@@ -472,6 +445,25 @@ export function ProductionDetails() {
               )}
               </Card>
 
+                    {/* Status Action Button */}
+                    <ProductionStatusWorkflow
+                      productionId={production.id}
+                      currentStatus={production.status as ProductionStatus}
+                      production={{
+                        id: production.id,
+                        bar_reference: production.bar_reference,
+                        production_date: production.production_date,
+                        bullion_grams: production.bullion_grams,
+                        estimated_fineness_pct: production.estimated_fineness_pct,
+                        pure_gold_grams: production.pure_gold_grams,
+                        estimated_oz: production.estimated_oz,
+                        mining_company_name: miningCompany?.name,
+                        site_country: siteCountry
+                      }}
+                      userEmail={user?.email}
+                      onStatusChanged={loadProductionDetails}
+                      compactButton
+                    />
                   </>
                 )}
 

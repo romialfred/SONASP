@@ -105,6 +105,13 @@ export function DailyProductionForm({ production, onCancel, onSuccess }: DailyPr
       newErrors.estimated_silver_pct = 'La finesse argent doit être entre 0 et 100%';
     }
 
+    // Vérifier que la somme des pourcentages ne dépasse pas 100%
+    const goldPct = parseFloat(formData.estimated_gold_pct) || 0;
+    const silverPct = parseFloat(formData.estimated_silver_pct) || 0;
+    if (goldPct + silverPct > 100) {
+      newErrors.estimated_silver_pct = `La somme Or (${goldPct}%) + Argent (${silverPct}%) ne peut pas dépasser 100%`;
+    }
+
     if (!formData.mining_company_id) {
       newErrors.mining_company_id = 'Veuillez sélectionner une mining company';
     }

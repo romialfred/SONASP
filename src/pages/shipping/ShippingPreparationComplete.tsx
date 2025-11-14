@@ -213,7 +213,7 @@ export default function ShippingPreparationComplete() {
         seal_number: sealNumber,
         shipped_to_company: selectedFreightCompanyId,
         shipped_to_address: selectedRefineryId,
-        status: 'prepared' as const,
+        status: 'waiting_for_customs_approval' as const,  // Statut initial correct
         prepared_at: new Date().toISOString(),
       };
 

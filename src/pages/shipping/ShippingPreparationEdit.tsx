@@ -12,6 +12,7 @@ import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { shippingPreparationService, ShippingPreparation } from '@/services/shippingPreparationService';
+import { ShippingStatus } from '@/constants/shippingStatuses';
 import { supabase } from '@/lib/supabase';
 
 interface Refinery {
@@ -45,7 +46,7 @@ export default function ShippingPreparationEdit() {
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [shippedToCountry, setShippedToCountry] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<ShippingStatus>('ready_for_customs');
+  const [status, setStatus] = useState<ShippingStatus>('waiting_for_customs_approval');
 
   useEffect(() => {
     loadData();
@@ -229,12 +230,12 @@ export default function ShippingPreparationEdit() {
                   </label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as 'pending' | 'prepared' | 'validated_for_refinery')}
+                    onChange={(e) => setStatus(e.target.value as ShippingStatus)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="pending">En Attente</option>
-                    <option value="prepared">Préparée</option>
-                    <option value="validated_for_refinery">Validée pour Raffinerie</option>
+                    <option value="waiting_for_customs_approval">En Attente Douane</option>
+                    <option value="approved_by_customs">Douane Approuvée</option>
+                    <option value="ready_for_expedition">Prêt pour Expédition</option>
                   </select>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { ShippingStatus } from '@/constants/shippingStatuses';
 
 export interface ShippingPreparation {
   id: string;
@@ -13,7 +14,7 @@ export interface ShippingPreparation {
   shipped_to_company: string | null;
   shipped_to_address: string | null;
   shipped_to_country: string | null;
-  status: 'pending' | 'prepared' | 'validated_for_refinery' | 'in_refining' | 'refined' | 'sold' | 'cancelled';
+  status: ShippingStatus;
   prepared_at: string | null;
   shipped_at: string | null;
   notes: string | null;
@@ -405,8 +406,8 @@ class ShippingPreparationService {
 
     const updateData: any = { status: newStatus };
 
-    // Update prepared_at timestamp when status changes to prepared
-    if (newStatus === 'prepared') {
+    // Update prepared_at timestamp when status changes to waiting_for_customs_approval
+    if (newStatus === 'waiting_for_customs_approval') {
       updateData.prepared_at = new Date().toISOString();
     }
 

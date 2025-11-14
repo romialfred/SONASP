@@ -387,52 +387,149 @@ export function ProductionDetails() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 col-span-2">
                   <TrendingUp className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-600">Finesse Estimée</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {production.estimated_fineness_pct.toFixed(2)}%
-                    </p>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-600 mb-1">Composition</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
+                        OR: {production.estimated_fineness_pct.toFixed(2)}%
+                      </span>
+                      {production.estimated_silver_pct !== undefined && production.estimated_silver_pct > 0 && (
+                        <span className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-1 rounded">
+                          Argent: {production.estimated_silver_pct.toFixed(2)}%
+                        </span>
+                      )}
+                      {(() => {
+                        const silverPct = production.estimated_silver_pct || 0;
+                        const impurityPct = 100 - production.estimated_fineness_pct - silverPct;
+                        if (impurityPct > 0) {
+                          return (
+                            <span className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded">
+                              Impuretés: {impurityPct.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-900 mb-2">
+                <h3 className="text-xs font-semibold text-gray-900 mb-3">
                   Poids et Conversions
                 </h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-gray-50 rounded-lg p-2">
-                    <p className="text-xs text-gray-600">Bullion</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {production.bullion_grams.toFixed(2)} g
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {(production.bullion_grams / 31.1035).toFixed(2)} oz
-                    </p>
-                  </div>
 
-                  <div className="bg-blue-50 rounded-lg p-2">
-                    <p className="text-xs text-blue-700">Pure Gold</p>
-                    <p className="text-sm font-bold text-blue-900">
-                      {production.pure_gold_grams.toFixed(2)} g
-                    </p>
-                    <p className="text-xs text-blue-600 mt-0.5">
-                      {production.estimated_oz.toFixed(4)} oz
-                    </p>
+                {/* Bullion Total */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-700">Bullion Total</p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-900">
+                        {production.bullion_grams.toFixed(2)} g
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(production.bullion_grams / 31.1035).toFixed(4)} oz
+                      </p>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="bg-emerald-50 rounded-lg p-2">
-                    <p className="text-xs text-emerald-700">Calcul</p>
-                    <p className="text-xs text-emerald-900 mt-1">
-                      {production.bullion_grams.toFixed(0)} g × {production.estimated_fineness_pct.toFixed(0)}%
-                    </p>
-                    <p className="text-xs text-emerald-900">
-                      = {production.pure_gold_grams.toFixed(0)} g
+                {/* OR - Gold */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-amber-900">OR (Gold)</p>
+                    <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                      {production.estimated_fineness_pct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-xs text-amber-700">Poids</p>
+                      <p className="text-sm font-bold text-amber-900">
+                        {production.pure_gold_grams.toFixed(2)} g
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-amber-700">Onces</p>
+                      <p className="text-sm font-bold text-amber-900">
+                        {production.estimated_oz.toFixed(4)} oz
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-amber-200">
+                    <p className="text-xs text-amber-700">
+                      Calcul: {production.bullion_grams.toFixed(2)} g × {production.estimated_fineness_pct.toFixed(2)}% = {production.pure_gold_grams.toFixed(2)} g
                     </p>
                   </div>
                 </div>
+
+                {/* Argent - Silver */}
+                {production.estimated_silver_pct !== undefined && production.estimated_silver_pct > 0 && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-900">Argent (Silver)</p>
+                      <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                        {production.estimated_silver_pct.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-xs text-slate-700">Poids</p>
+                        <p className="text-sm font-bold text-slate-900">
+                          {((production.bullion_grams * production.estimated_silver_pct) / 100).toFixed(2)} g
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-700">Onces</p>
+                        <p className="text-sm font-bold text-slate-900">
+                          {(((production.bullion_grams * production.estimated_silver_pct) / 100) / 31.1035).toFixed(4)} oz
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-200">
+                      <p className="text-xs text-slate-700">
+                        Calcul: {production.bullion_grams.toFixed(2)} g × {production.estimated_silver_pct.toFixed(2)}% = {((production.bullion_grams * production.estimated_silver_pct) / 100).toFixed(2)} g
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Impuretés */}
+                {(() => {
+                  const silverPct = production.estimated_silver_pct || 0;
+                  const impurityPct = 100 - production.estimated_fineness_pct - silverPct;
+
+                  if (impurityPct > 0) {
+                    return (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-red-900">Impuretés</p>
+                          <span className="text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded">
+                            {impurityPct.toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-xs text-red-700">Poids</p>
+                            <p className="text-sm font-bold text-red-900">
+                              {((production.bullion_grams * impurityPct) / 100).toFixed(2)} g
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-red-700">Composition</p>
+                            <p className="text-xs text-red-800 mt-1">
+                              100% - {production.estimated_fineness_pct.toFixed(2)}% - {silverPct.toFixed(2)}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {production.notes && (

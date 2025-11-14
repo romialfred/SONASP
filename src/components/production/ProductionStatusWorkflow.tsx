@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ArrowRight, Lock } from 'lucide-react';
+import { Check, ArrowRight, Lock, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   PRODUCTION_STATUSES,
@@ -9,6 +9,10 @@ import {
 } from '@/constants/productionStatuses';
 import { productionStatusService } from '@/services/productionStatusService';
 import { ProductionStatusConfirmationModal } from './ProductionStatusConfirmationModal';
+import {
+  WorkflowModule,
+  useStatusTransitionControl
+} from '@/hooks/useStatusTransitionControl';
 
 interface ProductionDetails {
   id: string;
@@ -39,7 +43,17 @@ export function ProductionStatusWorkflow({
 }: ProductionStatusWorkflowProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Contrôle des transitions - MODULE PRODUCTION uniquement
+  const transitionControl = useStatusTransitionControl(
+    WorkflowModule.PRODUCTION,
+    currentStatus
+  );
+
   const nextStatus = getNextAllowedStatus(currentStatus);
+
+  // Vérifier si la production est verrouillée pour ce module
+  const isLocked = !transitionControl.canChangeStatus;
+  const isReadyForCustoms = currentStatus === 'ready_for_customs';
 
   const handleUpdateStatus = async (notes?: string) => {
     if (!nextStatus) return;
@@ -59,6 +73,42 @@ export function ProductionStatusWorkflow({
 
   return (
     <div className="space-y-4">
+      {/* Alerte de verrouillage */}
+      {isLocked && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-900 mb-1">
+                Statut verrouillé pour le module Production
+              </p>
+              <p className="text-xs text-amber-800">
+                {transitionControl.responsibilityMessage}
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Les modifications de statut doivent être effectuées depuis le module approprié.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info Prêt pour Douane */}
+      {isReadyForCustoms && !isLocked && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <Info className="w-5 h-5 text-blue-700 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-blue-900 mb-1">
+                Dernière étape modifiable depuis Production
+              </p>
+              <p className="text-xs text-blue-800">
+                Après validation, la production sera gérée par le module <strong>Préparation d'Expédition</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Status Flow Visualization */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {STATUS_FLOW.map((status, index) => {
@@ -105,8 +155,8 @@ export function ProductionStatusWorkflow({
         </p>
       </div>
 
-      {/* Action Button */}
-      {nextStatus && (
+      {/* Action Button - Contrôlé */}
+      {nextStatus && !isLocked && transitionControl.checkTransition(nextStatus) && (
         <div className="space-y-3">
           <Button
             onClick={() => setShowConfirmModal(true)}
@@ -116,6 +166,16 @@ export function ProductionStatusWorkflow({
             <ArrowRight className="w-5 h-5 mr-2" />
             Passer à: {PRODUCTION_STATUSES[nextStatus].label}
           </Button>
+        </div>
+      )}
+
+      {/* Bouton verrouillé */}
+      {nextStatus && isLocked && (
+        <div className="p-4 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center gap-2">
+          <Lock className="w-5 h-5 text-gray-500" />
+          <span className="text-sm text-gray-600 font-medium">
+            Changement de statut verrouillé - Géré par un autre module
+          </span>
         </div>
       )}
 

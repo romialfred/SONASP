@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatusBadge } from './ProductionStatusBadge';
 import { ProductionStatus } from '@/constants/productionStatuses';
+import { formatDateStandard } from '@/utils/dateUtils';
 
 interface MiningCompany {
   id: string;
@@ -28,14 +29,6 @@ export function ProductionTable({
   miningCompanies = []
 }: ProductionTableProps) {
   const navigate = useNavigate();
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
 
   const getCompanyName = (companyId: string | null) => {
     if (!companyId) return 'N/A';
@@ -96,7 +89,7 @@ export function ProductionTable({
                 <div className="flex items-center">
                   <Calendar className="w-3.5 h-3.5 text-gray-400 mr-1.5" />
                   <span className="text-xs text-gray-900">
-                    {formatDate(production.production_date)}
+                    {formatDateStandard(production.production_date)}
                   </span>
                 </div>
               </td>

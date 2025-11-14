@@ -190,9 +190,7 @@ END $$;
 -- ÉTAPE 8: Mettre à jour les métadonnées
 -- =====================================================
 
-COMMENT ON COLUMN daily_production.status IS
-  'Workflow: prepared → ready_for_customs → shipped → cancelled. ' ||
-  'Le statut ready_for_customs indique que la production est validée et prête pour inclusion dans une expédition.';
+COMMENT ON COLUMN daily_production.status IS 'Workflow: prepared → ready_for_customs → shipped → cancelled. Le statut ready_for_customs indique que la production est validée et prête pour inclusion dans une expédition.';
 
 -- =====================================================
 -- ÉTAPE 9: Vérification finale

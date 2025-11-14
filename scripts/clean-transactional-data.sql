@@ -298,21 +298,33 @@ BEGIN
   END IF;
 END $$;
 
--- 8. Expéditions
-DELETE FROM shipping_preparations;
-RAISE NOTICE '✅ Expéditions supprimées';
+-- 8. Expéditions (table principale)
+DO $$
+BEGIN
+  DELETE FROM shipping_preparations;
+  RAISE NOTICE '✅ Expéditions supprimées';
+END $$;
 
--- 9. Historique des statuts
-DELETE FROM unified_status_history;
-RAISE NOTICE '✅ Historique des statuts supprimé';
+-- 9. Historique des statuts (table principale)
+DO $$
+BEGIN
+  DELETE FROM unified_status_history;
+  RAISE NOTICE '✅ Historique des statuts supprimé';
+END $$;
 
--- 10. Documents de production
-DELETE FROM production_documents;
-RAISE NOTICE '✅ Documents de production supprimés';
+-- 10. Documents de production (table principale)
+DO $$
+BEGIN
+  DELETE FROM production_documents;
+  RAISE NOTICE '✅ Documents de production supprimés';
+END $$;
 
--- 11. Productions journalières
-DELETE FROM daily_production;
-RAISE NOTICE '✅ Productions journalières supprimées';
+-- 11. Productions journalières (table principale)
+DO $$
+BEGIN
+  DELETE FROM daily_production;
+  RAISE NOTICE '✅ Productions journalières supprimées';
+END $$;
 
 -- 12. Batches (si la table existe)
 DO $$

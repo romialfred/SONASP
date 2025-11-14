@@ -85,7 +85,87 @@ COMMENT ON COLUMN table_name.column_name IS 'Première partie du commentaire. De
 
 ---
 
-### 2. Modification d'ENUM avec des colonnes dépendantes
+### 2. RAISE NOTICE et DELETE en dehors d'un bloc DO $$
+
+**❌ INCORRECT - ERREUR DE SYNTAXE:**
+```sql
+-- Ceci cause: ERROR: 42601: syntax error at or near "RAISE"
+DELETE FROM my_table;
+RAISE NOTICE '✅ Table supprimée';
+```
+
+**✅ CORRECT - TOUJOURS dans un bloc DO $$:**
+```sql
+DO $$
+BEGIN
+  DELETE FROM my_table;
+  RAISE NOTICE '✅ Table supprimée';
+END $$;
+```
+
+**❌ INCORRECT - Mélange de code:**
+```sql
+-- Transaction ouverte
+BEGIN;
+
+DELETE FROM table1;
+RAISE NOTICE 'Table 1 supprimée';  -- ❌ ERREUR!
+
+DELETE FROM table2;
+RAISE NOTICE 'Table 2 supprimée';  -- ❌ ERREUR!
+
+COMMIT;
+```
+
+**✅ CORRECT - Chaque opération dans son bloc:**
+```sql
+-- Transaction ouverte
+BEGIN;
+
+DO $$
+BEGIN
+  DELETE FROM table1;
+  RAISE NOTICE '✅ Table 1 supprimée';
+END $$;
+
+DO $$
+BEGIN
+  DELETE FROM table2;
+  RAISE NOTICE '✅ Table 2 supprimée';
+END $$;
+
+COMMIT;
+```
+
+**OU ENCORE MIEUX - Toutes les opérations dans un seul bloc:**
+```sql
+BEGIN;
+
+DO $$
+BEGIN
+  DELETE FROM table1;
+  RAISE NOTICE '✅ Table 1 supprimée';
+
+  DELETE FROM table2;
+  RAISE NOTICE '✅ Table 2 supprimée';
+
+  DELETE FROM table3;
+  RAISE NOTICE '✅ Table 3 supprimée';
+
+  RAISE NOTICE '';
+  RAISE NOTICE '✅ Toutes les tables ont été supprimées avec succès';
+END $$;
+
+COMMIT;
+```
+
+**Raison:** `RAISE NOTICE` est une commande PL/pgSQL qui doit être utilisée dans un bloc anonyme `DO $$` ou dans une fonction. Elle ne peut pas être utilisée directement dans du SQL standard. PostgreSQL génère une erreur de syntaxe (42601) si on tente de l'utiliser en dehors d'un contexte procédural.
+
+**Règle d'or:** Dès que vous utilisez `RAISE NOTICE`, `RAISE EXCEPTION`, ou toute autre commande PL/pgSQL, vous DEVEZ être dans un bloc `DO $$ BEGIN ... END $$;`
+
+---
+
+### 3. Modification d'ENUM avec des colonnes dépendantes
 
 **❌ INCORRECT:**
 ```sql

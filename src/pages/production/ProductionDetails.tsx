@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
+import { Tabs } from '@/components/ui/Tabs';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { productionStatusService, StatusHistoryEntry } from '@/services/productionStatusService';
 import { productionDocumentService } from '@/services/productionDocumentService';
@@ -37,6 +38,7 @@ export function ProductionDetails() {
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
   const [siteCountry, setSiteCountry] = useState<string>('Guinée');
+  const [activeTab, setActiveTab] = useState('details');
 
   // Determine return path - check where we came from
   const returnPath = location.state?.from || '/production/in-safe';
@@ -317,19 +319,32 @@ export function ProductionDetails() {
           </div>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Section: Détails de la Production */}
-            <div className="space-y-3">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-600" />
-                Détails de la Production
-              </h2>
-
-              {/* Production Details Card */}
-              <Card className="p-4">
+        {/* Tabs Navigation */}
+        <Tabs
+          tabs={[
+            {
+              id: 'details',
+              label: 'Détails de la Production',
+              icon: Package,
+            },
+            {
+              id: 'documents',
+              label: 'Documents',
+              icon: FileText,
+              count: documents.length,
+            },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        >
+          {(currentTab) => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Left Column - Content based on active tab */}
+              <div className="lg:col-span-2 space-y-4">
+                {currentTab === 'details' && (
+                  <>
+                    {/* Production Details Card */}
+                    <Card className="p-4">
                 <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
                   Informations Générales
                 </h3>
@@ -446,61 +461,58 @@ export function ProductionDetails() {
                 userEmail={user?.email}
                 onStatusChanged={loadProductionDetails}
               />
-              </Card>
-            </div>
+                    </Card>
+                  </>
+                )}
 
-            {/* Section: Documents */}
-            <div className="space-y-3">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Documents
-              </h2>
+                {currentTab === 'documents' && (
+                  <>
+                    {/* Documents Card */}
+                    <Card className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                          Documents Attachés
+                        </h3>
+                        <Button
+                          onClick={() => setShowDocumentUpload(true)}
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                        >
+                          Ajouter
+                        </Button>
+                      </div>
 
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                      Documents Attachés
-                    </h3>
-                    <span className="text-xs text-gray-500">({documents.length})</span>
+                      <ProductionDocumentsList
+                        documents={documents}
+                        onView={handleDocumentView}
+                        onDownload={handleDocumentDownload}
+                        onDelete={handleDocumentDelete}
+                        canDelete={true}
+                      />
+                    </Card>
+                  </>
+                )}
+              </div>
+
+              {/* Right Column - History */}
+              <div className="space-y-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                    <History className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-sm font-semibold text-gray-900">
+                      Historique des Changements
+                    </h2>
                   </div>
-                <Button
-                  onClick={() => setShowDocumentUpload(true)}
-                  size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-                >
-                  Ajouter
-                </Button>
-              </div>
 
-              <ProductionDocumentsList
-                documents={documents}
-                onView={handleDocumentView}
-                onDownload={handleDocumentDownload}
-                onDelete={handleDocumentDelete}
-                canDelete={true}
-              />
-              </Card>
+                  <ProductionStatusHistory
+                    history={statusHistory}
+                    siteCountry={siteCountry}
+                  />
+                </Card>
+              </div>
             </div>
-          </div>
-
-          {/* Right Column - History - Refined */}
-          <div className="space-y-4">
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                <History className="w-4 h-4 text-blue-600" />
-                <h2 className="text-sm font-semibold text-gray-900">
-                  Historique des Changements
-                </h2>
-              </div>
-
-              <ProductionStatusHistory
-                history={statusHistory}
-                siteCountry={siteCountry}
-              />
-            </Card>
-          </div>
-        </div>
+          )}
+        </Tabs>
       </div>
 
       {/* Document Upload Modal */}

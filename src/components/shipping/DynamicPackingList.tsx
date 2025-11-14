@@ -94,14 +94,14 @@ export function DynamicPackingList({
       </div>
 
       {/* Ingots Table - Format Gouvernemental Conforme */}
-      <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-xs">
+      <table className="w-full border-collapse border border-gray-800 mb-6 text-xs">
         <thead>
           <tr style={{ backgroundColor: '#C69C3D' }}>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot & Box #</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Net<br/>Weight (g)</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Gross<br/>Weight (g)</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 1</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 2</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900">Ingot & Box #</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Net<br/>Weight (g)</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Gross<br/>Weight (g)</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 1</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 2</th>
           </tr>
         </thead>
         <tbody>
@@ -132,10 +132,10 @@ export function DynamicPackingList({
           )}
           {/* Totals - Format Gouvernemental avec fond jaune/orange */}
           <tr className="font-bold" style={{ backgroundColor: '#C69C3D' }}>
-            <td className="border-2 border-gray-800 p-2 text-left text-gray-900">TOTAL</td>
-            <td className="border-2 border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalNetWeight, 2)}</td>
-            <td className="border-2 border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalGrossWeight, 2)}</td>
-            <td className="border-2 border-gray-800 p-2" colSpan={2}></td>
+            <td className="border border-gray-800 p-2 text-left text-gray-900">TOTAL</td>
+            <td className="border border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalNetWeight, 2)}</td>
+            <td className="border border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalGrossWeight, 2)}</td>
+            <td className="border border-gray-800 p-2" colSpan={2}></td>
           </tr>
         </tbody>
       </table>
@@ -148,12 +148,12 @@ export function DynamicPackingList({
       )}
 
       {/* Signatures Table - Format Gouvernemental Conforme */}
-      <table className="w-full border-collapse border-2 border-gray-800 text-xs">
+      <table className="w-full border-collapse border border-gray-800 text-xs">
         <thead>
           <tr style={{ backgroundColor: '#ADD8E6' }}>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">POSITION</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">NAME</th>
-            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">SIGNATURE</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">POSITION</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">NAME</th>
+            <th className="border border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">SIGNATURE</th>
           </tr>
         </thead>
         <tbody>

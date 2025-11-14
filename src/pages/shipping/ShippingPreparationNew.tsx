@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, Download, ChevronLeft, ChevronRight, Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -13,6 +13,7 @@ import { shippingPreparationService, ShippingPreparation, ShippingSignatory, Shi
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { PackingListPdfService } from '@/services/packingListPdfService';
 
 interface DailyProduction {
   id: string;
@@ -369,6 +370,55 @@ export default function ShippingPreparationNew() {
   const handleCancel = () => {
     if (confirm('Annuler les modifications? Les données non enregistrées seront perdues.')) {
       navigate('/shipping/preparation');
+    }
+  };
+
+  const handleSendPackingListByEmail = async () => {
+    try {
+      if (selectedProductions.length === 0) {
+        setErrorTitle('Aucune production sélectionnée');
+        setErrorMessage('Veuillez sélectionner au moins une production avant d\'envoyer le packing list.');
+        setShowErrorDialog(true);
+        return;
+      }
+
+      if (!selectedRefinery) {
+        setErrorTitle('Raffinerie non sélectionnée');
+        setErrorMessage('Veuillez sélectionner une raffinerie avant d\'envoyer le packing list.');
+        setShowErrorDialog(true);
+        return;
+      }
+
+      // Préparer les données du packing list
+      const packingListData = {
+        expeditionLotNumber: generateExpeditionLotNumber(),
+        productionDate: selectedProductions[0].production.production_date,
+        miningCompany: selectedProductions[0].production.mining_company?.name || '',
+        refineryName: selectedRefinery.name,
+        refineryAddress: selectedRefinery.location,
+        refineryCountry: selectedRefinery.country,
+        freightCompany: selectedFreightCompany?.name,
+        ingots: selectedProductions.map((sp, idx) => ({
+          ingotBoxNumber: sp.production.bar_reference || `BOX-${idx + 1}`,
+          netWeight: sp.production.pure_gold_grams,
+          grossWeight: sp.production.bullion_grams,
+          sealNumber1: sp.sealNumber1,
+          sealNumber2: sp.sealNumber2,
+        })),
+        signatories: signatories.map(s => ({
+          position: s.position,
+          name: s.name,
+        })),
+      };
+
+      // Envoyer via Outlook
+      await PackingListPdfService.sendViaOutlook(packingListData);
+
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi par email:', error);
+      setErrorTitle('Erreur d\'envoi');
+      setErrorMessage('Une erreur est survenue lors de la préparation de l\'email. Veuillez réessayer.');
+      setShowErrorDialog(true);
     }
   };
 
@@ -1137,17 +1187,29 @@ export default function ShippingPreparationNew() {
                 <p className="text-xs text-yellow-100">Mise à jour en temps réel</p>
               </div>
             )}
-            <button
-              onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}
-              className="p-1.5 hover:bg-yellow-600 rounded-md transition-colors"
-              title={isPreviewCollapsed ? 'Ouvrir le preview' : 'Fermer le preview'}
-            >
-              {isPreviewCollapsed ? (
-                <ChevronLeft className="w-5 h-5 text-white" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2">
+              {!isPreviewCollapsed && selectedProductions.length > 0 && (
+                <button
+                  onClick={handleSendPackingListByEmail}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-yellow-700 hover:bg-yellow-50 rounded-md transition-colors text-xs font-semibold shadow-sm"
+                  title="Envoyer par email (Outlook)"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Envoyer par Email
+                </button>
               )}
-            </button>
+              <button
+                onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}
+                className="p-1.5 hover:bg-yellow-600 rounded-md transition-colors"
+                title={isPreviewCollapsed ? 'Ouvrir le preview' : 'Fermer le preview'}
+              >
+                {isPreviewCollapsed ? (
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-white" />
+                )}
+              </button>
+            </div>
           </div>
           {!isPreviewCollapsed && (
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">

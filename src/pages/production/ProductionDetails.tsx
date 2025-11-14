@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -28,7 +28,6 @@ interface MiningCompany {
 export function ProductionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
 
   const [production, setProduction] = useState<DailyProduction | null>(null);
@@ -41,8 +40,8 @@ export function ProductionDetails() {
   const [siteCountry, setSiteCountry] = useState<string>('Guinée');
   const [activeTab, setActiveTab] = useState('details');
 
-  // Determine return path - check where we came from
-  const returnPath = location.state?.from || '/production/in-safe';
+  // Always return to Production in Safe page
+  const returnPath = '/production/in-safe';
 
   useEffect(() => {
     if (id) {

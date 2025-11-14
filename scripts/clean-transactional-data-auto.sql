@@ -12,51 +12,100 @@
 -- Transaction complète
 BEGIN;
 
--- Suppression dans l'ordre des dépendances
--- 1. Licences d'exportation
-DELETE FROM export_license_quotas WHERE true;
-DELETE FROM export_licenses WHERE true;
-
--- 2. Certificats d'essai
-DELETE FROM assay_certificates WHERE true;
-
--- 3. Paiements
-DELETE FROM virtual_payments WHERE true;
-DELETE FROM payments WHERE true;
-
--- 4. Ventes
-DELETE FROM pre_sales WHERE true;
-DELETE FROM sales WHERE true;
-
--- 5. Inventaire
-DELETE FROM inventory_movements WHERE true;
-DELETE FROM inventory WHERE true;
-
--- 6. Fret et douanes
-DELETE FROM freight_customs WHERE true;
-
--- 7. Expéditions
-DELETE FROM shipping_documents WHERE true;
-DELETE FROM shipping_preparations WHERE true;
-
--- 8. Productions
-DELETE FROM unified_status_history WHERE true;
-DELETE FROM production_documents WHERE true;
-DELETE FROM daily_production WHERE true;
-
--- 9. Batches (si existe)
+-- Suppression dans l'ordre des dépendances avec vérifications
 DO $$
 BEGIN
+  -- 1. Licences d'exportation
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_license_quotas') THEN
+    DELETE FROM export_license_quotas;
+    RAISE NOTICE '✅ Quotas de licences d''exportation supprimés';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_licenses') THEN
+    DELETE FROM export_licenses;
+    RAISE NOTICE '✅ Licences d''exportation supprimées';
+  END IF;
+
+  -- 2. Certificats d'essai
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assay_certificates') THEN
+    DELETE FROM assay_certificates;
+    RAISE NOTICE '✅ Certificats d''essai supprimés';
+  END IF;
+
+  -- 3. Paiements
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
+    DELETE FROM virtual_payments;
+    RAISE NOTICE '✅ Paiements virtuels supprimés';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
+    DELETE FROM payments;
+    RAISE NOTICE '✅ Paiements supprimés';
+  END IF;
+
+  -- 4. Ventes
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'pre_sales') THEN
+    DELETE FROM pre_sales;
+    RAISE NOTICE '✅ Pré-ventes supprimées';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
+    DELETE FROM sales;
+    RAISE NOTICE '✅ Ventes supprimées';
+  END IF;
+
+  -- 5. Inventaire
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory_movements') THEN
+    DELETE FROM inventory_movements;
+    RAISE NOTICE '✅ Mouvements d''inventaire supprimés';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory') THEN
+    DELETE FROM inventory;
+    RAISE NOTICE '✅ Inventaire supprimé';
+  END IF;
+
+  -- 6. Fret et douanes
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'freight_customs') THEN
+    DELETE FROM freight_customs;
+    RAISE NOTICE '✅ Fret et douanes supprimés';
+  END IF;
+
+  -- 7. Documents d'expédition
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_documents') THEN
+    DELETE FROM shipping_documents;
+    RAISE NOTICE '✅ Documents d''expédition supprimés';
+  END IF;
+
+  -- 8. Expéditions (table principale toujours existante)
+  DELETE FROM shipping_preparations;
+  RAISE NOTICE '✅ Expéditions supprimées';
+
+  -- 9. Historique des statuts (table principale toujours existante)
+  DELETE FROM unified_status_history;
+  RAISE NOTICE '✅ Historique des statuts supprimé';
+
+  -- 10. Documents de production (table principale toujours existante)
+  DELETE FROM production_documents;
+  RAISE NOTICE '✅ Documents de production supprimés';
+
+  -- 11. Productions journalières (table principale toujours existante)
+  DELETE FROM daily_production;
+  RAISE NOTICE '✅ Productions journalières supprimées';
+
+  -- 12. Batches (si existe)
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'batches') THEN
     DELETE FROM batches;
+    RAISE NOTICE '✅ Batches supprimés';
   END IF;
-END $$;
 
--- Afficher le résultat
-DO $$
-BEGIN
+  -- Message final
+  RAISE NOTICE '';
+  RAISE NOTICE '✅ ═══════════════════════════════════════════════════════';
   RAISE NOTICE '✅ Nettoyage automatique terminé avec succès';
   RAISE NOTICE '✅ Toutes les données transactionnelles ont été supprimées';
+  RAISE NOTICE '✅ ═══════════════════════════════════════════════════════';
+  RAISE NOTICE '';
 END $$;
 
 -- COMMIT automatique

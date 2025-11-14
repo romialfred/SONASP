@@ -586,7 +586,7 @@ export default function ShippingPreparationNew() {
         total_net_weight_grams: totalNetWeightGrams,
         total_gross_weight_grams: totalGrossWeightGrams,
         total_weight_oz: totalNetWeightOz,
-        status: 'prepared' as const,
+        status: 'waiting_for_customs_approval' as const,  // Statut initial du workflow
         prepared_at: new Date().toISOString(),
       };
 

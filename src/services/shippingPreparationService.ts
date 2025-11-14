@@ -104,13 +104,14 @@ class ShippingPreparationService {
     const { data: { user } } = await supabase.auth.getUser();
 
     // CRITICAL FIX: Ensure status is valid enum value from shipping_preparation_status
-    // Source: supabase/migrations/20251114_004_correct_status_enums_verified.sql
-    const validStatuses: ShippingStatus[] = ['ready_for_customs', 'approved_by_customs', 'ready_for_expedition'];
+    // Source: supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql
+    // Workflow: waiting_for_customs_approval → approved_by_customs → ready_for_expedition
+    const validStatuses: ShippingStatus[] = ['waiting_for_customs_approval', 'approved_by_customs', 'ready_for_expedition'];
     const cleanPreparation = { ...preparation };
 
     if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status as ShippingStatus)) {
-      cleanPreparation.status = 'ready_for_customs';
-      console.warn('Invalid or missing status, defaulting to: ready_for_customs');
+      cleanPreparation.status = 'waiting_for_customs_approval';
+      console.warn('Invalid or missing status, defaulting to: waiting_for_customs_approval');
     }
 
     const { data, error } = await supabase
@@ -128,12 +129,13 @@ class ShippingPreparationService {
 
   async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
     // CRITICAL FIX: Validate status before UPDATE using enum shipping_preparation_status
-    const validStatuses: ShippingStatus[] = ['ready_for_customs', 'approved_by_customs', 'ready_for_expedition'];
+    // Workflow: waiting_for_customs_approval → approved_by_customs → ready_for_expedition
+    const validStatuses: ShippingStatus[] = ['waiting_for_customs_approval', 'approved_by_customs', 'ready_for_expedition'];
     const cleanUpdates = { ...updates };
 
     if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status as ShippingStatus)) {
-      cleanUpdates.status = 'ready_for_customs';
-      console.warn('Invalid status in UPDATE, defaulting to: ready_for_customs');
+      cleanUpdates.status = 'waiting_for_customs_approval';
+      console.warn('Invalid status in UPDATE, defaulting to: waiting_for_customs_approval');
     }
 
     const { data, error } = await supabase

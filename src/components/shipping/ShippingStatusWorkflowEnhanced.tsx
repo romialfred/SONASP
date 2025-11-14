@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
+import { Check, AlertTriangle, ChevronRight, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { ShippingStatus, getShippingStatusConfig } from '@/constants/shippingStatuses';
@@ -26,13 +26,11 @@ export function ShippingStatusWorkflowEnhanced({
   const currentConfig = getShippingStatusConfig(currentStatus);
   const CurrentIcon = currentConfig.icon;
 
+  // Workflow complet: waiting_for_customs_approval → approved_by_customs → ready_for_expedition
   const allStatuses: ShippingStatus[] = [
-    'pending',
-    'prepared',
-    'validated_for_refinery',
-    'in_refining',
-    'refined',
-    'sold',
+    'waiting_for_customs_approval',  // En attente approbation douane
+    'approved_by_customs',            // Douane approuvée
+    'ready_for_expedition',           // Prêt pour expédition
   ];
 
   const currentIndex = allStatuses.indexOf(currentStatus);
@@ -93,6 +91,38 @@ export function ShippingStatusWorkflowEnhanced({
             </div>
           </div>
         </div>
+
+        {/* Bouton Action Rapide: Customs Approved */}
+        {currentStatus === 'waiting_for_customs_approval' && (
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-4 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="bg-amber-500 rounded-full p-3">
+                  <Check className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-amber-900 mb-1">
+                  Approbation Douanière Reçue ?
+                </div>
+                <div className="text-xs text-amber-700">
+                  Cliquez ci-dessous une fois que l'approbation de la douane a été obtenue
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Button
+                  size="lg"
+                  variant="primary"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg"
+                  onClick={() => handleStatusClick('approved_by_customs')}
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Customs Approved
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">
@@ -192,25 +222,18 @@ export function ShippingStatusWorkflowEnhanced({
           </div>
         </div>
 
-        {currentStatus !== 'sold' && currentStatus !== 'cancelled' && (
+        {currentStatus !== 'ready_for_expedition' && (
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <div className="text-sm font-semibold text-red-900 mb-1">
-                  Annulation
+                  Note Importante
                 </div>
-                <div className="text-xs text-red-700 mb-3">
-                  Cette action est irréversible et doit être utilisée uniquement en cas de problème majeur.
+                <div className="text-xs text-red-700">
+                  Assurez-vous d'avoir reçu l'approbation officielle de la douane avant de passer au statut suivant.
+                  L'approbation peut prendre plusieurs jours.
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  onClick={() => handleStatusClick('cancelled')}
-                >
-                  Annuler l'Expédition
-                </Button>
               </div>
             </div>
           </div>

@@ -29,7 +29,7 @@ export default function ShippingDashboard() {
 
   const stats = {
     total: preparations.length,
-    ready_for_customs: preparations.filter(p => p.status === 'ready_for_customs').length,
+    waiting_for_customs_approval: preparations.filter(p => p.status === 'waiting_for_customs_approval').length,
     approved_by_customs: preparations.filter(p => p.status === 'approved_by_customs').length,
     ready_for_expedition: preparations.filter(p => p.status === 'ready_for_expedition').length,
     totalWeight: preparations.reduce((sum, p) => sum + (p.total_net_weight_grams || 0), 0),
@@ -37,13 +37,13 @@ export default function ShippingDashboard() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      ready_for_customs: 'bg-blue-50 text-blue-700 border-blue-200',
+      waiting_for_customs_approval: 'bg-yellow-50 text-yellow-800 border-yellow-200',
       approved_by_customs: 'bg-amber-50 text-amber-700 border-amber-200',
       ready_for_expedition: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     };
     const labels = {
-      ready_for_customs: 'Prêt pour Douane',
-      approved_by_customs: 'Approuvé par Douane',
+      waiting_for_customs_approval: 'En Attente Douane',
+      approved_by_customs: 'Douane Approuvée',
       ready_for_expedition: 'Prêt pour Expédition',
     };
     return (

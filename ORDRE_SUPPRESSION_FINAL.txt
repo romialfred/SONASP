@@ -1,0 +1,44 @@
+# ORDRE DE SUPPRESSION OPTIMAL - Basé sur Analyse FK Réelle
+
+## ORDRE CORRECT (38 Tables)
+
+1.  sales_payment_schedules
+2.  sales_notifications_log
+3.  sales_line_items
+4.  sales_documents
+5.  sales_commissions
+6.  sales_audit_trail
+7.  sales_approvals
+8.  sales_allocations
+9.  sale_pricing_details
+10. pre_sales_inventory_matches
+11. inventory_transactions
+12. gold_inventory
+13. email_logs
+14. payments
+15. pre_sales
+16. customer_accounts_receivable
+17. sales
+18. customer_fx_rates
+19. customer_contracts
+20. customer_banks
+21. shipping_status_history
+22. shipping_signatories
+23. shipping_production_items
+24. shipping_ingots
+25. shipping_documents
+26. freight_customs_operations
+27. assay_certificates
+28. shipping_preparations
+29. export_license_documents
+30. export_licenses
+31. production_status_history
+32. production_documents
+33. daily_production
+34. quarterly_forecasts
+35. production_forecasts
+36. monthly_budgets
+37. annual_budgets
+38. batches
+
+NE PAS SUPPRIMER: customers, mining_companies, sites, etc.

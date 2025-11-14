@@ -12,11 +12,16 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
-import { ShippingStatusWorkflow } from '@/components/shipping/ShippingStatusWorkflow';
+import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
+import { ShippingStatusHistory, ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
+import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { DocumentUploadSection } from '@/components/shipping/DocumentUploadSection';
 import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
+import { shippingStatusService } from '@/services/shippingStatusService';
 import { supabase } from '@/lib/supabase';
+import { ShippingStatus } from '@/constants/shippingStatuses';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Refinery {
   id: string;

@@ -10,12 +10,18 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
-import { ShippingStatusWorkflow } from '@/components/shipping/ShippingStatusWorkflow';
+import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
+import { ShippingStatusHistory, ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
+import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { DocumentUploadSection } from '@/components/shipping/DocumentUploadSection';
 import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
+import { shippingStatusService } from '@/services/shippingStatusService';
 import { assayCertificateService } from '@/services/assayCertificateService';
 import { supabase } from '@/lib/supabase';
+import { ShippingStatus } from '@/constants/shippingStatuses';
+import { History } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Refinery {
   id: string;

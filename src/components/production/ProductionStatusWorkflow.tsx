@@ -32,7 +32,6 @@ interface ProductionStatusWorkflowProps {
   production: ProductionDetails;
   userEmail?: string;
   onStatusChanged: () => void;
-  compactButton?: boolean;
 }
 
 export function ProductionStatusWorkflow({
@@ -40,8 +39,7 @@ export function ProductionStatusWorkflow({
   currentStatus,
   production,
   userEmail,
-  onStatusChanged,
-  compactButton = false
+  onStatusChanged
 }: ProductionStatusWorkflowProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -72,45 +70,6 @@ export function ProductionStatusWorkflow({
       throw error;
     }
   };
-
-  // Mode compact - seulement le bouton d'action
-  if (compactButton) {
-    return (
-      <>
-        {nextStatus && !isLocked && transitionControl.checkTransition(nextStatus) && (
-          <Button
-            onClick={() => setShowConfirmModal(true)}
-            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all"
-            size="lg"
-          >
-            <ArrowRight className="w-5 h-5 mr-2" />
-            Passer à: {PRODUCTION_STATUSES[nextStatus].label}
-          </Button>
-        )}
-
-        {nextStatus && isLocked && (
-          <div className="p-3 bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center gap-2">
-            <Lock className="w-4 h-4 text-gray-500" />
-            <span className="text-xs text-gray-600 font-medium">
-              Statut verrouillé
-            </span>
-          </div>
-        )}
-
-        {nextStatus && (
-          <ProductionStatusConfirmationModal
-            isOpen={showConfirmModal}
-            onClose={() => setShowConfirmModal(false)}
-            onConfirm={handleUpdateStatus}
-            currentStatus={currentStatus}
-            nextStatus={nextStatus}
-            production={production}
-            userEmail={userEmail}
-          />
-        )}
-      </>
-    );
-  }
 
   return (
     <div className="space-y-4">

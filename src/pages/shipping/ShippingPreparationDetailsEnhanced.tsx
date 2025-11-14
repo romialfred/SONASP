@@ -85,6 +85,7 @@ const statusLabels: Record<string, string> = {
 export default function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
@@ -92,7 +93,7 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [signatories, setSignatories] = useState<ShippingSignatory[]>([]);
   const [documents, setDocuments] = useState<ShippingDocument[]>([]);
   const [certificates, setCertificates] = useState<AssayCertificate[]>([]);
-  const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
+  const [statusHistory, setStatusHistory] = useState<ShippingStatusHistoryEntry[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
   const [freightCompany, setFreightCompany] = useState<FreightCompany | null>(null);
   const [license, setLicense] = useState<ExportLicense | null>(null);
@@ -142,28 +143,9 @@ export default function ShippingPreparationDetailsEnhanced() {
 
       if (certsData) setCertificates(certsData);
 
-      // Load status history from unified_status_history
-      const { data: historyData } = await supabase
-        .from('unified_status_history')
-        .select(`
-          id,
-          old_status,
-          new_status,
-          changed_at,
-          notes,
-          user_profiles!unified_status_history_changed_by_fkey(full_name)
-        `)
-        .eq('entity_type', 'shipping')
-        .eq('entity_id', id!)
-        .order('changed_at', { ascending: false });
-
-      if (historyData) {
-        setStatusHistory(historyData.map(h => ({
-          ...h,
-          changed_by: (h.user_profiles as any)?.full_name || 'Système',
-          location: prep.shipped_to_address || 'Guinée'
-        })));
-      }
+      // Load status history from shipping_status_history
+      const historyData = await shippingStatusService.getStatusHistory(id!).catch(() => []);
+      setStatusHistory(historyData);
 
       // Load refinery if ID exists
       if (prep.shipped_to_address) {
@@ -647,11 +629,13 @@ export default function ShippingPreparationDetailsEnhanced() {
                   {/* Action Buttons */}
                   <div>
                     <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                      Actions Disponibles
+                      Workflow de Statut
                     </div>
-                    <ShippingStatusWorkflow
-                      currentStatus={preparation.status}
-                      onStatusChange={handleStatusChange}
+                    <ShippingStatusWorkflowEnhanced
+                      shippingId={preparation.id}
+                      currentStatus={preparation.status as ShippingStatus}
+                      onStatusChanged={loadPreparationDetails}
+                      userEmail={user?.email}
                     />
                   </div>
 
@@ -670,96 +654,15 @@ export default function ShippingPreparationDetailsEnhanced() {
 
               {/* History Timeline */}
               <Card className="bg-white border-slate-200 p-5">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
                   <History className="w-4 h-4 text-blue-600" />
                   <h3 className="text-sm font-semibold text-slate-900">Historique des Changements</h3>
                 </div>
 
-                {statusHistory.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <History className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Aucun historique</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                    {statusHistory.map((history, index) => (
-                      <div key={history.id} className="relative">
-                        {/* Timeline line */}
-                        {index !== statusHistory.length - 1 && (
-                          <div className="absolute left-[13px] top-8 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-transparent" />
-                        )}
-
-                        {/* Timeline item */}
-                        <div className="relative pl-8">
-                          <div className={`absolute left-0 top-1 w-7 h-7 rounded-full flex items-center justify-center ${
-                            index === 0
-                              ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 ring-4 ring-emerald-100'
-                              : 'bg-blue-500'
-                          }`}>
-                            {index === 0 ? (
-                              <CheckCircle className="w-4 h-4 text-white" />
-                            ) : (
-                              <div className="w-2 h-2 bg-white rounded-full" />
-                            )}
-                          </div>
-
-                          <div className={`p-3 rounded-lg border ${
-                            index === 0
-                              ? 'bg-emerald-50/50 border-emerald-200'
-                              : 'bg-slate-50 border-slate-200'
-                          }`}>
-                            {/* Status badges */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                                {statusLabels[history.old_status] || history.old_status}
-                              </span>
-                              <ArrowLeft className="w-3 h-3 text-slate-400 rotate-180" />
-                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
-                                {statusLabels[history.new_status] || history.new_status}
-                              </span>
-                            </div>
-
-                            {/* Time and user */}
-                            <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatShortDate(history.changed_at)}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {history.changed_by}
-                              </div>
-                            </div>
-
-                            {/* Location */}
-                            {history.location && (
-                              <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
-                                <MapPinned className="w-3 h-3" />
-                                {history.location}
-                              </div>
-                            )}
-
-                            {/* Notes */}
-                            {history.notes && (
-                              <div className="mt-2 pt-2 border-t border-slate-200">
-                                <div className="text-xs font-medium text-slate-600 mb-1">Notes:</div>
-                                <p className="text-xs text-slate-600 italic">{history.notes}</p>
-                              </div>
-                            )}
-
-                            {/* Most recent badge */}
-                            {index === 0 && (
-                              <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                Changement le plus récent
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <ShippingStatusHistory
+                  history={statusHistory}
+                  siteCountry={preparation?.shipped_to_country || undefined}
+                />
               </Card>
             </div>
           </div>

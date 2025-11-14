@@ -1,0 +1,305 @@
+import { useState } from 'react';
+import { Check, AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
+import { ShippingStatus, getShippingStatusConfig } from '@/constants/shippingStatuses';
+
+interface ShippingStatusWorkflowEnhancedProps {
+  shippingId: string;
+  currentStatus: ShippingStatus;
+  onStatusChanged: () => void;
+  userEmail?: string;
+}
+
+export function ShippingStatusWorkflowEnhanced({
+  shippingId,
+  currentStatus,
+  onStatusChanged,
+  userEmail,
+}: ShippingStatusWorkflowEnhancedProps) {
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ShippingStatus | null>(null);
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const currentConfig = getShippingStatusConfig(currentStatus);
+  const CurrentIcon = currentConfig.icon;
+
+  const allStatuses: ShippingStatus[] = [
+    'pending',
+    'prepared',
+    'validated_for_refinery',
+    'in_refining',
+    'refined',
+    'in_sale',
+    'sold',
+  ];
+
+  const currentIndex = allStatuses.indexOf(currentStatus);
+
+  const handleStatusClick = (newStatus: ShippingStatus) => {
+    setSelectedStatus(newStatus);
+    setShowModal(true);
+    setError(null);
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedStatus) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { shippingStatusService } = await import('@/services/shippingStatusService');
+
+      await shippingStatusService.changeStatus(
+        shippingId,
+        currentStatus,
+        selectedStatus,
+        userEmail || 'system',
+        notes || undefined
+      );
+
+      setShowModal(false);
+      setNotes('');
+      setSelectedStatus(null);
+      onStatusChanged();
+    } catch (err) {
+      console.error('Error changing status:', err);
+      setError('Erreur lors du changement de statut. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="space-y-6">
+        <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className={`${currentConfig.bgColor} rounded-xl p-3 shadow-sm`}>
+              <CurrentIcon className={`w-6 h-6 ${currentConfig.textColor}`} />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                Statut Actuel
+              </div>
+              <div className={`text-xl font-bold ${currentConfig.textColor}`}>
+                {currentConfig.label}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                {currentConfig.description}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">
+            Progression du Workflow
+          </div>
+
+          <div className="space-y-3">
+            {allStatuses.map((status, index) => {
+              const config = getShippingStatusConfig(status);
+              const Icon = config.icon;
+              const isPast = index < currentIndex;
+              const isCurrent = status === currentStatus;
+              const isNext = currentConfig.canTransitionTo.includes(status);
+              const isFuture = index > currentIndex && !isNext;
+
+              return (
+                <div key={status} className="relative">
+                  <div
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                      isCurrent
+                        ? `${config.borderColor} bg-gradient-to-r ${config.bgColor} shadow-sm`
+                        : isPast
+                        ? 'border-gray-200 bg-gray-50'
+                        : isNext
+                        ? 'border-emerald-200 bg-emerald-50 hover:shadow-md cursor-pointer'
+                        : 'border-gray-100 bg-gray-50 opacity-60'
+                    }`}
+                    onClick={() => isNext && handleStatusClick(status)}
+                  >
+                    <div
+                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                        isPast
+                          ? 'bg-emerald-500'
+                          : isCurrent
+                          ? config.bgColor
+                          : isNext
+                          ? 'bg-emerald-100'
+                          : 'bg-gray-200'
+                      }`}
+                    >
+                      {isPast ? (
+                        <Check className="w-5 h-5 text-white" />
+                      ) : (
+                        <Icon
+                          className={`w-5 h-5 ${
+                            isCurrent ? config.textColor : isNext ? 'text-emerald-700' : 'text-gray-400'
+                          }`}
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className={`text-sm font-semibold ${
+                          isCurrent ? config.textColor : isPast ? 'text-gray-700' : 'text-gray-600'
+                        }`}
+                      >
+                        {config.label}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {config.description}
+                      </div>
+                    </div>
+
+                    {isCurrent && (
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                          EN COURS
+                        </span>
+                      </div>
+                    )}
+                    {isPast && (
+                      <div className="flex-shrink-0">
+                        <Check className="w-5 h-5 text-emerald-600" />
+                      </div>
+                    )}
+                    {isNext && (
+                      <div className="flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusClick(status);
+                          }}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                          Passer
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {currentStatus !== 'sold' && currentStatus !== 'cancelled' && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-red-900 mb-1">
+                  Annulation
+                </div>
+                <div className="text-xs text-red-700 mb-3">
+                  Cette action est irréversible et doit être utilisée uniquement en cas de problème majeur.
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => handleStatusClick('cancelled')}
+                >
+                  Annuler l'Expédition
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => !loading && setShowModal(false)}
+        title="Confirmer le Changement de Statut"
+      >
+        <div className="space-y-4 p-2">
+          {selectedStatus && (() => {
+            const config = getShippingStatusConfig(selectedStatus);
+            const Icon = config.icon;
+            return (
+              <>
+                <div className={`flex items-center gap-3 p-4 rounded-lg border-2 ${config.borderColor} ${config.bgColor}`}>
+                  <div className={`rounded-lg p-3 bg-white shadow-sm`}>
+                    <Icon className={`w-6 h-6 ${config.textColor}`} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">Nouveau statut</div>
+                    <div className={`text-lg font-bold ${config.textColor}`}>
+                      {config.label}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {config.description}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes {selectedStatus === 'cancelled' ? '(requis)' : '(optionnel)'}
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder={
+                      selectedStatus === 'cancelled'
+                        ? 'Veuillez expliquer la raison de l\'annulation...'
+                        : 'Ajouter des notes sur ce changement de statut...'
+                    }
+                    required={selectedStatus === 'cancelled'}
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowModal(false);
+                      setNotes('');
+                      setError(null);
+                    }}
+                    disabled={loading}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={loading || (selectedStatus === 'cancelled' && !notes.trim())}
+                    className="min-w-[120px]"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Traitement...
+                      </>
+                    ) : (
+                      'Confirmer'
+                    )}
+                  </Button>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </Modal>
+    </>
+  );
+}

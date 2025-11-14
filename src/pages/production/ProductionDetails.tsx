@@ -553,6 +553,7 @@ export function ProductionDetails() {
                         estimated_fineness_pct: production.estimated_fineness_pct,
                         pure_gold_grams: production.pure_gold_grams,
                         estimated_oz: production.estimated_oz,
+                        estimated_silver_pct: production.estimated_silver_pct,
                         mining_company_name: miningCompany?.name,
                         site_country: siteCountry
                       }}

@@ -22,6 +22,7 @@ interface ProductionDetails {
   estimated_fineness_pct: number;
   pure_gold_grams: number;
   estimated_oz: number;
+  estimated_silver_pct?: number;
   mining_company_name?: string;
   site_country?: string;
 }

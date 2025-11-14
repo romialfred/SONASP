@@ -411,8 +411,8 @@ class ShippingPreparationService {
       updateData.prepared_at = new Date().toISOString();
     }
 
-    // Update shipped_at timestamp when status changes to a shipping-related status
-    if (newStatus === 'validated_for_refinery' || newStatus === 'in_refining') {
+    // Update shipped_at timestamp when status changes to ready_for_expedition
+    if (newStatus === 'ready_for_expedition') {
       updateData.shipped_at = new Date().toISOString();
     }
 

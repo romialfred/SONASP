@@ -10,7 +10,7 @@
  * peut effectuer des changements.
  */
 
-import { ProductionStatus } from '@/constants/productionStatuses';
+// ProductionStatus is defined locally in this file
 
 /**
  * Phases/Modules du système

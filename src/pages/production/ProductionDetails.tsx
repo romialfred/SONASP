@@ -321,14 +321,17 @@ export function ProductionDetails() {
         </div>
 
         {/* Workflow Section - At Top */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
           <div className="lg:col-span-2">
             <ProductionStatusWorkflowEnhanced
               currentStatus={production.status as ProductionStatus}
               statusHistory={statusHistory}
             />
           </div>
-          <div className="flex items-end">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Statut &gt; Action
+            </div>
             <ProductionStatusWorkflow
               productionId={production.id}
               currentStatus={production.status as ProductionStatus}

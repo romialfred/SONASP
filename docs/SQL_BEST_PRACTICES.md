@@ -2,6 +2,71 @@
 
 ## ⚠️ ERREURS COMMUNES À NE JAMAIS RÉPÉTER
 
+### 🚨 0. ERREUR CRITIQUE: NE JAMAIS créer une migration sans vérifier la base de données
+
+**❌ ERREUR FATALE - LA PLUS GRAVE DE TOUTES:**
+```sql
+-- Créer une migration qui référence des tables inexistantes
+ALTER TABLE freight_customs ADD COLUMN ...;
+-- ERROR: 42P01: relation "freight_customs" does not exist
+```
+
+**✅ PROCESSUS OBLIGATOIRE AVANT TOUTE MIGRATION:**
+
+**Étape 1: Créer un script de vérification**
+```javascript
+// scripts/verify-database-structure.cjs
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
+);
+
+async function verifyDatabase() {
+  const tablesToCheck = ['daily_production', 'shipping_preparations', 'freight_customs', 'sales'];
+
+  for (const tableName of tablesToCheck) {
+    const { error } = await supabase.from(tableName).select('*').limit(1);
+    if (error?.code === '42P01') {
+      console.log(`❌ ${tableName}: N'EXISTE PAS`);
+    } else if (!error) {
+      console.log(`✅ ${tableName}: Existe`);
+    }
+  }
+}
+
+verifyDatabase();
+```
+
+**Étape 2: TOUJOURS exécuter AVANT d'écrire la migration**
+```bash
+node scripts/verify-database-structure.cjs
+```
+
+**Étape 3: Vérifier l'existence DANS la migration**
+```sql
+DO $$
+BEGIN
+  -- Vérifier si la table existe
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_name = 'freight_customs'
+  ) THEN
+    ALTER TABLE freight_customs ADD COLUMN ...;
+    RAISE NOTICE '✅ Colonne ajoutée à freight_customs';
+  ELSE
+    RAISE NOTICE '⚠️  Table freight_customs n''existe pas - modification ignorée';
+  END IF;
+END $$;
+```
+
+**Raison:** Référencer une table inexistante cause l'erreur 42P01 et fait échouer TOUTE la migration. C'est l'erreur la plus coûteuse car elle bloque tout le déploiement!
+
+---
+
 ### 1. L'opérateur || dans COMMENT ON COLUMN
 
 **❌ INCORRECT - NE JAMAIS FAIRE:**
@@ -133,16 +198,20 @@ DROP TYPE IF EXISTS my_enum CASCADE;
 
 ---
 
-## 📋 CHECKLIST AVANT CHAQUE MIGRATION
+## 📋 CHECKLIST AVANT CHAQUE MIGRATION (OBLIGATOIRE)
 
-- [ ] Vérifier la structure actuelle des tables avec `\d table_name`
+### CRITIQUE - À FAIRE EN PREMIER:
+- [ ] 🚨 **EXÉCUTER `node scripts/verify-database-structure.cjs`**
+- [ ] 🚨 **Vérifier que TOUTES les tables référencées existent**
+- [ ] 🚨 **Vérifier que TOUTES les colonnes référencées existent**
+
+### ENSUITE:
 - [ ] Identifier toutes les dépendances (triggers, fonctions, vues)
 - [ ] Tester la syntaxe des COMMENT ON (pas de ||)
-- [ ] Vérifier les noms de colonnes dans les sous-requêtes
-- [ ] Utiliser des blocs DO $$ pour les modifications d'ENUM
+- [ ] Utiliser des blocs DO $$ avec EXCEPTION pour chaque modification
 - [ ] Prévoir la recréation des objets dépendants après CASCADE
-- [ ] Tester la migration sur un environnement de test
-- [ ] Ajouter des RAISE NOTICE pour le suivi
+- [ ] Ajouter des RAISE NOTICE pour le suivi de chaque étape
+- [ ] Tester la migration localement si possible
 
 ---
 

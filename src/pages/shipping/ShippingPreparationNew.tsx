@@ -166,6 +166,7 @@ export default function ShippingPreparationNew() {
         mining_company:mining_companies(id, name, code)
       `)
       .eq('mining_company_id', miningCompanyId)
+      .eq('status', 'ready_for_customs')
       .order('production_date', { ascending: false })
       .limit(100);
 

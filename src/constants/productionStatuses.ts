@@ -1,4 +1,4 @@
-export type ProductionStatus = 'prepared' | 'shipped' | 'cancelled';
+export type ProductionStatus = 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled';
 
 export const PRODUCTION_STATUSES: Record<ProductionStatus, {
   label: string;
@@ -12,7 +12,14 @@ export const PRODUCTION_STATUSES: Record<ProductionStatus, {
     color: 'text-blue-700',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
-    description: 'Production créée et prête pour expédition'
+    description: 'Production créée et en attente de validation'
+  },
+  ready_for_customs: {
+    label: 'Prêt pour la Douane',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    description: 'Production validée et prête pour inclusion dans une expédition'
   },
   shipped: {
     label: 'Expédié',
@@ -30,17 +37,19 @@ export const PRODUCTION_STATUSES: Record<ProductionStatus, {
   }
 };
 
-export const STATUS_FLOW: ProductionStatus[] = ['prepared', 'shipped'];
+export const STATUS_FLOW: ProductionStatus[] = ['prepared', 'ready_for_customs', 'shipped'];
 
 export const NEXT_STATUS: Record<ProductionStatus, ProductionStatus | null> = {
-  prepared: 'shipped',
+  prepared: 'ready_for_customs',
+  ready_for_customs: 'shipped',
   shipped: null,
   cancelled: null
 };
 
 export const PREVIOUS_STATUS: Record<ProductionStatus, ProductionStatus | null> = {
   prepared: null,
-  shipped: 'prepared',
+  ready_for_customs: 'prepared',
+  shipped: 'ready_for_customs',
   cancelled: null
 };
 

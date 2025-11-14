@@ -14,7 +14,7 @@ export interface DailyProduction {
   notes: string | null;
   site_id: string;
   mining_company_id: string | null;
-  status: 'prepared' | 'shipped' | 'cancelled';
+  status: 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled';
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -395,6 +395,78 @@ class DailyProductionService {
 
     if (error) throw error;
     return data as string;
+  }
+
+  // Status management methods
+  async updateProductionStatus(
+    productionId: string,
+    newStatus: 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled',
+    notes?: string
+  ): Promise<DailyProduction> {
+    try {
+      const { data, error } = await supabase
+        .from('daily_production')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productionId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Si des notes sont fournies, les ajouter à l'historique
+      if (notes) {
+        await supabase
+          .from('production_status_history')
+          .update({ notes })
+          .eq('production_id', productionId)
+          .eq('new_status', newStatus)
+          .order('changed_at', { ascending: false })
+          .limit(1);
+      }
+
+      return data as DailyProduction;
+    } catch (error: any) {
+      console.error('Error updating production status:', error);
+      throw new Error(`Impossible de mettre à jour le statut: ${error.message}`);
+    }
+  }
+
+  async getProductionStatusHistory(productionId: string) {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_production_status_history', { prod_id: productionId });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      console.error('Error fetching status history:', error);
+      return [];
+    }
+  }
+
+  async getProductionsReadyForCustoms(miningCompanyId?: string) {
+    try {
+      let query = supabase
+        .from('daily_production')
+        .select('*')
+        .eq('status', 'ready_for_customs')
+        .order('production_date', { ascending: false });
+
+      if (miningCompanyId) {
+        query = query.eq('mining_company_id', miningCompanyId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data as DailyProduction[];
+    } catch (error: any) {
+      console.error('Error fetching productions ready for customs:', error);
+      throw error;
+    }
   }
 }
 

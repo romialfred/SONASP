@@ -12,6 +12,7 @@ import { productionStatusService, StatusHistoryEntry } from '@/services/producti
 import { productionDocumentService } from '@/services/productionDocumentService';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
 import { ProductionStatusWorkflow } from '@/components/production/ProductionStatusWorkflow';
+import { ProductionStatusWorkflowEnhanced } from '@/components/production/ProductionStatusWorkflowEnhanced';
 import { ProductionDocumentsList, ProductionDocument } from '@/components/production/ProductionDocumentsList';
 import { ProductionDocumentUpload } from '@/components/production/ProductionDocumentUpload';
 import { ProductionStatusHistory } from '@/components/production/ProductionStatusHistory';
@@ -319,6 +320,36 @@ export function ProductionDetails() {
           </div>
         </div>
 
+        {/* Workflow Section - At Top */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <ProductionStatusWorkflowEnhanced
+              currentStatus={production.status as ProductionStatus}
+              statusHistory={statusHistory}
+            />
+          </div>
+          <div className="flex items-end">
+            <ProductionStatusWorkflow
+              productionId={production.id}
+              currentStatus={production.status as ProductionStatus}
+              production={{
+                id: production.id,
+                bar_reference: production.bar_reference,
+                production_date: production.production_date,
+                bullion_grams: production.bullion_grams,
+                estimated_fineness_pct: production.estimated_fineness_pct,
+                pure_gold_grams: production.pure_gold_grams,
+                estimated_oz: production.estimated_oz,
+                mining_company_name: miningCompany?.name,
+                site_country: siteCountry
+              }}
+              userEmail={user?.email}
+              onStatusChanged={loadProductionDetails}
+              compactButton
+            />
+          </div>
+        </div>
+
         {/* Tabs Navigation */}
         <Tabs
           tabs={[
@@ -438,30 +469,6 @@ export function ProductionDetails() {
               )}
               </Card>
 
-              {/* Status Workflow Card */}
-              <Card className="p-4">
-                <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-600" />
-                  Workflow de Statut
-                </h3>
-                <ProductionStatusWorkflow
-                productionId={production.id}
-                currentStatus={production.status as ProductionStatus}
-                production={{
-                  id: production.id,
-                  bar_reference: production.bar_reference,
-                  production_date: production.production_date,
-                  bullion_grams: production.bullion_grams,
-                  estimated_fineness_pct: production.estimated_fineness_pct,
-                  pure_gold_grams: production.pure_gold_grams,
-                  estimated_oz: production.estimated_oz,
-                  mining_company_name: miningCompany?.name,
-                  site_country: siteCountry
-                }}
-                userEmail={user?.email}
-                onStatusChanged={loadProductionDetails}
-              />
-                    </Card>
                   </>
                 )}
 

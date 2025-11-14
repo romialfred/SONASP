@@ -12,6 +12,35 @@
 -- Transaction complète
 BEGIN;
 
+-- Désactiver temporairement les triggers de protection
+DO $$
+BEGIN
+  -- Désactiver les triggers sur virtual_payments
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
+    ALTER TABLE virtual_payments DISABLE TRIGGER ALL;
+    RAISE NOTICE '⚠️  Triggers désactivés sur virtual_payments';
+  END IF;
+
+  -- Désactiver les triggers sur payments
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
+    ALTER TABLE payments DISABLE TRIGGER ALL;
+    RAISE NOTICE '⚠️  Triggers désactivés sur payments';
+  END IF;
+
+  -- Désactiver les triggers sur autres tables si nécessaire
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
+    ALTER TABLE sales DISABLE TRIGGER ALL;
+    RAISE NOTICE '⚠️  Triggers désactivés sur sales';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory') THEN
+    ALTER TABLE inventory DISABLE TRIGGER ALL;
+    RAISE NOTICE '⚠️  Triggers désactivés sur inventory';
+  END IF;
+
+  RAISE NOTICE '';
+END $$;
+
 -- Suppression dans l'ordre des dépendances avec vérifications
 DO $$
 BEGIN
@@ -105,6 +134,38 @@ BEGIN
   RAISE NOTICE '✅ Nettoyage automatique terminé avec succès';
   RAISE NOTICE '✅ Toutes les données transactionnelles ont été supprimées';
   RAISE NOTICE '✅ ═══════════════════════════════════════════════════════';
+  RAISE NOTICE '';
+END $$;
+
+-- Réactiver les triggers
+DO $$
+BEGIN
+  -- Réactiver les triggers sur virtual_payments
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
+    ALTER TABLE virtual_payments ENABLE TRIGGER ALL;
+    RAISE NOTICE '🔄 Triggers réactivés sur virtual_payments';
+  END IF;
+
+  -- Réactiver les triggers sur payments
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
+    ALTER TABLE payments ENABLE TRIGGER ALL;
+    RAISE NOTICE '🔄 Triggers réactivés sur payments';
+  END IF;
+
+  -- Réactiver les triggers sur sales
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
+    ALTER TABLE sales ENABLE TRIGGER ALL;
+    RAISE NOTICE '🔄 Triggers réactivés sur sales';
+  END IF;
+
+  -- Réactiver les triggers sur inventory
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory') THEN
+    ALTER TABLE inventory ENABLE TRIGGER ALL;
+    RAISE NOTICE '🔄 Triggers réactivés sur inventory';
+  END IF;
+
+  RAISE NOTICE '';
+  RAISE NOTICE '✅ Tous les triggers ont été réactivés';
   RAISE NOTICE '';
 END $$;
 

@@ -321,11 +321,18 @@ export function ProductionDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Production Details Card - Refined */}
-            <Card className="p-4">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">
-                Détails de Production
+            {/* Section: Détails de la Production */}
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                Détails de la Production
               </h2>
+
+              {/* Production Details Card */}
+              <Card className="p-4">
+                <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                  Informations Générales
+                </h3>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-start gap-2">
@@ -414,15 +421,15 @@ export function ProductionDetails() {
                   </p>
                 </div>
               )}
-            </Card>
+              </Card>
 
-            {/* Status Workflow Card - Refined */}
-            <Card className="p-4">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
-                Workflow de Statut
-              </h2>
-              <ProductionStatusWorkflow
+              {/* Status Workflow Card */}
+              <Card className="p-4">
+                <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-600" />
+                  Workflow de Statut
+                </h3>
+                <ProductionStatusWorkflow
                 productionId={production.id}
                 currentStatus={production.status as ProductionStatus}
                 production={{
@@ -439,18 +446,24 @@ export function ProductionDetails() {
                 userEmail={user?.email}
                 onStatusChanged={loadProductionDetails}
               />
-            </Card>
+              </Card>
+            </div>
 
-            {/* Documents Card - Refined */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-600" />
-                  <h2 className="text-sm font-semibold text-gray-900">
-                    Documents Attachés
-                  </h2>
-                  <span className="text-xs text-gray-500">({documents.length})</span>
-                </div>
+            {/* Section: Documents */}
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                Documents
+              </h2>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      Documents Attachés
+                    </h3>
+                    <span className="text-xs text-gray-500">({documents.length})</span>
+                  </div>
                 <Button
                   onClick={() => setShowDocumentUpload(true)}
                   size="sm"
@@ -467,7 +480,8 @@ export function ProductionDetails() {
                 onDelete={handleDocumentDelete}
                 canDelete={true}
               />
-            </Card>
+              </Card>
+            </div>
           </div>
 
           {/* Right Column - History - Refined */}

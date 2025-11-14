@@ -1,4 +1,4 @@
-import { Clock, User, MapPin, FileText, Circle } from 'lucide-react';
+import { Clock, User, MapPin, FileText, Circle, Timer } from 'lucide-react';
 import { ProductionStatusBadge } from './ProductionStatusBadge';
 import { ProductionStatus } from '@/constants/productionStatuses';
 
@@ -30,8 +30,33 @@ export function ProductionStatusHistory({ history, siteCountry }: ProductionStat
       time: date.toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit'
+      }),
+      full: date.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       })
     };
+  };
+
+  // Calculer la durée entre deux dates
+  const calculateDuration = (date1: string, date2: string) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    const diffMs = Math.abs(d1.getTime() - d2.getTime());
+
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}j`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}min`);
+
+    return parts.join(' ');
   };
 
   if (history.length === 0) {
@@ -48,16 +73,27 @@ export function ProductionStatusHistory({ history, siteCountry }: ProductionStat
     );
   }
 
+  // Trier l'historique du plus récent au plus ancien
+  const sortedHistory = [...history].sort(
+    (a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
+  );
+
   return (
     <div className="relative">
       {/* Vertical Timeline Line */}
       <div className="absolute left-[15px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-blue-200 via-blue-300 to-blue-200" />
 
-      <div className="space-y-6">
-        {history.map((entry, index) => {
-          const { date, time } = formatDateTime(entry.changed_at);
+      <div className="space-y-4">
+        {sortedHistory.map((entry, index) => {
+          const { date, time, full } = formatDateTime(entry.changed_at);
           const isFirst = index === 0;
-          const isLast = index === history.length - 1;
+          const isLast = index === sortedHistory.length - 1;
+
+          // Calculer la durée depuis le changement précédent
+          const duration = !isLast ? calculateDuration(
+            entry.changed_at,
+            sortedHistory[index + 1].changed_at
+          ) : null;
 
           return (
             <div key={entry.id} className="relative pl-12">
@@ -76,22 +112,22 @@ export function ProductionStatusHistory({ history, siteCountry }: ProductionStat
 
               {/* Content Card */}
               <div
-                className={`bg-white rounded-lg border-2 shadow-sm hover:shadow-md transition-all ${
+                className={`bg-white rounded-lg border shadow-sm hover:shadow-md transition-all ${
                   isFirst
-                    ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/30 to-white'
+                    : 'border-gray-200 hover:border-blue-200'
                 }`}
               >
-                <div className="p-4">
+                <div className="p-3">
                   {/* Header: Status Change */}
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
                     {entry.old_status ? (
                       <>
                         <ProductionStatusBadge
                           status={entry.old_status as ProductionStatus}
                           size="sm"
                         />
-                        <span className="text-gray-400 font-bold">→</span>
+                        <span className="text-gray-400 font-bold text-xs">→</span>
                         <ProductionStatusBadge
                           status={entry.new_status as ProductionStatus}
                           size="sm"
@@ -109,43 +145,42 @@ export function ProductionStatusHistory({ history, siteCountry }: ProductionStat
                         </span>
                       </div>
                     )}
-                  </div>
-
-                  {/* Metadata Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    {/* Date & Time */}
-                    <div className="flex items-center gap-2 text-xs">
-                      <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-gray-900 font-medium truncate">{date}</p>
-                        <p className="text-gray-500 truncate">{time}</p>
-                      </div>
-                    </div>
-
-                    {/* User */}
-                    <div className="flex items-center gap-2 text-xs">
-                      <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-gray-900 font-medium truncate">
-                          {entry.user_email || 'Système'}
-                        </p>
-                        {entry.user_email && (
-                          <p className="text-gray-500 truncate">Utilisateur</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Country (if available) */}
-                    {siteCountry && (
-                      <div className="flex items-center gap-2 text-xs col-span-2">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-gray-900 font-medium truncate">{siteCountry}</p>
-                          <p className="text-gray-500 truncate">Localisation</p>
-                        </div>
-                      </div>
+                    {isFirst && (
+                      <span className="ml-auto text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        RÉCENT
+                      </span>
                     )}
                   </div>
+
+                  {/* Date, Auteur, Lieu sur une seule ligne */}
+                  <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      <span className="font-medium">{full}</span>
+                    </div>
+                    <span className="text-gray-300">|</span>
+                    <div className="flex items-center gap-1">
+                      <User className="w-3 h-3 text-gray-400" />
+                      <span>{entry.user_email || 'Système'}</span>
+                    </div>
+                    {siteCountry && (
+                      <>
+                        <span className="text-gray-300">|</span>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-gray-400" />
+                          <span>{siteCountry}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Durée depuis le changement précédent */}
+                  {duration && (
+                    <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mb-2">
+                      <Timer className="w-3 h-3" />
+                      <span className="font-medium">Durée: {duration}</span>
+                    </div>
+                  )}
 
                   {/* Notes (if available) */}
                   {entry.notes && (
@@ -162,15 +197,6 @@ export function ProductionStatusHistory({ history, siteCountry }: ProductionStat
                     </div>
                   )}
 
-                  {/* First Entry Badge */}
-                  {isFirst && (
-                    <div className="mt-3 pt-3 border-t border-emerald-200">
-                      <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                        <Circle className="w-2 h-2 fill-current" />
-                        Changement le plus récent
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

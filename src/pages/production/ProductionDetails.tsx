@@ -49,7 +49,7 @@ export function ProductionDetails() {
     }
   }, [id]);
 
-  const loadProductionDetails = async () => {
+  const loadProductionDetails = async (forceRefresh = false) => {
     if (!id) {
       setError({
         title: 'ID Invalide',
@@ -62,6 +62,12 @@ export function ProductionDetails() {
     try {
       setLoading(true);
       setError(null);
+
+      // Si forceRefresh, attendre un peu pour que le trigger s'exécute
+      if (forceRefresh) {
+        console.log('🔄 Force refresh - Waiting for trigger to complete...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       const prodData = await dailyProductionService.getProductionById(id);
 
@@ -82,7 +88,9 @@ export function ProductionDetails() {
 
       // Load status history with direct database query as fallback
       try {
+        console.log('📊 Loading status history for production:', id);
         const history = await loadStatusHistory(id);
+        console.log('✅ Status history loaded:', history.length, 'entries');
         setStatusHistory(history);
       } catch (historyError) {
         console.warn('Could not load status history:', historyError);
@@ -558,7 +566,7 @@ export function ProductionDetails() {
                         site_country: siteCountry
                       }}
                       userEmail={user?.email}
-                      onStatusChanged={loadProductionDetails}
+                      onStatusChanged={() => loadProductionDetails(true)}
                       compactButton
                     />
                   </>

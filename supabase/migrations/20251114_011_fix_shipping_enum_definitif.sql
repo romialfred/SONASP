@@ -239,7 +239,7 @@ DO $$
 DECLARE
     column_type text;
     enum_name text;
-    column_default text;
+    col_default text;
     enum_values text[];
 BEGIN
     RAISE NOTICE '============================================';
@@ -247,11 +247,11 @@ BEGIN
     RAISE NOTICE '============================================';
 
     -- Vérifier le type de la colonne
-    SELECT data_type, udt_name, column_default
-    INTO column_type, enum_name, column_default
-    FROM information_schema.columns
-    WHERE table_name = 'shipping_preparations'
-    AND column_name = 'status';
+    SELECT data_type, udt_name, c.column_default
+    INTO column_type, enum_name, col_default
+    FROM information_schema.columns c
+    WHERE c.table_name = 'shipping_preparations'
+    AND c.column_name = 'status';
 
     -- Vérifier les valeurs de l'ENUM
     SELECT array_agg(enumlabel ORDER BY enumsortorder)
@@ -262,7 +262,7 @@ BEGIN
     RAISE NOTICE 'Table shipping_preparations.status:';
     RAISE NOTICE '  Data Type: %', column_type;
     RAISE NOTICE '  UDT Name: %', enum_name;
-    RAISE NOTICE '  Default: %', column_default;
+    RAISE NOTICE '  Default: %', col_default;
     RAISE NOTICE '';
     RAISE NOTICE 'ENUM shipping_preparation_status:';
     RAISE NOTICE '  Valeurs: %', enum_values;

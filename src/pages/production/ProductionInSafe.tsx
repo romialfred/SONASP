@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Download, TrendingUp, TrendingDown, Minus, Shield, Calendar } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Minus, Shield, Calendar, CalendarDays, CalendarCheck } from 'lucide-react';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
@@ -23,10 +23,16 @@ interface SafeProductionSummary {
   record_count: number;
 }
 
+interface PeriodData {
+  actual: number;
+  budget: number;
+  forecast: number;
+}
+
 interface ForecastData {
-  ytd_forecast: number;
-  ytd_budget: number;
-  ytd_actual: number;
+  wtd: PeriodData;
+  mtd: PeriodData;
+  ytd: PeriodData;
 }
 
 export function ProductionInSafe() {
@@ -53,11 +59,11 @@ export function ProductionInSafe() {
     record_count: 0
   });
 
-  // Forecast data
+  // Forecast data with WTD, MTD, YTD
   const [forecasts, setForecasts] = useState<ForecastData>({
-    ytd_forecast: 5000,
-    ytd_budget: 5500,
-    ytd_actual: 0
+    wtd: { actual: 0, budget: 850, forecast: 780 },
+    mtd: { actual: 0, budget: 2800, forecast: 2500 },
+    ytd: { actual: 0, budget: 5500, forecast: 5000 }
   });
 
   useEffect(() => {
@@ -121,12 +127,37 @@ export function ProductionInSafe() {
         record_count: productionData.length
       });
 
-      // Calculate YTD actual
-      const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+      // Calculate WTD, MTD, YTD actuals
+      const now = new Date();
+
+      // Week to Date (start of week = Sunday)
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      // Month to Date
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Year to Date
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+      const wtdData = productionData.filter(p => new Date(p.production_date) >= startOfWeek);
+      const mtdData = productionData.filter(p => new Date(p.production_date) >= startOfMonth);
       const ytdData = productionData.filter(p => new Date(p.production_date) >= startOfYear);
+
       setForecasts(prev => ({
-        ...prev,
-        ytd_actual: ytdData.reduce((sum, p) => sum + p.estimated_oz, 0)
+        wtd: {
+          ...prev.wtd,
+          actual: wtdData.reduce((sum, p) => sum + p.estimated_oz, 0)
+        },
+        mtd: {
+          ...prev.mtd,
+          actual: mtdData.reduce((sum, p) => sum + p.estimated_oz, 0)
+        },
+        ytd: {
+          ...prev.ytd,
+          actual: ytdData.reduce((sum, p) => sum + p.estimated_oz, 0)
+        }
       }));
 
     } catch (error) {
@@ -142,9 +173,9 @@ export function ProductionInSafe() {
   };
 
   const getTrafficLight = (percentage: number) => {
-    if (percentage >= 95) return { color: 'bg-emerald-500', label: 'Excellent' };
-    if (percentage >= 85) return { color: 'bg-yellow-500', label: 'Attention' };
-    return { color: 'bg-red-500', label: 'Critique' };
+    if (percentage >= 95) return { color: 'bg-emerald-500', label: 'Excellent', textColor: 'text-emerald-700' };
+    if (percentage >= 85) return { color: 'bg-yellow-500', label: 'Attention', textColor: 'text-yellow-700' };
+    return { color: 'bg-red-500', label: 'Critique', textColor: 'text-red-700' };
   };
 
   const getOutlookIcon = (currentOz: number, index: number) => {
@@ -216,10 +247,124 @@ export function ProductionInSafe() {
     return company?.name || 'N/A';
   };
 
-  const forecastPercentage = calculatePercentage(forecasts.ytd_actual, forecasts.ytd_forecast);
-  const budgetPercentage = calculatePercentage(forecasts.ytd_actual, forecasts.ytd_budget);
-  const forecastTrafficLight = getTrafficLight(forecastPercentage);
-  const budgetTrafficLight = getTrafficLight(budgetPercentage);
+  // Render Period Card Component
+  const PeriodCard = ({
+    title,
+    icon: Icon,
+    data,
+    borderColor
+  }: {
+    title: string;
+    icon: any;
+    data: PeriodData;
+    borderColor: string;
+  }) => {
+    const budgetPercentage = calculatePercentage(data.actual, data.budget);
+    const forecastPercentage = calculatePercentage(data.actual, data.forecast);
+    const budgetGap = data.actual - data.budget;
+    const forecastGap = data.actual - data.forecast;
+    const budgetStatus = getTrafficLight(budgetPercentage);
+    const forecastStatus = getTrafficLight(forecastPercentage);
+
+    return (
+      <Card className={`${borderColor} shadow-md hover:shadow-lg transition-shadow`}>
+        <div className="p-5">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+            <Icon className="w-5 h-5 text-amber-600" />
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide">
+              {title}
+            </h3>
+          </div>
+
+          {/* Main Values */}
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between items-baseline">
+              <span className="text-xs font-medium text-gray-600">Actuel</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {safeToFixed(data.actual, 0)} oz
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-gray-600">Budget</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {safeToFixed(data.budget, 0)} oz
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-gray-600">Prévision</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {safeToFixed(data.forecast, 0)} oz
+              </span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 my-3"></div>
+
+          {/* vs Budget */}
+          <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-200 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${budgetStatus.color}`} />
+                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
+              </div>
+              <span className={`text-xs font-bold ${budgetStatus.textColor}`}>
+                {budgetStatus.label}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-bold text-blue-700">
+                {safeToFixed(budgetPercentage, 1)}%
+              </span>
+              <div className="flex items-center gap-1">
+                {budgetGap >= 0 ? (
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                )}
+                <span className={`text-sm font-bold ${
+                  budgetGap >= 0 ? 'text-emerald-700' : 'text-red-700'
+                }`}>
+                  {budgetGap >= 0 ? '+' : ''}{safeToFixed(budgetGap, 0)} oz
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* vs Prévision */}
+          <div className="bg-gradient-to-br from-emerald-50 to-white p-3 rounded-lg border border-emerald-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${forecastStatus.color}`} />
+                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
+              </div>
+              <span className={`text-xs font-bold ${forecastStatus.textColor}`}>
+                {forecastStatus.label}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-bold text-emerald-700">
+                {safeToFixed(forecastPercentage, 1)}%
+              </span>
+              <div className="flex items-center gap-1">
+                {forecastGap >= 0 ? (
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                )}
+                <span className={`text-sm font-bold ${
+                  forecastGap >= 0 ? 'text-emerald-700' : 'text-red-700'
+                }`}>
+                  {forecastGap >= 0 ? '+' : ''}{safeToFixed(forecastGap, 0)} oz
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <MainLayout>
@@ -315,7 +460,7 @@ export function ProductionInSafe() {
           </div>
         </Card>
 
-        {/* Production Table - EN HAUT */}
+        {/* Production Table */}
         <Card className="border-amber-200 shadow-lg">
           <div className="p-4 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
             <div className="flex items-center justify-between">
@@ -445,163 +590,26 @@ export function ProductionInSafe() {
           </div>
         </Card>
 
-        {/* KPI Tiles - APRÈS LE TABLEAU */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Year to Date Progress */}
-          <Card className="border-l-4 border-l-amber-500 shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Year to Date
-                  </h3>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-medium text-gray-600">Réalisé</span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    {safeToFixed(forecasts.ytd_actual, 0)} oz
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium text-gray-600">Budget</span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {safeToFixed(forecasts.ytd_budget, 0)} oz
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium text-gray-600">Forecast</span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {safeToFixed(forecasts.ytd_forecast, 0)} oz
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="pt-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-medium text-gray-600">Progrès vs Budget</span>
-                    <span className="text-xs font-bold text-gray-900">
-                      {safeToFixed(budgetPercentage, 1)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-amber-500 to-yellow-500 h-3 rounded-full transition-all"
-                      style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* vs Forecast */}
-          <Card className="border-t-4 border-t-emerald-500 shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-5">
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">
-                vs Forecast
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${forecastTrafficLight.color}`} />
-                    <span className="text-xs font-medium text-gray-600">Status</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900">
-                    {forecastTrafficLight.label}
-                  </span>
-                </div>
-
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-medium text-gray-600">Performance</span>
-                    <span className="text-3xl font-bold text-emerald-700">
-                      {safeToFixed(forecastPercentage, 1)}%
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    {forecastPercentage >= 100 ? (
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-600" />
-                    )}
-                    <span className={`text-xs font-medium ${
-                      forecastPercentage >= 100 ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
-                      {forecastPercentage >= 100 ? 'Au-dessus' : 'En-dessous'} de la prévision
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-600">Écart</span>
-                  <span className={`font-bold ${
-                    forecasts.ytd_actual >= forecasts.ytd_forecast
-                      ? 'text-emerald-700'
-                      : 'text-red-700'
-                  }`}>
-                    {forecasts.ytd_actual >= forecasts.ytd_forecast ? '+' : ''}
-                    {safeToFixed(forecasts.ytd_actual - forecasts.ytd_forecast, 0)} oz
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* vs Budget */}
-          <Card className="border-t-4 border-t-blue-500 shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-5">
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">
-                vs Budget
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${budgetTrafficLight.color}`} />
-                    <span className="text-xs font-medium text-gray-600">Status</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900">
-                    {budgetTrafficLight.label}
-                  </span>
-                </div>
-
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-medium text-gray-600">Performance</span>
-                    <span className="text-3xl font-bold text-blue-700">
-                      {safeToFixed(budgetPercentage, 1)}%
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    {budgetPercentage >= 100 ? (
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-600" />
-                    )}
-                    <span className={`text-xs font-medium ${
-                      budgetPercentage >= 100 ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
-                      {budgetPercentage >= 100 ? 'Au-dessus' : 'En-dessous'} du budget
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-600">Écart</span>
-                  <span className={`font-bold ${
-                    forecasts.ytd_actual >= forecasts.ytd_budget
-                      ? 'text-emerald-700'
-                      : 'text-red-700'
-                  }`}>
-                    {forecasts.ytd_actual >= forecasts.ytd_budget ? '+' : ''}
-                    {safeToFixed(forecasts.ytd_actual - forecasts.ytd_budget, 0)} oz
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
+        {/* KPI Tiles - 3 Period Cards Harmonized */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <PeriodCard
+            title="Week to Date"
+            icon={Calendar}
+            data={forecasts.wtd}
+            borderColor="border-l-4 border-l-blue-500"
+          />
+          <PeriodCard
+            title="Month to Date"
+            icon={CalendarDays}
+            data={forecasts.mtd}
+            borderColor="border-l-4 border-l-emerald-500"
+          />
+          <PeriodCard
+            title="Year to Date"
+            icon={CalendarCheck}
+            data={forecasts.ytd}
+            borderColor="border-l-4 border-l-amber-500"
+          />
         </div>
       </div>
     </MainLayout>

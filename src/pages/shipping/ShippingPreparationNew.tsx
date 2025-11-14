@@ -590,12 +590,21 @@ export default function ShippingPreparationNew() {
         prepared_at: new Date().toISOString(),
       };
 
+      // DEBUG: Vérifier les données avant envoi
+      console.log('=== DEBUG SHIPPING PREPARATION ===');
+      console.log('prepData.status:', prepData.status);
+      console.log('Full prepData:', JSON.stringify(prepData, null, 2));
+      console.log('==================================');
+
       let prepId: string;
 
       if (preparation) {
+        console.log('UPDATE MODE - preparation.id:', preparation.id);
+        console.log('preparation actuelle:', preparation);
         await shippingPreparationService.updatePreparation(preparation.id, prepData);
         prepId = preparation.id;
       } else {
+        console.log('CREATE MODE - Nouvelle préparation');
         const newPrep = await shippingPreparationService.createPreparation(prepData);
         prepId = newPrep.id;
         setPreparation(newPrep);

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Download, TrendingUp, TrendingDown, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Minus, Shield, Calendar } from 'lucide-react';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
@@ -24,21 +24,9 @@ interface SafeProductionSummary {
 }
 
 interface ForecastData {
-  wtd_forecast: number;
-  wtd_budget: number;
-  wtd_actual: number;
-  mtd_forecast: number;
-  mtd_budget: number;
-  mtd_actual: number;
-  month_forecast: number;
-  month_budget: number;
-}
-
-interface StatusCount {
-  prepared: number;
-  shipped: number;
-  refined: number;
-  sold: number;
+  ytd_forecast: number;
+  ytd_budget: number;
+  ytd_actual: number;
 }
 
 export function ProductionInSafe() {
@@ -65,24 +53,11 @@ export function ProductionInSafe() {
     record_count: 0
   });
 
-  // Status counts
-  const [statusCounts, setStatusCounts] = useState<StatusCount>({
-    prepared: 0,
-    shipped: 0,
-    refined: 0,
-    sold: 0
-  });
-
   // Forecast data
-  const [forecasts] = useState<ForecastData>({
-    wtd_forecast: 732,
-    wtd_budget: 807,
-    wtd_actual: 0,
-    mtd_forecast: 2368,
-    mtd_budget: 2735,
-    mtd_actual: 0,
-    month_forecast: 2368,
-    month_budget: 2735
+  const [forecasts, setForecasts] = useState<ForecastData>({
+    ytd_forecast: 5000,
+    ytd_budget: 5500,
+    ytd_actual: 0
   });
 
   useEffect(() => {
@@ -146,26 +121,13 @@ export function ProductionInSafe() {
         record_count: productionData.length
       });
 
-      // Calculate status counts
-      const counts: StatusCount = {
-        prepared: productionData.filter(p => p.status === 'prepared').length,
-        shipped: productionData.filter(p => p.status === 'shipped').length,
-        refined: productionData.filter(p => p.status === 'refined').length,
-        sold: productionData.filter(p => p.status === 'sold').length
-      };
-      setStatusCounts(counts);
-
-      // Calculate actual WTD and MTD
-      const now = new Date();
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const wtdData = productionData.filter(p => new Date(p.production_date) >= startOfWeek);
-      const mtdData = productionData.filter(p => new Date(p.production_date) >= startOfMonth);
-
-      forecasts.wtd_actual = wtdData.reduce((sum, p) => sum + p.estimated_oz, 0);
-      forecasts.mtd_actual = mtdData.reduce((sum, p) => sum + p.estimated_oz, 0);
+      // Calculate YTD actual
+      const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+      const ytdData = productionData.filter(p => new Date(p.production_date) >= startOfYear);
+      setForecasts(prev => ({
+        ...prev,
+        ytd_actual: ytdData.reduce((sum, p) => sum + p.estimated_oz, 0)
+      }));
 
     } catch (error) {
       console.error('Error loading productions:', error);
@@ -174,33 +136,27 @@ export function ProductionInSafe() {
     }
   };
 
-  const calculateVariance = (actual: number, target: number) => {
-    return actual - target;
-  };
-
   const calculatePercentage = (actual: number, target: number) => {
     if (target === 0) return 0;
-    return ((actual / target) * 100) - 100;
+    return (actual / target) * 100;
   };
 
-  const generateSummaryText = (): string => {
-    const totalBars = summary.record_count;
-    const totalOz = Math.round(summary.total_estimated_oz);
+  const getTrafficLight = (percentage: number) => {
+    if (percentage >= 95) return { color: 'bg-emerald-500', label: 'Excellent' };
+    if (percentage >= 85) return { color: 'bg-yellow-500', label: 'Attention' };
+    return { color: 'bg-red-500', label: 'Critique' };
+  };
 
-    // Status analysis
-    const statuses = [];
-    if (statusCounts.prepared > 0) statuses.push(`${statusCounts.prepared} en préparation`);
-    if (statusCounts.shipped > 0) statuses.push(`${statusCounts.shipped} expédiées`);
-    if (statusCounts.refined > 0) statuses.push(`${statusCounts.refined} raffinées`);
-    if (statusCounts.sold > 0) statuses.push(`${statusCounts.sold} vendues`);
+  const getOutlookIcon = (currentOz: number, index: number) => {
+    if (index === 0) return <Minus className="w-4 h-4 text-gray-400" />;
+    const previousOz = productions[index - 1]?.estimated_oz || 0;
 
-    // Performance analysis
-    const wtdVariance = calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast);
-    const mtdVariance = calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast);
-    const wtdPerf = wtdVariance >= 0 ? 'conforme' : 'en retard';
-    const mtdPerf = mtdVariance >= 0 ? 'sur la bonne voie' : 'nécessite attention';
-
-    return `${totalBars} barres totalisant ${totalOz} oz en coffre-fort (${statuses.join(', ')}). Performance hebdomadaire ${wtdPerf}, mensuelle ${mtdPerf}.`;
+    if (currentOz > previousOz) {
+      return <TrendingUp className="w-4 h-4 text-emerald-600" />;
+    } else if (currentOz < previousOz) {
+      return <TrendingDown className="w-4 h-4 text-red-600" />;
+    }
+    return <Minus className="w-4 h-4 text-gray-400" />;
   };
 
   const exportToCSV = () => {
@@ -210,34 +166,34 @@ export function ProductionInSafe() {
     }
 
     const headers = [
-      'Date',
+      'Date de Production',
+      'Société',
       'Bullion (g)',
-      'Estimated Fineness (%)',
-      'Pure Gold (g)',
-      'Estimated Oz',
+      'Finesse Estimée (%)',
+      'Or Pur (g)',
+      'Oz Estimées',
       'Bar Reference',
-      'Société Minière',
       'Statut'
     ];
 
     const rows = productions.map(p => [
       new Date(p.production_date).toLocaleDateString('fr-FR'),
+      getCompanyName(p.mining_company_id),
       p.bullion_grams.toFixed(2),
       p.estimated_fineness_pct.toFixed(1),
       p.pure_gold_grams.toFixed(2),
       p.estimated_oz.toFixed(4),
       p.bar_reference || '',
-      getCompanyName(p.mining_company_id),
       p.status || 'N/A'
     ]);
 
     rows.push([
       'TOTAL',
+      '',
       summary.total_bullion_grams.toFixed(2),
       '',
       summary.total_pure_gold_grams.toFixed(2),
       summary.total_estimated_oz.toFixed(4),
-      '',
       '',
       ''
     ]);
@@ -260,76 +216,53 @@ export function ProductionInSafe() {
     return company?.name || 'N/A';
   };
 
-  const getStatusIcon = () => {
-    const wtdVariance = calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast);
-    const mtdVariance = calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast);
-
-    if (wtdVariance >= 0 && mtdVariance >= 0) {
-      return <CheckCircle className="w-5 h-5 text-emerald-600" />;
-    } else if (wtdVariance < 0 || mtdVariance < 0) {
-      return <AlertCircle className="w-5 h-5 text-amber-600" />;
-    }
-    return <Shield className="w-5 h-5 text-slate-600" />;
-  };
+  const forecastPercentage = calculatePercentage(forecasts.ytd_actual, forecasts.ytd_forecast);
+  const budgetPercentage = calculatePercentage(forecasts.ytd_actual, forecasts.ytd_budget);
+  const forecastTrafficLight = getTrafficLight(forecastPercentage);
+  const budgetTrafficLight = getTrafficLight(budgetPercentage);
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header - Professional Style */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-slate-100 rounded-lg">
-                <Shield className="w-6 h-6 text-slate-700" />
+              <div className="p-2.5 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl border border-amber-200">
+                <Shield className="w-6 h-6 text-amber-700" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Production en Coffre-Fort
-              </h1>
-            </div>
-            <p className="text-sm text-gray-600">
-              Suivi et analyse des barres d'or
-            </p>
-          </div>
-          <Button
-            onClick={exportToCSV}
-            variant="outline"
-            className="border-slate-300 hover:bg-slate-50"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
-          </Button>
-        </div>
-
-        {/* Dynamic Summary Card */}
-        <Card className="border-l-4 border-l-slate-700 bg-gradient-to-r from-slate-50 to-white">
-          <div className="p-5">
-            <div className="flex items-start gap-3">
-              {getStatusIcon()}
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Résumé de la situation</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {generateSummaryText()}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Production en Coffre-Fort
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Tableau de bord Management Usine
                 </p>
               </div>
             </div>
           </div>
-        </Card>
+          <Button
+            onClick={exportToCSV}
+            variant="outline"
+            className="border-amber-300 hover:bg-amber-50 text-amber-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exporter CSV
+          </Button>
+        </div>
 
-        {/* Filters - Clean Design */}
-        <Card>
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900">Filtres</h3>
-          </div>
+        {/* Filters */}
+        <Card className="border-amber-200">
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Société Minière
                 </label>
                 <select
                   value={selectedCompany}
                   onChange={(e) => setSelectedCompany(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 >
                   <option value="all">Toutes</option>
                   {miningCompanies.map(company => (
@@ -339,292 +272,105 @@ export function ProductionInSafe() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Statut
                 </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 >
                   <option value="all">Tous</option>
                   <option value="prepared">Préparé</option>
+                  <option value="ready_for_customs">Prêt pour Douane</option>
                   <option value="shipped">Expédié</option>
                   <option value="refined">Raffiné</option>
-                  <option value="sold">Vendu</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Date Début
                 </label>
                 <input
                   type="date"
                   value={dateRange.startDate}
                   onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Date Fin
                 </label>
                 <input
                   type="date"
                   value={dateRange.endDate}
                   onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Performance Cards - Refined Design */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* WTD Card */}
-          <Card className="border-t-4 border-t-slate-700">
-            <div className="p-5 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">Performance Hebdomadaire</h3>
-              <p className="text-xs text-gray-600 mt-0.5">Week to Date</p>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-600">Prévision</span>
-                <span className="text-sm font-semibold text-gray-900">{forecasts.wtd_forecast} oz</span>
-              </div>
-
-              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-600">Budget</span>
-                <span className="text-sm font-semibold text-gray-900">{forecasts.wtd_budget} oz</span>
-              </div>
-
-              <div className="flex justify-between items-center py-3 bg-slate-50 rounded-lg px-4">
-                <span className="text-xs font-semibold text-slate-900">Réalisé</span>
-                <span className="text-lg font-bold text-slate-900">{forecasts.wtd_actual.toFixed(0)} oz</span>
-              </div>
-
-              <div className={`flex justify-between items-center py-3 px-4 rounded-lg ${
-                calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0
-                  ? 'bg-emerald-50 border border-emerald-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className={`text-sm font-bold ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0
-                      ? 'text-emerald-700'
-                      : 'text-red-700'
-                  }`}>
-                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0 ? '+' : ''}
-                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast).toFixed(0)} oz
-                  </span>
-                  <span className={`text-xs ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_forecast) >= 0
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
-                  }`}>
-                    ({calculatePercentage(forecasts.wtd_actual, forecasts.wtd_forecast).toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-
-              <div className={`flex justify-between items-center py-3 px-4 rounded-lg ${
-                calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0
-                  ? 'bg-emerald-50 border border-emerald-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                  )}
-                  <span className={`text-sm font-bold ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0
-                      ? 'text-emerald-700'
-                      : 'text-red-700'
-                  }`}>
-                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0 ? '+' : ''}
-                    {calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget).toFixed(0)} oz
-                  </span>
-                  <span className={`text-xs ${
-                    calculateVariance(forecasts.wtd_actual, forecasts.wtd_budget) >= 0
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
-                  }`}>
-                    ({calculatePercentage(forecasts.wtd_actual, forecasts.wtd_budget).toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* MTD Card */}
-          <Card className="border-t-4 border-t-slate-700">
-            <div className="p-5 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">Performance Mensuelle</h3>
-              <p className="text-xs text-gray-600 mt-0.5">Month to Date</p>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-600">Prévision</span>
-                <span className="text-sm font-semibold text-gray-900">{forecasts.mtd_forecast} oz</span>
-              </div>
-
-              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-600">Budget</span>
-                <span className="text-sm font-semibold text-gray-900">{forecasts.mtd_budget} oz</span>
-              </div>
-
-              <div className="flex justify-between items-center py-3 bg-slate-50 rounded-lg px-4">
-                <span className="text-xs font-semibold text-slate-900">Réalisé</span>
-                <span className="text-lg font-bold text-slate-900">{forecasts.mtd_actual.toFixed(0)} oz</span>
-              </div>
-
-              <div className={`flex justify-between items-center py-3 px-4 rounded-lg ${
-                calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0
-                  ? 'bg-emerald-50 border border-emerald-200'
-                  : 'bg-amber-50 border border-amber-200'
-              }`}>
-                <span className="text-xs font-semibold text-gray-700">vs Prévision</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-amber-600" />
-                  )}
-                  <span className={`text-sm font-bold ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0
-                      ? 'text-emerald-700'
-                      : 'text-amber-700'
-                  }`}>
-                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0 ? '+' : ''}
-                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast).toFixed(0)} oz
-                  </span>
-                  <span className={`text-xs ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_forecast) >= 0
-                      ? 'text-emerald-600'
-                      : 'text-amber-600'
-                  }`}>
-                    ({calculatePercentage(forecasts.mtd_actual, forecasts.mtd_forecast).toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-
-              <div className={`flex justify-between items-center py-3 px-4 rounded-lg ${
-                calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0
-                  ? 'bg-emerald-50 border border-emerald-200'
-                  : 'bg-amber-50 border border-amber-200'
-              }`}>
-                <span className="text-xs font-semibold text-gray-700">vs Budget</span>
-                <div className="flex items-center gap-2">
-                  {calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-amber-600" />
-                  )}
-                  <span className={`text-sm font-bold ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0
-                      ? 'text-emerald-700'
-                      : 'text-amber-700'
-                  }`}>
-                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0 ? '+' : ''}
-                    {calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget).toFixed(0)} oz
-                  </span>
-                  <span className={`text-xs ${
-                    calculateVariance(forecasts.mtd_actual, forecasts.mtd_budget) >= 0
-                      ? 'text-emerald-600'
-                      : 'text-amber-600'
-                  }`}>
-                    ({calculatePercentage(forecasts.mtd_actual, forecasts.mtd_budget).toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Monthly Targets - Subtle Design */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-gradient-to-br from-slate-50 to-white border-slate-200">
-            <div className="p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-gray-600">Budget Mensuel</span>
-                <span className="text-xl font-bold text-slate-900">{forecasts.month_budget} oz</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-slate-50 to-white border-slate-200">
-            <div className="p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-gray-600">Prévision Mensuelle</span>
-                <span className="text-xl font-bold text-slate-900">{forecasts.month_forecast} oz</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Production Table - Professional Style */}
-        <Card>
-          <div className="p-5 border-b border-gray-200 bg-slate-50">
+        {/* Production Table - EN HAUT */}
+        <Card className="border-amber-200 shadow-lg">
+          <div className="p-4 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Inventaire des Barres</h3>
-                <p className="text-xs text-gray-600 mt-0.5">{summary.record_count} barres · {safeToFixed(summary.total_estimated_oz, 0)} oz total</p>
+                <h3 className="text-base font-bold text-gray-900">Inventaire des Barres</h3>
+                <p className="text-xs text-gray-600 mt-1">
+                  {summary.record_count} barre{summary.record_count > 1 ? 's' : ''} · {safeToFixed(summary.total_estimated_oz, 2)} oz au total
+                </p>
               </div>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-100 border-b border-slate-200">
+              <thead className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-100 border-b-2 border-amber-300">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Date
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Date Production
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Bullion (g)
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Finesse (%)
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Or Pur (g)
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Oz Estimées
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Référence
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">
                     Société
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Statut
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Bullion (g)
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Finesse %
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Or Pur (g)
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Oz Estimées
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Bar Reference
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Outlook
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Status
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
-                      Chargement...
+                    <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      Chargement des données...
                     </td>
                   </tr>
                 ) : productions.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                       Aucune production trouvée
                     </td>
                   </tr>
@@ -632,28 +378,38 @@ export function ProductionInSafe() {
                   productions.map((prod, index) => (
                     <tr
                       key={prod.id}
-                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100 transition-colors`}
+                      className="hover:bg-amber-50/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/production/${prod.id}`)}
                     >
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {new Date(prod.production_date).toLocaleDateString('fr-FR')}
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                        {new Date(prod.production_date).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: '2-digit'
+                        })}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                        {safeToLocaleString(prod.bullion_grams, { maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-700">
-                        {safeToFixed(prod.estimated_fineness_pct, 1)}%
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                        {safeToLocaleString(prod.pure_gold_grams, { maximumFractionDigits: 2 })}
+                      <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                        {getCompanyName(prod.mining_company_id)}
                       </td>
                       <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                        {safeToLocaleString(prod.bullion_grams, { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-700">
+                        {safeToFixed(prod.estimated_fineness_pct, 2)}%
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                        {safeToLocaleString(prod.pure_gold_grams, { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-bold text-amber-700">
                         {safeToFixed(prod.estimated_oz, 2)}
                       </td>
-                      <td className="px-4 py-3 text-sm font-mono text-gray-700">
+                      <td className="px-4 py-3 text-sm font-mono text-gray-700 font-medium">
                         {prod.bar_reference || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {getCompanyName(prod.mining_company_id)}
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          {getOutlookIcon(prod.estimated_oz, index)}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <ProductionStatusBadge status={prod.status as ProductionStatus} size="sm" />
@@ -663,28 +419,190 @@ export function ProductionInSafe() {
                 )}
               </tbody>
               {!loading && productions.length > 0 && (
-                <tfoot className="bg-slate-700 text-white">
+                <tfoot className="bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 border-t-2 border-amber-300">
                   <tr>
-                    <td className="px-4 py-3 text-xs font-semibold uppercase">
+                    <td className="px-4 py-4 text-xs font-bold uppercase text-gray-900">
                       Total
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-bold">
-                      {safeToLocaleString(summary.total_bullion_grams, { maximumFractionDigits: 2 })}
+                    <td className="px-4 py-4"></td>
+                    <td className="px-4 py-4 text-sm text-right font-bold text-gray-900">
+                      {safeToLocaleString(summary.total_bullion_grams, { maximumFractionDigits: 0 })}
                     </td>
-                    <td className="px-4 py-3"></td>
-                    <td className="px-4 py-3 text-sm text-right font-bold">
-                      {safeToLocaleString(summary.total_pure_gold_grams, { maximumFractionDigits: 2 })}
+                    <td className="px-4 py-4 text-sm text-right font-medium text-gray-700">
+                      Moy: {safeToFixed(summary.avg_fineness_pct, 2)}%
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-bold">
+                    <td className="px-4 py-4 text-sm text-right font-bold text-gray-900">
+                      {safeToLocaleString(summary.total_pure_gold_grams, { maximumFractionDigits: 0 })}
+                    </td>
+                    <td className="px-4 py-4 text-base text-right font-bold text-amber-900">
                       {safeToFixed(summary.total_estimated_oz, 2)}
                     </td>
-                    <td colSpan={3} className="px-4 py-3"></td>
+                    <td colSpan={3} className="px-4 py-4"></td>
                   </tr>
                 </tfoot>
               )}
             </table>
           </div>
         </Card>
+
+        {/* KPI Tiles - APRÈS LE TABLEAU */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Year to Date Progress */}
+          <Card className="border-l-4 border-l-amber-500 shadow-md hover:shadow-lg transition-shadow">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-amber-600" />
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    Year to Date
+                  </h3>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-medium text-gray-600">Réalisé</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {safeToFixed(forecasts.ytd_actual, 0)} oz
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-gray-600">Budget</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {safeToFixed(forecasts.ytd_budget, 0)} oz
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-gray-600">Forecast</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {safeToFixed(forecasts.ytd_forecast, 0)} oz
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="pt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-medium text-gray-600">Progrès vs Budget</span>
+                    <span className="text-xs font-bold text-gray-900">
+                      {safeToFixed(budgetPercentage, 1)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 h-3 rounded-full transition-all"
+                      style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* vs Forecast */}
+          <Card className="border-t-4 border-t-emerald-500 shadow-md hover:shadow-lg transition-shadow">
+            <div className="p-5">
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">
+                vs Forecast
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${forecastTrafficLight.color}`} />
+                    <span className="text-xs font-medium text-gray-600">Status</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">
+                    {forecastTrafficLight.label}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs font-medium text-gray-600">Performance</span>
+                    <span className="text-3xl font-bold text-emerald-700">
+                      {safeToFixed(forecastPercentage, 1)}%
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    {forecastPercentage >= 100 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                    )}
+                    <span className={`text-xs font-medium ${
+                      forecastPercentage >= 100 ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
+                      {forecastPercentage >= 100 ? 'Au-dessus' : 'En-dessous'} de la prévision
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-600">Écart</span>
+                  <span className={`font-bold ${
+                    forecasts.ytd_actual >= forecasts.ytd_forecast
+                      ? 'text-emerald-700'
+                      : 'text-red-700'
+                  }`}>
+                    {forecasts.ytd_actual >= forecasts.ytd_forecast ? '+' : ''}
+                    {safeToFixed(forecasts.ytd_actual - forecasts.ytd_forecast, 0)} oz
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* vs Budget */}
+          <Card className="border-t-4 border-t-blue-500 shadow-md hover:shadow-lg transition-shadow">
+            <div className="p-5">
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">
+                vs Budget
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${budgetTrafficLight.color}`} />
+                    <span className="text-xs font-medium text-gray-600">Status</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">
+                    {budgetTrafficLight.label}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs font-medium text-gray-600">Performance</span>
+                    <span className="text-3xl font-bold text-blue-700">
+                      {safeToFixed(budgetPercentage, 1)}%
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    {budgetPercentage >= 100 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                    )}
+                    <span className={`text-xs font-medium ${
+                      budgetPercentage >= 100 ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
+                      {budgetPercentage >= 100 ? 'Au-dessus' : 'En-dessous'} du budget
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-600">Écart</span>
+                  <span className={`font-bold ${
+                    forecasts.ytd_actual >= forecasts.ytd_budget
+                      ? 'text-emerald-700'
+                      : 'text-red-700'
+                  }`}>
+                    {forecasts.ytd_actual >= forecasts.ytd_budget ? '+' : ''}
+                    {safeToFixed(forecasts.ytd_actual - forecasts.ytd_budget, 0)} oz
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
     </MainLayout>
   );

@@ -60,15 +60,21 @@ Pour un **nettoyage intentionnel** (reset de test, migration, etc.), nous DEVONS
 PostgreSQL permet de **désactiver temporairement** les triggers sur une table:
 
 ```sql
--- Désactiver TOUS les triggers sur une table
-ALTER TABLE ma_table DISABLE TRIGGER ALL;
+-- Désactiver les triggers UTILISATEUR sur une table
+ALTER TABLE ma_table DISABLE TRIGGER USER;
 
 -- Effectuer les opérations
 DELETE FROM ma_table;
 
--- Réactiver TOUS les triggers
-ALTER TABLE ma_table ENABLE TRIGGER ALL;
+-- Réactiver les triggers UTILISATEUR
+ALTER TABLE ma_table ENABLE TRIGGER USER;
 ```
+
+**Important - Bug #5 Corrigé:** Nous utilisons `USER` au lieu de `ALL` car:
+- `ALL` = Tous les triggers (utilisateur + système comme les FK)
+- `USER` = Uniquement les triggers créés par l'utilisateur
+- `ALL` nécessite des permissions **superuser** → Erreur 42501!
+- `USER` fonctionne avec les permissions normales ✅
 
 ### ✅ Solution Appliquée
 
@@ -84,19 +90,19 @@ DO $$
 BEGIN
   -- Désactiver sur virtual_payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
-    ALTER TABLE virtual_payments DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur virtual_payments';
+    ALTER TABLE virtual_payments DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur virtual_payments';
   END IF;
 
   -- Désactiver sur payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
-    ALTER TABLE payments DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur payments';
+    ALTER TABLE payments DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur payments';
   END IF;
 
   -- Désactiver sur sales
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
-    ALTER TABLE sales DISABLE TRIGGER ALL;
+    ALTER TABLE sales DISABLE TRIGGER USER;
     RAISE NOTICE '⚠️  Triggers désactivés sur sales';
   END IF;
 

@@ -217,26 +217,26 @@ BEGIN
 
   -- Désactiver les triggers sur virtual_payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
-    ALTER TABLE virtual_payments DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur virtual_payments';
+    ALTER TABLE virtual_payments DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur virtual_payments';
   END IF;
 
   -- Désactiver les triggers sur payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
-    ALTER TABLE payments DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur payments';
+    ALTER TABLE payments DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur payments';
   END IF;
 
   -- Désactiver les triggers sur sales
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
-    ALTER TABLE sales DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur sales';
+    ALTER TABLE sales DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur sales';
   END IF;
 
   -- Désactiver les triggers sur inventory
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory') THEN
-    ALTER TABLE inventory DISABLE TRIGGER ALL;
-    RAISE NOTICE '⚠️  Triggers désactivés sur inventory';
+    ALTER TABLE inventory DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers utilisateur désactivés sur inventory';
   END IF;
 
   RAISE NOTICE '';
@@ -504,30 +504,30 @@ BEGIN
 
   -- Réactiver les triggers sur virtual_payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
-    ALTER TABLE virtual_payments ENABLE TRIGGER ALL;
-    RAISE NOTICE '🔄 Triggers réactivés sur virtual_payments';
+    ALTER TABLE virtual_payments ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers utilisateur réactivés sur virtual_payments';
   END IF;
 
   -- Réactiver les triggers sur payments
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
-    ALTER TABLE payments ENABLE TRIGGER ALL;
-    RAISE NOTICE '🔄 Triggers réactivés sur payments';
+    ALTER TABLE payments ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers utilisateur réactivés sur payments';
   END IF;
 
   -- Réactiver les triggers sur sales
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales') THEN
-    ALTER TABLE sales ENABLE TRIGGER ALL;
-    RAISE NOTICE '🔄 Triggers réactivés sur sales';
+    ALTER TABLE sales ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers utilisateur réactivés sur sales';
   END IF;
 
   -- Réactiver les triggers sur inventory
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory') THEN
-    ALTER TABLE inventory ENABLE TRIGGER ALL;
-    RAISE NOTICE '🔄 Triggers réactivés sur inventory';
+    ALTER TABLE inventory ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers utilisateur réactivés sur inventory';
   END IF;
 
   RAISE NOTICE '';
-  RAISE NOTICE '✅ Tous les triggers ont été réactivés';
+  RAISE NOTICE '✅ Tous les triggers utilisateur ont été réactivés';
   RAISE NOTICE '';
 END $$;
 

@@ -1,4 +1,13 @@
-export type ProductionStatus = 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled';
+/**
+ * ENUM production_status_v2 défini dans la base de données
+ * Source: supabase/migrations/20251114_004_correct_status_enums_verified.sql
+ *
+ * Valeurs autorisées (SHIPPED RETIRÉ):
+ * - prepared: Préparé
+ * - ready_for_customs: Prêt pour la Douane
+ * - cancelled: Annulé
+ */
+export type ProductionStatus = 'prepared' | 'ready_for_customs' | 'cancelled';
 
 export const PRODUCTION_STATUSES: Record<ProductionStatus, {
   label: string;
@@ -21,13 +30,6 @@ export const PRODUCTION_STATUSES: Record<ProductionStatus, {
     borderColor: 'border-amber-200',
     description: 'Production validée et prête pour inclusion dans une expédition'
   },
-  shipped: {
-    label: 'Expédié',
-    color: 'text-emerald-700',
-    bgColor: 'bg-emerald-50',
-    borderColor: 'border-emerald-200',
-    description: 'Production expédiée vers la raffinerie - Statut final du module Production'
-  },
   cancelled: {
     label: 'Annulé',
     color: 'text-red-700',
@@ -37,19 +39,17 @@ export const PRODUCTION_STATUSES: Record<ProductionStatus, {
   }
 };
 
-export const STATUS_FLOW: ProductionStatus[] = ['prepared', 'ready_for_customs', 'shipped'];
+export const STATUS_FLOW: ProductionStatus[] = ['prepared', 'ready_for_customs'];
 
 export const NEXT_STATUS: Record<ProductionStatus, ProductionStatus | null> = {
   prepared: 'ready_for_customs',
-  ready_for_customs: 'shipped',
-  shipped: null,
+  ready_for_customs: null,
   cancelled: null
 };
 
 export const PREVIOUS_STATUS: Record<ProductionStatus, ProductionStatus | null> = {
   prepared: null,
   ready_for_customs: 'prepared',
-  shipped: 'ready_for_customs',
   cancelled: null
 };
 

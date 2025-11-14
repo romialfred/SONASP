@@ -1,13 +1,18 @@
-import { Clock, Package, Check, Building2, TrendingUp, DollarSign, XCircle, Plane } from 'lucide-react';
+import { Clock, Package, Check, Building2, TrendingUp, DollarSign, XCircle, Plane, CheckCircle } from 'lucide-react';
 
+/**
+ * ENUM shipping_preparation_status défini dans la base de données
+ * Source: supabase/migrations/20251114_004_correct_status_enums_verified.sql
+ *
+ * Valeurs autorisées:
+ * - ready_for_customs: Prêt pour la douane
+ * - approved_by_customs: Approuvé par la douane
+ * - ready_for_expedition: Prêt pour Expédition
+ */
 export type ShippingStatus =
-  | 'pending'
-  | 'prepared'
-  | 'validated_for_refinery'
-  | 'in_refining'
-  | 'refined'
-  | 'sold'
-  | 'cancelled';
+  | 'ready_for_customs'
+  | 'approved_by_customs'
+  | 'ready_for_expedition';
 
 export interface ShippingStatusConfig {
   value: ShippingStatus;
@@ -21,88 +26,48 @@ export interface ShippingStatusConfig {
   canTransitionTo: ShippingStatus[];
 }
 
+/**
+ * Configuration des statuts d'expédition selon l'ENUM de la base de données
+ * Workflow: ready_for_customs → approved_by_customs → ready_for_expedition
+ */
 export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
-  pending: {
-    value: 'pending',
-    label: 'En Attente',
-    description: 'Expédition en attente de préparation',
-    color: 'slate',
-    bgColor: 'bg-slate-100',
-    textColor: 'text-slate-700',
-    borderColor: 'border-slate-300',
-    icon: Clock,
-    canTransitionTo: ['prepared', 'cancelled'],
-  },
-  prepared: {
-    value: 'prepared',
-    label: 'Préparée',
-    description: 'Expédition préparée et prête pour validation',
+  ready_for_customs: {
+    value: 'ready_for_customs',
+    label: 'Prêt pour Douane',
+    description: 'Expédition préparée, en attente d\'approbation douanière',
     color: 'blue',
     bgColor: 'bg-blue-100',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-300',
     icon: Package,
-    canTransitionTo: ['validated_for_refinery', 'cancelled'],
+    canTransitionTo: ['approved_by_customs'],
   },
-  validated_for_refinery: {
-    value: 'validated_for_refinery',
-    label: 'Validée pour Raffinerie',
-    description: 'Expédition validée et en route vers la raffinerie',
+  approved_by_customs: {
+    value: 'approved_by_customs',
+    label: 'Approuvé par Douane',
+    description: 'Dédouanement validé, prêt pour expédition',
     color: 'amber',
     bgColor: 'bg-amber-100',
     textColor: 'text-amber-700',
     borderColor: 'border-amber-300',
-    icon: Plane,
-    canTransitionTo: ['in_refining', 'cancelled'],
+    icon: CheckCircle,
+    canTransitionTo: ['ready_for_expedition'],
   },
-  in_refining: {
-    value: 'in_refining',
-    label: 'En Raffinage',
-    description: 'Matériaux en cours de raffinage',
-    color: 'orange',
-    bgColor: 'bg-orange-100',
-    textColor: 'text-orange-700',
-    borderColor: 'border-orange-300',
-    icon: Building2,
-    canTransitionTo: ['refined', 'cancelled'],
-  },
-  refined: {
-    value: 'refined',
-    label: 'Raffinée',
-    description: 'Raffinage terminé, prêt pour la vente',
-    color: 'teal',
-    bgColor: 'bg-teal-100',
-    textColor: 'text-teal-700',
-    borderColor: 'border-teal-300',
-    icon: Check,
-    canTransitionTo: ['sold', 'cancelled'],
-  },
-  sold: {
-    value: 'sold',
-    label: 'Vendue',
-    description: 'Vente terminée et finalisée',
+  ready_for_expedition: {
+    value: 'ready_for_expedition',
+    label: 'Prêt pour Expédition',
+    description: 'Autorisé à être expédié vers la destination finale',
     color: 'emerald',
     bgColor: 'bg-emerald-100',
     textColor: 'text-emerald-700',
     borderColor: 'border-emerald-300',
-    icon: DollarSign,
-    canTransitionTo: [],
-  },
-  cancelled: {
-    value: 'cancelled',
-    label: 'Annulée',
-    description: 'Expédition annulée',
-    color: 'red',
-    bgColor: 'bg-red-100',
-    textColor: 'text-red-700',
-    borderColor: 'border-red-300',
-    icon: XCircle,
+    icon: Plane,
     canTransitionTo: [],
   },
 };
 
 export const getShippingStatusConfig = (status: ShippingStatus): ShippingStatusConfig => {
-  return SHIPPING_STATUSES[status] || SHIPPING_STATUSES.pending;
+  return SHIPPING_STATUSES[status] || SHIPPING_STATUSES.ready_for_customs;
 };
 
 export const canTransitionToStatus = (

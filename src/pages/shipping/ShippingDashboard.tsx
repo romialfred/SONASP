@@ -29,24 +29,22 @@ export default function ShippingDashboard() {
 
   const stats = {
     total: preparations.length,
-    pending: preparations.filter(p => p.status === 'pending').length,
-    prepared: preparations.filter(p => p.status === 'prepared').length,
-    shipped: preparations.filter(p => p.status === 'shipped' || p.status === 'validated_for_refinery').length,
+    ready_for_customs: preparations.filter(p => p.status === 'ready_for_customs').length,
+    approved_by_customs: preparations.filter(p => p.status === 'approved_by_customs').length,
+    ready_for_expedition: preparations.filter(p => p.status === 'ready_for_expedition').length,
     totalWeight: preparations.reduce((sum, p) => sum + (p.total_net_weight_grams || 0), 0),
   };
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      prepared: 'bg-blue-50 text-blue-700 border-blue-200',
-      validated_for_refinery: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      shipped: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      ready_for_customs: 'bg-blue-50 text-blue-700 border-blue-200',
+      approved_by_customs: 'bg-amber-50 text-amber-700 border-amber-200',
+      ready_for_expedition: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     };
     const labels = {
-      pending: 'En attente',
-      prepared: 'Préparé',
-      validated_for_refinery: 'Expédié',
-      shipped: 'Expédié',
+      ready_for_customs: 'Prêt pour Douane',
+      approved_by_customs: 'Approuvé par Douane',
+      ready_for_expedition: 'Prêt pour Expédition',
     };
     return (
       <span className={`px-2 py-0.5 rounded text-xs font-medium border ${styles[status as keyof typeof styles] || 'bg-slate-50 text-slate-700 border-slate-200'}`}>

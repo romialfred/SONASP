@@ -103,14 +103,14 @@ class ShippingPreparationService {
   async createPreparation(preparation: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // CRITICAL FIX: Ensure status is valid enum value
-    // Only allow valid shipping_status_v2 values (NO 'shipped'!)
-    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'sold', 'cancelled'];
+    // CRITICAL FIX: Ensure status is valid enum value from shipping_preparation_status
+    // Source: supabase/migrations/20251114_004_correct_status_enums_verified.sql
+    const validStatuses: ShippingStatus[] = ['ready_for_customs', 'approved_by_customs', 'ready_for_expedition'];
     const cleanPreparation = { ...preparation };
 
-    if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status)) {
-      cleanPreparation.status = 'prepared';
-      console.warn('Invalid or missing status, defaulting to: prepared');
+    if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status as ShippingStatus)) {
+      cleanPreparation.status = 'ready_for_customs';
+      console.warn('Invalid or missing status, defaulting to: ready_for_customs');
     }
 
     const { data, error } = await supabase
@@ -127,13 +127,13 @@ class ShippingPreparationService {
   }
 
   async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
-    // CRITICAL FIX: Validate status before UPDATE
-    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'sold', 'cancelled'];
+    // CRITICAL FIX: Validate status before UPDATE using enum shipping_preparation_status
+    const validStatuses: ShippingStatus[] = ['ready_for_customs', 'approved_by_customs', 'ready_for_expedition'];
     const cleanUpdates = { ...updates };
 
-    if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status)) {
-      cleanUpdates.status = 'prepared';
-      console.warn('Invalid status in UPDATE, defaulting to: prepared');
+    if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status as ShippingStatus)) {
+      cleanUpdates.status = 'ready_for_customs';
+      console.warn('Invalid status in UPDATE, defaulting to: ready_for_customs');
     }
 
     const { data, error } = await supabase

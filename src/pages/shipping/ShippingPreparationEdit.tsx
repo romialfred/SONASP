@@ -45,7 +45,7 @@ export default function ShippingPreparationEdit() {
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [shippedToCountry, setShippedToCountry] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'pending' | 'prepared' | 'validated_for_refinery'>('pending');
+  const [status, setStatus] = useState<ShippingStatus>('ready_for_customs');
 
   useEffect(() => {
     loadData();

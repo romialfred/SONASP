@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Package, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Package, AlertCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
+import { formatDateStandard } from '@/utils/dateUtils';
 
 interface ShipmentInfo {
   id: string;
@@ -80,134 +81,139 @@ export function ExportLicenseDetails() {
 
   const getStatusBadge = () => {
     if (license.status === 'exhausted') {
-      return <span className="px-3 py-1 text-sm font-semibold bg-red-100 text-red-800 rounded-full">Épuisée</span>;
+      return <span className="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Épuisée</span>;
     }
     if (new Date(license.end_date) < new Date()) {
-      return <span className="px-3 py-1 text-sm font-semibold bg-gray-100 text-gray-800 rounded-full">Expirée</span>;
+      return <span className="px-2.5 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">Expirée</span>;
     }
     if (usagePercentage >= 90) {
-      return <span className="px-3 py-1 text-sm font-semibold bg-orange-100 text-orange-800 rounded-full">Presque épuisée</span>;
+      return <span className="px-2.5 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">Presque épuisée</span>;
     }
     if (license.status === 'active') {
-      return <span className="px-3 py-1 text-sm font-semibold bg-green-100 text-green-800 rounded-full">Active</span>;
+      return <span className="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Active</span>;
     }
-    return <span className="px-3 py-1 text-sm font-semibold bg-blue-100 text-blue-800 rounded-full">{license.status}</span>;
+    return <span className="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">{license.status}</span>;
   };
 
   return (
     <MainLayout>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="px-6 py-4 max-w-7xl mx-auto">
+        {/* Header - Compact */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
             <Button
               onClick={() => navigate('/production/licenses')}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-1.5"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               Retour
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{license.license_number}</h1>
-              <p className="text-sm text-gray-600">Détails de la licence d'exportation</p>
+              <h1 className="text-xl font-bold text-gray-900">{license.license_number}</h1>
+              <p className="text-xs text-gray-500">Détails de la licence d'exportation</p>
             </div>
           </div>
-          <Button
-            onClick={() => navigate(`/production/licenses/edit/${id}`)}
-            className="gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Modifier
-          </Button>
+          <div className="flex items-center gap-3">
+            {getStatusBadge()}
+            <Button
+              onClick={() => navigate(`/production/licenses/edit/${id}`)}
+              size="sm"
+              className="gap-1.5"
+            >
+              <Edit className="w-3.5 h-3.5" />
+              Modifier
+            </Button>
+          </div>
         </div>
 
-        {/* Status Badge */}
-        <div className="mb-6">
-          {getStatusBadge()}
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-4">
           {/* Left Column - Main Info */}
-          <div className="col-span-2 space-y-6">
-            {/* Basic Information */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Informations Générales</h2>
-              <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2 space-y-4">
+            {/* Basic Information - Compact */}
+            <Card className="p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-gray-600" />
+                Informations Générales
+              </h2>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Compagnie Minière</label>
-                  <p className="text-base font-semibold text-gray-900">
+                  <label className="text-xs font-medium text-gray-500">Compagnie Minière</label>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">
                     {license.mining_company?.name} ({license.mining_company?.code})
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Institution Émettrice</label>
-                  <p className="text-base font-semibold text-gray-900">{license.issuing_institution}</p>
+                  <label className="text-xs font-medium text-gray-500">Institution Émettrice</label>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">{license.issuing_institution}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Date de Demande</label>
-                  <p className="text-base font-semibold text-gray-900">
-                    {new Date(license.request_date).toLocaleDateString('fr-FR')}
+                  <label className="text-xs font-medium text-gray-500">Date de Demande</label>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                    {formatDateStandard(license.request_date)}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Période de Validité</label>
-                  <p className="text-base font-semibold text-gray-900">
-                    {new Date(license.start_date).toLocaleDateString('fr-FR')} - {new Date(license.end_date).toLocaleDateString('fr-FR')}
+                  <label className="text-xs font-medium text-gray-500">Période de Validité</label>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                    {formatDateStandard(license.start_date)} - {formatDateStandard(license.end_date)}
                   </p>
                 </div>
                 {license.average_sale_price && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Prix Moyen de Vente</label>
-                    <p className="text-base font-semibold text-gray-900">
+                    <label className="text-xs font-medium text-gray-500">Prix Moyen de Vente</label>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">
                       ${license.average_sale_price.toFixed(2)}/g
                     </p>
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Jours Restants</label>
-                  <p className={`text-base font-semibold ${daysRemaining <= 30 ? 'text-orange-600' : 'text-gray-900'}`}>
+                  <label className="text-xs font-medium text-gray-500">Jours Restants</label>
+                  <p className={`text-sm font-semibold mt-0.5 ${daysRemaining <= 30 ? 'text-orange-600' : 'text-gray-900'}`}>
                     {daysRemaining > 0 ? `${daysRemaining} jours` : 'Expirée'}
                   </p>
                 </div>
               </div>
               {license.comments && (
-                <div className="mt-4">
-                  <label className="text-sm font-medium text-gray-500">Commentaires</label>
-                  <p className="text-base text-gray-700 mt-1">{license.comments}</p>
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <label className="text-xs font-medium text-gray-500">Commentaires</label>
+                  <p className="text-sm text-gray-700 mt-0.5">{license.comments}</p>
                 </div>
               )}
             </Card>
 
-            {/* Quantity Tracking */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Suivi des Quantités</h2>
+            {/* Quantity Tracking - Compact */}
+            <Card className="p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-gray-600" />
+                Suivi des Quantités
+              </h2>
 
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600 font-medium">Autorisée</p>
-                  <p className="text-2xl font-bold text-blue-900">{license.authorized_quantity_grams.toLocaleString()}g</p>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-600 font-medium mb-1">Autorisée</p>
+                  <p className="text-lg font-bold text-blue-900">{license.authorized_quantity_grams.toLocaleString()}g</p>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <p className="text-sm text-orange-600 font-medium">Utilisée</p>
-                  <p className="text-2xl font-bold text-orange-900">{license.used_quantity_grams.toLocaleString()}g</p>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <p className="text-xs text-orange-600 font-medium mb-1">Utilisée</p>
+                  <p className="text-lg font-bold text-orange-900">{license.used_quantity_grams.toLocaleString()}g</p>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-600 font-medium">Restante</p>
-                  <p className="text-2xl font-bold text-green-900">{license.remaining_quantity_grams.toLocaleString()}g</p>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-xs text-green-600 font-medium mb-1">Restante</p>
+                  <p className="text-lg font-bold text-green-900">{license.remaining_quantity_grams.toLocaleString()}g</p>
                 </div>
               </div>
 
-              {/* Progress Bar */}
+              {/* Progress Bar - Compact */}
               <div>
-                <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
                   <span>Utilisation</span>
                   <span className="font-semibold">{Math.round(usagePercentage)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-4">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
-                    className={`h-4 rounded-full transition-all ${
+                    className={`h-2.5 rounded-full transition-all ${
                       usagePercentage >= 90
                         ? 'bg-red-500'
                         : usagePercentage >= 70
@@ -220,35 +226,36 @@ export function ExportLicenseDetails() {
               </div>
             </Card>
 
-            {/* Shipments */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
+            {/* Shipments - Compact */}
+            <Card className="p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-600" />
                 Expéditions ({shipments.length})
               </h2>
               {shipments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>Aucune expédition pour cette licence</p>
+                <div className="text-center py-6 text-gray-500">
+                  <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Aucune expédition pour cette licence</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {shipments.map((shipment) => (
                     <div
                       key={shipment.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => navigate(`/shipping/preparation/${shipment.id}`)}
                     >
                       <div>
-                        <p className="font-semibold text-gray-900">{shipment.expedition_lot_number}</p>
-                        <p className="text-sm text-gray-600">
-                          {new Date(shipment.prepared_at).toLocaleDateString('fr-FR')}
+                        <p className="text-sm font-semibold text-gray-900">{shipment.expedition_lot_number}</p>
+                        <p className="text-xs text-gray-600">
+                          {formatDateStandard(shipment.prepared_at)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-gray-900">
                           {shipment.total_net_weight_grams.toLocaleString()}g
                         </p>
-                        <span className={`text-xs px-2 py-1 rounded ${
+                        <span className={`text-xs px-2 py-0.5 rounded ${
                           shipment.status === 'validated_for_refinery'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-blue-100 text-blue-800'
@@ -263,16 +270,16 @@ export function ExportLicenseDetails() {
             </Card>
           </div>
 
-          {/* Right Column - Alerts & Stats */}
-          <div className="space-y-6">
+          {/* Right Column - Alerts & Stats - Compact */}
+          <div className="space-y-4">
             {/* Alerts */}
             {(usagePercentage >= 90 || daysRemaining <= 30) && (
-              <Card className="p-4 bg-orange-50 border-orange-200">
-                <h3 className="text-sm font-bold text-orange-900 mb-2 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
+              <Card className="p-3 bg-orange-50 border-orange-200">
+                <h3 className="text-xs font-bold text-orange-900 mb-2 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
                   Alertes
                 </h3>
-                <ul className="space-y-2 text-sm text-orange-800">
+                <ul className="space-y-1.5 text-xs text-orange-800">
                   {usagePercentage >= 90 && (
                     <li>• Licence presque épuisée ({Math.round(usagePercentage)}%)</li>
                   )}
@@ -286,32 +293,32 @@ export function ExportLicenseDetails() {
               </Card>
             )}
 
-            {/* Quick Stats */}
-            <Card className="p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Statistiques Rapides</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
+            {/* Quick Stats - Compact */}
+            <Card className="p-3">
+              <h3 className="text-xs font-bold text-gray-900 mb-2.5">Statistiques Rapides</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Expéditions</span>
-                  <span className="font-semibold">{shipments.length}</span>
+                  <span className="font-semibold text-gray-900">{shipments.length}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Poids Moyen</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-gray-900">
                     {shipments.length > 0
                       ? Math.round(license.used_quantity_grams / shipments.length).toLocaleString()
                       : 0}g
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                   <span className="text-gray-600">Créée le</span>
-                  <span className="font-semibold">
-                    {new Date(license.created_at).toLocaleDateString('fr-FR')}
+                  <span className="font-semibold text-gray-900">
+                    {formatDateStandard(license.created_at)}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Mise à jour</span>
-                  <span className="font-semibold">
-                    {new Date(license.updated_at).toLocaleDateString('fr-FR')}
+                  <span className="font-semibold text-gray-900">
+                    {formatDateStandard(license.updated_at)}
                   </span>
                 </div>
               </div>

@@ -16,6 +16,7 @@ import { ProductionDocumentsList, ProductionDocument } from './ProductionDocumen
 import { supabase } from '@/lib/supabase';
 import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
+import { roundUpToFixed } from '@/utils/numberUtils';
 
 interface DailyProductionFormProps {
   production?: DailyProduction | null;
@@ -138,21 +139,23 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   const bullionInOz = gramsToOz(bullionInGrams);
 
+  // ARRONDI AU SUPÉRIEUR avec 2 décimales pour les grammes
   const pureGoldGrams = formData.bullion_grams && formData.estimated_gold_pct
-    ? (bullionInGrams * parseFloat(formData.estimated_gold_pct) / 100).toFixed(2)
+    ? roundUpToFixed(bullionInGrams * parseFloat(formData.estimated_gold_pct) / 100, 2)
     : '0.00';
 
   const silverContentGrams = formData.bullion_grams && formData.estimated_silver_pct
-    ? (bullionInGrams * parseFloat(formData.estimated_silver_pct) / 100).toFixed(2)
+    ? roundUpToFixed(bullionInGrams * parseFloat(formData.estimated_silver_pct) / 100, 2)
     : '0.00';
 
+  // ARRONDI AU SUPÉRIEUR avec 2 décimales pour les onces
   const silverContentOz = silverContentGrams !== '0.00'
-    ? (parseFloat(silverContentGrams) / 31.1035).toFixed(4)
-    : '0.0000';
+    ? roundUpToFixed(parseFloat(silverContentGrams) / 31.1035, 2)
+    : '0.00';
 
   const estimatedOz = pureGoldGrams !== '0.00'
-    ? (parseFloat(pureGoldGrams) / 31.1035).toFixed(4)
-    : '0.0000';
+    ? roundUpToFixed(parseFloat(pureGoldGrams) / 31.1035, 2)
+    : '0.00';
 
   // Fonction pour obtenir le préfixe de la société
   const getCompanyPrefix = (companyName: string): string => {
@@ -301,7 +304,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 📦 Bar Reference: ${formData.bar_reference || 'Auto-généré'}
 
 ⚖️ POIDS ET FINESSE:
-   • Bullion: ${bullionGramsToSave.toFixed(2)} g (${bullionInOz.toFixed(2)} oz)
+   • Bullion: ${roundUpToFixed(bullionGramsToSave, 2)} g (${roundUpToFixed(bullionInOz, 2)} oz)
    • Finesse or: ${formData.estimated_gold_pct}%
    • Finesse argent: ${formData.estimated_silver_pct || 0}%
 
@@ -468,7 +471,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                     <div className="flex justify-between">
                       <span className="text-xs text-blue-700">Production:</span>
                       <span className="text-sm font-bold text-blue-900">
-                        {wtdSummary.total_estimated_oz?.toFixed(2)} oz
+                        {roundUpToFixed(wtdSummary.total_estimated_oz || 0, 2)} oz
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -497,7 +500,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                     <div className="flex justify-between">
                       <span className="text-xs text-emerald-700">Production:</span>
                       <span className="text-sm font-bold text-emerald-900">
-                        {mtdSummary.total_estimated_oz?.toFixed(2)} oz
+                        {roundUpToFixed(mtdSummary.total_estimated_oz || 0, 2)} oz
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -526,7 +529,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                     <div className="flex justify-between">
                       <span className="text-xs text-purple-700">Production:</span>
                       <span className="text-sm font-bold text-purple-900">
-                        {ytdSummary.total_estimated_oz?.toFixed(2)} oz
+                        {roundUpToFixed(ytdSummary.total_estimated_oz || 0, 2)} oz
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -638,9 +641,9 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 {formData.bullion_grams && (
                   <div className="mt-2 space-y-1">
                     {weightUnit === 'grams' ? (
-                      <p className="text-sm text-gray-600">= {bullionInOz.toFixed(2)} oz</p>
+                      <p className="text-sm text-gray-600">= {roundUpToFixed(bullionInOz, 2)} oz</p>
                     ) : (
-                      <p className="text-sm text-gray-600">= {bullionInGrams.toFixed(2)} g</p>
+                      <p className="text-sm text-gray-600">= {roundUpToFixed(bullionInGrams, 2)} g</p>
                     )}
                     <p className="text-xs text-gray-500">Reference: 1 oz = 31.10 g</p>
                   </div>

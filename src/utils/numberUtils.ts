@@ -118,3 +118,63 @@ export function safeSum(
 
   return validValues.reduce((acc, val) => acc + val, 0);
 }
+
+/**
+ * Arrondit un nombre AU SUPÉRIEUR avec un nombre précis de décimales
+ *
+ * @param value - La valeur à arrondir
+ * @param decimals - Nombre de décimales (défaut: 2)
+ * @returns Nombre arrondi au supérieur
+ *
+ * @example
+ * roundUpToDecimals(343.5298, 2) // 343.53
+ * roundUpToDecimals(10.001, 2) // 10.01
+ * roundUpToDecimals(10.999, 2) // 11.00
+ * roundUpToDecimals(5.2, 2) // 5.20
+ */
+export function roundUpToDecimals(value: number, decimals: number = 2): number {
+  const multiplier = Math.pow(10, decimals);
+  return Math.ceil(value * multiplier) / multiplier;
+}
+
+/**
+ * Arrondit un nombre AU SUPÉRIEUR et retourne une chaîne avec le nombre exact de décimales
+ *
+ * @param value - La valeur à arrondir
+ * @param decimals - Nombre de décimales (défaut: 2)
+ * @returns Chaîne formatée avec exactement le nombre de décimales spécifié
+ *
+ * @example
+ * roundUpToFixed(343.5298, 2) // "343.53"
+ * roundUpToFixed(10.001, 2) // "10.01"
+ * roundUpToFixed(10.999, 2) // "11.00"
+ * roundUpToFixed(5.2, 2) // "5.20"
+ */
+export function roundUpToFixed(value: number, decimals: number = 2): string {
+  return roundUpToDecimals(value, decimals).toFixed(decimals);
+}
+
+/**
+ * Arrondit de manière sécurisée AU SUPÉRIEUR avec gestion des valeurs undefined/null
+ *
+ * @param value - La valeur à arrondir
+ * @param decimals - Nombre de décimales (défaut: 2)
+ * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
+ * @returns Chaîne formatée avec exactement le nombre de décimales spécifié
+ *
+ * @example
+ * safeRoundUpToFixed(343.5298, 2) // "343.53"
+ * safeRoundUpToFixed(undefined, 2) // "0.00"
+ * safeRoundUpToFixed(null, 2, 0) // "0.00"
+ */
+export function safeRoundUpToFixed(
+  value: number | undefined | null,
+  decimals: number = 2,
+  defaultValue: number = 0
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return defaultValue.toFixed(decimals);
+  }
+
+  return roundUpToFixed(value, decimals);
+}

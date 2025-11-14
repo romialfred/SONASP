@@ -39,14 +39,14 @@ SET status = 'prepared'
 WHERE status IS NULL;
 
 -- Mettre à jour toutes les productions qui ont 'shipped' vers 'prepared'
--- (pour permettre la validation manuelle)
+-- SAUF celles qui sont déjà dans des expéditions (via shipping_production_items)
 UPDATE daily_production
 SET status = 'prepared'
 WHERE status = 'shipped'
 AND id NOT IN (
-  SELECT DISTINCT production_id
-  FROM shipping_preparations
-  WHERE production_id IS NOT NULL
+  SELECT DISTINCT daily_production_id
+  FROM shipping_production_items
+  WHERE daily_production_id IS NOT NULL
 );
 
 -- Créer un index pour les requêtes sur ready_for_customs

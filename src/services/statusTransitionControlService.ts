@@ -26,75 +26,92 @@ export enum WorkflowModule {
 
 /**
  * Matrice de contrôle: Quels statuts peuvent être modifiés par quel module
+ *
+ * BASÉ SUR LES ENUMs RÉELS DE LA BASE DE DONNÉES:
+ * - production_status_v2: prepared, ready_for_customs, cancelled
+ * - shipping_preparation_status: waiting_for_customs_approval, approved_by_customs, ready_for_expedition
  */
 const STATUS_MODULE_CONTROL_MATRIX: Record<WorkflowModule, string[]> = {
   // MODULE PRODUCTION: Peut modifier uniquement Préparé et Prêt pour la douane
+  // ENUM: production_status_v2
   [WorkflowModule.PRODUCTION]: [
-    'prepared',
-    'ready_for_customs'
+    'prepared',              // Préparé
+    'ready_for_customs'      // Prêt pour la Douane
   ],
 
   // MODULE SHIPPING PREPARATION: Prend le relais après "Prêt pour la douane"
+  // ENUM: shipping_preparation_status
   [WorkflowModule.SHIPPING_PREPARATION]: [
-    'ready_for_customs',
-    'customs_approved',
-    'ready_for_expedition'
+    'waiting_for_customs_approval',  // En Attente Douane (statut initial)
+    'approved_by_customs',           // Approuvé par Douane
+    'ready_for_expedition'           // Prêt pour Expédition
   ],
 
-  // MODULE FREIGHT & CUSTOMS: Gère l'expédition physique
+  // MODULE FREIGHT & CUSTOMS: Gère l'expédition physique vers raffinerie
   [WorkflowModule.FREIGHT_CUSTOMS]: [
-    'ready_for_expedition',
-    'shipped_to_refinery'
+    'ready_for_expedition',    // Prêt pour Expédition
+    'shipped_to_refinery'      // Expédié à la Raffinerie
   ],
 
   // MODULE REFINERY: Gère la réception et le raffinage
   [WorkflowModule.REFINERY]: [
-    'shipped_to_refinery',
-    'refined'
+    'shipped_to_refinery',  // Expédié à la Raffinerie
+    'refined'               // Raffinée
   ],
 
   // MODULE INVENTORY: Gère le stock raffiné
   [WorkflowModule.INVENTORY]: [
-    'refined',
-    'in_inventory'
+    'refined',        // Raffinée
+    'in_inventory'    // En Inventaire
   ],
 
   // MODULE SALE: Gère les ventes
   [WorkflowModule.SALE]: [
-    'in_inventory',
-    'sold',
-    'paid'
+    'in_inventory',   // En Inventaire
+    'in_sale',        // En Vente
+    'sold',           // Vendu
+    'paid'            // Payé
   ]
 };
 
 /**
  * Transitions autorisées entre statuts
  * Format: { [status_actuel]: [statuts_possibles] }
+ *
+ * WORKFLOW COMPLET BASÉ SUR LA CAPTURE D'ÉCRAN:
+ * Production: Préparé → Prêt pour la douane
+ * Shipping: Waiting for Custom approval → Approved by customs → Ready for expedition
+ * Freight: Prêt pour Expédition → Expédié à la raffinerie
+ * Refinery: Expédié à la raffinerie → Raffinée
+ * Inventory: En inventaire
+ * Sale: En vente → Vendu → Payé
  */
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  // Phase Production
+  // ===== PHASE PRODUCTION =====
   'prepared': ['ready_for_customs', 'cancelled'],
+  'ready_for_customs': ['waiting_for_customs_approval', 'cancelled'],
 
-  // Phase Shipping Preparation
-  'ready_for_customs': ['customs_approved', 'ready_for_expedition', 'cancelled'],
-  'customs_approved': ['ready_for_expedition', 'cancelled'],
+  // ===== PHASE SHIPPING PREPARATION =====
+  'waiting_for_customs_approval': ['approved_by_customs', 'cancelled'],
+  'approved_by_customs': ['ready_for_expedition', 'cancelled'],
 
-  // Phase Freight & Customs
+  // ===== PHASE FREIGHT & CUSTOMS =====
   'ready_for_expedition': ['shipped_to_refinery', 'cancelled'],
 
-  // Phase Refinery
+  // ===== PHASE REFINERY =====
   'shipped_to_refinery': ['refined', 'cancelled'],
 
-  // Phase Inventory
+  // ===== PHASE INVENTORY =====
   'refined': ['in_inventory'],
-  'in_inventory': ['sold'],
+  'in_inventory': ['in_sale'],
 
-  // Phase Sale
+  // ===== PHASE SALE =====
+  'in_sale': ['sold'],
   'sold': ['paid'],
   'paid': [], // État final
 
-  // État d'annulation
-  'cancelled': [] // État final
+  // État d'annulation (final)
+  'cancelled': []
 };
 
 /**

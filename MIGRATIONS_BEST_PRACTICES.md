@@ -41,11 +41,100 @@ Chaque fichier de migration DOIT commencer par un bloc de commentaires expliquan
 5. **Committer du code qui dépend de migrations non exécutées**
 
 ### ✅ TOUJOURS
-1. **Créer une nouvelle migration pour chaque changement de schéma**
-2. **Tester la migration sur un environnement de dev d'abord**
-3. **Documenter clairement ce que fait la migration**
-4. **Communiquer à l'équipe quand vous créez une migration**
-5. **Vérifier que la migration est idempotente (peut être relancée sans erreur)**
+1. **VÉRIFIER LES DÉPENDANCES AVANT D'EXÉCUTER** (voir section ci-dessous)
+2. **Créer une nouvelle migration pour chaque changement de schéma**
+3. **Tester la migration sur un environnement de dev d'abord**
+4. **Documenter clairement ce que fait la migration**
+5. **Communiquer à l'équipe quand vous créez une migration**
+6. **Vérifier que la migration est idempotente (peut être relancée sans erreur)**
+
+## 🔍 VÉRIFICATION PRÉALABLE OBLIGATOIRE
+
+### ⚠️ AVANT D'EXÉCUTER UNE MIGRATION, TOUJOURS:
+
+#### 1. Exécuter le Script de Vérification (OBLIGATOIRE)
+
+```sql
+-- Copier/coller dans Supabase SQL Editor:
+-- Contenu de scripts/verify-database-structure.sql
+```
+
+Ce script vérifie automatiquement:
+- ✅ Les tables requises existent
+- ✅ Les colonnes nécessaires sont présentes
+- ✅ Les foreign keys sont possibles
+- ✅ La structure est correcte
+
+#### 2. Lire le Résultat Attentivement
+
+**Résultat OK:**
+```
+✅ Table shipping_preparations existe
+✅ Colonne status existe dans shipping_preparations
+✅ PRÊT: Toutes les dépendances sont satisfaites
+```
+→ Vous pouvez exécuter la migration
+
+**Résultat PROBLÈME:**
+```
+❌ Table shipping_preparations N'EXISTE PAS
+❌ BLOQUANT: Dépendances manquantes
+```
+→ **NE PAS EXÉCUTER** la migration
+
+#### 3. Résoudre les Problèmes AVANT d'Exécuter
+
+**Si une table manque:**
+1. Identifier quelle migration crée cette table
+2. Exécuter les migrations précédentes dans l'ordre
+3. Re-vérifier
+4. Puis exécuter votre migration
+
+**Si une foreign key échoue:**
+1. Vérifier que la table référencée existe
+2. Option A: Corriger la migration pour utiliser la bonne table
+3. Option B: Rendre la colonne NULLABLE (sans foreign key)
+4. Option C: Créer d'abord la table manquante
+
+### 🛡️ Exemple Réel (Erreur Vécue)
+
+**Erreur:**
+```
+Error: Failed to run sql query: ERROR: 42P01: relation "users" does not exist
+```
+
+**Cause:**
+La migration référençait `REFERENCES users(id)` mais:
+- ❌ `public.users` n'existe pas
+- ✅ `auth.users` existe (Supabase)
+- ✅ `user_profiles` pourrait exister
+
+**Solution:**
+```sql
+-- AU LIEU DE:
+changed_by uuid REFERENCES users(id)
+
+-- UTILISER:
+changed_by uuid  -- Sans foreign key, stocke auth.uid()
+
+-- OU SI user_profiles existe:
+changed_by uuid REFERENCES user_profiles(id)
+```
+
+### 📋 Checklist de Vérification Complète
+
+Avant chaque migration, vérifier:
+
+- [ ] 1. Script `verify-database-structure.sql` exécuté
+- [ ] 2. Toutes les tables requises existent
+- [ ] 3. Toutes les colonnes requises existent
+- [ ] 4. Les foreign keys pointent vers des tables existantes
+- [ ] 5. Les types de colonnes sont compatibles
+- [ ] 6. La migration utilise `IF NOT EXISTS` (idempotence)
+- [ ] 7. Les RLS policies sont incluses si c'est une nouvelle table
+- [ ] 8. Les indexes sont créés pour les colonnes fréquemment requêtées
+- [ ] 9. La documentation est claire dans le fichier SQL
+- [ ] 10. L'équipe a été notifiée
 
 ## 📝 Format Standard d'une Migration
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { roundUpToFixed } from '@/utils/numberUtils';
 
 interface DynamicPackingListProps {
   expeditionLotNumber: string;
@@ -43,11 +44,12 @@ export function DynamicPackingList({
   const totalNetWeight = ingots.reduce((sum, ingot) => sum + ingot.netWeight, 0);
   const totalGrossWeight = ingots.reduce((sum, ingot) => sum + ingot.grossWeight, 0);
 
+  // Format de date conforme: 31-Oct-25 (avec tirets)
   const formattedDate = new Date(productionDate).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: '2-digit',
-  });
+  }).replace(/ /g, '-'); // Remplace les espaces par des tirets
 
   return (
     <div className="bg-white p-6 text-sm" style={{ width: '100%', fontFamily: 'Arial, sans-serif' }}>
@@ -91,32 +93,32 @@ export function DynamicPackingList({
         </div>
       </div>
 
-      {/* Ingots Table */}
-      <table className="w-full border-collapse border border-gray-400 mb-6 text-xs">
+      {/* Ingots Table - Format Gouvernemental Conforme */}
+      <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-xs">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-400 p-2 text-left">Ingot & Box #</th>
-            <th className="border border-gray-400 p-2 text-right">Ingot Net Weight (g)</th>
-            <th className="border border-gray-400 p-2 text-right">Ingot Gross Weight (g)</th>
-            <th className="border border-gray-400 p-2 text-center">Seal Number 1</th>
-            <th className="border border-gray-400 p-2 text-center">Seal Number 2</th>
+          <tr style={{ backgroundColor: '#C69C3D' }}>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot & Box #</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Net<br/>Weight (g)</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Ingot Gross<br/>Weight (g)</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 1</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900">Seal Number 2</th>
           </tr>
         </thead>
         <tbody>
           {ingots.length > 0 ? (
             ingots.map((ingot, index) => (
-              <tr key={index}>
-                <td className="border border-gray-400 p-2">{ingot.ingotBoxNumber}</td>
-                <td className="border border-gray-400 p-2 text-right">{ingot.netWeight.toFixed(2)}</td>
-                <td className="border border-gray-400 p-2 text-right">{ingot.grossWeight.toFixed(2)}</td>
+              <tr key={index} className="bg-white">
+                <td className="border border-gray-400 p-2 text-center font-medium">{ingot.ingotBoxNumber}</td>
+                <td className="border border-gray-400 p-2 text-center">{roundUpToFixed(ingot.netWeight, 2)}</td>
+                <td className="border border-gray-400 p-2 text-center">{roundUpToFixed(ingot.grossWeight, 2)}</td>
                 <td className="border border-gray-400 p-2 text-center">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-green-600">✓</span> {ingot.sealNumber1}
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <span className="text-green-600 text-base">✓</span> {ingot.sealNumber1}
                   </span>
                 </td>
                 <td className="border border-gray-400 p-2 text-center">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-green-600">✓</span> {ingot.sealNumber2}
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <span className="text-green-600 text-base">✓</span> {ingot.sealNumber2}
                   </span>
                 </td>
               </tr>
@@ -128,21 +130,11 @@ export function DynamicPackingList({
               </td>
             </tr>
           )}
-          {/* Single empty row */}
-          {ingots.length > 0 && (
-            <tr>
-              <td className="border border-gray-400 p-2">&nbsp;</td>
-              <td className="border border-gray-400 p-2">&nbsp;</td>
-              <td className="border border-gray-400 p-2">&nbsp;</td>
-              <td className="border border-gray-400 p-2">&nbsp;</td>
-              <td className="border border-gray-400 p-2">&nbsp;</td>
-            </tr>
-          )}
-          {/* Totals */}
-          <tr className="font-bold bg-gray-50">
-            <td className="border-2 border-gray-800 p-2">TOTAL</td>
-            <td className="border-2 border-gray-800 p-2 text-right">{totalNetWeight.toFixed(2)}</td>
-            <td className="border-2 border-gray-800 p-2 text-right">{totalGrossWeight.toFixed(2)}</td>
+          {/* Totals - Format Gouvernemental avec fond jaune/orange */}
+          <tr className="font-bold" style={{ backgroundColor: '#C69C3D' }}>
+            <td className="border-2 border-gray-800 p-2 text-left text-gray-900">TOTAL</td>
+            <td className="border-2 border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalNetWeight, 2)}</td>
+            <td className="border-2 border-gray-800 p-2 text-center text-gray-900">{roundUpToFixed(totalGrossWeight, 2)}</td>
             <td className="border-2 border-gray-800 p-2" colSpan={2}></td>
           </tr>
         </tbody>
@@ -155,21 +147,21 @@ export function DynamicPackingList({
         </div>
       )}
 
-      {/* Signatures Table */}
-      <table className="w-full border-collapse border border-gray-400 text-xs">
+      {/* Signatures Table - Format Gouvernemental Conforme */}
+      <table className="w-full border-collapse border-2 border-gray-800 text-xs">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-400 p-2 text-left w-1/3">POSITION</th>
-            <th className="border border-gray-400 p-2 text-left w-1/3">NAME</th>
-            <th className="border border-gray-400 p-2 text-left w-1/3">SIGNATURE</th>
+          <tr style={{ backgroundColor: '#ADD8E6' }}>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">POSITION</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">NAME</th>
+            <th className="border-2 border-gray-800 p-2 text-center font-bold text-gray-900 w-1/3">SIGNATURE</th>
           </tr>
         </thead>
         <tbody>
           {signatories.length > 0 ? (
             signatories.map((signatory, index) => (
-              <tr key={index}>
-                <td className="border border-gray-400 p-3">{signatory.position}</td>
-                <td className="border border-gray-400 p-3 font-medium text-blue-900">{signatory.name}</td>
+              <tr key={index} className="bg-white">
+                <td className="border border-gray-400 p-3 text-left font-medium">{signatory.position}</td>
+                <td className="border border-gray-400 p-3 text-center font-semibold">{signatory.name}</td>
                 <td className="border border-gray-400 p-3"></td>
               </tr>
             ))
@@ -178,14 +170,6 @@ export function DynamicPackingList({
               <td colSpan={3} className="border border-gray-400 p-6 text-center text-gray-400">
                 No signatories added yet
               </td>
-            </tr>
-          )}
-          {/* Single empty row */}
-          {signatories.length > 0 && (
-            <tr>
-              <td className="border border-gray-400 p-3">&nbsp;</td>
-              <td className="border border-gray-400 p-3">&nbsp;</td>
-              <td className="border border-gray-400 p-3">&nbsp;</td>
             </tr>
           )}
         </tbody>

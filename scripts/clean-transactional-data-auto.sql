@@ -45,6 +45,32 @@ BEGIN
     RAISE NOTICE '⚠️  Triggers désactivés: shipping_preparations';
   END IF;
 
+  -- Désactiver triggers d'audit (Bug #6)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'batch_status_history') THEN
+    ALTER TABLE batch_status_history DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers désactivés: batch_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'production_status_history') THEN
+    ALTER TABLE production_status_history DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers désactivés: production_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_status_history') THEN
+    ALTER TABLE shipping_status_history DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers désactivés: shipping_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'unified_status_history') THEN
+    ALTER TABLE unified_status_history DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers désactivés: unified_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales_audit_trail') THEN
+    ALTER TABLE sales_audit_trail DISABLE TRIGGER USER;
+    RAISE NOTICE '⚠️  Triggers désactivés: sales_audit_trail';
+  END IF;
+
   RAISE NOTICE '';
 END $$;
 
@@ -399,6 +425,32 @@ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_preparations') THEN
     ALTER TABLE shipping_preparations ENABLE TRIGGER USER;
     RAISE NOTICE '🔄 Triggers réactivés: shipping_preparations';
+  END IF;
+
+  -- Réactiver triggers d'audit (Bug #6)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'batch_status_history') THEN
+    ALTER TABLE batch_status_history ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers réactivés: batch_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'production_status_history') THEN
+    ALTER TABLE production_status_history ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers réactivés: production_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_status_history') THEN
+    ALTER TABLE shipping_status_history ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers réactivés: shipping_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'unified_status_history') THEN
+    ALTER TABLE unified_status_history ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers réactivés: unified_status_history';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'sales_audit_trail') THEN
+    ALTER TABLE sales_audit_trail ENABLE TRIGGER USER;
+    RAISE NOTICE '🔄 Triggers réactivés: sales_audit_trail';
   END IF;
 
   RAISE NOTICE '';

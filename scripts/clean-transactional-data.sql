@@ -215,30 +215,7 @@ BEGIN
   RAISE NOTICE '';
 END $$;
 
--- 1. Licences d'exportation et quotas
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_license_quotas') THEN
-    DELETE FROM export_license_quotas;
-    RAISE NOTICE '✅ Quotas de licences d''exportation supprimés';
-  END IF;
-
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_licenses') THEN
-    DELETE FROM export_licenses;
-    RAISE NOTICE '✅ Licences d''exportation supprimées';
-  END IF;
-END $$;
-
--- 2. Certificats d'essai
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assay_certificates') THEN
-    DELETE FROM assay_certificates;
-    RAISE NOTICE '✅ Certificats d''essai supprimés';
-  END IF;
-END $$;
-
--- 3. Paiements
+-- 1. Paiements (plus haut niveau - dépend de sales)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
@@ -252,7 +229,7 @@ BEGIN
   END IF;
 END $$;
 
--- 4. Ventes
+-- 2. Ventes (dépend de inventory et shipping)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'pre_sales') THEN
@@ -266,7 +243,7 @@ BEGIN
   END IF;
 END $$;
 
--- 5. Inventaire
+-- 3. Inventaire (peut dépendre de production)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory_movements') THEN
@@ -280,7 +257,7 @@ BEGIN
   END IF;
 END $$;
 
--- 6. Fret et douanes
+-- 4. Fret et douanes (peut dépendre de shipping)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'freight_customs') THEN
@@ -289,7 +266,7 @@ BEGIN
   END IF;
 END $$;
 
--- 7. Documents d'expédition
+-- 5. Documents d'expédition (dépend de shipping_preparations)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_documents') THEN
@@ -298,11 +275,34 @@ BEGIN
   END IF;
 END $$;
 
--- 8. Expéditions (table principale)
+-- 6. Expéditions (table principale - AVANT licenses car FK vers licenses)
 DO $$
 BEGIN
   DELETE FROM shipping_preparations;
   RAISE NOTICE '✅ Expéditions supprimées';
+END $$;
+
+-- 7. Certificats d'essai (APRÈS shipping_preparations)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assay_certificates') THEN
+    DELETE FROM assay_certificates;
+    RAISE NOTICE '✅ Certificats d''essai supprimés';
+  END IF;
+END $$;
+
+-- 8. Licences d'exportation et quotas (APRÈS shipping_preparations)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_license_quotas') THEN
+    DELETE FROM export_license_quotas;
+    RAISE NOTICE '✅ Quotas de licences d''exportation supprimés';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_licenses') THEN
+    DELETE FROM export_licenses;
+    RAISE NOTICE '✅ Licences d''exportation supprimées';
+  END IF;
 END $$;
 
 -- 9. Historique des statuts (table principale)

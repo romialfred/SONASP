@@ -15,24 +15,7 @@ BEGIN;
 -- Suppression dans l'ordre des dépendances avec vérifications
 DO $$
 BEGIN
-  -- 1. Licences d'exportation
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_license_quotas') THEN
-    DELETE FROM export_license_quotas;
-    RAISE NOTICE '✅ Quotas de licences d''exportation supprimés';
-  END IF;
-
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_licenses') THEN
-    DELETE FROM export_licenses;
-    RAISE NOTICE '✅ Licences d''exportation supprimées';
-  END IF;
-
-  -- 2. Certificats d'essai
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assay_certificates') THEN
-    DELETE FROM assay_certificates;
-    RAISE NOTICE '✅ Certificats d''essai supprimés';
-  END IF;
-
-  -- 3. Paiements
+  -- 1. Paiements (plus haut niveau)
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'virtual_payments') THEN
     DELETE FROM virtual_payments;
     RAISE NOTICE '✅ Paiements virtuels supprimés';
@@ -43,7 +26,7 @@ BEGIN
     RAISE NOTICE '✅ Paiements supprimés';
   END IF;
 
-  -- 4. Ventes
+  -- 2. Ventes
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'pre_sales') THEN
     DELETE FROM pre_sales;
     RAISE NOTICE '✅ Pré-ventes supprimées';
@@ -54,7 +37,7 @@ BEGIN
     RAISE NOTICE '✅ Ventes supprimées';
   END IF;
 
-  -- 5. Inventaire
+  -- 3. Inventaire
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'inventory_movements') THEN
     DELETE FROM inventory_movements;
     RAISE NOTICE '✅ Mouvements d''inventaire supprimés';
@@ -65,31 +48,48 @@ BEGIN
     RAISE NOTICE '✅ Inventaire supprimé';
   END IF;
 
-  -- 6. Fret et douanes
+  -- 4. Fret et douanes
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'freight_customs') THEN
     DELETE FROM freight_customs;
     RAISE NOTICE '✅ Fret et douanes supprimés';
   END IF;
 
-  -- 7. Documents d'expédition
+  -- 5. Documents d'expédition
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shipping_documents') THEN
     DELETE FROM shipping_documents;
     RAISE NOTICE '✅ Documents d''expédition supprimés';
   END IF;
 
-  -- 8. Expéditions (table principale toujours existante)
+  -- 6. Expéditions (AVANT licenses car FK vers licenses)
   DELETE FROM shipping_preparations;
   RAISE NOTICE '✅ Expéditions supprimées';
 
-  -- 9. Historique des statuts (table principale toujours existante)
+  -- 7. Certificats d'essai (APRÈS shipping)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'assay_certificates') THEN
+    DELETE FROM assay_certificates;
+    RAISE NOTICE '✅ Certificats d''essai supprimés';
+  END IF;
+
+  -- 8. Licences d'exportation (APRÈS shipping)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_license_quotas') THEN
+    DELETE FROM export_license_quotas;
+    RAISE NOTICE '✅ Quotas de licences d''exportation supprimés';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'export_licenses') THEN
+    DELETE FROM export_licenses;
+    RAISE NOTICE '✅ Licences d''exportation supprimées';
+  END IF;
+
+  -- 9. Historique des statuts
   DELETE FROM unified_status_history;
   RAISE NOTICE '✅ Historique des statuts supprimé';
 
-  -- 10. Documents de production (table principale toujours existante)
+  -- 10. Documents de production
   DELETE FROM production_documents;
   RAISE NOTICE '✅ Documents de production supprimés';
 
-  -- 11. Productions journalières (table principale toujours existante)
+  -- 11. Productions journalières
   DELETE FROM daily_production;
   RAISE NOTICE '✅ Productions journalières supprimées';
 

@@ -1,427 +1,139 @@
-import { useState, useEffect } from 'react';
+/**
+ * Composant de Workflow Unifié - Affichage Complet
+ * Visible dans TOUS les modules sans possibilité de modification
+ */
+
+import { Check, Circle } from 'lucide-react';
+
+// Import depuis les constantes unifiées
 import {
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  ChevronRight,
-  User,
-  Calendar,
-  MessageSquare,
-  RefreshCw,
-  Package,
-  Truck,
-  Factory,
-  ShoppingCart,
-  CheckCheck,
-} from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { TextArea } from '@/components/ui/TextArea';
-import { Loading } from '@/components/ui/Loading';
-import {
-  getStatusHistory,
-  getNextStatuses,
-  getStatusLabel,
-  getStatusColor,
-  changeProductionStatus,
-  changeShippingStatus,
-  ProductionStatus,
-  ShippingStatus,
-  StatusChangeContext,
-  EntityType,
-  StatusHistoryEntry,
-} from '@/services/unifiedStatusService';
-import { useAlert } from '@/hooks/useAlert';
+  UnifiedStatus,
+  UNIFIED_STATUS_CONFIG,
+  COMPLETE_STATUS_FLOW,
+  isStatusCompleted,
+  getProgressPercentage
+} from '@/constants/unifiedStatuses';
 
 interface UnifiedStatusFlowProps {
-  entityType: EntityType;
-  entityId: string;
   currentStatus: string;
-  context: StatusChangeContext;
-  canEdit?: boolean; // Can user edit status in this context
-  onStatusChanged?: () => void;
+  className?: string;
+  compact?: boolean;
 }
 
 export function UnifiedStatusFlow({
-  entityType,
-  entityId,
   currentStatus,
-  context,
-  canEdit = false,
-  onStatusChanged,
+  className = '',
+  compact = false
 }: UnifiedStatusFlowProps) {
-  const alert = useAlert();
-  const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showChangeModal, setShowChangeModal] = useState(false);
-  const [selectedNewStatus, setSelectedNewStatus] = useState<string>('');
-  const [notes, setNotes] = useState('');
-  const [changing, setChanging] = useState(false);
-
-  useEffect(() => {
-    loadHistory();
-  }, [entityId, entityType]);
-
-  const loadHistory = async () => {
-    setLoading(true);
-    try {
-      const result = await getStatusHistory(entityType, entityId);
-      if (result.success && result.data) {
-        setHistory(result.data);
-      } else {
-        console.error('Error loading history:', result.error);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusChange = async () => {
-    if (!selectedNewStatus) return;
-
-    setChanging(true);
-    try {
-      let result;
-      if (entityType === 'production') {
-        result = await changeProductionStatus(
-          entityId,
-          selectedNewStatus as ProductionStatus,
-          context,
-          notes
-        );
-      } else {
-        result = await changeShippingStatus(
-          entityId,
-          selectedNewStatus as ShippingStatus,
-          context,
-          notes
-        );
-      }
-
-      if (result.success) {
-        alert.showAlert('Statut modifié avec succès', 'success');
-        setShowChangeModal(false);
-        setNotes('');
-        setSelectedNewStatus('');
-        loadHistory();
-        onStatusChanged?.();
-      } else {
-        alert.showAlert(result.error || 'Erreur lors du changement de statut', 'error');
-      }
-    } catch (error: any) {
-      alert.showAlert(error.message, 'error');
-    } finally {
-      setChanging(false);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    const iconClass = 'w-4 h-4';
-
-    switch (status) {
-      case 'prepared':
-        return <Package className={iconClass} />;
-      case 'shipped':
-      case 'validated_for_refinery':
-        return <Truck className={iconClass} />;
-      case 'in_refining':
-      case 'refined':
-        return <Factory className={iconClass} />;
-      case 'in_sale':
-        return <ShoppingCart className={iconClass} />;
-      case 'sold':
-        return <CheckCheck className={iconClass} />;
-      case 'cancelled':
-        return <AlertCircle className={iconClass} />;
-      default:
-        return <Clock className={iconClass} />;
-    }
-  };
-
-  const nextStatuses = canEdit ? getNextStatuses(entityType, currentStatus, context) : [];
-
-  if (loading) {
+  // Cast du statut pour TypeScript
+  const status = currentStatus as UnifiedStatus;
+  const statusConfig = UNIFIED_STATUS_CONFIG[status];
+  
+  // Si le statut n'est pas reconnu, utiliser les valeurs par défaut
+  if (!statusConfig) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loading />
-        </div>
-      </Card>
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+        <p className="text-sm text-yellow-800">
+          Statut non reconnu: {currentStatus}
+        </p>
+      </div>
     );
   }
 
+  const progressPercentage = getProgressPercentage(status);
+
   return (
-    <>
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="card-title">Suivi des Statuts</h3>
-            <p className="card-subtitle">
-              Historique complet des changements de statut
-            </p>
-          </div>
-          {canEdit && nextStatuses.length > 0 && (
-            <Button
-              size="sm"
-              onClick={() => setShowChangeModal(true)}
-              className="btn-text-base"
-            >
-              <RefreshCw className="w-4 h-4 mr-1.5" />
-              Modifier Statut
-            </Button>
-          )}
-        </div>
-
-        {/* Current Status Badge */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white rounded-lg shadow-sm">
-                {getStatusIcon(currentStatus)}
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                  Statut Actuel
-                </p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {getStatusLabel(entityType, currentStatus)}
-                </p>
-              </div>
+    <div className={`space-y-4 ${className}`}>
+      {/* En-tête Statut Actuel */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{statusConfig.icon}</span>
+            <div>
+              <p className="text-xs text-gray-600">Statut Actuel</p>
+              <p className={`text-lg font-bold ${statusConfig.color}`}>
+                {statusConfig.label}
+              </p>
             </div>
-            <div className={`
-              px-4 py-2 rounded-full text-xs font-medium border-2
-              ${getStatusColor(entityType, currentStatus)}
-            `}>
-              {getStatusLabel(entityType, currentStatus)}
+          </div>
+
+          {/* Progression */}
+          <div className="text-right">
+            <p className="text-xs text-gray-600 mb-1">Progression</p>
+            <div className="flex items-center gap-2">
+              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold">{progressPercentage}%</span>
             </div>
           </div>
         </div>
 
-        {/* Status History Timeline */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Historique des Changements
-          </h4>
+        <p className="text-xs text-gray-700">{statusConfig.description}</p>
+        <p className="text-[10px] text-gray-600 mt-1">Phase: {statusConfig.phase}</p>
+      </div>
 
-          {history.length === 0 ? (
-            <p className="text-sm text-gray-500 italic py-4 text-center">
-              Aucun historique disponible
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {history.map((entry, index) => {
-                const isLatest = index === history.length - 1;
-                const colorClass = getStatusColor(entityType, entry.new_status);
+      {/* Workflow Complet */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <h4 className="text-xs font-semibold text-gray-900 mb-3">
+          Workflow Complet
+        </h4>
 
-                return (
+        <div className="space-y-2">
+          {COMPLETE_STATUS_FLOW.map((flowStatus, index) => {
+            const config = UNIFIED_STATUS_CONFIG[flowStatus];
+            const isCompleted = isStatusCompleted(flowStatus, status);
+            const isCurrent = flowStatus === status;
+            const isPast = isCompleted && !isCurrent;
+
+            return (
+              <div key={flowStatus} className="flex items-center gap-3">
+                {/* Icône */}
+                <div className="flex flex-col items-center">
                   <div
-                    key={entry.id}
                     className={`
-                      relative pl-8 pb-4 border-l-2 transition-colors
-                      ${isLatest ? 'border-blue-500' : 'border-gray-300'}
+                      w-8 h-8 rounded-full flex items-center justify-center
+                      ${isCurrent ? `${config.bgColor} ${config.borderColor} border-2` : ''}
+                      ${isPast ? 'bg-green-100 border-green-300 border' : ''}
+                      ${!isCompleted ? 'bg-gray-100 border-gray-200 border' : ''}
                     `}
                   >
-                    {/* Timeline dot */}
-                    <div className={`
-                      absolute left-0 top-0 -ml-[9px] w-4 h-4 rounded-full border-2
-                      ${isLatest
-                        ? 'bg-blue-500 border-blue-200'
-                        : 'bg-white border-gray-300'
-                      }
-                    `}>
-                      {isLatest && (
-                        <div className="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-75" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          {/* Status transition */}
-                          <div className="flex items-center gap-2 mb-2">
-                            {entry.old_status && (
-                              <>
-                                <span className={`
-                                  px-2 py-0.5 rounded-full text-xs font-medium border
-                                  ${getStatusColor(entityType, entry.old_status)}
-                                `}>
-                                  {getStatusLabel(entityType, entry.old_status)}
-                                </span>
-                                <ChevronRight className="w-3 h-3 text-gray-400" />
-                              </>
-                            )}
-                            <span className={`
-                              px-2 py-0.5 rounded-full text-xs font-medium border
-                              ${colorClass}
-                            `}>
-                              {getStatusLabel(entityType, entry.new_status)}
-                            </span>
-                          </div>
-
-                          {/* Action description */}
-                          {entry.action_description && (
-                            <p className="text-sm text-gray-700 mb-2">
-                              {entry.action_description}
-                            </p>
-                          )}
-
-                          {/* Notes */}
-                          {entry.notes && (
-                            <div className="flex items-start gap-2 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                              <MessageSquare className="w-3.5 h-3.5 text-gray-500 mt-0.5 flex-shrink-0" />
-                              <p className="text-xs text-gray-600 italic">
-                                {entry.notes}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Meta info */}
-                          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
-                            {entry.user_name && (
-                              <div className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                <span>{entry.user_name}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>
-                                {new Date(entry.changed_at).toLocaleString('fr-FR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                            </div>
-                            <div className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-                              {entry.change_context.replace(/_/g, ' ')}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Status icon */}
-                        <div className="flex-shrink-0">
-                          <div className={`p-2 rounded-lg ${colorClass.replace('text-', 'text-').split(' ')[0].replace('text-', 'bg-').replace('-800', '-100')}`}>
-                            {getStatusIcon(entry.new_status)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    {isCompleted ? (
+                      <Check className={`w-4 h-4 ${isCurrent ? config.color : 'text-green-600'}`} />
+                    ) : (
+                      <Circle className="w-4 h-4 text-gray-400" />
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  {/* Ligne de connexion */}
+                  {index < COMPLETE_STATUS_FLOW.length - 1 && (
+                    <div className={`w-0.5 h-6 ${isPast ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  )}
+                </div>
+
+                {/* Label */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span>{config.icon}</span>
+                    <span className={`text-sm ${isCurrent ? 'font-bold ' + config.color : isPast ? 'text-gray-700' : 'text-gray-500'}`}>
+                      {config.label}
+                    </span>
+                    {isCurrent && (
+                      <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                        ACTUEL
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 ml-7">{config.phase}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Context Info */}
-        {!canEdit && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-yellow-800">
-                Le statut ne peut pas être modifié depuis ce module.
-                {entityType === 'production' && currentStatus === 'validated_for_refinery' && (
-                  <span> Utilisez le module <strong>Shipping Management</strong> pour modifier le statut.</span>
-                )}
-              </p>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Change Status Modal */}
-      {showChangeModal && (
-        <Modal
-          isOpen={showChangeModal}
-          onClose={() => setShowChangeModal(false)}
-          title="Modifier le Statut"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="form-label">Statut Actuel</label>
-              <div className={`
-                px-4 py-2 rounded-lg border-2 text-sm font-medium
-                ${getStatusColor(entityType, currentStatus)}
-              `}>
-                {getStatusLabel(entityType, currentStatus)}
-              </div>
-            </div>
-
-            <div>
-              <label className="form-label">Nouveau Statut</label>
-              <div className="grid grid-cols-1 gap-2">
-                {nextStatuses.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setSelectedNewStatus(status)}
-                    className={`
-                      px-4 py-3 rounded-lg border-2 text-sm font-medium text-left
-                      transition-all hover:shadow-md
-                      ${selectedNewStatus === status
-                        ? `${getStatusColor(entityType, status)} ring-2 ring-blue-500`
-                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(status)}
-                      <span>{getStatusLabel(entityType, status)}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="form-label">Notes (Optionnel)</label>
-              <TextArea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ajouter une note sur ce changement de statut..."
-                rows={3}
-              />
-              <p className="form-helper">
-                Ces notes seront visibles dans l'historique
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowChangeModal(false)}
-                disabled={changing}
-                className="flex-1"
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleStatusChange}
-                disabled={!selectedNewStatus || changing}
-                className="flex-1"
-              >
-                {changing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Modification...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Confirmer
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </>
+      </div>
+    </div>
   );
 }

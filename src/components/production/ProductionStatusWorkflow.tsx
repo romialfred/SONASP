@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Check, ArrowRight, Lock, AlertCircle, Info } from 'lucide-react';
+import { ArrowRight, Lock, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   PRODUCTION_STATUSES,
   ProductionStatus,
-  STATUS_FLOW,
   getNextAllowedStatus
 } from '@/constants/productionStatuses';
 import { productionStatusService } from '@/services/productionStatusService';
@@ -13,6 +12,7 @@ import {
   WorkflowModule,
   useStatusTransitionControl
 } from '@/hooks/useStatusTransitionControl';
+import { UnifiedStatusFlow } from '@/components/common/UnifiedStatusFlow';
 
 interface ProductionDetails {
   id: string;
@@ -109,51 +109,8 @@ export function ProductionStatusWorkflow({
           </div>
         </div>
       )}
-      {/* Status Flow Visualization */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {STATUS_FLOW.map((status, index) => {
-          const statusConfig = PRODUCTION_STATUSES[status];
-          const isCompleted = STATUS_FLOW.indexOf(currentStatus) >= index;
-          const isCurrent = currentStatus === status;
-
-          return (
-            <div key={status} className="flex items-center gap-2 flex-shrink-0">
-              <div
-                className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all
-                  ${
-                    isCurrent
-                      ? `${statusConfig.bgColor} ${statusConfig.borderColor} ${statusConfig.color} font-semibold`
-                      : isCompleted
-                      ? 'bg-gray-100 border-gray-300 text-gray-700'
-                      : 'bg-white border-gray-200 text-gray-400'
-                  }
-                `}
-              >
-                {isCompleted && !isCurrent && (
-                  <Check className="w-4 h-4 text-emerald-600" />
-                )}
-                {!isCompleted && <Lock className="w-4 h-4" />}
-                <span className="text-sm">{statusConfig.label}</span>
-              </div>
-
-              {index < STATUS_FLOW.length - 1 && (
-                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Current Status Info */}
-      <div className={`p-4 rounded-lg border-2 ${PRODUCTION_STATUSES[currentStatus].bgColor} ${PRODUCTION_STATUSES[currentStatus].borderColor}`}>
-        <h4 className={`text-sm font-semibold mb-1 ${PRODUCTION_STATUSES[currentStatus].color}`}>
-          Statut Actuel: {PRODUCTION_STATUSES[currentStatus].label}
-        </h4>
-        <p className="text-sm text-gray-600">
-          {PRODUCTION_STATUSES[currentStatus].description}
-        </p>
-      </div>
+      {/* Workflow Unifié - Affiche TOUS les statuts possibles */}
+      <UnifiedStatusFlow currentStatus={currentStatus} />
 
       {/* Action Button - Contrôlé */}
       {nextStatus && !isLocked && transitionControl.checkTransition(nextStatus) && (

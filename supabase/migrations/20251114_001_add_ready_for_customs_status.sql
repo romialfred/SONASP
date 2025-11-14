@@ -60,9 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_production_company_ready
   WHERE status IN ('prepared', 'ready_for_customs');
 
 -- Mise à jour du commentaire sur la colonne status
-COMMENT ON COLUMN daily_production.status IS
-  'Workflow: prepared → ready_for_customs → shipped → refined → sold. ' ||
-  'Le statut ready_for_customs indique que la production est prête pour la douane et peut être incluse dans une expédition.';
+COMMENT ON COLUMN daily_production.status IS 'Workflow: prepared → ready_for_customs → shipped → refined → sold. Le statut ready_for_customs indique que la production est prête pour la douane et peut être incluse dans une expédition.';
 
 -- Vérification
 DO $$

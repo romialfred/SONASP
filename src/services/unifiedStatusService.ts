@@ -12,7 +12,6 @@ export type ShippingStatus =
   | 'validated_for_refinery'
   | 'in_refining'
   | 'refined'
-  | 'in_sale'
   | 'sold'
   | 'cancelled';
 
@@ -65,7 +64,6 @@ export const SHIPPING_STATUS_LABELS: Record<ShippingStatus, string> = {
   validated_for_refinery: 'Validé pour Raffinerie',
   in_refining: 'En Raffinage',
   refined: 'Raffiné',
-  in_sale: 'En Vente',
   sold: 'Vendu',
   cancelled: 'Annulé',
 };
@@ -86,7 +84,6 @@ export const SHIPPING_STATUS_COLORS: Record<ShippingStatus, string> = {
   validated_for_refinery: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   in_refining: 'bg-purple-100 text-purple-800 border-purple-300',
   refined: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-  in_sale: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   sold: 'bg-green-100 text-green-800 border-green-300',
   cancelled: 'bg-red-100 text-red-800 border-red-300',
 };
@@ -104,10 +101,9 @@ export const PRODUCTION_STATUS_FLOW: Record<ProductionStatus, ProductionStatus[]
 export const SHIPPING_STATUS_FLOW: Record<ShippingStatus, ShippingStatus[]> = {
   pending: ['prepared', 'cancelled'],
   prepared: ['validated_for_refinery', 'cancelled'],
-  validated_for_refinery: ['in_refining', 'in_sale'],
+  validated_for_refinery: ['in_refining', 'sold'],
   in_refining: ['refined'],
-  refined: ['in_sale'],
-  in_sale: ['sold'],
+  refined: ['sold'],
   sold: [],
   cancelled: [],
 };

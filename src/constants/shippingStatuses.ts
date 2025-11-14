@@ -6,7 +6,6 @@ export type ShippingStatus =
   | 'validated_for_refinery'
   | 'in_refining'
   | 'refined'
-  | 'in_sale'
   | 'sold'
   | 'cancelled';
 
@@ -76,17 +75,6 @@ export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
     textColor: 'text-teal-700',
     borderColor: 'border-teal-300',
     icon: Check,
-    canTransitionTo: ['in_sale', 'cancelled'],
-  },
-  in_sale: {
-    value: 'in_sale',
-    label: 'En Vente',
-    description: 'Matériaux disponibles et en vente',
-    color: 'cyan',
-    bgColor: 'bg-cyan-100',
-    textColor: 'text-cyan-700',
-    borderColor: 'border-cyan-300',
-    icon: TrendingUp,
     canTransitionTo: ['sold', 'cancelled'],
   },
   sold: {

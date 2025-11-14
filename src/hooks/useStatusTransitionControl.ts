@@ -120,7 +120,7 @@ export function useActiveModuleForStatus(status: string): WorkflowModule | null 
     if (['refined', 'in_inventory'].includes(status)) {
       return WorkflowModule.INVENTORY;
     }
-    if (['in_inventory', 'in_sale', 'sold', 'paid'].includes(status)) {
+    if (['in_inventory', 'sold', 'paid'].includes(status)) {
       return WorkflowModule.SALE;
     }
     return null;

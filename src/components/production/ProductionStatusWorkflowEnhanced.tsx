@@ -17,9 +17,8 @@ const WORKFLOW_STEPS = [
   { key: 'customs_approved', label: 'Approuvé par la Douane', phase: 'Shipping Preparation' },
   { key: 'ready_for_expedition', label: 'Prêt pour Expédition', phase: 'Shipping Preparation' },
   { key: 'shipped_to_refinery', label: 'Expédié à la Raffinerie', phase: 'Freight & Customs' },
-  { key: 'in_refining', label: 'Raffinage Terminé', phase: 'Refinery' },
+  { key: 'refined', label: 'Raffinage Terminé', phase: 'Refinery' },
   { key: 'in_inventory', label: 'En Inventaire', phase: 'Inventory' },
-  { key: 'in_sale', label: 'En Vente', phase: 'Sale' },
   { key: 'sold', label: 'Vendu', phase: 'Sale' },
   { key: 'paid', label: 'Payé', phase: 'Sale' },
 ];
@@ -80,7 +79,7 @@ export function ProductionStatusWorkflowEnhanced({
           />
 
           {/* All steps in single row */}
-          <div className="relative grid grid-cols-10 gap-2">
+          <div className="relative grid grid-cols-9 gap-3">
             {WORKFLOW_STEPS.map((step, index) => {
               const isPast = index < currentIndex;
               const isCurrent = step.key === currentStatus;

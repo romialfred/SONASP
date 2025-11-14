@@ -13,7 +13,7 @@ export interface ShippingPreparation {
   shipped_to_company: string | null;
   shipped_to_address: string | null;
   shipped_to_country: string | null;
-  status: 'pending' | 'prepared' | 'validated_for_refinery' | 'in_refining' | 'refined' | 'in_sale' | 'sold' | 'cancelled';
+  status: 'pending' | 'prepared' | 'validated_for_refinery' | 'in_refining' | 'refined' | 'sold' | 'cancelled';
   prepared_at: string | null;
   shipped_at: string | null;
   notes: string | null;
@@ -105,7 +105,7 @@ class ShippingPreparationService {
 
     // CRITICAL FIX: Ensure status is valid enum value
     // Only allow valid shipping_status_v2 values (NO 'shipped'!)
-    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled'];
+    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'sold', 'cancelled'];
     const cleanPreparation = { ...preparation };
 
     if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status)) {
@@ -128,7 +128,7 @@ class ShippingPreparationService {
 
   async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
     // CRITICAL FIX: Validate status before UPDATE
-    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'in_sale', 'sold', 'cancelled'];
+    const validStatuses = ['pending', 'prepared', 'validated_for_refinery', 'in_refining', 'refined', 'sold', 'cancelled'];
     const cleanUpdates = { ...updates };
 
     if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status)) {

@@ -24,7 +24,6 @@ export type UnifiedStatus =
   | 'in_inventory'
 
   // Phase Sale
-  | 'in_sale'
   | 'sold'
   | 'paid'
 
@@ -125,16 +124,6 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
   },
 
   // PHASE SALE
-  in_sale: {
-    label: 'En Vente',
-    shortLabel: 'Vente',
-    color: 'text-orange-700',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
-    description: 'En cours de vente à un client',
-    icon: '💰',
-    phase: 'Sale'
-  },
   sold: {
     label: 'Vendu',
     shortLabel: 'Vendu',
@@ -181,7 +170,6 @@ export const COMPLETE_STATUS_FLOW: UnifiedStatus[] = [
   'shipped_to_refinery',
   'refined',
   'in_inventory',
-  'in_sale',
   'sold',
   'paid'
 ];
@@ -195,7 +183,7 @@ export const STATUS_BY_PHASE = {
   freight: ['shipped_to_refinery'] as UnifiedStatus[],
   refinery: ['refined'] as UnifiedStatus[],
   inventory: ['in_inventory'] as UnifiedStatus[],
-  sale: ['in_sale', 'sold', 'paid'] as UnifiedStatus[]
+  sale: ['sold', 'paid'] as UnifiedStatus[]
 };
 
 /**

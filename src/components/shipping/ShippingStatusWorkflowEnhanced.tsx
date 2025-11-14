@@ -32,7 +32,6 @@ export function ShippingStatusWorkflowEnhanced({
     'validated_for_refinery',
     'in_refining',
     'refined',
-    'in_sale',
     'sold',
   ];
 

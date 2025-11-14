@@ -62,7 +62,6 @@ const STATUS_MODULE_CONTROL_MATRIX: Record<WorkflowModule, string[]> = {
   // MODULE SALE: Gère les ventes
   [WorkflowModule.SALE]: [
     'in_inventory',
-    'in_sale',
     'sold',
     'paid'
   ]
@@ -88,10 +87,9 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
   // Phase Inventory
   'refined': ['in_inventory'],
-  'in_inventory': ['in_sale'],
+  'in_inventory': ['sold'],
 
   // Phase Sale
-  'in_sale': ['sold', 'cancelled'],
   'sold': ['paid'],
   'paid': [], // État final
 

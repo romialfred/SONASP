@@ -92,11 +92,11 @@ BEGIN
       sp.id,
       sp.expedition_lot_number,
       sp.status as shipping_status,
-      COUNT(DISTINCT spi.production_id) as nb_productions,
+      COUNT(DISTINCT spi.daily_production_id) as nb_productions,
       STRING_AGG(DISTINCT dp.status::text, ', ') as production_statuses
     FROM shipping_preparations sp
     LEFT JOIN shipping_production_items spi ON spi.shipping_preparation_id = sp.id
-    LEFT JOIN daily_production dp ON dp.id = spi.production_id
+    LEFT JOIN daily_production dp ON dp.id = spi.daily_production_id
     GROUP BY sp.id, sp.expedition_lot_number, sp.status
     HAVING STRING_AGG(DISTINCT dp.status::text, ', ') LIKE '%prepared%'
   LOOP

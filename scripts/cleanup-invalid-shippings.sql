@@ -27,15 +27,15 @@ BEGIN
       sp.status as shipping_status,
       sp.export_license_id,
       sp.total_weight_grams,
-      COUNT(DISTINCT spi.production_id) as nb_productions,
+      COUNT(DISTINCT spi.daily_production_id) as nb_productions,
       STRING_AGG(DISTINCT dp.status::text, ', ') as production_statuses,
       STRING_AGG(DISTINCT dp.bar_reference, ', ') as production_refs
     FROM shipping_preparations sp
     LEFT JOIN shipping_production_items spi ON spi.shipping_preparation_id = sp.id
-    LEFT JOIN daily_production dp ON dp.id = spi.production_id
+    LEFT JOIN daily_production dp ON dp.id = spi.daily_production_id
     GROUP BY sp.id, sp.expedition_lot_number, sp.status, sp.export_license_id, sp.total_weight_grams
     HAVING STRING_AGG(DISTINCT dp.status::text, ', ') = 'prepared'
-       OR (COUNT(DISTINCT spi.production_id) > 0
+       OR (COUNT(DISTINCT spi.daily_production_id) > 0
            AND STRING_AGG(DISTINCT dp.status::text, ', ') LIKE '%prepared%')
   LOOP
     v_invalid_count := v_invalid_count + 1;
@@ -105,7 +105,7 @@ BEGIN
   SELECT COUNT(*) INTO v_invalid_count
   FROM shipping_preparations sp
   LEFT JOIN shipping_production_items spi ON spi.shipping_preparation_id = sp.id
-  LEFT JOIN daily_production dp ON dp.id = spi.production_id
+  LEFT JOIN daily_production dp ON dp.id = spi.daily_production_id
   GROUP BY sp.id
   HAVING STRING_AGG(DISTINCT dp.status::text, ', ') = 'prepared';
 

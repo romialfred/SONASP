@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Calculator, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import { Calendar, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import { annualBudgetService, MonthlyBudget, QuarterlyForecast } from '../../services/annualBudgetService';
 
 interface BudgetMatrixTableProps {
@@ -310,32 +310,8 @@ export function BudgetMatrixTable({
     );
   };
 
-  const calculateYearTotal = (): number => {
-    return Array.from({ length: 12 }, (_, i) => i + 1)
-      .reduce((sum, m) => sum + getBudgetValue(m), 0);
-  };
-
-  const yearTotal = calculateYearTotal();
-
   return (
     <div className="space-y-4">
-      {/* Year Summary */}
-      <div className="bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-lg p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-slate-600 to-slate-700 rounded-lg shadow-sm">
-              <Calculator className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Annuel {year}</h3>
-              <p className="text-2xl font-bold text-slate-900 mt-0.5">
-                {yearTotal.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} <span className="text-sm font-medium text-slate-600">oz</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Info Banner */}
       {mode === 'forecast' && selectedQuarter && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3 shadow-sm">

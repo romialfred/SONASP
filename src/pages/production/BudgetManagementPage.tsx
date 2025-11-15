@@ -287,14 +287,21 @@ export function BudgetManagementPage() {
 
   const calculateTotalBudget = () => {
     if (mode === 'budget') {
+      // Calculer le total annuel (tous les 12 mois)
       return monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
     } else if (selectedQuarter) {
+      // Calculer le total du trimestre sélectionné
       const quarterMonths = annualBudgetService.getQuarterMonths(selectedQuarter);
       return quarterlyForecasts
         .filter(qf => qf.quarter === selectedQuarter && quarterMonths.includes(qf.month))
         .reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0);
     }
     return 0;
+  };
+
+  const calculateYearTotal = () => {
+    // Toujours calculer le total annuel (12 mois)
+    return monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
   };
 
   const toggleQuarter = (quarter: number) => {
@@ -514,7 +521,7 @@ export function BudgetManagementPage() {
       {/* Right Sidebar - Always Visible */}
       <div className="w-80 bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
         <div className="p-5 space-y-5">
-          {/* Total Section */}
+          {/* Total Annuel Section - Always shows annual total */}
           <div className="bg-gradient-to-br from-sky-600 via-sky-700 to-cyan-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
@@ -524,16 +531,16 @@ export function BudgetManagementPage() {
                   <Target className="w-5 h-5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-sky-50">
-                  {mode === 'budget' ? 'TOTAL ANNUEL' : `TOTAL T${selectedQuarter}`}
+                  TOTAL ANNUEL
                 </h3>
               </div>
               <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
-                {(selectedCompanyId === 'ALL' && mode === 'budget' ? groupTotals.budget : calculateTotalBudget()).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                {(selectedCompanyId === 'ALL' ? groupTotals.budget : calculateYearTotal()).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
                 <span className="text-lg ml-2 font-bold text-sky-100">oz</span>
               </div>
               <p className="text-sky-100 text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                {mode === 'budget' ? '12 mois' : '3 mois'}
+                12 mois
               </p>
               {selectedCompanyId === 'ALL' && (
                 <div className="mt-3 pt-3 border-t border-white/20">
@@ -545,6 +552,32 @@ export function BudgetManagementPage() {
               )}
             </div>
           </div>
+
+          {/* Trimestre Total Section - Only in forecast mode */}
+          {mode === 'forecast' && selectedQuarter && (
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+                    <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-50">
+                    TOTAL T{selectedQuarter}
+                  </h3>
+                </div>
+                <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
+                  {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                  <span className="text-lg ml-2 font-bold text-blue-100">oz</span>
+                </div>
+                <p className="text-blue-100 text-sm font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  3 mois
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats */}
           <div className="space-y-3">

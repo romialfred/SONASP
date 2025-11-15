@@ -20,9 +20,6 @@ import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
 import { RefineryDashboard } from './pages/dashboards/RefineryDashboard';
 import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
-import { BatchListing } from './pages/batches/BatchListing';
-import { BatchCreate } from './pages/batches/BatchCreate';
-import { BatchDetailsWorkflow } from './pages/batches/BatchDetailsWorkflow';
 import { AssayCertificatesPage } from './pages/documents/AssayCertificatesPage';
 import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
@@ -59,7 +56,6 @@ import { RefineryForm } from './pages/admin/RefineryForm';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
-import { BatchApprovalFactory } from './pages/batches/BatchApprovalFactory';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
@@ -200,33 +196,9 @@ function AppRoutes() {
             />
 
             <Route
-              path="/batches"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
-                  <BatchListing />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/batches/new"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_CREATE}>
-                  <BatchCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/batches/:id"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
-                  <BatchDetailsWorkflow />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/shipping/preparation"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingDashboard />
                 </ProtectedRoute>
               }
@@ -234,7 +206,7 @@ function AppRoutes() {
             <Route
               path="/shipping/preparation/new"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingPreparationNew />
                 </ProtectedRoute>
               }
@@ -242,7 +214,7 @@ function AppRoutes() {
             <Route
               path="/shipping/preparation/edit/:id"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingPreparationNew />
                 </ProtectedRoute>
               }
@@ -250,7 +222,7 @@ function AppRoutes() {
             <Route
               path="/shipping/preparation/:id"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingPreparationDetailsEnhanced />
                 </ProtectedRoute>
               }
@@ -258,7 +230,7 @@ function AppRoutes() {
             <Route
               path="/shipping/preparation/:id/details"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingPreparationDetailsEnhanced />
                 </ProtectedRoute>
               }
@@ -266,7 +238,7 @@ function AppRoutes() {
             <Route
               path="/shipping/preparation/:id/edit"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <ShippingPreparationEdit />
                 </ProtectedRoute>
               }
@@ -301,16 +273,8 @@ function AppRoutes() {
             <Route
               path="/documents/assay-certificates"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.BATCHES_VIEW}>
+                <ProtectedRoute>
                   <AssayCertificatesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/batches/approvals"
-              element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
-                  <BatchApprovalFactory />
                 </ProtectedRoute>
               }
             />

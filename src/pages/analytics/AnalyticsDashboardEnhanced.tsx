@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { OverviewAnalytics } from './tabs/OverviewAnalytics';
 import { SalesAnalytics } from './tabs/SalesAnalytics';
-import { BatchAnalytics } from './tabs/BatchAnalytics';
 import { CustomerAnalytics } from './tabs/CustomerAnalytics';
 import { FinancialAnalytics } from './tabs/FinancialAnalytics';
 import { PerformanceAnalytics } from './tabs/PerformanceAnalytics';
@@ -29,11 +28,6 @@ export function AnalyticsDashboardEnhanced() {
       id: 'sales',
       label: 'Sales',
       icon: DollarSign
-    },
-    {
-      id: 'batches',
-      label: 'Batches',
-      icon: Package
     },
     {
       id: 'customers',
@@ -79,8 +73,6 @@ export function AnalyticsDashboardEnhanced() {
                 return <OverviewAnalytics />;
               case 'sales':
                 return <SalesAnalytics />;
-              case 'batches':
-                return <BatchAnalytics />;
               case 'customers':
                 return <CustomerAnalytics />;
               case 'financial':

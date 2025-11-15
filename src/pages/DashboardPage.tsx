@@ -9,17 +9,8 @@ import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAx
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { calculateInventoryMetrics } from '@/services/inventoryService';
 
-interface Batch {
-  id: string;
-  batch_number: string;
-  status: string;
-  weight_grams: number;
-  weight_ounces: number;
-  created_at: string;
-}
 
 interface Sale {
   id: string;

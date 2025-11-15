@@ -372,7 +372,7 @@ export function BudgetManagementPage() {
       <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         {/* Main Content */}
         <div className="flex-1 overflow-auto pb-8">
-          <div className="max-w-7xl mx-auto p-6 space-y-6">
+          <div className="max-w-6xl mx-auto p-6 pr-3 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -563,121 +563,97 @@ export function BudgetManagementPage() {
       </div>
 
       {/* Right Sidebar - Always Visible */}
-      <div className="w-80 bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
-        <div className="p-5 space-y-5">
+      <div className="w-[420px] bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
+        <div className="p-5 space-y-4">
           {/* Total Annuel Section - Always shows annual total */}
-          <div className="bg-gradient-to-br from-sky-600 via-sky-700 to-cyan-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                  <Target className="w-5 h-5" />
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl p-4 text-white shadow-lg border border-blue-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="bg-white/20 rounded-lg p-1.5">
+                  <Target className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-sky-50">
-                  TOTAL ANNUEL
-                </h3>
+                <span className="text-xs font-semibold uppercase tracking-wide">Total Annuel</span>
               </div>
-              <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
-                {calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                <span className="text-lg ml-2 font-bold text-sky-100">oz</span>
-              </div>
-              <p className="text-sky-100 text-sm font-medium flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+              <span className="text-[10px] font-medium text-blue-100 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
                 12 mois
-              </p>
+              </span>
+            </div>
+            <div className="text-3xl font-bold">
+              {calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+              <span className="text-base ml-1.5 font-semibold text-blue-100">oz</span>
             </div>
           </div>
 
           {/* Trimestre Total Section - Only in forecast mode */}
           {mode === 'forecast' && selectedQuarter && (
-            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                    <TrendingUp className="w-5 h-5" />
+            <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 rounded-xl p-4 text-white shadow-lg border border-purple-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="bg-white/20 rounded-lg p-1.5">
+                    <TrendingUp className="w-4 h-4" />
                   </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-50">
-                    TOTAL T{selectedQuarter}
-                  </h3>
+                  <span className="text-xs font-semibold uppercase tracking-wide">Total T{selectedQuarter}</span>
                 </div>
-                <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
-                  {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                  <span className="text-lg ml-2 font-bold text-blue-100">oz</span>
-                </div>
-                <p className="text-blue-100 text-sm font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                <span className="text-[10px] font-medium text-purple-100 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
                   3 mois
-                </p>
+                </span>
+              </div>
+              <div className="text-3xl font-bold">
+                {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                <span className="text-base ml-1.5 font-semibold text-purple-100">oz</span>
               </div>
             </div>
           )}
 
-          {/* Quick Stats */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
-              <Activity className="w-4 h-4 text-slate-500" />
-              Statistiques Rapides
-            </h3>
-
-            <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100/80 rounded-xl p-4 border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
+          {/* Quick Stats - Simplified */}
+          <div className="space-y-2">
+            <div className="bg-white rounded-lg p-3 border border-amber-200 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-blue-700 font-semibold uppercase tracking-wide">Année</span>
-                <span className="text-xl font-bold text-blue-900">{selectedYear}</span>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-amber-50 via-amber-50 to-amber-100/80 rounded-xl p-4 border border-amber-200/50 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-amber-700 font-semibold uppercase tracking-wide">Mode</span>
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-100 rounded-md p-1.5">
+                    <Activity className="w-3.5 h-3.5 text-amber-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-600">Mode</span>
+                </div>
                 <span className="text-sm font-bold text-amber-900">
                   {mode === 'budget' ? 'Budget' : `Forecast T${selectedQuarter}`}
                 </span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-50 via-emerald-50 to-emerald-100/80 rounded-xl p-4 border border-emerald-200/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-lg p-3 border border-emerald-200 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-emerald-700 font-semibold uppercase tracking-wide">Modifications</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-emerald-900">
+                  <div className="bg-emerald-100 rounded-md p-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-600">Modifications</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-emerald-900">
                     {Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}
                   </span>
                   {hasPendingChanges() && (
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                   )}
                 </div>
               </div>
             </div>
-
-            {selectedCompanyId && miningCompanies.find(c => c.id === selectedCompanyId) && (
-              <div className="bg-gradient-to-br from-teal-50 via-teal-50 to-teal-100/80 rounded-xl p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-teal-600" />
-                  <div>
-                    <div className="text-[10px] text-teal-600 font-semibold uppercase tracking-wide mb-1">Compagnie</div>
-                    <div className="text-sm font-bold text-teal-900">
-                      {miningCompanies.find(c => c.id === selectedCompanyId)?.name}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Pie Charts - Forecast Mode */}
           {mode === 'forecast' && selectedQuarter && (
             <>
               {/* Monthly Distribution for Selected Quarter */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
-                  <PieChart className="w-4 h-4 text-slate-500" />
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                  <PieChart className="w-4 h-4 text-blue-600" />
                   Distribution T{selectedQuarter} par Mois
                 </h3>
-                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <ResponsiveContainer width="100%" height={240}>
                     <RechartsPie>
                       <Pie
                         data={(() => {
@@ -691,8 +667,8 @@ export function BudgetManagementPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={true}
-                        label={(entry) => `${entry.name}: ${entry.percentage}%`}
-                        outerRadius={70}
+                        label={(entry) => `${entry.percentage}%`}
+                        outerRadius={75}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -702,22 +678,26 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Forecast']}
+                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                        contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
-                      <Legend />
+                      <Legend
+                        wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                        formatter={(value) => <span style={{ color: '#475569', fontWeight: 500 }}>{value}</span>}
+                      />
                     </RechartsPie>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Quarterly Distribution */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
-                  <BarChart3 className="w-4 h-4 text-slate-500" />
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-purple-600" />
                   Distribution Annuelle par Trimestre
                 </h3>
-                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <ResponsiveContainer width="100%" height={240}>
                     <RechartsPie>
                       <Pie
                         data={(() => {
@@ -731,8 +711,8 @@ export function BudgetManagementPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={true}
-                        label={(entry) => `${entry.name}: ${entry.percentage}%`}
-                        outerRadius={70}
+                        label={(entry) => `${entry.percentage}%`}
+                        outerRadius={75}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -742,9 +722,13 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Forecast']}
+                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                        contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
-                      <Legend />
+                      <Legend
+                        wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                        formatter={(value) => <span style={{ color: '#475569', fontWeight: 500 }}>{value}</span>}
+                      />
                     </RechartsPie>
                   </ResponsiveContainer>
                 </div>

@@ -145,55 +145,55 @@ export function BudgetMatrixTable({
         {/* Quarter Header - Always Visible */}
         <div
           className={`
-            flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md
+            flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all cursor-pointer hover:shadow-md
             ${colors.bg} ${colors.border} shadow-sm
           `}
           onClick={() => toggleQuarter(quarter)}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {isExpanded ? (
               <ChevronDown className={`w-4 h-4 ${colors.text}`} />
             ) : (
               <ChevronRight className={`w-4 h-4 ${colors.text}`} />
             )}
-            <div className={`p-1.5 rounded-md ${colors.icon} shadow-sm`}>
-              <Calendar className="w-4 h-4 text-white" />
+            <div className={`p-1 rounded ${colors.icon}`}>
+              <Calendar className="w-3.5 h-3.5 text-white" />
             </div>
             <span className={`text-sm font-bold ${colors.text}`}>
-              Trimestre {quarter}
+              T{quarter}
             </span>
 
             {/* Month Names when collapsed */}
             {!isExpanded && (
-              <span className="text-xs text-slate-500 font-medium ml-2">
+              <span className="text-[11px] text-slate-500 font-medium">
                 ({months.map(m => annualBudgetService.getMonthName(m).substring(0, 3)).join(', ')})
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-6 text-xs">
+          <div className="flex items-center gap-5 text-xs">
             <div className="text-right">
-              <span className="text-slate-500 font-medium block mb-0.5">Budget</span>
-              <span className="font-bold text-base text-slate-900">
+              <span className="text-slate-500 font-medium text-[10px] block mb-0.5">Budget</span>
+              <span className="font-bold text-sm text-slate-900">
                 {quarterTotals.budget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                <span className="text-xs ml-1 text-slate-600">oz</span>
+                <span className="text-[10px] ml-1 text-slate-500">oz</span>
               </span>
             </div>
             {showForecastColumns && (
               <>
                 <div className="text-right">
-                  <span className="text-blue-600 font-medium block mb-0.5">Forecast</span>
-                  <span className="font-bold text-base text-blue-700">
+                  <span className="text-blue-600 font-medium text-[10px] block mb-0.5">Forecast</span>
+                  <span className="font-bold text-sm text-blue-700">
                     {quarterTotals.forecast.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                    <span className="text-xs ml-1 text-blue-600">oz</span>
+                    <span className="text-[10px] ml-1 text-blue-500">oz</span>
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-500 font-medium block mb-0.5">Écart</span>
-                  <span className={`font-bold text-base ${quarterTotals.forecast - quarterTotals.budget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className="text-slate-500 font-medium text-[10px] block mb-0.5">Écart</span>
+                  <span className={`font-bold text-sm ${quarterTotals.forecast - quarterTotals.budget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {quarterTotals.forecast - quarterTotals.budget >= 0 ? '+' : ''}
                     {(quarterTotals.forecast - quarterTotals.budget).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                    <span className="text-xs ml-1">oz</span>
+                    <span className="text-[10px] ml-1">oz</span>
                   </span>
                 </div>
               </>

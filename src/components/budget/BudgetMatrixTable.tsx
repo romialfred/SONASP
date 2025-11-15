@@ -25,13 +25,48 @@ export function BudgetMatrixTable({
 }: BudgetMatrixTableProps) {
   const year = new Date().getFullYear();
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
-  const [expandedQuarters, setExpandedQuarters] = useState<Record<number, boolean>>({1: true, 2: true, 3: true, 4: true});
+  const [expandedQuarters, setExpandedQuarters] = useState<Record<number, boolean>>({1: true, 2: false, 3: false, 4: false});
 
   const toggleQuarter = (quarter: number) => {
     setExpandedQuarters(prev => ({
       ...prev,
       [quarter]: !prev[quarter]
     }));
+  };
+
+  const toggleAllQuarters = () => {
+    const allExpanded = Object.values(expandedQuarters).every(v => v);
+    setExpandedQuarters({1: !allExpanded, 2: !allExpanded, 3: !allExpanded, 4: !allExpanded});
+  };
+
+  const getQuarterColor = (quarter: number) => {
+    const colors = {
+      1: {
+        bg: 'bg-gradient-to-r from-blue-50 to-blue-100',
+        border: 'border-blue-300',
+        icon: 'bg-blue-600',
+        text: 'text-blue-900'
+      },
+      2: {
+        bg: 'bg-gradient-to-r from-emerald-50 to-emerald-100',
+        border: 'border-emerald-300',
+        icon: 'bg-emerald-600',
+        text: 'text-emerald-900'
+      },
+      3: {
+        bg: 'bg-gradient-to-r from-amber-50 to-amber-100',
+        border: 'border-amber-300',
+        icon: 'bg-amber-600',
+        text: 'text-amber-900'
+      },
+      4: {
+        bg: 'bg-gradient-to-r from-purple-50 to-purple-100',
+        border: 'border-purple-300',
+        icon: 'bg-purple-600',
+        text: 'text-purple-900'
+      }
+    };
+    return colors[quarter as keyof typeof colors];
   };
 
   const getBudgetValue = (month: number): number => {
@@ -98,33 +133,28 @@ export function BudgetMatrixTable({
     const isActive = selectedQuarter === quarter;
     const showForecastColumns = mode === 'forecast' && isActive;
     const isExpanded = expandedQuarters[quarter];
+    const colors = getQuarterColor(quarter);
 
     return (
       <div key={quarter} className="mb-4 last:mb-0">
         {/* Quarter Header - Always Visible */}
         <div
           className={`
-            flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md
-            ${isActive
-              ? 'bg-gradient-to-r from-slate-100 to-slate-200 border-slate-300 shadow-sm'
-              : 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200'
-            }
+            flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md
+            ${colors.bg} ${colors.border} shadow-sm
           `}
           onClick={() => toggleQuarter(quarter)}
         >
           <div className="flex items-center gap-3">
             {isExpanded ? (
-              <ChevronDown className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-600'}`} />
+              <ChevronDown className={`w-4 h-4 ${colors.text}`} />
             ) : (
-              <ChevronRight className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-600'}`} />
+              <ChevronRight className={`w-4 h-4 ${colors.text}`} />
             )}
-            <div className={`
-              p-1.5 rounded-md
-              ${isActive ? 'bg-slate-700 shadow-sm' : 'bg-slate-400'}
-            `}>
+            <div className={`p-1.5 rounded-md ${colors.icon} shadow-sm`}>
               <Calendar className="w-4 h-4 text-white" />
             </div>
-            <span className={`text-sm font-semibold ${isActive ? 'text-slate-900' : 'text-slate-700'}`}>
+            <span className={`text-sm font-bold ${colors.text}`}>
               Trimestre {quarter}
             </span>
 
@@ -310,8 +340,30 @@ export function BudgetMatrixTable({
     );
   };
 
+  const allExpanded = Object.values(expandedQuarters).every(v => v);
+
   return (
     <div className="space-y-4">
+      {/* Expand/Collapse All Button */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={toggleAllQuarters}
+          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-all shadow-sm hover:shadow"
+        >
+          {allExpanded ? (
+            <>
+              <ChevronRight className="w-4 h-4" />
+              Réduire tous les trimestres
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              Dérouler tous les trimestres
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Info Banner */}
       {mode === 'forecast' && selectedQuarter && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3 shadow-sm">

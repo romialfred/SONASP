@@ -46,7 +46,7 @@ export function BudgetManagementPage() {
   const [mode, setMode] = useState<'budget' | 'forecast'>('budget');
   const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('ALL');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [groupTotals, setGroupTotals] = useState({ budget: 0, forecast: 0 });
 
   const [loading, setLoading] = useState(true);
@@ -60,11 +60,18 @@ export function BudgetManagementPage() {
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [expandedQuarters, setExpandedQuarters] = useState<Record<number, boolean>>({1: true, 2: true, 3: true, 4: true});
+  const [expandedQuarters, setExpandedQuarters] = useState<Record<number, boolean>>({1: true, 2: false, 3: false, 4: false});
 
   useEffect(() => {
     loadMiningCompanies();
   }, []);
+
+  useEffect(() => {
+    // Auto-select first company if available and no company selected
+    if (miningCompanies.length > 0 && !selectedCompanyId) {
+      setSelectedCompanyId(miningCompanies[0].id);
+    }
+  }, [miningCompanies]);
 
   useEffect(() => {
     loadBudgetData();
@@ -88,35 +95,20 @@ export function BudgetManagementPage() {
     try {
       setLoading(true);
 
-      if (selectedCompanyId === 'ALL') {
-        const allData = await annualBudgetService.getAllCompaniesTotals(selectedYear);
-        setGroupTotals({
-          budget: allData.groupTotal,
-          forecast: allData.groupForecastTotal
-        });
-
-        const allMonthlyBudgets: MonthlyBudget[] = [];
-        const allForecasts: QuarterlyForecast[] = [];
-
-        allData.companies.forEach(company => {
-          allMonthlyBudgets.push(...company.monthlyBudgets);
-          allForecasts.push(...company.quarterlyForecasts);
-        });
-
-        setAnnualBudget(null);
-        setMonthlyBudgets(allMonthlyBudgets);
-        setQuarterlyForecasts(allForecasts);
-      } else {
-        const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
-          selectedYear,
-          'guinea',
-          selectedCompanyId
-        );
-
-        setAnnualBudget(data.budget);
-        setMonthlyBudgets(data.monthlyBudgets);
-        setQuarterlyForecasts(data.quarterlyForecasts);
+      if (!selectedCompanyId) {
+        setLoading(false);
+        return;
       }
+
+      const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
+        selectedYear,
+        'guinea',
+        selectedCompanyId
+      );
+
+      setAnnualBudget(data.budget);
+      setMonthlyBudgets(data.monthlyBudgets);
+      setQuarterlyForecasts(data.quarterlyForecasts);
 
       setPendingBudgets({});
       setPendingForecasts({});
@@ -143,8 +135,8 @@ export function BudgetManagementPage() {
   };
 
   const handleSaveBudgets = async () => {
-    if (selectedCompanyId === 'ALL') {
-      showError('Veuillez sélectionner une compagnie minière spécifique pour enregistrer');
+    if (!selectedCompanyId) {
+      showError('Veuillez sélectionner une compagnie minière');
       return;
     }
 
@@ -419,7 +411,6 @@ export function BudgetManagementPage() {
                     onChange={e => setSelectedCompanyId(e.target.value)}
                     className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-semibold text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
-                    <option value="ALL">🏢 Groupe Mansa Resources</option>
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}
@@ -535,21 +526,13 @@ export function BudgetManagementPage() {
                 </h3>
               </div>
               <div className="text-4xl font-extrabold mb-2 text-white tracking-tight">
-                {(selectedCompanyId === 'ALL' ? groupTotals.budget : calculateYearTotal()).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                {calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
                 <span className="text-lg ml-2 font-bold text-sky-100">oz</span>
               </div>
               <p className="text-sky-100 text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 12 mois
               </p>
-              {selectedCompanyId === 'ALL' && (
-                <div className="mt-3 pt-3 border-t border-white/20">
-                  <div className="flex items-center gap-2 text-xs text-sky-100">
-                    <PieChart className="w-3.5 h-3.5" />
-                    <span>Groupe Mansa Resources</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -616,7 +599,7 @@ export function BudgetManagementPage() {
               </div>
             </div>
 
-            {selectedCompanyId !== 'ALL' && miningCompanies.find(c => c.id === selectedCompanyId) && (
+            {selectedCompanyId && miningCompanies.find(c => c.id === selectedCompanyId) && (
               <div className="bg-gradient-to-br from-teal-50 via-teal-50 to-teal-100/80 rounded-xl p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-teal-600" />

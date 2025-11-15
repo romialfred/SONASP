@@ -21,7 +21,9 @@
     "cleanup:shipping:preview": "node scripts/cleanup-all-shipping-data.js --dry-run",
     "db:clean": "./scripts/clean-data.sh",
     "db:clean:auto": "./scripts/clean-data.sh --auto",
-    "db:check-trigger": "psql $SUPABASE_DB_URL -f scripts/check-production-trigger.sql"
+    "db:check-trigger": "psql $SUPABASE_DB_URL -f scripts/check-production-trigger.sql",
+    "db:reset-production-status": "node scripts/reset-all-production-to-prepared.js",
+    "db:reset-production-status:preview": "node scripts/reset-all-production-to-prepared.js --dry-run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

@@ -124,6 +124,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-emerald-700">Total Autorisé</p>
                   <p className="text-lg font-semibold text-emerald-900">{(totalAuthorized / 1000).toFixed(1)} kg</p>
+                  <p className="text-xs text-emerald-600">({(totalAuthorized / 31.1035).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -136,6 +137,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-amber-700">Utilisé</p>
                   <p className="text-lg font-semibold text-amber-900">{(totalUsed / 1000).toFixed(1)} kg</p>
+                  <p className="text-xs text-amber-600">({(totalUsed / 31.1035).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -148,6 +150,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-green-700">Disponible</p>
                   <p className="text-lg font-semibold text-green-900">{(totalRemaining / 1000).toFixed(1)} kg</p>
+                  <p className="text-xs text-green-600">({(totalRemaining / 31.1035).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -246,14 +249,21 @@ export function ExportLicensesPage() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredLicenses.map((license) => {
+            {filteredLicenses.map((license, index) => {
               const percentage = (license.used_quantity_grams / license.authorized_quantity_grams) * 100;
               const isExpiring = new Date(license.end_date).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
+              const authorizedOz = (license.authorized_quantity_grams / 31.1035).toFixed(2);
+              const remainingOz = (license.remaining_quantity_grams / 31.1035).toFixed(2);
+
+              // Couleurs de fond alternées subtiles
+              const bgColorClass = index % 2 === 0
+                ? 'bg-gradient-to-br from-blue-50/30 to-indigo-50/20'
+                : 'bg-gradient-to-br from-emerald-50/30 to-teal-50/20';
 
               return (
                 <Card
                   key={license.id}
-                  className="group relative p-4 hover:shadow-xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-white to-gray-50 border border-gray-300 hover:border-emerald-300 transform hover:scale-[1.01]"
+                  className={`group relative p-4 hover:shadow-xl transition-all duration-300 cursor-pointer ${bgColorClass} border border-gray-300 hover:border-emerald-300 transform hover:scale-[1.01]`}
                   onClick={() => navigate(`/production/licenses/${license.id}`)}
                 >
                   {/* Background gradient effect on hover */}
@@ -297,10 +307,12 @@ export function ExportLicensesPage() {
                       <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Autorisée</p>
                         <p className="text-sm font-semibold text-blue-700">{(license.authorized_quantity_grams / 1000).toFixed(2)} kg</p>
+                        <p className="text-xs text-blue-600">({authorizedOz} oz)</p>
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Disponible</p>
                         <p className="text-sm font-semibold text-emerald-700">{(license.remaining_quantity_grams / 1000).toFixed(2)} kg</p>
+                        <p className="text-xs text-emerald-600">({remainingOz} oz)</p>
                       </div>
                     </div>
 

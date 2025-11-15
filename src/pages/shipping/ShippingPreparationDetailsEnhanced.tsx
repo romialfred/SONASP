@@ -1,72 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Package, ArrowLeft, FileText, Calendar, Building2, Truck,
-  User, Weight, Box, Users, FileCheck, History
-} from 'lucide-react';
-import { Tabs } from '@/components/ui/Tabs';
+import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History, Users, Ship } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
-import { NotificationDialog } from '@/components/ui/NotificationDialog';
-import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
-import { ShippingStatusHistory, ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
-import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
-import { DocumentUploadSection } from '@/components/shipping/DocumentUploadSection';
-import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
+import { Tabs } from '@/components/ui/Tabs';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
-import { supabase } from '@/lib/supabase';
+import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
+import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
+import { ShippingStatusHistory } from '@/components/shipping/ShippingStatusHistory';
 import { ShippingStatus } from '@/constants/shippingStatuses';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
+import { assayCertificateService, AssayCertificate } from '@/services/assayCertificateService';
 
-interface Refinery {
+interface ShippingStatusHistoryEntry {
   id: string;
-  name: string;
-  location: string;
-  country: string;
-}
-
-interface TransportCompany {
-  id: string;
-  name: string;
-  address: string | null;
-}
-
-interface AssayCertificate {
-  id: string;
-  shipping_preparation_id: string;
-  certificate_number: string | null;
-  certificate_date: string | null;
-  issuing_laboratory: string | null;
-  file_name: string;
-  approval_status: string;
-  created_at: string;
-}
-
-interface ExportLicense {
-  id: string;
-  license_number: string;
-  issue_date: string;
-  end_date: string;
-  authorized_quantity_grams: number;
-  used_quantity_grams: number;
-  status: string;
+  entity_id: string;
+  old_status: string | null;
+  new_status: string;
+  changed_by: string | null;
+  changed_at: string;
+  notes: string | null;
+  action_description: string | null;
+  user_email?: string;
 }
 
 interface MiningCompany {
   id: string;
   name: string;
-  code: string;
 }
 
-export default function ShippingPreparationDetailsEnhanced() {
-  const { id } = useParams();
+interface Refinery {
+  id: string;
+  name: string;
+}
+
+interface TransportCompany {
+  id: string;
+  name: string;
+}
+
+interface ExportLicense {
+  id: string;
+  license_number: string;
+}
+
+export function ShippingPreparationDetailsEnhanced() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [loading, setLoading] = useState(true);
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
   const [productionItems, setProductionItems] = useState<ShippingProductionItem[]>([]);
   const [signatories, setSignatories] = useState<ShippingSignatory[]>([]);
@@ -77,11 +64,9 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [transportCompany, setTransportCompany] = useState<TransportCompany | null>(null);
   const [license, setLicense] = useState<ExportLicense | null>(null);
   const [miningCompany, setMiningCompany] = useState<MiningCompany | null>(null);
-  const [showError, setShowError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [activeTab, setActiveTab] = useState('details');
 
   const returnPath = '/shipping';
 
@@ -92,10 +77,18 @@ export default function ShippingPreparationDetailsEnhanced() {
   }, [id]);
 
   const loadShippingDetails = async (forceRefresh = false) => {
-    if (!id) return;
+    if (!id) {
+      setError({
+        title: 'ID Invalide',
+        message: 'L\'identifiant de l\'expédition est manquant.'
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
 
       if (forceRefresh) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -103,8 +96,11 @@ export default function ShippingPreparationDetailsEnhanced() {
 
       const prep = await shippingPreparationService.getPreparationById(id);
       if (!prep) {
-        setErrorMessage('Expédition introuvable');
-        setShowError(true);
+        setError({
+          title: 'Expédition introuvable',
+          message: 'L\'expédition demandée n\'existe pas ou a été supprimée.'
+        });
+        setLoading(false);
         return;
       }
 
@@ -128,116 +124,96 @@ export default function ShippingPreparationDetailsEnhanced() {
       // Load status history
       await loadStatusHistory(id);
 
-      // Load refinery
+      // Load related entities
       if (prep.refinery_id) {
-        const { data: refineryData } = await supabase
-          .from('refineries')
-          .select('id, name, location, country')
+        const { data } = await supabase
+          .from('refinery_plants')
+          .select('id, name')
           .eq('id', prep.refinery_id)
           .maybeSingle();
-        if (refineryData) setRefinery(refineryData);
+        if (data) setRefinery(data);
       }
 
-      // Load transport company
       if (prep.freight_company_id) {
-        const { data: transportData } = await supabase
+        const { data } = await supabase
           .from('freight_companies')
-          .select('id, name, address')
+          .select('id, name')
           .eq('id', prep.freight_company_id)
           .maybeSingle();
-        if (transportData) setTransportCompany(transportData);
+        if (data) setTransportCompany(data);
       }
 
-      // Load export license
       if (prep.export_license_id) {
-        const { data: licenseData } = await supabase
+        const { data } = await supabase
           .from('export_licenses')
-          .select('*')
+          .select('id, license_number')
           .eq('id', prep.export_license_id)
           .maybeSingle();
-        if (licenseData) setLicense(licenseData);
+        if (data) setLicense(data);
       }
 
-      // Load mining company
       if (prep.mining_company_id) {
-        const { data: companyData } = await supabase
+        const { data } = await supabase
           .from('mining_companies')
-          .select('id, name, code')
+          .select('id, name')
           .eq('id', prep.mining_company_id)
           .maybeSingle();
-        if (companyData) setMiningCompany(companyData);
+        if (data) setMiningCompany(data);
       }
-
     } catch (error: any) {
       console.error('Error loading shipping details:', error);
-      setErrorMessage(error.message || 'Erreur lors du chargement des détails');
-      setShowError(true);
+      setError({
+        title: 'Erreur de chargement',
+        message: error.message || 'Impossible de charger les détails de l\'expédition. Veuillez réessayer.'
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const loadCertificates = async () => {
+    if (!id) return;
+    try {
+      const certs = await assayCertificateService.getCertificatesByShipping(id);
+      setCertificates(certs);
+    } catch (error) {
+      console.warn('Could not load certificates:', error);
+    }
+  };
+
   const loadStatusHistory = async (shippingId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('unified_status_history')
+      const { data: historyData, error: historyError } = await supabase
+        .from('shipping_status_history')
         .select(`
           id,
-          entity_id,
+          shipping_preparation_id,
           old_status,
           new_status,
           changed_by,
           changed_at,
-          notes,
-          action_description
+          notes
         `)
-        .eq('entity_type', 'shipping')
-        .eq('entity_id', shippingId)
+        .eq('shipping_preparation_id', shippingId)
         .order('changed_at', { ascending: false });
 
-      if (error) throw error;
+      if (historyError) throw historyError;
 
-      // Fetch user emails
-      const historyWithEmails = await Promise.all(
-        (data || []).map(async (entry) => {
-          if (entry.changed_by) {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('email')
-              .eq('id', entry.changed_by)
-              .maybeSingle();
+      const formattedHistory: ShippingStatusHistoryEntry[] = (historyData || []).map(h => ({
+        id: h.id,
+        entity_id: h.shipping_preparation_id,
+        old_status: h.old_status,
+        new_status: h.new_status,
+        changed_by: h.changed_by,
+        changed_at: h.changed_at,
+        notes: h.notes,
+        action_description: null
+      }));
 
-            return {
-              ...entry,
-              changed_by_email: userData?.email || 'Système'
-            };
-          }
-          return { ...entry, changed_by_email: 'Système' };
-        })
-      );
-
-      setStatusHistory(historyWithEmails);
+      setStatusHistory(formattedHistory);
     } catch (error) {
       console.error('Error loading status history:', error);
       setStatusHistory([]);
-    }
-  };
-
-  const loadCertificates = async () => {
-    if (!id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('assay_certificates')
-        .select('*')
-        .eq('shipping_preparation_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCertificates(data || []);
-    } catch (error) {
-      console.error('Error loading certificates:', error);
-      setCertificates([]);
     }
   };
 
@@ -249,12 +225,11 @@ export default function ShippingPreparationDetailsEnhanced() {
     });
   };
 
-  const calculateTotals = () => {
-    const totalNetWeight = productionItems.reduce((sum, item) => sum + (item.net_weight_grams || 0), 0);
-    const totalGrossWeight = productionItems.reduce((sum, item) => sum + (item.gross_weight_grams || 0), 0);
-    const totalBoxes = productionItems.length;
-
-    return { totalNetWeight, totalGrossWeight, totalBoxes };
+  const formatWeight = (grams: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(grams);
   };
 
   if (loading) {
@@ -278,12 +253,18 @@ export default function ShippingPreparationDetailsEnhanced() {
     );
   }
 
-  const { totalNetWeight, totalGrossWeight, totalBoxes } = calculateTotals();
-
   return (
     <MainLayout>
+      {error && (
+        <ErrorDialog
+          title={error.title}
+          message={error.message}
+          onClose={() => setError(null)}
+        />
+      )}
+
       <div className="space-y-4">
-        {/* Header - Refined */}
+        {/* Header - Same as Production Details */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <Button
@@ -298,7 +279,7 @@ export default function ShippingPreparationDetailsEnhanced() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-gray-900">
-                  Expédition {preparation.expedition_number}
+                  Expédition {preparation.reference_number || preparation.expedition_number}
                 </h1>
                 <ShippingStatusBadge
                   status={preparation.status as ShippingStatus}
@@ -308,7 +289,7 @@ export default function ShippingPreparationDetailsEnhanced() {
               </div>
               <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1.5">
                 <Calendar className="w-3 h-3" />
-                {formatDate(preparation.production_date)}
+                {formatDate(preparation.shipment_date || preparation.production_date)}
               </p>
             </div>
           </div>
@@ -319,12 +300,13 @@ export default function ShippingPreparationDetailsEnhanced() {
               size="sm"
               className="text-xs"
             >
+              <Edit className="w-3.5 h-3.5 mr-1.5" />
               Modifier
             </Button>
           </div>
         </div>
 
-        {/* Workflow Section - Full Width */}
+        {/* Workflow Section - Full Width - Horizontal like Production */}
         <ShippingStatusWorkflowEnhanced
           currentStatus={preparation.status as ShippingStatus}
           statusHistory={statusHistory}
@@ -334,15 +316,21 @@ export default function ShippingPreparationDetailsEnhanced() {
         <Tabs
           tabs={[
             {
-              id: 'overview',
-              label: 'Vue d\'ensemble',
+              id: 'details',
+              label: 'Détails de l\'Expédition',
               icon: Package,
             },
             {
-              id: 'productions',
-              label: 'Productions',
-              icon: Box,
+              id: 'items',
+              label: 'Boîtes',
+              icon: Package,
               count: productionItems.length,
+            },
+            {
+              id: 'certificates',
+              label: 'Certificats d\'Essai',
+              icon: FileText,
+              count: certificates.length,
             },
             {
               id: 'signatories',
@@ -356,384 +344,264 @@ export default function ShippingPreparationDetailsEnhanced() {
               icon: FileText,
               count: documents.length,
             },
-            {
-              id: 'certificates',
-              label: 'Certificats',
-              icon: FileCheck,
-              count: certificates.length,
-            },
           ]}
-          activeTab={activeTab}
-          onChange={setActiveTab}
+          defaultTab="details"
         >
-          {(currentTab) => (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Left Column - Content based on active tab */}
-              <div className="lg:col-span-2 space-y-4">
-                {currentTab === 'overview' && (
-                  <>
-                    {/* Shipping Details Card */}
-                    <Card className="p-4">
-                      <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          {(activeTab) => {
+            if (activeTab === 'details') {
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Column - Main Info */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Informations Générales */}
+                    <Card className="p-6">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
                         Informations d'Expédition
                       </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Building className="w-3 h-3" />
+                            Raffinerie de Destination
+                          </p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {refinery?.name || 'Non spécifiée'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Building className="w-3 h-3" />
+                            Mining Company
+                          </p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {miningCompany?.name || 'Non spécifiée'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Ship className="w-3 h-3" />
+                            Compagnie de Fret
+                          </p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {transportCompany?.name || 'Non spécifiée'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Numéro de License</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {license?.license_number || 'Non spécifié'}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Raffinerie */}
-                        <div className="flex items-start gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-600">Raffinerie de Destination</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {refinery?.name || 'Non spécifiée'}
-                            </p>
-                            {refinery && (
-                              <p className="text-xs text-gray-500">
-                                {refinery.location}, {refinery.country}
+                    {/* Poids et Conversions */}
+                    <Card className="p-6">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                        Poids et Conversions
+                      </h3>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500">Nombre de Boîtes</p>
+                          <p className="text-2xl font-bold text-gray-900">{preparation.total_boxes}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                            <p className="text-xs text-yellow-800 mb-2">Poids Net Total</p>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-yellow-900">
+                                Grammes
                               </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Compagnie de transport */}
-                        <div className="flex items-start gap-2">
-                          <Truck className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-600">Compagnie de Fret</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {transportCompany?.name || 'Non spécifiée'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Mining Company */}
-                        <div className="flex items-start gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-600">Mining Company</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {miningCompany?.name || 'Non spécifiée'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Numéro de scellé */}
-                        {preparation.seal_numbers && preparation.seal_numbers.length > 0 && (
-                          <div className="flex items-start gap-2">
-                            <FileCheck className="w-4 h-4 text-gray-400 mt-0.5" />
-                            <div>
-                              <p className="text-xs text-gray-600">Numéros de Scellé</p>
-                              <p className="text-sm font-medium text-gray-900 font-mono">
-                                {preparation.seal_numbers.join(', ')}
+                              <p className="text-xl font-bold text-yellow-900">
+                                {formatWeight(preparation.total_net_weight_grams)} g
+                              </p>
+                            </div>
+                            <div className="space-y-1 mt-3">
+                              <p className="text-sm font-medium text-yellow-900">
+                                Onces
+                              </p>
+                              <p className="text-xl font-bold text-yellow-900">
+                                {formatWeight(preparation.total_weight_oz)} oz
                               </p>
                             </div>
                           </div>
-                        )}
+                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <p className="text-xs text-blue-800 mb-2">Poids Brut Total</p>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-blue-900">
+                                Grammes
+                              </p>
+                              <p className="text-xl font-bold text-blue-900">
+                                {formatWeight(preparation.total_gross_weight_grams)} g
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
+                    </Card>
+                  </div>
 
-                      {/* Poids et Conversions */}
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h3 className="text-xs font-semibold text-gray-900 mb-3">
-                          Poids et Conversions
+                  {/* Right Column - Status History */}
+                  <div className="lg:col-span-1">
+                    <Card className="p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <History className="w-4 h-4 text-gray-500" />
+                        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                          Historique des Changements
                         </h3>
-
-                        {/* Totaux */}
-                        <div className="space-y-3">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs font-semibold text-gray-700">Nombre de Boîtes</p>
-                              <p className="text-sm font-bold text-gray-900">{totalBoxes}</p>
-                            </div>
-                          </div>
-
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs font-semibold text-blue-900">Poids Net Total</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <p className="text-xs text-blue-700">Grammes</p>
-                                <p className="text-sm font-bold text-blue-900">
-                                  {totalNetWeight.toFixed(2)} g
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-blue-700">Onces</p>
-                                <p className="text-sm font-bold text-blue-900">
-                                  {(totalNetWeight / 31.1035).toFixed(4)} oz
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs font-semibold text-gray-700">Poids Brut Total</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <p className="text-xs text-gray-600">Grammes</p>
-                                <p className="text-sm font-bold text-gray-900">
-                                  {totalGrossWeight.toFixed(2)} g
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-600">Onces</p>
-                                <p className="text-sm font-bold text-gray-900">
-                                  {(totalGrossWeight / 31.1035).toFixed(4)} oz
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
                       </div>
-
-                      {/* License d'exportation */}
-                      {license && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <h3 className="text-xs font-semibold text-gray-900 mb-3">
-                            Licence d'Exportation
-                          </h3>
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-green-700">Numéro</span>
-                                <span className="text-sm font-bold text-green-900 font-mono">
-                                  {license.license_number}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-green-700">Date d'émission</span>
-                                <span className="text-xs text-green-900">
-                                  {formatDate(license.issue_date)}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-green-700">Date d'expiration</span>
-                                <span className="text-xs text-green-900">
-                                  {formatDate(license.end_date)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {preparation.notes && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <h3 className="text-xs font-semibold text-gray-900 mb-1">Notes</h3>
-                          <p className="text-xs text-gray-700 whitespace-pre-wrap">
-                            {preparation.notes}
+                      {statusHistory.length > 0 ? (
+                        <ShippingStatusHistory history={statusHistory} />
+                      ) : (
+                        <div className="text-center py-8">
+                          <History className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500">Aucun changement enregistré</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            L'historique des changements apparaîtra ici
                           </p>
                         </div>
                       )}
                     </Card>
-
-                    {/* Status Action Button - Below content */}
-                    <div>
-                      {/* TODO: Add status action button component here */}
-                    </div>
-                  </>
-                )}
-
-                {currentTab === 'productions' && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                      Productions Incluses
-                    </h3>
-                    {productionItems.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-4">
-                        Aucune production incluse
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {productionItems.map((item, index) => (
-                          <div
-                            key={item.id}
-                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-semibold text-gray-700">
-                                Boîte {index + 1}
-                              </span>
-                              <span className="text-xs font-mono text-gray-600">
-                                {item.box_number || `BOX-${index + 1}`}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <p className="text-xs text-gray-600">Poids Net</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {item.net_weight_grams.toFixed(2)} g
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-600">Poids Brut</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {item.gross_weight_grams.toFixed(2)} g
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                )}
-
-                {currentTab === 'signatories' && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                      Signataires
-                    </h3>
-                    {signatories.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-4">
-                        Aucun signataire enregistré
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {signatories.map((sig) => (
-                          <div
-                            key={sig.id}
-                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
-                          >
-                            <div className="flex items-start gap-2">
-                              <User className="w-4 h-4 text-gray-400 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {sig.full_name}
-                                </p>
-                                <p className="text-xs text-gray-600">{sig.title}</p>
-                                {sig.organization && (
-                                  <p className="text-xs text-gray-500">{sig.organization}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                )}
-
-                {currentTab === 'documents' && (
-                  <Card className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                        Documents Attachés
-                      </h3>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-                      >
-                        Ajouter
-                      </Button>
-                    </div>
-                    <DocumentUploadSection
-                      shippingId={id!}
-                      documents={documents}
-                      onDocumentsChange={(docs) => setDocuments(docs)}
-                    />
-                  </Card>
-                )}
-
-                {currentTab === 'certificates' && (
-                  <Card className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                        Certificats d'Essai
-                      </h3>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-                      >
-                        Ajouter
-                      </Button>
-                    </div>
-                    {certificates.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-4">
-                        Aucun certificat téléchargé
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {certificates.map((cert) => (
-                          <div
-                            key={cert.id}
-                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-start gap-2">
-                                <FileCheck className="w-4 h-4 text-gray-400 mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {cert.file_name}
-                                  </p>
-                                  {cert.certificate_number && (
-                                    <p className="text-xs text-gray-600 font-mono">
-                                      {cert.certificate_number}
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-gray-500">
-                                    {formatDate(cert.created_at)}
-                                  </p>
-                                </div>
-                              </div>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                cert.approval_status === 'approved'
-                                  ? 'bg-green-100 text-green-700'
-                                  : cert.approval_status === 'rejected'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {cert.approval_status === 'approved' ? 'Approuvé' :
-                                 cert.approval_status === 'rejected' ? 'Rejeté' : 'En attente'}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                )}
-              </div>
-
-              {/* Right Column - History - Always visible */}
-              <div className="space-y-4">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                    <History className="w-4 h-4 text-blue-600" />
-                    <h2 className="text-sm font-semibold text-gray-900">
-                      Historique des Changements
-                    </h2>
                   </div>
+                </div>
+              );
+            }
 
-                  <ShippingStatusHistory
-                    history={statusHistory}
-                    siteCountry="Guinée"
-                  />
+            if (activeTab === 'items') {
+              return (
+                <Card className="p-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Boîtes d'Expédition</h3>
+                  {productionItems.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">N° Boîte</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Poids Net (g)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Poids Brut (g)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Finesse (%)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Or Pur (g)</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">Scellés</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {productionItems.map((item) => (
+                            <tr key={item.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 font-medium text-gray-900">
+                                {item.box_number || item.ingot_box_number}
+                              </td>
+                              <td className="px-4 py-3 text-right text-gray-900">
+                                {formatWeight(item.net_weight_grams)}
+                              </td>
+                              <td className="px-4 py-3 text-right text-gray-900">
+                                {formatWeight(item.gross_weight_grams)}
+                              </td>
+                              <td className="px-4 py-3 text-right text-gray-900">
+                                {item.fineness_pct.toFixed(2)}%
+                              </td>
+                              <td className="px-4 py-3 text-right font-medium text-yellow-700">
+                                {formatWeight(item.pure_gold_grams)}
+                              </td>
+                              <td className="px-4 py-3 text-gray-600 text-xs">
+                                {[item.seal_number_1, item.seal_number_2].filter(Boolean).join(', ') || 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">Aucune boîte enregistrée</p>
+                    </div>
+                  )}
                 </Card>
-              </div>
-            </div>
-          )}
+              );
+            }
+
+            if (activeTab === 'certificates') {
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {certificates.length > 0 ? (
+                    certificates.map((cert) => (
+                      <AssayCertificateCard key={cert.id} certificate={cert} />
+                    ))
+                  ) : (
+                    <Card className="col-span-2 p-8 text-center">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">Aucun certificat d'essai disponible</p>
+                    </Card>
+                  )}
+                </div>
+              );
+            }
+
+            if (activeTab === 'signatories') {
+              return (
+                <Card className="p-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Signataires</h3>
+                  {signatories.length > 0 ? (
+                    <div className="space-y-3">
+                      {signatories.map((sig) => (
+                        <div key={sig.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Users className="w-5 h-5 text-gray-400 mt-1" />
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">
+                                {sig.full_name || sig.name}
+                              </p>
+                              <p className="text-sm text-gray-600">{sig.title || sig.position}</p>
+                              {sig.organization && (
+                                <p className="text-xs text-gray-500 mt-1">{sig.organization}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">Aucun signataire enregistré</p>
+                    </div>
+                  )}
+                </Card>
+              );
+            }
+
+            if (activeTab === 'documents') {
+              return (
+                <Card className="p-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Documents</h3>
+                  {documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{doc.title}</p>
+                              <p className="text-xs text-gray-500">{doc.file_name}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">Aucun document disponible</p>
+                    </div>
+                  )}
+                </Card>
+              );
+            }
+
+            return null;
+          }}
         </Tabs>
       </div>
-
-      {/* Error Dialog */}
-      <ErrorDialog
-        isOpen={showError}
-        onClose={() => setShowError(false)}
-        title="Erreur"
-        message={errorMessage}
-      />
-
-      {/* Success Dialog */}
-      <NotificationDialog
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        type="success"
-        title="Succès"
-        message={successMessage}
-      />
     </MainLayout>
   );
 }

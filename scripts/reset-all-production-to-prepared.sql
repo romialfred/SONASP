@@ -14,89 +14,107 @@
   ## IMPORTANT:
   - Le trigger `log_unified_status_change` enregistrera automatiquement
     chaque changement dans unified_status_history
-  - Les changements seront attribués à l'utilisateur système
+  - Compatible avec l'interface SQL de Supabase (utilise RAISE NOTICE)
 
   ## Utilisation:
-  ```bash
-  psql $SUPABASE_DB_URL -f scripts/reset-all-production-to-prepared.sql
-  ```
+  Exécutez ce script dans l'éditeur SQL de Supabase.
+  Regardez les messages dans la console/logs pour voir la progression.
 */
 
 -- =====================================================
--- 1. AFFICHER RÉSUMÉ AVANT
+-- SCRIPT DE RÉINITIALISATION DES STATUTS
 -- =====================================================
 
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '📊 RÉSUMÉ AVANT MODIFICATION'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-
-SELECT
-  status as "Statut Actuel",
-  COUNT(*) as "Nombre de Productions"
-FROM daily_production
-WHERE status IS NOT NULL
-GROUP BY status
-ORDER BY COUNT(*) DESC;
-
-\echo ''
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '🔄 DÉBUT DE LA MISE À JOUR'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-
--- =====================================================
--- 2. SAUVEGARDER LES STATUTS ACTUELS (pour référence)
--- =====================================================
-
-CREATE TEMP TABLE IF NOT EXISTS temp_old_statuses AS
-SELECT
-  id,
-  bar_reference,
-  status as old_status,
-  production_date,
-  created_at
-FROM daily_production
-WHERE status IS NOT NULL
-  AND status != 'prepared';
-
-\echo ''
-\echo '✅ Statuts actuels sauvegardés dans table temporaire'
-
--- Afficher quelques exemples
-\echo ''
-\echo 'Exemples de productions qui seront modifiées:'
-SELECT
-  bar_reference as "Référence",
-  old_status as "Statut Actuel",
-  to_char(production_date, 'DD/MM/YYYY') as "Date Production"
-FROM temp_old_statuses
-ORDER BY production_date DESC
-LIMIT 5;
-
--- =====================================================
--- 3. METTRE À JOUR TOUS LES STATUTS À "prepared"
--- =====================================================
-
-\echo ''
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '🔨 MISE À JOUR EN COURS...'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-
--- Important: Cette requête déclenchera le trigger qui créera les entrées dans unified_status_history
 DO $$
 DECLARE
-  v_count INTEGER;
+  v_count_before INTEGER;
+  v_count_to_update INTEGER;
   v_updated INTEGER := 0;
+  v_history_count INTEGER;
+  rec RECORD;
 BEGIN
-  -- Compter combien de productions seront modifiées
-  SELECT COUNT(*) INTO v_count
+  -- =====================================================
+  -- 1. AFFICHER RÉSUMÉ AVANT MODIFICATION
+  -- =====================================================
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'RÉSUMÉ AVANT MODIFICATION';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+
+  -- Compter le total
+  SELECT COUNT(*) INTO v_count_before
+  FROM daily_production
+  WHERE status IS NOT NULL;
+
+  RAISE NOTICE 'Total productions: %', v_count_before;
+  RAISE NOTICE '';
+  RAISE NOTICE 'Répartition par statut:';
+
+  -- Afficher la répartition
+  FOR rec IN
+    SELECT
+      status,
+      COUNT(*) as count
+    FROM daily_production
+    WHERE status IS NOT NULL
+    GROUP BY status
+    ORDER BY COUNT(*) DESC
+  LOOP
+    RAISE NOTICE '  % : % production(s)', RPAD(rec.status::text, 25), rec.count;
+  END LOOP;
+
+  -- =====================================================
+  -- 2. COMPTER LES PRODUCTIONS À MODIFIER
+  -- =====================================================
+  SELECT COUNT(*) INTO v_count_to_update
   FROM daily_production
   WHERE status IS NOT NULL
     AND status::text != 'prepared';
 
-  RAISE NOTICE 'Productions à modifier: %', v_count;
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'PRODUCTIONS À MODIFIER: %', v_count_to_update;
+  RAISE NOTICE '========================================';
 
-  -- Effectuer la mise à jour
-  -- Le trigger log_unified_status_change() enregistrera automatiquement dans unified_status_history
+  IF v_count_to_update = 0 THEN
+    RAISE NOTICE '';
+    RAISE NOTICE 'Toutes les productions ont déjà le statut "prepared"';
+    RAISE NOTICE 'Rien à faire!';
+    RETURN;
+  END IF;
+
+  RAISE NOTICE '';
+  RAISE NOTICE 'Exemples de productions qui seront modifiées (5 premiers):';
+  RAISE NOTICE '';
+
+  FOR rec IN
+    SELECT
+      bar_reference,
+      status,
+      to_char(production_date, 'DD/MM/YYYY') as prod_date
+    FROM daily_production
+    WHERE status IS NOT NULL
+      AND status::text != 'prepared'
+    ORDER BY production_date DESC
+    LIMIT 5
+  LOOP
+    RAISE NOTICE '  % | % -> prepared | Date: %',
+      RPAD(COALESCE(rec.bar_reference, 'N/A'), 20),
+      RPAD(rec.status::text, 20),
+      rec.prod_date;
+  END LOOP;
+
+  -- =====================================================
+  -- 3. METTRE À JOUR TOUS LES STATUTS À "prepared"
+  -- =====================================================
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'MISE À JOUR EN COURS...';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+
+  -- Important: Cette requête déclenchera le trigger qui créera les entrées dans unified_status_history
   UPDATE daily_production
   SET
     status = 'prepared',
@@ -106,72 +124,92 @@ BEGIN
 
   GET DIAGNOSTICS v_updated = ROW_COUNT;
 
-  RAISE NOTICE '✅ % productions mises à jour avec succès!', v_updated;
+  RAISE NOTICE '% production(s) mise(s) à jour avec succès!', v_updated;
 
-  -- Vérifier que les entrées ont été créées dans unified_status_history
-  PERFORM pg_sleep(0.5); -- Petit délai pour laisser le trigger s'exécuter
+  -- Petit délai pour laisser le trigger s'exécuter
+  PERFORM pg_sleep(0.5);
 
-  DECLARE
-    v_history_count INTEGER;
-  BEGIN
-    SELECT COUNT(*) INTO v_history_count
-    FROM unified_status_history
-    WHERE entity_type = 'production'
-      AND new_status = 'prepared'
-      AND changed_at >= NOW() - INTERVAL '1 minute';
+  -- =====================================================
+  -- 4. VÉRIFIER L'HISTORIQUE
+  -- =====================================================
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'VÉRIFICATION HISTORIQUE';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
 
-    RAISE NOTICE '✅ % entrées créées dans unified_status_history', v_history_count;
-  END;
+  SELECT COUNT(*) INTO v_history_count
+  FROM unified_status_history
+  WHERE entity_type = 'production'
+    AND new_status = 'prepared'
+    AND changed_at >= NOW() - INTERVAL '2 minutes';
+
+  RAISE NOTICE '% entrée(s) créée(s) dans unified_status_history', v_history_count;
+  RAISE NOTICE '';
+
+  IF v_history_count > 0 THEN
+    RAISE NOTICE 'Dernières entrées créées (5 premiers):';
+    RAISE NOTICE '';
+
+    FOR rec IN
+      SELECT
+        old_status,
+        new_status,
+        to_char(changed_at, 'DD/MM HH24:MI:SS') as change_time
+      FROM unified_status_history
+      WHERE entity_type = 'production'
+        AND new_status = 'prepared'
+        AND changed_at >= NOW() - INTERVAL '2 minutes'
+      ORDER BY changed_at DESC
+      LIMIT 5
+    LOOP
+      RAISE NOTICE '  % -> % | %',
+        RPAD(COALESCE(rec.old_status, 'null'), 20),
+        RPAD(rec.new_status, 15),
+        rec.change_time;
+    END LOOP;
+  ELSE
+    RAISE WARNING 'Aucune entrée trouvée dans unified_status_history!';
+    RAISE WARNING 'Le trigger pourrait ne pas fonctionner correctement.';
+  END IF;
+
+  -- =====================================================
+  -- 5. RÉSUMÉ FINAL
+  -- =====================================================
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'RÉSUMÉ APRÈS MODIFICATION';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+
+  RAISE NOTICE 'Répartition par statut:';
+
+  FOR rec IN
+    SELECT
+      status,
+      COUNT(*) as count
+    FROM daily_production
+    WHERE status IS NOT NULL
+    GROUP BY status
+    ORDER BY COUNT(*) DESC
+  LOOP
+    RAISE NOTICE '  % : % production(s)', RPAD(rec.status::text, 25), rec.count;
+  END LOOP;
+
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'SCRIPT TERMINÉ AVEC SUCCÈS';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Points importants:';
+  RAISE NOTICE '  - % production(s) mise(s) à jour', v_updated;
+  RAISE NOTICE '  - Tous les statuts changés à "prepared"';
+  RAISE NOTICE '  - % entrée(s) dans unified_status_history', v_history_count;
+  RAISE NOTICE '';
+  RAISE NOTICE 'Pour vérifier ultérieurement:';
+  RAISE NOTICE '  SELECT * FROM unified_status_history';
+  RAISE NOTICE '  WHERE entity_type = ''production''';
+  RAISE NOTICE '  ORDER BY changed_at DESC LIMIT 20;';
+  RAISE NOTICE '';
+
 END $$;
-
--- =====================================================
--- 4. VÉRIFICATION ET RAPPORT FINAL
--- =====================================================
-
-\echo ''
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '📊 RÉSUMÉ APRÈS MODIFICATION'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-
-SELECT
-  status as "Statut Actuel",
-  COUNT(*) as "Nombre de Productions"
-FROM daily_production
-WHERE status IS NOT NULL
-GROUP BY status
-ORDER BY COUNT(*) DESC;
-
-\echo ''
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '📝 VÉRIFICATION HISTORIQUE (dernières 10 entrées)'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-
-SELECT
-  entity_id as "Production ID",
-  old_status as "Ancien Statut",
-  new_status as "Nouveau Statut",
-  to_char(changed_at, 'DD/MM/YYYY HH24:MI:SS') as "Date Changement",
-  action_description as "Description"
-FROM unified_status_history
-WHERE entity_type = 'production'
-  AND new_status = 'prepared'
-  AND changed_at >= NOW() - INTERVAL '1 minute'
-ORDER BY changed_at DESC
-LIMIT 10;
-
-\echo ''
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo '✅ SCRIPT TERMINÉ AVEC SUCCÈS'
-\echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-\echo ''
-\echo '📌 Points importants:'
-\echo '  • Tous les statuts ont été changés à "prepared"'
-\echo '  • Les changements sont enregistrés dans unified_status_history'
-\echo '  • Le trigger log_unified_status_change a fonctionné correctement'
-\echo ''
-\echo '🔍 Pour vérifier ultérieurement:'
-\echo '  SELECT * FROM unified_status_history WHERE entity_type = '\''production'\'' ORDER BY changed_at DESC LIMIT 20;'
-\echo ''
-
--- Nettoyer la table temporaire
-DROP TABLE IF EXISTS temp_old_statuses;

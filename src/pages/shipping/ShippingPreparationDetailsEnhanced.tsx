@@ -342,11 +342,11 @@ export default function ShippingPreparationDetailsEnhanced() {
               {/* Tabs */}
               <Tabs
                 tabs={[
-                  { id: 'overview', label: 'Vue d\'ensemble', icon: <Package className="w-4 h-4" /> },
-                  { id: 'productions', label: 'Productions', icon: <Box className="w-4 h-4" /> },
-                  { id: 'signatories', label: 'Signataires', icon: <Users className="w-4 h-4" /> },
-                  { id: 'documents', label: 'Documents', icon: <FileText className="w-4 h-4" />, badge: documents.length > 0 ? documents.length : undefined },
-                  { id: 'certificates', label: 'Certificats', icon: <FileCheck className="w-4 h-4" />, badge: certificates.length > 0 ? certificates.length : undefined }
+                  { id: 'overview', label: 'Vue d\'ensemble', icon: Package },
+                  { id: 'productions', label: 'Productions', icon: Box },
+                  { id: 'signatories', label: 'Signataires', icon: Users },
+                  { id: 'documents', label: 'Documents', icon: FileText, badge: documents.length > 0 ? documents.length : undefined },
+                  { id: 'certificates', label: 'Certificats', icon: FileCheck, badge: certificates.length > 0 ? certificates.length : undefined }
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}

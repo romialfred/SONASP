@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Package, ArrowLeft, FileText, Calendar, Building2,
-  User, Clock, MapPin, Weight, Box, Users, FileCheck, Edit,
-  CheckCircle, XCircle, History, MapPinned
+  Package, ArrowLeft, FileText, Calendar, Building2, Truck,
+  User, Clock, MapPin, Weight, Box, Users, FileCheck, Upload,
+  Edit, History, RefreshCw
 } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -11,7 +11,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
-import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
 import { ShippingStatusHistory, ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
 import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
@@ -30,7 +29,7 @@ interface Refinery {
   country: string;
 }
 
-interface FreightCompany {
+interface TransportCompany {
   id: string;
   name: string;
   address: string | null;
@@ -47,39 +46,34 @@ interface AssayCertificate {
   created_at: string;
 }
 
-interface StatusHistory {
-  id: string;
-  old_status: string;
-  new_status: string;
-  changed_at: string;
-  changed_by: string;
-  notes: string | null;
-  location: string | null;
-}
-
 interface ExportLicense {
   id: string;
   license_number: string;
   issue_date: string;
-  expiry_date: string;
-  issued_by: string;
-  total_weight_authorized_grams: number;
-  weight_used_grams: number;
+  end_date: string;
+  authorized_quantity_grams: number;
+  used_quantity_grams: number;
   status: string;
 }
 
+interface MiningCompany {
+  id: string;
+  name: string;
+  code: string;
+}
+
 const statusLabels: Record<string, string> = {
-  pending: 'En Attente',
-  prepared: 'Préparée',
-  validated: 'Validée',
-  shipped: 'Expédiée',
-  in_transit: 'En Transit',
-  received: 'Reçue',
-  refining: 'En Raffinage',
-  refined: 'Raffinée',
-  in_sale: 'En Vente',
-  sold: 'Vendue',
+  waiting_for_customs_approval: 'En Attente Douane',
+  approved_by_customs: 'Approuvé par Douane',
+  ready_for_expedition: 'Prêt pour Expédition',
   cancelled: 'Annulée'
+};
+
+const statusDescriptions: Record<string, string> = {
+  waiting_for_customs_approval: 'Expédition créée, en attente d\'approbation douanière (peut durer plusieurs jours)',
+  approved_by_customs: 'Approuvé par la douane, prêt pour l\'expédition',
+  ready_for_expedition: 'Validé et prêt pour le départ',
+  cancelled: 'Expédition annulée'
 };
 
 export default function ShippingPreparationDetailsEnhanced() {
@@ -95,9 +89,9 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [certificates, setCertificates] = useState<AssayCertificate[]>([]);
   const [statusHistory, setStatusHistory] = useState<ShippingStatusHistoryEntry[]>([]);
   const [refinery, setRefinery] = useState<Refinery | null>(null);
-  const [freightCompany, setFreightCompany] = useState<FreightCompany | null>(null);
+  const [transportCompany, setTransportCompany] = useState<TransportCompany | null>(null);
   const [license, setLicense] = useState<ExportLicense | null>(null);
-
+  const [miningCompany, setMiningCompany] = useState<MiningCompany | null>(null);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -143,11 +137,10 @@ export default function ShippingPreparationDetailsEnhanced() {
 
       if (certsData) setCertificates(certsData);
 
-      // Load status history from shipping_status_history
+      // Load status history
       const historyData = await shippingStatusService.getStatusHistory(id!).catch(() => []);
       setStatusHistory(historyData);
 
-      // Load refinery if ID exists
       if (prep.shipped_to_address) {
         const { data: refineryData } = await supabase
           .from('refineries')
@@ -158,7 +151,6 @@ export default function ShippingPreparationDetailsEnhanced() {
         if (refineryData) setRefinery(refineryData);
       }
 
-      // Load freight company if ID exists
       if (prep.shipped_to_company) {
         const { data: companyData } = await supabase
           .from('transport_companies')
@@ -166,18 +158,29 @@ export default function ShippingPreparationDetailsEnhanced() {
           .eq('id', prep.shipped_to_company)
           .maybeSingle();
 
-        if (companyData) setFreightCompany(companyData);
+        if (companyData) setTransportCompany(companyData);
       }
 
-      // Load export license if ID exists
-      if (prep.export_license_id) {
+      // Load export license
+      if (prep.license_id) {
         const { data: licenseData } = await supabase
           .from('export_licenses')
           .select('*')
-          .eq('id', prep.export_license_id)
+          .eq('id', prep.license_id)
           .maybeSingle();
 
         if (licenseData) setLicense(licenseData);
+      }
+
+      // Load mining company
+      if (prep.mining_company_id) {
+        const { data: companyData } = await supabase
+          .from('mining_companies')
+          .select('*')
+          .eq('id', prep.mining_company_id)
+          .maybeSingle();
+
+        if (companyData) setMiningCompany(companyData);
       }
 
     } catch (error) {
@@ -240,23 +243,16 @@ export default function ShippingPreparationDetailsEnhanced() {
   };
 
   const formatShortDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-[1600px] mx-auto p-6">
-          <div className="flex gap-6">
-            {/* Main Content - Left Side */}
-            <div className="flex-1 space-y-6">
-              {/* Header */}
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-[1800px] mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
                   onClick={() => navigate('/shipping/preparation')}
@@ -267,402 +263,344 @@ export default function ShippingPreparationDetailsEnhanced() {
                   <ArrowLeft className="w-4 h-4" />
                   Retour
                 </Button>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl shadow-md">
-                    <Package className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-slate-900">Détails de l'Expédition</h1>
-                    <p className="text-sm text-slate-500">{preparation.expedition_lot_number}</p>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Expédition {preparation.expedition_lot_number}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {formatShortDate(preparation.prepared_at || preparation.created_at)}
+                    </span>
                   </div>
                 </div>
               </div>
+              <Button
+                onClick={() => navigate(`/shipping/preparation/${id}/edit`)}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Modifier
+              </Button>
+            </div>
+          </div>
+        </div>
 
-              {/* Metric Tiles - Modern Design */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="max-w-[1800px] mx-auto px-6 py-6">
+          <div className="flex gap-6">
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Workflow Visual */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                <ShippingStatusWorkflowEnhanced
+                  shippingId={preparation.id}
+                  currentStatus={preparation.status as ShippingStatus}
+                  onStatusChanged={loadPreparationDetails}
+                  userEmail={user?.email}
+                />
+              </div>
+
+              {/* Metrics Tiles - Compact */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 {/* Boxes */}
-                <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/30 p-5">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full -mr-16 -mt-16" />
-                  <div className="relative">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2.5 bg-amber-500/10 rounded-lg">
-                        <Box className="w-5 h-5 text-amber-600" />
-                      </div>
-                      <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Boîtes</span>
-                    </div>
-                    <p className="text-3xl font-bold text-amber-900">{preparation.total_boxes}</p>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border border-amber-200 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Box className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-semibold text-amber-700 uppercase">Boîtes</span>
                   </div>
+                  <p className="text-2xl font-bold text-amber-900">{productionItems.length}</p>
                 </div>
 
                 {/* Net Weight */}
-                <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 p-5">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full -mr-16 -mt-16" />
-                  <div className="relative">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2.5 bg-emerald-500/10 rounded-lg">
-                        <Weight className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Poids Net</span>
-                    </div>
-                    <p className="text-3xl font-bold text-emerald-900">
-                      {preparation.total_net_weight_grams.toFixed(2)}
-                      <span className="text-base font-normal text-emerald-600 ml-2">g</span>
-                    </p>
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Weight className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-semibold text-emerald-700 uppercase">Poids Net</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-2xl font-bold text-emerald-900">{preparation.total_net_weight_grams.toFixed(2)}</p>
+                    <span className="text-xs text-emerald-600">g</span>
                   </div>
                 </div>
 
                 {/* Gross Weight */}
-                <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 p-5">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-full -mr-16 -mt-16" />
-                  <div className="relative">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2.5 bg-blue-500/10 rounded-lg">
-                        <Weight className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Poids Brut</span>
-                    </div>
-                    <p className="text-3xl font-bold text-blue-900">
-                      {preparation.total_gross_weight_grams.toFixed(2)}
-                      <span className="text-base font-normal text-blue-600 ml-2">g</span>
-                    </p>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Weight className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-semibold text-blue-700 uppercase">Poids Brut</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-2xl font-bold text-blue-900">{preparation.total_gross_weight_grams.toFixed(2)}</p>
+                    <span className="text-xs text-blue-600">g</span>
                   </div>
                 </div>
               </div>
 
-              {/* Tabs Content */}
-              <Card className="bg-white border-slate-200">
-                <Tabs
-                  tabs={[
-                    { id: 'overview', label: 'Vue d\'ensemble', icon: Package },
-                    { id: 'productions', label: 'Productions', icon: Box },
-                    { id: 'signatories', label: 'Signataires', icon: Users },
-                    { id: 'documents', label: 'Documents', icon: FileText },
-                    { id: 'certificates', label: 'Certificats', icon: FileCheck },
-                  ]}
-                  activeTab={activeTab}
-                  onChange={setActiveTab}
-                />
+              {/* Tabs */}
+              <Tabs
+                tabs={[
+                  { id: 'overview', label: 'Vue d\'ensemble', icon: <Package className="w-4 h-4" /> },
+                  { id: 'productions', label: 'Productions', icon: <Box className="w-4 h-4" /> },
+                  { id: 'signatories', label: 'Signataires', icon: <Users className="w-4 h-4" /> },
+                  { id: 'documents', label: 'Documents', icon: <FileText className="w-4 h-4" />, badge: documents.length > 0 ? documents.length : undefined },
+                  { id: 'certificates', label: 'Certificats', icon: <FileCheck className="w-4 h-4" />, badge: certificates.length > 0 ? certificates.length : undefined }
+                ]}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+              />
 
-                <div className="p-6">
-                  {/* Overview Tab */}
-                  {activeTab === 'overview' && (
-                    <div className="space-y-6">
+              <div className="mt-6">
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <h2 className="text-lg font-bold text-gray-900">Informations d'Expédition</h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Raffinerie */}
                       <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <Building2 className="w-5 h-5 text-blue-600" />
-                          <h3 className="text-base font-semibold text-slate-900">Informations d'Expédition</h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                Raffinerie de Destination
-                              </label>
-                              <div className="text-sm font-medium text-slate-900">{refinery?.name || 'N/A'}</div>
-                              {refinery && (
-                                <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {refinery.location}, {refinery.country}
-                                </div>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                Compagnie de Fret
-                              </label>
-                              <div className="text-sm font-medium text-slate-900">{freightCompany?.name || 'N/A'}</div>
-                              {freightCompany?.address && (
-                                <div className="text-xs text-slate-500 mt-1">{freightCompany.address}</div>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                Numéro de Scellé
-                              </label>
-                              <div className="text-sm font-medium text-slate-900">
-                                {preparation.seal_number || 'N/A'}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                Date de Préparation
-                              </label>
-                              <div className="text-sm font-medium text-slate-900 flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-emerald-500" />
-                                {formatDate(preparation.prepared_at)}
-                              </div>
-                            </div>
-
-                            {license && (
-                              <div>
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1">
-                                  Licence d'Exportation
-                                </label>
-                                <div className="text-sm font-medium text-slate-900">
-                                  {license.license_number}
-                                </div>
-                                <div className="text-xs text-slate-500 mt-1">
-                                  Émise par: {license.issued_by}
-                                </div>
-                                <div className="text-xs text-slate-500 mt-0.5">
-                                  Expire le: {formatDate(license.expiry_date)}
-                                </div>
-                                <div className="text-xs mt-1">
-                                  <span className="text-slate-500">Utilisé: </span>
-                                  <span className="font-medium text-slate-900">
-                                    {license.weight_used_grams.toFixed(2)} g
-                                  </span>
-                                  <span className="text-slate-500"> / {license.total_weight_authorized_grams.toFixed(2)} g</span>
-                                </div>
-                              </div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          RAFFINERIE DE DESTINATION
+                        </label>
+                        <div className="flex items-start gap-3">
+                          <Building2 className="w-5 h-5 text-gray-400 mt-1" />
+                          <div>
+                            <p className="font-medium text-gray-900">{refinery?.name || 'N/A'}</p>
+                            {refinery && (
+                              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {refinery.location}, {refinery.country}
+                              </p>
                             )}
                           </div>
                         </div>
+                      </div>
 
-                        {preparation.notes && (
-                          <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-2">
-                              Notes
-                            </label>
-                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{preparation.notes}</p>
+                      {/* Date */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          DATE DE PRÉPARATION
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-5 h-5 text-gray-400" />
+                          <p className="font-medium text-gray-900">
+                            {formatDate(preparation.prepared_at || preparation.created_at)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Freight Company */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          COMPAGNIE DE FRET
+                        </label>
+                        <div className="flex items-start gap-3">
+                          <Truck className="w-5 h-5 text-gray-400 mt-1" />
+                          <div>
+                            <p className="font-medium text-gray-900">{transportCompany?.name || 'N/A'}</p>
+                            {transportCompany?.address && (
+                              <p className="text-sm text-gray-600 mt-1">{transportCompany.address}</p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Productions Tab */}
-                  {activeTab === 'productions' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-slate-900">Éléments de Production</h3>
-                        <span className="text-sm text-slate-500">{productionItems.length} élément(s)</span>
-                      </div>
-
-                      {productionItems.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400">
-                          <Box className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">Aucun élément de production</p>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {productionItems.map((item, index) => (
-                            <div key={item.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="bg-amber-100 rounded-lg p-2">
-                                    <Box className="w-4 h-4 text-amber-600" />
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">
-                                      Boîte #{item.ingot_box_number}
-                                    </div>
-                                    <div className="text-xs text-slate-500">Index: {index + 1}</div>
-                                  </div>
-                                </div>
-                              </div>
+                      </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                                <div>
-                                  <div className="text-slate-500 mb-1">Poids Net</div>
-                                  <div className="font-semibold text-slate-900">{item.net_weight_grams.toFixed(2)} g</div>
-                                </div>
-                                <div>
-                                  <div className="text-slate-500 mb-1">Poids Brut</div>
-                                  <div className="font-semibold text-slate-900">{item.gross_weight_grams.toFixed(2)} g</div>
-                                </div>
-                                <div>
-                                  <div className="text-slate-500 mb-1">Finesse</div>
-                                  <div className="font-semibold text-slate-900">{item.fineness_pct.toFixed(2)}%</div>
-                                </div>
-                                <div>
-                                  <div className="text-slate-500 mb-1">Or Pur</div>
-                                  <div className="font-semibold text-slate-900">{item.pure_gold_grams.toFixed(2)} g</div>
-                                </div>
-                              </div>
+                      {/* Seal Number */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          NUMÉRO DE SCELLÉ
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <FileCheck className="w-5 h-5 text-gray-400" />
+                          <p className="font-mono font-medium text-gray-900">
+                            {preparation.seal_number || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
 
-                              {(item.seal_number_1 || item.seal_number_2) && (
-                                <div className="mt-3 pt-3 border-t border-slate-200">
-                                  <div className="text-xs text-slate-500">
-                                    Scellés: {[item.seal_number_1, item.seal_number_2].filter(Boolean).join(', ')}
-                                  </div>
-                                </div>
-                              )}
+                      {/* Mining Company */}
+                      {miningCompany && (
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            COMPAGNIE MINIÈRE
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <Building2 className="w-5 h-5 text-gray-400" />
+                            <p className="font-medium text-gray-900">{miningCompany.name}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* License */}
+                      {license && (
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            LICENCE D'EXPORTATION
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="font-medium text-gray-900">{license.license_number}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Expire: {formatShortDate(license.end_date)}
+                              </p>
                             </div>
-                          ))}
+                          </div>
                         </div>
                       )}
                     </div>
-                  )}
+                  </Card>
+                )}
 
-                  {/* Signatories Tab */}
-                  {activeTab === 'signatories' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-slate-900">Signataires</h3>
-                        <span className="text-sm text-slate-500">{signatories.length} signataire(s)</span>
-                      </div>
-
-                      {signatories.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400">
-                          <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">Aucun signataire</p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {signatories.map((signatory) => (
-                            <div key={signatory.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                              <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 rounded-lg p-2">
-                                  <User className="w-4 h-4 text-blue-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="text-sm font-semibold text-slate-900">{signatory.name}</div>
-                                  <div className="text-xs text-slate-500">{signatory.position}</div>
-                                  {signatory.signed_at && (
-                                    <div className="text-xs text-emerald-600 mt-1">
-                                      Signé le {formatDate(signatory.signed_at)}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                {activeTab === 'productions' && (
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-bold text-gray-900">Productions Incluses</h2>
+                      <span className="text-sm text-gray-500">{productionItems.length} items</span>
                     </div>
-                  )}
 
-                  {/* Documents Tab */}
-                  {activeTab === 'documents' && (
+                    {productionItems.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Box Number</th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Poids Brut (g)</th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Finesse (%)</th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Or Pur (g)</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Scellé 1</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Scellé 2</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {productionItems.map((item, index) => (
+                              <tr key={item.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.ingot_box_number}</td>
+                                <td className="px-4 py-3 text-sm text-right font-medium">{item.gross_weight_grams.toFixed(2)}</td>
+                                <td className="px-4 py-3 text-sm text-right text-amber-600 font-semibold">{item.fineness_pct.toFixed(2)}%</td>
+                                <td className="px-4 py-3 text-sm text-right font-bold text-emerald-700">{item.pure_gold_grams.toFixed(2)}</td>
+                                <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.seal_number_1 || '-'}</td>
+                                <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.seal_number_2 || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <Box className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p>Aucune production associée</p>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {activeTab === 'signatories' && (
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-bold text-gray-900">Signataires</h2>
+                      <span className="text-sm text-gray-500">{signatories.length} signataires</span>
+                    </div>
+                    {signatories.length > 0 ? (
+                      <div className="space-y-4">
+                        {signatories.map((signatory, index) => (
+                          <div key={signatory.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                              <User className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-900">{signatory.name}</p>
+                              <p className="text-sm text-gray-600">{signatory.position}</p>
+                            </div>
+                            {signatory.signed_at && (
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500">Signé le</p>
+                                <p className="text-sm font-medium text-gray-700">
+                                  {formatShortDate(signatory.signed_at)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p>Aucun signataire enregistré</p>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {activeTab === 'documents' && (
+                  <Card className="p-6">
                     <DocumentUploadSection
                       shippingId={id!}
                       documents={documents}
-                      onDocumentAdded={loadPreparationDetails}
-                      onDocumentDeleted={(docId) => {
-                        setDocuments(documents.filter(d => d.id !== docId));
-                      }}
+                      onDocumentUploaded={loadPreparationDetails}
                     />
-                  )}
+                  </Card>
+                )}
 
-                  {/* Certificates Tab */}
-                  {activeTab === 'certificates' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-slate-900">Certificats d'Analyse</h3>
-                        <span className="text-sm text-slate-500">{certificates.length} certificat(s)</span>
-                      </div>
-
-                      <AssayCertificateUploadForShipping
-                        shippingPreparationId={id!}
-                        onUploadComplete={loadPreparationDetails}
-                      />
-
-                      {certificates.length > 0 && (
-                        <div className="space-y-3 mt-6">
-                          {certificates.map((cert) => (
-                            <div key={cert.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="bg-teal-100 rounded-lg p-2">
-                                    <FileCheck className="w-4 h-4 text-teal-600" />
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">
-                                      {cert.certificate_number || cert.file_name}
-                                    </div>
-                                    <div className="text-xs text-slate-500">
-                                      {cert.issuing_laboratory || 'Laboratoire non spécifié'}
-                                    </div>
-                                    {cert.certificate_date && (
-                                      <div className="text-xs text-slate-500">
-                                        Date: {formatDate(cert.certificate_date)}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                    cert.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                    cert.approval_status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                    'bg-amber-100 text-amber-700'
-                                  }`}>
-                                    {cert.approval_status === 'approved' ? 'Approuvé' :
-                                     cert.approval_status === 'rejected' ? 'Rejeté' :
-                                     'En attente'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </Card>
+                {activeTab === 'certificates' && (
+                  <Card className="p-6">
+                    <AssayCertificateUploadForShipping
+                      shippingPreparationId={id!}
+                      certificates={certificates}
+                      onCertificateUploaded={loadPreparationDetails}
+                    />
+                  </Card>
+                )}
+              </div>
             </div>
 
-            {/* Right Sidebar - Actions & History */}
-            <div className="w-96 space-y-6">
-              {/* Status & Actions Panel */}
-              <Card className="bg-white border-slate-200 p-5">
-                <div className="space-y-4">
-                  {/* Current Status */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Clock className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut Actuel</span>
+            {/* Right Sidebar - Status & History */}
+            <div className="w-96">
+              {/* Current Status */}
+              <Card className="p-5 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Statut Actuel</h3>
+                </div>
+                <ShippingStatusBadge status={preparation.status} size="lg" />
+              </Card>
+
+              {/* Workflow Status Card */}
+              <Card className="p-5 mb-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="w-5 h-5 text-amber-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Workflow de Statut</h3>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-full flex-shrink-0">
+                      <Clock className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <Package className="w-5 h-5 text-blue-600" />
-                      <span className="font-semibold text-blue-900">{statusLabels[preparation.status] || preparation.status}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-amber-900 mb-1">
+                        {statusLabels[preparation.status] || preparation.status}
+                      </p>
+                      <p className="text-xs text-amber-700">
+                        {statusDescriptions[preparation.status] || ''}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                      Workflow de Statut
-                    </div>
-                    <ShippingStatusWorkflowEnhanced
-                      shippingId={preparation.id}
-                      currentStatus={preparation.status as ShippingStatus}
-                      onStatusChanged={loadPreparationDetails}
-                      userEmail={user?.email}
-                    />
-                  </div>
-
-                  {/* Edit Button */}
-                  <Button
-                    onClick={() => navigate(`/shipping/preparation/${id}/edit`)}
-                    variant="outline"
-                    className="w-full gap-2 border-slate-300 hover:bg-slate-50"
-                    size="sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Modifier l'expédition
-                  </Button>
                 </div>
               </Card>
 
-              {/* History Timeline */}
-              <Card className="bg-white border-slate-200 p-5">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                  <History className="w-4 h-4 text-blue-600" />
-                  <h3 className="text-sm font-semibold text-slate-900">Historique des Changements</h3>
+              {/* History */}
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <History className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Historique des Changements</h3>
                 </div>
-
-                <ShippingStatusHistory
-                  history={statusHistory}
-                  siteCountry={preparation?.shipped_to_country || undefined}
-                />
+                <ShippingStatusHistory history={statusHistory} />
               </Card>
             </div>
           </div>
@@ -675,7 +613,6 @@ export default function ShippingPreparationDetailsEnhanced() {
         title="Erreur"
         message={errorMessage}
       />
-
       <SuccessDialog
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}

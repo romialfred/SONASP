@@ -11,6 +11,8 @@ interface BudgetMatrixTableProps {
   pendingForecasts: Record<string, number>;
   onBudgetChange: (month: number, value: number) => void;
   onForecastChange: (quarter: number, month: number, value: number) => void;
+  expandedQuarters: Record<number, boolean>;
+  onToggleQuarter: (quarter: number) => void;
 }
 
 export function BudgetMatrixTable({
@@ -21,22 +23,25 @@ export function BudgetMatrixTable({
   pendingBudgets,
   pendingForecasts,
   onBudgetChange,
-  onForecastChange
+  onForecastChange,
+  expandedQuarters,
+  onToggleQuarter
 }: BudgetMatrixTableProps) {
   const year = new Date().getFullYear();
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
-  const [expandedQuarters, setExpandedQuarters] = useState<Record<number, boolean>>({1: true, 2: false, 3: false, 4: false});
 
   const toggleQuarter = (quarter: number) => {
-    setExpandedQuarters(prev => ({
-      ...prev,
-      [quarter]: !prev[quarter]
-    }));
+    onToggleQuarter(quarter);
   };
 
   const toggleAllQuarters = () => {
     const allExpanded = Object.values(expandedQuarters).every(v => v);
-    setExpandedQuarters({1: !allExpanded, 2: !allExpanded, 3: !allExpanded, 4: !allExpanded});
+    const newState = !allExpanded;
+    [1, 2, 3, 4].forEach(q => {
+      if (expandedQuarters[q] !== newState) {
+        onToggleQuarter(q);
+      }
+    });
   };
 
   const getQuarterColor = (quarter: number) => {

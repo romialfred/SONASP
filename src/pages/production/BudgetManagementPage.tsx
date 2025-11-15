@@ -17,6 +17,7 @@ import {
   Building2,
   PieChart
 } from 'lucide-react';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Button } from '../../components/ui/Button';
@@ -296,11 +297,61 @@ export function BudgetManagementPage() {
     return monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
   };
 
+  const getQuarterMonthsData = () => {
+    if (!selectedQuarter || mode !== 'forecast') return [];
+
+    const months = annualBudgetService.getQuarterMonths(selectedQuarter);
+    return months.map(month => {
+      const key = `${selectedQuarter}-${month}`;
+      const forecast = pendingForecasts[key] !== undefined
+        ? pendingForecasts[key]
+        : quarterlyForecasts.find(qf => qf.quarter === selectedQuarter && qf.month === month)?.forecast_oz || 0;
+
+      return {
+        name: annualBudgetService.getMonthName(month),
+        value: Number(forecast),
+        percentage: 0 // Will be calculated
+      };
+    });
+  };
+
+  const getQuarterlyDistributionData = () => {
+    if (mode !== 'forecast') return [];
+
+    return [1, 2, 3, 4].map(quarter => {
+      const months = annualBudgetService.getQuarterMonths(quarter);
+      const total = months.reduce((sum, month) => {
+        const key = `${quarter}-${month}`;
+        const forecast = pendingForecasts[key] !== undefined
+          ? pendingForecasts[key]
+          : quarterlyForecasts.find(qf => qf.quarter === quarter && qf.month === month)?.forecast_oz || 0;
+        return sum + Number(forecast);
+      }, 0);
+
+      return {
+        name: `T${quarter}`,
+        value: total,
+        percentage: 0 // Will be calculated
+      };
+    });
+  };
+
   const toggleQuarter = (quarter: number) => {
     setExpandedQuarters(prev => ({
       ...prev,
       [quarter]: !prev[quarter]
     }));
+  };
+
+  const handleQuarterSelect = (quarter: number) => {
+    setSelectedQuarter(quarter);
+    // Dérouler automatiquement le trimestre sélectionné
+    if (!expandedQuarters[quarter]) {
+      setExpandedQuarters(prev => ({
+        ...prev,
+        [quarter]: true
+      }));
+    }
   };
 
   const getQuarterStatus = (quarter: number) => {
@@ -461,7 +512,7 @@ export function BudgetManagementPage() {
                         return (
                           <button
                             key={quarter}
-                            onClick={() => setSelectedQuarter(quarter)}
+                            onClick={() => handleQuarterSelect(quarter)}
                             disabled={!canRevise && selectedYear === currentYear}
                             className={`
                               relative px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200
@@ -504,6 +555,8 @@ export function BudgetManagementPage() {
               pendingForecasts={pendingForecasts}
               onBudgetChange={handleBudgetChange}
               onForecastChange={handleForecastChange}
+              expandedQuarters={expandedQuarters}
+              onToggleQuarter={toggleQuarter}
             />
           </Card>
         </div>
@@ -613,6 +666,91 @@ export function BudgetManagementPage() {
               </div>
             )}
           </div>
+
+          {/* Pie Charts - Forecast Mode */}
+          {mode === 'forecast' && selectedQuarter && (
+            <>
+              {/* Monthly Distribution for Selected Quarter */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
+                  <PieChart className="w-4 h-4 text-slate-500" />
+                  Distribution T{selectedQuarter} par Mois
+                </h3>
+                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <RechartsPie>
+                      <Pie
+                        data={(() => {
+                          const data = getQuarterMonthsData();
+                          const total = data.reduce((sum, item) => sum + item.value, 0);
+                          return data.map(item => ({
+                            ...item,
+                            percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                          }));
+                        })()}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={(entry) => `${entry.name}: ${entry.percentage}%`}
+                        outerRadius={70}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {getQuarterMonthsData().map((entry, index) => {
+                          const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+                          return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                        })}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Forecast']}
+                      />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Quarterly Distribution */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
+                  <BarChart3 className="w-4 h-4 text-slate-500" />
+                  Distribution Annuelle par Trimestre
+                </h3>
+                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <RechartsPie>
+                      <Pie
+                        data={(() => {
+                          const data = getQuarterlyDistributionData();
+                          const total = data.reduce((sum, item) => sum + item.value, 0);
+                          return data.map(item => ({
+                            ...item,
+                            percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                          }));
+                        })()}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={(entry) => `${entry.name}: ${entry.percentage}%`}
+                        outerRadius={70}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {getQuarterlyDistributionData().map((entry, index) => {
+                          const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                          return <Cell key={`cell-${index}`} fill={colors[index]} />;
+                        })}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Forecast']}
+                      />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Quarter Progress */}
           {mode === 'forecast' && (

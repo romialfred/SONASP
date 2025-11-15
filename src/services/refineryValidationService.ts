@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
 /**
  * Validate refinery reception and move batch to processing status

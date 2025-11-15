@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/Input';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Loading } from '@/components/ui/Loading';
 import { PDFViewer } from '@/components/ui/PDFViewer';
-import { AssayCertificateViewer } from '@/components/batch/AssayCertificateViewer';
 import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
 import { useAlert } from '@/hooks/useAlert';
 import { supabase } from '@/lib/supabase';
@@ -702,25 +701,17 @@ export function AssayCertificatesPage() {
         </div>
       </div>
 
-      {/* Certificate Viewer Modal */}
+      {/* Certificate Viewer Modal - Component removed with batch system */}
       {showCertificateViewer && selectedCertificate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-6xl h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden">
-            <AssayCertificateViewer
-              certificate={selectedCertificate}
-              onClose={() => setShowCertificateViewer(false)}
-              onApprove={() => {
-                loadCertificatesByShipping();
-                setShowCertificateViewer(false);
-              }}
-              onReject={() => {
-                loadCertificatesByShipping();
-                setShowCertificateViewer(false);
-              }}
-              onDataUpdate={() => {
-                loadCertificatesByShipping();
-              }}
-            />
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-2xl overflow-hidden p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Certificate Viewer</h2>
+              <Button onClick={() => setShowCertificateViewer(false)} variant="ghost">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <PDFViewer url={selectedCertificate.certificate_url} />
           </div>
         </div>
       )}

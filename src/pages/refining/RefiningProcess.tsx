@@ -9,7 +9,6 @@ import Input from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
-import { calculateFinalFine, formatWeight } from '@/utils/batchUtils';
 
 interface FormData {
   pre_melting_weight: string;

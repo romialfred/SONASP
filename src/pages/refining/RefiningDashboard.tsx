@@ -2,23 +2,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Flame, CheckCircle, Clock, TrendingUp, Package, AlertCircle, Eye, BarChart3 } from 'lucide-react';
-import { BatchFilters } from '@/components/batch/BatchFilters';
-import { convertGramsToOunces } from '@/utils/batchUtils';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Button } from '@/components/ui/Button';
-import { BatchCard } from '@/components/batch/BatchCard';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { supabase } from '@/lib/supabase';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
-import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { validateRefineryReceipt, startBatchProcessing } from '@/services/refineryValidationService';
-import { completeProcessing } from '@/services/batchTransitionService';
 
 interface Site {
   name: string;
@@ -145,12 +139,6 @@ export function RefiningDashboard() {
             mining_company:mining_companies(id, name, country)
           `)
           .in('status', [
-            BATCH_STATUSES.VALIDATED_FOR_REFINERY,
-            BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
-            BATCH_STATUSES.RECEIVED_AT_REFINERY,
-            BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-            BATCH_STATUSES.PROCESSING,
-            BATCH_STATUSES.PROCESSED
           ])
           .order('created_at', { ascending: false }),
         supabase
@@ -236,23 +224,18 @@ export function RefiningDashboard() {
 
   // Count batches by status (using filtered batches)
   const waitingReceiptCount = filteredBatches.filter(
-    b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT
   ).length;
 
   const receivedCount = filteredBatches.filter(
-    b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY
   ).length;
 
   const validatedCount = filteredBatches.filter(
-    b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING
   ).length;
 
   const processingCount = filteredBatches.filter(
-    b => b.status === BATCH_STATUSES.PROCESSING
   ).length;
 
   const processedCount = filteredBatches.filter(
-    b => b.status === BATCH_STATUSES.PROCESSED
   ).length;
 
   const totalProcessed = refiningRecords.length;
@@ -498,7 +481,6 @@ export function RefiningDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {filteredBatches
-                          .filter(b => b.status === BATCH_STATUSES.PROCESSING)
                           .map((batch) => {
                             const actions = [
                               {
@@ -550,7 +532,6 @@ export function RefiningDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {filteredBatches
-                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_PROCESSING)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,
@@ -604,7 +585,6 @@ export function RefiningDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {filteredBatches
-                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || b.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,
@@ -653,7 +633,6 @@ export function RefiningDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {filteredBatches
-                          .filter(b => b.status === BATCH_STATUSES.RECEIVED_AT_REFINERY)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,

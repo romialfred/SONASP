@@ -12,7 +12,6 @@
  * - Multilingual error messages
  */
 
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { SALES_STATUSES } from '@/constants/salesStatuses';
 
 export interface ValidationResult {

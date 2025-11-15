@@ -15,7 +15,7 @@ import { ShippingStatus } from '@/constants/shippingStatuses';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
-import { assayCertificateService, AssayCertificate } from '@/services/assayCertificateService';
+import { getShippingCertificates, AssayCertificate } from '@/services/assayCertificateService';
 
 interface ShippingStatusHistoryEntry {
   id: string;
@@ -174,7 +174,7 @@ export function ShippingPreparationDetailsEnhanced() {
   const loadCertificates = async () => {
     if (!id) return;
     try {
-      const certs = await assayCertificateService.getCertificatesByShipping(id);
+      const certs = await getShippingCertificates(id);
       setCertificates(certs);
     } catch (error) {
       console.warn('Could not load certificates:', error);
@@ -605,3 +605,5 @@ export function ShippingPreparationDetailsEnhanced() {
     </MainLayout>
   );
 }
+
+export default ShippingPreparationDetailsEnhanced;

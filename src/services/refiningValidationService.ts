@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { calculateFinalFine } from '@/utils/batchUtils';
 import { getBusinessRuleValue } from './businessRulesService';
 
 export interface RefiningData {

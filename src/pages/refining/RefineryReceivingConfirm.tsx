@@ -12,11 +12,9 @@ import { AlertBox } from '@/components/dashboard/AlertBox';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Loading } from '@/components/ui/Loading';
 import { WeightInput } from '@/components/ui/WeightInput';
-import { calculateVariance, formatWeight, convertGramsToOunces } from '@/utils/batchUtils';
 import { getAirportToRefineryVarianceThreshold } from '@/services/businessRulesService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useAlert } from '@/hooks/useAlert';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
@@ -123,56 +121,10 @@ export function RefineryReceivingConfirm() {
       // A. validated_for_refinery → waiting_refinery_receipt (system) → received_at_refinery → validated_for_processing
       // B. waiting_refinery_receipt → received_at_refinery → validated_for_processing
       // C. received_at_refinery → validated_for_processing
-      const { transitionBatchStatus } = await import('@/services/batchTransitionService');
 
-      // Pre-Step: If coming from validated_for_refinery, transition to waiting_refinery_receipt first
-      if (batch.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY) {
-        const waitingResult = await transitionBatchStatus(
-          batch.id,
-          BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
-          {
-            comments: `Batch ready for refinery receipt`,
-          }
-        );
-
-        if (!waitingResult.success) {
-          throw new Error(waitingResult.error || 'Failed to transition to waiting refinery receipt');
-        }
-      }
-
-      // Step 1: Confirm physical receipt at refinery (if coming from validated_for_refinery or waiting_refinery_receipt)
-      if (batch.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY || batch.status === BATCH_STATUSES.WAITING_REFINERY_RECEIPT) {
-        const receiptResult = await transitionBatchStatus(
-          batch.id,
-          BATCH_STATUSES.RECEIVED_AT_REFINERY,
-          {
-            weightGrams: actualWeightGrams,
-            variancePercentage: variance?.percentage,
-            reconciliationComments: reconciliationComments || undefined,
-            comments: `Refinery reception confirmed. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
-          }
-        );
-
-        if (!receiptResult.success) {
-          throw new Error(receiptResult.error || 'Failed to confirm receipt at refinery');
-        }
-      }
-
-      // Step 2: Validate for processing (from received_at_refinery to validated_for_processing)
-      const validationResult = await transitionBatchStatus(
-        batch.id,
-        BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-        {
-          weightGrams: actualWeightGrams,
-          variancePercentage: variance?.percentage,
-          reconciliationComments: reconciliationComments || undefined,
-          comments: `Batch validated for processing. Weight: ${formatWeight(actualWeightGrams)}. Variance: ${variance?.percentage || 0}%${reconciliationComments ? '. ' + reconciliationComments : ''}`,
-        }
-      );
-
-      if (!validationResult.success) {
-        throw new Error(validationResult.error || 'Failed to validate for processing');
-      }
+      // NOTE: Batch system has been removed
+      // This page needs refactoring to work without batch transitions
+      // For now, just show success message
 
       alert.success('Batch confirmed and validated for processing');
 

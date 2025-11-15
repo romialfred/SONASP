@@ -158,39 +158,10 @@ export function DashboardPage() {
     goldPrice: m.goldPrice,
   }));
 
-  // Batch status distribution - Using actual BATCH_STATUSES
   const statusMapping: Record<string, string> = {
-    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: 'Created',
-    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: 'Approved for Transport',
-    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: 'In Transit to Airport',
-    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: 'At Airport',
-    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: 'Validated for Refinery',
-    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: 'In Transit to Refinery',
-    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: 'At Refinery',
-    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: 'Ready for Processing',
-    [BATCH_STATUSES.PROCESSING]: 'Processing',
-    [BATCH_STATUSES.IN_INVENTORY]: 'In Inventory',
-    [BATCH_STATUSES.READY_FOR_SALE]: 'Ready for Sale',
-    [BATCH_STATUSES.ALLOCATED_TO_SALE]: 'Allocated',
-    [BATCH_STATUSES.SOLD]: 'Sold',
-    [BATCH_STATUSES.CANCELLED]: 'Cancelled',
   };
 
   const statusColors: Record<string, string> = {
-    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: '#94a3b8',
-    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: '#3b82f6',
-    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: '#2563eb',
-    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: '#f59e0b',
-    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: '#8b5cf6',
-    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: '#a855f7',
-    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: '#ec4899',
-    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: '#14b8a6',
-    [BATCH_STATUSES.PROCESSING]: '#f97316',
-    [BATCH_STATUSES.IN_INVENTORY]: '#22c55e',
-    [BATCH_STATUSES.READY_FOR_SALE]: '#10b981',
-    [BATCH_STATUSES.ALLOCATED_TO_SALE]: '#84cc16',
-    [BATCH_STATUSES.SOLD]: '#16a34a',
-    [BATCH_STATUSES.CANCELLED]: '#ef4444',
   };
 
   const totalBatchesForChart = batches.length;

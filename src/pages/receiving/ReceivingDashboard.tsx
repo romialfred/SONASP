@@ -5,11 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
-import { useBatchRealtime } from '@/hooks/useBatchRealtime';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
-import { BatchCard } from '@/components/batch/BatchCard';
-import { getAvailableBatchActions, getBatchStatusInfo } from '@/services/batchActionsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 
@@ -22,10 +18,6 @@ export function ReceivingDashboard() {
   // Use Realtime hook to fetch batches with relevant statuses for airport
   const { batches, loading, refetch } = useBatchRealtime({
     statuses: [
-      BATCH_STATUSES.APPROVED_FOR_TRANSPORT,
-      BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
-      BATCH_STATUSES.RECEIVED_AT_AIRPORT,
-      BATCH_STATUSES.VALIDATED_FOR_REFINERY,
     ],
   });
 
@@ -41,19 +33,15 @@ export function ReceivingDashboard() {
 
   // Count batches by status using correct constants
   const readyToShipCount = batches.filter(
-    b => b.status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT
   ).length;
 
   const inTransitCount = batches.filter(
-    b => b.status === BATCH_STATUSES.WAITING_AIRPORT_RECEIPT
   ).length;
 
   const atAirportCount = batches.filter(
-    b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT
   ).length;
 
   const validatedCount = batches.filter(
-    b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY
   ).length;
 
   const totalWeight = batches.reduce((sum, b) => sum + (b.weight_ounces || 0), 0);
@@ -114,7 +102,6 @@ export function ReceivingDashboard() {
   const handleValidateForRefinery = async (batchId: string) => {
     // This will be called after confirmation modal
     try {
-      const { validateForRefinery } = await import('@/services/batchTransitionService');
       const result = await validateForRefinery(batchId, 'Validated by airport staff');
 
       if (result.success) {
@@ -201,7 +188,6 @@ export function ReceivingDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status === BATCH_STATUSES.APPROVED_FOR_TRANSPORT)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,
@@ -241,7 +227,6 @@ export function ReceivingDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status === BATCH_STATUSES.WAITING_AIRPORT_RECEIPT)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,
@@ -281,7 +266,6 @@ export function ReceivingDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status === BATCH_STATUSES.RECEIVED_AT_AIRPORT)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,
@@ -321,7 +305,6 @@ export function ReceivingDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         {batches
-                          .filter(b => b.status === BATCH_STATUSES.VALIDATED_FOR_REFINERY)
                           .map((batch) => {
                             const actions = getAvailableBatchActions(
                               batch,

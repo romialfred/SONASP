@@ -5,12 +5,9 @@ import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { Download, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { BatchFilters } from '@/components/batch/BatchFilters';
 import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
 import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
-import { convertGramsToOunces } from '@/utils/batchUtils';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 
 interface MiningCompany {
   id: string;
@@ -33,13 +30,6 @@ interface Batch {
 }
 
 const REFINERY_STATUSES = [
-  BATCH_STATUSES.VALIDATED_FOR_REFINERY,
-  BATCH_STATUSES.WAITING_REFINERY_RECEIPT,
-  BATCH_STATUSES.RECEIVED_AT_REFINERY,
-  BATCH_STATUSES.VALIDATED_FOR_PROCESSING,
-  BATCH_STATUSES.PROCESSING,
-  BATCH_STATUSES.PROCESSED,
-  BATCH_STATUSES.IN_INVENTORY,
 ];
 
 export function RefiningPage() {

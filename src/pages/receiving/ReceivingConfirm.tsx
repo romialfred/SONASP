@@ -12,11 +12,9 @@ import { AlertBox } from '@/components/dashboard/AlertBox';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Loading } from '@/components/ui/Loading';
 import { WeightInput } from '@/components/ui/WeightInput';
-import { calculateVariance, formatWeight, convertGramsToOunces } from '@/utils/batchUtils';
 import { getMineToAirportVarianceThreshold } from '@/services/businessRulesService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { BATCH_STATUSES } from '@/constants/batchStatuses';
 import { useAlert } from '@/hooks/useAlert';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 
@@ -133,7 +131,6 @@ export function ReceivingConfirm() {
         const { error: transitError } = await supabase
           .from('batches')
           .update({
-            status: BATCH_STATUSES.WAITING_AIRPORT_RECEIPT,
             updated_at: new Date().toISOString(),
           })
           .eq('id', batch.id);
@@ -141,31 +138,24 @@ export function ReceivingConfirm() {
         if (transitError) throw transitError;
 
         // Then proceed to received_at_airport
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
         isAirportReceipt = true;
       } else if (batch.status === 'waiting_airport_receipt') {
         // Airport receiving: batch just arrived, mark as received
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
         isAirportReceipt = true;
       } else if (batch.status === 'received_at_airport') {
         // Airport validation: batch validated, ready for refinery
-        newStatus = BATCH_STATUSES.VALIDATED_FOR_REFINERY;
         isAirportReceipt = true;
       } else if (batch.status === 'validated_for_refinery') {
         // Shipping to refinery after validation
-        newStatus = BATCH_STATUSES.WAITING_REFINERY_RECEIPT;
         isAirportReceipt = true;
       } else if (batch.status === 'waiting_refinery_receipt') {
         // Refinery receiving: after confirmation, mark as received
-        newStatus = BATCH_STATUSES.RECEIVED_AT_REFINERY;
         isRefineryReceipt = true;
       } else if (batch.status === 'received_at_refinery') {
         // Refinery validation: ready for processing
-        newStatus = BATCH_STATUSES.VALIDATED_FOR_PROCESSING;
         isRefineryReceipt = true;
       } else {
         // Default: received at airport
-        newStatus = BATCH_STATUSES.RECEIVED_AT_AIRPORT;
         isAirportReceipt = true;
       }
 

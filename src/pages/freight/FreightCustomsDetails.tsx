@@ -31,6 +31,11 @@ export default function FreightCustomsDetails() {
   const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<FreightCustomsDocument | null>(null);
 
+  // Function to handle back navigation
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   useEffect(() => {
     if (id) {
       loadOperationDetails();
@@ -114,7 +119,7 @@ export default function FreightCustomsDetails() {
             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Opération non trouvée</h3>
             <p className="text-sm text-gray-600 mb-4">L'opération demandée n'existe pas ou a été supprimée.</p>
-            <Button onClick={() => navigate('/freight-customs')}>
+            <Button onClick={handleBack}>
               Retour à la liste
             </Button>
           </Card>
@@ -133,7 +138,7 @@ export default function FreightCustomsDetails() {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/freight-customs')}
+            onClick={handleBack}
             className="text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

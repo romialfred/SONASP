@@ -40,8 +40,10 @@ export function ProductionDetails() {
   const [siteCountry, setSiteCountry] = useState<string>('Guinée');
   const [activeTab, setActiveTab] = useState('details');
 
-  // Always return to Production in Safe page
-  const returnPath = '/production/in-safe';
+  // Function to handle back navigation
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   useEffect(() => {
     if (id) {
@@ -278,7 +280,7 @@ export function ProductionDetails() {
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-sm text-gray-600">Production introuvable</p>
-          <Button onClick={() => navigate(returnPath)} className="mt-4" size="sm">
+          <Button onClick={handleBack} className="mt-4" size="sm">
             Retour à la liste
           </Button>
         </div>
@@ -294,7 +296,7 @@ export function ProductionDetails() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate(returnPath)}
+              onClick={handleBack}
               size="sm"
               className="text-xs"
             >

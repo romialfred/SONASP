@@ -68,7 +68,10 @@ export function ShippingPreparationDetailsEnhanced() {
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState('details');
 
-  const returnPath = '/shipping';
+  // Function to handle back navigation
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   useEffect(() => {
     if (id) {
@@ -259,7 +262,7 @@ export function ShippingPreparationDetailsEnhanced() {
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-sm text-gray-600">Expédition introuvable</p>
-          <Button onClick={() => navigate(returnPath)} className="mt-4" size="sm">
+          <Button onClick={handleBack} className="mt-4" size="sm">
             Retour à la liste
           </Button>
         </div>
@@ -283,7 +286,7 @@ export function ShippingPreparationDetailsEnhanced() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate(returnPath)}
+              onClick={handleBack}
               size="sm"
               className="text-xs"
             >

@@ -566,43 +566,43 @@ export function BudgetManagementPage() {
       <div className="w-[420px] bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
         <div className="p-5 space-y-4">
           {/* Total Annuel Section - Always shows annual total */}
-          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl p-4 text-white shadow-lg border border-blue-500/20">
+          <div className="bg-gradient-to-br from-slate-600/90 via-slate-700/85 to-slate-800/90 rounded-xl p-4 text-white shadow-md border border-slate-500/30">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="bg-white/20 rounded-lg p-1.5">
+                <div className="bg-white/15 rounded-lg p-1.5">
                   <Target className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold uppercase tracking-wide">Total Annuel</span>
               </div>
-              <span className="text-[10px] font-medium text-blue-100 flex items-center gap-1">
+              <span className="text-[10px] font-medium text-slate-200 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 12 mois
               </span>
             </div>
             <div className="text-3xl font-bold">
               {calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-              <span className="text-base ml-1.5 font-semibold text-blue-100">oz</span>
+              <span className="text-base ml-1.5 font-semibold text-slate-200">oz</span>
             </div>
           </div>
 
           {/* Trimestre Total Section - Only in forecast mode */}
           {mode === 'forecast' && selectedQuarter && (
-            <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 rounded-xl p-4 text-white shadow-lg border border-purple-500/20">
+            <div className="bg-gradient-to-br from-teal-600/85 via-teal-700/80 to-cyan-700/85 rounded-xl p-4 text-white shadow-md border border-teal-500/30">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="bg-white/20 rounded-lg p-1.5">
+                  <div className="bg-white/15 rounded-lg p-1.5">
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <span className="text-xs font-semibold uppercase tracking-wide">Total T{selectedQuarter}</span>
                 </div>
-                <span className="text-[10px] font-medium text-purple-100 flex items-center gap-1">
+                <span className="text-[10px] font-medium text-teal-100 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   3 mois
                 </span>
               </div>
               <div className="text-3xl font-bold">
                 {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                <span className="text-base ml-1.5 font-semibold text-purple-100">oz</span>
+                <span className="text-base ml-1.5 font-semibold text-teal-100">oz</span>
               </div>
             </div>
           )}
@@ -649,7 +649,7 @@ export function BudgetManagementPage() {
               {/* Monthly Distribution for Selected Quarter */}
               <div className="space-y-2.5">
                 <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <PieChart className="w-4 h-4 text-blue-600" />
+                  <PieChart className="w-4 h-4 text-slate-600" />
                   Distribution T{selectedQuarter} par Mois
                 </h3>
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
@@ -673,7 +673,7 @@ export function BudgetManagementPage() {
                         dataKey="value"
                       >
                         {getQuarterMonthsData().map((entry, index) => {
-                          const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+                          const colors = ['#64748b', '#14b8a6', '#f59e0b'];
                           return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                         })}
                       </Pie>
@@ -693,7 +693,7 @@ export function BudgetManagementPage() {
               {/* Quarterly Distribution */}
               <div className="space-y-2.5">
                 <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-purple-600" />
+                  <BarChart3 className="w-4 h-4 text-slate-600" />
                   Distribution Annuelle par Trimestre
                 </h3>
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
@@ -717,7 +717,7 @@ export function BudgetManagementPage() {
                         dataKey="value"
                       >
                         {getQuarterlyDistributionData().map((entry, index) => {
-                          const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                          const colors = ['#64748b', '#14b8a6', '#f59e0b', '#0891b2'];
                           return <Cell key={`cell-${index}`} fill={colors[index]} />;
                         })}
                       </Pie>

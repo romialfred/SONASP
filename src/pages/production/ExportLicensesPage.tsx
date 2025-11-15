@@ -89,8 +89,8 @@ export function ExportLicensesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Licences d'Exportation</h1>
-            <p className="text-sm text-gray-600 mt-1">Gestion et suivi des licences d'exportation d'or</p>
+            <h1 className="text-xl font-semibold text-gray-900">Licences d'Exportation</h1>
+            <p className="text-xs text-gray-600 mt-1">Gestion et suivi des licences d'exportation d'or</p>
           </div>
           <Button
             onClick={() => navigate('/production/licenses/new')}
@@ -104,50 +104,50 @@ export function ExportLicensesPage() {
         {/* Summary Cards */}
         {activeLicenses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-lg shadow-md">
-                  <FileText className="w-5 h-5 text-white" />
+            <Card className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-blue-600 rounded-lg shadow-md">
+                  <FileText className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-blue-700">Licences Actives</p>
-                  <p className="text-xl font-medium text-blue-900">{activeLicenses.length}</p>
+                  <p className="text-lg font-semibold text-blue-900">{activeLicenses.length}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-600 rounded-lg shadow-md">
-                  <TrendingUp className="w-5 h-5 text-white" />
+            <Card className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-300 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-600 rounded-lg shadow-md">
+                  <TrendingUp className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-emerald-700">Total Autorisé</p>
-                  <p className="text-xl font-medium text-emerald-900">{(totalAuthorized / 1000).toFixed(1)} kg</p>
+                  <p className="text-lg font-semibold text-emerald-900">{(totalAuthorized / 1000).toFixed(1)} kg</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-600 rounded-lg shadow-md">
-                  <CheckCircle className="w-5 h-5 text-white" />
+            <Card className="p-3 bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-300 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-600 rounded-lg shadow-md">
+                  <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-amber-700">Utilisé</p>
-                  <p className="text-xl font-medium text-amber-900">{(totalUsed / 1000).toFixed(1)} kg</p>
+                  <p className="text-lg font-semibold text-amber-900">{(totalUsed / 1000).toFixed(1)} kg</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-green-600 rounded-lg shadow-md">
-                  <AlertCircle className="w-5 h-5 text-white" />
+            <Card className="p-3 bg-gradient-to-br from-green-50 to-green-100 border border-green-300 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-green-600 rounded-lg shadow-md">
+                  <AlertCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-green-700">Disponible</p>
-                  <p className="text-xl font-medium text-green-900">{(totalRemaining / 1000).toFixed(1)} kg</p>
+                  <p className="text-lg font-semibold text-green-900">{(totalRemaining / 1000).toFixed(1)} kg</p>
                 </div>
               </div>
             </Card>
@@ -253,22 +253,22 @@ export function ExportLicensesPage() {
               return (
                 <Card
                   key={license.id}
-                  className="group relative p-5 hover:shadow-2xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-white to-gray-50 border-2 border-transparent hover:border-emerald-200 transform hover:scale-[1.01]"
+                  className="group relative p-4 hover:shadow-xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-white to-gray-50 border border-gray-300 hover:border-emerald-300 transform hover:scale-[1.01]"
                   onClick={() => navigate(`/production/licenses/${license.id}`)}
                 >
                   {/* Background gradient effect on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/0 via-blue-50/0 to-purple-50/0 group-hover:from-emerald-50/30 group-hover:via-blue-50/20 group-hover:to-purple-50/10 rounded-lg transition-all duration-500"></div>
 
                   <div className="relative">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2.5">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors duration-300">
+                        <div className="flex items-center gap-2.5 mb-1.5">
+                          <h3 className="text-base font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors duration-300">
                             {license.license_number}
                           </h3>
                           {getStatusBadge(license)}
                           {isExpiring && license.status === 'active' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full animate-pulse">
                               <Clock className="w-3 h-3" />
                               Expire bientôt
                             </span>
@@ -283,35 +283,35 @@ export function ExportLicensesPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-4">
-                      <div className="space-y-1">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                      <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Institution</p>
                         <p className="text-sm text-gray-900">{license.issuing_institution}</p>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Période</p>
                         <p className="text-sm text-gray-900">
                           {new Date(license.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} - {new Date(license.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Autorisée</p>
-                        <p className="text-base font-medium text-blue-700">{(license.authorized_quantity_grams / 1000).toFixed(2)} kg</p>
+                        <p className="text-sm font-semibold text-blue-700">{(license.authorized_quantity_grams / 1000).toFixed(2)} kg</p>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Disponible</p>
-                        <p className="text-base font-medium text-emerald-700">{(license.remaining_quantity_grams / 1000).toFixed(2)} kg</p>
+                        <p className="text-sm font-semibold text-emerald-700">{(license.remaining_quantity_grams / 1000).toFixed(2)} kg</p>
                       </div>
                     </div>
 
                     {/* Enhanced Progress bar */}
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between text-xs mb-2">
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-gray-600" />
+                          <TrendingUp className="w-3 h-3 text-gray-600" />
                           <span className="font-medium text-gray-700">Utilisation</span>
                         </div>
-                        <span className={`font-semibold text-base ${
+                        <span className={`font-semibold text-sm ${
                           percentage >= 90 ? 'text-red-600' :
                           percentage >= 70 ? 'text-orange-600' :
                           'text-emerald-600'
@@ -319,7 +319,7 @@ export function ExportLicensesPage() {
                           {Math.round(percentage)}%
                         </span>
                       </div>
-                      <div className="relative w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                      <div className="relative w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner">
                         <div
                           className={`h-full rounded-full transition-all duration-700 relative ${
                             percentage >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' :

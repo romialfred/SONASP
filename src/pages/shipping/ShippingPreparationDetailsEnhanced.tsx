@@ -101,7 +101,7 @@ export default function ShippingPreparationDetailsEnhanced() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      const prep = await shippingPreparationService.getPreparation(id);
+      const prep = await shippingPreparationService.getPreparationById(id);
       if (!prep) {
         setErrorMessage('Expédition introuvable');
         setShowError(true);

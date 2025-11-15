@@ -3,12 +3,19 @@ import { ShippingStatus } from '@/constants/shippingStatuses';
 
 export interface ShippingPreparation {
   id: string;
+  reference_number: string;
+  expedition_number: string;
+  shipment_date: string;
+  production_date: string;
   daily_production_id: string | null;
   mining_company_id: string | null;
   license_id: string | null;
   export_license_id: string | null;
+  refinery_id: string | null;
+  freight_company_id: string | null;
   expedition_lot_number: string | null;
   seal_number: string | null;
+  seal_numbers: string[];
   packing_list_url: string | null;
   packing_list_document_id: string | null;
   shipped_to_company: string | null;
@@ -33,6 +40,7 @@ export interface ShippingProductionItem {
   id: string;
   shipping_preparation_id: string;
   daily_production_id: string;
+  box_number: string;
   ingot_box_number: string;
   net_weight_grams: number;
   gross_weight_grams: number;
@@ -47,6 +55,9 @@ export interface ShippingProductionItem {
 export interface ShippingSignatory {
   id: string;
   shipping_preparation_id: string;
+  full_name: string;
+  title: string;
+  organization?: string;
   position: string;
   name: string;
   signature_data: string | null;

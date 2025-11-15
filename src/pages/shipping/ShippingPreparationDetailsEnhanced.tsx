@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Package, ArrowLeft, FileText, Calendar, Building2, Truck,
-  User, Clock, MapPin, Weight, Box, Users, FileCheck, Upload,
-  Edit, History, RefreshCw
+  User, Weight, Box, Users, FileCheck, History
 } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -18,7 +17,6 @@ import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { DocumentUploadSection } from '@/components/shipping/DocumentUploadSection';
 import { AssayCertificateUploadForShipping } from '@/components/shipping/AssayCertificateUploadForShipping';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
-import { shippingStatusService } from '@/services/shippingStatusService';
 import { supabase } from '@/lib/supabase';
 import { ShippingStatus } from '@/constants/shippingStatuses';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,20 +61,6 @@ interface MiningCompany {
   code: string;
 }
 
-const statusLabels: Record<string, string> = {
-  waiting_for_customs_approval: 'En Attente Douane',
-  approved_by_customs: 'Approuvé par Douane',
-  ready_for_expedition: 'Prêt pour Expédition',
-  cancelled: 'Annulée'
-};
-
-const statusDescriptions: Record<string, string> = {
-  waiting_for_customs_approval: 'Expédition créée, en attente d\'approbation douanière (peut durer plusieurs jours)',
-  approved_by_customs: 'Approuvé par la douane, prêt pour l\'expédition',
-  ready_for_expedition: 'Validé et prêt pour le départ',
-  cancelled: 'Expédition annulée'
-};
-
 export default function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -99,77 +83,78 @@ export default function ShippingPreparationDetailsEnhanced() {
   const [successMessage, setSuccessMessage] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
+  const returnPath = '/shipping';
+
   useEffect(() => {
     if (id) {
-      loadPreparationDetails();
+      loadShippingDetails();
     }
   }, [id]);
 
-  const loadPreparationDetails = async () => {
+  const loadShippingDetails = async (forceRefresh = false) => {
+    if (!id) return;
+
     try {
       setLoading(true);
 
-      const prep = await shippingPreparationService.getPreparationById(id!);
+      if (forceRefresh) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
+      const prep = await shippingPreparationService.getPreparation(id);
       if (!prep) {
-        setErrorMessage('Préparation non trouvée.');
+        setErrorMessage('Expédition introuvable');
         setShowError(true);
-        setLoading(false);
         return;
       }
 
       setPreparation(prep);
 
-      const [items, sigs, docs] = await Promise.all([
-        shippingPreparationService.getProductionItems(id!),
-        shippingPreparationService.getSignatories(id!),
-        shippingPreparationService.getDocuments(id!),
-      ]);
-
+      // Load production items
+      const items = await shippingPreparationService.getProductionItems(id);
       setProductionItems(items);
+
+      // Load signatories
+      const sigs = await shippingPreparationService.getSignatories(id);
       setSignatories(sigs);
+
+      // Load documents
+      const docs = await shippingPreparationService.getDocuments(id);
       setDocuments(docs);
 
       // Load certificates
-      const { data: certsData } = await supabase
-        .from('assay_certificates')
-        .select('*')
-        .eq('shipping_preparation_id', id!);
-
-      if (certsData) setCertificates(certsData);
+      await loadCertificates();
 
       // Load status history
-      const historyData = await shippingStatusService.getStatusHistory(id!).catch(() => []);
-      setStatusHistory(historyData);
+      await loadStatusHistory(id);
 
-      if (prep.shipped_to_address) {
+      // Load refinery
+      if (prep.refinery_id) {
         const { data: refineryData } = await supabase
           .from('refineries')
-          .select('*')
-          .eq('id', prep.shipped_to_address)
+          .select('id, name, location, country')
+          .eq('id', prep.refinery_id)
           .maybeSingle();
-
         if (refineryData) setRefinery(refineryData);
       }
 
-      if (prep.shipped_to_company) {
-        const { data: companyData } = await supabase
-          .from('transport_companies')
-          .select('*')
-          .eq('id', prep.shipped_to_company)
+      // Load transport company
+      if (prep.freight_company_id) {
+        const { data: transportData } = await supabase
+          .from('freight_companies')
+          .select('id, name, address')
+          .eq('id', prep.freight_company_id)
           .maybeSingle();
-
-        if (companyData) setTransportCompany(companyData);
+        if (transportData) setTransportCompany(transportData);
       }
 
       // Load export license
-      if (prep.license_id) {
+      if (prep.export_license_id) {
         const { data: licenseData } = await supabase
           .from('export_licenses')
           .select('*')
-          .eq('id', prep.license_id)
+          .eq('id', prep.export_license_id)
           .maybeSingle();
-
         if (licenseData) setLicense(licenseData);
       }
 
@@ -177,41 +162,105 @@ export default function ShippingPreparationDetailsEnhanced() {
       if (prep.mining_company_id) {
         const { data: companyData } = await supabase
           .from('mining_companies')
-          .select('*')
+          .select('id, name, code')
           .eq('id', prep.mining_company_id)
           .maybeSingle();
-
         if (companyData) setMiningCompany(companyData);
       }
 
-    } catch (error) {
-      console.error('Error loading preparation:', error);
-      setErrorMessage('Erreur lors du chargement des détails.');
+    } catch (error: any) {
+      console.error('Error loading shipping details:', error);
+      setErrorMessage(error.message || 'Erreur lors du chargement des détails');
       setShowError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (newStatus: string, notes?: string) => {
+  const loadStatusHistory = async (shippingId: string) => {
     try {
-      await shippingPreparationService.updateStatus(id!, newStatus as any, notes);
-      setSuccessMessage('Statut mis à jour avec succès');
-      setShowSuccess(true);
-      await loadPreparationDetails();
+      const { data, error } = await supabase
+        .from('unified_status_history')
+        .select(`
+          id,
+          entity_id,
+          old_status,
+          new_status,
+          changed_by,
+          changed_at,
+          notes,
+          action_description
+        `)
+        .eq('entity_type', 'shipping')
+        .eq('entity_id', shippingId)
+        .order('changed_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch user emails
+      const historyWithEmails = await Promise.all(
+        (data || []).map(async (entry) => {
+          if (entry.changed_by) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('email')
+              .eq('id', entry.changed_by)
+              .maybeSingle();
+
+            return {
+              ...entry,
+              changed_by_email: userData?.email || 'Système'
+            };
+          }
+          return { ...entry, changed_by_email: 'Système' };
+        })
+      );
+
+      setStatusHistory(historyWithEmails);
     } catch (error) {
-      console.error('Error updating status:', error);
-      setErrorMessage('Erreur lors du changement de statut');
-      setShowError(true);
+      console.error('Error loading status history:', error);
+      setStatusHistory([]);
     }
+  };
+
+  const loadCertificates = async () => {
+    if (!id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('assay_certificates')
+        .select('*')
+        .eq('shipping_preparation_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCertificates(data || []);
+    } catch (error) {
+      console.error('Error loading certificates:', error);
+      setCertificates([]);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const calculateTotals = () => {
+    const totalNetWeight = productionItems.reduce((sum, item) => sum + (item.net_weight_grams || 0), 0);
+    const totalGrossWeight = productionItems.reduce((sum, item) => sum + (item.gross_weight_grams || 0), 0);
+    const totalBoxes = productionItems.length;
+
+    return { totalNetWeight, totalGrossWeight, totalBoxes };
   };
 
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <Loading size="lg" />
-        </div>
+        <Loading />
       </MainLayout>
     );
   }
@@ -219,401 +268,465 @@ export default function ShippingPreparationDetailsEnhanced() {
   if (!preparation) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <Package className="w-16 h-16 mx-auto mb-4 text-slate-400" />
-            <p className="text-slate-600">Préparation non trouvée</p>
-            <Button onClick={() => navigate('/shipping/preparation')} className="mt-4">
-              Retour
-            </Button>
-          </div>
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-600">Expédition introuvable</p>
+          <Button onClick={() => navigate(returnPath)} className="mt-4" size="sm">
+            Retour à la liste
+          </Button>
         </div>
       </MainLayout>
     );
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatShortDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
+  const { totalNetWeight, totalGrossWeight, totalBoxes } = calculateTotals();
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-[1800px] mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => navigate('/shipping/preparation')}
-                  variant="outline"
+      <div className="space-y-4">
+        {/* Header - Refined */}
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate(returnPath)}
+              size="sm"
+              className="text-xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+              Retour
+            </Button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-gray-900">
+                  Expédition {preparation.expedition_number}
+                </h1>
+                <ShippingStatusBadge
+                  status={preparation.status as ShippingStatus}
                   size="sm"
-                  className="gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Retour
-                </Button>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">
-                    Expédition {preparation.expedition_lot_number}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">
-                      {formatShortDate(preparation.prepared_at || preparation.created_at)}
-                    </span>
-                  </div>
-                </div>
+                  showIcon
+                />
               </div>
-              <Button
-                onClick={() => navigate(`/shipping/preparation/${id}/edit`)}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                Modifier
-              </Button>
+              <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1.5">
+                <Calendar className="w-3 h-3" />
+                {formatDate(preparation.production_date)}
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => navigate(`/shipping/preparation/${id}/edit`)}
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              Modifier
+            </Button>
           </div>
         </div>
 
-        <div className="max-w-[1800px] mx-auto px-6 py-6">
-          <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1">
-              {/* Workflow Visual */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <ShippingStatusWorkflowEnhanced
-                  shippingId={preparation.id}
-                  currentStatus={preparation.status as ShippingStatus}
-                  onStatusChanged={loadPreparationDetails}
-                  userEmail={user?.email}
-                />
-              </div>
+        {/* Workflow Section - Full Width */}
+        <ShippingStatusWorkflowEnhanced
+          currentStatus={preparation.status as ShippingStatus}
+          statusHistory={statusHistory}
+        />
 
-              {/* Metrics Tiles - Compact */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {/* Boxes */}
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border border-amber-200 p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Box className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-semibold text-amber-700 uppercase">Boîtes</span>
-                  </div>
-                  <p className="text-2xl font-bold text-amber-900">{productionItems.length}</p>
-                </div>
+        {/* Tabs Navigation */}
+        <Tabs
+          tabs={[
+            {
+              id: 'overview',
+              label: 'Vue d\'ensemble',
+              icon: Package,
+            },
+            {
+              id: 'productions',
+              label: 'Productions',
+              icon: Box,
+              count: productionItems.length,
+            },
+            {
+              id: 'signatories',
+              label: 'Signataires',
+              icon: Users,
+              count: signatories.length,
+            },
+            {
+              id: 'documents',
+              label: 'Documents',
+              icon: FileText,
+              count: documents.length,
+            },
+            {
+              id: 'certificates',
+              label: 'Certificats',
+              icon: FileCheck,
+              count: certificates.length,
+            },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        >
+          {(currentTab) => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Left Column - Content based on active tab */}
+              <div className="lg:col-span-2 space-y-4">
+                {currentTab === 'overview' && (
+                  <>
+                    {/* Shipping Details Card */}
+                    <Card className="p-4">
+                      <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                        Informations d'Expédition
+                      </h3>
 
-                {/* Net Weight */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Weight className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-emerald-700 uppercase">Poids Net</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold text-emerald-900">{preparation.total_net_weight_grams.toFixed(2)}</p>
-                    <span className="text-xs text-emerald-600">g</span>
-                  </div>
-                </div>
-
-                {/* Gross Weight */}
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Weight className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-blue-700 uppercase">Poids Brut</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold text-blue-900">{preparation.total_gross_weight_grams.toFixed(2)}</p>
-                    <span className="text-xs text-blue-600">g</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tabs */}
-              <Tabs
-                tabs={[
-                  { id: 'overview', label: 'Vue d\'ensemble', icon: Package },
-                  { id: 'productions', label: 'Productions', icon: Box },
-                  { id: 'signatories', label: 'Signataires', icon: Users },
-                  { id: 'documents', label: 'Documents', icon: FileText, badge: documents.length > 0 ? documents.length : undefined },
-                  { id: 'certificates', label: 'Certificats', icon: FileCheck, badge: certificates.length > 0 ? certificates.length : undefined }
-                ]}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-              />
-
-              <div className="mt-6">
-                {/* Overview Tab */}
-                {activeTab === 'overview' && (
-                  <Card className="p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      <h2 className="text-lg font-bold text-gray-900">Informations d'Expédition</h2>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                      {/* Raffinerie */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          RAFFINERIE DE DESTINATION
-                        </label>
-                        <div className="flex items-start gap-3">
-                          <Building2 className="w-5 h-5 text-gray-400 mt-1" />
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Raffinerie */}
+                        <div className="flex items-start gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
                           <div>
-                            <p className="font-medium text-gray-900">{refinery?.name || 'N/A'}</p>
+                            <p className="text-xs text-gray-600">Raffinerie de Destination</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {refinery?.name || 'Non spécifiée'}
+                            </p>
                             {refinery && (
-                              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                                <MapPin className="w-3.5 h-3.5" />
+                              <p className="text-xs text-gray-500">
                                 {refinery.location}, {refinery.country}
                               </p>
                             )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Date */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          DATE DE PRÉPARATION
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <Calendar className="w-5 h-5 text-gray-400" />
-                          <p className="font-medium text-gray-900">
-                            {formatDate(preparation.prepared_at || preparation.created_at)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Freight Company */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          COMPAGNIE DE FRET
-                        </label>
-                        <div className="flex items-start gap-3">
-                          <Truck className="w-5 h-5 text-gray-400 mt-1" />
+                        {/* Compagnie de transport */}
+                        <div className="flex items-start gap-2">
+                          <Truck className="w-4 h-4 text-gray-400 mt-0.5" />
                           <div>
-                            <p className="font-medium text-gray-900">{transportCompany?.name || 'N/A'}</p>
-                            {transportCompany?.address && (
-                              <p className="text-sm text-gray-600 mt-1">{transportCompany.address}</p>
-                            )}
+                            <p className="text-xs text-gray-600">Compagnie de Fret</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {transportCompany?.name || 'Non spécifiée'}
+                            </p>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Seal Number */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          NUMÉRO DE SCELLÉ
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <FileCheck className="w-5 h-5 text-gray-400" />
-                          <p className="font-mono font-medium text-gray-900">
-                            {preparation.seal_number || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Mining Company */}
-                      {miningCompany && (
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            COMPAGNIE MINIÈRE
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <Building2 className="w-5 h-5 text-gray-400" />
-                            <p className="font-medium text-gray-900">{miningCompany.name}</p>
+                        {/* Mining Company */}
+                        <div className="flex items-start gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs text-gray-600">Mining Company</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {miningCompany?.name || 'Non spécifiée'}
+                            </p>
                           </div>
                         </div>
-                      )}
 
-                      {/* License */}
-                      {license && (
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            LICENCE D'EXPORTATION
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
+                        {/* Numéro de scellé */}
+                        {preparation.seal_numbers && preparation.seal_numbers.length > 0 && (
+                          <div className="flex items-start gap-2">
+                            <FileCheck className="w-4 h-4 text-gray-400 mt-0.5" />
                             <div>
-                              <p className="font-medium text-gray-900">{license.license_number}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Expire: {formatShortDate(license.end_date)}
+                              <p className="text-xs text-gray-600">Numéros de Scellé</p>
+                              <p className="text-sm font-medium text-gray-900 font-mono">
+                                {preparation.seal_numbers.join(', ')}
                               </p>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {activeTab === 'productions' && (
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-bold text-gray-900">Productions Incluses</h2>
-                      <span className="text-sm text-gray-500">{productionItems.length} items</span>
-                    </div>
-
-                    {productionItems.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-gray-200">
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Box Number</th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Poids Brut (g)</th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Finesse (%)</th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Or Pur (g)</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Scellé 1</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Scellé 2</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {productionItems.map((item, index) => (
-                              <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
-                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.ingot_box_number}</td>
-                                <td className="px-4 py-3 text-sm text-right font-medium">{item.gross_weight_grams.toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm text-right text-amber-600 font-semibold">{item.fineness_pct.toFixed(2)}%</td>
-                                <td className="px-4 py-3 text-sm text-right font-bold text-emerald-700">{item.pure_gold_grams.toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.seal_number_1 || '-'}</td>
-                                <td className="px-4 py-3 text-sm font-mono text-gray-700">{item.seal_number_2 || '-'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-center py-12 text-gray-500">
-                        <Box className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>Aucune production associée</p>
-                      </div>
-                    )}
-                  </Card>
-                )}
 
-                {activeTab === 'signatories' && (
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-bold text-gray-900">Signataires</h2>
-                      <span className="text-sm text-gray-500">{signatories.length} signataires</span>
-                    </div>
-                    {signatories.length > 0 ? (
-                      <div className="space-y-4">
-                        {signatories.map((signatory, index) => (
-                          <div key={signatory.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                              <User className="w-5 h-5 text-blue-600" />
+                      {/* Poids et Conversions */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h3 className="text-xs font-semibold text-gray-900 mb-3">
+                          Poids et Conversions
+                        </h3>
+
+                        {/* Totaux */}
+                        <div className="space-y-3">
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold text-gray-700">Nombre de Boîtes</p>
+                              <p className="text-sm font-bold text-gray-900">{totalBoxes}</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900">{signatory.name}</p>
-                              <p className="text-sm text-gray-600">{signatory.position}</p>
+                          </div>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs font-semibold text-blue-900">Poids Net Total</p>
                             </div>
-                            {signatory.signed_at && (
-                              <div className="text-right">
-                                <p className="text-xs text-gray-500">Signé le</p>
-                                <p className="text-sm font-medium text-gray-700">
-                                  {formatShortDate(signatory.signed_at)}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-blue-700">Grammes</p>
+                                <p className="text-sm font-bold text-blue-900">
+                                  {totalNetWeight.toFixed(2)} g
                                 </p>
                               </div>
-                            )}
+                              <div>
+                                <p className="text-xs text-blue-700">Onces</p>
+                                <p className="text-sm font-bold text-blue-900">
+                                  {(totalNetWeight / 31.1035).toFixed(4)} oz
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs font-semibold text-gray-700">Poids Brut Total</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-gray-600">Grammes</p>
+                                <p className="text-sm font-bold text-gray-900">
+                                  {totalGrossWeight.toFixed(2)} g
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600">Onces</p>
+                                <p className="text-sm font-bold text-gray-900">
+                                  {(totalGrossWeight / 31.1035).toFixed(4)} oz
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* License d'exportation */}
+                      {license && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h3 className="text-xs font-semibold text-gray-900 mb-3">
+                            Licence d'Exportation
+                          </h3>
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-green-700">Numéro</span>
+                                <span className="text-sm font-bold text-green-900 font-mono">
+                                  {license.license_number}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-green-700">Date d'émission</span>
+                                <span className="text-xs text-green-900">
+                                  {formatDate(license.issue_date)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-green-700">Date d'expiration</span>
+                                <span className="text-xs text-green-900">
+                                  {formatDate(license.end_date)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {preparation.notes && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h3 className="text-xs font-semibold text-gray-900 mb-1">Notes</h3>
+                          <p className="text-xs text-gray-700 whitespace-pre-wrap">
+                            {preparation.notes}
+                          </p>
+                        </div>
+                      )}
+                    </Card>
+
+                    {/* Status Action Button - Below content */}
+                    <div>
+                      {/* TODO: Add status action button component here */}
+                    </div>
+                  </>
+                )}
+
+                {currentTab === 'productions' && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                      Productions Incluses
+                    </h3>
+                    {productionItems.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-4">
+                        Aucune production incluse
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {productionItems.map((item, index) => (
+                          <div
+                            key={item.id}
+                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-gray-700">
+                                Boîte {index + 1}
+                              </span>
+                              <span className="text-xs font-mono text-gray-600">
+                                {item.box_number || `BOX-${index + 1}`}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-gray-600">Poids Net</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {item.net_weight_grams.toFixed(2)} g
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600">Poids Brut</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {item.gross_weight_grams.toFixed(2)} g
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
+                    )}
+                  </Card>
+                )}
+
+                {currentTab === 'signatories' && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                      Signataires
+                    </h3>
+                    {signatories.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-4">
+                        Aucun signataire enregistré
+                      </p>
                     ) : (
-                      <div className="text-center py-12 text-gray-500">
-                        <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>Aucun signataire enregistré</p>
+                      <div className="space-y-2">
+                        {signatories.map((sig) => (
+                          <div
+                            key={sig.id}
+                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                          >
+                            <div className="flex items-start gap-2">
+                              <User className="w-4 h-4 text-gray-400 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {sig.full_name}
+                                </p>
+                                <p className="text-xs text-gray-600">{sig.title}</p>
+                                {sig.organization && (
+                                  <p className="text-xs text-gray-500">{sig.organization}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </Card>
                 )}
 
-                {activeTab === 'documents' && (
-                  <Card className="p-6">
+                {currentTab === 'documents' && (
+                  <Card className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                        Documents Attachés
+                      </h3>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                      >
+                        Ajouter
+                      </Button>
+                    </div>
                     <DocumentUploadSection
                       shippingId={id!}
                       documents={documents}
-                      onDocumentUploaded={loadPreparationDetails}
+                      onDocumentsChange={(docs) => setDocuments(docs)}
                     />
                   </Card>
                 )}
 
-                {activeTab === 'certificates' && (
-                  <Card className="p-6">
-                    <AssayCertificateUploadForShipping
-                      shippingPreparationId={id!}
-                      certificates={certificates}
-                      onCertificateUploaded={loadPreparationDetails}
-                    />
+                {currentTab === 'certificates' && (
+                  <Card className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                        Certificats d'Essai
+                      </h3>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                      >
+                        Ajouter
+                      </Button>
+                    </div>
+                    {certificates.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-4">
+                        Aucun certificat téléchargé
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {certificates.map((cert) => (
+                          <div
+                            key={cert.id}
+                            className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-start gap-2">
+                                <FileCheck className="w-4 h-4 text-gray-400 mt-0.5" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {cert.file_name}
+                                  </p>
+                                  {cert.certificate_number && (
+                                    <p className="text-xs text-gray-600 font-mono">
+                                      {cert.certificate_number}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-gray-500">
+                                    {formatDate(cert.created_at)}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                cert.approval_status === 'approved'
+                                  ? 'bg-green-100 text-green-700'
+                                  : cert.approval_status === 'rejected'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {cert.approval_status === 'approved' ? 'Approuvé' :
+                                 cert.approval_status === 'rejected' ? 'Rejeté' : 'En attente'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </Card>
                 )}
               </div>
-            </div>
 
-            {/* Right Sidebar - Status & History */}
-            <div className="w-96">
-              {/* Current Status */}
-              <Card className="p-5 mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Statut Actuel</h3>
-                </div>
-                <ShippingStatusBadge status={preparation.status} size="lg" />
-              </Card>
-
-              {/* Workflow Status Card */}
-              <Card className="p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Package className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Workflow de Statut</h3>
-                </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-full flex-shrink-0">
-                      <Clock className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-amber-900 mb-1">
-                        {statusLabels[preparation.status] || preparation.status}
-                      </p>
-                      <p className="text-xs text-amber-700">
-                        {statusDescriptions[preparation.status] || ''}
-                      </p>
-                    </div>
+              {/* Right Column - History - Always visible */}
+              <div className="space-y-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                    <History className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-sm font-semibold text-gray-900">
+                      Historique des Changements
+                    </h2>
                   </div>
-                </div>
-              </Card>
 
-              {/* History */}
-              <Card className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <History className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Historique des Changements</h3>
-                </div>
-                <ShippingStatusHistory history={statusHistory} />
-              </Card>
+                  <ShippingStatusHistory
+                    history={statusHistory}
+                    siteCountry="Guinée"
+                  />
+                </Card>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </Tabs>
       </div>
 
+      {/* Error Dialog */}
       <ErrorDialog
         isOpen={showError}
         onClose={() => setShowError(false)}
         title="Erreur"
         message={errorMessage}
       />
+
+      {/* Success Dialog */}
       <NotificationDialog
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}

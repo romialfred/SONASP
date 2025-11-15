@@ -186,6 +186,8 @@ export function ShippingPreparationDetailsEnhanced() {
 
   const loadStatusHistory = async (shippingId: string) => {
     try {
+      console.log('📊 Loading status history for shipping:', shippingId);
+
       // Query unified_status_history table
       const { data: historyData, error: historyError } = await supabase
         .from('unified_status_history')
@@ -199,7 +201,7 @@ export function ShippingPreparationDetailsEnhanced() {
           notes,
           action_description
         `)
-        .eq('entity_type', 'shipping_preparation')
+        .eq('entity_type', 'shipping')
         .eq('entity_id', shippingId)
         .order('changed_at', { ascending: false });
 
@@ -210,36 +212,65 @@ export function ShippingPreparationDetailsEnhanced() {
       }
 
       if (!historyData || historyData.length === 0) {
-        console.log('No status history found for shipping:', shippingId);
+        console.log('⚠️ No status history found for shipping:', shippingId);
         setStatusHistory([]);
         return;
       }
 
-      const formattedHistory: ShippingStatusHistoryEntry[] = historyData.map(h => ({
-        id: h.id,
-        entity_id: h.entity_id,
-        old_status: h.old_status,
-        new_status: h.new_status,
-        changed_by: h.changed_by,
-        changed_at: h.changed_at,
-        notes: h.notes,
-        action_description: h.action_description
-      }));
+      console.log('📋 Found', historyData.length, 'history entries, fetching user emails...');
 
-      console.log('✅ Status history loaded:', formattedHistory.length, 'entries');
-      setStatusHistory(formattedHistory);
+      // Fetch user emails for each history entry
+      const historyWithEmails = await Promise.all(
+        historyData.map(async (entry) => {
+          let userEmail = 'Système';
+          if (entry.changed_by) {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', entry.changed_by)
+              .maybeSingle();
+            userEmail = userData?.email || 'Utilisateur Inconnu';
+          }
+          return {
+            id: entry.id,
+            entity_id: entry.entity_id,
+            old_status: entry.old_status,
+            new_status: entry.new_status,
+            changed_by: entry.changed_by,
+            changed_at: entry.changed_at,
+            notes: entry.notes,
+            action_description: entry.action_description,
+            user_email: userEmail
+          } as ShippingStatusHistoryEntry;
+        })
+      );
+
+      console.log('✅ Status history loaded with emails:', historyWithEmails.length, 'entries');
+      setStatusHistory(historyWithEmails);
     } catch (error) {
-      console.error('Error loading status history:', error);
+      console.error('❌ Error loading status history:', error);
       setStatusHistory([]);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Date non spécifiée';
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString);
+        return 'Date invalide';
+      }
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date invalide';
+    }
   };
 
   const formatWeight = (grams: number) => {
@@ -306,7 +337,7 @@ export function ShippingPreparationDetailsEnhanced() {
               </div>
               <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1.5">
                 <Calendar className="w-3 h-3" />
-                {formatDate(preparation.shipment_date || preparation.production_date)}
+                {formatDate(preparation.created_at)}
               </p>
             </div>
           </div>

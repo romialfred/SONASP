@@ -183,33 +183,47 @@ export function ShippingPreparationDetailsEnhanced() {
 
   const loadStatusHistory = async (shippingId: string) => {
     try {
+      // Query unified_status_history table
       const { data: historyData, error: historyError } = await supabase
-        .from('shipping_status_history')
+        .from('unified_status_history')
         .select(`
           id,
-          shipping_preparation_id,
+          entity_id,
           old_status,
           new_status,
           changed_by,
           changed_at,
-          notes
+          notes,
+          action_description
         `)
-        .eq('shipping_preparation_id', shippingId)
+        .eq('entity_type', 'shipping_preparation')
+        .eq('entity_id', shippingId)
         .order('changed_at', { ascending: false });
 
-      if (historyError) throw historyError;
+      if (historyError) {
+        console.error('Error loading unified status history:', historyError);
+        setStatusHistory([]);
+        return;
+      }
 
-      const formattedHistory: ShippingStatusHistoryEntry[] = (historyData || []).map(h => ({
+      if (!historyData || historyData.length === 0) {
+        console.log('No status history found for shipping:', shippingId);
+        setStatusHistory([]);
+        return;
+      }
+
+      const formattedHistory: ShippingStatusHistoryEntry[] = historyData.map(h => ({
         id: h.id,
-        entity_id: h.shipping_preparation_id,
+        entity_id: h.entity_id,
         old_status: h.old_status,
         new_status: h.new_status,
         changed_by: h.changed_by,
         changed_at: h.changed_at,
         notes: h.notes,
-        action_description: null
+        action_description: h.action_description
       }));
 
+      console.log('✅ Status history loaded:', formattedHistory.length, 'entries');
       setStatusHistory(formattedHistory);
     } catch (error) {
       console.error('Error loading status history:', error);
@@ -345,7 +359,8 @@ export function ShippingPreparationDetailsEnhanced() {
               count: documents.length,
             },
           ]}
-          defaultTab="details"
+          activeTab={activeTab}
+          onChange={setActiveTab}
         >
           {(activeTab) => {
             if (activeTab === 'details') {

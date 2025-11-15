@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
+import { NotificationDialog } from '@/components/ui/NotificationDialog';
 import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
 import { ShippingStatusHistory, ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
 import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
@@ -613,9 +614,10 @@ export default function ShippingPreparationDetailsEnhanced() {
         title="Erreur"
         message={errorMessage}
       />
-      <SuccessDialog
+      <NotificationDialog
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
+        type="success"
         title="Succès"
         message={successMessage}
       />

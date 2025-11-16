@@ -251,6 +251,12 @@ export function BudgetManagementPage() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
+  // Months array for display
+  const months = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
+
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [mode, setMode] = useState<'budget' | 'forecast'>('budget');
   const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);

@@ -67,20 +67,23 @@ BEGIN
 END $$;
 
 -- =====================================================
--- ETAPE 1: SAUVEGARDE DES TRIGGERS EXISTANTS
+-- ETAPE 1: DESACTIVER TRIGGERS SPECIFIQUES (Pas les system triggers)
 -- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE 'ETAPE 1: Sauvegarde des Triggers';
+  RAISE NOTICE 'ETAPE 1: Desactivation Triggers Specifiques';
   RAISE NOTICE '-------------------------------------';
 
-  -- Desactiver temporairement les triggers
-  ALTER TABLE daily_production DISABLE TRIGGER ALL;
-  ALTER TABLE shipping_preparations DISABLE TRIGGER ALL;
+  -- Desactiver UNIQUEMENT les triggers utilisateur (pas les system triggers)
+  -- On ne peut pas utiliser DISABLE TRIGGER ALL car ca tente de desactiver les FK
 
-  RAISE NOTICE 'OK: Triggers desactives temporairement';
+  -- Supprimer les triggers existants s'ils existent
+  DROP TRIGGER IF EXISTS production_status_change_trigger ON daily_production;
+  DROP TRIGGER IF EXISTS shipping_status_change_trigger ON shipping_preparations;
+
+  RAISE NOTICE 'OK: Triggers utilisateur supprimes (seront recrees)';
   RAISE NOTICE '';
 END $$;
 
@@ -438,19 +441,31 @@ BEGIN
 END $$;
 
 -- =====================================================
--- ETAPE 7: REACTIVER LES TRIGGERS
+-- ETAPE 7: VERIFICATION DES TRIGGERS (deja crees a l'etape 6)
 -- =====================================================
 
 DO $$
+DECLARE
+  v_trigger_count INTEGER;
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE 'ETAPE 7: Reactivation des Triggers';
+  RAISE NOTICE 'ETAPE 7: Verification des Triggers';
   RAISE NOTICE '-------------------------------------';
 
-  ALTER TABLE daily_production ENABLE TRIGGER ALL;
-  ALTER TABLE shipping_preparations ENABLE TRIGGER ALL;
+  -- Compter les triggers actifs
+  SELECT COUNT(*) INTO v_trigger_count
+  FROM pg_trigger t
+  JOIN pg_class c ON t.tgrelid = c.oid
+  WHERE t.tgname IN ('production_status_change_trigger', 'shipping_status_change_trigger')
+  AND t.tgenabled = 'O'
+  AND NOT t.tgisinternal;
 
-  RAISE NOTICE 'OK: Tous les triggers reactives';
+  IF v_trigger_count >= 2 THEN
+    RAISE NOTICE 'OK: % triggers actifs et fonctionnels', v_trigger_count;
+  ELSE
+    RAISE NOTICE 'ATTENTION: Seulement % trigger(s) trouve(s)', v_trigger_count;
+  END IF;
+
   RAISE NOTICE '';
 END $$;
 

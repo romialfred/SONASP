@@ -881,10 +881,175 @@ export function BudgetManagementPage() {
         </div>
       </div>
 
-      {/* Right Sidebar - Conditional on loading */}
+      {/* Right Sidebar - Conditional on loading and tab */}
       {!loading && (
       <div className="w-[420px] bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
         <div className="p-5 space-y-4">
+
+        {activeTab === 'browser' ? (
+          /* Production Browser Performance Sidebar */
+          <>
+          {/* Performance Annuelle */}
+          <div className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-lg p-4 text-white shadow-lg border border-slate-600/50">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="bg-white/15 rounded-lg p-1.5">
+                  <Target className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wide">Performance Annuelle</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300">Budget:</span>
+                <span className="text-sm font-bold">{calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300">Actual:</span>
+                <span className="text-sm font-bold text-blue-300">0.00 oz</span>
+              </div>
+              <div className="h-px bg-white/20"></div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300">Variation:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span className="text-sm font-bold text-red-400">-100.0%</span>
+                  <span className="text-xs text-slate-400">(-{calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance par Trimestre */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+              <TrendingUp className="w-4 h-4 text-slate-600" />
+              Performance par Trimestre
+            </h3>
+
+            {[1, 2, 3, 4].map(quarter => {
+              const quarterMonths = [
+                [1, 2, 3],
+                [4, 5, 6],
+                [7, 8, 9],
+                [10, 11, 12]
+              ][quarter - 1];
+
+              const quarterBudget = quarterMonths.reduce((sum, month) => {
+                const budget = pendingBudgets[month] !== undefined
+                  ? pendingBudgets[month]
+                  : monthlyBudgets.find(mb => mb.month === month)?.budget_oz || 0;
+                return sum + Number(budget);
+              }, 0);
+
+              const quarterActual = 0; // TODO: Connect to actual data
+              const variance = quarterActual - quarterBudget;
+              const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
+
+              const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
+              const trafficColor = {
+                green: { bg: 'bg-emerald-500', text: 'text-emerald-600', border: 'border-emerald-300', light: 'bg-emerald-50' },
+                orange: { bg: 'bg-amber-500', text: 'text-amber-600', border: 'border-amber-300', light: 'bg-amber-50' },
+                red: { bg: 'bg-red-500', text: 'text-red-600', border: 'border-red-300', light: 'bg-red-50' }
+              }[trafficLight];
+
+              const quarterSummary = variancePercent >= 0
+                ? `Excellent trimestre avec performance ${variancePercent.toFixed(1)}% au-dessus du budget. Objectifs largement dépassés.`
+                : variancePercent >= -10
+                ? `Performance légèrement en dessous du budget (${variancePercent.toFixed(1)}%). Ajustements mineurs nécessaires.`
+                : `Performance critique avec écart de ${variancePercent.toFixed(1)}% du budget. Action corrective urgente requise.`;
+
+              return (
+                <div key={quarter} className={`bg-white rounded-lg border-2 ${trafficColor.border} shadow-sm p-3 hover:shadow-md transition-shadow`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${trafficColor.bg} shadow-sm`}></div>
+                      <span className="text-sm font-bold text-slate-800">Trimestre {quarter}</span>
+                    </div>
+                    <span className={`text-xs font-bold ${trafficColor.text}`}>
+                      {variancePercent >= 0 ? '+' : ''}{variancePercent.toFixed(1)}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 mb-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">Budget:</span>
+                      <span className="font-semibold text-slate-800">{quarterBudget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">Actual:</span>
+                      <span className="font-semibold text-blue-600">{quarterActual.toFixed(2)} oz</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">Écart:</span>
+                      <span className={`font-bold ${trafficColor.text}`}>
+                        {variance >= 0 ? '+' : ''}{variance.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Summary Text */}
+                  <div className={`${trafficColor.light} rounded-md p-2 border ${trafficColor.border}`}>
+                    <p className="text-[10px] leading-relaxed text-slate-700">
+                      {quarterSummary}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Performance Mensuelle */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+              <BarChart3 className="w-4 h-4 text-slate-600" />
+              Performance Mensuelle
+            </h3>
+
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm divide-y divide-slate-100">
+              {months.map((month, index) => {
+                const monthNum = index + 1;
+                const budget = pendingBudgets[monthNum] !== undefined
+                  ? pendingBudgets[monthNum]
+                  : monthlyBudgets.find(mb => mb.month === monthNum)?.budget_oz || 0;
+
+                const actual = 0; // TODO: Connect to actual data
+                const variance = actual - budget;
+                const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
+
+                const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
+                const dotColor = {
+                  green: 'bg-emerald-500',
+                  orange: 'bg-amber-500',
+                  red: 'bg-red-500'
+                }[trafficLight];
+
+                return (
+                  <div key={monthNum} className="p-2 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
+                        <span className="text-xs font-semibold text-slate-700">{month}</span>
+                      </div>
+                      <span className={`text-xs font-bold ${variancePercent >= 0 ? 'text-emerald-600' : variancePercent >= -10 ? 'text-amber-600' : 'text-red-600'}`}>
+                        {variancePercent >= 0 ? '+' : ''}{variancePercent.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500">
+                      <span>{budget.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} oz</span>
+                      <span className={variancePercent >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                        {variance >= 0 ? '+' : ''}{variance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} oz
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          </>
+        ) : (
+          /* Budget/Forecast Matrix Sidebar (Original) */
+          <>
           {/* Total Annuel Section - Always shows annual total */}
           <div className="bg-gradient-to-br from-slate-600/90 via-slate-700/85 to-slate-800/90 rounded-lg p-3 text-white shadow-md border border-slate-500/30">
             <div className="flex items-center justify-between mb-1.5">
@@ -1188,6 +1353,8 @@ export function BudgetManagementPage() {
             <Clock className="w-3.5 h-3.5" />
             <span className="font-medium">Mise à jour: {new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
+          </>
+        )}
         </div>
       </div>
       )}

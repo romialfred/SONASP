@@ -17,7 +17,8 @@ import {
   Building2,
   PieChart
 } from 'lucide-react';
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import * as XLSX from 'xlsx';
 import { supabase } from '../../lib/supabase';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Button } from '../../components/ui/Button';
@@ -38,6 +39,213 @@ interface MiningCompany {
   name: string;
 }
 
+interface ProductionBrowserTabProps {
+  monthlyBudgets: MonthlyBudget[];
+  quarterlyForecasts: QuarterlyForecast[];
+  pendingBudgets: Record<number, number>;
+  pendingForecasts: Record<string, number>;
+}
+
+function ProductionBrowserTab({
+  monthlyBudgets,
+  quarterlyForecasts,
+  pendingBudgets,
+  pendingForecasts
+}: ProductionBrowserTabProps) {
+  const months = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
+
+  const exportData = () => {
+    const data = months.map((month, index) => {
+      const monthNum = index + 1;
+      const quarter = Math.ceil(monthNum / 3);
+
+      const budget = pendingBudgets[monthNum] !== undefined
+        ? pendingBudgets[monthNum]
+        : monthlyBudgets.find(mb => mb.month === monthNum)?.budget_oz || 0;
+
+      const forecast = pendingForecasts[`${quarter}-${monthNum}`] !== undefined
+        ? pendingForecasts[`${quarter}-${monthNum}`]
+        : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
+
+      return {
+        Mois: month,
+        Budget: Number(budget).toFixed(2),
+        Actual: '0.00', // TODO: Connect to actual production data
+        Forecast: Number(forecast).toFixed(2)
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Production Browser');
+
+    // Style the header row
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const address = XLSX.utils.encode_col(C) + "1";
+      if (!ws[address]) continue;
+      ws[address].s = { font: { bold: true }, fill: { fgColor: { rgb: "4F81BD" } } };
+    }
+
+    ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+
+    XLSX.writeFile(wb, `Production_Browser_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const getChartData = () => {
+    return months.map((month, index) => {
+      const monthNum = index + 1;
+      const quarter = Math.ceil(monthNum / 3);
+
+      const budget = pendingBudgets[monthNum] !== undefined
+        ? pendingBudgets[monthNum]
+        : monthlyBudgets.find(mb => mb.month === monthNum)?.budget_oz || 0;
+
+      const forecast = pendingForecasts[`${quarter}-${monthNum}`] !== undefined
+        ? pendingForecasts[`${quarter}-${monthNum}`]
+        : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
+
+      return {
+        name: month.substring(0, 3),
+        Budget: Number(budget),
+        Actual: 0, // TODO: Connect to actual production data
+        Forecast: Number(forecast)
+      };
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Export Button */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-800">Production Browser - Vue Annuelle</h3>
+        <Button onClick={exportData} variant="primary" size="sm">
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Exporter Excel
+        </Button>
+      </div>
+
+      {/* Matrix Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border border-slate-500">
+                Mois
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-blue-600">
+                Budget (oz)
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-emerald-600">
+                Actual (oz)
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-amber-600">
+                Forecast (oz)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {months.map((month, index) => {
+              const monthNum = index + 1;
+              const quarter = Math.ceil(monthNum / 3);
+
+              const budget = pendingBudgets[monthNum] !== undefined
+                ? pendingBudgets[monthNum]
+                : monthlyBudgets.find(mb => mb.month === monthNum)?.budget_oz || 0;
+
+              const forecast = pendingForecasts[`${quarter}-${monthNum}`] !== undefined
+                ? pendingForecasts[`${quarter}-${monthNum}`]
+                : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
+
+              const isQuarterStart = monthNum % 3 === 1;
+
+              return (
+                <tr
+                  key={month}
+                  className={`
+                    ${isQuarterStart ? 'border-t-2 border-slate-400' : ''}
+                    ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
+                    hover:bg-blue-50 transition-colors
+                  `}
+                >
+                  <td className="px-4 py-3 text-sm font-semibold text-slate-700 border border-slate-200">
+                    {month}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-blue-50/50">
+                    {Number(budget).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-emerald-50/50">
+                    0.00
+                  </td>
+                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-amber-50/50">
+                    {Number(forecast).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              );
+            })}
+            {/* Total Row */}
+            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white font-bold border-t-2 border-slate-800">
+              <td className="px-4 py-3 text-sm uppercase tracking-wide border border-slate-500">
+                Total Annuel
+              </td>
+              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+                {monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+                0.00
+              </td>
+              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+                {quarterlyForecasts.reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bar Chart */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-slate-600" />
+          Comparaison Mensuelle: Budget, Actual, Forecast
+        </h3>
+        <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={getChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis
+                dataKey="name"
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                label={{ value: 'Onces (oz)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#64748b' } }}
+              />
+              <Tooltip
+                formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                contentStyle={{ fontSize: '12px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+              />
+              <Legend
+                wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 600 }}
+              />
+              <Bar dataKey="Budget" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Actual" fill="#10b981" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Forecast" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BudgetManagementPage() {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
@@ -46,6 +254,7 @@ export function BudgetManagementPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [mode, setMode] = useState<'budget' | 'forecast'>('budget');
   const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'matrix' | 'browser'>('matrix');
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [groupTotals, setGroupTotals] = useState({ budget: 0, forecast: 0 });
@@ -316,22 +525,41 @@ export function BudgetManagementPage() {
   };
 
   const getQuarterlyDistributionData = () => {
-    if (mode !== 'forecast') return [];
-
     return [1, 2, 3, 4].map(quarter => {
       const months = annualBudgetService.getQuarterMonths(quarter);
       const total = months.reduce((sum, month) => {
-        const key = `${quarter}-${month}`;
-        const forecast = pendingForecasts[key] !== undefined
-          ? pendingForecasts[key]
-          : quarterlyForecasts.find(qf => qf.quarter === quarter && qf.month === month)?.forecast_oz || 0;
-        return sum + Number(forecast);
+        if (mode === 'budget') {
+          const budget = pendingBudgets[month] !== undefined
+            ? pendingBudgets[month]
+            : monthlyBudgets.find(mb => mb.month === month)?.budget_oz || 0;
+          return sum + Number(budget);
+        } else {
+          const key = `${quarter}-${month}`;
+          const forecast = pendingForecasts[key] !== undefined
+            ? pendingForecasts[key]
+            : quarterlyForecasts.find(qf => qf.quarter === quarter && qf.month === month)?.forecast_oz || 0;
+          return sum + Number(forecast);
+        }
       }, 0);
 
       return {
         name: `T${quarter}`,
         value: total,
         percentage: 0 // Will be calculated
+      };
+    });
+  };
+
+  const getMonthlyBudgetData = () => {
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(month => {
+      const budget = pendingBudgets[month] !== undefined
+        ? pendingBudgets[month]
+        : monthlyBudgets.find(mb => mb.month === month)?.budget_oz || 0;
+
+      return {
+        name: annualBudgetService.getMonthName(month).substring(0, 3),
+        value: Number(budget),
+        month
       };
     });
   };
@@ -361,6 +589,18 @@ export function BudgetManagementPage() {
     if (hasData) return 'completed';
     if (canRevise) return 'active';
     return 'upcoming';
+  };
+
+  const exportToExcel = (data: any[], filename: string) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Production Data');
+
+    // Auto-size columns
+    const maxWidth = data.reduce((w, r) => Math.max(w, ...Object.keys(r).map(k => String(r[k]).length)), 10);
+    ws['!cols'] = Object.keys(data[0] || {}).map(() => ({ wch: maxWidth + 2 }));
+
+    XLSX.writeFile(wb, filename);
   };
 
   if (loading) {
@@ -544,9 +784,38 @@ export function BudgetManagementPage() {
             </div>
           </Card>
 
-          {/* Budget Matrix */}
-          <Card className="p-5 shadow-sm border-slate-200 bg-white">
-            <BudgetMatrixTable
+          {/* Tabs */}
+          <Card className="p-0 shadow-sm border-slate-200 bg-white overflow-hidden">
+            <div className="flex border-b border-slate-200">
+              <button
+                onClick={() => setActiveTab('matrix')}
+                className={`
+                  flex-1 px-6 py-3 text-sm font-semibold transition-all
+                  ${activeTab === 'matrix'
+                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }
+                `}
+              >
+                {mode === 'budget' ? 'Budget Matrix' : 'Forecast Matrix'}
+              </button>
+              <button
+                onClick={() => setActiveTab('browser')}
+                className={`
+                  flex-1 px-6 py-3 text-sm font-semibold transition-all
+                  ${activeTab === 'browser'
+                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }
+                `}
+              >
+                Production Browser
+              </button>
+            </div>
+
+            <div className="p-5">
+              {activeTab === 'matrix' ? (
+                <BudgetMatrixTable
               mode={mode}
               selectedQuarter={selectedQuarter}
               monthlyBudgets={monthlyBudgets}
@@ -558,6 +827,15 @@ export function BudgetManagementPage() {
               expandedQuarters={expandedQuarters}
               onToggleQuarter={toggleQuarter}
             />
+              ) : (
+                <ProductionBrowserTab
+                  monthlyBudgets={monthlyBudgets}
+                  quarterlyForecasts={quarterlyForecasts}
+                  pendingBudgets={pendingBudgets}
+                  pendingForecasts={pendingForecasts}
+                />
+              )}
+            </div>
           </Card>
         </div>
       </div>
@@ -607,6 +885,100 @@ export function BudgetManagementPage() {
             </div>
           )}
 
+
+          {/* Donut Chart - Budget by Quarter (Budget Mode Only) */}
+          {mode === 'budget' && (
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                <PieChart className="w-4 h-4 text-slate-600" />
+                Budget par Trimestre
+              </h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <ResponsiveContainer width="100%" height={280}>
+                  <RechartsPie>
+                    <Pie
+                      data={(() => {
+                        const data = getQuarterlyDistributionData();
+                        const total = data.reduce((sum, item) => sum + item.value, 0);
+                        return data.map(item => ({
+                          ...item,
+                          percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                        }));
+                      })()}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      labelLine={false}
+                      label={(entry) => `${entry.percentage}%`}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {getQuarterlyDistributionData().map((entry, index) => {
+                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                        return <Cell key={`cell-${index}`} fill={colors[index]} />;
+                      })}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                      contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                      formatter={(value) => <span style={{ color: '#475569', fontWeight: 500 }}>{value}</span>}
+                    />
+                  </RechartsPie>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Monthly Distribution Horizontal Bar Chart (Budget Mode) */}
+          {mode === 'budget' && (
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-slate-600" />
+                Budget Mensuel
+              </h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart
+                    data={getMonthlyBudgetData()}
+                    layout="horizontal"
+                    margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
+                      width={45}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                      contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
+                    />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                      {getMonthlyBudgetData().map((entry, index) => {
+                        const colors = [
+                          '#3b82f6', '#10b981', '#f59e0b', // Q1
+                          '#06b6d4', '#14b8a6', '#84cc16', // Q2
+                          '#f59e0b', '#f97316', '#ef4444', // Q3
+                          '#8b5cf6', '#a855f7', '#6366f1'  // Q4
+                        ];
+                        return <Cell key={`cell-${index}`} fill={colors[index]} />;
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
 
           {/* Pie Charts - Forecast Mode */}
           {mode === 'forecast' && selectedQuarter && (

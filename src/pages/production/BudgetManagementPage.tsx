@@ -260,6 +260,7 @@ export function BudgetManagementPage() {
   const [groupTotals, setGroupTotals] = useState({ budget: 0, forecast: 0 });
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [annualBudget, setAnnualBudget] = useState<AnnualBudget | null>(null);
   const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
@@ -284,7 +285,9 @@ export function BudgetManagementPage() {
   }, [miningCompanies]);
 
   useEffect(() => {
-    loadBudgetData();
+    if (selectedCompanyId) {
+      loadBudgetData();
+    }
   }, [selectedYear, selectedCompanyId]);
 
   const loadMiningCompanies = async () => {
@@ -303,10 +306,17 @@ export function BudgetManagementPage() {
 
   const loadBudgetData = async () => {
     try {
-      setLoading(true);
+      // Ne pas afficher le loading complet si on a déjà des données
+      // Cela évite la page blanche lors du changement de filtre
+      if (monthlyBudgets.length === 0) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
 
       if (!selectedCompanyId) {
         setLoading(false);
+        setRefreshing(false);
         return;
       }
 
@@ -327,6 +337,7 @@ export function BudgetManagementPage() {
       showError('Erreur lors du chargement des données budgétaires');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -673,7 +684,12 @@ export function BudgetManagementPage() {
           )}
 
           {/* Controls */}
-          <Card className="shadow-sm border-slate-200">
+          <Card className="shadow-sm border-slate-200 relative">
+            {refreshing && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-100 overflow-hidden">
+                <div className="h-full bg-blue-600 animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div className="flex items-center gap-4">
                 {/* Year Selector */}
@@ -788,32 +804,47 @@ export function BudgetManagementPage() {
           <Card className="p-0 shadow-sm border-slate-200 bg-white overflow-hidden">
             <div className="flex border-b border-slate-200">
               <button
-                onClick={() => setActiveTab('matrix')}
+                onClick={() => !refreshing && setActiveTab('matrix')}
+                disabled={refreshing}
                 className={`
                   flex-1 px-6 py-3 text-sm font-semibold transition-all
                   ${activeTab === 'matrix'
                     ? 'bg-white text-blue-600 border-b-2 border-blue-600'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }
+                  ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
                 {mode === 'budget' ? 'Budget Matrix' : 'Forecast Matrix'}
               </button>
               <button
-                onClick={() => setActiveTab('browser')}
+                onClick={() => !refreshing && setActiveTab('browser')}
+                disabled={refreshing}
                 className={`
                   flex-1 px-6 py-3 text-sm font-semibold transition-all
                   ${activeTab === 'browser'
                     ? 'bg-white text-blue-600 border-b-2 border-blue-600'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }
+                  ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
                 Production Browser
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="p-5 relative">
+              {refreshing && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-sm font-medium">Actualisation...</span>
+                  </div>
+                </div>
+              )}
               {activeTab === 'matrix' ? (
                 <BudgetMatrixTable
               mode={mode}
@@ -934,36 +965,36 @@ export function BudgetManagementPage() {
           )}
 
           {/* Monthly Distribution Horizontal Bar Chart (Budget Mode) */}
-          {mode === 'budget' && (
+          {mode === 'budget' && monthlyBudgets.length > 0 && (
             <div className="space-y-2.5">
               <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-slate-600" />
                 Budget Mensuel
               </h3>
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
-                <ResponsiveContainer width="100%" height={400}>
+                <ResponsiveContainer width="100%" height={450}>
                   <BarChart
                     data={getMonthlyBudgetData()}
-                    layout="horizontal"
-                    margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+                    layout="vertical"
+                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                     <XAxis
                       type="number"
                       tick={{ fontSize: 11, fill: '#64748b' }}
-                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) => value > 0 ? `${(value / 1000).toFixed(0)}k` : '0'}
                     />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
-                      width={45}
+                      tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
+                      width={35}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Budget']}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
-                    <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
                       {getMonthlyBudgetData().map((entry, index) => {
                         const colors = [
                           '#3b82f6', '#10b981', '#f59e0b', // Q1

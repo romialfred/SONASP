@@ -614,16 +614,24 @@ export function BudgetManagementPage() {
     XLSX.writeFile(wb, filename);
   };
 
-  if (loading) {
-    return <Loading message="Chargement du budget..." />;
-  }
-
   return (
     <MainLayout>
       <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         {/* Main Content */}
         <div className="flex-1 overflow-auto pb-8">
           <div className="max-w-6xl mx-auto p-6 pr-3 space-y-6">
+
+          {loading ? (
+            /* Loading State - Only Content Area */
+            <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+                <p className="text-lg text-slate-700 font-semibold">Chargement du budget...</p>
+                <p className="text-sm text-slate-500 mt-2">Récupération des données budgétaires</p>
+              </div>
+            </div>
+          ) : (
+            <>
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -868,10 +876,13 @@ export function BudgetManagementPage() {
               )}
             </div>
           </Card>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Right Sidebar - Always Visible */}
+      {/* Right Sidebar - Conditional on loading */}
+      {!loading && (
       <div className="w-[420px] bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
         <div className="p-5 space-y-4">
           {/* Total Annuel Section - Always shows annual total */}
@@ -1179,7 +1190,8 @@ export function BudgetManagementPage() {
           </div>
         </div>
       </div>
-    </div>
+      )}
+      </div>
     </MainLayout>
   );
 }

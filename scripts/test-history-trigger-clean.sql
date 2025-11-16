@@ -72,7 +72,7 @@ ORDER BY new_status;
 -- Test 7: Productions ready_for_customs avec historique
 SELECT
   dp.id AS production_id,
-  dp.batch_number AS lot,
+  dp.production_number AS numero_production,
   dp.status AS statut_actuel,
   COUNT(ush.id) AS entrees_historique,
   CASE
@@ -85,8 +85,8 @@ LEFT JOIN unified_status_history ush ON
   ush.entity_type = 'production' AND
   ush.entity_id = dp.id
 WHERE dp.status = 'ready_for_customs'
-GROUP BY dp.id, dp.batch_number, dp.status
-ORDER BY COUNT(ush.id), dp.batch_number
+GROUP BY dp.id, dp.production_number, dp.status
+ORDER BY COUNT(ush.id), dp.production_number
 LIMIT 10;
 
 -- Test 8: Ratio Productions / Historiques
@@ -111,7 +111,7 @@ FROM stats;
 -- Test 9: Productions SANS historique
 SELECT
   dp.id,
-  dp.batch_number AS lot,
+  dp.production_number AS numero_production,
   dp.status AS statut,
   dp.created_at AS cree_le,
   'MANQUANT' AS historique

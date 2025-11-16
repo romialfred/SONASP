@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearing Service Workers - Gold Shipper</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Clearing Cache</h1>
+        <p id="message">Removing service workers and clearing cache...</p>
+        <div class="spinner" id="spinner"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const messageEl = document.getElementById('message');
+        const statusEl = document.getElementById('status');
+        const spinnerEl = document.getElementById('spinner');
+
+        async function clearEverything() {
+            let steps = 0;
+
+            try {
+                // Step 1: Unregister Service Workers
+                if ('serviceWorker' in navigator) {
+                    statusEl.textContent = '🗑️ Unregistering service workers...';
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        steps++;
+                    }
+
+                    statusEl.textContent = `✅ ${steps} service worker(s) unregistered`;
+                }
+
+                // Step 2: Clear Cache Storage
+                if ('caches' in window) {
+                    statusEl.textContent = '🗑️ Clearing cache storage...';
+                    const cacheNames = await caches.keys();
+
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                    }
+
+                    statusEl.textContent = `✅ ${cacheNames.length} cache(s) cleared`;
+                }
+
+                // Step 3: Success
+                spinnerEl.style.display = 'none';
+                messageEl.innerHTML = '<span class="success">✅ Cache Cleared Successfully!</span>';
+                statusEl.textContent = 'Redirecting to home page...';
+
+                // Step 4: Redirect
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                spinnerEl.style.display = 'none';
+                messageEl.textContent = '❌ Error clearing cache';
+                statusEl.textContent = `Error: ${error.message}`;
+                console.error('Cache clearing error:', error);
+
+                // Still redirect after error
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+            }
+        }
+
+        // Start clearing immediately
+        clearEverything();
+    </script>
+</body>
+</html>

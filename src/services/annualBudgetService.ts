@@ -135,13 +135,22 @@ class AnnualBudgetService {
     budgets: MonthlyBudgetInput[],
     miningCompanyId?: string | null
   ): Promise<MonthlyBudget[]> {
-    const records = budgets.map(b => ({
-      annual_budget_id: annualBudgetId,
-      month: b.month,
-      budget_oz: b.budget_oz,
-      days_in_month: this.getDaysInMonth(b.month, parseInt(annualBudgetId.substring(0, 4))),
-      mining_company_id: miningCompanyId || null
-    }));
+    // Extract year from various possible sources
+    const year = new Date().getFullYear(); // Fallback to current year
+
+    const records = budgets.map(b => {
+      const daysInMonth = this.getDaysInMonth(b.month, year);
+      const dailyBudgetOz = daysInMonth > 0 ? b.budget_oz / daysInMonth : 0;
+
+      return {
+        annual_budget_id: annualBudgetId,
+        month: b.month,
+        budget_oz: b.budget_oz,
+        days_in_month: daysInMonth,
+        daily_budget_oz: dailyBudgetOz,
+        mining_company_id: miningCompanyId || null
+      };
+    });
 
     const { data, error } = await supabase
       .from('monthly_budgets')
@@ -181,17 +190,25 @@ class AnnualBudgetService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const records = forecasts.map(f => ({
-      annual_budget_id: annualBudgetId,
-      quarter,
-      revision_date: revisionDate,
-      month: f.month,
-      forecast_oz: f.forecast_oz,
-      days_in_month: this.getDaysInMonth(f.month, parseInt(annualBudgetId.substring(0, 4))),
-      notes: f.notes || null,
-      mining_company_id: miningCompanyId || null,
-      created_by: user.id
-    }));
+    const year = new Date().getFullYear(); // Fallback to current year
+
+    const records = forecasts.map(f => {
+      const daysInMonth = this.getDaysInMonth(f.month, year);
+      const dailyForecastOz = daysInMonth > 0 ? f.forecast_oz / daysInMonth : 0;
+
+      return {
+        annual_budget_id: annualBudgetId,
+        quarter,
+        revision_date: revisionDate,
+        month: f.month,
+        forecast_oz: f.forecast_oz,
+        days_in_month: daysInMonth,
+        daily_forecast_oz: dailyForecastOz,
+        notes: f.notes || null,
+        mining_company_id: miningCompanyId || null,
+        created_by: user.id
+      };
+    });
 
     const { data, error } = await supabase
       .from('quarterly_forecasts')

@@ -370,15 +370,13 @@ export function BudgetManagementPage() {
     try {
       setSaving(true);
 
-      let budget = annualBudget;
-      if (!budget) {
-        budget = await annualBudgetService.createAnnualBudget(
-          selectedYear,
-          'guinea',
-          selectedCompanyId
-        );
-        setAnnualBudget(budget);
-      }
+      // Use getOrCreateAnnualBudget to avoid duplicate creation (409 conflict)
+      let budget = await annualBudgetService.getOrCreateAnnualBudget(
+        selectedYear,
+        'guinea',
+        selectedCompanyId
+      );
+      setAnnualBudget(budget);
 
       const budgetInputs: MonthlyBudgetInput[] = Array.from({ length: 12 }, (_, i) => {
         const month = i + 1;
@@ -409,7 +407,10 @@ export function BudgetManagementPage() {
   };
 
   const handleSaveForecasts = async () => {
-    if (!selectedQuarter || !annualBudget) return;
+    if (!selectedQuarter) {
+      showError('Veuillez sélectionner un trimestre');
+      return;
+    }
 
     if (selectedCompanyId === 'ALL') {
       showError('Veuillez sélectionner une compagnie minière spécifique pour enregistrer');
@@ -418,6 +419,17 @@ export function BudgetManagementPage() {
 
     try {
       setSaving(true);
+
+      // Ensure annual budget exists before saving forecasts
+      let budget = annualBudget;
+      if (!budget) {
+        budget = await annualBudgetService.getOrCreateAnnualBudget(
+          selectedYear,
+          'guinea',
+          selectedCompanyId
+        );
+        setAnnualBudget(budget);
+      }
 
       const revisionDate = new Date(selectedYear, annualBudgetService.getRevisionMonth(selectedQuarter) - 1, 1);
       const quarterMonths = annualBudgetService.getQuarterMonths(selectedQuarter);
@@ -440,7 +452,7 @@ export function BudgetManagementPage() {
       });
 
       const savedForecasts = await annualBudgetService.upsertQuarterlyForecasts(
-        annualBudget.id,
+        budget.id,
         selectedQuarter,
         revisionDate.toISOString().split('T')[0],
         forecastInputs,

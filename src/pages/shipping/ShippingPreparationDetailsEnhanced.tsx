@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History, Users, Ship } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History, Users, Ship, Check } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';

@@ -1,186 +1,198 @@
-# 📋 MIGRATIONS À EXÉCUTER MANUELLEMENT
+# LISTE DES MIGRATIONS A EXECUTER
 
-## 🎯 ORDRE D'EXÉCUTION
-
-### ⚠️ IMPORTANT
-Exécuter ces migrations dans l'ordre indiqué pour éviter les erreurs de dépendances.
+Date: 2025-01-15
+Module: Budget Management
+Status: ACTION REQUISE
 
 ---
 
-## 1️⃣ MIGRATION STORAGE (PRIORITAIRE) ⭐
+## TABLEAU DES MIGRATIONS
 
-### Fichier
-```
-supabase/migrations/20251113_011_fix_assay_certificates_storage.sql
-```
+| Ordre | Fichier Migration | Description | Priorite | Status |
+|-------|------------------|-------------|----------|---------|
+| 1 | 20251115_004_create_budget_system_tables.sql | Creation tables budgets (annual_budgets, monthly_budgets, quarterly_forecasts) | CRITIQUE | A EXECUTER |
 
-### Pourquoi
-- ✅ Corrige l'erreur "we hit a snag" lors de l'upload d'assay certificates
-- ✅ Crée les buckets nécessaires pour documents et certificats
-- ✅ Configure les politiques RLS pour sécuriser les accès
+---
 
-### Ce qu'elle fait
-1. Crée le bucket `ASSAY-CERTIFICATES` (public)
-2. Crée le bucket `shipping-documents` (public)
-3. Configure 8 politiques RLS (4 par bucket):
-   - INSERT (upload)
-   - SELECT (lecture)
-   - UPDATE (modification)
-   - DELETE (suppression)
+## DETAILS MIGRATION #1
 
-### Comment l'exécuter
+Fichier: supabase/migrations/20251115_004_create_budget_system_tables.sql
 
-#### Option A: Supabase Dashboard
-1. Aller sur https://supabase.com/dashboard
-2. Sélectionner votre projet
-3. Aller dans **SQL Editor**
-4. Créer une nouvelle query
-5. Copier/coller le contenu complet du fichier `20251113_011_fix_assay_certificates_storage.sql`
-6. Cliquer **RUN** ou Cmd+Enter / Ctrl+Enter
+Priorite: CRITIQUE
 
-#### Option B: CLI Supabase (si installé)
+Description:
+- Creation table annual_budgets (budgets annuels)
+- Creation table monthly_budgets (budgets mensuels)
+- Creation table quarterly_forecasts (previsions trimestrielles)
+- Contraintes uniques intelligentes (gestion NULL)
+- RLS policies completes
+- Indexes de performance
+- Triggers updated_at
+
+Pourquoi Critique:
+- Module Budget actuellement NON FONCTIONNEL
+- Erreurs 404 et 409 dans console
+- Bloque enregistrement des budgets
+
+Tables Creees:
+1. annual_budgets - Configuration budget annuel par annee/site/compagnie
+2. monthly_budgets - Repartition mensuelle (12 mois)
+3. quarterly_forecasts - Revisions trimestrielles (4 trimestres)
+
+---
+
+## COMMANDES D'EXECUTION
+
+Methode 1: psql (Recommandee)
+
 ```bash
-supabase migration up 20251113_011_fix_assay_certificates_storage
+# Verifier connexion
+psql $SUPABASE_DB_URL -c "SELECT version();"
+
+# Executer migration
+psql $SUPABASE_DB_URL -f supabase/migrations/20251115_004_create_budget_system_tables.sql
+
+# Verifier tables creees
+psql $SUPABASE_DB_URL -c "SELECT table_name FROM information_schema.tables WHERE table_name IN ('annual_budgets', 'monthly_budgets', 'quarterly_forecasts');"
 ```
 
-### Résultat Attendu
+Methode 2: Supabase CLI
+
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase db push
+```
+
+Methode 3: Supabase Dashboard
+
+1. Aller sur https://supabase.com/dashboard
+2. Selectionner votre projet
+3. Menu "SQL Editor"
+4. Copier contenu de supabase/migrations/20251115_004_create_budget_system_tables.sql
+5. Cliquer "Run"
+
+---
+
+## VALIDATION POST-MIGRATION
+
+Etape 1: Verifier Tables Creees
+
 ```sql
-INSERT 0 2                     -- 2 buckets créés ou mis à jour
-CREATE POLICY                  -- 8 politiques créées
+SELECT table_name, table_schema
+FROM information_schema.tables
+WHERE table_name IN ('annual_budgets', 'monthly_budgets', 'quarterly_forecasts')
+  AND table_schema = 'public'
+ORDER BY table_name;
 ```
 
-### Vérification
+Resultat Attendu: 3 lignes
+- annual_budgets
+- monthly_budgets
+- quarterly_forecasts
+
+Etape 2: Verifier RLS Active
+
 ```sql
--- Vérifier les buckets
-SELECT * FROM storage.buckets 
-WHERE id IN ('ASSAY-CERTIFICATES', 'shipping-documents');
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE tablename IN ('annual_budgets', 'monthly_budgets', 'quarterly_forecasts')
+ORDER BY tablename;
+```
 
--- Résultat attendu:
--- ASSAY-CERTIFICATES    | t (public)
--- shipping-documents    | t (public)
+Resultat Attendu: rowsecurity = t (true) pour les 3 tables
 
--- Vérifier les politiques
-SELECT COUNT(*) FROM pg_policies 
-WHERE tablename = 'objects' 
-AND (policyname LIKE '%assay%' OR policyname LIKE '%shipping%');
+Etape 3: Test Interface Application
 
--- Résultat attendu: 8
+1. Aller sur URL: /production/budget
+2. Selectionner annee: 2025
+3. Selectionner compagnie: Kourousa
+4. Entrer budgets mensuels (ex: Janvier: 35900, Fevrier: 45900)
+5. Cliquer bouton "Enregistrer"
+
+Resultat Attendu:
+- Message: "Budget annuel enregistre avec succes"
+- Pas d'erreur 409 dans console
+- Pas d'erreur 404 dans console
+- Budgets affiches correctement
+
+---
+
+## IMPACT
+
+Avant Migration:
+
+| Aspect | Etat |
+|--------|------|
+| Tables budget | Inexistantes |
+| Module Budget | Non fonctionnel |
+| Erreur 404 | Oui |
+| Erreur 409 | Oui |
+| Enregistrement | Impossible |
+
+Apres Migration:
+
+| Aspect | Etat |
+|--------|------|
+| Tables budget | Creees (3 tables) |
+| Module Budget | Fonctionnel |
+| Erreur 404 | Resolue |
+| Erreur 409 | Resolue |
+| Enregistrement | Operationnel |
+
+---
+
+## PRECAUTIONS
+
+Avant Execution:
+
+1. Backup Base de Donnees
+   ```bash
+   pg_dump $SUPABASE_DB_URL > backup_budget_$(date +%Y%m%d_%H%M%S).sql
+   ```
+
+2. Verifier Connexion
+   ```bash
+   psql $SUPABASE_DB_URL -c "SELECT current_database(), current_user;"
+   ```
+
+Rollback si Necessaire:
+
+```sql
+DROP TABLE IF EXISTS quarterly_forecasts CASCADE;
+DROP TABLE IF EXISTS monthly_budgets CASCADE;
+DROP TABLE IF EXISTS annual_budgets CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 ```
 
 ---
 
-## 2️⃣ MIGRATION BUDGET (OPTIONNELLE)
+## CHECKLIST FINALE
 
-### Fichier
+Cocher apres chaque etape:
+
+- [ ] Backup base de donnees effectue
+- [ ] Migration 20251115_004_create_budget_system_tables.sql executee
+- [ ] Tables verifiees (3 tables creees)
+- [ ] RLS verifie (active sur 3 tables)
+- [ ] Test insertion reussi
+- [ ] Interface Budget testee
+- [ ] Console sans erreur 404
+- [ ] Console sans erreur 409
+
+---
+
+## VALIDATION BUILD
+
+```bash
+npm run build
+✓ built in 27.06s
 ```
-supabase/migrations/20251113_010_add_mining_company_to_budgets.sql
-```
 
-### Quand l'exécuter
-✅ Si vous utilisez le module **Budget/Forecast**
-❌ Sinon, vous pouvez ignorer
-
-### Ce qu'elle fait
-1. Ajoute `mining_company_id` aux tables de budget
-2. Crée des index pour performance
-3. Met à jour les politiques RLS
-4. Permet la gestion par compagnie minière
-
-### Référence
-Voir documentation complète dans:
-- `BUDGET_MODULE_IMPROVEMENTS.md`
-- `BUDGET_COLORS_UPDATED.md`
-- `BUDGET_QUICK_START.md`
+Status: Build reussi sans erreur
 
 ---
 
-## ✅ CHECKLIST POST-MIGRATION
-
-### Après Migration Storage (011)
-
-- [ ] Vérifier que les 2 buckets sont créés
-- [ ] Vérifier que les 8 politiques RLS sont actives
-- [ ] Tester upload d'un document dans Shipping
-- [ ] Tester upload d'un assay certificate
-- [ ] Vérifier qu'il n'y a plus d'erreur "we hit a snag"
-
-### Tests Fonctionnels
-
-- [ ] Aller sur une page d'expédition
-- [ ] Cliquer sur l'onglet "Documents"
-- [ ] Cliquer "Ajouter un Document"
-- [ ] Uploader un fichier PDF
-- [ ] Vérifier que le document apparaît dans la liste
-- [ ] Cliquer sur les boutons Voir/Télécharger
-- [ ] Supprimer le document de test
-
-- [ ] Cliquer sur "Upload Certificate"
-- [ ] Uploader un PDF d'assay certificate
-- [ ] Vérifier que l'upload réussit
-- [ ] Pas d'erreur "we hit a snag"
-- [ ] Certificate apparaît dans la liste
-
-### Changement de Statut
-
-- [ ] Section "Statut" affiche le statut actuel avec icône
-- [ ] Boutons "Actions Disponibles" visibles
-- [ ] Cliquer sur un bouton d'action
-- [ ] Modal de confirmation s'ouvre
-- [ ] Ajouter des notes (optionnel)
-- [ ] Confirmer le changement
-- [ ] Statut mis à jour
-- [ ] Notes enregistrées dans l'historique
-
----
-
-## 🚨 EN CAS DE PROBLÈME
-
-### Erreur "Bucket already exists"
-✅ **Normal** - La migration utilise `ON CONFLICT DO NOTHING`
-✅ Continue l'exécution, les politiques seront créées
-
-### Erreur "Policy already exists"
-✅ **Normal** - La migration utilise `DROP POLICY IF EXISTS` puis `CREATE POLICY`
-✅ Les anciennes politiques sont remplacées
-
-### Erreur "Permission denied"
-❌ Vérifier que vous êtes connecté avec un compte admin
-❌ Vérifier les permissions de votre utilisateur Supabase
-
-### Upload échoue après migration
-1. Vérifier les buckets: `SELECT * FROM storage.buckets`
-2. Vérifier les politiques: `SELECT * FROM pg_policies WHERE tablename = 'objects'`
-3. Vider le cache du navigateur (Ctrl+Shift+R)
-4. Réessayer l'upload
-
----
-
-## 📞 SUPPORT
-
-### Documentation Complète
-- `SHIPPING_DETAILS_IMPROVEMENTS.md` - Détails techniques
-- `SHIPPING_IMPROVEMENTS_SUMMARY.md` - Résumé des features
-- `BUDGET_MODULE_IMPROVEMENTS.md` - Module budget (si utilisé)
-
-### Logs
-En cas de problème, vérifier les logs:
-- Console navigateur (F12)
-- Supabase Dashboard → Logs
-- Messages d'erreur complets
-
----
-
-## 📊 RÉSUMÉ
-
-| Migration | Fichier | Obligatoire | Dépendances |
-|-----------|---------|-------------|-------------|
-| Storage | `20251113_011_fix_assay_certificates_storage.sql` | ✅ OUI | Aucune |
-| Budget | `20251113_010_add_mining_company_to_budgets.sql` | ⚠️ Si module budget | Aucune |
-
-**Total migrations obligatoires:** 1
-**Temps d'exécution estimé:** < 1 minute
-**Risque:** Faible (migrations idempotentes)
-
----
-
-**✅ Une fois les migrations exécutées, l'application est prête pour production!**
+Prepare Par: Senior Full Stack Developer
+Date: 2025-01-15
+Status: PRET POUR EXECUTION

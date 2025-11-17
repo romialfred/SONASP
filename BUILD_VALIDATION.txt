@@ -1,0 +1,33 @@
+
+> vite-react-typescript-starter@0.0.0 build
+> vite build
+
+vite v5.4.8 building for production...
+transforming...
+✓ 3278 modules transformed.
+node_modules/pdfjs-dist/build/pdf.js (1982:23): Use of eval in "node_modules/pdfjs-dist/build/pdf.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /tmp/cc-agent/59164212/project/node_modules/react-dom/client.js is dynamically imported by /tmp/cc-agent/59164212/project/src/pages/shipping/ShippingPreparationNew.tsx but also statically imported by /tmp/cc-agent/59164212/project/src/main.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/registerSW.js                     0.13 kB
+dist/manifest.webmanifest              0.40 kB
+dist/index.html                        0.96 kB │ gzip:     0.50 kB
+dist/assets/index-BKlndXPt.css       117.01 kB │ gzip:    15.65 kB
+dist/assets/purify.es-B6FQ9oRL.js     22.57 kB │ gzip:     8.74 kB
+dist/assets/index.es-dJaMu16b.js     150.45 kB │ gzip:    51.41 kB
+dist/assets/index-BWJyzrKO.js      4,097.50 kB │ gzip: 1,007.34 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 30.84s
+
+PWA v1.1.0
+mode      generateSW
+precache  21 entries (4296.91 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-b833909e.js

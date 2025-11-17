@@ -145,15 +145,14 @@ class AnnualBudgetService {
 
     const records = budgets.map(b => {
       const daysInMonth = this.getDaysInMonth(b.month, year);
-      const dailyBudgetOz = daysInMonth > 0 ? b.budget_oz / daysInMonth : 0;
 
       return {
         annual_budget_id: annualBudgetId,
         month: b.month,
         budget_oz: b.budget_oz,
         days_in_month: daysInMonth,
-        daily_budget_oz: dailyBudgetOz,
         mining_company_id: miningCompanyId || null
+        // NOTE: daily_budget_oz is GENERATED column - do NOT insert it
       };
     });
 
@@ -199,7 +198,6 @@ class AnnualBudgetService {
 
     const records = forecasts.map(f => {
       const daysInMonth = this.getDaysInMonth(f.month, year);
-      const dailyForecastOz = daysInMonth > 0 ? f.forecast_oz / daysInMonth : 0;
 
       return {
         annual_budget_id: annualBudgetId,
@@ -208,10 +206,10 @@ class AnnualBudgetService {
         month: f.month,
         forecast_oz: f.forecast_oz,
         days_in_month: daysInMonth,
-        daily_forecast_oz: dailyForecastOz,
         notes: f.notes || null,
         mining_company_id: miningCompanyId || null,
         created_by: user.id
+        // NOTE: daily_forecast_oz is GENERATED column - do NOT insert it
       };
     });
 

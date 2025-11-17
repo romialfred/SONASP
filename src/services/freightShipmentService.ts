@@ -38,7 +38,6 @@ export interface FreightShipment {
   updated_at: string;
   deleted_at?: string | null;
 
-  // Relations
   destination_refinery?: any;
   productions?: FreightShipmentProduction[];
   signatories?: FreightShipmentSignatory[];
@@ -71,49 +70,40 @@ export interface FreightShipmentSignatory {
   created_at: string;
 }
 
-/**
- * Production individuelle disponible pour expédition
- * Statut: ready_for_customs (Prêt pour Expédition vers Raffinerie)
- */
-export interface AvailableProduction {
+export interface AvailableShippingPreparation {
   id: string;
-  production_date: string;
-  bar_reference: string;
+  expedition_lot_number: string;
   status: string;
-  bullion_grams: number;
-  estimated_fineness_pct: number;
-  estimated_silver_pct: number;
-  pure_gold_grams: number;
-  estimated_oz: number;
-  silver_content_grams: number;
-  mining_company_id?: string | null;
-  mining_companies?: {
+  shipped_at: string | null;
+  total_net_weight_grams: number;
+  total_gross_weight_grams: number;
+  shipped_to_company: string | null;
+  shipped_to_country: string | null;
+  items: Array<{
     id: string;
-    name: string;
-    country?: string;
-  };
+    daily_production_id: string;
+    ingot_box_number: string;
+    daily_production: {
+      production_date: string;
+      bar_reference: string;
+      bullion_grams: number;
+      estimated_fineness_pct: number;
+      pure_gold_grams: number;
+      estimated_oz: number;
+      silver_content_grams: number | null;
+      mining_company_id: string | null;
+    };
+  }>;
 }
 
 export const freightShipmentService = {
-  /**
-   * Récupère toutes les expéditions freight
-   */
   async listShipments(): Promise<FreightShipment[]> {
     const { data, error } = await supabase
       .from('freight_shipments')
       .select(`
         *,
         destination_refinery:refineries(id, name, location, country),
-        productions:freight_shipment_productions(
-          *,
-          daily_production:daily_production(
-            id,
-            production_date,
-            bar_reference,
-            mining_company_id,
-            mining_companies(id, name)
-          )
-        ),
+        productions:freight_shipment_productions(*),
         signatories:freight_shipment_signatories(*)
       `)
       .is('deleted_at', null)
@@ -123,22 +113,13 @@ export const freightShipmentService = {
     return data || [];
   },
 
-  /**
-   * Récupère une expédition par ID
-   */
   async getShipmentById(id: string): Promise<FreightShipment | null> {
     const { data, error } = await supabase
       .from('freight_shipments')
       .select(`
         *,
         destination_refinery:refineries(*),
-        productions:freight_shipment_productions(
-          *,
-          daily_production:daily_production(
-            *,
-            mining_companies(id, name, country)
-          )
-        ),
+        productions:freight_shipment_productions(*),
         signatories:freight_shipment_signatories(*)
       `)
       .eq('id', id)
@@ -149,47 +130,43 @@ export const freightShipmentService = {
     return data;
   },
 
-  /**
-   * Récupère les productions individuelles disponibles pour expédition
-   * Statut: ready_for_customs (Prêt pour Douane = Prêt pour Expédition)
-   */
-  async getAvailableProductions(): Promise<AvailableProduction[]> {
+  async getAvailableShippingPreparations(): Promise<AvailableShippingPreparation[]> {
     const { data, error } = await supabase
-      .from('daily_production')
+      .from('shipping_preparations')
       .select(`
         id,
-        production_date,
-        bar_reference,
+        expedition_lot_number,
         status,
-        bullion_grams,
-        estimated_fineness_pct,
-        estimated_silver_pct,
-        pure_gold_grams,
-        estimated_oz,
-        silver_content_grams,
-        mining_company_id,
-        mining_companies:mining_company_id(id, name, country)
+        shipped_at,
+        total_net_weight_grams,
+        total_gross_weight_grams,
+        shipped_to_company,
+        shipped_to_country,
+        items:shipping_production_items(
+          id,
+          daily_production_id,
+          ingot_box_number,
+          daily_production:daily_production_id(
+            production_date,
+            bar_reference,
+            bullion_grams,
+            estimated_fineness_pct,
+            pure_gold_grams,
+            estimated_oz,
+            silver_content_grams,
+            mining_company_id
+          )
+        )
       `)
-      .eq('status', 'ready_for_customs')
-      .order('production_date', { ascending: false });
+      .eq('status', 'ready_for_expedition')
+      .order('shipped_at', { ascending: false });
 
     if (error) throw error;
-
-    // Filtrer les productions déjà assignées à une expédition freight
-    const { data: assignedProductions } = await supabase
-      .from('freight_shipment_productions')
-      .select('production_id');
-
-    const assignedIds = new Set(assignedProductions?.map(p => p.production_id) || []);
-
-    return (data || []).filter(prod => !assignedIds.has(prod.id));
+    return (data || []) as AvailableShippingPreparation[];
   },
 
-  /**
-   * Crée une nouvelle expédition freight avec plusieurs productions
-   */
   async createShipment(data: {
-    production_ids: string[];
+    shipping_preparation_ids: string[];
     shipment_date?: string;
     destination_refinery_id?: string;
     number_of_boxes: number;
@@ -202,35 +179,57 @@ export const freightShipmentService = {
   }): Promise<FreightShipment> {
     const { data: userData } = await supabase.auth.getUser();
 
-    // Générer le numéro de référence
     const { data: refData, error: refError } = await supabase.rpc(
       'generate_freight_shipment_reference'
     );
 
     if (refError) throw refError;
 
-    // Récupérer les informations des productions sélectionnées
-    const { data: productions, error: prodError } = await supabase
-      .from('daily_production')
+    const { data: shippingPreps, error: prepError } = await supabase
+      .from('shipping_preparations')
       .select(`
         id,
-        production_date,
-        bar_reference,
-        bullion_grams,
-        estimated_fineness_pct,
-        estimated_silver_pct,
-        pure_gold_grams,
-        estimated_oz,
-        silver_content_grams
+        expedition_lot_number,
+        total_net_weight_grams,
+        total_gross_weight_grams,
+        items:shipping_production_items(
+          id,
+          daily_production_id,
+          daily_production:daily_production_id(
+            id,
+            production_date,
+            bar_reference,
+            bullion_grams,
+            estimated_fineness_pct,
+            estimated_silver_pct,
+            pure_gold_grams,
+            estimated_oz,
+            silver_content_grams
+          )
+        )
       `)
-      .in('id', data.production_ids);
+      .in('id', data.shipping_preparation_ids);
 
-    if (prodError) throw prodError;
-    if (!productions || productions.length === 0) {
-      throw new Error('Aucune production trouvée avec les IDs fournis');
+    if (prepError) throw prepError;
+    if (!shippingPreps || shippingPreps.length === 0) {
+      throw new Error('Aucune shipping preparation trouvée');
     }
 
-    // Créer l'expédition freight
+    const allProductions: any[] = [];
+    shippingPreps.forEach((prep: any) => {
+      if (prep.items) {
+        prep.items.forEach((item: any) => {
+          if (item.daily_production) {
+            allProductions.push(item.daily_production);
+          }
+        });
+      }
+    });
+
+    if (allProductions.length === 0) {
+      throw new Error('Aucune production trouvée dans les shipping preparations');
+    }
+
     const { data: shipment, error: shipmentError } = await supabase
       .from('freight_shipments')
       .insert({
@@ -251,8 +250,7 @@ export const freightShipmentService = {
 
     if (shipmentError) throw shipmentError;
 
-    // Ajouter les productions
-    const productionsToInsert = productions.map((prod: any) => ({
+    const productionsToInsert = allProductions.map((prod: any) => ({
       freight_shipment_id: shipment.id,
       production_id: prod.id,
       production_date: prod.production_date,
@@ -272,7 +270,6 @@ export const freightShipmentService = {
 
     if (prodInsertError) throw prodInsertError;
 
-    // Ajouter les signataires
     if (data.signatories && data.signatories.length > 0) {
       const signatoriesToInsert = data.signatories.map((sig) => ({
         freight_shipment_id: shipment.id,
@@ -288,13 +285,9 @@ export const freightShipmentService = {
       if (sigError) throw sigError;
     }
 
-    // Retourner l'expédition complète
     return this.getShipmentById(shipment.id) as Promise<FreightShipment>;
   },
 
-  /**
-   * Met à jour une expédition
-   */
   async updateShipment(
     id: string,
     updates: Partial<FreightShipment>
@@ -310,9 +303,6 @@ export const freightShipmentService = {
     return data;
   },
 
-  /**
-   * Change le statut d'une expédition
-   */
   async updateStatus(
     id: string,
     status: FreightShipmentStatus
@@ -320,7 +310,6 @@ export const freightShipmentService = {
     const { data: userData } = await supabase.auth.getUser();
     const updates: any = { status };
 
-    // Ajouter les timestamps selon le statut
     if (status === 'approved') {
       updates.approved_at = new Date().toISOString();
       updates.approved_by = userData?.user?.id;
@@ -335,9 +324,6 @@ export const freightShipmentService = {
     return this.updateShipment(id, updates);
   },
 
-  /**
-   * Ajoute un signataire
-   */
   async addSignatory(
     shipmentId: string,
     signatory: { position: string; full_name: string; display_order: number }
@@ -355,9 +341,6 @@ export const freightShipmentService = {
     return data;
   },
 
-  /**
-   * Supprime un signataire
-   */
   async removeSignatory(signatoryId: string): Promise<void> {
     const { error } = await supabase
       .from('freight_shipment_signatories')
@@ -367,9 +350,6 @@ export const freightShipmentService = {
     if (error) throw error;
   },
 
-  /**
-   * Met à jour l'ordre des signataires
-   */
   async updateSignatoryOrder(signatoryId: string, displayOrder: number): Promise<void> {
     const { error } = await supabase
       .from('freight_shipment_signatories')
@@ -379,11 +359,8 @@ export const freightShipmentService = {
     if (error) throw error;
   },
 
-  /**
-   * Supprime une expédition (soft delete)
-   */
   async deleteShipment(id: string): Promise<void> {
-    const { error } = await supabase
+    const { error} = await supabase
       .from('freight_shipments')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);

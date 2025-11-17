@@ -20,7 +20,7 @@ interface Signatory {
 
 export default function FreightShipmentCreate() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
+  const { showError, showSuccess, showInfo } = useNotification();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -70,14 +70,14 @@ export default function FreightShipmentCreate() {
       setRefineries(refineriesData || []);
 
       if (productions.length === 0) {
-        showNotification(
-          'info',
-          'Aucune production disponible. Les productions doivent avoir le statut "Prêt pour la Douane".'
+        showInfo(
+          'Aucune production disponible',
+          'Les productions doivent avoir le statut "Prêt pour la Douane".'
         );
       }
     } catch (error: any) {
       console.error('Erreur lors du chargement des données:', error);
-      showNotification('error', 'Erreur lors du chargement: ' + error.message);
+      showError('Erreur de chargement', error.message || 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
@@ -120,28 +120,28 @@ export default function FreightShipmentCreate() {
 
   const validateForm = (): boolean => {
     if (selectedProductionIds.size === 0) {
-      showNotification('error', 'Veuillez sélectionner au moins une production');
+      showError('Erreur de validation', 'Veuillez sélectionner au moins une production');
       return false;
     }
 
     if (numberOfBoxes < 1) {
-      showNotification('error', 'Le nombre de boîtes doit être au moins 1');
+      showError('Erreur de validation', 'Le nombre de boîtes doit être au moins 1');
       return false;
     }
 
     if (!goldPriceUsdPerOz || parseFloat(goldPriceUsdPerOz) <= 0) {
-      showNotification('error', 'Veuillez entrer un prix de l\'or valide');
+      showError('Erreur de validation', 'Veuillez entrer un prix de l\'or valide');
       return false;
     }
 
     if (!exchangeRate || parseFloat(exchangeRate) <= 0) {
-      showNotification('error', 'Veuillez entrer un taux de change valide');
+      showError('Erreur de validation', 'Veuillez entrer un taux de change valide');
       return false;
     }
 
     const validSignatories = signatories.filter((sig) => sig.position && sig.full_name);
     if (validSignatories.length === 0) {
-      showNotification('error', 'Veuillez ajouter au moins un signataire avec position et nom');
+      showError('Erreur de validation', 'Veuillez ajouter au moins un signataire avec position et nom');
       return false;
     }
 
@@ -177,11 +177,11 @@ export default function FreightShipmentCreate() {
         signatories: validSignatories,
       });
 
-      showNotification('success', `Expédition Freight ${shipment.reference_number} créée avec succès`);
+      showSuccess('Expédition créée', `Expédition Freight ${shipment.reference_number} créée avec succès`);
       navigate(`/freight/shipments/${shipment.id}`);
     } catch (error: any) {
       console.error('Erreur lors de la création:', error);
-      showNotification('error', 'Erreur lors de la création: ' + error.message);
+      showError('Erreur de création', error.message || 'Erreur inconnue');
     } finally {
       setSubmitting(false);
     }

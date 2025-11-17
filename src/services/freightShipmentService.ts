@@ -171,7 +171,6 @@ export const freightShipmentService = {
         mining_companies:mining_company_id(id, name, country)
       `)
       .eq('status', 'ready_for_customs')
-      .is('deleted_at', null)
       .order('production_date', { ascending: false });
 
     if (error) throw error;

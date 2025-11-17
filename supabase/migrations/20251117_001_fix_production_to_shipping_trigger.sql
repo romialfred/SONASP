@@ -51,7 +51,7 @@ BEGIN
     ) VALUES (
       NEW.id,
       v_expedition_lot,
-      'pending', -- Status initial dans shipping
+      'waiting_for_customs_approval', -- Status initial dans shipping (CORRECT)
       NEW.bullion_grams, -- Poids net
       NEW.bullion_grams * 1.02, -- Poids brut estimé (+2%)
       'Créé automatiquement depuis Production (ready_for_customs)',
@@ -73,7 +73,7 @@ BEGIN
       'shipping',
       v_shipping_id,
       NULL,
-      'pending',
+      'waiting_for_customs_approval',
       'system',
       auth.uid(),
       'Shipping créé automatiquement',

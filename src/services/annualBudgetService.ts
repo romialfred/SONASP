@@ -70,9 +70,11 @@ class AnnualBudgetService {
       .eq('year', year)
       .eq('site_id', siteId);
 
+    // Always filter on mining_company_id to respect unique constraint
     if (miningCompanyId) {
       query = query.eq('mining_company_id', miningCompanyId);
-    } else if (miningCompanyId === null) {
+    } else {
+      // If null or undefined, filter for NULL values
       query = query.is('mining_company_id', null);
     }
 
@@ -90,12 +92,15 @@ class AnnualBudgetService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Normalize: undefined or null becomes explicit null for DB
+    const normalizedCompanyId = miningCompanyId || null;
+
     const { data, error } = await supabase
       .from('annual_budgets')
       .insert({
         year,
         site_id: siteId,
-        mining_company_id: miningCompanyId || null,
+        mining_company_id: normalizedCompanyId,
         created_by: user.id
       })
       .select()

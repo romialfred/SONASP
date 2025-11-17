@@ -12,15 +12,9 @@ interface ShippingStatusWorkflowEnhancedProps {
 }
 
 const WORKFLOW_STEPS = [
-  { key: 'prepared', label: 'Préparé', phase: 'Production' },
-  { key: 'customs_approved', label: 'Douane Approuvée', phase: 'Shipping Preparation' },
+  { key: 'waiting_for_customs_approval', label: 'En Attente Douane', phase: 'Shipping Preparation' },
+  { key: 'approved_by_customs', label: 'Douane Approuvée', phase: 'Shipping Preparation' },
   { key: 'ready_for_expedition', label: 'Prêt pour Expédition', phase: 'Shipping Preparation' },
-  { key: 'shipped_to_refinery', label: 'Expédié à la Raffinerie', phase: 'Freight & Customs' },
-  { key: 'received_at_refinery', label: 'Reçu à la Raffinerie', phase: 'Freight & Customs' },
-  { key: 'refined', label: 'Raffiné', phase: 'Refinery' },
-  { key: 'in_inventory', label: 'En Inventaire', phase: 'Inventory' },
-  { key: 'sold', label: 'Vendu', phase: 'Sale' },
-  { key: 'paid', label: 'Payé', phase: 'Sale' },
 ];
 
 export function ShippingStatusWorkflowEnhanced({
@@ -79,7 +73,7 @@ export function ShippingStatusWorkflowEnhanced({
           />
 
           {/* All steps in single row */}
-          <div className="relative grid grid-cols-9 gap-3">
+          <div className="relative grid grid-cols-3 gap-3">
             {WORKFLOW_STEPS.map((step, index) => {
               const isPast = index < currentIndex;
               const isCurrent = step.key === currentStatus;

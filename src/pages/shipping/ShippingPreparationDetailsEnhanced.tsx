@@ -280,6 +280,62 @@ export function ShippingPreparationDetailsEnhanced() {
     }).format(grams);
   };
 
+  const handleStatusChange = async (newStatus: ShippingStatus) => {
+    if (!preparation || !id) return;
+
+    const confirmMessages = {
+      'approved_by_customs': 'Confirmer l\'approbation douanière ?',
+      'ready_for_expedition': 'Confirmer le statut prêt pour expédition ?'
+    };
+
+    const confirmMessage = confirmMessages[newStatus as keyof typeof confirmMessages];
+    if (!confirmMessage || !window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { error: updateError } = await supabase
+        .from('shipping_preparations')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Log dans l'historique
+      await supabase
+        .from('unified_status_history')
+        .insert({
+          entity_type: 'shipping',
+          entity_id: id,
+          old_status: preparation.status,
+          new_status: newStatus,
+          change_context: 'shipping_management',
+          changed_by: user?.id,
+          action_description: `Status changé: ${preparation.status} → ${newStatus}`,
+        });
+
+      // Recharger les données
+      await loadShippingDetails(true);
+
+      setError({
+        title: 'Succès',
+        message: `Status changé avec succès vers "${newStatus}"`
+      });
+    } catch (err: any) {
+      console.error('Error changing status:', err);
+      setError({
+        title: 'Erreur',
+        message: err.message || 'Erreur lors du changement de status'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -650,6 +706,56 @@ export function ShippingPreparationDetailsEnhanced() {
             return null;
           }}
         </Tabs>
+
+        {/* Action Buttons */}
+        {preparation && (
+          <Card className="p-6 bg-gradient-to-r from-slate-50 to-gray-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Actions disponibles</h3>
+                <p className="text-xs text-gray-600">
+                  {preparation.status === 'waiting_for_customs_approval' && 'Approuver cette expédition pour la douane'}
+                  {preparation.status === 'approved_by_customs' && 'Marquer comme prêt pour expédition'}
+                  {preparation.status === 'ready_for_expedition' && 'Cette expédition est prête. Gérer l\'expédition dans le module Freight & Customs.'}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                {preparation.status === 'waiting_for_customs_approval' && (
+                  <Button
+                    onClick={() => handleStatusChange('approved_by_customs')}
+                    variant="primary"
+                    size="md"
+                    className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Approuver Douane
+                  </Button>
+                )}
+                {preparation.status === 'approved_by_customs' && (
+                  <Button
+                    onClick={() => handleStatusChange('ready_for_expedition')}
+                    variant="primary"
+                    size="md"
+                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+                  >
+                    <Ship className="w-4 h-4 mr-2" />
+                    Prêt pour Expédition
+                  </Button>
+                )}
+                {preparation.status === 'ready_for_expedition' && (
+                  <Button
+                    onClick={() => navigate('/freight')}
+                    variant="outline"
+                    size="md"
+                  >
+                    <Ship className="w-4 h-4 mr-2" />
+                    Gérer dans Freight & Customs
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </MainLayout>
   );

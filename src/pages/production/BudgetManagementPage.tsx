@@ -44,13 +44,15 @@ interface ProductionBrowserTabProps {
   quarterlyForecasts: QuarterlyForecast[];
   pendingBudgets: Record<number, number>;
   pendingForecasts: Record<string, number>;
+  monthlyActuals: Record<number, number>;
 }
 
 function ProductionBrowserTab({
   monthlyBudgets,
   quarterlyForecasts,
   pendingBudgets,
-  pendingForecasts
+  pendingForecasts,
+  monthlyActuals
 }: ProductionBrowserTabProps) {
   const months = [
     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -70,10 +72,12 @@ function ProductionBrowserTab({
         ? pendingForecasts[`${quarter}-${monthNum}`]
         : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
 
+      const actual = monthlyActuals[monthNum] || 0;
+
       return {
         Mois: month,
         Budget: Number(budget).toFixed(2),
-        Actual: '0.00', // TODO: Connect to actual production data
+        Actual: Number(actual).toFixed(2),
         Forecast: Number(forecast).toFixed(2)
       };
     });
@@ -108,10 +112,12 @@ function ProductionBrowserTab({
         ? pendingForecasts[`${quarter}-${monthNum}`]
         : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
 
+      const actual = monthlyActuals[monthNum] || 0;
+
       return {
         name: month.substring(0, 3),
         Budget: Number(budget),
-        Actual: 0, // TODO: Connect to actual production data
+        Actual: Number(actual),
         Forecast: Number(forecast)
       };
     });
@@ -162,6 +168,7 @@ function ProductionBrowserTab({
                 ? pendingForecasts[`${quarter}-${monthNum}`]
                 : quarterlyForecasts.find(qf => qf.month === monthNum)?.forecast_oz || 0;
 
+              const actual = monthlyActuals[monthNum] || 0;
               const isQuarterStart = monthNum % 3 === 1;
 
               return (
@@ -180,7 +187,7 @@ function ProductionBrowserTab({
                     {Number(budget).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-emerald-50/50">
-                    0.00
+                    {Number(actual).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-amber-50/50">
                     {Number(forecast).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -197,7 +204,7 @@ function ProductionBrowserTab({
                 {monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                0.00
+                {Object.values(monthlyActuals).reduce((sum, val) => sum + Number(val || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
                 {quarterlyForecasts.reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -274,6 +281,7 @@ export function BudgetManagementPage() {
 
   const [pendingBudgets, setPendingBudgets] = useState<Record<number, number>>({});
   const [pendingForecasts, setPendingForecasts] = useState<Record<string, number>>({});
+  const [monthlyActuals, setMonthlyActuals] = useState<Record<number, number>>({});
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -335,6 +343,14 @@ export function BudgetManagementPage() {
       setAnnualBudget(data.budget);
       setMonthlyBudgets(data.monthlyBudgets);
       setQuarterlyForecasts(data.quarterlyForecasts);
+
+      // Load actual production data
+      const actuals = await annualBudgetService.getMonthlyActualProduction(
+        selectedYear,
+        selectedCompanyId,
+        'guinea'
+      );
+      setMonthlyActuals(actuals);
 
       setPendingBudgets({});
       setPendingForecasts({});
@@ -890,6 +906,7 @@ export function BudgetManagementPage() {
                   quarterlyForecasts={quarterlyForecasts}
                   pendingBudgets={pendingBudgets}
                   pendingForecasts={pendingForecasts}
+                  monthlyActuals={monthlyActuals}
                 />
               )}
             </div>

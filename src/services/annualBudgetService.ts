@@ -284,6 +284,54 @@ class AnnualBudgetService {
     return new Date(year, month, 0).getDate();
   }
 
+  async getMonthlyActualProduction(
+    year: number,
+    miningCompanyId: string | null,
+    siteId: string = 'guinea'
+  ): Promise<Record<number, number>> {
+    try {
+      let query = supabase
+        .from('daily_production')
+        .select('production_date, total_weight_oz, mining_company_id')
+        .gte('production_date', `${year}-01-01`)
+        .lte('production_date', `${year}-12-31`)
+        .eq('site_id', siteId);
+
+      if (miningCompanyId && miningCompanyId !== 'ALL') {
+        query = query.eq('mining_company_id', miningCompanyId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching actual production:', error);
+        return {};
+      }
+
+      if (!data || data.length === 0) {
+        return {};
+      }
+
+      const monthlyTotals: Record<number, number> = {};
+
+      data.forEach(record => {
+        const date = new Date(record.production_date);
+        const month = date.getMonth() + 1;
+        const weight = Number(record.total_weight_oz) || 0;
+
+        if (!monthlyTotals[month]) {
+          monthlyTotals[month] = 0;
+        }
+        monthlyTotals[month] += weight;
+      });
+
+      return monthlyTotals;
+    } catch (error) {
+      console.error('Error in getMonthlyActualProduction:', error);
+      return {};
+    }
+  }
+
   getQuarterFromMonth(month: number): number {
     return Math.ceil(month / 3);
   }

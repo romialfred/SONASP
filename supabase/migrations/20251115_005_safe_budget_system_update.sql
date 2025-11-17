@@ -55,8 +55,20 @@ BEGIN
 END $$;
 
 -- Unique constraint: One budget per year/site/company combination
--- Utilise DROP IF EXISTS pour eviter erreurs
-DROP INDEX IF EXISTS unique_annual_budget;
+-- IMPORTANT: Supprimer CONSTRAINT pas INDEX (si existe comme constraint)
+DO $$
+BEGIN
+  -- Supprimer ancienne contrainte si existe
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'unique_annual_budget' AND conrelid = 'annual_budgets'::regclass
+  ) THEN
+    ALTER TABLE annual_budgets DROP CONSTRAINT unique_annual_budget;
+    RAISE NOTICE 'Contrainte unique_annual_budget supprimee';
+  END IF;
+END $$;
+
+-- Supprimer anciens index si existent (pas contraintes)
 DROP INDEX IF EXISTS unique_annual_budget_with_company;
 DROP INDEX IF EXISTS unique_annual_budget_without_company;
 

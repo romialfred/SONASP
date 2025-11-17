@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
-import { freightShipmentService, type AvailableProduction } from '@/services/freightShipmentService';
+import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
 
@@ -24,11 +24,11 @@ export default function FreightShipmentCreate() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [availableProductions, setAvailableProductions] = useState<AvailableProduction[]>([]);
+  const [availableShippingPreparations, setAvailableShippingPreparations] = useState<AvailableShippingPreparation[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
 
   // Form state
-  const [selectedProductionIds, setSelectedProductionIds] = useState<Set<string>>(new Set());
+  const [selectedShippingPrepIds, setSelectedShippingPrepIds] = useState<Set<string>>(new Set());
   const [shipmentDate, setShipmentDate] = useState(new Date().toISOString().split('T')[0]);
   const [destinationRefineryId, setDestinationRefineryId] = useState('');
   const [numberOfBoxes, setNumberOfBoxes] = useState(1);
@@ -42,11 +42,12 @@ export default function FreightShipmentCreate() {
     { position: 'Finance Manager', full_name: '', display_order: 1 },
   ]);
 
-  // Selected productions summary
-  const selectedProductions = availableProductions.filter(p => selectedProductionIds.has(p.id));
-  const totalBullionGrams = selectedProductions.reduce((sum, p) => sum + p.bullion_grams, 0);
-  const totalPureGoldGrams = selectedProductions.reduce((sum, p) => sum + p.pure_gold_grams, 0);
-  const totalPureGoldOz = selectedProductions.reduce((sum, p) => sum + p.estimated_oz, 0);
+  // Selected shipping preparations summary
+  const selectedShippingPreps = availableShippingPreparations.filter(sp => selectedShippingPrepIds.has(sp.id));
+  const allSelectedProductions = selectedShippingPreps.flatMap(sp => sp.items.map(item => item.daily_production));
+  const totalBullionGrams = allSelectedProductions.reduce((sum, p) => sum + (p?.bullion_grams || 0), 0);
+  const totalPureGoldGrams = allSelectedProductions.reduce((sum, p) => sum + (p?.pure_gold_grams || 0), 0);
+  const totalPureGoldOz = allSelectedProductions.reduce((sum, p) => sum + (p?.estimated_oz || 0), 0);
 
   useEffect(() => {
     loadData();
@@ -56,9 +57,9 @@ export default function FreightShipmentCreate() {
     try {
       setLoading(true);
 
-      // Charger les productions disponibles (status = ready_for_customs)
-      const productions = await freightShipmentService.getAvailableProductions();
-      setAvailableProductions(productions);
+      // Charger les shipping preparations disponibles (status = ready_for_expedition)
+      const shippingPreps = await freightShipmentService.getAvailableShippingPreparations();
+      setAvailableShippingPreparations(shippingPreps);
 
       // Charger les raffineries
       const { data: refineriesData, error: refineriesError } = await supabase
@@ -69,10 +70,10 @@ export default function FreightShipmentCreate() {
       if (refineriesError) throw refineriesError;
       setRefineries(refineriesData || []);
 
-      if (productions.length === 0) {
+      if (shippingPreps.length === 0) {
         showInfo(
-          'Aucune production disponible',
-          'Les productions doivent avoir le statut "Prêt pour la Douane".'
+          'Aucune expédition disponible',
+          'Les expéditions doivent avoir le statut "Prêt pour Expédition" (ready_for_expedition) dans le module Shipping Preparation.'
         );
       }
     } catch (error: any) {
@@ -83,22 +84,22 @@ export default function FreightShipmentCreate() {
     }
   };
 
-  const toggleProductionSelection = (productionId: string) => {
-    const newSet = new Set(selectedProductionIds);
-    if (newSet.has(productionId)) {
-      newSet.delete(productionId);
+  const toggleShippingPrepSelection = (shippingPrepId: string) => {
+    const newSet = new Set(selectedShippingPrepIds);
+    if (newSet.has(shippingPrepId)) {
+      newSet.delete(shippingPrepId);
     } else {
-      newSet.add(productionId);
+      newSet.add(shippingPrepId);
     }
-    setSelectedProductionIds(newSet);
+    setSelectedShippingPrepIds(newSet);
   };
 
-  const selectAllProductions = () => {
-    setSelectedProductionIds(new Set(availableProductions.map(p => p.id)));
+  const selectAllShippingPreps = () => {
+    setSelectedShippingPrepIds(new Set(availableShippingPreparations.map(sp => sp.id)));
   };
 
-  const deselectAllProductions = () => {
-    setSelectedProductionIds(new Set());
+  const deselectAllShippingPreps = () => {
+    setSelectedShippingPrepIds(new Set());
   };
 
   const handleAddSignatory = () => {
@@ -119,8 +120,8 @@ export default function FreightShipmentCreate() {
   };
 
   const validateForm = (): boolean => {
-    if (selectedProductionIds.size === 0) {
-      showError('Erreur de validation', 'Veuillez sélectionner au moins une production');
+    if (selectedShippingPrepIds.size === 0) {
+      showError('Erreur de validation', 'Veuillez sélectionner au moins une expédition');
       return false;
     }
 
@@ -165,7 +166,7 @@ export default function FreightShipmentCreate() {
         }));
 
       const shipment = await freightShipmentService.createShipment({
-        production_ids: Array.from(selectedProductionIds),
+        shipping_preparation_ids: Array.from(selectedShippingPrepIds),
         shipment_date: shipmentDate,
         destination_refinery_id: destinationRefineryId || undefined,
         number_of_boxes: numberOfBoxes,
@@ -213,33 +214,33 @@ export default function FreightShipmentCreate() {
           </div>
         </div>
 
-        {availableProductions.length === 0 ? (
+        {availableShippingPreparations.length === 0 ? (
           <Card className="p-6">
             <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-yellow-900">Aucune production disponible</h3>
+                <h3 className="font-semibold text-yellow-900">Aucune expédition disponible</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Toutes les productions avec le statut "Prêt pour la Douane" (ready_for_customs) ont déjà
-                  été assignées à une expédition ou aucune n'est encore validée.
+                  Les expéditions doivent avoir le statut "Prêt pour Expédition" (ready_for_expedition)
+                  dans le module Shipping Preparation.
                 </p>
               </div>
             </div>
           </Card>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Sélection des Productions */}
+            {/* Sélection des Shipping Preparations */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
                   <Package className="w-5 h-5 inline mr-2" />
-                  Sélection des Productions ({selectedProductionIds.size} / {availableProductions.length})
+                  Sélection des Expéditions ({selectedShippingPrepIds.size} / {availableShippingPreparations.length})
                 </h2>
                 <div className="flex gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={selectAllProductions}>
+                  <Button type="button" variant="secondary" size="sm" onClick={selectAllShippingPreps}>
                     Tout sélectionner
                   </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={deselectAllProductions}>
+                  <Button type="button" variant="secondary" size="sm" onClick={deselectAllShippingPreps}>
                     Tout désélectionner
                   </Button>
                 </div>
@@ -252,64 +253,61 @@ export default function FreightShipmentCreate() {
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">
                         <input
                           type="checkbox"
-                          checked={selectedProductionIds.size === availableProductions.length}
-                          onChange={(e) => e.target.checked ? selectAllProductions() : deselectAllProductions()}
+                          checked={selectedShippingPrepIds.size === availableShippingPreparations.length}
+                          onChange={(e) => e.target.checked ? selectAllShippingPreps() : deselectAllShippingPreps()}
                           className="rounded border-gray-300"
                         />
                       </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Bar Ref.</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Lot d'Expédition</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Date</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Compagnie</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Poids Brut (g)</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Finesse (%)</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (g)</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (oz)</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Destination</th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 border">Nb Prod.</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Poids Net (g)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {availableProductions.map((prod) => (
-                      <tr
-                        key={prod.id}
-                        className={`hover:bg-gray-50 cursor-pointer transition ${
-                          selectedProductionIds.has(prod.id) ? 'bg-blue-50' : ''
-                        }`}
-                        onClick={() => toggleProductionSelection(prod.id)}
-                      >
-                        <td className="px-3 py-2 border">
-                          <input
-                            type="checkbox"
-                            checked={selectedProductionIds.has(prod.id)}
-                            onChange={() => toggleProductionSelection(prod.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-sm font-medium text-gray-900 border">{prod.bar_reference}</td>
-                        <td className="px-3 py-2 text-sm text-gray-600 border">
-                          {new Date(prod.production_date).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-600 border">
-                          {prod.mining_companies?.name || 'N/A'}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-right text-gray-900 border">
-                          {prod.bullion_grams.toFixed(3)}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-right text-gray-600 border">
-                          {prod.estimated_fineness_pct.toFixed(2)}%
-                        </td>
-                        <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 border">
-                          {prod.pure_gold_grams.toFixed(3)}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-right font-semibold text-amber-700 border">
-                          {prod.estimated_oz.toFixed(6)}
-                        </td>
-                      </tr>
-                    ))}
+                    {availableShippingPreparations.map((prep) => {
+                      const productionCount = prep.items?.length || 0;
+                      return (
+                        <tr
+                          key={prep.id}
+                          className={`hover:bg-gray-50 cursor-pointer transition ${
+                            selectedShippingPrepIds.has(prep.id) ? 'bg-blue-50' : ''
+                          }`}
+                          onClick={() => toggleShippingPrepSelection(prep.id)}
+                        >
+                          <td className="px-3 py-2 border">
+                            <input
+                              type="checkbox"
+                              checked={selectedShippingPrepIds.has(prep.id)}
+                              onChange={() => toggleShippingPrepSelection(prep.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-gray-300"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-sm font-medium text-gray-900 border">
+                            {prep.expedition_lot_number || prep.id.substring(0, 8)}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 border">
+                            {prep.shipped_at ? new Date(prep.shipped_at).toLocaleDateString('fr-FR') : 'N/A'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 border">
+                            {prep.shipped_to_company}, {prep.shipped_to_country}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-center text-gray-900 border">
+                            {productionCount}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-right text-gray-900 border">
+                            {prep.total_net_weight_grams?.toFixed(3) || '0.000'}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
-              {selectedProductions.length > 0 && (
+              {selectedShippingPreps.length > 0 && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -318,7 +316,7 @@ export default function FreightShipmentCreate() {
                       <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-green-700">Productions:</span>
-                          <span className="ml-2 font-semibold text-green-900">{selectedProductions.length}</span>
+                          <span className="ml-2 font-semibold text-green-900">{allSelectedProductions.length}</span>
                         </div>
                         <div>
                           <span className="text-green-700">Poids Brut Total:</span>
@@ -503,7 +501,7 @@ export default function FreightShipmentCreate() {
               <Button type="button" variant="secondary" onClick={() => navigate('/freight')}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={submitting || selectedProductionIds.size === 0}>
+              <Button type="submit" disabled={submitting || selectedShippingPrepIds.size === 0}>
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

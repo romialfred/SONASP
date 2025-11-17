@@ -76,9 +76,9 @@ function ProductionBrowserTab({
 
       return {
         Mois: month,
-        Budget: Number(budget).toFixed(2),
-        Actual: Number(actual).toFixed(2),
-        Forecast: Number(forecast).toFixed(2)
+        Budget: Math.round(Number(budget)),
+        Actual: Math.round(Number(actual)),
+        Forecast: Math.round(Number(forecast))
       };
     });
 
@@ -116,9 +116,9 @@ function ProductionBrowserTab({
 
       return {
         name: month.substring(0, 3),
-        Budget: Number(budget),
-        Actual: Number(actual),
-        Forecast: Number(forecast)
+        Budget: Math.round(Number(budget)),
+        Actual: Math.round(Number(actual)),
+        Forecast: Math.round(Number(forecast))
       };
     });
   };
@@ -127,7 +127,7 @@ function ProductionBrowserTab({
     <div className="space-y-6">
       {/* Header with Export Button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-800">Production Browser - Vue Annuelle</h3>
+        <h3 className="text-lg  text-slate-800">Production Browser - Vue Annuelle</h3>
         <Button onClick={exportData} variant="primary" size="sm">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -141,16 +141,16 @@ function ProductionBrowserTab({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border border-slate-500">
+              <th className="px-4 py-3 text-left text-xs  uppercase tracking-wider border border-slate-500">
                 Mois
               </th>
-              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-blue-600">
+              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-blue-600">
                 Budget (oz)
               </th>
-              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-emerald-600">
+              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-emerald-600">
                 Actual (oz)
               </th>
-              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border border-slate-500 bg-amber-600">
+              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-amber-600">
                 Forecast (oz)
               </th>
             </tr>
@@ -180,34 +180,34 @@ function ProductionBrowserTab({
                     hover:bg-blue-50 transition-colors
                   `}
                 >
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-700 border border-slate-200">
+                  <td className="px-4 py-3 text-sm  text-slate-700 border border-slate-200">
                     {month}
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-blue-50/50">
-                    {Number(budget).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-blue-50/50">
+                    {Math.round(Number(budget))}
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-emerald-50/50">
-                    {Number(actual).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-emerald-50/50">
+                    {Math.round(Number(actual))}
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-right border border-slate-200 bg-amber-50/50">
-                    {Number(forecast).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-amber-50/50">
+                    {Math.round(Number(forecast))}
                   </td>
                 </tr>
               );
             })}
             {/* Total Row */}
-            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white font-bold border-t-2 border-slate-800">
+            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white  border-t-2 border-slate-800">
               <td className="px-4 py-3 text-sm uppercase tracking-wide border border-slate-500">
                 Total Annuel
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {monthlyBudgets.reduce((sum, mb) => sum + Math.round(Number(mb.budget_oz || 0)), 0)}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {Object.values(monthlyActuals).reduce((sum, val) => sum + Number(val || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0)}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {quarterlyForecasts.reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {quarterlyForecasts.reduce((sum, qf) => sum + Math.round(Number(qf.forecast_oz || 0)), 0)}
               </td>
             </tr>
           </tbody>
@@ -216,7 +216,7 @@ function ProductionBrowserTab({
 
       {/* Bar Chart */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-sm  text-slate-700 uppercase tracking-wider flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-slate-600" />
           Comparaison Mensuelle: Budget, Actual, Forecast
         </h3>
@@ -236,7 +236,7 @@ function ProductionBrowserTab({
                 label={{ value: 'Onces (oz)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#64748b' } }}
               />
               <Tooltip
-                formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                formatter={(value: number) => [`${value} oz`]}
                 contentStyle={{ fontSize: '12px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />
               <Legend
@@ -535,20 +535,20 @@ export function BudgetManagementPage() {
   const calculateTotalBudget = () => {
     if (mode === 'budget') {
       // Calculer le total annuel (tous les 12 mois)
-      return monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
+      return monthlyBudgets.reduce((sum, mb) => sum + Math.round(Number(mb.budget_oz || 0)), 0);
     } else if (selectedQuarter) {
       // Calculer le total du trimestre sélectionné
       const quarterMonths = annualBudgetService.getQuarterMonths(selectedQuarter);
       return quarterlyForecasts
         .filter(qf => qf.quarter === selectedQuarter && quarterMonths.includes(qf.month))
-        .reduce((sum, qf) => sum + Number(qf.forecast_oz || 0), 0);
+        .reduce((sum, qf) => sum + Math.round(Number(qf.forecast_oz || 0)), 0);
     }
     return 0;
   };
 
   const calculateYearTotal = () => {
     // Toujours calculer le total annuel (12 mois)
-    return monthlyBudgets.reduce((sum, mb) => sum + Number(mb.budget_oz || 0), 0);
+    return monthlyBudgets.reduce((sum, mb) => sum + Math.round(Number(mb.budget_oz || 0)), 0);
   };
 
   const getQuarterMonthsData = () => {
@@ -563,7 +563,7 @@ export function BudgetManagementPage() {
 
       return {
         name: annualBudgetService.getMonthName(month),
-        value: Number(forecast),
+        value: Math.round(Number(forecast)),
         percentage: 0 // Will be calculated
       };
     });
@@ -577,13 +577,13 @@ export function BudgetManagementPage() {
           const budget = pendingBudgets[month] !== undefined
             ? pendingBudgets[month]
             : monthlyBudgets.find(mb => mb.month === month)?.budget_oz || 0;
-          return sum + Number(budget);
+          return sum + Math.round(Number(budget));
         } else {
           const key = `${quarter}-${month}`;
           const forecast = pendingForecasts[key] !== undefined
             ? pendingForecasts[key]
             : quarterlyForecasts.find(qf => qf.quarter === quarter && qf.month === month)?.forecast_oz || 0;
-          return sum + Number(forecast);
+          return sum + Math.round(Number(forecast));
         }
       }, 0);
 
@@ -603,7 +603,7 @@ export function BudgetManagementPage() {
 
       return {
         name: annualBudgetService.getMonthName(month).substring(0, 3),
-        value: Number(budget),
+        value: Math.round(Number(budget)),
         month
       };
     });
@@ -660,7 +660,7 @@ export function BudgetManagementPage() {
             <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-                <p className="text-lg text-slate-700 font-semibold">Chargement du budget...</p>
+                <p className="text-lg text-slate-700 ">Chargement du budget...</p>
                 <p className="text-sm text-slate-500 mt-2">Récupération des données budgétaires</p>
               </div>
             </div>
@@ -678,7 +678,7 @@ export function BudgetManagementPage() {
                 Retour
               </Button>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl  bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   Gestion Budgétaire
                 </h1>
                 <p className="text-sm text-slate-600 mt-0.5">
@@ -699,7 +699,7 @@ export function BudgetManagementPage() {
               <Save className="w-4 h-4" />
               {saving ? 'Enregistrement...' : 'Enregistrer'}
               {hasPendingChanges() && (
-                <span className="bg-white text-slate-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                <span className="bg-white text-slate-800 px-2 py-0.5 rounded-full text-xs ">
                   {Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}
                 </span>
               )}
@@ -742,7 +742,7 @@ export function BudgetManagementPage() {
                   <select
                     value={selectedYear}
                     onChange={e => setSelectedYear(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-semibold text-slate-700 shadow-sm hover:shadow transition-shadow"
+                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow"
                   >
                     {getAvailableYears().map(year => (
                       <option key={year} value={year}>{year}</option>
@@ -758,7 +758,7 @@ export function BudgetManagementPage() {
                   <select
                     value={selectedCompanyId}
                     onChange={e => setSelectedCompanyId(e.target.value)}
-                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-semibold text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
+                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
@@ -771,7 +771,7 @@ export function BudgetManagementPage() {
                   <button
                     onClick={() => handleModeChange('budget')}
                     className={`
-                      flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all duration-200
+                      flex items-center gap-2 px-4 py-2 rounded-md text-xs  transition-all duration-200
                       ${mode === 'budget'
                         ? 'bg-white text-slate-900 shadow-sm'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -785,7 +785,7 @@ export function BudgetManagementPage() {
                     onClick={() => handleModeChange('forecast')}
                     disabled={!annualBudget}
                     className={`
-                      flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all duration-200
+                      flex items-center gap-2 px-4 py-2 rounded-md text-xs  transition-all duration-200
                       ${mode === 'forecast'
                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -801,7 +801,7 @@ export function BudgetManagementPage() {
                 {/* Quarter Selector (Forecast Mode) */}
                 {mode === 'forecast' && (
                   <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-slate-200">
-                    <span className="text-xs font-semibold text-slate-700">Trimestre:</span>
+                    <span className="text-xs  text-slate-700">Trimestre:</span>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4].map(quarter => {
                         const canRevise = annualBudgetService.canReviseQuarter(quarter, currentMonth);
@@ -813,7 +813,7 @@ export function BudgetManagementPage() {
                             onClick={() => handleQuarterSelect(quarter)}
                             disabled={!canRevise && selectedYear === currentYear}
                             className={`
-                              relative px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200
+                              relative px-3 py-1.5 text-xs  rounded-md transition-all duration-200
                               ${selectedQuarter === quarter
                                 ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm'
                                 : status === 'completed'
@@ -849,7 +849,7 @@ export function BudgetManagementPage() {
                 onClick={() => !refreshing && setActiveTab('matrix')}
                 disabled={refreshing}
                 className={`
-                  flex-1 px-6 py-3 text-sm font-semibold transition-all
+                  flex-1 px-6 py-3 text-sm  transition-all
                   ${activeTab === 'matrix'
                     ? 'bg-white text-blue-600 border-b-2 border-blue-600'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -863,7 +863,7 @@ export function BudgetManagementPage() {
                 onClick={() => !refreshing && setActiveTab('browser')}
                 disabled={refreshing}
                 className={`
-                  flex-1 px-6 py-3 text-sm font-semibold transition-all
+                  flex-1 px-6 py-3 text-sm  transition-all
                   ${activeTab === 'browser'
                     ? 'bg-white text-blue-600 border-b-2 border-blue-600'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -931,25 +931,25 @@ export function BudgetManagementPage() {
                 <div className="bg-white/15 rounded-lg p-1.5">
                   <Target className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wide">Performance Annuelle</span>
+                <span className="text-xs  uppercase tracking-wide">Performance Annuelle</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Budget:</span>
-                <span className="text-sm font-bold">{calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz</span>
+                <span className="text-sm ">{calculateYearTotal()} oz</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Actual:</span>
-                <span className="text-sm font-bold text-blue-300">0.00 oz</span>
+                <span className="text-sm  text-blue-300">0.00 oz</span>
               </div>
               <div className="h-px bg-white/20"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Variation:</span>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <span className="text-sm font-bold text-red-400">-100.0%</span>
-                  <span className="text-xs text-slate-400">(-{calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz)</span>
+                  <span className="text-sm  text-red-400">-100.0%</span>
+                  <span className="text-xs text-slate-400">(-{calculateYearTotal()} oz)</span>
                 </div>
               </div>
             </div>
@@ -957,7 +957,7 @@ export function BudgetManagementPage() {
 
           {/* Performance par Trimestre */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <h3 className="text-xs  text-slate-700 flex items-center gap-2 uppercase tracking-wide">
               <TrendingUp className="w-4 h-4 text-slate-600" />
               Performance par Trimestre
             </h3>
@@ -974,7 +974,7 @@ export function BudgetManagementPage() {
                 const budget = pendingBudgets[month] !== undefined
                   ? pendingBudgets[month]
                   : monthlyBudgets.find(mb => mb.month === month)?.budget_oz || 0;
-                return sum + Number(budget);
+                return sum + Math.round(Number(budget));
               }, 0);
 
               const quarterActual = 0; // TODO: Connect to actual data
@@ -989,36 +989,36 @@ export function BudgetManagementPage() {
               }[trafficLight];
 
               const quarterSummary = variancePercent >= 0
-                ? `Excellent trimestre avec performance ${variancePercent.toFixed(1)}% au-dessus du budget. Objectifs largement dépassés.`
+                ? `Excellent trimestre avec performance ${variancePercent}% au-dessus du budget. Objectifs largement dépassés.`
                 : variancePercent >= -10
-                ? `Performance légèrement en dessous du budget (${variancePercent.toFixed(1)}%). Ajustements mineurs nécessaires.`
-                : `Performance critique avec écart de ${variancePercent.toFixed(1)}% du budget. Action corrective urgente requise.`;
+                ? `Performance légèrement en dessous du budget (${variancePercent}%). Ajustements mineurs nécessaires.`
+                : `Performance critique avec écart de ${variancePercent}% du budget. Action corrective urgente requise.`;
 
               return (
                 <div key={quarter} className={`bg-white rounded-lg border-2 ${trafficColor.border} shadow-sm p-3 hover:shadow-md transition-shadow`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${trafficColor.bg} shadow-sm`}></div>
-                      <span className="text-sm font-bold text-slate-800">Trimestre {quarter}</span>
+                      <span className="text-sm  text-slate-800">Trimestre {quarter}</span>
                     </div>
-                    <span className={`text-xs font-bold ${trafficColor.text}`}>
-                      {variancePercent >= 0 ? '+' : ''}{variancePercent.toFixed(1)}%
+                    <span className={`text-xs  ${trafficColor.text}`}>
+                      {variancePercent >= 0 ? '+' : ''}{variancePercent}%
                     </span>
                   </div>
 
                   <div className="space-y-1.5 mb-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Budget:</span>
-                      <span className="font-semibold text-slate-800">{quarterBudget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz</span>
+                      <span className=" text-slate-800">{quarterBudget} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Actual:</span>
-                      <span className="font-semibold text-blue-600">{quarterActual.toFixed(2)} oz</span>
+                      <span className=" text-blue-600">{quarterActual} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Écart:</span>
-                      <span className={`font-bold ${trafficColor.text}`}>
-                        {variance >= 0 ? '+' : ''}{variance.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz
+                      <span className={` ${trafficColor.text}`}>
+                        {variance >= 0 ? '+' : ''}{variance} oz
                       </span>
                     </div>
                   </div>
@@ -1036,7 +1036,7 @@ export function BudgetManagementPage() {
 
           {/* Performance Mensuelle */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <h3 className="text-xs  text-slate-700 flex items-center gap-2 uppercase tracking-wide">
               <BarChart3 className="w-4 h-4 text-slate-600" />
               Performance Mensuelle
             </h3>
@@ -1064,16 +1064,16 @@ export function BudgetManagementPage() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
-                        <span className="text-xs font-semibold text-slate-700">{month}</span>
+                        <span className="text-xs  text-slate-700">{month}</span>
                       </div>
-                      <span className={`text-xs font-bold ${variancePercent >= 0 ? 'text-emerald-600' : variancePercent >= -10 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {variancePercent >= 0 ? '+' : ''}{variancePercent.toFixed(1)}%
+                      <span className={`text-xs  ${variancePercent >= 0 ? 'text-emerald-600' : variancePercent >= -10 ? 'text-amber-600' : 'text-red-600'}`}>
+                        {variancePercent >= 0 ? '+' : ''}{variancePercent}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-slate-500">
-                      <span>{budget.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} oz</span>
+                      <span>{budget} oz</span>
                       <span className={variancePercent >= 0 ? 'text-emerald-600' : 'text-red-600'}>
-                        {variance >= 0 ? '+' : ''}{variance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} oz
+                        {variance >= 0 ? '+' : ''}{variance} oz
                       </span>
                     </div>
                   </div>
@@ -1092,16 +1092,16 @@ export function BudgetManagementPage() {
                 <div className="bg-white/15 rounded-md p-1">
                   <Target className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wide">Total Annuel</span>
+                <span className="text-[10px]  uppercase tracking-wide">Total Annuel</span>
               </div>
               <span className="text-[9px] font-medium text-slate-200 flex items-center gap-1">
                 <Clock className="w-2.5 h-2.5" />
                 12 mois
               </span>
             </div>
-            <div className="text-2xl font-bold">
-              {calculateYearTotal().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-              <span className="text-sm ml-1.5 font-semibold text-slate-200">oz</span>
+            <div className="text-2xl ">
+              {calculateYearTotal()}
+              <span className="text-sm ml-1.5  text-slate-200">oz</span>
             </div>
           </div>
 
@@ -1113,16 +1113,16 @@ export function BudgetManagementPage() {
                   <div className="bg-white/15 rounded-md p-1">
                     <TrendingUp className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide">Total T{selectedQuarter}</span>
+                  <span className="text-[10px]  uppercase tracking-wide">Total T{selectedQuarter}</span>
                 </div>
                 <span className="text-[9px] font-medium text-teal-100 flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
                   3 mois
                 </span>
               </div>
-              <div className="text-2xl font-bold">
-                {calculateTotalBudget().toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                <span className="text-sm ml-1.5 font-semibold text-teal-100">oz</span>
+              <div className="text-2xl ">
+                {calculateTotalBudget()}
+                <span className="text-sm ml-1.5  text-teal-100">oz</span>
               </div>
             </div>
           )}
@@ -1131,7 +1131,7 @@ export function BudgetManagementPage() {
           {/* Donut Chart - Budget by Quarter (Budget Mode Only) */}
           {mode === 'budget' && (
             <div className="space-y-2.5">
-              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+              <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                 <PieChart className="w-4 h-4 text-slate-600" />
                 Budget par Trimestre
               </h3>
@@ -1144,7 +1144,7 @@ export function BudgetManagementPage() {
                         const total = data.reduce((sum, item) => sum + item.value, 0);
                         return data.map(item => ({
                           ...item,
-                          percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                          percentage: total > 0 ? ((item.value / total) * 100) : 0
                         }));
                       })()}
                       cx="50%"
@@ -1162,7 +1162,7 @@ export function BudgetManagementPage() {
                       })}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                      formatter={(value: number) => [`${value} oz`]}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Legend
@@ -1178,7 +1178,7 @@ export function BudgetManagementPage() {
           {/* Monthly Distribution Horizontal Bar Chart (Budget Mode) */}
           {mode === 'budget' && monthlyBudgets.length > 0 && (
             <div className="space-y-2.5">
-              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+              <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-slate-600" />
                 Budget Mensuel
               </h3>
@@ -1193,7 +1193,7 @@ export function BudgetManagementPage() {
                     <XAxis
                       type="number"
                       tick={{ fontSize: 11, fill: '#64748b' }}
-                      tickFormatter={(value) => value > 0 ? `${(value / 1000).toFixed(0)}k` : '0'}
+                      tickFormatter={(value) => value > 0 ? `${(value / 1000)}k` : '0'}
                     />
                     <YAxis
                       type="category"
@@ -1202,7 +1202,7 @@ export function BudgetManagementPage() {
                       width={35}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`, 'Budget']}
+                      formatter={(value: number) => [`${value} oz`, 'Budget']}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
@@ -1227,7 +1227,7 @@ export function BudgetManagementPage() {
             <>
               {/* Monthly Distribution for Selected Quarter */}
               <div className="space-y-2.5">
-                <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                   <PieChart className="w-4 h-4 text-slate-600" />
                   Distribution T{selectedQuarter} par Mois
                 </h3>
@@ -1240,7 +1240,7 @@ export function BudgetManagementPage() {
                           const total = data.reduce((sum, item) => sum + item.value, 0);
                           return data.map(item => ({
                             ...item,
-                            percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                            percentage: total > 0 ? ((item.value / total) * 100) : 0
                           }));
                         })()}
                         cx="50%"
@@ -1257,7 +1257,7 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                        formatter={(value: number) => [`${value} oz`]}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend
@@ -1271,7 +1271,7 @@ export function BudgetManagementPage() {
 
               {/* Quarterly Distribution */}
               <div className="space-y-2.5">
-                <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-slate-600" />
                   Distribution Annuelle par Trimestre
                 </h3>
@@ -1284,7 +1284,7 @@ export function BudgetManagementPage() {
                           const total = data.reduce((sum, item) => sum + item.value, 0);
                           return data.map(item => ({
                             ...item,
-                            percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+                            percentage: total > 0 ? ((item.value / total) * 100) : 0
                           }));
                         })()}
                         cx="50%"
@@ -1301,7 +1301,7 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} oz`]}
+                        formatter={(value: number) => [`${value} oz`]}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend
@@ -1318,7 +1318,7 @@ export function BudgetManagementPage() {
           {/* Quarter Progress */}
           {mode === 'forecast' && (
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
+              <h3 className="text-xs  text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
                 <BarChart3 className="w-4 h-4 text-slate-500" />
                 Progrès des Révisions
               </h3>
@@ -1341,13 +1341,13 @@ export function BudgetManagementPage() {
                     >
                       <div className="flex items-center justify-between">
                         <span className={`
-                          font-bold text-sm
+                           text-sm
                           ${status === 'completed' ? 'text-emerald-900' : status === 'active' ? 'text-amber-900' : 'text-slate-600'}
                         `}>
                           Trimestre {q}
                         </span>
                         <span className={`
-                          text-[10px] px-2 py-1 rounded-full font-bold
+                          text-[10px] px-2 py-1 rounded-full 
                           ${status === 'completed'
                             ? 'bg-emerald-500 text-white'
                             : status === 'active'
@@ -1372,7 +1372,7 @@ export function BudgetManagementPage() {
                 <Info className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
-                <h4 className="text-xs font-bold text-blue-900 mb-2 uppercase tracking-wide">Aide</h4>
+                <h4 className="text-xs  text-blue-900 mb-2 uppercase tracking-wide">Aide</h4>
                 <p className="text-xs text-blue-700 leading-relaxed">
                   {mode === 'budget'
                     ? 'Définissez le budget mensuel pour chaque mois de l\'année. Les valeurs sont en onces d\'or. Sélectionnez une compagnie minière ou visualisez le total du groupe.'

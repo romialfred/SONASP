@@ -159,7 +159,7 @@ export function BudgetMatrixTable({
             <div className={`p-1 rounded ${colors.icon}`}>
               <Calendar className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className={`text-sm font-bold ${colors.text}`}>
+            <span className={`text-sm ${colors.text}`}>
               T{quarter}
             </span>
 
@@ -173,26 +173,26 @@ export function BudgetMatrixTable({
 
           <div className="flex items-center gap-5 text-xs">
             <div className="text-right">
-              <span className="text-slate-500 font-medium text-[10px] block mb-0.5">Budget</span>
-              <span className="font-bold text-sm text-slate-900">
-                {quarterTotals.budget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+              <span className="text-slate-500 text-[10px] block mb-0.5">Budget</span>
+              <span className="text-sm text-slate-900">
+                {Math.round(quarterTotals.budget).toLocaleString('fr-FR')}
                 <span className="text-[10px] ml-1 text-slate-500">oz</span>
               </span>
             </div>
             {showForecastColumns && (
               <>
                 <div className="text-right">
-                  <span className="text-blue-600 font-medium text-[10px] block mb-0.5">Forecast</span>
-                  <span className="font-bold text-sm text-blue-700">
-                    {quarterTotals.forecast.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                  <span className="text-blue-600 text-[10px] block mb-0.5">Forecast</span>
+                  <span className="text-sm text-blue-700">
+                    {Math.round(quarterTotals.forecast).toLocaleString('fr-FR')}
                     <span className="text-[10px] ml-1 text-blue-500">oz</span>
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-500 font-medium text-[10px] block mb-0.5">Écart</span>
-                  <span className={`font-bold text-sm ${quarterTotals.forecast - quarterTotals.budget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className="text-slate-500 text-[10px] block mb-0.5">Écart</span>
+                  <span className={`text-sm ${quarterTotals.forecast - quarterTotals.budget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {quarterTotals.forecast - quarterTotals.budget >= 0 ? '+' : ''}
-                    {(quarterTotals.forecast - quarterTotals.budget).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                    {Math.round(quarterTotals.forecast - quarterTotals.budget).toLocaleString('fr-FR')}
                     <span className="text-[10px] ml-1">oz</span>
                   </span>
                 </div>
@@ -207,27 +207,27 @@ export function BudgetMatrixTable({
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-left text-xs text-slate-600 uppercase tracking-wide">
                     Mois
                   </th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-center text-xs text-slate-600 uppercase tracking-wide">
                     Jours
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-right text-xs text-slate-600 uppercase tracking-wide">
                     Budget (OZ)
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-right text-xs text-slate-500 uppercase tracking-wide">
                     /Jour
                   </th>
                   {showForecastColumns && (
                     <>
-                      <th className="px-3 py-2 text-right text-xs font-semibold text-blue-600 uppercase tracking-wide bg-blue-50/50">
+                      <th className="px-3 py-2 text-right text-xs text-blue-600 uppercase tracking-wide bg-blue-50/50">
                         Forecast (OZ)
                       </th>
-                      <th className="px-3 py-2 text-right text-xs font-semibold text-blue-500 uppercase tracking-wide bg-blue-50/50">
+                      <th className="px-3 py-2 text-right text-xs text-blue-500 uppercase tracking-wide bg-blue-50/50">
                         /Jour
                       </th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase tracking-wide bg-blue-50/30">
+                      <th className="px-3 py-2 text-center text-xs text-slate-600 uppercase tracking-wide bg-blue-50/30">
                         Écart
                       </th>
                     </>
@@ -255,10 +255,10 @@ export function BudgetMatrixTable({
                         ${editable ? 'hover:bg-blue-50/30' : 'hover:bg-slate-50'}
                       `}
                     >
-                      <td className="px-3 py-2 text-xs font-semibold text-slate-900 capitalize">
+                      <td className="px-3 py-2 text-xs text-slate-900 capitalize">
                         {monthName}
                       </td>
-                      <td className="px-3 py-2 text-xs text-center text-slate-600 font-medium">
+                      <td className="px-3 py-2 text-xs text-center text-slate-600">
                         {days}
                       </td>
                       <td className="px-3 py-2">
@@ -271,23 +271,23 @@ export function BudgetMatrixTable({
                             onFocus={() => setFocusedCell(`budget-${month}`)}
                             onBlur={() => setFocusedCell(null)}
                             className={`
-                              w-32 px-2 py-1 text-right text-sm font-semibold rounded border transition-all
+                              w-32 px-2 py-1 text-right text-sm rounded border transition-all
                               ${focusedCell === `budget-${month}`
                                 ? 'border-slate-400 ring-1 ring-slate-300 bg-slate-50'
                                 : 'border-slate-200 hover:border-slate-300'
                               }
                               bg-white text-slate-900 focus:outline-none
                             `}
-                            placeholder="0.00"
+                            placeholder="0"
                           />
                         ) : (
-                          <div className="text-right text-sm font-semibold text-slate-700 px-2 py-1">
-                            {budget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                          <div className="text-right text-sm text-slate-700 px-2 py-1">
+                            {Math.round(budget).toLocaleString('fr-FR')}
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-xs text-right text-slate-500 font-medium">
-                        {dailyBudget.toLocaleString('fr-FR', { maximumFractionDigits: 4 })}
+                      <td className="px-3 py-2 text-xs text-right text-slate-500">
+                        {Math.round(dailyBudget).toLocaleString('fr-FR')}
                       </td>
                       {showForecastColumns && (
                         <>
@@ -305,7 +305,7 @@ export function BudgetMatrixTable({
                               onBlur={() => setFocusedCell(null)}
                               disabled={!editable}
                               className={`
-                                w-32 px-2 py-1 text-right text-sm font-semibold rounded border transition-all
+                                w-32 px-2 py-1 text-right text-sm rounded border transition-all
                                 ${focusedCell === `forecast-${month}`
                                   ? 'border-blue-500 ring-1 ring-blue-300 bg-blue-50'
                                   : 'border-blue-200 hover:border-blue-300'
@@ -316,19 +316,19 @@ export function BudgetMatrixTable({
                                 }
                                 focus:outline-none
                               `}
-                              placeholder={budget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                              placeholder={Math.round(budget).toLocaleString('fr-FR')}
                             />
                           </td>
-                          <td className="px-3 py-2 text-xs text-right text-blue-600 font-semibold bg-blue-50/20">
-                            {dailyForecast.toLocaleString('fr-FR', { maximumFractionDigits: 4 })}
+                          <td className="px-3 py-2 text-xs text-right text-blue-600 bg-blue-50/20">
+                            {Math.round(dailyForecast).toLocaleString('fr-FR')}
                           </td>
                           <td className="px-3 py-2 bg-blue-50/10">
                             <div className="flex flex-col items-end gap-0.5">
-                              <span className={`text-xs font-bold ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {variance >= 0 ? '+' : ''}{variance.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                              <span className={`text-xs ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {variance >= 0 ? '+' : ''}{Math.round(variance).toLocaleString('fr-FR')}
                               </span>
-                              <span className={`text-[10px] font-semibold ${variance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                {variancePercentage >= 0 ? '+' : ''}{variancePercentage.toFixed(1)}%
+                              <span className={`text-[10px] ${variance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                {variancePercentage >= 0 ? '+' : ''}{Math.round(variancePercentage)}%
                               </span>
                             </div>
                           </td>
@@ -353,7 +353,7 @@ export function BudgetMatrixTable({
       <div className="flex items-center justify-between">
         <button
           onClick={toggleAllQuarters}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-all shadow-sm hover:shadow"
+          className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-all shadow-sm hover:shadow"
         >
           {allExpanded ? (
             <>
@@ -376,7 +376,7 @@ export function BudgetMatrixTable({
             <Info className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-blue-900 mb-1 text-xs">Mode Forecast - Révision T{selectedQuarter}</p>
+            <p className="text-blue-900 mb-1 text-xs">Mode Forecast - Révision T{selectedQuarter}</p>
             <p className="text-xs text-blue-700 leading-relaxed">
               Modifiez les prévisions pour les 3 mois du trimestre sélectionné.
               Les calculs journaliers et les écarts sont automatiques.

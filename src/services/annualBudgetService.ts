@@ -290,12 +290,29 @@ class AnnualBudgetService {
     siteId: string = 'guinea'
   ): Promise<Record<number, number>> {
     try {
+      console.log('📊 [ACTUAL] Parametres:', { year, miningCompanyId, siteId });
+
+      // First try: Get ALL records without any filter to check if data exists
+      const { data: allData, error: allError } = await supabase
+        .from('daily_production')
+        .select('production_date, total_weight_oz, mining_company_id, site_id');
+
+      console.log('📦 [ACTUAL] ALL records (no filter):', {
+        count: allData?.length || 0,
+        sample: allData?.[0]
+      });
+
+      // Now apply filters
       let query = supabase
         .from('daily_production')
-        .select('production_date, total_weight_oz, mining_company_id')
+        .select('production_date, total_weight_oz, mining_company_id, site_id')
         .gte('production_date', `${year}-01-01`)
-        .lte('production_date', `${year}-12-31`)
-        .eq('site_id', siteId);
+        .lte('production_date', `${year}-12-31`);
+
+      // Only filter by site if it's provided and not empty
+      if (siteId && siteId !== '') {
+        query = query.eq('site_id', siteId);
+      }
 
       if (miningCompanyId && miningCompanyId !== 'ALL') {
         query = query.eq('mining_company_id', miningCompanyId);
@@ -303,12 +320,19 @@ class AnnualBudgetService {
 
       const { data, error } = await query;
 
+      console.log('📦 [ACTUAL] Filtered result:', {
+        count: data?.length || 0,
+        error: error?.message,
+        filters: { year, miningCompanyId, siteId }
+      });
+
       if (error) {
-        console.error('Error fetching actual production:', error);
+        console.error('❌ [ACTUAL] Error:', error);
         return {};
       }
 
       if (!data || data.length === 0) {
+        console.warn('⚠️ [ACTUAL] NO DATA after filters');
         return {};
       }
 
@@ -319,15 +343,19 @@ class AnnualBudgetService {
         const month = date.getMonth() + 1;
         const weight = Number(record.total_weight_oz) || 0;
 
+        console.log(`  📅 ${record.production_date}: ${weight} oz (month ${month})`);
+
         if (!monthlyTotals[month]) {
           monthlyTotals[month] = 0;
         }
         monthlyTotals[month] += weight;
       });
 
+      console.log('✅ [ACTUAL] Monthly totals:', monthlyTotals);
+
       return monthlyTotals;
     } catch (error) {
-      console.error('Error in getMonthlyActualProduction:', error);
+      console.error('❌ [ACTUAL] Exception:', error);
       return {};
     }
   }

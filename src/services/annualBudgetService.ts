@@ -292,20 +292,10 @@ class AnnualBudgetService {
     try {
       console.log('📊 [ACTUAL] Parametres:', { year, miningCompanyId, siteId });
 
-      // First try: Get ALL records without any filter to check if data exists
-      const { data: allData, error: allError } = await supabase
-        .from('daily_production')
-        .select('production_date, total_weight_oz, mining_company_id, site_id');
-
-      console.log('📦 [ACTUAL] ALL records (no filter):', {
-        count: allData?.length || 0,
-        sample: allData?.[0]
-      });
-
-      // Now apply filters
+      // Build query with correct columns (bullion_grams, not total_weight_oz)
       let query = supabase
         .from('daily_production')
-        .select('production_date, total_weight_oz, mining_company_id, site_id')
+        .select('production_date, bullion_grams, estimated_gold_pct, estimated_fineness_pct, mining_company_id, site_id')
         .gte('production_date', `${year}-01-01`)
         .lte('production_date', `${year}-12-31`);
 
@@ -320,10 +310,10 @@ class AnnualBudgetService {
 
       const { data, error } = await query;
 
-      console.log('📦 [ACTUAL] Filtered result:', {
+      console.log('📦 [ACTUAL] Query result:', {
         count: data?.length || 0,
         error: error?.message,
-        filters: { year, miningCompanyId, siteId }
+        sampleRecord: data?.[0]
       });
 
       if (error) {
@@ -332,7 +322,7 @@ class AnnualBudgetService {
       }
 
       if (!data || data.length === 0) {
-        console.warn('⚠️ [ACTUAL] NO DATA after filters');
+        console.warn('⚠️ [ACTUAL] NO DATA found');
         return {};
       }
 
@@ -341,14 +331,25 @@ class AnnualBudgetService {
       data.forEach(record => {
         const date = new Date(record.production_date);
         const month = date.getMonth() + 1;
-        const weight = Number(record.total_weight_oz) || 0;
 
-        console.log(`  📅 ${record.production_date}: ${weight} oz (month ${month})`);
+        // Calculate fine gold in ounces
+        // Formula: (bullion_grams * fineness_pct / 100) / 31.1035
+        const bullionGrams = Number(record.bullion_grams) || 0;
+        const fineness = Number(record.estimated_gold_pct || record.estimated_fineness_pct) || 0;
+        const fineGoldGrams = (bullionGrams * fineness) / 100;
+        const fineGoldOz = fineGoldGrams / 31.1035;
+
+        console.log(`  📅 ${record.production_date}: ${bullionGrams}g × ${fineness}% = ${fineGoldOz.toFixed(2)} oz (month ${month})`);
 
         if (!monthlyTotals[month]) {
           monthlyTotals[month] = 0;
         }
-        monthlyTotals[month] += weight;
+        monthlyTotals[month] += fineGoldOz;
+      });
+
+      // Round to 2 decimals
+      Object.keys(monthlyTotals).forEach(month => {
+        monthlyTotals[Number(month)] = Math.round(monthlyTotals[Number(month)] * 100) / 100;
       });
 
       console.log('✅ [ACTUAL] Monthly totals:', monthlyTotals);

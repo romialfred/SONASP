@@ -79,6 +79,8 @@ import ShippingPreparationEdit from './pages/shipping/ShippingPreparationEdit';
 import FreightCustomsDashboard from './pages/freight/FreightCustomsDashboard';
 import FreightCustomsDetails from './pages/freight/FreightCustomsDetails';
 import FreightCustomsCreate from './pages/freight/FreightCustomsCreate';
+import FreightShipmentDashboard from './pages/freight/FreightShipmentDashboard';
+import FreightShipmentCreate from './pages/freight/FreightShipmentCreate';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -244,7 +246,25 @@ function AppRoutes() {
               }
             />
 
-            {/* Freight & Customs Routes */}
+            {/* Freight & Customs Routes - NEW SYSTEM */}
+            <Route
+              path="/freight"
+              element={
+                <ProtectedRoute>
+                  <FreightShipmentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/freight/shipments/create"
+              element={
+                <ProtectedRoute>
+                  <FreightShipmentCreate />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Freight & Customs Routes - OLD SYSTEM (kept for compatibility) */}
             <Route
               path="/freight-customs"
               element={

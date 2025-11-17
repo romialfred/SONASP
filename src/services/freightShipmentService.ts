@@ -71,25 +71,32 @@ export interface FreightShipmentSignatory {
   created_at: string;
 }
 
-export interface AvailableShippingPreparation {
+/**
+ * Production individuelle disponible pour expédition
+ * Statut: ready_for_customs (Prêt pour Expédition vers Raffinerie)
+ */
+export interface AvailableProduction {
   id: string;
-  reference_number: string;
+  production_date: string;
+  bar_reference: string;
   status: string;
-  shipment_date: string;
-  total_weight_grams: number;
-  total_weight_oz: number;
-  destination?: string | null;
+  bullion_grams: number;
+  estimated_fineness_pct: number;
+  estimated_silver_pct: number;
+  pure_gold_grams: number;
+  estimated_oz: number;
+  silver_content_grams: number;
   mining_company_id?: string | null;
   mining_companies?: {
     id: string;
     name: string;
+    country?: string;
   };
-  items?: any[];
 }
 
 export const freightShipmentService = {
   /**
-   * Récupère toutes les expéditions freight (shipping_preparations avec ready_for_expedition)
+   * Récupère toutes les expéditions freight
    */
   async listShipments(): Promise<FreightShipment[]> {
     const { data, error } = await supabase
@@ -129,7 +136,7 @@ export const freightShipmentService = {
           *,
           daily_production:daily_production(
             *,
-            mining_companies(id, name)
+            mining_companies(id, name, country)
           )
         ),
         signatories:freight_shipment_signatories(*)
@@ -143,49 +150,48 @@ export const freightShipmentService = {
   },
 
   /**
-   * Récupère les shipping_preparations disponibles (ready_for_expedition)
+   * Récupère les productions individuelles disponibles pour expédition
+   * Statut: ready_for_customs (Prêt pour Douane = Prêt pour Expédition)
    */
-  async getAvailableShippingPreparations(): Promise<AvailableShippingPreparation[]> {
+  async getAvailableProductions(): Promise<AvailableProduction[]> {
     const { data, error } = await supabase
-      .from('shipping_preparations')
+      .from('daily_production')
       .select(`
         id,
-        reference_number,
+        production_date,
+        bar_reference,
         status,
-        shipment_date,
-        total_weight_grams,
-        total_weight_oz,
-        destination,
+        bullion_grams,
+        estimated_fineness_pct,
+        estimated_silver_pct,
+        pure_gold_grams,
+        estimated_oz,
+        silver_content_grams,
         mining_company_id,
-        mining_companies:mining_company_id(id, name),
-        items:shipping_preparation_items(
-          id,
-          production_id,
-          daily_productions:production_id(
-            id,
-            production_date,
-            bar_reference,
-            bullion_grams,
-            estimated_fineness_pct,
-            estimated_silver_pct,
-            pure_gold_grams,
-            estimated_oz,
-            silver_content_grams
-          )
-        )
+        mining_companies:mining_company_id(id, name, country)
       `)
-      .eq('status', 'ready_for_expedition')
-      .order('shipment_date', { ascending: false });
+      .eq('status', 'ready_for_customs')
+      .is('deleted_at', null)
+      .order('production_date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+
+    // Filtrer les productions déjà assignées à une expédition freight
+    const { data: assignedProductions } = await supabase
+      .from('freight_shipment_productions')
+      .select('production_id');
+
+    const assignedIds = new Set(assignedProductions?.map(p => p.production_id) || []);
+
+    return (data || []).filter(prod => !assignedIds.has(prod.id));
   },
 
   /**
-   * Crée une nouvelle expédition freight depuis une shipping_preparation
+   * Crée une nouvelle expédition freight avec plusieurs productions
    */
   async createShipment(data: {
-    shipping_preparation_id: string;
+    production_ids: string[];
+    shipment_date?: string;
     destination_refinery_id?: string;
     number_of_boxes: number;
     box_type: string;
@@ -204,31 +210,26 @@ export const freightShipmentService = {
 
     if (refError) throw refError;
 
-    // Récupérer les informations de la shipping_preparation
-    const { data: shippingPrep, error: spError } = await supabase
-      .from('shipping_preparations')
+    // Récupérer les informations des productions sélectionnées
+    const { data: productions, error: prodError } = await supabase
+      .from('daily_production')
       .select(`
-        *,
-        items:shipping_preparation_items(
-          id,
-          production_id,
-          daily_productions:production_id(
-            id,
-            production_date,
-            bar_reference,
-            bullion_grams,
-            estimated_fineness_pct,
-            estimated_silver_pct,
-            pure_gold_grams,
-            estimated_oz,
-            silver_content_grams
-          )
-        )
+        id,
+        production_date,
+        bar_reference,
+        bullion_grams,
+        estimated_fineness_pct,
+        estimated_silver_pct,
+        pure_gold_grams,
+        estimated_oz,
+        silver_content_grams
       `)
-      .eq('id', data.shipping_preparation_id)
-      .single();
+      .in('id', data.production_ids);
 
-    if (spError) throw spError;
+    if (prodError) throw prodError;
+    if (!productions || productions.length === 0) {
+      throw new Error('Aucune production trouvée avec les IDs fournis');
+    }
 
     // Créer l'expédition freight
     const { data: shipment, error: shipmentError } = await supabase
@@ -236,7 +237,7 @@ export const freightShipmentService = {
       .insert({
         reference_number: refData,
         status: 'pending',
-        shipment_date: shippingPrep.shipment_date || new Date().toISOString(),
+        shipment_date: data.shipment_date || new Date().toISOString(),
         destination_refinery_id: data.destination_refinery_id,
         number_of_boxes: data.number_of_boxes,
         box_type: data.box_type,
@@ -252,29 +253,25 @@ export const freightShipmentService = {
     if (shipmentError) throw shipmentError;
 
     // Ajouter les productions
-    if (shippingPrep.items && shippingPrep.items.length > 0) {
-      const productionsToInsert = shippingPrep.items
-        .filter((item: any) => item.daily_productions)
-        .map((item: any) => ({
-          freight_shipment_id: shipment.id,
-          production_id: item.production_id,
-          production_date: item.daily_productions.production_date,
-          bar_reference: item.daily_productions.bar_reference,
-          bullion_grams: item.daily_productions.bullion_grams,
-          estimated_fineness_pct: item.daily_productions.estimated_fineness_pct,
-          estimated_silver_pct: item.daily_productions.estimated_silver_pct || 0,
-          pure_gold_grams: item.daily_productions.pure_gold_grams,
-          pure_gold_oz: item.daily_productions.estimated_oz,
-          silver_content_grams: item.daily_productions.silver_content_grams || 0,
-          added_by: userData?.user?.id,
-        }));
+    const productionsToInsert = productions.map((prod: any) => ({
+      freight_shipment_id: shipment.id,
+      production_id: prod.id,
+      production_date: prod.production_date,
+      bar_reference: prod.bar_reference,
+      bullion_grams: prod.bullion_grams,
+      estimated_fineness_pct: prod.estimated_fineness_pct,
+      estimated_silver_pct: prod.estimated_silver_pct || 0,
+      pure_gold_grams: prod.pure_gold_grams,
+      pure_gold_oz: prod.estimated_oz,
+      silver_content_grams: prod.silver_content_grams || 0,
+      added_by: userData?.user?.id,
+    }));
 
-      const { error: prodError } = await supabase
-        .from('freight_shipment_productions')
-        .insert(productionsToInsert);
+    const { error: prodInsertError } = await supabase
+      .from('freight_shipment_productions')
+      .insert(productionsToInsert);
 
-      if (prodError) throw prodError;
-    }
+    if (prodInsertError) throw prodInsertError;
 
     // Ajouter les signataires
     if (data.signatories && data.signatories.length > 0) {

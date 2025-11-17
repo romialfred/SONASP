@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Package, Plus, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Package, Plus, X, AlertCircle, CheckCircle, Check } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
-import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
+import { freightShipmentService, type AvailableProduction } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
 
@@ -24,11 +24,12 @@ export default function FreightShipmentCreate() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [availableExpeditions, setAvailableExpeditions] = useState<AvailableShippingPreparation[]>([]);
+  const [availableProductions, setAvailableProductions] = useState<AvailableProduction[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
 
   // Form state
-  const [selectedExpeditionId, setSelectedExpeditionId] = useState('');
+  const [selectedProductionIds, setSelectedProductionIds] = useState<Set<string>>(new Set());
+  const [shipmentDate, setShipmentDate] = useState(new Date().toISOString().split('T')[0]);
   const [destinationRefineryId, setDestinationRefineryId] = useState('');
   const [numberOfBoxes, setNumberOfBoxes] = useState(1);
   const [boxType, setBoxType] = useState('Plastic Box');
@@ -41,8 +42,11 @@ export default function FreightShipmentCreate() {
     { position: 'Finance Manager', full_name: '', display_order: 1 },
   ]);
 
-  // Selected expedition details
-  const selectedExpedition = availableExpeditions.find((exp) => exp.id === selectedExpeditionId);
+  // Selected productions summary
+  const selectedProductions = availableProductions.filter(p => selectedProductionIds.has(p.id));
+  const totalBullionGrams = selectedProductions.reduce((sum, p) => sum + p.bullion_grams, 0);
+  const totalPureGoldGrams = selectedProductions.reduce((sum, p) => sum + p.pure_gold_grams, 0);
+  const totalPureGoldOz = selectedProductions.reduce((sum, p) => sum + p.estimated_oz, 0);
 
   useEffect(() => {
     loadData();
@@ -52,9 +56,9 @@ export default function FreightShipmentCreate() {
     try {
       setLoading(true);
 
-      // Charger les expéditions disponibles (status = ready_for_expedition)
-      const expeditions = await freightShipmentService.getAvailableShippingPreparations();
-      setAvailableExpeditions(expeditions);
+      // Charger les productions disponibles (status = ready_for_customs)
+      const productions = await freightShipmentService.getAvailableProductions();
+      setAvailableProductions(productions);
 
       // Charger les raffineries
       const { data: refineriesData, error: refineriesError } = await supabase
@@ -65,10 +69,10 @@ export default function FreightShipmentCreate() {
       if (refineriesError) throw refineriesError;
       setRefineries(refineriesData || []);
 
-      if (expeditions.length === 0) {
+      if (productions.length === 0) {
         showNotification(
           'info',
-          'Aucune expédition disponible. Les expéditions doivent avoir le statut "Prêt pour Expédition".'
+          'Aucune production disponible. Les productions doivent avoir le statut "Prêt pour la Douane".'
         );
       }
     } catch (error: any) {
@@ -77,6 +81,24 @@ export default function FreightShipmentCreate() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleProductionSelection = (productionId: string) => {
+    const newSet = new Set(selectedProductionIds);
+    if (newSet.has(productionId)) {
+      newSet.delete(productionId);
+    } else {
+      newSet.add(productionId);
+    }
+    setSelectedProductionIds(newSet);
+  };
+
+  const selectAllProductions = () => {
+    setSelectedProductionIds(new Set(availableProductions.map(p => p.id)));
+  };
+
+  const deselectAllProductions = () => {
+    setSelectedProductionIds(new Set());
   };
 
   const handleAddSignatory = () => {
@@ -97,8 +119,8 @@ export default function FreightShipmentCreate() {
   };
 
   const validateForm = (): boolean => {
-    if (!selectedExpeditionId) {
-      showNotification('error', 'Veuillez sélectionner une expédition');
+    if (selectedProductionIds.size === 0) {
+      showNotification('error', 'Veuillez sélectionner au moins une production');
       return false;
     }
 
@@ -117,7 +139,6 @@ export default function FreightShipmentCreate() {
       return false;
     }
 
-    // Valider les signataires
     const validSignatories = signatories.filter((sig) => sig.position && sig.full_name);
     if (validSignatories.length === 0) {
       showNotification('error', 'Veuillez ajouter au moins un signataire avec position et nom');
@@ -144,7 +165,8 @@ export default function FreightShipmentCreate() {
         }));
 
       const shipment = await freightShipmentService.createShipment({
-        shipping_preparation_id: selectedExpeditionId,
+        production_ids: Array.from(selectedProductionIds),
+        shipment_date: shipmentDate,
         destination_refinery_id: destinationRefineryId || undefined,
         number_of_boxes: numberOfBoxes,
         box_type: boxType,
@@ -175,7 +197,7 @@ export default function FreightShipmentCreate() {
 
   return (
     <MainLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Button variant="secondary" onClick={() => navigate('/freight')}>
@@ -183,98 +205,153 @@ export default function FreightShipmentCreate() {
               Retour
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Nouvelle Expédition Freight & Customs</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Nouvelle Expédition vers Raffinerie</h1>
               <p className="text-sm text-gray-600 mt-1">
-                Créer une opération douanière depuis une expédition validée
+                Sélectionnez les productions prêtes pour expédition (validées par la douane)
               </p>
             </div>
           </div>
         </div>
 
-        {availableExpeditions.length === 0 ? (
+        {availableProductions.length === 0 ? (
           <Card className="p-6">
             <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-yellow-900">Aucune expédition disponible</h3>
+                <h3 className="font-semibold text-yellow-900">Aucune production disponible</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Toutes les expéditions avec le statut "Prêt pour Expédition" ont déjà une opération
-                  douanière associée. Créez une nouvelle expédition ou attendez qu'une expédition soit
-                  marquée comme "Prêt pour Expédition".
+                  Toutes les productions avec le statut "Prêt pour la Douane" (ready_for_customs) ont déjà
+                  été assignées à une expédition ou aucune n'est encore validée.
                 </p>
               </div>
             </div>
           </Card>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Sélection de l'expédition */}
+            {/* Sélection des Productions */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                <Package className="w-5 h-5 inline mr-2" />
-                Sélection de l'Expédition
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  <Package className="w-5 h-5 inline mr-2" />
+                  Sélection des Productions ({selectedProductionIds.size} / {availableProductions.length})
+                </h2>
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={selectAllProductions}>
+                    Tout sélectionner
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={deselectAllProductions}>
+                    Tout désélectionner
+                  </Button>
+                </div>
+              </div>
 
-              <div className="space-y-4">
-                <Select
-                  label="Expédition *"
-                  value={selectedExpeditionId}
-                  onChange={(e) => setSelectedExpeditionId(e.target.value)}
-                  required
-                >
-                  <option value="">Sélectionner une expédition...</option>
-                  {availableExpeditions.map((exp) => (
-                    <option key={exp.id} value={exp.id}>
-                      {exp.reference_number} - {exp.mining_companies?.name} -{' '}
-                      {exp.total_weight_oz.toFixed(3)} oz - {new Date(exp.shipment_date).toLocaleDateString('fr-FR')}
-                    </option>
-                  ))}
-                </Select>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">
+                        <input
+                          type="checkbox"
+                          checked={selectedProductionIds.size === availableProductions.length}
+                          onChange={(e) => e.target.checked ? selectAllProductions() : deselectAllProductions()}
+                          className="rounded border-gray-300"
+                        />
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Bar Ref.</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Date</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Compagnie</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Poids Brut (g)</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Finesse (%)</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (g)</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (oz)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {availableProductions.map((prod) => (
+                      <tr
+                        key={prod.id}
+                        className={`hover:bg-gray-50 cursor-pointer transition ${
+                          selectedProductionIds.has(prod.id) ? 'bg-blue-50' : ''
+                        }`}
+                        onClick={() => toggleProductionSelection(prod.id)}
+                      >
+                        <td className="px-3 py-2 border">
+                          <input
+                            type="checkbox"
+                            checked={selectedProductionIds.has(prod.id)}
+                            onChange={() => toggleProductionSelection(prod.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border-gray-300"
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-sm font-medium text-gray-900 border">{prod.bar_reference}</td>
+                        <td className="px-3 py-2 text-sm text-gray-600 border">
+                          {new Date(prod.production_date).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-600 border">
+                          {prod.mining_companies?.name || 'N/A'}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-right text-gray-900 border">
+                          {prod.bullion_grams.toFixed(3)}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-right text-gray-600 border">
+                          {prod.estimated_fineness_pct.toFixed(2)}%
+                        </td>
+                        <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 border">
+                          {prod.pure_gold_grams.toFixed(3)}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-right font-semibold text-amber-700 border">
+                          {prod.estimated_oz.toFixed(6)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                {selectedExpedition && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-blue-900">Détails de l'expédition</h4>
-                        <div className="mt-2 grid grid-cols-2 gap-3 text-sm text-blue-700">
-                          <div>
-                            <span className="font-medium">Référence:</span> {selectedExpedition.reference_number}
-                          </div>
-                          <div>
-                            <span className="font-medium">Compagnie minière:</span>{' '}
-                            {selectedExpedition.mining_companies?.name}
-                          </div>
-                          <div>
-                            <span className="font-medium">Poids total:</span>{' '}
-                            {selectedExpedition.total_weight_grams.toFixed(3)} g /{' '}
-                            {selectedExpedition.total_weight_oz.toFixed(3)} oz
-                          </div>
-                          <div>
-                            <span className="font-medium">Date:</span>{' '}
-                            {new Date(selectedExpedition.shipment_date).toLocaleDateString('fr-FR')}
-                          </div>
-                          <div>
-                            <span className="font-medium">Productions:</span> {selectedExpedition.items?.length || 0}
-                          </div>
+              {selectedProductions.length > 0 && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-green-900">Résumé de la Sélection</h4>
+                      <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-green-700">Productions:</span>
+                          <span className="ml-2 font-semibold text-green-900">{selectedProductions.length}</span>
+                        </div>
+                        <div>
+                          <span className="text-green-700">Poids Brut Total:</span>
+                          <span className="ml-2 font-semibold text-green-900">{totalBullionGrams.toFixed(3)} g</span>
+                        </div>
+                        <div>
+                          <span className="text-green-700">Or Pur Total:</span>
+                          <span className="ml-2 font-semibold text-green-900">
+                            {totalPureGoldGrams.toFixed(3)} g / {totalPureGoldOz.toFixed(6)} oz
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
-
-                <p className="text-xs text-gray-500">
-                  Seules les expéditions avec statut "Prêt pour Expédition" sont disponibles
-                </p>
-              </div>
+                </div>
+              )}
             </Card>
 
-            {/* Informations commerciales */}
+            {/* Informations d'Expédition */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations Commerciales</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations d'Expédition</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Date d'Expédition *"
+                  type="date"
+                  value={shipmentDate}
+                  onChange={(e) => setShipmentDate(e.target.value)}
+                  required
+                />
+
                 <Select
-                  label="Raffinerie de destination"
+                  label="Raffinerie de Destination"
                   value={destinationRefineryId}
                   onChange={(e) => setDestinationRefineryId(e.target.value)}
                 >
@@ -287,7 +364,7 @@ export default function FreightShipmentCreate() {
                 </Select>
 
                 <Input
-                  label="Nombre de boîtes *"
+                  label="Nombre de Boîtes *"
                   type="number"
                   min="1"
                   value={numberOfBoxes}
@@ -296,24 +373,32 @@ export default function FreightShipmentCreate() {
                 />
 
                 <Input
-                  label="Type de boîte"
+                  label="Type de Boîte"
                   value={boxType}
                   onChange={(e) => setBoxType(e.target.value)}
                   placeholder="Plastic Box"
                 />
+              </div>
+            </Card>
 
+            {/* Informations Douanières */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations Douanières</h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
-                  label="Prix de l'or (USD/oz) *"
+                  label="Prix de l'Or (USD/oz) *"
                   type="number"
                   step="0.01"
                   min="0"
                   value={goldPriceUsdPerOz}
                   onChange={(e) => setGoldPriceUsdPerOz(e.target.value)}
                   required
+                  placeholder="Ex: 2650.00"
                 />
 
                 <Input
-                  label="Taux de change *"
+                  label="Taux de Change *"
                   type="number"
                   step="0.0001"
                   min="0"
@@ -324,7 +409,7 @@ export default function FreightShipmentCreate() {
                 />
 
                 <Select
-                  label="Monnaie locale"
+                  label="Monnaie Locale"
                   value={localCurrency}
                   onChange={(e) => setLocalCurrency(e.target.value)}
                 >
@@ -348,7 +433,7 @@ export default function FreightShipmentCreate() {
             {/* Signataires */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Signataires des Documents</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Signataires des Documents PDF</h2>
                 <Button type="button" variant="secondary" size="sm" onClick={handleAddSignatory}>
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter un signataire
@@ -392,12 +477,24 @@ export default function FreightShipmentCreate() {
 
             {/* Informations importantes */}
             <Card className="p-6 bg-blue-50 border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-2">À propos de la création d'opération</h3>
+              <h3 className="font-semibold text-blue-900 mb-2">Génération Automatique des Documents</h3>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Un numéro de référence unique sera généré automatiquement (Format: HUM-SMK-XXX/YYYY)</li>
-                <li>• Le statut initial sera "En Attente Douane" (customs_pending)</li>
-                <li>• Les PDFs (Bullion Summary et Facture Customs) seront générés automatiquement</li>
-                <li>• Vous pourrez ajouter des documents et changer le statut après la création</li>
+                <li>
+                  <Check className="w-4 h-4 inline mr-1" />
+                  Bullion Summary PDF: Liste détaillée de toutes les productions sélectionnées
+                </li>
+                <li>
+                  <Check className="w-4 h-4 inline mr-1" />
+                  Facture Customs (Invoice pour besoins de la douane)
+                </li>
+                <li>
+                  <Check className="w-4 h-4 inline mr-1" />
+                  Référence unique auto-générée: HUM-SMK-XXX/YYYY
+                </li>
+                <li>
+                  <Check className="w-4 h-4 inline mr-1" />
+                  Statut initial: En Attente (Pending)
+                </li>
               </ul>
             </Card>
 
@@ -406,7 +503,7 @@ export default function FreightShipmentCreate() {
               <Button type="button" variant="secondary" onClick={() => navigate('/freight')}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={submitting || !selectedExpeditionId}>
+              <Button type="submit" disabled={submitting || selectedProductionIds.size === 0}>
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -415,7 +512,7 @@ export default function FreightShipmentCreate() {
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Créer l'opération
+                    Créer l'Expédition
                   </>
                 )}
               </Button>

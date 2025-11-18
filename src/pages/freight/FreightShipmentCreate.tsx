@@ -179,7 +179,7 @@ export default function FreightShipmentCreate() {
       });
 
       showSuccess('Expédition créée', `Expédition Freight ${shipment.reference_number} créée avec succès`);
-      navigate('/freight');
+      navigate(`/freight/shipments/${shipment.id}`);
     } catch (error: any) {
       console.error('Erreur lors de la création:', error);
       showError('Erreur de création', error.message || 'Erreur inconnue');

@@ -81,6 +81,7 @@ import FreightCustomsDetails from './pages/freight/FreightCustomsDetails';
 import FreightCustomsCreate from './pages/freight/FreightCustomsCreate';
 import FreightShipmentDashboard from './pages/freight/FreightShipmentDashboard';
 import FreightShipmentCreate from './pages/freight/FreightShipmentCreate';
+import FreightShipmentDetails from './pages/freight/FreightShipmentDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -260,6 +261,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <FreightShipmentCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/freight/shipments/:id"
+              element={
+                <ProtectedRoute>
+                  <FreightShipmentDetails />
                 </ProtectedRoute>
               }
             />

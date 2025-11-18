@@ -131,7 +131,17 @@ export const freightShipmentService = {
   },
 
   async getAvailableShippingPreparations(): Promise<AvailableShippingPreparation[]> {
-    const { data, error } = await supabase
+    // Get all shipping preparations that are already used in freight shipments
+    const { data: usedShipments, error: usedError } = await supabase
+      .from('freight_shipment_shipping_preparations')
+      .select('shipping_preparation_id');
+
+    if (usedError) throw usedError;
+
+    const usedIds = (usedShipments || []).map((s: any) => s.shipping_preparation_id);
+
+    // Get available shipping preparations (not yet used in freight shipments)
+    let query = supabase
       .from('shipping_preparations')
       .select(`
         id,
@@ -158,8 +168,14 @@ export const freightShipmentService = {
           )
         )
       `)
-      .eq('status', 'ready_for_expedition')
-      .order('shipped_at', { ascending: false });
+      .eq('status', 'ready_for_expedition');
+
+    // Filter out already used shipping preparations
+    if (usedIds.length > 0) {
+      query = query.not('id', 'in', `(${usedIds.join(',')})`);
+    }
+
+    const { data, error } = await query.order('shipped_at', { ascending: false });
 
     if (error) throw error;
     return (data || []) as AvailableShippingPreparation[];

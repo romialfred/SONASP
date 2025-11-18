@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<FreightShipmentStatus, { label: string; color: strin
 
 export default function FreightShipmentDashboard() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
+  const { showError, showSuccess } = useNotification();
   const [shipments, setShipments] = useState<FreightShipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +52,7 @@ export default function FreightShipmentDashboard() {
       setShipments(data);
     } catch (error: any) {
       console.error('Erreur chargement:', error);
-      showNotification('error', 'Erreur lors du chargement: ' + error.message);
+      showError('Erreur de chargement', error.message || 'Erreur inconnue');
     } finally {
       setLoading(false);
     }

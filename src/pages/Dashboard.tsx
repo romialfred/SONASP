@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
 
@@ -358,7 +359,7 @@ export function Dashboard() {
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {sale.status}
+                            {formatStatusFr(sale.status)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600">{sale.customer_name}</p>

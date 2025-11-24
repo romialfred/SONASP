@@ -29,6 +29,7 @@ import {
   getPreSaleInventoryMatch,
   type PreSaleSummary,
 } from '@/services/preSalesService';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function PreSaleDetails() {
@@ -278,7 +279,7 @@ export default function PreSaleDetails() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Batch Status</p>
-                <p className="font-medium text-gray-900">{preSale.batch_status}</p>
+                <p className="font-medium text-gray-900">{formatStatusFr(preSale.batch_status)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Quantity</p>

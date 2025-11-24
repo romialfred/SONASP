@@ -11,6 +11,7 @@ import {
   getPreSalesStatistics,
   type PreSaleSummary,
 } from '@/services/preSalesService';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 export default function PreSalesDashboard() {
   const navigate = useNavigate();
@@ -258,7 +259,7 @@ export default function PreSalesDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{preSale.batch_number}</div>
-                      <div className="text-xs text-gray-500">{preSale.batch_status}</div>
+                      <div className="text-xs text-gray-500">{formatStatusFr(preSale.batch_status)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{preSale.customer_name}</div>

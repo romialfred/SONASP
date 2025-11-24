@@ -9,6 +9,7 @@ import { ComposedChart, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAx
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import { calculateInventoryMetrics } from '@/services/inventoryService';
 
 
@@ -159,6 +160,14 @@ export function DashboardPage() {
   }));
 
   const statusMapping: Record<string, string> = {
+    prepared: 'Préparé',
+    in_safe: 'En Coffre',
+    ready_for_shipping: 'Prêt pour Expédition',
+    shipped: 'Expédié',
+    received_at_refinery: 'Reçu à la Raffinerie',
+    refined: 'Raffiné',
+    in_sale: 'En Vente',
+    sold: 'Vendu',
   };
 
   const statusColors: Record<string, string> = {
@@ -489,7 +498,7 @@ export function DashboardPage() {
               {batches.length > 0 ? (
                 <div className="space-y-3">
                   {batches.slice(0, 5).map(batch => {
-                    const statusLabel = statusMapping[batch.status] || batch.status;
+                    const statusLabel = statusMapping[batch.status] || formatStatusFr(batch.status);
                     return (
                       <div key={batch.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                         <div className="flex items-center gap-3">

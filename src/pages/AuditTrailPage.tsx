@@ -8,6 +8,7 @@ import Select from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
 import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 interface AuditLog {
   id: string;
@@ -241,7 +242,7 @@ export function AuditTrailPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
-                            {log.status}
+                            {formatStatusFr(log.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={log.details}>

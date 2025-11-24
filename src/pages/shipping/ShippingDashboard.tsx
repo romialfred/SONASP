@@ -19,6 +19,17 @@ export default function ShippingDashboard() {
     try {
       setLoading(true);
       const data = await shippingPreparationService.getAllPreparations();
+      console.log('📊 Shipping Preparations chargées:', data.length);
+      if (data.length > 0) {
+        console.log('📋 Première expédition:', {
+          id: data[0].id,
+          expedition_lot_number: data[0].expedition_lot_number,
+          mining_company_id: data[0].mining_company_id,
+          mining_company_name: data[0].mining_company_name,
+          seal_number: data[0].seal_number,
+          total_boxes: data[0].total_boxes
+        });
+      }
       setPreparations(data);
     } catch (error) {
       console.error('Error loading preparations:', error);

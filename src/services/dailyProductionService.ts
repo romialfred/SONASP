@@ -384,6 +384,21 @@ class DailyProductionService {
     return data[0] as ProductionSummary;
   }
 
+  async getYTDSummary(
+    referenceDate: string = new Date().toISOString().split('T')[0],
+    miningCompanyId?: string,
+    siteId: string = 'guinea'
+  ): Promise<ProductionSummary> {
+    const { data, error } = await supabase.rpc('get_ytd_summary', {
+      reference_date: referenceDate,
+      company_id: miningCompanyId || null,
+      site: siteId
+    });
+
+    if (error) throw error;
+    return data[0] as ProductionSummary;
+  }
+
   async generateBarReference(
     companyName?: string,
     productionDate: string = new Date().toISOString().split('T')[0]

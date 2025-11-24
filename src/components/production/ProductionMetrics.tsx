@@ -28,7 +28,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
       const [wtd, mtd, ytd] = await Promise.all([
         dailyProductionService.getWTDSummary(dateRange.endDate, miningCompanyId),
         dailyProductionService.getMTDSummary(dateRange.endDate, miningCompanyId),
-        dailyProductionService.getMTDSummary(dateRange.endDate, miningCompanyId)
+        dailyProductionService.getYTDSummary(dateRange.endDate, miningCompanyId)
       ]);
       setWtdSummary(wtd);
       setMtdSummary(mtd);

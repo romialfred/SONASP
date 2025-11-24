@@ -1,3 +1,20 @@
+/**
+ * PAGE: Production In Safe (Production dans le Coffre)
+ *
+ * Cette page affiche UNIQUEMENT les productions qui sont physiquement dans le coffre.
+ *
+ * DIFFÉRENCES AVEC DailyProductionPage:
+ * - DailyProductionPage: Affiche TOUTES les productions (y compris annulées)
+ * - ProductionInSafe: Affiche UNIQUEMENT les productions actives (exclu 'cancelled')
+ *
+ * PLAGE DE DATES PAR DÉFAUT:
+ * - Identique à DailyProductionPage: du 1er janvier de l'année en cours à aujourd'hui
+ * - Cela garantit que toutes les entrées de Daily Production apparaissent ici (sauf annulées)
+ *
+ * FILTRES APPLIQUÉS AUTOMATIQUEMENT:
+ * - status != 'cancelled' (les productions annulées ne sont pas dans le coffre)
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -44,7 +61,7 @@ export function ProductionInSafe() {
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
 
@@ -95,6 +112,10 @@ export function ProductionInSafe() {
         .gte('production_date', dateRange.startDate)
         .lte('production_date', dateRange.endDate)
         .order('production_date', { ascending: false });
+
+      // Exclure automatiquement les productions annulées du safe
+      // Les productions annulées ne sont plus dans le coffre
+      query = query.neq('status', 'cancelled');
 
       if (selectedCompany !== 'all') {
         query = query.eq('mining_company_id', selectedCompany);

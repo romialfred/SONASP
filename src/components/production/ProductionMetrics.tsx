@@ -35,6 +35,21 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
       setYtdSummary(ytd);
     } catch (error) {
       console.error('Error loading summaries:', error);
+      // Toujours afficher les tuiles même en cas d'erreur avec des valeurs par défaut
+      const defaultSummary: ProductionSummary = {
+        total_bullion_grams: 0,
+        total_pure_gold_grams: 0,
+        total_estimated_oz: 0,
+        avg_fineness_pct: 0,
+        record_count: 0,
+        forecast_oz: 0,
+        budget_oz: 0,
+        variance_vs_forecast: 0,
+        variance_vs_budget: 0
+      };
+      setWtdSummary(defaultSummary);
+      setMtdSummary(defaultSummary);
+      setYtdSummary(defaultSummary);
     } finally {
       setLoading(false);
     }
@@ -158,39 +173,38 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
   return (
     <div className="space-y-4">
       {/* WTD, MTD et YTD Performance Cards - Style EXACT Production in Safe */}
-      {(wtdSummary || mtdSummary || ytdSummary) && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Performance Hebdomadaire */}
-          {wtdSummary && renderPerformanceCard(
-            'Performance Hebdomadaire',
-            'Week to Date',
-            wtdSummary,
-            'border-t-blue-600',
-            'bg-blue-50',
-            'text-blue-900'
-          )}
+      {/* TOUJOURS AFFICHER LES 3 TUILES - INSTITUTIONNEL */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Performance Hebdomadaire */}
+        {renderPerformanceCard(
+          'Performance Hebdomadaire',
+          'Week to Date',
+          wtdSummary,
+          'border-t-blue-600',
+          'bg-blue-50',
+          'text-blue-900'
+        )}
 
-          {/* Performance Mensuelle */}
-          {mtdSummary && renderPerformanceCard(
-            'Performance Mensuelle',
-            'Month to Date',
-            mtdSummary,
-            'border-t-purple-600',
-            'bg-purple-50',
-            'text-purple-900'
-          )}
+        {/* Performance Mensuelle */}
+        {renderPerformanceCard(
+          'Performance Mensuelle',
+          'Month to Date',
+          mtdSummary,
+          'border-t-purple-600',
+          'bg-purple-50',
+          'text-purple-900'
+        )}
 
-          {/* Performance Annuelle */}
-          {ytdSummary && renderPerformanceCard(
-            'Performance Annuelle',
-            'Year to Date',
-            ytdSummary,
-            'border-t-emerald-600',
-            'bg-emerald-50',
-            'text-emerald-900'
-          )}
-        </div>
-      )}
+        {/* Performance Annuelle */}
+        {renderPerformanceCard(
+          'Performance Annuelle',
+          'Year to Date',
+          ytdSummary,
+          'border-t-emerald-600',
+          'bg-emerald-50',
+          'text-emerald-900'
+        )}
+      </div>
 
       {loading && (
         <div className="text-center py-4">

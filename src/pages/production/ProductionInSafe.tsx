@@ -168,13 +168,15 @@ export function ProductionInSafe() {
   };
 
   const calculatePercentage = (actual: number, target: number) => {
-    if (target === 0) return 0;
-    return (actual / target) * 100;
+    if (target === 0) return actual === 0 ? 0 : -100;
+    return ((actual - target) / target) * 100;
   };
 
-  const getTrafficLight = (percentage: number) => {
-    if (percentage >= 95) return { color: 'bg-emerald-500', label: 'Excellent', textColor: 'text-emerald-700' };
-    if (percentage >= 85) return { color: 'bg-yellow-500', label: 'Attention', textColor: 'text-yellow-700' };
+  const getTrafficLight = (variancePercent: number) => {
+    // variance% = ((actual - target) / target) * 100
+    // positive = exceeds target (good), negative = below target (bad)
+    if (variancePercent >= 0) return { color: 'bg-emerald-500', label: 'Excellent', textColor: 'text-emerald-700' };
+    if (variancePercent >= -10) return { color: 'bg-yellow-500', label: 'Attention', textColor: 'text-yellow-700' };
     return { color: 'bg-red-500', label: 'Critique', textColor: 'text-red-700' };
   };
 

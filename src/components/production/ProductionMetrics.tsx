@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { DailyProduction, dailyProductionService, ProductionSummary } from '@/services/dailyProductionService';
+import { formatNumberWithSpaces, formatVarianceWithSpaces } from '@/utils/numberUtils';
 
 interface ProductionMetricsProps {
   productions: DailyProduction[];
@@ -94,7 +95,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <div className="flex justify-between items-center pb-2 border-b border-gray-100">
             <span className="text-xs text-gray-600">Prévision</span>
             <span className="text-sm font-semibold text-gray-900">
-              {summary.forecast_oz?.toFixed(2) || '0.00'} oz
+              {formatNumberWithSpaces(summary.forecast_oz, 2)} oz
             </span>
           </div>
 
@@ -102,7 +103,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <div className="flex justify-between items-center pb-2 border-b border-gray-100">
             <span className="text-xs text-gray-600">Budget</span>
             <span className="text-sm font-semibold text-gray-900">
-              {summary.budget_oz?.toFixed(2) || '0.00'} oz
+              {formatNumberWithSpaces(summary.budget_oz, 2)} oz
             </span>
           </div>
 
@@ -110,7 +111,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
           <div className={`flex justify-between items-center py-2 ${realiseBg} rounded-lg px-3`}>
             <span className={`text-xs font-semibold ${realiseTextColor}`}>Réalisé</span>
             <span className={`text-base font-bold ${realiseTextColor}`}>
-              {summary.total_estimated_oz?.toFixed(2) || '0.00'} oz
+              {formatNumberWithSpaces(summary.total_estimated_oz, 2)} oz
             </span>
           </div>
 
@@ -130,7 +131,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
               <span className={`text-sm font-bold ${
                 varianceForecast >= 0 ? 'text-emerald-700' : 'text-orange-700'
               }`}>
-                {varianceForecast >= 0 ? '+' : ''}{varianceForecast.toFixed(0)}
+                {formatVarianceWithSpaces(varianceForecast, 0, true)}
               </span>
               <span className={`text-xs ${
                 varianceForecast >= 0 ? 'text-emerald-600' : 'text-orange-600'
@@ -156,7 +157,7 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
               <span className={`text-sm font-bold ${
                 varianceBudget >= 0 ? 'text-emerald-700' : 'text-amber-700'
               }`}>
-                {varianceBudget >= 0 ? '+' : ''}{varianceBudget.toFixed(0)}
+                {formatVarianceWithSpaces(varianceBudget, 0, true)}
               </span>
               <span className={`text-xs ${
                 varianceBudget >= 0 ? 'text-emerald-600' : 'text-amber-600'

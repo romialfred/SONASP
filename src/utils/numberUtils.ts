@@ -178,3 +178,71 @@ export function safeRoundUpToFixed(
 
   return roundUpToFixed(value, decimals);
 }
+
+/**
+ * Formate un nombre avec séparateur d'espace pour les milliers
+ * Applique automatiquement le séparateur pour les nombres >= 1000
+ *
+ * @param value - La valeur à formater
+ * @param decimals - Nombre de décimales (défaut: 2)
+ * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
+ * @returns Chaîne formatée avec séparateur d'espace
+ *
+ * @example
+ * formatNumberWithSpaces(498885.00, 2) // "498 885.00"
+ * formatNumberWithSpaces(914378.99, 2) // "914 378.99"
+ * formatNumberWithSpaces(1011.59, 2) // "1 011.59"
+ * formatNumberWithSpaces(123.45, 2) // "123.45"
+ * formatNumberWithSpaces(undefined, 2) // "0.00"
+ */
+export function formatNumberWithSpaces(
+  value: number | undefined | null,
+  decimals: number = 2,
+  defaultValue: number = 0
+): string {
+  // Gérer les valeurs invalides
+  if (value === undefined || value === null || isNaN(value)) {
+    value = defaultValue;
+  }
+
+  // Formater avec le nombre de décimales
+  const fixedValue = value.toFixed(decimals);
+
+  // Séparer la partie entière et décimale
+  const [integerPart, decimalPart] = fixedValue.split('.');
+
+  // Ajouter des espaces tous les 3 chiffres (de droite à gauche)
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+  // Recombiner avec la partie décimale
+  return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+}
+
+/**
+ * Formate un nombre avec séparateur d'espace et gère les valeurs négatives
+ *
+ * @param value - La valeur à formater
+ * @param decimals - Nombre de décimales (défaut: 0 pour les variances)
+ * @param showSign - Afficher le signe + pour les positifs (défaut: false)
+ * @returns Chaîne formatée avec séparateur d'espace
+ *
+ * @example
+ * formatVarianceWithSpaces(-497873, 0) // "-497 873"
+ * formatVarianceWithSpaces(-913367, 0) // "-913 367"
+ * formatVarianceWithSpaces(123456, 0, true) // "+123 456"
+ */
+export function formatVarianceWithSpaces(
+  value: number | undefined | null,
+  decimals: number = 0,
+  showSign: boolean = false
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    value = 0;
+  }
+
+  const sign = value >= 0 ? (showSign ? '+' : '') : '';
+  const absValue = Math.abs(value);
+  const formatted = formatNumberWithSpaces(absValue, decimals, 0);
+
+  return value >= 0 ? `${sign}${formatted}` : `-${formatted}`;
+}

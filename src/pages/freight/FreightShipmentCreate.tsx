@@ -73,7 +73,7 @@ export default function FreightShipmentCreate() {
       if (shippingPreps.length === 0) {
         showInfo(
           'Aucune expédition disponible',
-          'Les expéditions doivent avoir le statut "Prêt pour Expédition" (ready_for_expedition) dans le module Shipping Preparation.'
+          'Les expéditions doivent avoir le statut "Prêt pour Expédition" dans le module Shipping Preparation.'
         );
       }
     } catch (error: any) {
@@ -221,7 +221,7 @@ export default function FreightShipmentCreate() {
               <div>
                 <h3 className="font-semibold text-yellow-900">Aucune expédition disponible</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Les expéditions doivent avoir le statut "Prêt pour Expédition" (ready_for_expedition)
+                  Les expéditions doivent avoir le statut "Prêt pour Expédition"
                   dans le module Shipping Preparation.
                 </p>
               </div>

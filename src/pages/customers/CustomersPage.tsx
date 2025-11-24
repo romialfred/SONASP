@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Loading } from '@/components/ui/Loading';
 import { Search, Download, Mail, MapPin } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 interface Customer {
   id: string;
@@ -127,7 +128,7 @@ export function CustomersPage() {
                       {customer.phone && <p className="text-xs text-gray-500 mt-1">{customer.phone}</p>}
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(customer.status)}`}>
-                      {customer.status}
+                      {formatStatusFr(customer.status)}
                     </span>
                   </div>
 

@@ -20,6 +20,7 @@ import { shippingPreparationService, ShippingPreparation, ShippingProductionItem
 import { shippingStatusService } from '@/services/shippingStatusService';
 import { assayCertificateService } from '@/services/assayCertificateService';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import { ShippingStatus } from '@/constants/shippingStatuses';
 import { History } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -579,7 +580,7 @@ export default function ShippingPreparationDetails() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-amber-900 mb-1">
-                        {statusLabels[preparation.status] || preparation.status}
+                        {statusLabels[preparation.status] || formatStatusFr(preparation.status)}
                       </p>
                       <p className="text-xs text-amber-700">
                         {statusDescriptions[preparation.status] || ''}

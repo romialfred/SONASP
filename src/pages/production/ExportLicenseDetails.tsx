@@ -7,6 +7,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
 import { formatDateStandard } from '@/utils/dateUtils';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 interface ShipmentInfo {
   id: string;
@@ -92,7 +93,7 @@ export function ExportLicenseDetails() {
     if (license.status === 'active') {
       return <span className="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Active</span>;
     }
-    return <span className="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">{license.status}</span>;
+    return <span className="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">{formatStatusFr(license.status)}</span>;
   };
 
   return (
@@ -260,7 +261,7 @@ export function ExportLicenseDetails() {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-blue-100 text-blue-800'
                         }`}>
-                          {shipment.status}
+                          {formatStatusFr(shipment.status)}
                         </span>
                       </div>
                     </div>

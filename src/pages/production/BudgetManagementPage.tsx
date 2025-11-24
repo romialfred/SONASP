@@ -941,15 +941,35 @@ export function BudgetManagementPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Actual:</span>
-                <span className="text-sm  text-blue-300">0.00 oz</span>
+                <span className="text-sm  text-blue-300">
+                  {Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0)} oz
+                </span>
               </div>
               <div className="h-px bg-white/20"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Variation:</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <span className="text-sm  text-red-400">-100.0%</span>
-                  <span className="text-xs text-slate-400">(-{calculateYearTotal()} oz)</span>
+                  {(() => {
+                    const yearBudget = calculateYearTotal();
+                    const yearActual = Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0);
+                    const yearVariance = yearActual - yearBudget;
+                    const yearVariancePercent = yearBudget > 0 ? ((yearVariance / yearBudget) * 100) : -100;
+                    const isPositive = yearVariancePercent >= 0;
+                    const isWarning = yearVariancePercent >= -10 && yearVariancePercent < 0;
+                    const dotColor = isPositive ? 'bg-green-500' : isWarning ? 'bg-yellow-500' : 'bg-red-500';
+                    const textColor = isPositive ? 'text-green-400' : isWarning ? 'text-yellow-400' : 'text-red-400';
+                    return (
+                      <>
+                        <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
+                        <span className={`text-sm ${textColor}`}>
+                          {yearVariancePercent >= 0 ? '+' : ''}{yearVariancePercent.toFixed(1)}%
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          ({yearVariance >= 0 ? '+' : ''}{yearVariance} oz)
+                        </span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -977,7 +997,9 @@ export function BudgetManagementPage() {
                 return sum + Math.round(Number(budget));
               }, 0);
 
-              const quarterActual = 0; // TODO: Connect to actual data
+              const quarterActual = quarterMonths.reduce((sum, month) => {
+                return sum + Math.round(Number(monthlyActuals[month] || 0));
+              }, 0);
               const variance = quarterActual - quarterBudget;
               const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
 
@@ -1048,7 +1070,7 @@ export function BudgetManagementPage() {
                   ? pendingBudgets[monthNum]
                   : monthlyBudgets.find(mb => mb.month === monthNum)?.budget_oz || 0;
 
-                const actual = 0; // TODO: Connect to actual data
+                const actual = Math.round(Number(monthlyActuals[monthNum] || 0));
                 const variance = actual - budget;
                 const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
 

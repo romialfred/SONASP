@@ -500,32 +500,32 @@ export function ProductionInSafe() {
             <table className="w-full">
               <thead className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-100 border-b-2 border-amber-300">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Date Production
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    DATE
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Société
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    SOCIÉTÉ
                   </th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Bullion (g)
+                  <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    BULLION (G)
                   </th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Finesse %
+                  <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    FINESSE %
                   </th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Or Pur (g)
+                  <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    OR PUR (G)
                   </th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Oz Estimées
+                  <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    OZ ESTIMÉES
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Bar Reference
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    RÉFÉRENCE
                   </th>
-                  <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Outlook
+                  <th className="px-3 py-2.5 text-center text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    OUTLOOK
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Status
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
+                    STATUT
                   </th>
                 </tr>
               </thead>
@@ -549,37 +549,51 @@ export function ProductionInSafe() {
                       className="hover:bg-amber-50/50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/production/${prod.id}`)}
                     >
-                      <td className="px-4 py-2.5 text-sm font-medium text-gray-900">
-                        {new Date(prod.production_date).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: '2-digit'
-                        })}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="text-xs text-gray-900">
+                          {new Date(prod.production_date).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: '2-digit'
+                          })}
+                        </div>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-gray-700">
-                        {getCompanyName(prod.mining_company_id)}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className="text-xs text-gray-700">
+                          {getCompanyName(prod.mining_company_id)}
+                        </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-right font-medium text-gray-900">
-                        {safeToLocaleString(prod.bullion_grams, { maximumFractionDigits: 0 })}
+                      <td className="px-3 py-3 whitespace-nowrap text-right">
+                        <span className="text-xs text-gray-900">
+                          {safeToLocaleString(prod.bullion_grams, { maximumFractionDigits: 0 })}
+                        </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-right text-gray-700">
-                        {safeToFixed(prod.estimated_fineness_pct, 2)}%
+                      <td className="px-3 py-3 whitespace-nowrap text-right">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800">
+                          {safeToFixed(prod.estimated_fineness_pct, 2)}%
+                        </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-right font-medium text-gray-900">
-                        {safeToLocaleString(prod.pure_gold_grams, { maximumFractionDigits: 0 })}
+                      <td className="px-3 py-3 whitespace-nowrap text-right">
+                        <span className="text-xs text-yellow-700">
+                          {safeToLocaleString(prod.pure_gold_grams, { maximumFractionDigits: 0 })}
+                        </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-right font-semibold text-amber-700">
-                        {safeToFixed(prod.estimated_oz, 2)}
+                      <td className="px-3 py-3 whitespace-nowrap text-right">
+                        <span className="text-xs font-medium text-emerald-700">
+                          {safeToFixed(prod.estimated_oz, 2)}
+                        </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm font-mono text-gray-700">
-                        {prod.bar_reference || '-'}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className="text-xs font-mono text-gray-700">
+                          {prod.bar_reference || '-'}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-3 text-center">
                         <div className="flex justify-center">
                           {getOutlookIcon(prod.estimated_oz, index)}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         <ProductionStatusBadge status={prod.status as ProductionStatus} size="sm" />
                       </td>
                     </tr>
@@ -589,23 +603,25 @@ export function ProductionInSafe() {
               {!loading && productions.length > 0 && (
                 <tfoot className="bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 border-t-2 border-amber-300">
                   <tr>
-                    <td className="px-4 py-3 text-xs font-semibold uppercase text-gray-900">
-                      Total
+                    <td className="px-3 py-2.5 text-xs font-medium uppercase text-gray-900">
+                      TOTAL
                     </td>
-                    <td className="px-4 py-3"></td>
-                    <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    <td className="px-3 py-2.5"></td>
+                    <td className="px-3 py-2.5 text-xs text-right text-gray-900">
                       {safeToLocaleString(summary.total_bullion_grams, { maximumFractionDigits: 0 })}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-700">
+                    <td className="px-3 py-2.5 text-xs text-right text-gray-700">
                       Moy: {safeToFixed(summary.avg_fineness_pct, 2)}%
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    <td className="px-3 py-2.5 text-xs text-right text-gray-900">
                       {safeToLocaleString(summary.total_pure_gold_grams, { maximumFractionDigits: 0 })}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-bold text-amber-900">
+                    <td className="px-3 py-2.5 text-xs text-right font-medium text-emerald-900">
                       {safeToFixed(summary.total_estimated_oz, 2)}
                     </td>
-                    <td colSpan={3} className="px-4 py-3"></td>
+                    <td colSpan={3} className="px-3 py-2.5 text-xs text-gray-900">
+                      {summary.record_count} barre{summary.record_count > 1 ? 's' : ''}
+                    </td>
                   </tr>
                 </tfoot>
               )}

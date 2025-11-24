@@ -25,6 +25,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Loading } from '../../components/ui/Loading';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
+import { filterOperationalMiningCompanies } from '../../utils/miningCompanyFilters';
 import {
   annualBudgetService,
   AnnualBudget,
@@ -292,9 +293,9 @@ export function BudgetManagementPage() {
   }, []);
 
   useEffect(() => {
-    // Auto-select first company if available and no company selected
+    // Auto-select "ALL" if no company selected
     if (miningCompanies.length > 0 && !selectedCompanyId) {
-      setSelectedCompanyId(miningCompanies[0].id);
+      setSelectedCompanyId('ALL');
     }
   }, [miningCompanies]);
 
@@ -309,10 +310,14 @@ export function BudgetManagementPage() {
       const { data, error } = await supabase
         .from('mining_companies')
         .select('id, name')
+        .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
-      setMiningCompanies(data || []);
+
+      // Filtrer pour exclure la société mère "Mansa Resource"
+      const operationalCompanies = filterOperationalMiningCompanies(data || []);
+      setMiningCompanies(operationalCompanies);
     } catch (error) {
       console.error('Error loading mining companies:', error);
     }
@@ -334,23 +339,88 @@ export function BudgetManagementPage() {
         return;
       }
 
-      const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
-        selectedYear,
-        'guinea',
-        selectedCompanyId
-      );
+      // Si "ALL" est sélectionné, charger et agréger les données de toutes les mines
+      if (selectedCompanyId === 'ALL') {
+        // Charger les données pour chaque mine
+        const allBudgets: MonthlyBudget[] = [];
+        const allForecasts: QuarterlyForecast[] = [];
+        const allActuals: Record<number, number> = {};
 
-      setAnnualBudget(data.budget);
-      setMonthlyBudgets(data.monthlyBudgets);
-      setQuarterlyForecasts(data.quarterlyForecasts);
+        for (const company of miningCompanies) {
+          const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
+            selectedYear,
+            'guinea',
+            company.id
+          );
 
-      // Load actual production data
-      const actuals = await annualBudgetService.getMonthlyActualProduction(
-        selectedYear,
-        selectedCompanyId,
-        'guinea'
-      );
-      setMonthlyActuals(actuals);
+          allBudgets.push(...data.monthlyBudgets);
+          allForecasts.push(...data.quarterlyForecasts);
+
+          const actuals = await annualBudgetService.getMonthlyActualProduction(
+            selectedYear,
+            company.id,
+            'guinea'
+          );
+
+          // Agréger les actuals par mois
+          for (const [month, value] of Object.entries(actuals)) {
+            const monthNum = parseInt(month);
+            allActuals[monthNum] = (allActuals[monthNum] || 0) + value;
+          }
+        }
+
+        // Agréger les budgets par mois
+        const aggregatedBudgets: MonthlyBudget[] = [];
+        for (let month = 1; month <= 12; month++) {
+          const monthBudgets = allBudgets.filter(b => b.month === month);
+          const totalBudget = monthBudgets.reduce((sum, b) => sum + (b.budget_oz || 0), 0);
+
+          if (monthBudgets.length > 0) {
+            aggregatedBudgets.push({
+              ...monthBudgets[0],
+              budget_oz: totalBudget
+            });
+          }
+        }
+
+        // Agréger les forecasts par mois
+        const aggregatedForecasts: QuarterlyForecast[] = [];
+        for (let month = 1; month <= 12; month++) {
+          const monthForecasts = allForecasts.filter(f => f.month === month);
+          const totalForecast = monthForecasts.reduce((sum, f) => sum + (f.forecast_oz || 0), 0);
+
+          if (monthForecasts.length > 0) {
+            aggregatedForecasts.push({
+              ...monthForecasts[0],
+              forecast_oz: totalForecast
+            });
+          }
+        }
+
+        setAnnualBudget(null as any);
+        setMonthlyBudgets(aggregatedBudgets);
+        setQuarterlyForecasts(aggregatedForecasts);
+        setMonthlyActuals(allActuals);
+      } else {
+        // Charger les données pour une mine spécifique
+        const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
+          selectedYear,
+          'guinea',
+          selectedCompanyId
+        );
+
+        setAnnualBudget(data.budget);
+        setMonthlyBudgets(data.monthlyBudgets);
+        setQuarterlyForecasts(data.quarterlyForecasts);
+
+        // Load actual production data
+        const actuals = await annualBudgetService.getMonthlyActualProduction(
+          selectedYear,
+          selectedCompanyId,
+          'guinea'
+        );
+        setMonthlyActuals(actuals);
+      }
 
       setPendingBudgets({});
       setPendingForecasts({});
@@ -760,6 +830,7 @@ export function BudgetManagementPage() {
                     onChange={e => setSelectedCompanyId(e.target.value)}
                     className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
+                    <option value="ALL">Sélectionner Toutes les Mines</option>
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}

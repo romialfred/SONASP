@@ -131,17 +131,17 @@ export const freightShipmentService = {
   },
 
   async getAvailableShippingPreparations(): Promise<AvailableShippingPreparation[]> {
-    // Get all shipping preparations that are already used in freight shipments
-    const { data: usedShipments, error: usedError } = await supabase
-      .from('freight_shipment_shipping_preparations')
-      .select('shipping_preparation_id');
+    // Get all production IDs that are already used in freight shipments
+    const { data: usedProductions, error: usedError } = await supabase
+      .from('freight_shipment_productions')
+      .select('production_id');
 
     if (usedError) throw usedError;
 
-    const usedIds = (usedShipments || []).map((s: any) => s.shipping_preparation_id);
+    const usedProductionIds = (usedProductions || []).map((p: any) => p.production_id);
 
-    // Get available shipping preparations (not yet used in freight shipments)
-    let query = supabase
+    // Get all shipping preparations with their production items
+    const { data: shippingPreps, error: prepError } = await supabase
       .from('shipping_preparations')
       .select(`
         id,
@@ -168,17 +168,19 @@ export const freightShipmentService = {
           )
         )
       `)
-      .eq('status', 'ready_for_expedition');
+      .eq('status', 'ready_for_expedition')
+      .order('shipped_at', { ascending: false });
 
-    // Filter out already used shipping preparations
-    if (usedIds.length > 0) {
-      query = query.not('id', 'in', `(${usedIds.join(',')})`);
-    }
+    if (prepError) throw prepError;
 
-    const { data, error } = await query.order('shipped_at', { ascending: false });
+    // Filter out shipping preparations where all productions are already used
+    const availablePreps = (shippingPreps || []).filter((prep: any) => {
+      const items = prep.items || [];
+      // Keep only if at least one production is not yet used in freight shipments
+      return items.some((item: any) => !usedProductionIds.includes(item.daily_production_id));
+    });
 
-    if (error) throw error;
-    return (data || []) as AvailableShippingPreparation[];
+    return availablePreps as AvailableShippingPreparation[];
   },
 
   async createShipment(data: {

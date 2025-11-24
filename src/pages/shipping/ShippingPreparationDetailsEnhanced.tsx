@@ -54,7 +54,7 @@ export function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showConfirm } = useDialog();
+  const { showConfirm, showSuccess, showError: showErrorDialog } = useDialog();
 
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
   const [productionItems, setProductionItems] = useState<ShippingProductionItem[]>([]);
@@ -327,16 +327,11 @@ export function ShippingPreparationDetailsEnhanced() {
           // Recharger les données
           await loadShippingDetails(true);
 
-          setError({
-            title: 'Succès',
-            message: `Status changé avec succès vers "${newStatus}"`
-          });
+          // Afficher message de succès
+          showSuccess('Succès', `Le statut a été changé avec succès vers "${newStatus}"`);
         } catch (err: any) {
           console.error('Error changing status:', err);
-          setError({
-            title: 'Erreur',
-            message: err.message || 'Erreur lors du changement de status'
-          });
+          showErrorDialog('Erreur', err.message || 'Erreur lors du changement de status');
         } finally {
           setLoading(false);
         }

@@ -575,6 +575,7 @@ export default function ShippingPreparationNew() {
       const totalNetWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
       const totalGrossWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
       const totalNetWeightOz = totalNetWeightGrams / 31.1035;
+      const totalBoxes = selectedProductions.length; // Nombre de productions = nombre de boxes
 
       const prepData = {
         expedition_lot_number: expeditionLotNumber,
@@ -586,6 +587,7 @@ export default function ShippingPreparationNew() {
         total_net_weight_grams: totalNetWeightGrams,
         total_gross_weight_grams: totalGrossWeightGrams,
         total_weight_oz: totalNetWeightOz,
+        total_boxes: totalBoxes,
         status: 'waiting_for_customs_approval' as const,  // Statut initial du workflow
         prepared_at: new Date().toISOString(),
       };

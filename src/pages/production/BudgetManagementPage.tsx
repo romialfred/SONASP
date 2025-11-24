@@ -26,6 +26,7 @@ import { Card } from '../../components/ui/Card';
 import { Loading } from '../../components/ui/Loading';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
 import { filterOperationalMiningCompanies } from '../../utils/miningCompanyFilters';
+import { formatNumberWithSpaces } from '../../utils/numberUtils';
 import {
   annualBudgetService,
   AnnualBudget,
@@ -185,13 +186,13 @@ function ProductionBrowserTab({
                     {month}
                   </td>
                   <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-blue-50/50">
-                    {Math.round(Number(budget))}
+                    {formatNumberWithSpaces(budget, 2)}
                   </td>
                   <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-emerald-50/50">
-                    {Math.round(Number(actual))}
+                    {formatNumberWithSpaces(actual, 2)}
                   </td>
                   <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-amber-50/50">
-                    {Math.round(Number(forecast))}
+                    {formatNumberWithSpaces(forecast, 2)}
                   </td>
                 </tr>
               );
@@ -202,13 +203,13 @@ function ProductionBrowserTab({
                 Total Annuel
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {monthlyBudgets.reduce((sum, mb) => sum + Math.round(Number(mb.budget_oz || 0)), 0)}
+                {formatNumberWithSpaces(monthlyBudgets.reduce((sum, mb) => sum + (mb.budget_oz || 0), 0), 2)}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0)}
+                {formatNumberWithSpaces(Object.values(monthlyActuals).reduce((sum, val) => sum + (val || 0), 0), 2)}
               </td>
               <td className="px-4 py-3 text-sm text-right border border-slate-500">
-                {quarterlyForecasts.reduce((sum, qf) => sum + Math.round(Number(qf.forecast_oz || 0)), 0)}
+                {formatNumberWithSpaces(quarterlyForecasts.reduce((sum, qf) => sum + (qf.forecast_oz || 0), 0), 2)}
               </td>
             </tr>
           </tbody>
@@ -237,7 +238,7 @@ function ProductionBrowserTab({
                 label={{ value: 'Onces (oz)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#64748b' } }}
               />
               <Tooltip
-                formatter={(value: number) => [`${value} oz`]}
+                formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
                 contentStyle={{ fontSize: '12px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />
               <Legend
@@ -1008,12 +1009,12 @@ export function BudgetManagementPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Budget:</span>
-                <span className="text-sm ">{calculateYearTotal()} oz</span>
+                <span className="text-sm ">{formatNumberWithSpaces(calculateYearTotal(), 2)} oz</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-300">Actual:</span>
                 <span className="text-sm  text-blue-300">
-                  {Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0)} oz
+                  {formatNumberWithSpaces(Object.values(monthlyActuals).reduce((sum, val) => sum + (val || 0), 0), 2)} oz
                 </span>
               </div>
               <div className="h-px bg-white/20"></div>
@@ -1102,16 +1103,16 @@ export function BudgetManagementPage() {
                   <div className="space-y-1.5 mb-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Budget:</span>
-                      <span className=" text-slate-800">{quarterBudget} oz</span>
+                      <span className=" text-slate-800">{formatNumberWithSpaces(quarterBudget, 2)} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Actual:</span>
-                      <span className=" text-blue-600">{quarterActual} oz</span>
+                      <span className=" text-blue-600">{formatNumberWithSpaces(quarterActual, 2)} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Écart:</span>
                       <span className={` ${trafficColor.text}`}>
-                        {variance >= 0 ? '+' : ''}{variance} oz
+                        {variance >= 0 ? '+' : ''}{formatNumberWithSpaces(Math.abs(variance), 2)} oz
                       </span>
                     </div>
                   </div>
@@ -1193,7 +1194,7 @@ export function BudgetManagementPage() {
               </span>
             </div>
             <div className="text-2xl ">
-              {calculateYearTotal()}
+              {formatNumberWithSpaces(calculateYearTotal(), 2)}
               <span className="text-sm ml-1.5  text-slate-200">oz</span>
             </div>
           </div>
@@ -1214,7 +1215,7 @@ export function BudgetManagementPage() {
                 </span>
               </div>
               <div className="text-2xl ">
-                {calculateTotalBudget()}
+                {formatNumberWithSpaces(calculateTotalBudget(), 2)}
                 <span className="text-sm ml-1.5  text-teal-100">oz</span>
               </div>
             </div>
@@ -1255,7 +1256,7 @@ export function BudgetManagementPage() {
                       })}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`${value} oz`]}
+                      formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Legend
@@ -1295,7 +1296,7 @@ export function BudgetManagementPage() {
                       width={35}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value} oz`, 'Budget']}
+                      formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`, 'Budget']}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
@@ -1350,7 +1351,7 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value} oz`]}
+                        formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend
@@ -1394,7 +1395,7 @@ export function BudgetManagementPage() {
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${value} oz`]}
+                        formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend

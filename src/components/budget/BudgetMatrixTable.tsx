@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Calendar, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import { annualBudgetService, MonthlyBudget, QuarterlyForecast } from '../../services/annualBudgetService';
+import { formatNumberWithSpaces } from '../../utils/numberUtils';
 
 interface BudgetMatrixTableProps {
   mode: 'budget' | 'forecast';
@@ -175,7 +176,7 @@ export function BudgetMatrixTable({
             <div className="text-right">
               <span className="text-slate-500 text-[10px] block mb-0.5">Budget</span>
               <span className="text-sm text-slate-900">
-                {Math.round(quarterTotals.budget).toLocaleString('fr-FR')}
+                {formatNumberWithSpaces(quarterTotals.budget, 2)}
                 <span className="text-[10px] ml-1 text-slate-500">oz</span>
               </span>
             </div>
@@ -184,7 +185,7 @@ export function BudgetMatrixTable({
                 <div className="text-right">
                   <span className="text-blue-600 text-[10px] block mb-0.5">Forecast</span>
                   <span className="text-sm text-blue-700">
-                    {Math.round(quarterTotals.forecast).toLocaleString('fr-FR')}
+                    {formatNumberWithSpaces(quarterTotals.forecast, 2)}
                     <span className="text-[10px] ml-1 text-blue-500">oz</span>
                   </span>
                 </div>
@@ -192,7 +193,7 @@ export function BudgetMatrixTable({
                   <span className="text-slate-500 text-[10px] block mb-0.5">Écart</span>
                   <span className={`text-sm ${quarterTotals.forecast - quarterTotals.budget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {quarterTotals.forecast - quarterTotals.budget >= 0 ? '+' : ''}
-                    {Math.round(quarterTotals.forecast - quarterTotals.budget).toLocaleString('fr-FR')}
+                    {formatNumberWithSpaces(quarterTotals.forecast - quarterTotals.budget, 2)}
                     <span className="text-[10px] ml-1">oz</span>
                   </span>
                 </div>
@@ -282,12 +283,12 @@ export function BudgetMatrixTable({
                           />
                         ) : (
                           <div className="text-right text-sm text-slate-700 px-2 py-1">
-                            {Math.round(budget).toLocaleString('fr-FR')}
+                            {formatNumberWithSpaces(budget, 2)}
                           </div>
                         )}
                       </td>
                       <td className="px-3 py-2 text-xs text-right text-slate-500">
-                        {Math.round(dailyBudget).toLocaleString('fr-FR')}
+                        {formatNumberWithSpaces(dailyBudget, 2)}
                       </td>
                       {showForecastColumns && (
                         <>
@@ -316,16 +317,16 @@ export function BudgetMatrixTable({
                                 }
                                 focus:outline-none
                               `}
-                              placeholder={Math.round(budget).toLocaleString('fr-FR')}
+                              placeholder={formatNumberWithSpaces(budget, 2)}
                             />
                           </td>
                           <td className="px-3 py-2 text-xs text-right text-blue-600 bg-blue-50/20">
-                            {Math.round(dailyForecast).toLocaleString('fr-FR')}
+                            {formatNumberWithSpaces(dailyForecast, 2)}
                           </td>
                           <td className="px-3 py-2 bg-blue-50/10">
                             <div className="flex flex-col items-end gap-0.5">
                               <span className={`text-xs ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {variance >= 0 ? '+' : ''}{Math.round(variance).toLocaleString('fr-FR')}
+                                {variance >= 0 ? '+' : ''}{formatNumberWithSpaces(variance, 2)}
                               </span>
                               <span className={`text-[10px] ${variance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                 {variancePercentage >= 0 ? '+' : ''}{Math.round(variancePercentage)}%

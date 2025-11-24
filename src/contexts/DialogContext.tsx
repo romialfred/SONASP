@@ -184,20 +184,22 @@ export function DialogProvider({ children }: DialogProviderProps) {
 
       {config && (
         <Modal isOpen={isOpen} onClose={handleCancel} title="">
-          <div className="p-6">
+          <div className="p-8">
             {/* Icon */}
-            <div className="flex justify-center mb-4">
-              {getDialogIcon(config.type)}
+            <div className="flex justify-center mb-6">
+              <div className={`rounded-full p-4 ${colors!.bg}`}>
+                {getDialogIcon(config.type)}
+              </div>
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
               {config.title}
             </h2>
 
             {/* Message */}
-            <div className={`rounded-lg p-4 border ${colors!.bg} ${colors!.border} mb-6`}>
-              <p className={`text-center ${colors!.text} whitespace-pre-line`}>
+            <div className="mb-8">
+              <p className="text-center text-gray-700 whitespace-pre-line leading-relaxed text-base">
                 {config.message}
               </p>
             </div>
@@ -209,16 +211,16 @@ export function DialogProvider({ children }: DialogProviderProps) {
                   variant="ghost"
                   onClick={handleCancel}
                   disabled={isProcessing}
-                  className="min-w-[120px]"
+                  className="min-w-[140px] px-6 py-3 text-base font-medium border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
                 >
-                  {config.cancelText || 'Cancel'}
+                  {config.cancelText || 'Annuler'}
                 </Button>
               )}
               <Button
                 variant={colors!.button as 'primary' | 'danger'}
                 onClick={handleConfirm}
                 loading={isProcessing}
-                className="min-w-[120px]"
+                className="min-w-[140px] px-6 py-3 text-base font-medium shadow-lg hover:shadow-xl transition-all"
               >
                 {config.confirmText || 'OK'}
               </Button>

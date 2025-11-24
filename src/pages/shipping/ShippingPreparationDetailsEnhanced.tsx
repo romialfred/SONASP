@@ -14,6 +14,7 @@ import { ShippingStatusHistory } from '@/components/shipping/ShippingStatusHisto
 import { ShippingStatus } from '@/constants/shippingStatuses';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDialog } from '@/contexts/DialogContext';
 import { AssayCertificateCard } from '@/components/shipping/AssayCertificateCard';
 import { getShippingCertificates, AssayCertificate } from '@/services/assayCertificateService';
 
@@ -53,6 +54,7 @@ export function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showConfirm } = useDialog();
 
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
   const [productionItems, setProductionItems] = useState<ShippingProductionItem[]>([]);
@@ -289,51 +291,57 @@ export function ShippingPreparationDetailsEnhanced() {
     };
 
     const confirmMessage = confirmMessages[newStatus as keyof typeof confirmMessages];
-    if (!confirmMessage || !window.confirm(confirmMessage)) {
+    if (!confirmMessage) {
       return;
     }
 
-    try {
-      setLoading(true);
+    showConfirm(
+      'Confirmation',
+      confirmMessage,
+      async () => {
+        try {
+          setLoading(true);
 
-      const { error: updateError } = await supabase
-        .from('shipping_preparations')
-        .update({ status: newStatus })
-        .eq('id', id);
+          const { error: updateError } = await supabase
+            .from('shipping_preparations')
+            .update({ status: newStatus })
+            .eq('id', id);
 
-      if (updateError) {
-        throw updateError;
+          if (updateError) {
+            throw updateError;
+          }
+
+          // Log dans l'historique
+          await supabase
+            .from('unified_status_history')
+            .insert({
+              entity_type: 'shipping',
+              entity_id: id,
+              old_status: preparation.status,
+              new_status: newStatus,
+              change_context: 'shipping_management',
+              changed_by: user?.id,
+              action_description: `Status changé: ${preparation.status} → ${newStatus}`,
+            });
+
+          // Recharger les données
+          await loadShippingDetails(true);
+
+          setError({
+            title: 'Succès',
+            message: `Status changé avec succès vers "${newStatus}"`
+          });
+        } catch (err: any) {
+          console.error('Error changing status:', err);
+          setError({
+            title: 'Erreur',
+            message: err.message || 'Erreur lors du changement de status'
+          });
+        } finally {
+          setLoading(false);
+        }
       }
-
-      // Log dans l'historique
-      await supabase
-        .from('unified_status_history')
-        .insert({
-          entity_type: 'shipping',
-          entity_id: id,
-          old_status: preparation.status,
-          new_status: newStatus,
-          change_context: 'shipping_management',
-          changed_by: user?.id,
-          action_description: `Status changé: ${preparation.status} → ${newStatus}`,
-        });
-
-      // Recharger les données
-      await loadShippingDetails(true);
-
-      setError({
-        title: 'Succès',
-        message: `Status changé avec succès vers "${newStatus}"`
-      });
-    } catch (err: any) {
-      console.error('Error changing status:', err);
-      setError({
-        title: 'Erreur',
-        message: err.message || 'Erreur lors du changement de status'
-      });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   if (loading) {

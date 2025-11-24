@@ -17,6 +17,7 @@ import {
 import * as XLSX from 'xlsx';
 import { generatePDF } from '@/services/pdfGenerationService';
 import { reportSchedulingService, type ScheduledReport, type ReportHistory } from '@/services/reportSchedulingService';
+import { useDialog } from '@/contexts/DialogContext';
 
 interface ReportType {
   id: string;
@@ -29,6 +30,7 @@ interface ReportType {
 }
 
 export function ReportsDashboard() {
+  const { showError } = useDialog();
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState('');
   const [selectedReportId, setSelectedReportId] = useState('');
@@ -164,7 +166,7 @@ export function ReportsDashboard() {
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('An error occurred while generating the PDF. Please try again.');
+      showError('Erreur de génération PDF', 'Une erreur s\'est produite lors de la génération du PDF. Veuillez réessayer.');
     }
   };
 

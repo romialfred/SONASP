@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { BatchMetricsTiles } from '@/components/batch/BatchMetricsTiles';
-import { BatchSections } from '@/components/batch/BatchSections';
 import { supabase } from '@/lib/supabase';
+import { convertGramsToOunces, formatWeight } from '@/utils/salesUtils';
+import { formatDateStandard } from '@/utils/dateUtils';
 
 interface MiningCompany {
   id: string;
@@ -26,21 +26,20 @@ interface Batch {
   created_at: string;
   mining_company_id?: string;
   mining_company?: MiningCompany;
-  sale_id?: string;
 }
 
 const REFINERY_STATUSES = [
+  'validated_at_airport',
+  'in_transit_to_refinery',
+  'received_at_refinery',
+  'refinery_receipt_validated',
+  'processing',
+  'processed'
 ];
 
 export function RefiningPage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [miningCompanyFilter, setMiningCompanyFilter] = useState<string>('all');
-  const [yearFilter, setYearFilter] = useState<string>('all');
-  const [monthFilter, setMonthFilter] = useState<string>('');
   const [batches, setBatches] = useState<Batch[]>([]);
-  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,34 +49,23 @@ export function RefiningPage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [batchesResult, companiesResult] = await Promise.all([
-        supabase
-          .from('batches')
-          .select(`
-            *,
-            mining_company:mining_companies(id, name, country),
-            sales!left(id)
-          `)
-          .in('status', REFINERY_STATUSES)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('mining_companies')
-          .select('id, name, country')
-          .eq('status', 'active')
-          .order('name'),
-      ]);
+      const { data, error } = await supabase
+        .from('batches')
+        .select(`
+          *,
+          mining_company:mining_companies(id, name, country)
+        `)
+        .in('status', REFINERY_STATUSES)
+        .order('created_at', { ascending: false });
 
-      if (batchesResult.data) {
-        const enrichedBatches = batchesResult.data.map((batch: any) => ({
+      if (error) throw error;
+
+      if (data) {
+        const enrichedBatches = data.map((batch: any) => ({
           ...batch,
           weight_ounces: batch.weight_ounces || convertGramsToOunces(batch.weight_grams),
-          sale_id: batch.sales?.[0]?.id || null,
         }));
         setBatches(enrichedBatches);
-      }
-
-      if (companiesResult.data) {
-        setMiningCompanies(companiesResult.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -85,63 +73,6 @@ export function RefiningPage() {
       setLoading(false);
     }
   }
-
-  const filteredBatches = useMemo(() => {
-    return batches.filter((batch) => {
-      const matchesSearch = batch.batch_number.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
-      const matchesCompany =
-        miningCompanyFilter === 'all' || batch.mining_company_id === miningCompanyFilter;
-
-      let matchesDate = true;
-      if (yearFilter !== 'all') {
-        const batchDate = new Date(batch.shipping_date || batch.created_at);
-        const batchYear = batchDate.getFullYear().toString();
-        matchesDate = batchYear === yearFilter;
-
-        if (matchesDate && monthFilter) {
-          const batchMonth = String(batchDate.getMonth() + 1).padStart(2, '0');
-          matchesDate = batchMonth === monthFilter;
-        }
-      }
-
-      return matchesSearch && matchesStatus && matchesCompany && matchesDate;
-    });
-  }, [batches, searchQuery, statusFilter, miningCompanyFilter, yearFilter, monthFilter]);
-
-  const statusMetrics = useMemo(() => {
-    const metricsMap = new Map<string, { count: number; totalWeightGrams: number; totalWeightOunces: number }>();
-
-    filteredBatches.forEach((batch) => {
-      const existing = metricsMap.get(batch.status) || {
-        count: 0,
-        totalWeightGrams: 0,
-        totalWeightOunces: 0,
-      };
-
-      metricsMap.set(batch.status, {
-        count: existing.count + 1,
-        totalWeightGrams: existing.totalWeightGrams + batch.weight_grams,
-        totalWeightOunces: existing.totalWeightOunces + batch.weight_ounces,
-      });
-    });
-
-    return Array.from(metricsMap.entries())
-      .map(([status, data]) => ({
-        status,
-        ...data,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [filteredBatches]);
-
-  const availableYears = useMemo(() => {
-    const years = new Set<string>();
-    batches.forEach((batch) => {
-      const date = new Date(batch.shipping_date || batch.created_at);
-      years.add(date.getFullYear().toString());
-    });
-    return Array.from(years).sort((a, b) => b.localeCompare(a));
-  }, [batches]);
 
   const handleExport = () => {
     console.log('Export functionality to be implemented');
@@ -154,7 +85,6 @@ export function RefiningPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion du Raffinage</h1>
@@ -178,27 +108,6 @@ export function RefiningPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <BatchFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          miningCompanyFilter={miningCompanyFilter}
-          onMiningCompanyChange={setMiningCompanyFilter}
-          yearFilter={yearFilter}
-          onYearChange={(year) => {
-            setYearFilter(year);
-            if (year === 'all') {
-              setMonthFilter('');
-            }
-          }}
-          monthFilter={monthFilter}
-          onMonthChange={setMonthFilter}
-          miningCompanies={miningCompanies}
-          availableYears={availableYears}
-        />
-
         {loading ? (
           <Card>
             <div className="flex items-center justify-center py-12">
@@ -206,25 +115,84 @@ export function RefiningPage() {
             </div>
           </Card>
         ) : (
-          <>
-            {/* Metrics Tiles */}
-            {statusMetrics.length > 0 && <BatchMetricsTiles metrics={statusMetrics} />}
-
-            {/* Batch Sections */}
-            {filteredBatches.length > 0 ? (
-              <BatchSections batches={filteredBatches} onBatchClick={handleBatchClick} />
-            ) : (
-              <Card>
+          <Card>
+            <div className="p-6">
+              {batches.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Batch Number
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Weight
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Mining Company
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batches.map((batch) => (
+                        <tr
+                          key={batch.id}
+                          className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleBatchClick(batch.id)}
+                        >
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {batch.batch_number}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {batch.status.replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {formatWeight(batch.weight_grams)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {batch.mining_company?.name || 'N/A'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {formatDateStandard(batch.shipping_date || batch.created_at)}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBatchClick(batch.id);
+                              }}
+                            >
+                              View Details
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
                 <div className="text-center py-12">
+                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-sm">
-                    {batches.length === 0
-                      ? 'Aucun batch en raffinerie. Les batches validés apparaîtront ici.'
-                      : 'Aucun batch ne correspond à vos critères de recherche.'}
+                    Aucun batch en raffinerie. Les batches validés apparaîtront ici.
                   </p>
                 </div>
-              </Card>
-            )}
-          </>
+              )}
+            </div>
+          </Card>
         )}
       </div>
     </MainLayout>

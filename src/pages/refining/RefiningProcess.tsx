@@ -9,6 +9,17 @@ import Input from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import { FormField } from '@/components/ui/FormField';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import { formatWeight } from '@/utils/salesUtils';
+
+function calculateFinalFine(
+  postMeltingWeight: number,
+  fineness: number,
+  metalRetained: number
+): { finalFineGrams: number; finalFineOunces: number } {
+  const finalFineGrams = postMeltingWeight * (fineness / 100) * (metalRetained / 100);
+  const finalFineOunces = finalFineGrams / 31.1035;
+  return { finalFineGrams, finalFineOunces };
+}
 
 interface FormData {
   pre_melting_weight: string;

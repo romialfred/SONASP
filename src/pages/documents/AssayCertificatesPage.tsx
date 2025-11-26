@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileText, Eye, CheckCircle, XCircle, Search, MapPin, Calendar, Scale,
+  FileText, Eye, CheckCircle, XCircle, X, Search, MapPin, Calendar, Scale,
   Building2, Ship, Package, Upload, Plus, Download, ChevronDown, ChevronRight,
   ChevronLeft, PanelRightClose, PanelRightOpen
 } from 'lucide-react';

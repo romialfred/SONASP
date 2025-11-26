@@ -148,6 +148,12 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     ? roundUpToFixed(bullionInGrams * parseFloat(formData.estimated_silver_pct) / 100, 2)
     : '0.00';
 
+  // Calcul des impuretés
+  const goldPct = parseFloat(formData.estimated_gold_pct) || 0;
+  const silverPct = parseFloat(formData.estimated_silver_pct) || 0;
+  const totalPct = goldPct + silverPct;
+  const impuritiesPct = totalPct < 100 ? roundUpToFixed(100 - totalPct, 2) : '0.00';
+
   // ARRONDI AU SUPÉRIEUR avec 2 décimales pour les onces
   const silverContentOz = silverContentGrams !== '0.00'
     ? roundUpToFixed(parseFloat(silverContentGrams) / 31.1035, 2)
@@ -650,10 +656,10 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 )}
               </div>
 
-              {/* Estimated Gold Fineness */}
+              {/* Gold Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Fineness Gold (%) *
+                  Gold Assay % <span className="text-xs italic text-gray-500 font-normal">(estimated fineness)</span> *
                 </label>
                 <Input
                   type="number"
@@ -669,10 +675,10 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 />
               </div>
 
-              {/* Estimated Silver Percentage */}
+              {/* Silver Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Silver (%)
+                  Silver Assay % <span className="text-xs italic text-gray-500 font-normal">(estimated)</span>
                 </label>
                 <Input
                   type="number"
@@ -685,13 +691,18 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                   placeholder="ex: 5.2"
                   error={errors.estimated_silver_pct}
                 />
+                {totalPct > 100 && (
+                  <p className="mt-1 text-xs text-red-600">
+                    ⚠ La somme Gold + Silver dépasse 100% ({roundUpToFixed(totalPct, 2)}%)
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Calculated Fields */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-blue-900 mb-3">
-                Calculs Automatiques
+                Métriques Automatiques
               </h3>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -732,7 +743,24 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
                 </div>
               </div>
 
-              <p className="text-xs text-blue-600 mt-2">
+              {/* Impurities Row - Only show if < 100% */}
+              {totalPct < 100 && totalPct > 0 && (
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-orange-700">
+                      Impuretés %
+                    </label>
+                    <div className="text-lg font-bold text-orange-700">
+                      {impuritiesPct}%
+                    </div>
+                  </div>
+                  <p className="text-xs text-orange-600 mt-1">
+                    = 100% - ({roundUpToFixed(goldPct, 2)}% + {roundUpToFixed(silverPct, 2)}%)
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs text-blue-600 mt-3">
                 Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1035
               </p>
             </div>

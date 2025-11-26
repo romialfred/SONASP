@@ -715,7 +715,17 @@ export function AssayCertificatesPage() {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            <PDFViewer url={selectedCertificate.certificate_url} />
+            {loadingPdf ? (
+              <div className="flex items-center justify-center h-96">
+                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+              </div>
+            ) : pdfBlobUrl ? (
+              <PDFViewer url={pdfBlobUrl} />
+            ) : (
+              <div className="flex items-center justify-center h-96 text-gray-500">
+                Impossible de charger le certificat
+              </div>
+            )}
           </div>
         </div>
       )}

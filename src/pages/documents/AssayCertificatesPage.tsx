@@ -132,22 +132,29 @@ export function AssayCertificatesPage() {
 
       const { data: certificatesData, error: certsError } = await supabase
         .from('assay_certificates')
-        .select(`
-          *,
-          parsed_data:assay_certificate_data (
-            laboratory_name,
-            gold_content_gpt,
-            silver_content_gpt,
-            gold_purity_percentage,
-            sample_weight_g
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (certsError) throw certsError;
 
+      // Get parsed data separately
+      const { data: parsedData, error: parsedError } = await supabase
+        .from('assay_certificate_data')
+        .select('*');
+
+      if (parsedError) console.warn('Could not load parsed data:', parsedError);
+
+      // Merge parsed data with certificates
+      const certificatesWithParsedData = certificatesData?.map((cert: any) => {
+        const parsed = parsedData?.find((p: any) => p.certificate_id === cert.id);
+        return {
+          ...cert,
+          parsed_data: parsed || null,
+        };
+      }) || [];
+
       const grouped = shippingsData?.map((shipping: any) => {
-        const shippingCerts = certificatesData?.filter(
+        const shippingCerts = certificatesWithParsedData?.filter(
           (cert: any) => cert.shipping_preparation_id === shipping.id
         ) || [];
 
@@ -160,10 +167,7 @@ export function AssayCertificatesPage() {
           mining_company_country: shipping.mining_company?.country || 'Non spécifié',
           shipped_to_company: shipping.shipped_to_company || 'Non spécifié',
           created_at: shipping.created_at,
-          certificates: shippingCerts.map((cert: any) => ({
-            ...cert,
-            parsed_data: cert.parsed_data?.[0] || null,
-          })),
+          certificates: shippingCerts,
         };
       }) || [];
 

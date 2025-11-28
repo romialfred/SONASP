@@ -26,7 +26,7 @@ import { Card } from '../../components/ui/Card';
 import { Loading } from '../../components/ui/Loading';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
 import { filterOperationalMiningCompanies } from '../../utils/miningCompanyFilters';
-import { formatNumberWithSpaces } from '../../utils/numberUtils';
+import { formatNumberWithSpaces, formatPercentage } from '../../utils/numberUtils';
 import {
   annualBudgetService,
   AnnualBudget,
@@ -1034,7 +1034,7 @@ export function BudgetManagementPage() {
                       <>
                         <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
                         <span className={`text-sm ${textColor}`}>
-                          {yearVariancePercent >= 0 ? '+' : ''}{yearVariancePercent.toFixed(1)}%
+                          {formatPercentage(yearVariancePercent, 1, true)}
                         </span>
                         <span className="text-xs text-slate-400">
                           ({yearVariance >= 0 ? '+' : ''}{yearVariance} oz)
@@ -1074,6 +1074,7 @@ export function BudgetManagementPage() {
               }, 0);
               const variance = quarterActual - quarterBudget;
               const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
+              const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
 
               const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
               const trafficColor = {
@@ -1083,10 +1084,10 @@ export function BudgetManagementPage() {
               }[trafficLight];
 
               const quarterSummary = variancePercent >= 0
-                ? `Excellent trimestre avec performance ${variancePercent}% au-dessus du budget. Objectifs largement dépassés.`
+                ? `Excellent trimestre avec performance ${variancePercentFormatted} au-dessus du budget. Objectifs largement dépassés.`
                 : variancePercent >= -10
-                ? `Performance légèrement en dessous du budget (${variancePercent}%). Ajustements mineurs nécessaires.`
-                : `Performance critique avec écart de ${variancePercent}% du budget. Action corrective urgente requise.`;
+                ? `Performance légèrement en dessous du budget (${variancePercentFormatted}). Ajustements mineurs nécessaires.`
+                : `Performance critique avec écart de ${variancePercentFormatted} du budget. Action corrective urgente requise.`;
 
               return (
                 <div key={quarter} className={`bg-white rounded-lg border-2 ${trafficColor.border} shadow-sm p-3 hover:shadow-md transition-shadow`}>
@@ -1096,7 +1097,7 @@ export function BudgetManagementPage() {
                       <span className="text-sm  text-slate-800">Trimestre {quarter}</span>
                     </div>
                     <span className={`text-xs  ${trafficColor.text}`}>
-                      {variancePercent >= 0 ? '+' : ''}{variancePercent}%
+                      {variancePercentFormatted}
                     </span>
                   </div>
 
@@ -1145,6 +1146,7 @@ export function BudgetManagementPage() {
                 const actual = Math.round(Number(monthlyActuals[monthNum] || 0));
                 const variance = actual - budget;
                 const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
+                const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
 
                 const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
                 const dotColor = {
@@ -1161,7 +1163,7 @@ export function BudgetManagementPage() {
                         <span className="text-xs  text-slate-700">{month}</span>
                       </div>
                       <span className={`text-xs  ${variancePercent >= 0 ? 'text-emerald-600' : variancePercent >= -10 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {variancePercent >= 0 ? '+' : ''}{variancePercent}%
+                        {variancePercentFormatted}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-slate-500">

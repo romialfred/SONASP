@@ -1,381 +1,252 @@
-# ✅ ARRONDISSEMENT AU SUPÉRIEUR - 2 DÉCIMALES EXACTES
+# 🎯 CORRECTION PROFESSIONNELLE - FORMATAGE DES NOMBRES À 2 DÉCIMALES
 
-## 📋 Problème Identifié
+## 📋 PROBLÈME IDENTIFIÉ
 
-Dans le formulaire de production journalière, les valeurs en onces (oz) affichaient trop de décimales:
+### Issue Critique
+Des valeurs décimales sont affichées avec un nombre excessif de chiffres après la virgule dans toute l'application, notamment:
+- **Pourcentages**: `-99.83650692642811%` au lieu de `-99.84%`
+- **Variances**: Des nombres avec 10+ décimales
+- **Calculs**: Résultats non arrondis visibles aux utilisateurs
 
-**Avant:**
-```
-Gold Oz: 343.5298
-```
+### Impact Business
+❌ **Inacceptable dans un contexte professionnel:**
+- Manque de professionnalisme
+- Difficile à lire
+- Prête à confusion
+- Donne une impression de manque de rigueur
 
-**Attendu:**
-```
-Gold Oz: 343.53
-```
+## ✅ SOLUTION IMPLÉMENTÉE
 
-**Règle métier:** TOUJOURS arrondir **AU SUPÉRIEUR** avec **exactement 2 chiffres** après la virgule.
+### 1. Fonctions Utilitaires Centralisées
 
-## ✅ Solution Implémentée
-
-### 1. Nouvelles Fonctions Utilitaires
-
-**Fichier:** `src/utils/numberUtils.ts`
-
-#### `roundUpToDecimals(value, decimals)`
-
-Arrondit un nombre **AU SUPÉRIEUR** avec précision:
+Ajout de nouvelles fonctions dans `/src/utils/numberUtils.ts`:
 
 ```typescript
 /**
- * Arrondit un nombre AU SUPÉRIEUR avec un nombre précis de décimales
- *
- * @param value - La valeur à arrondir
- * @param decimals - Nombre de décimales (défaut: 2)
- * @returns Nombre arrondi au supérieur
- *
- * @example
- * roundUpToDecimals(343.5298, 2) // 343.53
- * roundUpToDecimals(10.001, 2) // 10.01
- * roundUpToDecimals(10.999, 2) // 11.00
- * roundUpToDecimals(5.2, 2) // 5.20
+ * Formate un pourcentage avec un nombre de décimales contrôlé
+ * TOUJOURS utilisez cette fonction pour afficher des pourcentages
  */
-export function roundUpToDecimals(value: number, decimals: number = 2): number {
-  const multiplier = Math.pow(10, decimals);
-  return Math.ceil(value * multiplier) / multiplier;
-}
-```
-
-**Logique:**
-1. Multiplier par 10^decimals (ex: 100 pour 2 décimales)
-2. Appliquer `Math.ceil()` pour arrondir au supérieur
-3. Diviser par 10^decimals
-
-**Exemples:**
-```typescript
-343.5298 × 100 = 34352.98
-Math.ceil(34352.98) = 34353
-34353 ÷ 100 = 343.53 ✅
-```
-
-#### `roundUpToFixed(value, decimals)`
-
-Retourne une **chaîne formatée** avec exactement le nombre de décimales:
-
-```typescript
-/**
- * Arrondit un nombre AU SUPÉRIEUR et retourne une chaîne avec le nombre exact de décimales
- *
- * @param value - La valeur à arrondir
- * @param decimals - Nombre de décimales (défaut: 2)
- * @returns Chaîne formatée avec exactement le nombre de décimales spécifié
- *
- * @example
- * roundUpToFixed(343.5298, 2) // "343.53"
- * roundUpToFixed(10.001, 2) // "10.01"
- * roundUpToFixed(10.999, 2) // "11.00"
- * roundUpToFixed(5.2, 2) // "5.20"
- */
-export function roundUpToFixed(value: number, decimals: number = 2): string {
-  return roundUpToDecimals(value, decimals).toFixed(decimals);
-}
-```
-
-#### `safeRoundUpToFixed(value, decimals, defaultValue)`
-
-Version **sécurisée** avec gestion des valeurs `undefined/null`:
-
-```typescript
-/**
- * Arrondit de manière sécurisée AU SUPÉRIEUR avec gestion des valeurs undefined/null
- *
- * @param value - La valeur à arrondir
- * @param decimals - Nombre de décimales (défaut: 2)
- * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
- * @returns Chaîne formatée avec exactement le nombre de décimales spécifié
- *
- * @example
- * safeRoundUpToFixed(343.5298, 2) // "343.53"
- * safeRoundUpToFixed(undefined, 2) // "0.00"
- * safeRoundUpToFixed(null, 2, 0) // "0.00"
- */
-export function safeRoundUpToFixed(
+export function formatPercentage(
   value: number | undefined | null,
-  decimals: number = 2,
-  defaultValue: number = 0
+  decimals: number = 1,
+  showSign: boolean = false
 ): string {
   if (value === undefined || value === null || isNaN(value)) {
-    return defaultValue.toFixed(decimals);
+    return '0.0%';
   }
 
-  return roundUpToFixed(value, decimals);
+  const sign = value >= 0 ? (showSign ? '+' : '') : '';
+  const formatted = Math.abs(value).toFixed(decimals);
+
+  return value >= 0 ? `${sign}${formatted}%` : `-${formatted}%`;
+}
+
+/**
+ * Calcule et formate un pourcentage de variance
+ * Gère automatiquement le cas où le budget est 0
+ */
+export function calculateVariancePercent(
+  actual: number,
+  budget: number,
+  decimals: number = 1,
+  showSign: boolean = false
+): string {
+  if (budget === 0 || budget === null || budget === undefined) {
+    return formatPercentage(-100, decimals, showSign);
+  }
+
+  const variance = actual - budget;
+  const percentValue = (variance / budget) * 100;
+
+  return formatPercentage(percentValue, decimals, showSign);
 }
 ```
 
-### 2. Application dans le Formulaire
+### 2. Corrections Module Budget & Forecast
 
-**Fichier:** `src/components/production/DailyProductionFormEnhanced.tsx`
+**Fichier**: `/src/pages/production/BudgetManagementPage.tsx`
 
-#### Import de la fonction
+#### Performance Annuelle (Ligne 1037)
+```typescript
+// ❌ AVANT
+{yearVariancePercent >= 0 ? '+' : ''}{yearVariancePercent.toFixed(1)}%
+
+// ✅ APRÈS
+{formatPercentage(yearVariancePercent, 1, true)}
+```
+
+#### Performance par Trimestre (Lignes 1076-1099)
+```typescript
+// ❌ AVANT
+const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
+// ... plus tard
+{variancePercent >= 0 ? '+' : ''}{variancePercent}%
+
+// ✅ APRÈS
+const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
+const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
+// ... plus tard
+{variancePercentFormatted}
+```
+
+#### Performance Mensuelle (Lignes 1147-1166)
+```typescript
+// ❌ AVANT
+const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
+// ... plus tard
+{variancePercent >= 0 ? '+' : ''}{variancePercent}%
+
+// ✅ APRÈS
+const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
+const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
+// ... plus tard
+{variancePercentFormatted}
+```
+
+#### Messages d'Alerte
+```typescript
+// ❌ AVANT
+`Performance critique avec écart de ${variancePercent}% du budget`
+
+// ✅ APRÈS
+`Performance critique avec écart de ${variancePercentFormatted} du budget`
+```
+
+### 3. Corrections Composant GoldPriceWidget
+
+**Fichier**: `/src/components/sales/GoldPriceWidget.tsx`
 
 ```typescript
-import { roundUpToFixed } from '@/utils/numberUtils';
+// ❌ AVANT
+{((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100).toFixed(1)}%
+
+// ✅ APRÈS
+{formatPercentage((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100, 1)}
 ```
 
-#### Calculs Arrondis au Supérieur
-
-**Avant:**
-```typescript
-const pureGoldGrams = formData.bullion_grams && formData.estimated_gold_pct
-  ? (bullionInGrams * parseFloat(formData.estimated_gold_pct) / 100).toFixed(2)
-  : '0.00';
-
-const estimatedOz = pureGoldGrams !== '0.00'
-  ? (parseFloat(pureGoldGrams) / 31.1035).toFixed(4)
-  : '0.0000';
-```
-
-**Après:**
-```typescript
-// ARRONDI AU SUPÉRIEUR avec 2 décimales pour les grammes
-const pureGoldGrams = formData.bullion_grams && formData.estimated_gold_pct
-  ? roundUpToFixed(bullionInGrams * parseFloat(formData.estimated_gold_pct) / 100, 2)
-  : '0.00';
-
-const silverContentGrams = formData.bullion_grams && formData.estimated_silver_pct
-  ? roundUpToFixed(bullionInGrams * parseFloat(formData.estimated_silver_pct) / 100, 2)
-  : '0.00';
-
-// ARRONDI AU SUPÉRIEUR avec 2 décimales pour les onces
-const silverContentOz = silverContentGrams !== '0.00'
-  ? roundUpToFixed(parseFloat(silverContentGrams) / 31.1035, 2)
-  : '0.00';
-
-const estimatedOz = pureGoldGrams !== '0.00'
-  ? roundUpToFixed(parseFloat(pureGoldGrams) / 31.1035, 2)
-  : '0.00';
-```
-
-#### Affichage Bullion
-
-**Avant:**
-```tsx
-<p className="text-sm text-gray-600">= {bullionInOz.toFixed(2)} oz</p>
-<p className="text-sm text-gray-600">= {bullionInGrams.toFixed(2)} g</p>
-```
-
-**Après:**
-```tsx
-<p className="text-sm text-gray-600">= {roundUpToFixed(bullionInOz, 2)} oz</p>
-<p className="text-sm text-gray-600">= {roundUpToFixed(bullionInGrams, 2)} g</p>
-```
-
-#### Confirmation Modal
-
-**Avant:**
-```typescript
-• Bullion: ${bullionGramsToSave.toFixed(2)} g (${bullionInOz.toFixed(2)} oz)
-```
-
-**Après:**
-```typescript
-• Bullion: ${roundUpToFixed(bullionGramsToSave, 2)} g (${roundUpToFixed(bullionInOz, 2)} oz)
-```
-
-#### Summaries (WTD, MTD, YTD)
-
-**Avant:**
-```tsx
-{wtdSummary.total_estimated_oz?.toFixed(2)} oz
-{mtdSummary.total_estimated_oz?.toFixed(2)} oz
-{ytdSummary.total_estimated_oz?.toFixed(2)} oz
-```
-
-**Après:**
-```tsx
-{roundUpToFixed(wtdSummary.total_estimated_oz || 0, 2)} oz
-{roundUpToFixed(mtdSummary.total_estimated_oz || 0, 2)} oz
-{roundUpToFixed(ytdSummary.total_estimated_oz || 0, 2)} oz
-```
-
-## 📊 Exemples de Résultats
+## 📊 EXEMPLES DE TRANSFORMATION
 
 ### Avant vs Après
 
-| Calcul | Avant | Après | Différence |
-|--------|-------|-------|------------|
-| **343.5298 oz** | 343.5298 | 343.53 | +0.0002 |
-| **10.001 oz** | 10.001 | 10.01 | +0.009 |
-| **10.999 oz** | 10.999 | 11.00 | +0.001 |
-| **5.2 oz** | 5.2 | 5.20 | 0 (format) |
-| **100.1234 oz** | 100.1234 | 100.13 | +0.0066 |
+| Avant | Après | Contexte |
+|-------|-------|----------|
+| `-99.83650692642811%` | `-99.8%` ou `-99.84%` | Variance trimestrielle |
+| `-99.54203369537330%` | `-99.5%` ou `-99.54%` | Performance budget |
+| `+15.7283746283746%` | `+15.7%` ou `+15.73%` | Croissance |
+| `0` | `0.0%` | Pas de variance |
 
-### Formule Appliquée
+### Règles de Formatage
 
-```
-Bullion: 11601.5 g
-Finesse Or: 92.10%
---------------------------------
-Pure Gold = 11601.5 × 92.10 / 100
-          = 10684.9815 g
+1. **Pourcentages de variance**: 1 décimale par défaut
+   - Exemple: `+10.5%`, `-5.3%`
 
-Gold Oz = 10684.9815 / 31.1035
-        = 343.52976... oz
+2. **Pourcentages précis**: 2 décimales si nécessaire
+   - Exemple: `99.84%` (taux d'utilisation)
 
-ARRONDI AU SUPÉRIEUR à 2 décimales:
-343.52976 → 343.53 oz ✅
-```
+3. **Toujours afficher le signe pour les variances**
+   - `+10.0%` (positif)
+   - `-5.0%` (négatif)
 
-## 🎯 Zones Modifiées
+4. **Gestion du zéro**
+   - Afficher `0.0%` au lieu de `0%`
 
-### Fichiers Mis à Jour
+## 🎯 STANDARDS À APPLIQUER SUR TOUTE LA PLATEFORME
 
-1. **`src/utils/numberUtils.ts`**
-   - ✅ Ajout `roundUpToDecimals()`
-   - ✅ Ajout `roundUpToFixed()`
-   - ✅ Ajout `safeRoundUpToFixed()`
-
-2. **`src/components/production/DailyProductionFormEnhanced.tsx`**
-   - ✅ Import de `roundUpToFixed`
-   - ✅ Calcul `pureGoldGrams` (2 décimales)
-   - ✅ Calcul `silverContentGrams` (2 décimales)
-   - ✅ Calcul `silverContentOz` (2 décimales)
-   - ✅ Calcul `estimatedOz` (2 décimales)
-   - ✅ Affichage `bullionInOz` (2 décimales)
-   - ✅ Affichage `bullionInGrams` (2 décimales)
-   - ✅ Modal confirmation (2 décimales)
-   - ✅ WTD/MTD/YTD summaries (2 décimales)
-
-### Calculs Automatiques Affichés
-
-```
-┌─────────────────────────────────────────┐
-│ Calculs Automatiques                    │
-├─────────────────────────────────────────┤
-│ Pure Gold (g)    │ 10684.98            │
-│ Gold Oz          │ 343.53  ✅          │
-│ Ag Content (g)   │ 0.00                │
-│ Silver Oz        │ 0.00                │
-└─────────────────────────────────────────┘
-```
-
-## ✅ Avantages de l'Approche
-
-### 1. **Précision Financière**
-- Arrondir **au supérieur** protège contre les pertes
-- Cohérent avec les pratiques commerciales
-
-### 2. **Format Uniforme**
-- **Toujours 2 décimales** (343.53, jamais 343.5298)
-- Lisibilité maximale
-- Conformité aux standards
-
-### 3. **Réutilisabilité**
-- Fonctions utilitaires disponibles partout
-- Code DRY (Don't Repeat Yourself)
-- Facile à maintenir
-
-### 4. **Sécurité**
-- Gestion des `undefined/null`
-- Pas d'erreurs `.toFixed() of undefined`
-- Valeurs par défaut sensées
-
-## 🧪 Tests
-
-### Test Manuel
-
+### DO ✅
 ```typescript
-// Dans la console navigateur ou un test
-import { roundUpToFixed } from '@/utils/numberUtils';
+// Import de la fonction
+import { formatPercentage, calculateVariancePercent } from '@/utils/numberUtils';
 
-console.log(roundUpToFixed(343.5298, 2));  // "343.53"
-console.log(roundUpToFixed(10.001, 2));     // "10.01"
-console.log(roundUpToFixed(10.999, 2));     // "11.00"
-console.log(roundUpToFixed(5.2, 2));        // "5.20"
+// Utilisation directe
+const percent = (actual / budget) * 100;
+display: formatPercentage(percent, 1, true) // "+10.5%"
+
+// Utilisation avec calcul intégré
+display: calculateVariancePercent(actual, budget, 1, true) // "+10.5%"
 ```
 
-### Test dans l'UI
-
-1. **Créer une production:**
-   - Bullion: 11601.5 g
-   - Finesse Or: 92.10%
-
-2. **Vérifier les calculs:**
-   - Pure Gold (g): doit afficher `10684.98` (arrondi supérieur)
-   - Gold Oz: doit afficher `343.53` (arrondi supérieur)
-
-3. **Vérifier tous les affichages:**
-   - ✅ Calculs automatiques: 2 décimales
-   - ✅ Conversion bullion: 2 décimales
-   - ✅ Modal confirmation: 2 décimales
-   - ✅ WTD/MTD/YTD: 2 décimales
-
-## 📝 Notes Importantes
-
-### Différence avec `.toFixed()`
-
-**`.toFixed()` standard** (arrondi mathématique):
+### DON'T ❌
 ```typescript
-343.5298.toFixed(2)  // "343.53" (arrondi normal)
-343.525.toFixed(2)   // "343.53" (arrondi normal)
-343.524.toFixed(2)   // "343.52" (arrondi normal)
+// NE JAMAIS utiliser toFixed() directement pour les pourcentages
+const percent = ((actual - budget) / budget * 100).toFixed(2) + '%'; // ❌
+
+// NE JAMAIS concaténer manuellement le signe
+const sign = percent >= 0 ? '+' : '';
+const display = sign + percent + '%'; // ❌
+
+// NE JAMAIS afficher plus de 2 décimales
+const display = percent.toFixed(10) + '%'; // ❌
 ```
 
-**`roundUpToFixed()` (arrondi supérieur):**
-```typescript
-roundUpToFixed(343.5298, 2)  // "343.53" (toujours supérieur)
-roundUpToFixed(343.525, 2)   // "343.53" (toujours supérieur)
-roundUpToFixed(343.521, 2)   // "343.53" (toujours supérieur)
-roundUpToFixed(343.501, 2)   // "343.51" (toujours supérieur)
-```
+## 🔍 FICHIERS À AUDITER ET CORRIGER
 
-### Pourquoi Arrondir au Supérieur?
+### Priorité HAUTE (Affichage utilisateur)
+- ✅ `/src/pages/production/BudgetManagementPage.tsx` - CORRIGÉ
+- ✅ `/src/components/sales/GoldPriceWidget.tsx` - CORRIGÉ
+- ⏳ `/src/components/sales/LiveGoldMarketPanel.tsx`
+- ⏳ `/src/components/sales/LiveGoldMarketWidget.tsx`
+- ⏳ `/src/components/sales/FinancialComparison.tsx`
+- ⏳ `/src/pages/analytics/tabs/*.tsx`
+- ⏳ `/src/pages/DashboardPage.tsx`
 
-1. **Protection commerciale:** Ne jamais sous-estimer la valeur
-2. **Conformité:** Pratique standard dans le trading de métaux précieux
-3. **Transparence:** Mieux vaut surestimer légèrement que sous-estimer
+### Priorité MOYENNE (Calculs internes)
+- ⏳ `/src/components/production/ProductionPieChart.tsx`
+- ⏳ `/src/components/charts/PieChartWidget.tsx`
+- ⏳ `/src/pages/production/ExportLicensesPage.tsx`
 
-### Cas Particuliers
+### Priorité BASSE (Affichages secondaires)
+- ⏳ `/src/components/prices/LiveFxRatePanel.tsx`
+- ⏳ `/src/components/fx/FxAnalysisTab.tsx`
+- ⏳ `/src/pages/customers/PaymentProcessing.tsx`
 
-**Valeurs déjà arrondies:**
-```typescript
-roundUpToFixed(343.53, 2)  // "343.53" (pas de changement)
-roundUpToFixed(100.00, 2)  // "100.00" (garde les zéros)
-```
+## 📈 PROGRESSION
 
-**Valeurs avec 1 décimale:**
-```typescript
-roundUpToFixed(5.2, 2)  // "5.20" (ajoute le zéro)
-roundUpToFixed(10.9, 2)  // "10.90" (ajoute le zéro)
-```
+- [x] Créer les fonctions utilitaires centralisées
+- [x] Corriger le module Budget & Forecast
+- [x] Corriger GoldPriceWidget
+- [ ] Auditer et corriger tous les composants Analytics
+- [ ] Auditer et corriger tous les composants de Dashboard
+- [ ] Auditer et corriger tous les composants de Sales/Pricing
+- [ ] Tests fonctionnels de validation
+- [ ] Documentation utilisateur mise à jour
 
-## 🚀 Prochaines Étapes
+## ✅ VALIDATION
 
-Si besoin d'appliquer ailleurs:
+### Tests à Effectuer
+1. ✅ Module Budget affiche des pourcentages à 1 décimale
+2. ✅ Build réussi sans erreur
+3. ⏳ Dashboard affiche des pourcentages corrects
+4. ⏳ Analytics affichent des pourcentages corrects
+5. ⏳ Composants de prix affichent des pourcentages corrects
 
-1. **Page de détails de production** (`ProductionDetails.tsx`)
-2. **Page d'expédition** (`ShippingPreparation*.tsx`)
-3. **Rapports** (`ReportsPage.tsx`)
-4. **Analytics** (`AnalyticsDashboard.tsx`)
+### Résultats Attendus
+- **Performance Annuelle**: `+10.5%` au lieu de `+10.527384728374%`
+- **Performance Trimestrielle**: `-99.8%` au lieu de `-99.83650692642811%`
+- **Tous les calculs**: Maximum 2 décimales, 1 par défaut pour les variances
 
-**Rechercher:**
-```bash
-grep -r "/ 31.1035" src/ --include="*.tsx" --include="*.ts"
-grep -r "\.toFixed(4)" src/ --include="*.tsx" --include="*.ts"
-```
+## 🏆 BENEFITS
 
-## ✅ Build Validé
+1. **Professionnalisme**: Interface épurée et lisible
+2. **Cohérence**: Tous les pourcentages formatés de la même manière
+3. **Maintenabilité**: Une seule fonction à maintenir
+4. **Performance**: Calculs optimisés
+5. **Standards**: Respect des conventions de formatage
 
-```bash
-npm run build
-✓ built in 36.41s
-✓ 0 erreurs
-```
+## 📝 NOTES TECHNIQUES
 
----
+### Fonction formatPercentage()
+- Gère `undefined`, `null`, `NaN` automatiquement
+- Retourne toujours une chaîne valide
+- Supporte le signe optionnel (`+` pour les positifs)
+- Nombre de décimales configurable (défaut: 1)
 
-**Date:** 2025-11-14
-**Statut:** ✅ IMPLÉMENTÉ ET TESTÉ
-**Build:** ✅ RÉUSSI
+### Fonction calculateVariancePercent()
+- Calcule ET formate en une seule opération
+- Gère le cas `budget = 0` (retourne `-100%`)
+- Simplifie le code en éliminant les calculs répétitifs
 
-**Tous les calculs arrondissent maintenant AU SUPÉRIEUR avec exactement 2 décimales!** 🎉
+## 🎯 CONCLUSION
+
+Cette correction systématique garantit que **TOUS les pourcentages affichés dans l'application** seront formatés professionnellement avec un maximum de 2 décimales, généralement 1 pour les variances.
+
+**Status**: ✅ Fondations posées, corrections en cours sur toute la plateforme

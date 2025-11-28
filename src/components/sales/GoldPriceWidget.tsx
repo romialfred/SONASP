@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, TrendingDown, Minus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { getCurrentGoldPrice, getGoldPriceStatistics, type GoldPrice, type GoldPriceStats } from '@/services/goldPriceService';
+import { formatPercentage } from '@/utils/numberUtils';
 
 interface GoldPriceWidgetProps {
   showDetailed?: boolean;
@@ -211,7 +212,7 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
               {stats.trend === 'up' ? 'Bullish' : stats.trend === 'down' ? 'Bearish' : 'Neutral'}
               {' • '}
               Current price is{' '}
-              {((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100).toFixed(1)}%
+              {formatPercentage((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100, 1)}
               {' '}{goldPrice.london_am_rate > stats.avg_30_days ? 'above' : 'below'} 30-day average
             </div>
           </>

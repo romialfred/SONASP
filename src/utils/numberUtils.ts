@@ -246,3 +246,65 @@ export function formatVarianceWithSpaces(
 
   return value >= 0 ? `${sign}${formatted}` : `-${formatted}`;
 }
+
+/**
+ * Formate un pourcentage avec un nombre de décimales contrôlé
+ * TOUJOURS utilisez cette fonction pour afficher des pourcentages
+ *
+ * @param value - La valeur du pourcentage (déjà en %, pas en décimal)
+ * @param decimals - Nombre de décimales (défaut: 1)
+ * @param showSign - Afficher le signe + pour les positifs (défaut: false)
+ * @returns Chaîne formatée avec le symbole %
+ *
+ * @example
+ * formatPercentage(99.83650692642811, 2) // "99.84%"
+ * formatPercentage(-99.54203369537330, 2) // "-99.54%"
+ * formatPercentage(15.7, 1) // "15.7%"
+ * formatPercentage(5.0, 1) // "5.0%"
+ * formatPercentage(10, 1, true) // "+10.0%"
+ */
+export function formatPercentage(
+  value: number | undefined | null,
+  decimals: number = 1,
+  showSign: boolean = false
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '0.0%';
+  }
+
+  const sign = value >= 0 ? (showSign ? '+' : '') : '';
+  const formatted = Math.abs(value).toFixed(decimals);
+
+  return value >= 0 ? `${sign}${formatted}%` : `-${formatted}%`;
+}
+
+/**
+ * Calcule et formate un pourcentage de variance
+ * Gère automatiquement le cas où le budget est 0
+ *
+ * @param actual - Valeur actuelle/réelle
+ * @param budget - Valeur budgétée/cible
+ * @param decimals - Nombre de décimales (défaut: 1)
+ * @param showSign - Afficher le signe + pour les positifs (défaut: false)
+ * @returns Pourcentage formaté ou "-100%" si budget = 0
+ *
+ * @example
+ * calculateVariancePercent(110, 100, 1) // "10.0%"
+ * calculateVariancePercent(90, 100, 1) // "-10.0%"
+ * calculateVariancePercent(50, 0, 1) // "-100.0%"
+ */
+export function calculateVariancePercent(
+  actual: number,
+  budget: number,
+  decimals: number = 1,
+  showSign: boolean = false
+): string {
+  if (budget === 0 || budget === null || budget === undefined) {
+    return formatPercentage(-100, decimals, showSign);
+  }
+
+  const variance = actual - budget;
+  const percentValue = (variance / budget) * 100;
+
+  return formatPercentage(percentValue, decimals, showSign);
+}

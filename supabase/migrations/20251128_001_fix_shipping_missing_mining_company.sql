@@ -53,7 +53,7 @@ BEGIN
       NEW.id,
       NEW.mining_company_id,    -- ✅ Copie depuis production
       v_expedition_lot,
-      COALESCE(NEW.ingot_box_number, 'PENDING'), -- Utiliser le numéro de boîte existant ou PENDING
+      COALESCE(NEW.bar_reference, 'PENDING'), -- Utiliser la référence du lingot ou PENDING
       'waiting_for_customs_approval', -- Status initial dans shipping
       NEW.bullion_grams,        -- Poids net
       NEW.bullion_grams * 1.02, -- Poids brut estimé (+2%)
@@ -100,7 +100,7 @@ $$;
 UPDATE shipping_preparations sp
 SET 
   mining_company_id = dp.mining_company_id,
-  seal_number = COALESCE(sp.seal_number, dp.ingot_box_number, 'PENDING'),
+  seal_number = COALESCE(sp.seal_number, dp.bar_reference, 'PENDING'),
   total_boxes = COALESCE(sp.total_boxes, 1),
   updated_at = NOW()
 FROM daily_production dp
@@ -149,7 +149,7 @@ END $$;
 COMMENT ON FUNCTION auto_create_shipping_on_ready_for_customs() IS
 'TRIGGER CRITIQUE CORRIGÉ: Crée shipping_preparations avec mining_company_id, seal_number et total_boxes.
 WORKFLOW: Production Management → Shipping Preparation
-DATA: Copie mining_company_id + ingot_box_number depuis daily_production
+DATA: Copie mining_company_id + bar_reference depuis daily_production
 STATUS: ready_for_customs (production) → waiting_for_customs_approval (shipping)';
 
 -- =====================================================

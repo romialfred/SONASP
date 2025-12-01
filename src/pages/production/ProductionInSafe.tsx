@@ -294,7 +294,7 @@ export function ProductionInSafe() {
         <div className="p-5">
           {/* Header */}
           <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-            <Icon className="w-4 h-4 text-amber-600" />
+            <Icon className="w-4 h-4 text-blue-600" />
             <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
               {title}
             </h3>
@@ -396,8 +396,8 @@ export function ProductionInSafe() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="p-2 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg border border-amber-200">
-                <Shield className="w-5 h-5 text-amber-700" />
+              <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <Shield className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
@@ -412,7 +412,7 @@ export function ProductionInSafe() {
           <Button
             onClick={exportToCSV}
             variant="outline"
-            className="border-amber-300 hover:bg-amber-50 text-amber-700"
+            className="border-slate-300 hover:bg-slate-50 text-slate-700"
           >
             <Download className="w-4 h-4 mr-2" />
             Exporter CSV
@@ -420,7 +420,7 @@ export function ProductionInSafe() {
         </div>
 
         {/* Filters */}
-        <Card className="border-amber-200">
+        <Card className="border-slate-200">
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
@@ -430,7 +430,7 @@ export function ProductionInSafe() {
                 <select
                   value={selectedCompany}
                   onChange={(e) => setSelectedCompany(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">Toutes</option>
                   {miningCompanies.map(company => (
@@ -446,7 +446,7 @@ export function ProductionInSafe() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">Tous</option>
                   <option value="prepared">Préparé</option>
@@ -464,7 +464,7 @@ export function ProductionInSafe() {
                   type="date"
                   value={dateRange.startDate}
                   onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -476,7 +476,7 @@ export function ProductionInSafe() {
                   type="date"
                   value={dateRange.endDate}
                   onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -484,8 +484,8 @@ export function ProductionInSafe() {
         </Card>
 
         {/* Production Table */}
-        <Card className="border-amber-200 shadow-lg">
-          <div className="p-4 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
+        <Card className="border-slate-200 shadow-lg">
+          <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Inventaire des Barres</h3>
@@ -498,7 +498,7 @@ export function ProductionInSafe() {
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-100 border-b-2 border-amber-300">
+              <thead className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 border-b-2 border-slate-300">
                 <tr>
                   <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
                     DATE
@@ -546,7 +546,7 @@ export function ProductionInSafe() {
                   productions.map((prod, index) => (
                     <tr
                       key={prod.id}
-                      className="hover:bg-amber-50/50 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/production/${prod.id}`)}
                     >
                       <td className="px-3 py-3 whitespace-nowrap">
@@ -569,12 +569,12 @@ export function ProductionInSafe() {
                         </span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-right">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {safeToFixed(prod.estimated_fineness_pct, 2)}%
                         </span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-right">
-                        <span className="text-xs text-yellow-700">
+                        <span className="text-xs text-amber-600 font-medium">
                           {safeToLocaleString(prod.pure_gold_grams, { maximumFractionDigits: 0 })}
                         </span>
                       </td>
@@ -601,7 +601,7 @@ export function ProductionInSafe() {
                 )}
               </tbody>
               {!loading && productions.length > 0 && (
-                <tfoot className="bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 border-t-2 border-amber-300">
+                <tfoot className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 border-t-2 border-slate-300">
                   <tr>
                     <td className="px-3 py-2.5 text-xs font-medium uppercase text-gray-900">
                       TOTAL
@@ -647,7 +647,7 @@ export function ProductionInSafe() {
             title="Year to Date"
             icon={CalendarCheck}
             data={forecasts.ytd}
-            borderColor="border-l-4 border-l-amber-500"
+            borderColor="border-l-4 border-l-emerald-500"
           />
         </div>
       </div>

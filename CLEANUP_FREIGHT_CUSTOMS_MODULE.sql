@@ -128,9 +128,16 @@ VACUUM ANALYZE freight_shipment_signatories;
 VACUUM ANALYZE freight_shipment_productions;
 VACUUM ANALYZE freight_shipments;
 
-RAISE NOTICE '';
-RAISE NOTICE '✓ Optimisation des tables effectuée';
-RAISE NOTICE '';
-RAISE NOTICE '==============================================';
-RAISE NOTICE 'SCRIPT TERMINÉ - MODULE FREIGHT & CUSTOMS VIDE';
-RAISE NOTICE '==============================================';
+-- =====================================================
+-- 7. MESSAGE FINAL
+-- =====================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '✓ Optimisation des tables effectuée';
+  RAISE NOTICE '';
+  RAISE NOTICE '==============================================';
+  RAISE NOTICE 'SCRIPT TERMINÉ - MODULE FREIGHT & CUSTOMS VIDE';
+  RAISE NOTICE '==============================================';
+END $$;

@@ -171,9 +171,9 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     if (name.includes('komana') || name.includes('smk')) {
       return 'HUMSMK';
     }
-    // Kourousa -> HUMKGM
+    // Kourousa -> HUMSMK
     if (name.includes('kourousa') || name.includes('kgm')) {
-      return 'HUMKGM';
+      return 'HUMSMK';
     }
     // Dugbe -> HUMDUG
     if (name.includes('dugbe') || name.includes('dug')) {
@@ -458,97 +458,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
             </Button>
           </div>
 
-          {/* Period Summaries - Only show for new production */}
-          {!production && (wtdSummary || mtdSummary || ytdSummary) && (
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* WTD Summary */}
-              {wtdSummary && (
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-2 bg-blue-600 rounded-lg">
-                      <Calendar className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-blue-900">Week-To-Date</h3>
-                      <p className="text-xs text-blue-700">Semaine en cours</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-blue-700">Production:</span>
-                      <span className="text-sm font-bold text-blue-900">
-                        {roundUpToFixed(wtdSummary.total_estimated_oz || 0, 2)} oz
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-blue-700">Records:</span>
-                      <span className="text-sm font-semibold text-blue-900">
-                        {wtdSummary.record_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* MTD Summary */}
-              {mtdSummary && (
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border border-emerald-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-2 bg-emerald-600 rounded-lg">
-                      <CalendarRange className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-emerald-900">Month-To-Date</h3>
-                      <p className="text-xs text-emerald-700">Mois en cours</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-emerald-700">Production:</span>
-                      <span className="text-sm font-bold text-emerald-900">
-                        {roundUpToFixed(mtdSummary.total_estimated_oz || 0, 2)} oz
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-emerald-700">Records:</span>
-                      <span className="text-sm font-semibold text-emerald-900">
-                        {mtdSummary.record_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* YTD Summary */}
-              {ytdSummary && (
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-2 bg-purple-600 rounded-lg">
-                      <CalendarClock className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-purple-900">Year-To-Date</h3>
-                      <p className="text-xs text-purple-700">Année en cours</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-purple-700">Production:</span>
-                      <span className="text-sm font-bold text-purple-900">
-                        {roundUpToFixed(ytdSummary.total_estimated_oz || 0, 2)} oz
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-purple-700">Records:</span>
-                      <span className="text-sm font-semibold text-purple-900">
-                        {ytdSummary.record_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Period Summaries - Removed as per user request */}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

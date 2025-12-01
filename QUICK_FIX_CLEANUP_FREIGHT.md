@@ -1,16 +1,35 @@
-# ✅ CORRECTION: Script Cleanup Freight & Customs
+# ✅ CORRECTION FINALE: Script Cleanup Freight & Customs
 
-## ⚠️ ERREUR CORRIGÉE
+## ⚠️ ERREURS CORRIGÉES
 
+### Erreur 1: Syntaxe RAISE NOTICE
 **Erreur**: `syntax error at or near "RAISE" LINE 131`
-
 **Cause**: Les commandes `RAISE NOTICE` étaient en dehors d'un bloc `DO $$`
+**Solution**: ✅ Encapsulé dans un bloc `DO $$`
 
-**Solution**: ✅ Corrigé dans `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql`
+### Erreur 2: Triggers Système ⚠️ NOUVELLE
+**Erreur**: `permission denied: "RI_ConstraintTrigger_a_55267" is a system trigger`
+**Cause**: `DISABLE TRIGGER ALL` essaie de désactiver les triggers système (non autorisé)
+**Solution**: ✅ Changé en `DISABLE TRIGGER USER` (triggers utilisateur uniquement)
 
-## 📋 SCRIPT CORRIGÉ - PRÊT À UTILISER
+## 📋 SCRIPT CORRIGÉ - VERSION FINALE
 
-Le fichier `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql` a été corrigé.
+Le fichier `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql` a été **COMPLÈTEMENT CORRIGÉ**.
+
+### Changements Appliqués
+
+```sql
+-- AVANT (❌ ERREUR)
+ALTER TABLE freight_shipments DISABLE TRIGGER ALL;
+
+-- APRÈS (✅ CORRECT)
+ALTER TABLE freight_shipments DISABLE TRIGGER USER;
+```
+
+**Pourquoi USER au lieu de ALL?**
+- `ALL` = Tous les triggers (utilisateur + système)
+- `USER` = Uniquement les triggers créés par l'utilisateur
+- Les triggers système (contraintes FK) ne peuvent pas être désactivés
 
 ### Copier et Exécuter dans Supabase SQL Editor
 
@@ -59,7 +78,7 @@ SCRIPT TERMINÉ - MODULE FREIGHT & CUSTOMS VIDE
 ==============================================
 ```
 
-## 🎯 SI VOUS AVEZ BESOIN D'UN BACKUP
+## 🎯 BACKUP RECOMMANDÉ (Optionnel)
 
 **AVANT** d'exécuter le cleanup, créez un backup:
 
@@ -84,8 +103,63 @@ INSERT INTO freight_shipment_productions SELECT * FROM backup_freight_shipment_p
 INSERT INTO freight_shipment_signatories SELECT * FROM backup_freight_shipment_signatories;
 ```
 
+## 📊 ORDRE D'EXÉCUTION
+
+Le script respecte l'ordre des contraintes de clés étrangères:
+
+```
+1. Désactiver triggers USER (pas système)
+              ↓
+2. Supprimer signataires (enfant)
+              ↓
+3. Supprimer productions liées (enfant)
+              ↓
+4. Supprimer expéditions (parent)
+              ↓
+5. Réactiver triggers USER
+              ↓
+6. Vérifier que tout est vide
+              ↓
+7. Optimiser les tables (VACUUM)
+```
+
+## 🆘 SI NOUVELLE ERREUR
+
+### Vérifier les Tables
+```sql
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_name LIKE 'freight_%' 
+ORDER BY table_name;
+```
+
+### Vérifier les Contraintes FK
+```sql
+SELECT 
+  tc.constraint_name, 
+  tc.table_name, 
+  kcu.column_name,
+  ccu.table_name AS foreign_table_name
+FROM information_schema.table_constraints AS tc 
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY' 
+  AND tc.table_name LIKE 'freight_%';
+```
+
+### Compter les Données
+```sql
+SELECT 
+  (SELECT COUNT(*) FROM freight_shipments) as shipments,
+  (SELECT COUNT(*) FROM freight_shipment_productions) as productions,
+  (SELECT COUNT(*) FROM freight_shipment_signatories) as signatories;
+```
+
 ---
 
-**Statut**: ✅ **CORRIGÉ ET PRÊT**
+**Statut**: ✅ **COMPLÈTEMENT CORRIGÉ - VERSION FINALE**
 **Fichier à utiliser**: `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql`
 **Action**: Copier et exécuter dans Supabase SQL Editor
+**Durée estimée**: < 5 secondes

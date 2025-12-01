@@ -21,13 +21,13 @@
 */
 
 -- =====================================================
--- 1. DÉSACTIVER LES TRIGGERS TEMPORAIREMENT
+-- 1. DÉSACTIVER LES TRIGGERS UTILISATEUR TEMPORAIREMENT
 -- =====================================================
 
--- Désactiver les triggers pour éviter les calculs automatiques
-ALTER TABLE freight_shipments DISABLE TRIGGER ALL;
-ALTER TABLE freight_shipment_productions DISABLE TRIGGER ALL;
-ALTER TABLE freight_shipment_signatories DISABLE TRIGGER ALL;
+-- Désactiver uniquement les triggers utilisateur (pas les triggers système)
+ALTER TABLE freight_shipments DISABLE TRIGGER USER;
+ALTER TABLE freight_shipment_productions DISABLE TRIGGER USER;
+ALTER TABLE freight_shipment_signatories DISABLE TRIGGER USER;
 
 -- =====================================================
 -- 2. SUPPRESSION DES DONNÉES (Ordre: Enfant → Parent)
@@ -74,12 +74,12 @@ BEGIN
 END $$;
 
 -- =====================================================
--- 3. RÉACTIVER LES TRIGGERS
+-- 3. RÉACTIVER LES TRIGGERS UTILISATEUR
 -- =====================================================
 
-ALTER TABLE freight_shipment_signatories ENABLE TRIGGER ALL;
-ALTER TABLE freight_shipment_productions ENABLE TRIGGER ALL;
-ALTER TABLE freight_shipments ENABLE TRIGGER ALL;
+ALTER TABLE freight_shipment_signatories ENABLE TRIGGER USER;
+ALTER TABLE freight_shipment_productions ENABLE TRIGGER USER;
+ALTER TABLE freight_shipments ENABLE TRIGGER USER;
 
 -- =====================================================
 -- 4. RÉINITIALISER LES SÉQUENCES (si applicable)

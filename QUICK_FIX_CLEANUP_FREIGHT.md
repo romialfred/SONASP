@@ -1,44 +1,48 @@
 # ✅ CORRECTION FINALE: Script Cleanup Freight & Customs
 
-## ⚠️ ERREURS CORRIGÉES
+## ⚠️ TOUTES LES ERREURS CORRIGÉES
 
 ### Erreur 1: Syntaxe RAISE NOTICE
 **Erreur**: `syntax error at or near "RAISE" LINE 131`
 **Cause**: Les commandes `RAISE NOTICE` étaient en dehors d'un bloc `DO $$`
 **Solution**: ✅ Encapsulé dans un bloc `DO $$`
 
-### Erreur 2: Triggers Système ⚠️ NOUVELLE
+### Erreur 2: Triggers Système
 **Erreur**: `permission denied: "RI_ConstraintTrigger_a_55267" is a system trigger`
 **Cause**: `DISABLE TRIGGER ALL` essaie de désactiver les triggers système (non autorisé)
 **Solution**: ✅ Changé en `DISABLE TRIGGER USER` (triggers utilisateur uniquement)
 
-## 📋 SCRIPT CORRIGÉ - VERSION FINALE
+### Erreur 3: VACUUM dans Transaction ⚠️ NOUVELLE
+**Erreur**: `VACUUM cannot run inside a transaction block`
+**Cause**: VACUUM ne peut pas s'exécuter dans une transaction
+**Solution**: ✅ VACUUM retiré du script principal et mis dans un script séparé optionnel
 
-Le fichier `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql` a été **COMPLÈTEMENT CORRIGÉ**.
+## 📋 SCRIPTS DISPONIBLES
 
-### Changements Appliqués
+### 1. CLEANUP_FREIGHT_CUSTOMS_MODULE.sql (PRINCIPAL)
+**À exécuter EN PREMIER** - Supprime toutes les données du module
 
-```sql
--- AVANT (❌ ERREUR)
-ALTER TABLE freight_shipments DISABLE TRIGGER ALL;
+### 2. OPTIMIZE_FREIGHT_TABLES.sql (OPTIONNEL)
+**À exécuter APRÈS** - Optimise les tables (VACUUM ANALYZE)
 
--- APRÈS (✅ CORRECT)
-ALTER TABLE freight_shipments DISABLE TRIGGER USER;
-```
+## 🚀 INSTRUCTIONS D'EXÉCUTION
 
-**Pourquoi USER au lieu de ALL?**
-- `ALL` = Tous les triggers (utilisateur + système)
-- `USER` = Uniquement les triggers créés par l'utilisateur
-- Les triggers système (contraintes FK) ne peuvent pas être désactivés
+### Étape 1: Nettoyage (OBLIGATOIRE)
 
-### Copier et Exécuter dans Supabase SQL Editor
+1. Ouvrez Supabase SQL Editor
+2. Copiez **TOUT** le contenu de `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql`
+3. Exécutez le script
+4. Vérifiez le rapport de nettoyage
 
-Ouvrez le fichier `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql` et copiez **TOUT** son contenu dans Supabase SQL Editor, puis exécutez.
+### Étape 2: Optimisation (OPTIONNEL)
+
+1. Dans Supabase SQL Editor (nouvelle requête)
+2. Copiez le contenu de `OPTIMIZE_FREIGHT_TABLES.sql`
+3. Exécutez le script séparément
 
 ## ✅ RÉSULTAT ATTENDU
 
-Vous devriez voir:
-
+### Script Principal (Étape 1)
 ```
 ==============================================
 DÉBUT DU NETTOYAGE - FREIGHT & CUSTOMS
@@ -71,14 +75,20 @@ Expéditions restantes: 0
 ✅ Prêt pour de nouvelles données
 ==============================================
 
-✓ Optimisation des tables effectuée
-
 ==============================================
 SCRIPT TERMINÉ - MODULE FREIGHT & CUSTOMS VIDE
 ==============================================
+
+NOTE: Pour optimiser les tables (optionnel), exécutez séparément:
+  VACUUM ANALYZE freight_shipment_signatories;
+  VACUUM ANALYZE freight_shipment_productions;
+  VACUUM ANALYZE freight_shipments;
 ```
 
-## 🎯 BACKUP RECOMMANDÉ (Optionnel)
+### Script Optimisation (Étape 2 - Optionnel)
+Pas de sortie visible, mais les tables sont optimisées en arrière-plan.
+
+## 🎯 BACKUP RECOMMANDÉ (Avant Étape 1)
 
 **AVANT** d'exécuter le cleanup, créez un backup:
 
@@ -103,29 +113,35 @@ INSERT INTO freight_shipment_productions SELECT * FROM backup_freight_shipment_p
 INSERT INTO freight_shipment_signatories SELECT * FROM backup_freight_shipment_signatories;
 ```
 
-## 📊 ORDRE D'EXÉCUTION
-
-Le script respecte l'ordre des contraintes de clés étrangères:
+## 📊 ORDRE D'EXÉCUTION COMPLET
 
 ```
-1. Désactiver triggers USER (pas système)
+1. (Optionnel) Créer backup
               ↓
-2. Supprimer signataires (enfant)
+2. Exécuter CLEANUP_FREIGHT_CUSTOMS_MODULE.sql
               ↓
-3. Supprimer productions liées (enfant)
+3. Vérifier le rapport de nettoyage
               ↓
-4. Supprimer expéditions (parent)
+4. (Optionnel) Exécuter OPTIMIZE_FREIGHT_TABLES.sql
               ↓
-5. Réactiver triggers USER
-              ↓
-6. Vérifier que tout est vide
-              ↓
-7. Optimiser les tables (VACUUM)
+5. Rafraîchir le dashboard Freight & Customs
+```
+
+## 🔍 VÉRIFICATION APRÈS NETTOYAGE
+
+```sql
+-- Compter les données restantes
+SELECT 
+  (SELECT COUNT(*) FROM freight_shipments) as shipments,
+  (SELECT COUNT(*) FROM freight_shipment_productions) as productions,
+  (SELECT COUNT(*) FROM freight_shipment_signatories) as signatories;
+
+-- Résultat attendu: 0, 0, 0
 ```
 
 ## 🆘 SI NOUVELLE ERREUR
 
-### Vérifier les Tables
+### Vérifier les Tables Existent
 ```sql
 SELECT table_name 
 FROM information_schema.tables 
@@ -149,17 +165,44 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
   AND tc.table_name LIKE 'freight_%';
 ```
 
-### Compter les Données
+## ⚙️ CHANGEMENTS TECHNIQUES APPLIQUÉS
+
 ```sql
-SELECT 
-  (SELECT COUNT(*) FROM freight_shipments) as shipments,
-  (SELECT COUNT(*) FROM freight_shipment_productions) as productions,
-  (SELECT COUNT(*) FROM freight_shipment_signatories) as signatories;
+-- AVANT (❌ 3 ERREURS)
+ALTER TABLE freight_shipments DISABLE TRIGGER ALL;     -- Erreur 2
+RAISE NOTICE 'Message';                                -- Erreur 1
+VACUUM ANALYZE freight_shipments;                      -- Erreur 3
+
+-- APRÈS (✅ CORRECT)
+ALTER TABLE freight_shipments DISABLE TRIGGER USER;    -- Triggers user only
+DO $$ BEGIN
+  RAISE NOTICE 'Message';                              -- Dans bloc DO
+END $$;
+-- VACUUM dans script séparé OPTIMIZE_FREIGHT_TABLES.sql
 ```
+
+## 💡 POURQUOI 2 SCRIPTS?
+
+**VACUUM ne peut pas s'exécuter dans une transaction**
+- Le script principal utilise des transactions pour garantir l'atomicité
+- VACUUM doit s'exécuter en dehors d'une transaction
+- Solution: 2 scripts séparés
+
+**Est-ce que VACUUM est nécessaire?**
+- ❌ Non, c'est optionnel
+- ✅ Mais recommandé pour libérer l'espace disque
+- ✅ Met à jour les statistiques pour de meilleures performances
 
 ---
 
 **Statut**: ✅ **COMPLÈTEMENT CORRIGÉ - VERSION FINALE**
-**Fichier à utiliser**: `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql`
-**Action**: Copier et exécuter dans Supabase SQL Editor
-**Durée estimée**: < 5 secondes
+
+**Fichiers à utiliser**:
+1. `CLEANUP_FREIGHT_CUSTOMS_MODULE.sql` (Obligatoire)
+2. `OPTIMIZE_FREIGHT_TABLES.sql` (Optionnel)
+
+**Action**: 
+1. Copier et exécuter le script principal
+2. (Optionnel) Exécuter le script d'optimisation séparément
+
+**Durée estimée**: < 5 secondes par script

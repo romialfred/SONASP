@@ -120,24 +120,18 @@ BEGIN
 END $$;
 
 -- =====================================================
--- 6. VACUUM ET ANALYSE (Optionnel - Optimisation)
--- =====================================================
-
--- Récupérer l'espace disque et mettre à jour les statistiques
-VACUUM ANALYZE freight_shipment_signatories;
-VACUUM ANALYZE freight_shipment_productions;
-VACUUM ANALYZE freight_shipments;
-
--- =====================================================
--- 7. MESSAGE FINAL
+-- 6. MESSAGE FINAL
 -- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '✓ Optimisation des tables effectuée';
-  RAISE NOTICE '';
   RAISE NOTICE '==============================================';
   RAISE NOTICE 'SCRIPT TERMINÉ - MODULE FREIGHT & CUSTOMS VIDE';
   RAISE NOTICE '==============================================';
+  RAISE NOTICE '';
+  RAISE NOTICE 'NOTE: Pour optimiser les tables (optionnel), exécutez séparément:';
+  RAISE NOTICE '  VACUUM ANALYZE freight_shipment_signatories;';
+  RAISE NOTICE '  VACUUM ANALYZE freight_shipment_productions;';
+  RAISE NOTICE '  VACUUM ANALYZE freight_shipments;';
 END $$;

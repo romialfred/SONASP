@@ -440,8 +440,8 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-      {/* Production Form - 3 columns */}
-      <div className="lg:col-span-3">
+      {/* Production Form - 4 columns */}
+      <div className="lg:col-span-4">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">
@@ -750,8 +750,8 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
         </Card>
       </div>
 
-      {/* Field Guide Panel - 2 columns */}
-      <div className="lg:col-span-2">
+      {/* Field Guide Panel - 1 column */}
+      <div className="lg:col-span-1">
         <FieldGuidePanel
           fields={dailyProductionFieldGuides}
           activeField={activeField}

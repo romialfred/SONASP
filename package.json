@@ -27,7 +27,10 @@
     "db:reset-production-status": "node scripts/reset-all-production-to-prepared.js",
     "db:reset-production-status:preview": "node scripts/reset-all-production-to-prepared.js --dry-run",
     "quality:check": "./scripts/quality-check.sh",
-    "pre-commit": "npm run quality:check"
+    "pre-commit": "npm run quality:check",
+    "mcp:install": "cd mcp-server && npm install",
+    "mcp:start": "cd mcp-server && npm start",
+    "mcp:dev": "cd mcp-server && npm run dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

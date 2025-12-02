@@ -11,6 +11,7 @@ import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
+import { depositorService, Depositor } from '@/services/depositorService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PackingListPdfService } from '@/services/packingListPdfService';
@@ -76,6 +77,7 @@ export default function ShippingPreparationNew() {
   const [selectedProductions, setSelectedProductions] = useState<SelectedProductionData[]>([]);
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
   const [signatories, setSignatories] = useState<{position: string; name: string; tempId: string}[]>([]);
+  const [depositors, setDepositors] = useState<Depositor[]>([]);
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([]);
   const [freightCompanies, setFreightCompanies] = useState<TransportCompany[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
@@ -100,6 +102,7 @@ export default function ShippingPreparationNew() {
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
 
   // Signatory form
+  const [selectedDepositorId, setSelectedDepositorId] = useState('');
   const [newSignatoryPosition, setNewSignatoryPosition] = useState('');
   const [newSignatoryName, setNewSignatoryName] = useState('');
 
@@ -127,6 +130,12 @@ export default function ShippingPreparationNew() {
       loadPreparation(id);
     }
   }, [isEditMode, id]);
+
+  useEffect(() => {
+    if (selectedMiningCompanyId) {
+      loadDepositors(selectedMiningCompanyId);
+    }
+  }, [selectedMiningCompanyId]);
 
   const loadInitialData = async () => {
     try {
@@ -195,6 +204,22 @@ export default function ShippingPreparationNew() {
 
     if (error) throw error;
     setRefineries(data || []);
+  };
+
+  const loadDepositors = async (miningCompanyId: string) => {
+    if (!miningCompanyId) {
+      setDepositors([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await depositorService.getDepositorsByCompany(miningCompanyId);
+      if (error) throw error;
+      setDepositors(data || []);
+    } catch (error) {
+      console.error('Error loading depositors:', error);
+      setDepositors([]);
+    }
   };
 
   const loadPreparation = async (prepId: string) => {
@@ -322,10 +347,24 @@ export default function ShippingPreparationNew() {
     ));
   };
 
+  const handleDepositorSelect = (depositorId: string) => {
+    setSelectedDepositorId(depositorId);
+    if (depositorId) {
+      const depositor = depositors.find(d => d.id === depositorId);
+      if (depositor) {
+        setNewSignatoryPosition(depositor.job_title);
+        setNewSignatoryName(depositor.full_name);
+      }
+    } else {
+      setNewSignatoryPosition('');
+      setNewSignatoryName('');
+    }
+  };
+
   const handleAddSignatory = () => {
     if (!newSignatoryPosition.trim() || !newSignatoryName.trim()) {
       setErrorTitle('Informations manquantes');
-      setErrorMessage('Veuillez remplir la position et le nom du signataire.');
+      setErrorMessage('Veuillez sélectionner un dépositaire ou remplir manuellement la position et le nom du signataire.');
       setShowErrorDialog(true);
       return;
     }
@@ -336,6 +375,7 @@ export default function ShippingPreparationNew() {
       tempId: `temp-${Date.now()}`
     }]);
 
+    setSelectedDepositorId('');
     setNewSignatoryPosition('');
     setNewSignatoryName('');
   };
@@ -981,30 +1021,56 @@ export default function ShippingPreparationNew() {
               <h2 className="text-sm font-bold text-gray-900 mb-3">Signataires</h2>
 
               <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-md p-3 mb-3">
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
-                    <select
-                      value={newSignatoryPosition}
-                      onChange={(e) => setNewSignatoryPosition(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                    >
-                      <option value="">-- Sélectionner --</option>
-                      {commonPositions.map((pos) => (
-                        <option key={pos} value={pos}>{pos}</option>
-                      ))}
-                    </select>
+                {!selectedMiningCompanyId ? (
+                  <div className="text-center text-amber-700 text-sm py-4">
+                    Veuillez d'abord sélectionner une compagnie minière pour voir les dépositaires
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-yellow-800 mb-1">Nom</label>
-                    <Input
-                      value={newSignatoryName}
-                      onChange={(e) => setNewSignatoryName(e.target.value)}
-                      placeholder="Nom complet"
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-yellow-800 mb-1">
+                        Sélectionner un Dépositaire
+                      </label>
+                      <select
+                        value={selectedDepositorId}
+                        onChange={(e) => handleDepositorSelect(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                      >
+                        <option value="">-- Sélectionner --</option>
+                        {depositors.map((depositor) => (
+                          <option key={depositor.id} value={depositor.id}>
+                            {depositor.full_name} - {depositor.job_title}
+                          </option>
+                        ))}
+                      </select>
+                      {depositors.length === 0 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          Aucun dépositaire trouvé. Vous pouvez saisir manuellement ci-dessous.
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-yellow-800 mb-1">Position</label>
+                        <Input
+                          value={newSignatoryPosition}
+                          onChange={(e) => setNewSignatoryPosition(e.target.value)}
+                          placeholder="Titre du poste"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-yellow-800 mb-1">Nom</label>
+                        <Input
+                          value={newSignatoryName}
+                          onChange={(e) => setNewSignatoryName(e.target.value)}
+                          placeholder="Nom complet"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
                 <Button
                   onClick={handleAddSignatory}
                   variant="outline"

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
 import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
+import { depositorService, Depositor } from '@/services/depositorService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
 
@@ -26,6 +27,8 @@ export default function FreightShipmentCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [availableShippingPreparations, setAvailableShippingPreparations] = useState<AvailableShippingPreparation[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
+  const [depositors, setDepositors] = useState<Depositor[]>([]);
+  const [selectedDepositorId, setSelectedDepositorId] = useState('');
 
   // Form state
   const [selectedShippingPrepIds, setSelectedShippingPrepIds] = useState<Set<string>>(new Set());
@@ -37,10 +40,7 @@ export default function FreightShipmentCreate() {
   const [exchangeRate, setExchangeRate] = useState('');
   const [localCurrency, setLocalCurrency] = useState('XOF');
   const [notes, setNotes] = useState('');
-  const [signatories, setSignatories] = useState<Signatory[]>([
-    { position: 'Mine Manager', full_name: '', display_order: 0 },
-    { position: 'Finance Manager', full_name: '', display_order: 1 },
-  ]);
+  const [signatories, setSignatories] = useState<Signatory[]>([]);
 
   // Selected shipping preparations summary
   const selectedShippingPreps = availableShippingPreparations.filter(sp => selectedShippingPrepIds.has(sp.id));
@@ -52,6 +52,23 @@ export default function FreightShipmentCreate() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // Load depositors when shipping preparations are selected
+    if (selectedShippingPrepIds.size > 0) {
+      const miningCompanyIds = new Set(
+        selectedShippingPreps
+          .flatMap(sp => sp.items.map(item => item.daily_production?.mining_company_id))
+          .filter(Boolean)
+      );
+
+      // Si une seule compagnie, charger ses dépositaires
+      if (miningCompanyIds.size === 1) {
+        const [miningCompanyId] = Array.from(miningCompanyIds);
+        loadDepositors(miningCompanyId as string);
+      }
+    }
+  }, [selectedShippingPrepIds]);
 
   const loadData = async () => {
     try {
@@ -102,11 +119,41 @@ export default function FreightShipmentCreate() {
     setSelectedShippingPrepIds(new Set());
   };
 
+  const loadDepositors = async (miningCompanyId: string) => {
+    try {
+      const { data, error } = await depositorService.getDepositorsByCompany(miningCompanyId);
+      if (error) throw error;
+      setDepositors(data || []);
+    } catch (error) {
+      console.error('Error loading depositors:', error);
+      setDepositors([]);
+    }
+  };
+
+  const handleDepositorSelect = (depositorId: string) => {
+    setSelectedDepositorId(depositorId);
+  };
+
   const handleAddSignatory = () => {
-    setSignatories([
-      ...signatories,
-      { position: '', full_name: '', display_order: signatories.length },
-    ]);
+    if (selectedDepositorId) {
+      const depositor = depositors.find(d => d.id === selectedDepositorId);
+      if (depositor) {
+        setSignatories([
+          ...signatories,
+          {
+            position: depositor.job_title,
+            full_name: depositor.full_name,
+            display_order: signatories.length
+          },
+        ]);
+        setSelectedDepositorId('');
+      }
+    } else {
+      setSignatories([
+        ...signatories,
+        { position: '', full_name: '', display_order: signatories.length },
+      ]);
+    }
   };
 
   const handleRemoveSignatory = (index: number) => {
@@ -432,9 +479,47 @@ export default function FreightShipmentCreate() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Signataires des Documents PDF</h2>
-                <Button type="button" variant="secondary" size="sm" onClick={handleAddSignatory}>
+              </div>
+
+              {depositors.length > 0 && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <label className="block text-sm font-medium text-blue-900 mb-2">
+                    Sélectionner un Dépositaire
+                  </label>
+                  <div className="flex gap-3">
+                    <select
+                      value={selectedDepositorId}
+                      onChange={(e) => handleDepositorSelect(e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Sélectionner un dépositaire --</option>
+                      {depositors.map((depositor) => (
+                        <option key={depositor.id} value={depositor.id}>
+                          {depositor.full_name} - {depositor.job_title}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddSignatory}
+                      disabled={!selectedDepositorId}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter
+                    </Button>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Ou cliquez sur "Ajouter manuellement" ci-dessous pour saisir un signataire personnalisé
+                  </p>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <Button type="button" variant="outline" size="sm" onClick={handleAddSignatory}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Ajouter un signataire
+                  Ajouter manuellement un signataire
                 </Button>
               </div>
 

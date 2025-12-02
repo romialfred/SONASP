@@ -64,6 +64,8 @@ import { MiningCompanyForm } from './pages/stakeholders/MiningCompanyForm';
 import { MiningCompanyDetails } from './pages/stakeholders/MiningCompanyDetails';
 import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage';
 import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
+import { DepositorsPage } from './pages/stakeholders/DepositorsPage';
+import { DepositorFormPage } from './pages/stakeholders/DepositorFormPage';
 import { DailyProductionPage } from './pages/production/DailyProductionPage';
 import { ProductionDetails } from './pages/production/ProductionDetails';
 import { ProductionInSafe } from './pages/production/ProductionInSafe';
@@ -685,6 +687,33 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'admin']}>
                   <RefineryPlantsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/depositors"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <DepositorsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/depositors/new"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <DepositorFormPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/depositors/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <DepositorFormPage />
                 </ProtectedRoute>
               }
             />

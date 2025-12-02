@@ -135,6 +135,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('stakeholders.miningCompanies'), path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
         { label: t('stakeholders.freightCompanies'), path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
         { label: t('stakeholders.refineryPlants'), path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
+        { label: t('stakeholders.depositors'), path: '/stakeholders/depositors', icon: Shield, iconColor: 'text-emerald-700' },
         { label: t('nav.customers'), path: '/customers', icon: Users, iconColor: 'text-teal-700' },
       ],
     },

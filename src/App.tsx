@@ -249,7 +249,7 @@ function AppRoutes() {
               }
             />
 
-            {/* Freight & Customs Routes - NEW SYSTEM */}
+            {/* Invoice & Consignment Routes - NEW SYSTEM */}
             <Route
               path="/freight"
               element={
@@ -275,7 +275,7 @@ function AppRoutes() {
               }
             />
 
-            {/* Freight & Customs Routes - OLD SYSTEM (kept for compatibility) */}
+            {/* Invoice & Consignment Routes - OLD SYSTEM (kept for compatibility) */}
             <Route
               path="/freight-customs"
               element={

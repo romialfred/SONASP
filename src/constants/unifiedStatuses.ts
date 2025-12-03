@@ -14,7 +14,7 @@ export type UnifiedStatus =
   | 'customs_approved'
   | 'ready_for_expedition'
 
-  // Phase Freight & Customs
+  // Phase Invoice & Consignment
   | 'shipped_to_refinery'
 
   // Phase Refinery
@@ -96,7 +96,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-indigo-200',
     description: 'En transit vers la raffinerie',
     icon: '✈️',
-    phase: 'Freight & Customs'
+    phase: 'Invoice & Consignment'
   },
 
   // PHASE REFINERY

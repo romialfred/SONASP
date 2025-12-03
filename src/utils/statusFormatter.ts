@@ -38,7 +38,7 @@ export function formatStatusFr(status: string): string {
     'ready_for_expedition': 'Prêt pour Expédition',
     'shipped_to_refinery': 'Expédié vers Raffinerie',
 
-    // Freight & Sales statuses
+    // Invoice & Sales statuses
     'draft': 'Brouillon',
     'awaiting_approval': 'En Attente d\'Approbation',
     'approved': 'Approuvé',

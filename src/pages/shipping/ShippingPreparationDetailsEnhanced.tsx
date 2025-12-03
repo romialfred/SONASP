@@ -719,7 +719,7 @@ export function ShippingPreparationDetailsEnhanced() {
                 <p className="text-xs text-gray-600">
                   {preparation.status === 'waiting_for_customs_approval' && 'Approuver cette expédition pour la douane'}
                   {preparation.status === 'approved_by_customs' && 'Marquer comme prêt pour expédition'}
-                  {preparation.status === 'ready_for_expedition' && 'Cette expédition est prête. Gérer l\'expédition dans le module Freight & Customs.'}
+                  {preparation.status === 'ready_for_expedition' && 'Cette expédition est prête. Gérer l\'expédition dans le module Invoice & Consignment.'}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -752,7 +752,7 @@ export function ShippingPreparationDetailsEnhanced() {
                     size="md"
                   >
                     <Ship className="w-4 h-4 mr-2" />
-                    Gérer dans Freight & Customs
+                    Gérer dans Invoice & Consignment
                   </Button>
                 )}
               </div>

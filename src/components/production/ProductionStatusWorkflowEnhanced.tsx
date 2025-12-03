@@ -16,7 +16,7 @@ const WORKFLOW_STEPS = [
   { key: 'ready_for_customs', label: 'Prêt pour la Douane', phase: 'Production → Shipping' },
   { key: 'customs_approved', label: 'Approuvé par la Douane', phase: 'Shipping Preparation' },
   { key: 'ready_for_expedition', label: 'Prêt pour Expédition', phase: 'Shipping Preparation' },
-  { key: 'shipped_to_refinery', label: 'Expédié à la Raffinerie', phase: 'Freight & Customs' },
+  { key: 'shipped_to_refinery', label: 'Expédié à la Raffinerie', phase: 'Invoice & Consignment' },
   { key: 'refined', label: 'Raffinage Terminé', phase: 'Refinery' },
   { key: 'in_inventory', label: 'En Inventaire', phase: 'Inventory' },
   { key: 'sold', label: 'Vendu', phase: 'Sale' },

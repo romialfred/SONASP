@@ -292,10 +292,20 @@ export default function ShippingPreparationNew() {
         selectedMiningCompanyId,
         year
       );
+      console.log('✅ Generated expedition lot number:', expeditionLotNumber);
       return expeditionLotNumber;
     } catch (error) {
-      console.error('Error generating expedition lot number:', error);
-      // Fallback to old format if function fails
+      console.error('❌ Error generating expedition lot number:', error);
+      console.error('Mining company ID:', selectedMiningCompanyId);
+      // Show error to user
+      setErrorTitle('Erreur de Numéro d\'Expédition');
+      setErrorMessage(
+        'Impossible de générer le numéro d\'expédition automatiquement. ' +
+        'Vérifiez que la compagnie minière a une abréviation configurée. ' +
+        'Erreur: ' + (error as Error).message
+      );
+      setShowErrorDialog(true);
+      // Fallback to temporary format
       const year = new Date().getFullYear();
       return `HUM-XXX-0000/${year}`;
     }

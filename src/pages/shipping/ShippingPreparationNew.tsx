@@ -97,6 +97,7 @@ export default function ShippingPreparationNew() {
 
   // Form state
   const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
+  const [expeditionLotNumber, setExpeditionLotNumber] = useState('');
   const [selectedLicenseId, setSelectedLicenseId] = useState('');
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
@@ -134,6 +135,10 @@ export default function ShippingPreparationNew() {
   useEffect(() => {
     if (selectedMiningCompanyId) {
       loadDepositors(selectedMiningCompanyId);
+      // Generate expedition lot number when company changes
+      generateExpeditionLotNumber().then(setExpeditionLotNumber);
+    } else {
+      setExpeditionLotNumber('');
     }
   }, [selectedMiningCompanyId]);
 
@@ -251,17 +256,22 @@ export default function ShippingPreparationNew() {
     }
   };
 
-  const generateExpeditionLotNumber = () => {
-    if (selectedProductions.length === 0) return '';
+  const generateExpeditionLotNumber = async (): Promise<string> => {
+    if (!selectedMiningCompanyId) return '';
 
-    const firstProduction = selectedProductions[0].production;
-    const date = new Date(firstProduction.production_date);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const companyCode = firstProduction.mining_company?.code || 'XXX';
-
-    return `HUM-${companyCode}-${month}${day}/${year}`;
+    try {
+      const year = new Date().getFullYear();
+      const expeditionLotNumber = await shippingPreparationService.generateExpeditionLotNumber(
+        selectedMiningCompanyId,
+        year
+      );
+      return expeditionLotNumber;
+    } catch (error) {
+      console.error('Error generating expedition lot number:', error);
+      // Fallback to old format if function fails
+      const year = new Date().getFullYear();
+      return `HUM-XXX-0000/${year}`;
+    }
   };
 
   const handleMiningCompanyChange = async (companyId: string) => {
@@ -447,7 +457,7 @@ export default function ShippingPreparationNew() {
 
       // Préparer les données du packing list
       const packingListData = {
-        expeditionLotNumber: generateExpeditionLotNumber(),
+        expeditionLotNumber,
         productionDate: selectedProductions[0].production.production_date,
         miningCompany: selectedProductions[0].production.mining_company?.name || '',
         refineryName: selectedRefinery.name,
@@ -624,8 +634,6 @@ export default function ShippingPreparationNew() {
 
     try {
       setSaving(true);
-
-      const expeditionLotNumber = generateExpeditionLotNumber();
 
       // Calculate total weights
       const totalNetWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
@@ -1316,7 +1324,7 @@ export default function ShippingPreparationNew() {
               {selectedProductions.length > 0 ? (
               <div className="bg-white rounded-lg shadow-xl">
                 <DynamicPackingList
-                  expeditionLotNumber={generateExpeditionLotNumber()}
+                  expeditionLotNumber={expeditionLotNumber}
                   productionDate={selectedProductions[0].production.production_date}
                   miningCompany={selectedProductions[0].production.mining_company?.name || ''}
                   refineryName={selectedRefinery?.name || ''}
@@ -1366,7 +1374,7 @@ export default function ShippingPreparationNew() {
             setShowSuccessDialog(false);
             navigate(`/shipping/preparation/${savedPreparationId}`);
           }}
-          expeditionNumber={generateExpeditionLotNumber()}
+          expeditionNumber={expeditionLotNumber}
           totalBoxes={selectedProductions.length}
           totalNetWeight={totalNetWeight}
           totalGrossWeight={totalGrossWeight}

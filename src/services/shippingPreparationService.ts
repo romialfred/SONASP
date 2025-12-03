@@ -294,6 +294,19 @@ class ShippingPreparationService {
     if (error) throw error;
   }
 
+  async generateExpeditionLotNumber(
+    miningCompanyId: string,
+    year?: number
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc('get_next_expedition_lot_number', {
+      p_mining_company_id: miningCompanyId,
+      p_year: year || new Date().getFullYear(),
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
   async getDocuments(preparationId: string): Promise<ShippingDocument[]> {
     const { data, error } = await supabase
       .from('shipping_documents')

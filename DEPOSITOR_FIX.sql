@@ -176,11 +176,13 @@ DO $$
 BEGIN
   RAISE NOTICE '--- Adding unique constraint ---';
 
-  -- Drop if exists
+  -- Drop if exists (with proper table check)
   IF EXISTS (
     SELECT 1
-    FROM pg_constraint
-    WHERE conname = 'depositors_unique_person_company_category'
+    FROM pg_constraint c
+    JOIN pg_class t ON c.conrelid = t.oid
+    WHERE c.conname = 'depositors_unique_person_company_category'
+      AND t.relname = 'depositors'
   ) THEN
     ALTER TABLE depositors
     DROP CONSTRAINT depositors_unique_person_company_category;
@@ -203,6 +205,8 @@ EXCEPTION
     RAISE NOTICE '   SELECT full_name, mining_company_id, category, COUNT(*)';
     RAISE NOTICE '   FROM depositors GROUP BY 1,2,3 HAVING COUNT(*) > 1;';
     RAISE NOTICE '';
+  WHEN undefined_object THEN
+    RAISE NOTICE '⚠️  Constraint does not exist yet - will create it';
 END $$;
 
 -- ============================================================================

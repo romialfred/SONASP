@@ -117,23 +117,43 @@ BEGIN
 END;
 ```
 
-#### ✅ BON:
+#### ❌ AUSSI MAUVAIS (Vérification incomplète):
 ```sql
 BEGIN
-  -- Vérifier si existe
+  -- Vérifie TOUTES les contraintes, pas juste pour cette table!
   IF EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'constraint_name'
   ) THEN
     ALTER TABLE table DROP CONSTRAINT constraint_name;
+    -- ERREUR si contrainte avec même nom existe sur une AUTRE table!
+  END IF;
+END;
+```
+
+#### ✅ BON:
+```sql
+BEGIN
+  -- Vérifier si existe POUR CETTE TABLE spécifiquement
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    JOIN pg_class t ON c.conrelid = t.oid
+    WHERE c.conname = 'constraint_name'
+      AND t.relname = 'table_name'
+  ) THEN
+    ALTER TABLE table DROP CONSTRAINT constraint_name;
+    RAISE NOTICE '⚠️  Dropped existing constraint';
   END IF;
 
-  -- Ajouter avec gestion d'erreur
+  -- Ajouter avec gestion d'erreur complète
   ALTER TABLE table ADD CONSTRAINT constraint_name UNIQUE (col1, col2);
 
 EXCEPTION
   WHEN unique_violation THEN
     RAISE NOTICE '❌ Cannot add constraint - duplicates exist';
     RAISE NOTICE '   Run query to find duplicates...';
+  WHEN undefined_object THEN
+    RAISE NOTICE '⚠️  Object does not exist yet';
 END;
 ```
 

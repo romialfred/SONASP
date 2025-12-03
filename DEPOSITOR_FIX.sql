@@ -172,24 +172,15 @@ END $$;
 -- STEP 3: Add unique constraint
 -- ============================================================================
 
+-- Drop constraint if it exists (using PostgreSQL native syntax)
+ALTER TABLE depositors
+DROP CONSTRAINT IF EXISTS depositors_unique_person_company_category;
+
+-- Add the unique constraint
 DO $$
 BEGIN
   RAISE NOTICE '--- Adding unique constraint ---';
 
-  -- Drop if exists (with proper table check)
-  IF EXISTS (
-    SELECT 1
-    FROM pg_constraint c
-    JOIN pg_class t ON c.conrelid = t.oid
-    WHERE c.conname = 'depositors_unique_person_company_category'
-      AND t.relname = 'depositors'
-  ) THEN
-    ALTER TABLE depositors
-    DROP CONSTRAINT depositors_unique_person_company_category;
-    RAISE NOTICE '⚠️  Dropped existing constraint';
-  END IF;
-
-  -- Add constraint
   ALTER TABLE depositors
   ADD CONSTRAINT depositors_unique_person_company_category
   UNIQUE (mining_company_id, category, full_name);
@@ -200,13 +191,19 @@ BEGIN
 
 EXCEPTION
   WHEN unique_violation THEN
-    RAISE NOTICE '❌ ERROR: Cannot add constraint - duplicates still exist';
-    RAISE NOTICE '   Run this query to find remaining duplicates:';
-    RAISE NOTICE '   SELECT full_name, mining_company_id, category, COUNT(*)';
-    RAISE NOTICE '   FROM depositors GROUP BY 1,2,3 HAVING COUNT(*) > 1;';
     RAISE NOTICE '';
-  WHEN undefined_object THEN
-    RAISE NOTICE '⚠️  Constraint does not exist yet - will create it';
+    RAISE NOTICE '❌ ERROR: Cannot add constraint - duplicates still exist';
+    RAISE NOTICE '';
+    RAISE NOTICE '   Run this query to find remaining duplicates:';
+    RAISE NOTICE '';
+    RAISE NOTICE '   SELECT full_name, mining_company_id, category, COUNT(*)';
+    RAISE NOTICE '   FROM depositors';
+    RAISE NOTICE '   GROUP BY full_name, mining_company_id, category';
+    RAISE NOTICE '   HAVING COUNT(*) > 1;';
+    RAISE NOTICE '';
+  WHEN OTHERS THEN
+    RAISE NOTICE '❌ ERROR: %', SQLERRM;
+    RAISE NOTICE '';
 END $$;
 
 -- ============================================================================

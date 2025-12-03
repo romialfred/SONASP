@@ -130,7 +130,7 @@ BEGIN
 END;
 ```
 
-#### ✅ BON:
+#### ✅ BON (Mais peut encore échouer):
 ```sql
 BEGIN
   -- Vérifier si existe POUR CETTE TABLE spécifiquement
@@ -151,11 +151,43 @@ BEGIN
 EXCEPTION
   WHEN unique_violation THEN
     RAISE NOTICE '❌ Cannot add constraint - duplicates exist';
-    RAISE NOTICE '   Run query to find duplicates...';
-  WHEN undefined_object THEN
-    RAISE NOTICE '⚠️  Object does not exist yet';
 END;
 ```
+
+#### ✅ ✅ MEILLEUR (Utilise syntaxe PostgreSQL native):
+```sql
+-- Drop constraint if exists (PostgreSQL 9.2+)
+ALTER TABLE table_name
+DROP CONSTRAINT IF EXISTS constraint_name;
+
+-- Add constraint with error handling
+DO $$
+BEGIN
+  RAISE NOTICE '--- Adding unique constraint ---';
+
+  ALTER TABLE table_name
+  ADD CONSTRAINT constraint_name
+  UNIQUE (col1, col2);
+
+  RAISE NOTICE '✅ Constraint created successfully';
+
+EXCEPTION
+  WHEN unique_violation THEN
+    RAISE NOTICE '❌ Cannot add constraint - duplicates exist';
+    RAISE NOTICE '   Run this query to find duplicates:';
+    RAISE NOTICE '   SELECT col1, col2, COUNT(*) FROM table_name';
+    RAISE NOTICE '   GROUP BY col1, col2 HAVING COUNT(*) > 1;';
+  WHEN OTHERS THEN
+    RAISE NOTICE '❌ ERROR: %', SQLERRM;
+END $$;
+```
+
+**Pourquoi cette approche est meilleure:**
+- ✅ `DROP CONSTRAINT IF EXISTS` est atomique et ne cause jamais d'erreur
+- ✅ Pas besoin de vérification EXISTS complexe
+- ✅ Plus simple et plus lisible
+- ✅ Fonctionne toujours, même si contrainte n'existe pas
+- ✅ Syntaxe PostgreSQL standard depuis version 9.2
 
 ---
 

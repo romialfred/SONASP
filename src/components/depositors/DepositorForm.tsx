@@ -4,7 +4,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { TextArea } from '@/components/ui/TextArea';
-import { Save, X } from 'lucide-react';
+import { Save, X, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import {
   DepositorCategory,
   DEPOSITOR_CATEGORIES,
@@ -62,6 +63,35 @@ export function DepositorForm({
     }
   }, [depositor]);
 
+  const checkForDuplicate = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('depositors')
+        .select('id, full_name')
+        .eq('mining_company_id', miningCompanyId)
+        .eq('category', formData.category)
+        .ilike('full_name', formData.full_name.trim());
+
+      if (error) throw error;
+
+      // Filter out the current depositor if editing
+      const duplicates = data?.filter(d => d.id !== depositor?.id) || [];
+
+      if (duplicates.length > 0) {
+        setErrors({
+          ...errors,
+          full_name: 'This person is already registered for this company with the same category/role. Please check existing records.',
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking for duplicates:', error);
+      return false;
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -94,6 +124,12 @@ export function DepositorForm({
       return;
     }
 
+    // Check for duplicates before submitting
+    const isDuplicate = await checkForDuplicate();
+    if (isDuplicate) {
+      return;
+    }
+
     try {
       await onSubmit(formData);
     } catch (error) {
@@ -123,6 +159,22 @@ export function DepositorForm({
     <form onSubmit={handleSubmit}>
       <Card>
         <div className="p-6 space-y-6">
+          {errors.full_name && errors.full_name.includes('already registered') && (
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
+              <div className="flex items-start">
+                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-800">Duplicate Depositor Warning</h3>
+                  <p className="text-sm text-amber-700 mt-1">{errors.full_name}</p>
+                  <p className="text-xs text-amber-600 mt-2">
+                    The same person cannot be registered multiple times for the same company with the same category/role.
+                    If this is a different role, please select a different category.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">

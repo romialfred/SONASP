@@ -87,6 +87,14 @@ export default function FreightShipmentCreate() {
       if (refineriesError) throw refineriesError;
       setRefineries(refineriesData || []);
 
+      // Set default to "Rand Refinery"
+      if (refineriesData && refineriesData.length > 0) {
+        const defaultRefinery = refineriesData.find(r => r.name.toLowerCase().includes('rand'));
+        if (defaultRefinery) {
+          setDestinationRefineryId(defaultRefinery.id);
+        }
+      }
+
       if (shippingPreps.length === 0) {
         showInfo(
           'Aucune expédition disponible',

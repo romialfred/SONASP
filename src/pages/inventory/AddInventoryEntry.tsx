@@ -229,6 +229,14 @@ export function AddInventoryEntry() {
       if (error) throw error;
 
       setRefineries(data || []);
+
+      // Set default to "Rand Refinery" if not already set
+      if (data && data.length > 0 && !formData.processing_location) {
+        const defaultRefinery = data.find(r => r.name.toLowerCase().includes('rand'));
+        if (defaultRefinery) {
+          setFormData(prev => ({ ...prev, processing_location: defaultRefinery.id }));
+        }
+      }
     } catch (error) {
       console.error('Error loading refineries:', error);
     }

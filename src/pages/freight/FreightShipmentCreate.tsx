@@ -119,36 +119,56 @@ export default function FreightShipmentCreate() {
 
   const loadSignatoriesFromShippingPreps = async () => {
     try {
+      console.log('🔍 Loading signatories for shipping preps:', Array.from(selectedShippingPrepIds));
       const allSignatories: Array<{id: string; full_name: string; position: string}> = [];
       const seenNames = new Set<string>();
 
       // Load signatories from each selected shipping preparation
       for (const prepId of Array.from(selectedShippingPrepIds)) {
+        console.log('📦 Loading signatories for prep ID:', prepId);
+
         const { data, error } = await supabase
           .from('shipping_signatories')
-          .select('id, full_name, position')
+          .select('*')
           .eq('shipping_preparation_id', prepId)
           .order('order_index');
 
         if (error) {
-          console.error('Error loading signatories:', error);
+          console.error('❌ Error loading signatories:', error);
           continue;
         }
 
+        console.log('✅ Signatories data received:', data);
+
         // Add unique signatories (avoid duplicates across multiple shipping preps)
-        if (data) {
+        if (data && data.length > 0) {
           for (const sig of data) {
-            if (!seenNames.has(sig.full_name)) {
+            // Try different possible column names (database schema may vary)
+            const displayName = sig.full_name || sig.name || sig.depositor_name || 'Unknown';
+            // Use title as fallback if position is empty
+            const displayPosition = sig.position || sig.title || sig.job_title || 'Unknown';
+
+            console.log('👤 Processing signatory:', {
+              raw: sig,
+              displayName,
+              displayPosition
+            });
+
+            if (!seenNames.has(displayName) && displayName !== 'Unknown') {
               allSignatories.push({
                 id: sig.id,
-                full_name: sig.full_name,
-                position: sig.position
+                full_name: displayName,
+                position: displayPosition
               });
-              seenNames.add(sig.full_name);
+              seenNames.add(displayName);
             }
           }
+        } else {
+          console.warn('⚠️ No signatories found for prep ID:', prepId);
         }
       }
+
+      console.log('📊 Total unique signatories loaded:', allSignatories.length, allSignatories);
 
       setAuthorisedDepositors(allSignatories);
       // Also update the signatories state for PDF generation
@@ -158,7 +178,7 @@ export default function FreightShipmentCreate() {
         display_order: index + 1
       })));
     } catch (error) {
-      console.error('Error loading signatories from shipping preps:', error);
+      console.error('💥 Error loading signatories from shipping preps:', error);
       setAuthorisedDepositors([]);
     }
   };

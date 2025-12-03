@@ -8,44 +8,42 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-console.log('=== VERIFICATION TABLES ===\n');
-
-// Check mining_companies
-const { count: compCount, error: compError } = await supabase
-  .from('mining_companies')
-  .select('*', { count: 'exact', head: true });
-
-console.log('mining_companies:');
-console.log('  Existe:', !compError);
-console.log('  Count:', compCount);
-if (compError) console.log('  Error:', compError.message);
-
-// Check daily_production
-const { count: prodCount, error: prodError } = await supabase
-  .from('daily_production')
-  .select('*', { count: 'exact', head: true });
-
-console.log('\ndaily_production:');
-console.log('  Existe:', !prodError);
-console.log('  Count:', prodCount);
-if (prodError) console.log('  Error:', prodError.message);
-
-// Get some daily_production records without filter
-const { data: anyProduction, error: anyError } = await supabase
-  .from('daily_production')
-  .select('production_date, total_weight_oz, mining_company_id, site_id')
-  .limit(5)
-  .order('production_date', { ascending: false });
-
-console.log('\n=== DERNIERS ENREGISTREMENTS DAILY_PRODUCTION ===');
-console.log('Count:', anyProduction?.length || 0);
-if (anyProduction && anyProduction.length > 0) {
-  anyProduction.forEach((p, i) => {
-    console.log(`\n${i + 1}. Date: ${p.production_date}`);
-    console.log(`   Weight: ${p.total_weight_oz} oz`);
-    console.log(`   Company ID: ${p.mining_company_id}`);
-    console.log(`   Site: ${p.site_id}`);
-  });
+async function checkTables() {
+  console.log('Checking different transport-related tables...\n');
+  
+  // Check transport_companies
+  const { data: transport1, error: error1 } = await supabase
+    .from('transport_companies')
+    .select('*');
+  
+  console.log('transport_companies:', transport1 ? transport1.length : 0, 'records');
+  
+  // Check freight_companies
+  const { data: transport2, error: error2 } = await supabase
+    .from('freight_companies')
+    .select('*');
+  
+  if (!error2) {
+    console.log('freight_companies:', transport2 ? transport2.length : 0, 'records');
+    if (transport2 && transport2.length > 0) {
+      console.log('Freight companies found:');
+      console.log(JSON.stringify(transport2, null, 2));
+    }
+  }
+  
+  // Check stakeholders table with freight companies
+  const { data: stakeholders, error: error3 } = await supabase
+    .from('stakeholders')
+    .select('*')
+    .eq('stakeholder_type', 'freight_company');
+  
+  if (!error3) {
+    console.log('\nstakeholders (freight_company):', stakeholders ? stakeholders.length : 0, 'records');
+    if (stakeholders && stakeholders.length > 0) {
+      console.log('Stakeholders found:');
+      console.log(JSON.stringify(stakeholders, null, 2));
+    }
+  }
 }
 
-process.exit(0);
+checkTables();

@@ -132,10 +132,14 @@ export default function FreightShipmentCreate() {
       // Charger les transport companies
       const { data: transportData, error: transportError } = await supabase
         .from('transport_companies')
-        .select('id, name, country')
+        .select('id, name, address, company_type')
+        .eq('is_active', true)
         .order('name');
 
-      if (transportError) console.error('Error loading transport companies:', transportError);
+      if (transportError) {
+        console.error('Error loading transport companies:', transportError);
+        showError('Erreur', 'Impossible de charger les compagnies de transport');
+      }
       setTransportCompanies(transportData || []);
 
       // Set defaults
@@ -763,7 +767,7 @@ export default function FreightShipmentCreate() {
                   <option value="">-- Sélectionner --</option>
                   {transportCompanies.map((company) => (
                     <option key={company.id} value={company.id}>
-                      {company.name} {company.country ? `(${company.country})` : ''}
+                      {company.name} {company.address ? `- ${company.address}` : ''}
                     </option>
                   ))}
                 </Select>

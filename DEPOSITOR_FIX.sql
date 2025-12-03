@@ -172,15 +172,20 @@ END $$;
 -- STEP 3: Add unique constraint
 -- ============================================================================
 
--- Drop constraint if it exists (using PostgreSQL native syntax)
-ALTER TABLE depositors
-DROP CONSTRAINT IF EXISTS depositors_unique_person_company_category;
-
--- Add the unique constraint
 DO $$
 BEGIN
   RAISE NOTICE '--- Adding unique constraint ---';
 
+  -- Drop constraint if it exists (using EXECUTE for dynamic SQL)
+  BEGIN
+    EXECUTE 'ALTER TABLE depositors DROP CONSTRAINT IF EXISTS depositors_unique_person_company_category';
+    RAISE NOTICE '⚠️  Attempted to drop existing constraint (if any)';
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE NOTICE '   (Constraint did not exist - this is normal)';
+  END;
+
+  -- Add the unique constraint
   ALTER TABLE depositors
   ADD CONSTRAINT depositors_unique_person_company_category
   UNIQUE (mining_company_id, category, full_name);
@@ -201,6 +206,10 @@ EXCEPTION
     RAISE NOTICE '   GROUP BY full_name, mining_company_id, category';
     RAISE NOTICE '   HAVING COUNT(*) > 1;';
     RAISE NOTICE '';
+  WHEN duplicate_object THEN
+    RAISE NOTICE '';
+    RAISE NOTICE '⚠️  Constraint already exists - this is OK';
+    RAISE NOTICE '';
   WHEN OTHERS THEN
     RAISE NOTICE '❌ ERROR: %', SQLERRM;
     RAISE NOTICE '';
@@ -210,28 +219,51 @@ END $$;
 -- STEP 4: Create performance index
 -- ============================================================================
 
-DROP INDEX IF EXISTS idx_depositors_company_category;
-
-CREATE INDEX idx_depositors_company_category
-ON depositors(mining_company_id, category);
-
 DO $$
 BEGIN
   RAISE NOTICE '--- Performance optimization ---';
+
+  -- Drop index if exists
+  BEGIN
+    EXECUTE 'DROP INDEX IF EXISTS idx_depositors_company_category';
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL; -- Ignore any error
+  END;
+
+  -- Create index
+  CREATE INDEX idx_depositors_company_category
+  ON depositors(mining_company_id, category);
+
   RAISE NOTICE '✅ Index created: idx_depositors_company_category';
   RAISE NOTICE '';
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE '❌ ERROR creating index: %', SQLERRM;
+    RAISE NOTICE '';
 END $$;
 
 -- ============================================================================
 -- STEP 5: Add constraint documentation
 -- ============================================================================
 
-COMMENT ON CONSTRAINT depositors_unique_person_company_category ON depositors IS
-'Prevents duplicate depositors: same person cannot be registered multiple times for the same mining company with the same category/role. Allows same person in different companies or different roles in same company.';
-
 DO $$
 BEGIN
-  RAISE NOTICE '✅ Constraint documented';
+  RAISE NOTICE '--- Documenting constraint ---';
+
+  -- Add comment on constraint
+  BEGIN
+    EXECUTE $$
+      COMMENT ON CONSTRAINT depositors_unique_person_company_category ON depositors IS
+      'Prevents duplicate depositors: same person cannot be registered multiple times for the same mining company with the same category/role. Allows same person in different companies or different roles in same company.'
+    $$;
+    RAISE NOTICE '✅ Constraint documented';
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE NOTICE '⚠️  Could not document constraint: %', SQLERRM;
+  END;
+
   RAISE NOTICE '';
 END $$;
 

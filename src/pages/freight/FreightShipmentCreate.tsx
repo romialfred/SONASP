@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
 import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
-import { depositorService, Depositor } from '@/services/depositorService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
 
@@ -27,8 +26,7 @@ export default function FreightShipmentCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [availableShippingPreparations, setAvailableShippingPreparations] = useState<AvailableShippingPreparation[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
-  const [depositors, setDepositors] = useState<Depositor[]>([]);
-  const [selectedDepositorId, setSelectedDepositorId] = useState('');
+  const [authorisedDepositors, setAuthorisedDepositors] = useState<Array<{id: string; full_name: string; position: string}>>([]);
 
   // Form state
   const [selectedShippingPrepIds, setSelectedShippingPrepIds] = useState<Set<string>>(new Set());
@@ -54,19 +52,11 @@ export default function FreightShipmentCreate() {
   }, []);
 
   useEffect(() => {
-    // Load depositors when shipping preparations are selected
+    // Load signatories from selected shipping preparations
     if (selectedShippingPrepIds.size > 0) {
-      const miningCompanyIds = new Set(
-        selectedShippingPreps
-          .flatMap(sp => sp.items.map(item => item.daily_production?.mining_company_id))
-          .filter(Boolean)
-      );
-
-      // Si une seule compagnie, charger ses dépositaires
-      if (miningCompanyIds.size === 1) {
-        const [miningCompanyId] = Array.from(miningCompanyIds);
-        loadDepositors(miningCompanyId as string);
-      }
+      loadSignatoriesFromShippingPreps();
+    } else {
+      setAuthorisedDepositors([]);
     }
   }, [selectedShippingPrepIds]);
 
@@ -127,52 +117,52 @@ export default function FreightShipmentCreate() {
     setSelectedShippingPrepIds(new Set());
   };
 
-  const loadDepositors = async (miningCompanyId: string) => {
+  const loadSignatoriesFromShippingPreps = async () => {
     try {
-      const { data, error } = await depositorService.getDepositorsByCompany(miningCompanyId);
-      if (error) throw error;
-      setDepositors(data || []);
-    } catch (error) {
-      console.error('Error loading depositors:', error);
-      setDepositors([]);
-    }
-  };
+      const allSignatories: Array<{id: string; full_name: string; position: string}> = [];
+      const seenNames = new Set<string>();
 
-  const handleDepositorSelect = (depositorId: string) => {
-    setSelectedDepositorId(depositorId);
-  };
+      // Load signatories from each selected shipping preparation
+      for (const prepId of Array.from(selectedShippingPrepIds)) {
+        const { data, error } = await supabase
+          .from('shipping_signatories')
+          .select('id, full_name, position')
+          .eq('shipping_preparation_id', prepId)
+          .order('order_index');
 
-  const handleAddSignatory = () => {
-    if (selectedDepositorId) {
-      const depositor = depositors.find(d => d.id === selectedDepositorId);
-      if (depositor) {
-        setSignatories([
-          ...signatories,
-          {
-            position: depositor.job_title,
-            full_name: depositor.full_name,
-            display_order: signatories.length
-          },
-        ]);
-        setSelectedDepositorId('');
+        if (error) {
+          console.error('Error loading signatories:', error);
+          continue;
+        }
+
+        // Add unique signatories (avoid duplicates across multiple shipping preps)
+        if (data) {
+          for (const sig of data) {
+            if (!seenNames.has(sig.full_name)) {
+              allSignatories.push({
+                id: sig.id,
+                full_name: sig.full_name,
+                position: sig.position
+              });
+              seenNames.add(sig.full_name);
+            }
+          }
+        }
       }
-    } else {
-      setSignatories([
-        ...signatories,
-        { position: '', full_name: '', display_order: signatories.length },
-      ]);
+
+      setAuthorisedDepositors(allSignatories);
+      // Also update the signatories state for PDF generation
+      setSignatories(allSignatories.map((sig, index) => ({
+        position: sig.position,
+        full_name: sig.full_name,
+        display_order: index + 1
+      })));
+    } catch (error) {
+      console.error('Error loading signatories from shipping preps:', error);
+      setAuthorisedDepositors([]);
     }
   };
 
-  const handleRemoveSignatory = (index: number) => {
-    setSignatories(signatories.filter((_, i) => i !== index));
-  };
-
-  const handleSignatoryChange = (index: number, field: keyof Signatory, value: string) => {
-    const updated = [...signatories];
-    updated[index] = { ...updated[index], [field]: value };
-    setSignatories(updated);
-  };
 
   const validateForm = (): boolean => {
     if (selectedShippingPrepIds.size === 0) {
@@ -483,95 +473,91 @@ export default function FreightShipmentCreate() {
               </div>
             </Card>
 
-            {/* Signataires */}
+            {/* Authorised Depositors */}
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Signataires des Documents PDF</h2>
-              </div>
-
-              {depositors.length > 0 && (
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <label className="block text-sm font-medium text-blue-900 mb-2">
-                    Sélectionner un Dépositaire
-                  </label>
-                  <div className="flex gap-3">
-                    <select
-                      value={selectedDepositorId}
-                      onChange={(e) => handleDepositorSelect(e.target.value)}
-                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">-- Sélectionner un dépositaire --</option>
-                      {depositors
-                        .filter(depositor => !signatories.some(sig => sig.full_name === depositor.full_name))
-                        .map((depositor) => (
-                          <option key={depositor.id} value={depositor.id}>
-                            {depositor.full_name} - {depositor.job_title}
-                          </option>
-                        ))}
-                    </select>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={handleAddSignatory}
-                      disabled={!selectedDepositorId}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter
-                    </Button>
-                  </div>
-                  {depositors.filter(depositor => !signatories.some(sig => sig.full_name === depositor.full_name)).length === 0 ? (
-                    <p className="text-xs text-amber-700 mt-2">
-                      Tous les dépositaires ont déjà été ajoutés. Utilisez "Ajouter manuellement" ci-dessous pour saisir un autre signataire.
-                    </p>
-                  ) : (
-                    <p className="text-xs text-blue-700 mt-2">
-                      Ou cliquez sur "Ajouter manuellement" ci-dessous pour saisir un signataire personnalisé
-                    </p>
-                  )}
-                </div>
-              )}
-
               <div className="mb-4">
-                <Button type="button" variant="outline" size="sm" onClick={handleAddSignatory}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter manuellement un signataire
-                </Button>
+                <h2 className="text-lg font-semibold text-gray-900">Authorised Depositors</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Signataires chargés automatiquement depuis les expéditions sélectionnées
+                </p>
               </div>
 
-              <div className="space-y-3">
-                {signatories.map((signatory, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1 grid grid-cols-2 gap-3">
-                      <Input
-                        label={`Position ${index + 1}`}
-                        value={signatory.position}
-                        onChange={(e) => handleSignatoryChange(index, 'position', e.target.value)}
-                        placeholder="Ex: Mine Manager"
-                      />
-                      <Input
-                        label="Nom complet"
-                        value={signatory.full_name}
-                        onChange={(e) => handleSignatoryChange(index, 'full_name', e.target.value)}
-                        placeholder="Ex: John Doe"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleRemoveSignatory(index)}
-                      className="mt-6"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+              {selectedShippingPrepIds.size === 0 ? (
+                <div className="p-6 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600">
+                    Veuillez sélectionner au moins une expédition pour voir les signataires autorisés
+                  </p>
+                </div>
+              ) : authorisedDepositors.length === 0 ? (
+                <div className="p-6 bg-amber-50 border border-amber-200 rounded-lg text-center">
+                  <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
+                  <p className="text-sm text-amber-800 font-medium mb-2">
+                    Aucun signataire trouvé
+                  </p>
+                  <p className="text-xs text-amber-700">
+                    Les expéditions sélectionnées n'ont pas de signataires configurés dans Shipping Preparation.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            #
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Position / Title
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Full Name
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Signature
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {authorisedDepositors.map((depositor, index) => (
+                          <tr key={depositor.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                              {index + 1}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-900">{depositor.position}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-semibold text-blue-900">{depositor.full_name}</span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full">
+                                <Check className="w-4 h-4 text-blue-600" />
+                                <span className="text-xs font-medium text-blue-700">Authorized</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
 
-              <p className="text-xs text-gray-500 mt-3">
-                Les signataires apparaîtront sur les documents PDF (Bullion Summary et Facture Customs)
-              </p>
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          {authorisedDepositors.length} {authorisedDepositors.length === 1 ? 'signataire chargé' : 'signataires chargés'}
+                        </p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Ces signataires apparaîtront automatiquement sur les documents PDF (Bullion Summary et Facture Customs)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </Card>
 
             {/* Informations importantes */}

@@ -145,34 +145,38 @@ export function DepositorFormPage() {
           </div>
         </div>
 
-        {!isEditMode && (
-          <Card>
-            <div className="p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mining Company <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                required
-              >
-                <option value="">Select a company...</option>
-                {miningCompanies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </Select>
-              {miningCompanies.length === 0 && (
-                <p className="mt-2 text-sm text-amber-600">
-                  No mining companies found. Please create a mining company first.
-                </p>
-              )}
-            </div>
-          </Card>
-        )}
+        <Card>
+          <div className="p-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mining Company <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={selectedCompanyId}
+              onChange={(e) => setSelectedCompanyId(e.target.value)}
+              required
+              disabled={isSubmitting}
+            >
+              <option value="">Select a company...</option>
+              {miningCompanies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </Select>
+            {miningCompanies.length === 0 && (
+              <p className="mt-2 text-sm text-amber-600">
+                No mining companies found. Please create a mining company first.
+              </p>
+            )}
+            {isEditMode && (
+              <p className="mt-2 text-sm text-gray-600">
+                You can change the mining company for this depositor.
+              </p>
+            )}
+          </div>
+        </Card>
 
-        {(isEditMode || selectedCompanyId) && (
+        {selectedCompanyId && (
           <DepositorForm
             depositor={depositor}
             miningCompanyId={selectedCompanyId}

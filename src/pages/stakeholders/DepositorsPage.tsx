@@ -233,92 +233,126 @@ export function DepositorsPage() {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Name & Title
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Depositor Information
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Company
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Mining Company
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Contact
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Contact Details
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Role
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredDepositors.map((depositor) => (
-                      <tr key={depositor.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4">
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {depositor.full_name}
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredDepositors.map((depositor, index) => (
+                      <tr
+                        key={depositor.id}
+                        className={`transition-colors hover:bg-blue-50 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                              {depositor.full_name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {depositor.job_title}
+                            <div>
+                              <div className="font-semibold text-gray-900 text-sm">
+                                {depositor.full_name}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-0.5">
+                                {depositor.job_title}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {getCompanyName(depositor.mining_company_id)}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {getCompanyName(depositor.mining_company_id)}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryBadgeColor(
                               depositor.category
                             )}`}
                           >
                             {DEPOSITOR_CATEGORIES[depositor.category]}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center text-sm text-gray-900">
-                              <Mail className="w-3 h-3 mr-1 text-gray-400" />
-                              {depositor.email}
+                        <td className="px-6 py-4">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                              <a
+                                href={`mailto:${depositor.email}`}
+                                className="hover:text-blue-600 hover:underline truncate"
+                              >
+                                {depositor.email}
+                              </a>
                             </div>
                             {depositor.cellphone && (
-                              <div className="flex items-center text-sm text-gray-600">
-                                <Phone className="w-3 h-3 mr-1 text-gray-400" />
-                                {depositor.cellphone}
+                              <div className="flex items-center gap-2 text-sm text-gray-700">
+                                <Phone className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <a
+                                  href={`tel:${depositor.cellphone}`}
+                                  className="hover:text-green-600 hover:underline"
+                                >
+                                  {depositor.cellphone}
+                                </a>
+                              </div>
+                            )}
+                            {depositor.telephone && (
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <Phone className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                <span>{depositor.telephone}</span>
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col items-center gap-1.5">
                             {depositor.is_primary && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                <UserCheck className="w-3 h-3 mr-1" />
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                <UserCheck className="w-3.5 h-3.5 mr-1" />
                                 Primary
                               </span>
                             )}
                             {depositor.is_backup && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                                 Backup
                               </span>
                             )}
+                            {!depositor.is_primary && !depositor.is_backup && (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-6 py-4">
+                          <div className="flex justify-center gap-2">
                             <button
                               onClick={() =>
                                 navigate(`/stakeholders/depositors/${depositor.id}/edit`)
                               }
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                              title="Edit"
+                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                              title="Edit Depositor"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -326,8 +360,8 @@ export function DepositorsPage() {
                               onClick={() =>
                                 handleDelete(depositor.id, depositor.full_name)
                               }
-                              className="p-2 text-red-600 hover:bg-red-50 rounded"
-                              title="Delete"
+                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                              title="Delete Depositor"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

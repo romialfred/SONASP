@@ -81,6 +81,18 @@ export function DepositorFormPage() {
     try {
       setIsSubmitting(true);
 
+      console.log('=== DepositorFormPage SUBMIT ===');
+      console.log('selectedCompanyId:', selectedCompanyId);
+      console.log('data received:', data);
+      console.log('isEditMode:', isEditMode);
+
+      // Validate that a company is selected
+      if (!selectedCompanyId) {
+        showError('Please select a mining company');
+        setIsSubmitting(false);
+        return;
+      }
+
       if (isEditMode && id) {
         // In edit mode, ensure mining_company_id is included in the update
         const updateData = {
@@ -99,9 +111,13 @@ export function DepositorFormPage() {
         }
         showSuccess('Depositor updated successfully');
       } else {
-        const { error } = await depositorService.createDepositor(
-          data as CreateDepositorInput
-        );
+        // In create mode, ensure mining_company_id is set correctly
+        const createData = {
+          ...data,
+          mining_company_id: selectedCompanyId,
+        } as CreateDepositorInput;
+
+        const { error } = await depositorService.createDepositor(createData);
         if (error) {
           // Check if it's a unique constraint violation
           if (error.code === '23505') {

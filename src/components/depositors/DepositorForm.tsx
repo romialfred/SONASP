@@ -45,6 +45,16 @@ export function DepositorForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Update formData when miningCompanyId prop changes
+  useEffect(() => {
+    console.log('🔄 miningCompanyId prop changed to:', miningCompanyId);
+    setFormData((prev) => ({
+      ...prev,
+      mining_company_id: miningCompanyId,
+    }));
+  }, [miningCompanyId]);
+
+  // Update formData when depositor is loaded (edit mode)
   useEffect(() => {
     if (depositor) {
       setFormData({
@@ -127,6 +137,11 @@ export function DepositorForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log('=== DepositorForm SUBMIT ===');
+    console.log('formData.mining_company_id:', formData.mining_company_id);
+    console.log('miningCompanyId prop:', miningCompanyId);
+    console.log('Full formData:', formData);
 
     if (!validateForm()) {
       return;

@@ -65,17 +65,25 @@ export function DepositorForm({
 
   const checkForDuplicate = async (): Promise<boolean> => {
     try {
+      // Normalize the name for comparison (lowercase and trim)
+      const normalizedName = formData.full_name.trim().toLowerCase();
+
+      // Get all depositors for this company and category
       const { data, error } = await supabase
         .from('depositors')
         .select('id, full_name')
-        .eq('mining_company_id', miningCompanyId)
+        .eq('mining_company_id', formData.mining_company_id)
         .eq('category', formData.category)
-        .ilike('full_name', formData.full_name.trim());
+        .eq('is_active', true);
 
       if (error) throw error;
 
-      // Filter out the current depositor if editing
-      const duplicates = data?.filter(d => d.id !== depositor?.id) || [];
+      // Check for exact match (case-insensitive)
+      const duplicates = data?.filter(d => {
+        const isCurrentDepositor = d.id === depositor?.id;
+        const nameMatches = d.full_name.trim().toLowerCase() === normalizedName;
+        return !isCurrentDepositor && nameMatches;
+      }) || [];
 
       if (duplicates.length > 0) {
         setErrors({
@@ -146,10 +154,21 @@ export function DepositorForm({
       [field]: value,
     }));
 
+    // Clear errors for the changed field
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        return newErrors;
+      });
+    }
+
+    // If category or mining_company_id changes, also clear full_name error
+    // since the duplicate check depends on these
+    if ((field === 'category' || field === 'mining_company_id') && errors.full_name) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.full_name;
         return newErrors;
       });
     }

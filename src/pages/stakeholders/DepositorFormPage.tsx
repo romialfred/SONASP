@@ -82,14 +82,35 @@ export function DepositorFormPage() {
       setIsSubmitting(true);
 
       if (isEditMode && id) {
-        const { error } = await depositorService.updateDepositor(id, data);
-        if (error) throw error;
+        // In edit mode, ensure mining_company_id is included in the update
+        const updateData = {
+          ...data,
+          mining_company_id: selectedCompanyId,
+        };
+        const { error } = await depositorService.updateDepositor(id, updateData);
+        if (error) {
+          // Check if it's a unique constraint violation
+          if (error.code === '23505') {
+            showError('This person is already registered for this company with the same category/role. Please check existing records.');
+          } else {
+            throw error;
+          }
+          return;
+        }
         showSuccess('Depositor updated successfully');
       } else {
         const { error } = await depositorService.createDepositor(
           data as CreateDepositorInput
         );
-        if (error) throw error;
+        if (error) {
+          // Check if it's a unique constraint violation
+          if (error.code === '23505') {
+            showError('This person is already registered for this company with the same category/role. Please check existing records.');
+          } else {
+            throw error;
+          }
+          return;
+        }
         showSuccess('Depositor created successfully');
       }
 

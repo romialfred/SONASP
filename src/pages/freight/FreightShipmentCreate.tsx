@@ -9,9 +9,11 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
+import { ComboBox } from '@/components/ui/ComboBox';
 import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
+import { AFRICAN_COUNTRIES, AFRICAN_CITIES, AFRICAN_AIRPORTS, getCitiesByCountry, getAirportsByCountry } from '@/data/africanLocations';
 
 interface Signatory {
   position: string;
@@ -124,7 +126,16 @@ export default function FreightShipmentCreate() {
       }
 
       if (transportData && transportData.length > 0) {
-        setTransportCompanyId(transportData[0].id);
+        // Chercher "Brinks Freight Express Limited" par défaut
+        const brinksCompany = transportData.find(t =>
+          t.name.toLowerCase().includes('brinks') ||
+          t.name.toLowerCase().includes('brinks freight express limited')
+        );
+        if (brinksCompany) {
+          setTransportCompanyId(brinksCompany.id);
+        } else {
+          setTransportCompanyId(transportData[0].id);
+        }
       }
 
       // Charger les mining companies
@@ -524,25 +535,53 @@ export default function FreightShipmentCreate() {
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
+                    <ComboBox
                       label="Pays de Départ"
                       value={departureCountry}
-                      onChange={(e) => setDepartureCountry(e.target.value)}
-                      placeholder="Ex: Mali"
+                      onChange={(value) => {
+                        setDepartureCountry(value);
+                        // Réinitialiser la ville et l'aéroport si le pays change
+                        const cities = getCitiesByCountry(value);
+                        if (cities.length > 0 && !cities.find(c => c.name === departureCity)) {
+                          setDepartureCity(cities[0].name);
+                        }
+                      }}
+                      options={AFRICAN_COUNTRIES.map(country => ({
+                        value: country.name,
+                        label: country.name,
+                        subtitle: `Capitale: ${country.capital}`
+                      }))}
+                      placeholder="Sélectionner ou saisir un pays"
+                      allowCustom={true}
+                      customPlaceholder="Saisir le nom du pays manuellement..."
                     />
-                    <Input
+                    <ComboBox
                       label="Ville de Départ"
                       value={departureCity}
-                      onChange={(e) => setDepartureCity(e.target.value)}
-                      placeholder="Ex: Bamako"
+                      onChange={setDepartureCity}
+                      options={getCitiesByCountry(departureCountry).map(city => ({
+                        value: city.name,
+                        label: city.name,
+                        subtitle: city.isCapital ? '⭐ Capitale' : city.country
+                      }))}
+                      placeholder="Sélectionner ou saisir une ville"
+                      allowCustom={true}
+                      customPlaceholder="Saisir le nom de la ville manuellement..."
                     />
                   </div>
 
-                  <Input
+                  <ComboBox
                     label="Aéroport de Départ"
                     value={departureAirport}
-                    onChange={(e) => setDepartureAirport(e.target.value)}
-                    placeholder="Ex: Bamako-Sénou International (BKO)"
+                    onChange={setDepartureAirport}
+                    options={getAirportsByCountry(departureCountry).map(airport => ({
+                      value: airport.name,
+                      label: `${airport.name} (${airport.code})`,
+                      subtitle: airport.city
+                    }))}
+                    placeholder="Sélectionner ou saisir un aéroport"
+                    allowCustom={true}
+                    customPlaceholder="Saisir le nom de l'aéroport manuellement..."
                   />
 
                   <div className="grid grid-cols-2 gap-3">
@@ -575,25 +614,53 @@ export default function FreightShipmentCreate() {
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
+                    <ComboBox
                       label="Pays d'Arrivée"
                       value={arrivalCountry}
-                      onChange={(e) => setArrivalCountry(e.target.value)}
-                      placeholder="Ex: South Africa"
+                      onChange={(value) => {
+                        setArrivalCountry(value);
+                        // Réinitialiser la ville et l'aéroport si le pays change
+                        const cities = getCitiesByCountry(value);
+                        if (cities.length > 0 && !cities.find(c => c.name === arrivalCity)) {
+                          setArrivalCity(cities[0].name);
+                        }
+                      }}
+                      options={AFRICAN_COUNTRIES.map(country => ({
+                        value: country.name,
+                        label: country.name,
+                        subtitle: `Capitale: ${country.capital}`
+                      }))}
+                      placeholder="Sélectionner ou saisir un pays"
+                      allowCustom={true}
+                      customPlaceholder="Saisir le nom du pays manuellement..."
                     />
-                    <Input
+                    <ComboBox
                       label="Ville d'Arrivée"
                       value={arrivalCity}
-                      onChange={(e) => setArrivalCity(e.target.value)}
-                      placeholder="Ex: Johannesburg"
+                      onChange={setArrivalCity}
+                      options={getCitiesByCountry(arrivalCountry).map(city => ({
+                        value: city.name,
+                        label: city.name,
+                        subtitle: city.isCapital ? '⭐ Capitale' : city.country
+                      }))}
+                      placeholder="Sélectionner ou saisir une ville"
+                      allowCustom={true}
+                      customPlaceholder="Saisir le nom de la ville manuellement..."
                     />
                   </div>
 
-                  <Input
+                  <ComboBox
                     label="Aéroport d'Arrivée"
                     value={arrivalAirport}
-                    onChange={(e) => setArrivalAirport(e.target.value)}
-                    placeholder="Ex: OR Tambo International (JNB)"
+                    onChange={setArrivalAirport}
+                    options={getAirportsByCountry(arrivalCountry).map(airport => ({
+                      value: airport.name,
+                      label: `${airport.name} (${airport.code})`,
+                      subtitle: airport.city
+                    }))}
+                    placeholder="Sélectionner ou saisir un aéroport"
+                    allowCustom={true}
+                    customPlaceholder="Saisir le nom de l'aéroport manuellement..."
                   />
 
                   <div className="grid grid-cols-2 gap-3">

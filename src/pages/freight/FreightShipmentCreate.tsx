@@ -501,11 +501,13 @@ export default function FreightShipmentCreate() {
                       className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">-- Sélectionner un dépositaire --</option>
-                      {depositors.map((depositor) => (
-                        <option key={depositor.id} value={depositor.id}>
-                          {depositor.full_name} - {depositor.job_title}
-                        </option>
-                      ))}
+                      {depositors
+                        .filter(depositor => !signatories.some(sig => sig.full_name === depositor.full_name))
+                        .map((depositor) => (
+                          <option key={depositor.id} value={depositor.id}>
+                            {depositor.full_name} - {depositor.job_title}
+                          </option>
+                        ))}
                     </select>
                     <Button
                       type="button"
@@ -518,9 +520,15 @@ export default function FreightShipmentCreate() {
                       Ajouter
                     </Button>
                   </div>
-                  <p className="text-xs text-blue-700 mt-2">
-                    Ou cliquez sur "Ajouter manuellement" ci-dessous pour saisir un signataire personnalisé
-                  </p>
+                  {depositors.filter(depositor => !signatories.some(sig => sig.full_name === depositor.full_name)).length === 0 ? (
+                    <p className="text-xs text-amber-700 mt-2">
+                      Tous les dépositaires ont déjà été ajoutés. Utilisez "Ajouter manuellement" ci-dessous pour saisir un autre signataire.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-blue-700 mt-2">
+                      Ou cliquez sur "Ajouter manuellement" ci-dessous pour saisir un signataire personnalisé
+                    </p>
+                  )}
                 </div>
               )}
 

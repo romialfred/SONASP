@@ -1053,12 +1053,19 @@ export default function ShippingPreparationNew() {
                         className="w-full px-3 py-2 text-sm border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                       >
                         <option value="">-- Sélectionner --</option>
-                        {depositors.map((depositor) => (
-                          <option key={depositor.id} value={depositor.id}>
-                            {depositor.full_name} - {depositor.job_title}
-                          </option>
-                        ))}
+                        {depositors
+                          .filter(depositor => !signatories.some(sig => sig.name === depositor.full_name))
+                          .map((depositor) => (
+                            <option key={depositor.id} value={depositor.id}>
+                              {depositor.full_name} - {depositor.job_title}
+                            </option>
+                          ))}
                       </select>
+                      {depositors.filter(depositor => !signatories.some(sig => sig.name === depositor.full_name)).length === 0 && depositors.length > 0 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          Tous les dépositaires ont déjà été ajoutés. Vous pouvez saisir manuellement ci-dessous.
+                        </p>
+                      )}
                       {depositors.length === 0 && (
                         <p className="text-xs text-amber-600 mt-1">
                           Aucun dépositaire trouvé. Vous pouvez saisir manuellement ci-dessous.

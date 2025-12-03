@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Package, AlertCircle, CheckCircle, Check, Plane, Clock, MapPin, Building2, Info } from 'lucide-react';
+import { ArrowLeft, Save, Package, AlertCircle, CheckCircle, Check, Plane, Clock, MapPin, Building2, Info, TrendingUp, DollarSign } from 'lucide-react';
+import { ProductionDetailsPopup } from '@/components/freight/ProductionDetailsPopup';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -65,6 +66,8 @@ export default function FreightShipmentCreate() {
   const [signatories, setSignatories] = useState<Signatory[]>([]);
   const [transportCompanies, setTransportCompanies] = useState<any[]>([]);
   const [hoveredPrepId, setHoveredPrepId] = useState<string | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [miningCompanies, setMiningCompanies] = useState<any[]>([]);
 
   // Selected shipping preparations summary
   const selectedShippingPreps = availableShippingPreparations.filter(sp => selectedShippingPrepIds.has(sp.id));
@@ -123,6 +126,15 @@ export default function FreightShipmentCreate() {
       if (transportData && transportData.length > 0) {
         setTransportCompanyId(transportData[0].id);
       }
+
+      // Charger les mining companies
+      const { data: miningData, error: miningError } = await supabase
+        .from('mining_companies')
+        .select('id, name, abbreviation')
+        .order('name');
+
+      if (miningError) console.error('Error loading mining companies:', miningError);
+      setMiningCompanies(miningData || []);
 
       if (shippingPreps.length === 0) {
         showInfo(
@@ -229,8 +241,13 @@ export default function FreightShipmentCreate() {
       return false;
     }
 
-    if (numberOfBoxes < 1) {
-      showError('Erreur de validation', 'Le nombre de boîtes doit être au moins 1');
+    if (!transportCompanyId) {
+      showError('Erreur de validation', 'Veuillez sélectionner une compagnie de transport');
+      return false;
+    }
+
+    if (!destinationRefineryId) {
+      showError('Erreur de validation', 'Veuillez sélectionner une raffinerie de destination');
       return false;
     }
 
@@ -350,11 +367,11 @@ export default function FreightShipmentCreate() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto relative">
                 <table className="w-full border-collapse">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
                         <input
                           type="checkbox"
                           checked={selectedShippingPrepIds.size === availableShippingPreparations.length}
@@ -362,25 +379,53 @@ export default function FreightShipmentCreate() {
                           className="rounded border-gray-300"
                         />
                       </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Lot d'Expédition</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Date</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Destination</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 border">Nb Prod.</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Poids Net (g)</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                        Lot d'Expédition
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                        Mining Company
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                        Date Production
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                        Bullion (g)
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                        Poids Net (g)
+                      </th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold text-gray-700 border border-gray-300">
+                        Nb Prod.
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {availableShippingPreparations.map((prep) => {
                       const productionCount = prep.items?.length || 0;
+                      const productions = prep.items?.map(item => item.daily_production).filter(Boolean) || [];
+                      const totalBullion = productions.reduce((sum, p: any) => sum + (p?.bullion_grams || 0), 0);
+                      const firstProduction = productions[0];
+                      const miningCompany = miningCompanies.find(mc => mc.id === firstProduction?.mining_company_id);
+
                       return (
                         <tr
                           key={prep.id}
-                          className={`hover:bg-gray-50 cursor-pointer transition ${
-                            selectedShippingPrepIds.has(prep.id) ? 'bg-blue-50' : ''
+                          className={`hover:bg-blue-50 cursor-pointer transition-colors ${
+                            selectedShippingPrepIds.has(prep.id) ? 'bg-blue-100' : 'bg-white'
                           }`}
                           onClick={() => toggleShippingPrepSelection(prep.id)}
+                          onMouseEnter={(e) => {
+                            setHoveredPrepId(prep.id);
+                            setMousePosition({ x: e.clientX, y: e.clientY });
+                          }}
+                          onMouseMove={(e) => {
+                            if (hoveredPrepId === prep.id) {
+                              setMousePosition({ x: e.clientX, y: e.clientY });
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredPrepId(null)}
                         >
-                          <td className="px-3 py-2 border">
+                          <td className="px-3 py-3 border border-gray-200">
                             <input
                               type="checkbox"
                               checked={selectedShippingPrepIds.has(prep.id)}
@@ -389,26 +434,53 @@ export default function FreightShipmentCreate() {
                               className="rounded border-gray-300"
                             />
                           </td>
-                          <td className="px-3 py-2 text-sm font-medium text-gray-900 border">
+                          <td className="px-3 py-3 text-sm font-bold text-blue-900 border border-gray-200">
                             {prep.expedition_lot_number || prep.id.substring(0, 8)}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 border">
-                            {prep.shipped_at ? new Date(prep.shipped_at).toLocaleDateString('fr-FR') : 'N/A'}
+                          <td className="px-3 py-3 text-sm text-gray-900 border border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-500" />
+                              <span className="font-medium">
+                                {miningCompany?.abbreviation || miningCompany?.name || 'N/A'}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 border">
-                            {prep.shipped_to_company}, {prep.shipped_to_country}
+                          <td className="px-3 py-3 text-sm text-gray-700 border border-gray-200">
+                            {firstProduction?.production_date
+                              ? new Date(firstProduction.production_date).toLocaleDateString('fr-FR')
+                              : 'N/A'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-center text-gray-900 border">
-                            {productionCount}
+                          <td className="px-3 py-3 text-sm text-right font-medium text-gray-900 border border-gray-200">
+                            {totalBullion.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                           </td>
-                          <td className="px-3 py-2 text-sm text-right text-gray-900 border">
-                            {prep.total_net_weight_grams?.toFixed(3) || '0.000'}
+                          <td className="px-3 py-3 text-sm text-right font-bold text-green-700 border border-gray-200">
+                            {prep.total_net_weight_grams?.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) || '0.000'}
+                          </td>
+                          <td className="px-3 py-3 text-sm text-center border border-gray-200">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-900 font-bold text-xs">
+                              {productionCount}
+                            </span>
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
+
+                {/* Popup avec détails productions au survol */}
+                {hoveredPrepId && (() => {
+                  const prep = availableShippingPreparations.find(p => p.id === hoveredPrepId);
+                  if (!prep) return null;
+                  const productions = prep.items?.map(item => item.daily_production).filter(Boolean) || [];
+                  return (
+                    <ProductionDetailsPopup
+                      expeditionLotNumber={prep.expedition_lot_number || prep.id.substring(0, 8)}
+                      productions={productions as any}
+                      visible={true}
+                      position={mousePosition}
+                    />
+                  );
+                })()}
               </div>
 
               {selectedShippingPreps.length > 0 && (
@@ -439,95 +511,267 @@ export default function FreightShipmentCreate() {
               )}
             </Card>
 
-            {/* Informations d'Expédition */}
+            {/* Section Informations de Vol - Départ et Arrivée */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Informations de Départ */}
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Plane className="w-5 h-5 text-blue-700 transform -rotate-45" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">Informations de Départ</h2>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Pays de Départ"
+                      value={departureCountry}
+                      onChange={(e) => setDepartureCountry(e.target.value)}
+                      placeholder="Ex: Mali"
+                    />
+                    <Input
+                      label="Ville de Départ"
+                      value={departureCity}
+                      onChange={(e) => setDepartureCity(e.target.value)}
+                      placeholder="Ex: Bamako"
+                    />
+                  </div>
+
+                  <Input
+                    label="Aéroport de Départ"
+                    value={departureAirport}
+                    onChange={(e) => setDepartureAirport(e.target.value)}
+                    placeholder="Ex: Bamako-Sénou International (BKO)"
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Date d'Expédition"
+                      type="date"
+                      value={shipmentDate}
+                      onChange={(e) => setShipmentDate(e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="Heure de Départ (Local)"
+                      type="time"
+                      value={departureTime}
+                      onChange={(e) => setDepartureTime(e.target.value)}
+                      placeholder="HH:MM"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Informations d'Arrivée */}
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <MapPin className="w-5 h-5 text-green-700" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">Informations d'Arrivée</h2>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Pays d'Arrivée"
+                      value={arrivalCountry}
+                      onChange={(e) => setArrivalCountry(e.target.value)}
+                      placeholder="Ex: South Africa"
+                    />
+                    <Input
+                      label="Ville d'Arrivée"
+                      value={arrivalCity}
+                      onChange={(e) => setArrivalCity(e.target.value)}
+                      placeholder="Ex: Johannesburg"
+                    />
+                  </div>
+
+                  <Input
+                    label="Aéroport d'Arrivée"
+                    value={arrivalAirport}
+                    onChange={(e) => setArrivalAirport(e.target.value)}
+                    placeholder="Ex: OR Tambo International (JNB)"
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Heure d'Arrivée Prévue"
+                      type="time"
+                      value={arrivalTime}
+                      onChange={(e) => setArrivalTime(e.target.value)}
+                      placeholder="HH:MM"
+                    />
+                    <Input
+                      label="Durée du Trajet"
+                      value={flightDuration}
+                      onChange={(e) => setFlightDuration(e.target.value)}
+                      placeholder="Ex: 4h 30min"
+                    />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Compagnies de Transport et Raffinage */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations d'Expédition</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Building2 className="w-5 h-5 text-purple-700" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Compagnies</h2>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Date d'Expédition *"
-                  type="date"
-                  value={shipmentDate}
-                  onChange={(e) => setShipmentDate(e.target.value)}
+                <Select
+                  label="Transport Company"
+                  value={transportCompanyId}
+                  onChange={(e) => setTransportCompanyId(e.target.value)}
                   required
-                />
+                >
+                  <option value="">-- Sélectionner --</option>
+                  {transportCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name} {company.country ? `(${company.country})` : ''}
+                    </option>
+                  ))}
+                </Select>
 
                 <Select
-                  label="Raffinerie de Destination"
+                  label="Refinery Company"
                   value={destinationRefineryId}
                   onChange={(e) => setDestinationRefineryId(e.target.value)}
+                  required
                 >
-                  <option value="">-- Sélectionner une raffinerie --</option>
+                  <option value="">-- Sélectionner --</option>
                   {refineries.map((refinery) => (
                     <option key={refinery.id} value={refinery.id}>
                       {refinery.name} - {refinery.location}, {refinery.country}
                     </option>
                   ))}
                 </Select>
-
-                <Input
-                  label="Nombre de Boîtes *"
-                  type="number"
-                  min="1"
-                  value={numberOfBoxes}
-                  onChange={(e) => setNumberOfBoxes(parseInt(e.target.value) || 1)}
-                  required
-                />
-
-                <Input
-                  label="Type de Boîte"
-                  value={boxType}
-                  onChange={(e) => setBoxType(e.target.value)}
-                  placeholder="Plastic Box"
-                />
               </div>
             </Card>
 
             {/* Informations Douanières */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations Douanières</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input
-                  label="Prix de l'Or (USD/oz) *"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={goldPriceUsdPerOz}
-                  onChange={(e) => setGoldPriceUsdPerOz(e.target.value)}
-                  required
-                  placeholder="Ex: 2650.00"
-                />
-
-                <Input
-                  label="Taux de Change *"
-                  type="number"
-                  step="0.0001"
-                  min="0"
-                  value={exchangeRate}
-                  onChange={(e) => setExchangeRate(e.target.value)}
-                  required
-                  placeholder="Ex: 656.5 pour USD/XOF"
-                />
-
-                <Select
-                  label="Monnaie Locale"
-                  value={localCurrency}
-                  onChange={(e) => setLocalCurrency(e.target.value)}
-                >
-                  <option value="XOF">XOF (Franc CFA)</option>
-                  <option value="GNF">GNF (Franc Guinéen)</option>
-                  <option value="USD">USD</option>
-                </Select>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-amber-700" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Informations Douanières</h2>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Prix de Vente de l'Or ($/oz) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={goldPriceUsdPerOz}
+                      onChange={(e) => setGoldPriceUsdPerOz(e.target.value)}
+                      required
+                      placeholder="2650.00"
+                      className="pl-8"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Prix du marché London AM</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Paire de Devises *
+                  </label>
+                  <Select
+                    value={currencyPair}
+                    onChange={(e) => setCurrencyPair(e.target.value)}
+                    required
+                  >
+                    <option value="USD/XOF">USD/XOF (Franc CFA BCEAO)</option>
+                    <option value="EUR/XOF">EUR/XOF (Franc CFA BCEAO)</option>
+                    <option value="USD/GNF">USD/GNF (Franc Guinéen)</option>
+                    <option value="EUR/GNF">EUR/GNF (Franc Guinéen)</option>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Sélectionnez la paire de conversion</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Taux de Change *
+                  </label>
+                  <div className="relative">
+                    <TrendingUp className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={exchangeRate}
+                      onChange={(e) => setExchangeRate(e.target.value)}
+                      required
+                      placeholder="656.50"
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pour {currencyPair.split('/')[1]}
+                  </p>
+                </div>
+              </div>
+
+              {/* Calculs Automatiques */}
+              {goldPriceUsdPerOz && exchangeRate && totalPureGoldOz > 0 && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    Calculs Automatiques
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-600 block">Valeur en USD:</span>
+                      <span className="text-lg font-bold text-blue-900">
+                        ${(parseFloat(goldPriceUsdPerOz) * totalPureGoldOz).toLocaleString('fr-FR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-600 block">
+                        Valeur en {currencyPair.split('/')[1]}:
+                      </span>
+                      <span className="text-lg font-bold text-green-700">
+                        {(parseFloat(goldPriceUsdPerOz) * totalPureGoldOz * parseFloat(exchangeRate)).toLocaleString('fr-FR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} {currencyPair.split('/')[1]}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-600 block">Total Onces:</span>
+                      <span className="text-lg font-bold text-purple-700">
+                        {totalPureGoldOz.toFixed(3)} oz
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes ou Observations
+                </label>
                 <TextArea
-                  label="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  placeholder="Notes ou observations pour cette expédition..."
+                  placeholder="Informations complémentaires pour cette expédition..."
                 />
               </div>
             </Card>

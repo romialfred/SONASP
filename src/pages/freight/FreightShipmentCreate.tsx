@@ -561,10 +561,14 @@ export default function FreightShipmentCreate() {
                       value={departureCountry}
                       onChange={(value) => {
                         setDepartureCountry(value);
-                        // Réinitialiser la ville et l'aéroport si le pays change
+                        // Auto-sélectionner la première ville et le premier aéroport
                         const cities = getCitiesByCountry(value);
-                        if (cities.length > 0 && !cities.find(c => c.name === departureCity)) {
+                        if (cities.length > 0) {
                           setDepartureCity(cities[0].name);
+                        }
+                        const airports = getAirportsByCountry(value);
+                        if (airports.length > 0) {
+                          setDepartureAirport(airports[0].name);
                         }
                       }}
                       options={AFRICAN_COUNTRIES.map(country => ({
@@ -624,7 +628,7 @@ export default function FreightShipmentCreate() {
                       />
                       {departureCountry && (
                         <p className="text-xs text-gray-500 mt-1">
-                          🕐 Fuseau horaire: {getTimezoneByCountry(departureCountry).split('/')[1].replace('_', ' ')}
+                          🕐 Fuseau Hor. {formatTimezoneOffset(getTimezoneByCountry(departureCountry))}
                         </p>
                       )}
                     </div>
@@ -648,18 +652,24 @@ export default function FreightShipmentCreate() {
                       value={arrivalCountry}
                       onChange={(value) => {
                         setArrivalCountry(value);
-                        // Réinitialiser la ville et l'aéroport si le pays change
+                        // Auto-sélectionner la première ville et le premier aéroport
                         const cities = getCitiesByCountry(value);
-                        if (cities.length > 0 && !cities.find(c => c.name === arrivalCity)) {
+                        if (cities.length > 0) {
                           setArrivalCity(cities[0].name);
                         }
+                        const airports = getAirportsByCountry(value);
+                        if (airports.length > 0) {
+                          setArrivalAirport(airports[0].name);
+                        }
                       }}
-                      options={AFRICAN_COUNTRIES.map(country => ({
-                        value: country.name,
-                        label: country.name,
-                        subtitle: `Capitale: ${country.capital} • ${formatTimezoneOffset(country.timezone)}`,
-                        icon: country.flag
-                      }))}
+                      options={AFRICAN_COUNTRIES
+                        .filter(country => country.name !== departureCountry)
+                        .map(country => ({
+                          value: country.name,
+                          label: country.name,
+                          subtitle: `Capitale: ${country.capital} • ${formatTimezoneOffset(country.timezone)}`,
+                          icon: country.flag
+                        }))}
                       placeholder="Sélectionner ou saisir un pays"
                       allowCustom={true}
                       customPlaceholder="Saisir le nom du pays manuellement..."
@@ -704,7 +714,7 @@ export default function FreightShipmentCreate() {
                       />
                       {arrivalCountry && (
                         <p className="text-xs text-gray-500 mt-1">
-                          🕐 Fuseau horaire: {getTimezoneByCountry(arrivalCountry).split('/')[1].replace('_', ' ')}
+                          🕐 Fuseau Hor. {formatTimezoneOffset(getTimezoneByCountry(arrivalCountry))}
                         </p>
                       )}
                     </div>

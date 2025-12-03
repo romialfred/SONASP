@@ -174,7 +174,11 @@ export default function ShippingPreparationNew() {
       return;
     }
 
-    const { data, error } = await supabase
+    // CRITICAL: Load only productions that are:
+    // 1. From the selected mining company
+    // 2. With status 'ready_for_customs'
+    // 3. NOT already assigned to any expedition (not in shipping_production_items)
+    const { data: allProductions, error: prodError } = await supabase
       .from('daily_production')
       .select(`
         *,
@@ -182,11 +186,34 @@ export default function ShippingPreparationNew() {
       `)
       .eq('mining_company_id', miningCompanyId)
       .eq('status', 'ready_for_customs')
-      .order('production_date', { ascending: false })
-      .limit(100);
+      .order('production_date', { ascending: false });
 
-    if (error) throw error;
-    setProductions(data || []);
+    if (prodError) throw prodError;
+
+    // Get list of production IDs already assigned to expeditions
+    const { data: assignedProductions, error: assignError } = await supabase
+      .from('shipping_production_items')
+      .select('daily_production_id');
+
+    if (assignError) throw assignError;
+
+    // Create a Set of assigned production IDs for fast lookup
+    const assignedIds = new Set(
+      (assignedProductions || []).map(item => item.daily_production_id)
+    );
+
+    // Filter out productions that are already assigned
+    const availableProductions = (allProductions || []).filter(
+      prod => !assignedIds.has(prod.id)
+    );
+
+    console.log(`📊 Productions disponibles pour ${miningCompanyId}:`, {
+      total: allProductions?.length || 0,
+      assigned: assignedIds.size,
+      available: availableProductions.length
+    });
+
+    setProductions(availableProductions);
   };
 
   const loadFreightCompanies = async () => {
@@ -899,10 +926,16 @@ export default function ShippingPreparationNew() {
                       e.target.value = '';
                     }}
                     className="px-3 py-1.5 border border-yellow-300 rounded-md focus:ring-1 focus:ring-yellow-500 bg-white text-xs"
-                    disabled={loading}
+                    disabled={loading || !selectedMiningCompanyId || productions.length === 0}
                     value=""
                   >
-                    <option value="">-- Ajouter --</option>
+                    <option value="">
+                      {!selectedMiningCompanyId
+                        ? '-- Sélectionnez une compagnie d\'abord --'
+                        : productions.length === 0
+                        ? '-- Aucune production disponible --'
+                        : '-- Ajouter --'}
+                    </option>
                     {productions
                       .filter(p => !selectedProductions.some(sp => sp.production.id === p.id))
                       .map((production) => (
@@ -912,6 +945,16 @@ export default function ShippingPreparationNew() {
                       ))}
                   </select>
                 </div>
+
+                {/* Info message when no productions available */}
+                {selectedMiningCompanyId && productions.length === 0 && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-xs text-blue-700">
+                      ℹ️ Aucune production disponible pour cette compagnie.
+                      Toutes les productions avec le statut "Prêt pour la douane" ont déjà été assignées à des expéditions.
+                    </p>
+                  </div>
+                )}
 
               {selectedProductions.length > 0 && (
                 <div className="overflow-x-auto">

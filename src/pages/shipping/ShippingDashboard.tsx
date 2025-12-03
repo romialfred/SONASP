@@ -67,10 +67,9 @@ export default function ShippingDashboard() {
   const getStatusIcon = (status: string) => {
     const iconClass = "w-3.5 h-3.5";
     switch (status) {
-      case 'pending': return <Clock className={`${iconClass} text-yellow-600`} />;
-      case 'prepared': return <Box className={`${iconClass} text-blue-600`} />;
-      case 'validated_for_refinery':
-      case 'shipped': return <CheckCircle className={`${iconClass} text-emerald-600`} />;
+      case 'waiting_for_customs_approval': return <Clock className={`${iconClass} text-yellow-600`} />;
+      case 'approved_by_customs': return <Box className={`${iconClass} text-blue-600`} />;
+      case 'ready_for_expedition': return <CheckCircle className={`${iconClass} text-emerald-600`} />;
       default: return <Package className={`${iconClass} text-slate-600`} />;
     }
   };
@@ -119,13 +118,13 @@ export default function ShippingDashboard() {
             </div>
           </div>
 
-          {/* En Attente */}
+          {/* En Attente Douane */}
           <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/50 to-yellow-50/30 p-4">
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/5 rounded-full -mr-12 -mt-12" />
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">En Attente</div>
-                <div className="text-2xl font-semibold text-amber-900">{stats.pending}</div>
+                <div className="text-2xl font-semibold text-amber-900">{stats.waiting_for_customs_approval}</div>
               </div>
               <div className="p-2 bg-amber-500/10 rounded-lg">
                 <Clock className="w-5 h-5 text-amber-600" />
@@ -133,13 +132,13 @@ export default function ShippingDashboard() {
             </div>
           </div>
 
-          {/* Préparés */}
+          {/* Approuvées par Douane */}
           <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/50 to-cyan-50/30 p-4">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/5 rounded-full -mr-12 -mt-12" />
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Préparés</div>
-                <div className="text-2xl font-semibold text-blue-900">{stats.prepared}</div>
+                <div className="text-2xl font-semibold text-blue-900">{stats.approved_by_customs}</div>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-lg">
                 <Box className="w-5 h-5 text-blue-600" />
@@ -147,13 +146,13 @@ export default function ShippingDashboard() {
             </div>
           </div>
 
-          {/* Expédiés */}
+          {/* Prêtes pour Expédition */}
           <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 p-4">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/5 rounded-full -mr-12 -mt-12" />
             <div className="relative flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Expédiés</div>
-                <div className="text-2xl font-semibold text-emerald-900">{stats.shipped}</div>
+                <div className="text-2xl font-semibold text-emerald-900">{stats.ready_for_expedition}</div>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />

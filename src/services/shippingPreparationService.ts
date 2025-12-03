@@ -236,11 +236,14 @@ class ShippingPreparationService {
   }
 
   async getAllPreparations(): Promise<ShippingPreparation[]> {
+    // CRITICAL: Only show expeditions that have at least one production item added
+    // This prevents empty expeditions from appearing in the list
     const { data, error } = await supabase
       .from('shipping_preparations')
       .select(`
         *,
-        mining_companies!shipping_preparations_mining_company_id_fkey(name)
+        mining_companies!shipping_preparations_mining_company_id_fkey(name),
+        shipping_production_items!inner(id)
       `)
       .order('created_at', { ascending: false });
 

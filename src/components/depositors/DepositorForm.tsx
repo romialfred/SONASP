@@ -201,8 +201,8 @@ export function DepositorForm({
                   <h3 className="text-sm font-semibold text-amber-800">Duplicate Depositor Warning</h3>
                   <p className="text-sm text-amber-700 mt-1">{errors.full_name}</p>
                   <p className="text-xs text-amber-600 mt-2">
-                    The same person cannot be registered multiple times for the same company with the same category/role.
-                    If this is a different role, please select a different category.
+                    The same person cannot be registered multiple times for the same company with the same role.
+                    If this is a different role, please select a different one.
                   </p>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export function DepositorForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category <span className="text-red-500">*</span>
+                Rôle <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formData.category}

@@ -1,186 +1,291 @@
 /*
-  # Fix GEOFFREY Peter Eye Duplicate & Add Constraint
+  # Fix GEOFFREY Peter Eye Duplicate & Add Unique Constraint
 
-  1. Purpose
-    - Update duplicate GEOFFREY Peter Eye record to KOUROUSSA mine
-    - Add unique constraint to prevent future duplicates
+  PURPOSE:
+    1. Find and update duplicate GEOFFREY Peter Eye record to KOUROUSSA mine
+    2. Add unique constraint to prevent future duplicates
+    3. Create performance index
 
-  2. Changes
-    - Identify and update the second GEOFFREY Peter Eye record
-    - Add unique constraint on (mining_company_id, category, full_name)
-
-  3. How to Apply
+  HOW TO APPLY:
     - Open Supabase SQL Editor
-    - Copy and paste this entire script
+    - Copy this entire script
     - Execute
-    - Check the NOTICE messages for results
+    - Check NOTICE messages for results
+
+  AUTHOR: System
+  DATE: 2025-12-03
 */
 
--- Step 1: Find GEOFFREY Peter Eye duplicates and display them
+-- ============================================================================
+-- STEP 1: Display current state
+-- ============================================================================
+
 DO $$
 DECLARE
   rec RECORD;
-  kouroussa_id UUID;
-  duplicate_id UUID;
-  first_company_name TEXT;
+  total_records INTEGER := 0;
 BEGIN
-  RAISE NOTICE '=== Starting Depositor Duplicate Fix ===';
+  RAISE NOTICE '';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'DEPOSITOR DUPLICATE FIX - STARTING';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '';
+  RAISE NOTICE '--- Current GEOFFREY Peter Eye records ---';
+
+  FOR rec IN
+    SELECT
+      d.id,
+      d.full_name,
+      d.category,
+      d.job_title,
+      mc.name as company_name,
+      mc.id as company_id,
+      d.created_at
+    FROM depositors d
+    LEFT JOIN mining_companies mc ON d.mining_company_id = mc.id
+    WHERE d.full_name ILIKE '%geoffrey%peter%'
+       OR d.full_name ILIKE '%peter%eye%'
+    ORDER BY d.created_at
+  LOOP
+    total_records := total_records + 1;
+    RAISE NOTICE '% Record %: % | % | Company: % | Created: %',
+      CASE WHEN total_records = 1 THEN '→' ELSE '→' END,
+      total_records,
+      rec.full_name,
+      rec.job_title,
+      COALESCE(rec.company_name, 'NO COMPANY'),
+      rec.created_at;
+  END LOOP;
+
+  IF total_records = 0 THEN
+    RAISE NOTICE 'ℹ️  No GEOFFREY Peter Eye records found';
+    RAISE NOTICE '   This person does not exist in database yet';
+  ELSE
+    RAISE NOTICE '';
+    RAISE NOTICE 'Total records found: %', total_records;
+  END IF;
+
+  RAISE NOTICE '';
+END $$;
+
+-- ============================================================================
+-- STEP 2: Update duplicate to KOUROUSSA
+-- ============================================================================
+
+DO $$
+DECLARE
+  kouroussa_id UUID;
+  first_record_id UUID;
+  second_record_id UUID;
+  records_count INTEGER;
+  same_company_count INTEGER;
+BEGIN
+  RAISE NOTICE '--- Checking for duplicates in same company ---';
+
+  -- Count total GEOFFREY Peter Eye records
+  SELECT COUNT(*) INTO records_count
+  FROM depositors
+  WHERE full_name ILIKE '%geoffrey%peter%'
+     OR full_name ILIKE '%peter%eye%';
+
+  IF records_count = 0 THEN
+    RAISE NOTICE 'ℹ️  No records to update';
+    RETURN;
+  ELSIF records_count = 1 THEN
+    RAISE NOTICE 'ℹ️  Only one record exists - no duplicate to fix';
+    RETURN;
+  END IF;
+
+  -- Check if duplicates are in same company
+  SELECT COUNT(*) INTO same_company_count
+  FROM (
+    SELECT mining_company_id, COUNT(*) as cnt
+    FROM depositors
+    WHERE full_name ILIKE '%geoffrey%peter%'
+       OR full_name ILIKE '%peter%eye%'
+    GROUP BY mining_company_id
+    HAVING COUNT(*) > 1
+  ) sub;
+
+  IF same_company_count = 0 THEN
+    RAISE NOTICE '✅ No duplicates in same company - records are already separated';
+    RAISE NOTICE '   No update needed';
+    RETURN;
+  END IF;
+
+  RAISE NOTICE '⚠️  Found duplicates in same company - will fix';
   RAISE NOTICE '';
 
-  -- Find Kouroussa mining company ID
+  -- Find Kouroussa mining company
   SELECT id INTO kouroussa_id
   FROM mining_companies
   WHERE name ILIKE '%kouroussa%' OR code ILIKE '%kouroussa%'
   LIMIT 1;
 
   IF kouroussa_id IS NULL THEN
-    RAISE NOTICE '⚠️  Warning: Kouroussa mining company not found.';
-    RAISE NOTICE '    Please create Kouroussa company first or check the company name.';
-  ELSE
-    RAISE NOTICE '✅ Kouroussa mining company found';
-    RAISE NOTICE '   ID: %', kouroussa_id;
+    RAISE NOTICE '❌ ERROR: Kouroussa mining company not found';
+    RAISE NOTICE '   Please create Kouroussa company first or specify correct company name';
+    RETURN;
   END IF;
 
-  RAISE NOTICE '';
-  RAISE NOTICE '--- Looking for GEOFFREY Peter Eye records ---';
+  RAISE NOTICE '✅ Kouroussa company found: %', kouroussa_id;
 
-  -- Find all GEOFFREY Peter Eye records
-  FOR rec IN
-    SELECT d.id, d.full_name, d.category, d.job_title, mc.name as company_name, d.created_at
-    FROM depositors d
-    LEFT JOIN mining_companies mc ON d.mining_company_id = mc.id
-    WHERE d.full_name ILIKE '%geoffrey%peter%' OR d.full_name ILIKE '%peter%eye%'
-    ORDER BY d.created_at
-  LOOP
-    RAISE NOTICE '📋 Record: % | % | Company: % | Created: %',
-      rec.full_name, rec.job_title, rec.company_name, rec.created_at;
-  END LOOP;
-
-  -- Count duplicates in same company
-  SELECT COUNT(*), mc.name INTO duplicate_id, first_company_name
-  FROM depositors d
-  LEFT JOIN mining_companies mc ON d.mining_company_id = mc.id
-  WHERE (d.full_name ILIKE '%geoffrey%peter%' OR d.full_name ILIKE '%peter%eye%')
-  GROUP BY mc.name
-  HAVING COUNT(*) > 1
+  -- Get first record (keep as-is)
+  SELECT id INTO first_record_id
+  FROM depositors
+  WHERE full_name ILIKE '%geoffrey%peter%'
+     OR full_name ILIKE '%peter%eye%'
+  ORDER BY created_at ASC
   LIMIT 1;
 
-  IF duplicate_id IS NOT NULL THEN
-    RAISE NOTICE '';
-    RAISE NOTICE '⚠️  Duplicate found in company: %', first_company_name;
-  ELSE
-    RAISE NOTICE '';
-    RAISE NOTICE '✅ No duplicates in same company';
-  END IF;
-
-  -- Get the second (duplicate) record to update
-  SELECT id INTO duplicate_id
+  -- Get second record (will update to Kouroussa)
+  SELECT id INTO second_record_id
   FROM depositors
-  WHERE full_name ILIKE '%geoffrey%peter%' OR full_name ILIKE '%peter%eye%'
-  ORDER BY created_at DESC
+  WHERE full_name ILIKE '%geoffrey%peter%'
+     OR full_name ILIKE '%peter%eye%'
+  ORDER BY created_at ASC
   LIMIT 1 OFFSET 1;
 
-  IF duplicate_id IS NOT NULL AND kouroussa_id IS NOT NULL THEN
-    RAISE NOTICE '';
-    RAISE NOTICE '--- Updating duplicate record ---';
-
-    -- Update the duplicate to Kouroussa
-    UPDATE depositors
-    SET mining_company_id = kouroussa_id,
-        updated_at = NOW()
-    WHERE id = duplicate_id;
-
-    RAISE NOTICE '✅ Updated duplicate record to KOUROUSSA mine';
-    RAISE NOTICE '   Record ID: %', duplicate_id;
-  ELSIF duplicate_id IS NULL THEN
-    RAISE NOTICE '';
-    RAISE NOTICE 'ℹ️  No duplicate found to update (only one record exists)';
+  IF second_record_id IS NULL THEN
+    RAISE NOTICE '⚠️  No second record to update';
+    RETURN;
   END IF;
 
   RAISE NOTICE '';
+  RAISE NOTICE '--- Updating second record ---';
+  RAISE NOTICE 'Record ID: %', second_record_id;
+  RAISE NOTICE 'New Company: KOUROUSSA (%)', kouroussa_id;
+
+  -- Update the second record
+  UPDATE depositors
+  SET
+    mining_company_id = kouroussa_id,
+    updated_at = NOW()
+  WHERE id = second_record_id;
+
+  RAISE NOTICE '✅ Successfully updated record to KOUROUSSA';
+  RAISE NOTICE '';
+
 END $$;
 
--- Step 2: Add unique constraint to prevent future duplicates
+-- ============================================================================
+-- STEP 3: Add unique constraint
+-- ============================================================================
+
 DO $$
 BEGIN
   RAISE NOTICE '--- Adding unique constraint ---';
 
-  -- Drop constraint if it already exists
+  -- Drop if exists
   IF EXISTS (
-    SELECT 1 FROM pg_constraint
+    SELECT 1
+    FROM pg_constraint
     WHERE conname = 'depositors_unique_person_company_category'
   ) THEN
-    ALTER TABLE depositors DROP CONSTRAINT depositors_unique_person_company_category;
-    RAISE NOTICE '⚠️  Dropped existing constraint (will recreate)';
+    ALTER TABLE depositors
+    DROP CONSTRAINT depositors_unique_person_company_category;
+    RAISE NOTICE '⚠️  Dropped existing constraint';
   END IF;
 
-  -- Add the constraint
+  -- Add constraint
   ALTER TABLE depositors
   ADD CONSTRAINT depositors_unique_person_company_category
   UNIQUE (mining_company_id, category, full_name);
 
-  RAISE NOTICE '✅ Constraint added: depositors_unique_person_company_category';
-  RAISE NOTICE '   Columns: (mining_company_id, category, full_name)';
+  RAISE NOTICE '✅ Constraint created: depositors_unique_person_company_category';
+  RAISE NOTICE '   Prevents: Same person + same company + same category';
+  RAISE NOTICE '';
 
 EXCEPTION
   WHEN unique_violation THEN
-    RAISE NOTICE '❌ Error: Cannot add constraint due to existing duplicates';
-    RAISE NOTICE '   Please remove all duplicates first, then run this script again';
+    RAISE NOTICE '❌ ERROR: Cannot add constraint - duplicates still exist';
+    RAISE NOTICE '   Run this query to find remaining duplicates:';
+    RAISE NOTICE '   SELECT full_name, mining_company_id, category, COUNT(*)';
+    RAISE NOTICE '   FROM depositors GROUP BY 1,2,3 HAVING COUNT(*) > 1;';
+    RAISE NOTICE '';
 END $$;
 
--- Step 3: Create an index for better performance
-CREATE INDEX IF NOT EXISTS idx_depositors_company_category
+-- ============================================================================
+-- STEP 4: Create performance index
+-- ============================================================================
+
+DROP INDEX IF EXISTS idx_depositors_company_category;
+
+CREATE INDEX idx_depositors_company_category
 ON depositors(mining_company_id, category);
 
-DO $$ BEGIN
-  RAISE NOTICE '✅ Performance index created: idx_depositors_company_category';
-END $$;
-
--- Step 4: Add comment to constraint
-COMMENT ON CONSTRAINT depositors_unique_person_company_category ON depositors IS
-'Ensures a person cannot be registered multiple times for the same mining company with the same category/role. This allows the same person to work for multiple companies or have different roles in the same company.';
-
-DO $$ BEGIN
-  RAISE NOTICE '✅ Constraint documentation added';
+DO $$
+BEGIN
+  RAISE NOTICE '--- Performance optimization ---';
+  RAISE NOTICE '✅ Index created: idx_depositors_company_category';
   RAISE NOTICE '';
 END $$;
 
--- Step 5: Display final result
+-- ============================================================================
+-- STEP 5: Add constraint documentation
+-- ============================================================================
+
+COMMENT ON CONSTRAINT depositors_unique_person_company_category ON depositors IS
+'Prevents duplicate depositors: same person cannot be registered multiple times for the same mining company with the same category/role. Allows same person in different companies or different roles in same company.';
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Constraint documented';
+  RAISE NOTICE '';
+END $$;
+
+-- ============================================================================
+-- STEP 6: Display final state
+-- ============================================================================
+
 DO $$
 DECLARE
   rec RECORD;
-  record_count INT := 0;
+  total_records INTEGER := 0;
 BEGIN
-  RAISE NOTICE '=== Final Depositor List for GEOFFREY Peter Eye ===';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'FINAL STATE - GEOFFREY Peter Eye';
+  RAISE NOTICE '========================================';
   RAISE NOTICE '';
 
   FOR rec IN
-    SELECT d.full_name, d.category, d.job_title, mc.name as company_name, d.email
+    SELECT
+      d.full_name,
+      d.category,
+      d.job_title,
+      mc.name as company_name,
+      d.email,
+      d.created_at
     FROM depositors d
     LEFT JOIN mining_companies mc ON d.mining_company_id = mc.id
-    WHERE d.full_name ILIKE '%geoffrey%peter%' OR d.full_name ILIKE '%peter%eye%'
+    WHERE d.full_name ILIKE '%geoffrey%peter%'
+       OR d.full_name ILIKE '%peter%eye%'
     ORDER BY mc.name, d.category
   LOOP
-    record_count := record_count + 1;
-    RAISE NOTICE '% ✓ % | % | Company: %',
-      record_count, rec.full_name, rec.job_title, rec.company_name;
+    total_records := total_records + 1;
+    RAISE NOTICE '✓ Record %', total_records;
+    RAISE NOTICE '  Name: %', rec.full_name;
+    RAISE NOTICE '  Title: %', rec.job_title;
+    RAISE NOTICE '  Company: %', COALESCE(rec.company_name, 'NO COMPANY');
+    RAISE NOTICE '  Category: %', rec.category;
+    RAISE NOTICE '';
   END LOOP;
 
-  IF record_count = 0 THEN
-    RAISE NOTICE 'ℹ️  No records found for GEOFFREY Peter Eye';
-    RAISE NOTICE '   This is normal if the person does not exist in the database yet';
+  IF total_records = 0 THEN
+    RAISE NOTICE 'ℹ️  No records found';
+  ELSE
+    RAISE NOTICE 'Total: % record(s)', total_records;
   END IF;
 
   RAISE NOTICE '';
-  RAISE NOTICE '=== Summary ===';
-  RAISE NOTICE 'Total records: %', record_count;
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'SCRIPT COMPLETED SUCCESSFULLY';
+  RAISE NOTICE '========================================';
   RAISE NOTICE '';
-  RAISE NOTICE '✅ Script completed successfully!';
-  RAISE NOTICE '';
-  RAISE NOTICE '📝 Next Steps:';
-  RAISE NOTICE '   1. Verify the results above';
-  RAISE NOTICE '   2. Try creating a duplicate depositor (should fail)';
-  RAISE NOTICE '   3. The frontend will now prevent duplicates automatically';
+  RAISE NOTICE 'NEXT STEPS:';
+  RAISE NOTICE '1. Verify records above are correct';
+  RAISE NOTICE '2. Test creating duplicate (should be blocked)';
+  RAISE NOTICE '3. Frontend validation is already active';
   RAISE NOTICE '';
 
 END $$;

@@ -37,18 +37,15 @@ export function formatStatusFr(status: string): string {
     'approved_by_customs': 'Approuvé par Douane',
     'ready_for_expedition': 'Prêt pour Expédition',
     'shipped_to_refinery': 'Expédié vers Raffinerie',
-    
-    // Freight statuses
-    'approved': 'Approuvé',
-    'received': 'Reçu',
-    
-    // Sales statuses
+
+    // Freight & Sales statuses
     'draft': 'Brouillon',
     'awaiting_approval': 'En Attente d\'Approbation',
     'approved': 'Approuvé',
     'rejected': 'Rejeté',
     'completed': 'Terminé',
     'cancelled': 'Annulé',
+    'received': 'Reçu',
   };
   
   return translations[status] || formatStatus(status);

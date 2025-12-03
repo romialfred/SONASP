@@ -13,7 +13,16 @@ import { ComboBox } from '@/components/ui/ComboBox';
 import { freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
-import { AFRICAN_COUNTRIES, AFRICAN_CITIES, AFRICAN_AIRPORTS, getCitiesByCountry, getAirportsByCountry } from '@/data/africanLocations';
+import {
+  AFRICAN_COUNTRIES,
+  AFRICAN_CITIES,
+  AFRICAN_AIRPORTS,
+  getCitiesByCountry,
+  getAirportsByCountry,
+  getTimezoneByCountry,
+  formatTimezoneOffset,
+  calculateFlightDuration
+} from '@/data/africanLocations';
 
 interface Signatory {
   position: string;
@@ -90,6 +99,18 @@ export default function FreightShipmentCreate() {
       setAuthorisedDepositors([]);
     }
   }, [selectedShippingPrepIds]);
+
+  // Calculer automatiquement la durée du vol
+  useEffect(() => {
+    if (departureTime && arrivalTime && departureCountry && arrivalCountry) {
+      const depTimezone = getTimezoneByCountry(departureCountry);
+      const arrTimezone = getTimezoneByCountry(arrivalCountry);
+      const duration = calculateFlightDuration(departureTime, depTimezone, arrivalTime, arrTimezone);
+      if (duration) {
+        setFlightDuration(duration);
+      }
+    }
+  }, [departureTime, arrivalTime, departureCountry, arrivalCountry]);
 
   const loadData = async () => {
     try {
@@ -549,7 +570,8 @@ export default function FreightShipmentCreate() {
                       options={AFRICAN_COUNTRIES.map(country => ({
                         value: country.name,
                         label: country.name,
-                        subtitle: `Capitale: ${country.capital}`
+                        subtitle: `Capitale: ${country.capital} • ${formatTimezoneOffset(country.timezone)}`,
+                        icon: country.flag
                       }))}
                       placeholder="Sélectionner ou saisir un pays"
                       allowCustom={true}
@@ -592,13 +614,20 @@ export default function FreightShipmentCreate() {
                       onChange={(e) => setShipmentDate(e.target.value)}
                       required
                     />
-                    <Input
-                      label="Heure de Départ (Local)"
-                      type="time"
-                      value={departureTime}
-                      onChange={(e) => setDepartureTime(e.target.value)}
-                      placeholder="HH:MM"
-                    />
+                    <div>
+                      <Input
+                        label={`Heure de Départ${departureCountry ? ` (${formatTimezoneOffset(getTimezoneByCountry(departureCountry))})` : ' (Local)'}`}
+                        type="time"
+                        value={departureTime}
+                        onChange={(e) => setDepartureTime(e.target.value)}
+                        placeholder="HH:MM"
+                      />
+                      {departureCountry && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          🕐 Fuseau horaire: {getTimezoneByCountry(departureCountry).split('/')[1].replace('_', ' ')}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -628,7 +657,8 @@ export default function FreightShipmentCreate() {
                       options={AFRICAN_COUNTRIES.map(country => ({
                         value: country.name,
                         label: country.name,
-                        subtitle: `Capitale: ${country.capital}`
+                        subtitle: `Capitale: ${country.capital} • ${formatTimezoneOffset(country.timezone)}`,
+                        icon: country.flag
                       }))}
                       placeholder="Sélectionner ou saisir un pays"
                       allowCustom={true}
@@ -664,19 +694,41 @@ export default function FreightShipmentCreate() {
                   />
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Heure d'Arrivée Prévue"
-                      type="time"
-                      value={arrivalTime}
-                      onChange={(e) => setArrivalTime(e.target.value)}
-                      placeholder="HH:MM"
-                    />
-                    <Input
-                      label="Durée du Trajet"
-                      value={flightDuration}
-                      onChange={(e) => setFlightDuration(e.target.value)}
-                      placeholder="Ex: 4h 30min"
-                    />
+                    <div>
+                      <Input
+                        label={`Heure d'Arrivée Prévue${arrivalCountry ? ` (${formatTimezoneOffset(getTimezoneByCountry(arrivalCountry))})` : ' (Local)'}`}
+                        type="time"
+                        value={arrivalTime}
+                        onChange={(e) => setArrivalTime(e.target.value)}
+                        placeholder="HH:MM"
+                      />
+                      {arrivalCountry && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          🕐 Fuseau horaire: {getTimezoneByCountry(arrivalCountry).split('/')[1].replace('_', ' ')}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Durée du Trajet ⚡ <span className="text-xs text-blue-600">(Calculée automatiquement)</span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          value={flightDuration}
+                          onChange={(e) => setFlightDuration(e.target.value)}
+                          placeholder="Ex: 4h 30min"
+                          className={flightDuration ? 'bg-green-50 border-green-300' : ''}
+                        />
+                        {flightDuration && (
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 text-xl">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Calculée selon les fuseaux horaires
+                      </p>
+                    </div>
                   </div>
                 </div>
               </Card>

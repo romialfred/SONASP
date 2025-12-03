@@ -5,6 +5,7 @@ interface Option {
   value: string;
   label: string;
   subtitle?: string;
+  icon?: string;
 }
 
 interface ComboBoxProps {
@@ -125,7 +126,8 @@ export function ComboBox({
                 : 'hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
             } ${isOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-300'}`}
           >
-            <span className={value ? 'text-gray-900' : 'text-gray-400'}>
+            <span className={`flex items-center gap-2 ${value ? 'text-gray-900' : 'text-gray-400'}`}>
+              {currentOption?.icon && <span className="text-xl">{currentOption.icon}</span>}
               {displayValue || placeholder}
             </span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
@@ -158,11 +160,16 @@ export function ComboBox({
                         value === option.value ? 'bg-blue-100' : ''
                       }`}
                     >
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">{option.label}</div>
-                        {option.subtitle && (
-                          <div className="text-xs text-gray-500">{option.subtitle}</div>
+                      <div className="flex-1 flex items-start gap-2">
+                        {option.icon && (
+                          <span className="text-xl mt-0.5">{option.icon}</span>
                         )}
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{option.label}</div>
+                          {option.subtitle && (
+                            <div className="text-xs text-gray-500">{option.subtitle}</div>
+                          )}
+                        </div>
                       </div>
                       {value === option.value && (
                         <Check className="w-4 h-4 text-blue-600" />

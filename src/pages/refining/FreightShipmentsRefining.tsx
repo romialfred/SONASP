@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, CheckCircle, Eye, TrendingUp, AlertCircle, Building2 } from 'lucide-react';
+import { Package, CheckCircle, Eye, TrendingUp, AlertCircle, Building2, Filter, X } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { CustomConfirm } from '@/components/ui/CustomConfirm';
+import { CustomAlert } from '@/components/ui/CustomAlert';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
@@ -13,10 +17,23 @@ import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 export default function FreightShipmentsRefining() {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
-  const { showConfirm } = useCustomAlert();
+  const {
+    showAlert,
+    showConfirm,
+    alertState,
+    confirmState,
+    closeAlert,
+    closeConfirm,
+    handleConfirmAction
+  } = useCustomAlert();
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState<FreightShipment[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'shipped_to_refinery' | 'received_at_refinery'>('all');
+  const [refineryFilter, setRefineryFilter] = useState('all');
 
   useEffect(() => {
     loadShipments();
@@ -72,10 +89,40 @@ export default function FreightShipmentsRefining() {
     }
   };
 
-  const waitingCount = shipments.filter(s => s.status === 'shipped_to_refinery').length;
-  const receivedCount = shipments.filter(s => s.status === 'received_at_refinery').length;
-  const totalValue = shipments.reduce((sum, s) => sum + s.total_value_usd, 0);
-  const totalOz = shipments.reduce((sum, s) => sum + s.total_pure_gold_oz, 0);
+  // Filter shipments
+  const filteredShipments = shipments.filter(shipment => {
+    // Search filter
+    const matchesSearch = searchTerm === '' ||
+      shipment.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.destination_refinery?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = statusFilter === 'all' || shipment.status === statusFilter;
+
+    // Refinery filter
+    const matchesRefinery = refineryFilter === 'all' ||
+      shipment.destination_refinery?.id === refineryFilter;
+
+    return matchesSearch && matchesStatus && matchesRefinery;
+  });
+
+  // Get unique refineries for filter
+  const uniqueRefineries = Array.from(
+    new Set(shipments.map(s => s.destination_refinery).filter(r => r !== null && r !== undefined))
+  );
+
+  const waitingCount = filteredShipments.filter(s => s.status === 'shipped_to_refinery').length;
+  const receivedCount = filteredShipments.filter(s => s.status === 'received_at_refinery').length;
+  const totalValue = filteredShipments.reduce((sum, s) => sum + s.total_value_usd, 0);
+  const totalOz = filteredShipments.reduce((sum, s) => sum + s.total_pure_gold_oz, 0);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setRefineryFilter('all');
+  };
+
+  const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all' || refineryFilter !== 'all';
 
   return (
     <MainLayout>
@@ -141,6 +188,76 @@ export default function FreightShipmentsRefining() {
           </Card>
         </div>
 
+        {/* Filters */}
+        <Card className="p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <h3 className="font-semibold text-gray-900">Filtres</h3>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="ml-auto text-sm"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rechercher
+              </label>
+              <Input
+                type="text"
+                placeholder="Référence, raffinerie..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Statut
+              </label>
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="shipped_to_refinery">En Attente</option>
+                <option value="received_at_refinery">Reçues</option>
+              </Select>
+            </div>
+
+            {/* Refinery Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Raffinerie
+              </label>
+              <Select
+                value={refineryFilter}
+                onChange={(e) => setRefineryFilter(e.target.value)}
+                className="w-full"
+              >
+                <option value="all">Toutes les raffineries</option>
+                {uniqueRefineries.map((refinery: any) => (
+                  <option key={refinery.id} value={refinery.id}>
+                    {refinery.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </Card>
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loading size="lg" />
@@ -155,6 +272,21 @@ export default function FreightShipmentsRefining() {
               <p className="text-gray-600">
                 Les expéditions marquées "Bon pour la Raffinerie" apparaîtront ici
               </p>
+            </div>
+          </Card>
+        ) : filteredShipments.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Aucun résultat
+              </h3>
+              <p className="text-gray-600">
+                Aucune expédition ne correspond aux filtres sélectionnés
+              </p>
+              <Button onClick={clearFilters} className="mt-4">
+                Réinitialiser les filtres
+              </Button>
             </div>
           </Card>
         ) : (
@@ -197,7 +329,7 @@ export default function FreightShipmentsRefining() {
                       </tr>
                     </thead>
                     <tbody>
-                      {shipments
+                      {filteredShipments
                         .filter(s => s.status === 'shipped_to_refinery')
                         .map(shipment => (
                           <tr key={shipment.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -301,7 +433,7 @@ export default function FreightShipmentsRefining() {
                       </tr>
                     </thead>
                     <tbody>
-                      {shipments
+                      {filteredShipments
                         .filter(s => s.status === 'received_at_refinery')
                         .map(shipment => (
                           <tr key={shipment.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -345,6 +477,27 @@ export default function FreightShipmentsRefining() {
             )}
           </div>
         )}
+
+        {/* Custom Alert */}
+        <CustomAlert
+          isOpen={alertState.isOpen}
+          message={alertState.message}
+          type={alertState.type}
+          title={alertState.title}
+          onClose={closeAlert}
+        />
+
+        {/* Custom Confirm */}
+        <CustomConfirm
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          type={confirmState.type}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          onConfirm={handleConfirmAction}
+          onCancel={closeConfirm}
+        />
       </div>
     </MainLayout>
   );

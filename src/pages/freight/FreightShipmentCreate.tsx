@@ -72,7 +72,12 @@ export default function FreightShipmentCreate() {
   const [goldPriceUsdPerOz, setGoldPriceUsdPerOz] = useState('');
   const [exchangeRate, setExchangeRate] = useState('');
   const [currencyPair, setCurrencyPair] = useState('USD/XOF');
+  const [localCurrency, setLocalCurrency] = useState('XOF');
   const [notes, setNotes] = useState('');
+
+  // Box Information
+  const [numberOfBoxes, setNumberOfBoxes] = useState(1);
+  const [boxType, setBoxType] = useState('Plastic Box');
 
   const [signatories, setSignatories] = useState<Signatory[]>([]);
   const [transportCompanies, setTransportCompanies] = useState<any[]>([]);

@@ -35,15 +35,7 @@ export default function FreightShipmentsRefining() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'shipped_to_refinery' | 'received_at_refinery'>('all');
   const [refineryFilter, setRefineryFilter] = useState('all');
 
-  useEffect(() => {
-    loadShipments();
-  }, []);
-
-  useAutoRefresh({
-    enabled: true,
-    onRefresh: loadShipments,
-  });
-
+  // Define loadShipments BEFORE using it
   const loadShipments = async () => {
     try {
       setLoading(true);
@@ -61,6 +53,15 @@ export default function FreightShipmentsRefining() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadShipments();
+  }, []);
+
+  useAutoRefresh({
+    enabled: true,
+    onRefresh: loadShipments,
+  });
 
   const handleReceiveShipment = async (shipmentId: string, shipmentRef: string) => {
     const confirmed = await showConfirm(

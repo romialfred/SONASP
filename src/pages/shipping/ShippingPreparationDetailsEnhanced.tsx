@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History, Users, Ship, Check } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Building, Package, TrendingUp, FileText, History, Users, Ship, Check, ClipboardList, FlaskConical, Receipt, Truck, Paperclip } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -53,6 +53,26 @@ interface ExportLicense {
   issue_date?: string;
   expiry_date?: string;
 }
+
+// Helper to categorize and sort documents
+const getDocumentType = (title: string): { type: string; order: number; icon: any; label: string } => {
+  const titleLower = title.toLowerCase();
+
+  if (titleLower.includes('packing') || titleLower.includes('liste de colisage')) {
+    return { type: 'packing', order: 1, icon: ClipboardList, label: 'Packing List' };
+  }
+  if (titleLower.includes('assay') || titleLower.includes('certificat') || titleLower.includes('essai')) {
+    return { type: 'assay', order: 2, icon: FlaskConical, label: 'Certificat d\'Essai' };
+  }
+  if (titleLower.includes('invoice') || titleLower.includes('facture')) {
+    return { type: 'invoice', order: 3, icon: Receipt, label: 'Invoice' };
+  }
+  if (titleLower.includes('consignment') || titleLower.includes('consignation')) {
+    return { type: 'consignment', order: 4, icon: Truck, label: 'Consignment' };
+  }
+
+  return { type: 'other', order: 5, icon: Paperclip, label: 'Autre Document' };
+};
 
 export function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams<{ id: string }>();
@@ -374,9 +394,9 @@ export function ShippingPreparationDetailsEnhanced() {
         />
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-4 -mx-6">
         {/* Header - Same as Production Details */}
-        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200 px-6">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -424,6 +444,7 @@ export function ShippingPreparationDetailsEnhanced() {
         />
 
         {/* Tabs Navigation */}
+        <div className="px-6">
         <Tabs
           tabs={[
             {
@@ -438,12 +459,6 @@ export function ShippingPreparationDetailsEnhanced() {
               count: productionItems.length,
             },
             {
-              id: 'certificates',
-              label: 'Certificats d\'Essai',
-              icon: FileText,
-              count: certificates.length,
-            },
-            {
               id: 'signatories',
               label: 'Signataires',
               icon: Users,
@@ -453,7 +468,7 @@ export function ShippingPreparationDetailsEnhanced() {
               id: 'documents',
               label: 'Documents',
               icon: FileText,
-              count: documents.length,
+              count: documents.length + certificates.length,
             },
           ]}
           activeTab={activeTab}
@@ -622,12 +637,12 @@ export function ShippingPreparationDetailsEnhanced() {
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50 border-b border-gray-200">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">N° Boîte</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Poids Net (g)</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Poids Brut (g)</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Finesse (%)</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700">Or Pur (g)</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">Scellés</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 whitespace-nowrap">N° Boîte</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 whitespace-nowrap">Poids Net (g)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 whitespace-nowrap">Poids Brut (g)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 whitespace-nowrap">Finesse (%)</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 whitespace-nowrap">Or Pur (g)</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 whitespace-nowrap">Scellés</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -666,23 +681,6 @@ export function ShippingPreparationDetailsEnhanced() {
               );
             }
 
-            if (activeTab === 'certificates') {
-              return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {certificates.length > 0 ? (
-                    certificates.map((cert) => (
-                      <AssayCertificateCard key={cert.id} certificate={cert} />
-                    ))
-                  ) : (
-                    <Card className="col-span-2 p-8 text-center">
-                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">Aucun certificat d'essai disponible</p>
-                    </Card>
-                  )}
-                </div>
-              );
-            }
-
             if (activeTab === 'signatories') {
               return (
                 <Card className="p-6">
@@ -717,22 +715,55 @@ export function ShippingPreparationDetailsEnhanced() {
             }
 
             if (activeTab === 'documents') {
+              // Combine documents and certificates, then sort by chronological order
+              const allDocs = [
+                ...documents.map(doc => ({ ...doc, isDocument: true })),
+                ...certificates.map(cert => ({
+                  id: cert.id,
+                  title: `Certificat d'Essai - ${cert.bar_reference || 'N/A'}`,
+                  file_name: cert.certificate_url?.split('/').pop() || 'certificate.pdf',
+                  document_url: cert.certificate_url,
+                  isDocument: false,
+                  isCertificate: true
+                }))
+              ];
+
+              const sortedDocuments = allDocs.sort((a, b) => {
+                const typeA = getDocumentType(a.title);
+                const typeB = getDocumentType(b.title);
+                return typeA.order - typeB.order;
+              });
+
               return (
                 <Card className="p-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Documents</h3>
-                  {documents.length > 0 ? (
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                    Documents ({sortedDocuments.length})
+                  </h3>
+                  {sortedDocuments.length > 0 ? (
                     <div className="space-y-2">
-                      {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{doc.title}</p>
-                              <p className="text-xs text-gray-500">{doc.file_name}</p>
+                      {sortedDocuments.map((doc) => {
+                        const docType = getDocumentType(doc.title);
+                        const Icon = docType.icon;
+
+                        return (
+                          <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <Icon className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                    {docType.label}
+                                  </span>
+                                  <p className="text-sm font-medium text-gray-900">{doc.title}</p>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">{doc.file_name}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
@@ -747,8 +778,10 @@ export function ShippingPreparationDetailsEnhanced() {
             return null;
           }}
         </Tabs>
+        </div>
 
         {/* Action Buttons */}
+        <div className="px-6">
         {preparation && (
           <Card className="p-6 bg-gradient-to-r from-slate-50 to-gray-50">
             <div className="flex items-center justify-between">
@@ -797,6 +830,7 @@ export function ShippingPreparationDetailsEnhanced() {
             </div>
           </Card>
         )}
+        </div>
       </div>
     </MainLayout>
   );

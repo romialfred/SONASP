@@ -138,7 +138,7 @@ export class PackingListPdfService {
       '',
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [[
         'Ingot & Box #',
@@ -207,7 +207,7 @@ export class PackingListPdfService {
       '', // Signature vide
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['POSITION', 'NAME', 'SIGNATURE']],
       body: signatureRows,

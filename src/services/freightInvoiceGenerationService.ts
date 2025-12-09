@@ -140,7 +140,7 @@ export const freightInvoiceGenerationService = {
     const avgGoldAssay = data.bars.reduce((sum, bar) => sum + bar.smkGoldAssay, 0) / data.bars.length;
     const avgSilverAssay = data.bars.reduce((sum, bar) => sum + bar.smkSilverAssay, 0) / data.bars.length;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 45,
       head: [[
         'Bar No.',
@@ -295,7 +295,7 @@ export const freightInvoiceGenerationService = {
     // Tableau principal
     const tableStartY = 120;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: tableStartY,
       head: [[
         'AWB #',

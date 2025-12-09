@@ -13,6 +13,7 @@ import { freightShipmentService, FreightShipment } from '@/services/freightShipm
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
+import { formatWeightOunces } from '@/utils/numberUtils';
 
 export default function FreightShipmentsRefining() {
   const navigate = useNavigate();
@@ -355,7 +356,7 @@ export default function FreightShipmentsRefining() {
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="font-semibold text-amber-700">
-                                {shipment.total_pure_gold_oz.toFixed(4)} oz
+                                {formatWeightOunces(shipment.total_pure_gold_oz)} oz
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
@@ -454,7 +455,7 @@ export default function FreightShipmentsRefining() {
                                 : '-'}
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-amber-700">
-                              {shipment.total_pure_gold_oz.toFixed(4)} oz
+                              {formatWeightOunces(shipment.total_pure_gold_oz)} oz
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
                               ${shipment.total_value_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}

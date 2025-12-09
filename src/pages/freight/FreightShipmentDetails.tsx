@@ -12,6 +12,7 @@ import { CustomAlert } from '@/components/ui/CustomAlert';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { formatWeightGrams, formatWeightOunces, formatCurrency } from '@/utils/numberUtils';
 
 export default function FreightShipmentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ export default function FreightShipmentDetails() {
         `Êtes-vous sûr de vouloir marquer cette expédition comme "Expédiée à la Raffinerie" ?\n\n` +
         `Référence: ${shipment.reference_number}\n` +
         `Destination: ${shipment.destination_refinery?.name || 'Non spécifiée'}\n` +
-        `Poids total: ${shipment.total_pure_gold_oz.toFixed(4)} oz\n\n` +
+        `Poids total: ${formatWeightOunces(shipment.total_pure_gold_oz)} oz\n\n` +
         `Cette action ne peut pas être annulée.`
       );
 
@@ -252,20 +253,20 @@ export default function FreightShipmentDetails() {
                             {new Date(prod.production_date).toLocaleDateString('fr-FR')}
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
-                            {prod.bullion_grams.toFixed(3)}
+                            {formatWeightGrams(prod.bullion_grams)}
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
                             {prod.estimated_fineness_pct.toFixed(2)}%
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
-                            {prod.pure_gold_grams.toFixed(3)}
+                            {formatWeightGrams(prod.pure_gold_grams)}
                           </td>
                           <td className="px-3 py-2 text-sm text-right font-medium text-amber-700 border border-gray-300">
-                            {prod.pure_gold_oz.toFixed(6)}
+                            {formatWeightOunces(prod.pure_gold_oz)}
                           </td>
                           {shipment.total_pure_silver_grams > 0 && (
                             <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
-                              {(prod.pure_silver_grams || 0).toFixed(3)}
+                              {formatWeightGrams(prod.pure_silver_grams || 0)}
                             </td>
                           )}
                         </tr>
@@ -276,20 +277,20 @@ export default function FreightShipmentDetails() {
                           GRAND TOTAL
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400">
-                          {shipment.total_bullion_grams.toFixed(3)}
+                          {formatWeightGrams(shipment.total_bullion_grams)}
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-gray-600 border border-gray-400">
                           -
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400">
-                          {shipment.total_pure_gold_grams.toFixed(3)}
+                          {formatWeightGrams(shipment.total_pure_gold_grams)}
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400 text-base">
-                          {shipment.total_pure_gold_oz.toFixed(4)}
+                          {formatWeightOunces(shipment.total_pure_gold_oz)}
                         </td>
                         {shipment.total_pure_silver_grams > 0 && (
                           <td className="px-3 py-3 text-sm text-right text-gray-900 border border-gray-400">
-                            {shipment.total_pure_silver_grams.toFixed(3)}
+                            {formatWeightGrams(shipment.total_pure_silver_grams)}
                           </td>
                         )}
                       </tr>
@@ -355,16 +356,16 @@ export default function FreightShipmentDetails() {
                               {prod.bar_reference}
                             </td>
                             <td className="px-3 py-2 text-sm text-right text-amber-700 font-medium border border-gray-300">
-                              {prod.pure_gold_oz.toFixed(6)}
+                              {formatWeightOunces(prod.pure_gold_oz)}
                             </td>
                             <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
-                              ${shipment.gold_price_usd_per_oz.toFixed(2)}
+                              ${formatCurrency(shipment.gold_price_usd_per_oz, false)}
                             </td>
                             <td className="px-3 py-2 text-sm text-right text-green-700 font-semibold border border-gray-300">
-                              ${valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              ${formatCurrency(valueUsd, false)}
                             </td>
                             <td className="px-3 py-2 text-sm text-right text-green-700 font-semibold border border-gray-300">
-                              {valueLocal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {formatCurrency(valueLocal, false)}
                             </td>
                           </tr>
                         );
@@ -375,16 +376,16 @@ export default function FreightShipmentDetails() {
                           TOTAL
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400 text-base">
-                          {shipment.total_pure_gold_oz.toFixed(4)}
+                          {formatWeightOunces(shipment.total_pure_gold_oz)}
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-gray-700 border border-gray-400">
-                          ${shipment.gold_price_usd_per_oz.toFixed(2)}
+                          ${formatCurrency(shipment.gold_price_usd_per_oz, false)}
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-green-900 border border-gray-400 text-base">
-                          ${shipment.total_value_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ${formatCurrency(shipment.total_value_usd, false)}
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-green-900 border border-gray-400 text-base">
-                          {shipment.total_value_local.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatCurrency(shipment.total_value_local, false)}
                         </td>
                       </tr>
                     </tbody>

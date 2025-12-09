@@ -308,3 +308,69 @@ export function calculateVariancePercent(
 
   return formatPercentage(percentValue, decimals, showSign);
 }
+
+/**
+ * STANDARD PLATEFORME: Formate TOUS les poids en grammes avec exactement 2 décimales
+ * À utiliser pour l'affichage de tous les poids en grammes
+ *
+ * @param value - Poids en grammes
+ * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
+ * @returns Chaîne formatée avec exactement 2 décimales
+ *
+ * @example
+ * formatWeightGrams(11269.900) // "11269.90"
+ * formatWeightGrams(33298.910) // "33298.91"
+ * formatWeightGrams(undefined) // "0.00"
+ */
+export function formatWeightGrams(
+  value: number | undefined | null,
+  defaultValue: number = 0
+): string {
+  return safeToFixed(value, 2, defaultValue);
+}
+
+/**
+ * STANDARD PLATEFORME: Formate TOUS les poids en onces avec exactement 2 décimales
+ * À utiliser pour l'affichage de tous les poids en onces
+ *
+ * @param value - Poids en onces
+ * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
+ * @returns Chaîne formatée avec exactement 2 décimales
+ *
+ * @example
+ * formatWeightOunces(333.566000) // "333.57"
+ * formatWeightOunces(737.018000) // "737.02"
+ * formatWeightOunces(1070.58400) // "1070.58"
+ * formatWeightOunces(undefined) // "0.00"
+ */
+export function formatWeightOunces(
+  value: number | undefined | null,
+  defaultValue: number = 0
+): string {
+  return safeToFixed(value, 2, defaultValue);
+}
+
+/**
+ * STANDARD PLATEFORME: Formate TOUS les montants en USD avec exactement 2 décimales
+ * À utiliser pour l'affichage de tous les montants financiers
+ *
+ * @param value - Montant en USD
+ * @param useSpaces - Utiliser des espaces comme séparateur de milliers (défaut: true)
+ * @param defaultValue - Valeur par défaut si undefined (défaut: 0)
+ * @returns Chaîne formatée avec exactement 2 décimales
+ *
+ * @example
+ * formatCurrency(2876543.21, true) // "2 876 543.21"
+ * formatCurrency(1234.56, false) // "1234.56"
+ * formatCurrency(undefined) // "0.00"
+ */
+export function formatCurrency(
+  value: number | undefined | null,
+  useSpaces: boolean = true,
+  defaultValue: number = 0
+): string {
+  if (useSpaces) {
+    return formatNumberWithSpaces(value, 2, defaultValue);
+  }
+  return safeToFixed(value, 2, defaultValue);
+}

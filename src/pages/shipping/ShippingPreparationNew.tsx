@@ -682,9 +682,9 @@ export default function ShippingPreparationNew() {
         expedition_lot_number: expeditionLotNumber,
         seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
         mining_company_id: selectedMiningCompanyId,
-        license_id: selectedLicenseId,
-        shipped_to_company: selectedFreightCompanyId,
-        shipped_to_address: selectedRefineryId,
+        export_license_id: selectedLicenseId,
+        freight_company_id: selectedFreightCompanyId,  // ✅ CORRECTED: Use proper column
+        refinery_id: selectedRefineryId,                // ✅ CORRECTED: Use proper column
         total_net_weight_grams: totalNetWeightGrams,
         total_gross_weight_grams: totalGrossWeightGrams,
         total_weight_oz: totalNetWeightOz,

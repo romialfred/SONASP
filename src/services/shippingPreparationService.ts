@@ -9,17 +9,16 @@ export interface ShippingPreparation {
   production_date: string;
   daily_production_id: string | null;
   mining_company_id: string | null;
-  license_id: string | null;
-  export_license_id: string | null;
-  refinery_id: string | null;
-  freight_company_id: string | null;
+  export_license_id: string | null;  // Primary license field
+  refinery_id: string | null;        // UUID reference to refinery_plants
+  freight_company_id: string | null; // UUID reference to freight_companies
   expedition_lot_number: string | null;
   seal_number: string | null;
   seal_numbers: string[];
   packing_list_url: string | null;
   packing_list_document_id: string | null;
-  shipped_to_company: string | null;
-  shipped_to_address: string | null;
+  shipped_to_company: string | null;  // Legacy TEXT field (keep for backward compatibility)
+  shipped_to_address: string | null;  // Legacy TEXT field (keep for backward compatibility)
   shipped_to_country: string | null;
   status: ShippingStatus;
   prepared_at: string | null;

@@ -13,6 +13,7 @@ import { freightShipmentService, FreightShipment } from '@/services/freightShipm
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { formatWeightGrams, formatWeightOunces, formatCurrency } from '@/utils/numberUtils';
+import { formatSignatoryName } from '@/utils/nameUtils';
 
 export default function FreightShipmentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -116,7 +117,7 @@ export default function FreightShipmentDetails() {
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -216,7 +217,7 @@ export default function FreightShipmentDetails() {
                 </h2>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
-                    <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <thead className="bg-slate-50">
                       <tr>
                         <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
                           Bar Ref.
@@ -272,7 +273,7 @@ export default function FreightShipmentDetails() {
                         </tr>
                       ))}
                       {/* Grand Total Row */}
-                      <tr className="bg-gradient-to-r from-amber-100 to-yellow-100 font-bold">
+                      <tr className="bg-amber-50 border-t-2 border-amber-300 font-bold">
                         <td colSpan={2} className="px-3 py-3 text-sm text-gray-900 border border-gray-400">
                           GRAND TOTAL
                         </td>
@@ -308,15 +309,15 @@ export default function FreightShipmentDetails() {
               </h2>
 
               {/* Price & Exchange Rate Summary */}
-              <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div>
-                  <label className="text-sm font-medium text-green-700">Prix de l'Or (USD/oz)</label>
+                  <label className="text-sm font-medium text-emerald-700">Prix de l'Or (USD/oz)</label>
                   <p className="text-gray-900 mt-1 font-bold text-lg">
                     ${shipment.gold_price_usd_per_oz.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-green-700">Taux de Change</label>
+                  <label className="text-sm font-medium text-emerald-700">Taux de Change</label>
                   <p className="text-gray-900 mt-1 font-bold text-lg">
                     {shipment.exchange_rate.toFixed(2)} {shipment.local_currency}/USD
                   </p>
@@ -327,7 +328,7 @@ export default function FreightShipmentDetails() {
               {shipment.productions && shipment.productions.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
-                    <thead className="bg-gradient-to-r from-green-50 to-emerald-50">
+                    <thead className="bg-slate-50">
                       <tr>
                         <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
                           Bar Ref.
@@ -371,7 +372,7 @@ export default function FreightShipmentDetails() {
                         );
                       })}
                       {/* Total Row */}
-                      <tr className="bg-gradient-to-r from-green-200 to-emerald-200 font-bold">
+                      <tr className="bg-emerald-50 border-t-2 border-emerald-300 font-bold">
                         <td className="px-3 py-3 text-sm text-gray-900 border border-gray-400">
                           TOTAL
                         </td>
@@ -464,7 +465,7 @@ export default function FreightShipmentDetails() {
                     .sort((a, b) => a.display_order - b.display_order)
                     .map((sig) => (
                       <div key={sig.id} className="border-l-2 border-blue-500 pl-3">
-                        <p className="text-sm font-medium text-gray-900">{sig.full_name}</p>
+                        <p className="text-sm font-medium text-gray-900">{formatSignatoryName(sig.full_name)}</p>
                         <p className="text-xs text-gray-600">{sig.position}</p>
                       </div>
                     ))}
@@ -479,15 +480,84 @@ export default function FreightShipmentDetails() {
                 Documents Générés
               </h2>
               <div className="space-y-3">
+                {/* Packing List */}
+                {shipment.packing_list_pdf_path && (
+                  <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Packing List</p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewingPdf(shipment.packing_list_pdf_path!)}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Visualiser"
+                        >
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <a
+                          href={shipment.packing_list_pdf_path}
+                          download
+                          className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
+                          title="Télécharger"
+                        >
+                          <Download className="w-4 h-4 text-emerald-600" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Consignment Note */}
+                {shipment.consignment_note_pdf_path && (
+                  <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-slate-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Consignment Note</p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewingPdf(shipment.consignment_note_pdf_path!)}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Visualiser"
+                        >
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <a
+                          href={shipment.consignment_note_pdf_path}
+                          download
+                          className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
+                          title="Télécharger"
+                        >
+                          <Download className="w-4 h-4 text-emerald-600" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bullion Summary */}
                 {shipment.bullion_summary_pdf_path && (
                   <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-red-600" />
+                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-amber-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Résumé Bullion</p>
+                          <p className="text-sm font-medium text-gray-900">Bullion Summary</p>
                           <p className="text-xs text-gray-500">PDF Document</p>
                         </div>
                       </div>
@@ -502,24 +572,26 @@ export default function FreightShipmentDetails() {
                         <a
                           href={shipment.bullion_summary_pdf_path}
                           download
-                          className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
                           title="Télécharger"
                         >
-                          <Download className="w-4 h-4 text-green-600" />
+                          <Download className="w-4 h-4 text-emerald-600" />
                         </a>
                       </div>
                     </div>
                   </div>
                 )}
+
+                {/* Invoice */}
                 {shipment.customs_invoice_pdf_path && (
                   <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-amber-600" />
+                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Facture Douane</p>
+                          <p className="text-sm font-medium text-gray-900">Invoice</p>
                           <p className="text-xs text-gray-500">PDF Document</p>
                         </div>
                       </div>
@@ -534,17 +606,18 @@ export default function FreightShipmentDetails() {
                         <a
                           href={shipment.customs_invoice_pdf_path}
                           download
-                          className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
                           title="Télécharger"
                         >
-                          <Download className="w-4 h-4 text-green-600" />
+                          <Download className="w-4 h-4 text-emerald-600" />
                         </a>
                       </div>
                     </div>
                   </div>
                 )}
-                {!shipment.bullion_summary_pdf_path && !shipment.customs_invoice_pdf_path && (
-                  <div className="text-center py-4">
+
+                {!shipment.packing_list_pdf_path && !shipment.consignment_note_pdf_path && !shipment.bullion_summary_pdf_path && !shipment.customs_invoice_pdf_path && (
+                  <div className="text-center py-6">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">Aucun document généré</p>
                   </div>

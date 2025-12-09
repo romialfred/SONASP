@@ -225,7 +225,7 @@ export default function FreightShipmentDashboard() {
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white">
+              <thead className="bg-slate-700 text-white">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
                     Référence

@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { FreightStatusBadge } from '@/components/freight/FreightStatusBadge';
+import { PDFViewer } from '@/components/ui/PDFViewer';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function FreightShipmentDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showError } = useNotification();
+  const { showError, showSuccess } = useNotification();
+  const { showAlert, showConfirm } = useCustomAlert();
 
   const [shipment, setShipment] = useState<FreightShipment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [viewingPdf, setViewingPdf] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -35,6 +40,38 @@ export default function FreightShipmentDetails() {
       showError('Erreur de chargement', error.message || 'Erreur inconnue');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendToRefinery = async () => {
+    if (!id || !shipment) return;
+
+    const confirmed = await showConfirm(
+      'Confirmer l\'expédition à la raffinerie',
+      `Êtes-vous sûr de vouloir marquer cette expédition comme "Expédiée à la Raffinerie" ?\n\n` +
+      `Référence: ${shipment.reference_number}\n` +
+      `Destination: ${shipment.destination_refinery?.name || 'Non spécifiée'}\n` +
+      `Poids total: ${shipment.total_pure_gold_oz.toFixed(4)} oz\n\n` +
+      `Cette action ne peut pas être annulée.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(true);
+      await freightShipmentService.updateStatus(id, 'shipped_to_refinery');
+
+      showSuccess(
+        'Expédition confirmée',
+        'L\'expédition a été marquée comme expédiée à la raffinerie. Elle apparaîtra maintenant dans le module Refining.'
+      );
+
+      await loadShipment();
+    } catch (error: any) {
+      console.error('Erreur:', error);
+      showError('Erreur', error.message || 'Impossible de mettre à jour le statut');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -78,11 +115,32 @@ export default function FreightShipmentDetails() {
                 Expédition {shipment.reference_number}
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                Détails de l'expédition vers la raffinerie
+                Détails complets de l'expédition vers la raffinerie
               </p>
             </div>
           </div>
-          <FreightStatusBadge status={shipment.status} />
+          <div className="flex items-center gap-3">
+            <FreightStatusBadge status={shipment.status} />
+            {shipment.status === 'pending' && (
+              <Button
+                onClick={handleSendToRefinery}
+                disabled={actionLoading}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Traitement...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Bon pour la Raffinerie
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -331,36 +389,120 @@ export default function FreightShipmentDetails() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Documents
+                Documents Générés
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {shipment.bullion_summary_pdf_path && (
-                  <a
-                    href={shipment.bullion_summary_pdf_path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    📄 Résumé Bullion (PDF)
-                  </a>
+                  <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Résumé Bullion</p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewingPdf(shipment.bullion_summary_pdf_path!)}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Visualiser"
+                        >
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <a
+                          href={shipment.bullion_summary_pdf_path}
+                          download
+                          className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                          title="Télécharger"
+                        >
+                          <Download className="w-4 h-4 text-green-600" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 {shipment.customs_invoice_pdf_path && (
-                  <a
-                    href={shipment.customs_invoice_pdf_path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    📄 Facture Douane (PDF)
-                  </a>
+                  <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Facture Douane</p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewingPdf(shipment.customs_invoice_pdf_path!)}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Visualiser"
+                        >
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <a
+                          href={shipment.customs_invoice_pdf_path}
+                          download
+                          className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                          title="Télécharger"
+                        >
+                          <Download className="w-4 h-4 text-green-600" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 {!shipment.bullion_summary_pdf_path && !shipment.customs_invoice_pdf_path && (
-                  <p className="text-sm text-gray-500">Aucun document disponible</p>
+                  <div className="text-center py-4">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Aucun document généré</p>
+                  </div>
                 )}
               </div>
             </Card>
+
+            {/* Status Info Card */}
+            {shipment.status === 'shipped_to_refinery' && (
+              <Card className="p-6 bg-emerald-50 border-emerald-200">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-emerald-900">Expédié à la Raffinerie</h3>
+                    <p className="text-xs text-emerald-700 mt-1">
+                      Cette expédition a été envoyée à la raffinerie et est en attente d'approbation dans le module Refining.
+                    </p>
+                    {shipment.shipped_at && (
+                      <p className="text-xs text-emerald-600 mt-2">
+                        Expédié le {new Date(shipment.shipped_at).toLocaleString('fr-FR')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
+
+        {/* PDF Viewer Modal */}
+        {viewingPdf && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-semibold text-gray-900">Visualisation du Document</h3>
+                <Button variant="secondary" onClick={() => setViewingPdf(null)}>
+                  Fermer
+                </Button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <PDFViewer url={viewingPdf} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

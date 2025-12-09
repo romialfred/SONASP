@@ -48,6 +48,7 @@ export function RefiningDashboard() {
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
+  const [freightShipmentsCount, setFreightShipmentsCount] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -63,7 +64,7 @@ export function RefiningDashboard() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [batchResult, refiningResult] = await Promise.all([
+      const [batchResult, refiningResult, freightResult] = await Promise.all([
         supabase
           .from('batches')
           .select(`
@@ -92,7 +93,11 @@ export function RefiningDashboard() {
               metal_type
             )
           `)
-          .order('processed_at', { ascending: false })
+          .order('processed_at', { ascending: false }),
+        supabase
+          .from('freight_shipments')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'shipped_to_refinery')
       ]);
 
       if (batchResult.error) {
@@ -109,6 +114,12 @@ export function RefiningDashboard() {
         console.error('Error fetching refining records:', refiningResult.error);
       } else {
         setRefiningRecords(refiningResult.data || []);
+      }
+
+      if (freightResult.error) {
+        console.error('Error fetching freight shipments:', freightResult.error);
+      } else {
+        setFreightShipmentsCount(freightResult.count || 0);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -179,6 +190,33 @@ export function RefiningDashboard() {
           </div>
         ) : (
           <>
+            {/* Freight Shipments Alert */}
+            {freightShipmentsCount > 0 && (
+              <Card
+                className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate('/refining/freight-shipments')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <Package className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {freightShipmentsCount} Expédition{freightShipmentsCount > 1 ? 's' : ''} en Attente d'Approbation
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Des expéditions depuis le module Invoice & Consignment attendent votre validation
+                      </p>
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors">
+                    Voir les Expéditions →
+                  </button>
+                </div>
+              </Card>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {metrics.map((metric) => (
                 <MetricCard key={metric.title} {...metric} />

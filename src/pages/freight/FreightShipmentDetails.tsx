@@ -163,28 +163,28 @@ export default function FreightShipmentDetails() {
           <div className="lg:col-span-2 space-y-6">
             {/* General Info Card */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5" />
+              <h2 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-600" />
                 Informations Générales
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Date d'Expédition</label>
-                  <p className="text-gray-900 mt-1">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Date d'Expédition</label>
+                  <p className="text-gray-900 font-semibold mt-1.5 text-base">
                     {new Date(shipment.shipment_date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Nombre de Boîtes</label>
-                  <p className="text-gray-900 mt-1">{shipment.number_of_boxes}</p>
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Nombre de Boîtes</label>
+                  <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.number_of_boxes}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Type de Boîte</label>
-                  <p className="text-gray-900 mt-1">{shipment.box_type}</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <label className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Type de Boîte</label>
+                  <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.box_type}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Nombre de Productions</label>
-                  <p className="text-gray-900 mt-1">{shipment.production_count}</p>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                  <label className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Nombre de Productions</label>
+                  <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.production_count}</p>
                 </div>
               </div>
 

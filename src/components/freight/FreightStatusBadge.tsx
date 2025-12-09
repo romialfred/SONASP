@@ -42,9 +42,33 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
           textColor: 'text-slate-700',
           borderColor: 'border-slate-200'
         };
+      case 'received_at_refinery':
+        return {
+          label: 'Reçu à la Raffinerie',
+          icon: CheckCircle,
+          bgColor: 'bg-emerald-100',
+          textColor: 'text-emerald-800',
+          borderColor: 'border-emerald-300'
+        };
+      case 'pending':
+        return {
+          label: 'En Attente',
+          icon: Package,
+          bgColor: 'bg-amber-50',
+          textColor: 'text-amber-700',
+          borderColor: 'border-amber-200'
+        };
+      case 'approved':
+        return {
+          label: 'Approuvé',
+          icon: CheckCircle,
+          bgColor: 'bg-blue-100',
+          textColor: 'text-blue-800',
+          borderColor: 'border-blue-300'
+        };
       default:
         return {
-          label: status,
+          label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           icon: Package,
           bgColor: 'bg-gray-100',
           textColor: 'text-gray-800',

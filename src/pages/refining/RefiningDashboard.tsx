@@ -97,7 +97,7 @@ export function RefiningDashboard() {
         supabase
           .from('freight_shipments')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'shipped_to_refinery')
+          .in('status', ['shipped_to_refinery', 'received_at_refinery'])
       ]);
 
       if (batchResult.error) {

@@ -225,30 +225,30 @@ export default function FreightShipmentDashboard() {
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-700 text-white">
+              <thead className="bg-slate-100 border-b-2 border-slate-300">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Référence
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Productions
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Or Pur (oz)
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Valeur (USD)
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Boîtes
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Statut
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
                     Actions
                   </th>
                 </tr>

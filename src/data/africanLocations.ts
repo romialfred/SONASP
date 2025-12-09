@@ -23,7 +23,7 @@ export interface Airport {
   country: string;
 }
 
-// Pays d'Afrique de l'Ouest + Afrique du Sud + Guinée
+// Pays africains + destinations internationales (Europe, États-Unis)
 export const AFRICAN_COUNTRIES: Country[] = [
   // Afrique de l'Ouest
   { code: 'BJ', name: 'Bénin', capital: 'Porto-Novo', flag: '🇧🇯', timezone: 'Africa/Porto-Novo' },
@@ -43,199 +43,251 @@ export const AFRICAN_COUNTRIES: Country[] = [
   { code: 'SL', name: 'Sierra Leone', capital: 'Freetown', flag: '🇸🇱', timezone: 'Africa/Freetown' },
   { code: 'TG', name: 'Togo', capital: 'Lomé', flag: '🇹🇬', timezone: 'Africa/Lome' },
 
-  // Afrique du Sud
-  { code: 'ZA', name: 'South Africa', capital: 'Pretoria', flag: '🇿🇦', timezone: 'Africa/Johannesburg' },
+  // Afrique du Nord
+  { code: 'DZ', name: 'Algérie', capital: 'Alger', flag: '🇩🇿', timezone: 'Africa/Algiers' },
+  { code: 'EG', name: 'Égypte', capital: 'Le Caire', flag: '🇪🇬', timezone: 'Africa/Cairo' },
+  { code: 'LY', name: 'Libye', capital: 'Tripoli', flag: '🇱🇾', timezone: 'Africa/Tripoli' },
+  { code: 'MA', name: 'Maroc', capital: 'Rabat', flag: '🇲🇦', timezone: 'Africa/Casablanca' },
+  { code: 'TN', name: 'Tunisie', capital: 'Tunis', flag: '🇹🇳', timezone: 'Africa/Tunis' },
+  { code: 'EH', name: 'Sahara Occidental', capital: 'El Aaiún', flag: '🇪🇭', timezone: 'Africa/El_Aaiun' },
+
+  // Afrique de l'Est
+  { code: 'BI', name: 'Burundi', capital: 'Gitega', flag: '🇧🇮', timezone: 'Africa/Bujumbura' },
+  { code: 'KM', name: 'Comores', capital: 'Moroni', flag: '🇰🇲', timezone: 'Indian/Comoro' },
+  { code: 'DJ', name: 'Djibouti', capital: 'Djibouti', flag: '🇩🇯', timezone: 'Africa/Djibouti' },
+  { code: 'ER', name: 'Érythrée', capital: 'Asmara', flag: '🇪🇷', timezone: 'Africa/Asmara' },
+  { code: 'ET', name: 'Éthiopie', capital: 'Addis-Abeba', flag: '🇪🇹', timezone: 'Africa/Addis_Ababa' },
+  { code: 'KE', name: 'Kenya', capital: 'Nairobi', flag: '🇰🇪', timezone: 'Africa/Nairobi' },
+  { code: 'MG', name: 'Madagascar', capital: 'Antananarivo', flag: '🇲🇬', timezone: 'Indian/Antananarivo' },
+  { code: 'MW', name: 'Malawi', capital: 'Lilongwe', flag: '🇲🇼', timezone: 'Africa/Blantyre' },
+  { code: 'MU', name: 'Maurice', capital: 'Port-Louis', flag: '🇲🇺', timezone: 'Indian/Mauritius' },
+  { code: 'MZ', name: 'Mozambique', capital: 'Maputo', flag: '🇲🇿', timezone: 'Africa/Maputo' },
+  { code: 'RE', name: 'La Réunion', capital: 'Saint-Denis', flag: '🇷🇪', timezone: 'Indian/Reunion' },
+  { code: 'RW', name: 'Rwanda', capital: 'Kigali', flag: '🇷🇼', timezone: 'Africa/Kigali' },
+  { code: 'SC', name: 'Seychelles', capital: 'Victoria', flag: '🇸🇨', timezone: 'Indian/Mahe' },
+  { code: 'SO', name: 'Somalie', capital: 'Mogadiscio', flag: '🇸🇴', timezone: 'Africa/Mogadishu' },
+  { code: 'SS', name: 'Soudan du Sud', capital: 'Djouba', flag: '🇸🇸', timezone: 'Africa/Juba' },
+  { code: 'SD', name: 'Soudan', capital: 'Khartoum', flag: '🇸🇩', timezone: 'Africa/Khartoum' },
+  { code: 'TZ', name: 'Tanzanie', capital: 'Dodoma', flag: '🇹🇿', timezone: 'Africa/Dar_es_Salaam' },
+  { code: 'UG', name: 'Ouganda', capital: 'Kampala', flag: '🇺🇬', timezone: 'Africa/Kampala' },
+  { code: 'YT', name: 'Mayotte', capital: 'Mamoudzou', flag: '🇾🇹', timezone: 'Indian/Mayotte' },
+  { code: 'ZM', name: 'Zambie', capital: 'Lusaka', flag: '🇿🇲', timezone: 'Africa/Lusaka' },
+  { code: 'ZW', name: 'Zimbabwe', capital: 'Harare', flag: '🇿🇼', timezone: 'Africa/Harare' },
+
+  // Afrique Centrale
+  { code: 'AO', name: 'Angola', capital: 'Luanda', flag: '🇦🇴', timezone: 'Africa/Luanda' },
+  { code: 'CM', name: 'Cameroun', capital: 'Yaoundé', flag: '🇨🇲', timezone: 'Africa/Douala' },
+  { code: 'CF', name: 'République Centrafricaine', capital: 'Bangui', flag: '🇨🇫', timezone: 'Africa/Bangui' },
+  { code: 'TD', name: 'Tchad', capital: 'N\'Djaména', flag: '🇹🇩', timezone: 'Africa/Ndjamena' },
+  { code: 'CG', name: 'République du Congo', capital: 'Brazzaville', flag: '🇨🇬', timezone: 'Africa/Brazzaville' },
+  { code: 'CD', name: 'RD Congo', capital: 'Kinshasa', flag: '🇨🇩', timezone: 'Africa/Kinshasa' },
+  { code: 'GQ', name: 'Guinée Équatoriale', capital: 'Malabo', flag: '🇬🇶', timezone: 'Africa/Malabo' },
+  { code: 'GA', name: 'Gabon', capital: 'Libreville', flag: '🇬🇦', timezone: 'Africa/Libreville' },
+  { code: 'ST', name: 'Sao Tomé-et-Principe', capital: 'São Tomé', flag: '🇸🇹', timezone: 'Africa/Sao_Tome' },
+
+  // Afrique Australe
+  { code: 'BW', name: 'Botswana', capital: 'Gaborone', flag: '🇧🇼', timezone: 'Africa/Gaborone' },
+  { code: 'SZ', name: 'Eswatini', capital: 'Mbabane', flag: '🇸🇿', timezone: 'Africa/Mbabane' },
+  { code: 'LS', name: 'Lesotho', capital: 'Maseru', flag: '🇱🇸', timezone: 'Africa/Maseru' },
+  { code: 'NA', name: 'Namibie', capital: 'Windhoek', flag: '🇳🇦', timezone: 'Africa/Windhoek' },
+  { code: 'ZA', name: 'Afrique du Sud', capital: 'Pretoria', flag: '🇿🇦', timezone: 'Africa/Johannesburg' },
+
+  // Europe (Destinations de raffineries)
+  { code: 'CH', name: 'Suisse', capital: 'Berne', flag: '🇨🇭', timezone: 'Europe/Zurich' },
+  { code: 'GB', name: 'Royaume-Uni', capital: 'Londres', flag: '🇬🇧', timezone: 'Europe/London' },
+  { code: 'BE', name: 'Belgique', capital: 'Bruxelles', flag: '🇧🇪', timezone: 'Europe/Brussels' },
+  { code: 'FR', name: 'France', capital: 'Paris', flag: '🇫🇷', timezone: 'Europe/Paris' },
+  { code: 'DE', name: 'Allemagne', capital: 'Berlin', flag: '🇩🇪', timezone: 'Europe/Berlin' },
+  { code: 'IT', name: 'Italie', capital: 'Rome', flag: '🇮🇹', timezone: 'Europe/Rome' },
+  { code: 'AE', name: 'Émirats Arabes Unis', capital: 'Abu Dhabi', flag: '🇦🇪', timezone: 'Asia/Dubai' },
+
+  // Amérique du Nord
+  { code: 'US', name: 'États-Unis', capital: 'Washington D.C.', flag: '🇺🇸', timezone: 'America/New_York' },
+  { code: 'CA', name: 'Canada', capital: 'Ottawa', flag: '🇨🇦', timezone: 'America/Toronto' },
 ];
 
 // Villes capitales et grandes villes
 export const AFRICAN_CITIES: City[] = [
-  // Mali
+  // Afrique de l'Ouest
   { name: 'Bamako', country: 'Mali', isCapital: true },
-
-  // Guinée
   { name: 'Conakry', country: 'Guinée', isCapital: true },
-
-  // Côte d\'Ivoire
   { name: 'Yamoussoukro', country: 'Côte d\'Ivoire', isCapital: true },
   { name: 'Abidjan', country: 'Côte d\'Ivoire', isCapital: false },
-
-  // Ghana
   { name: 'Accra', country: 'Ghana', isCapital: true },
-
-  // Nigeria
   { name: 'Abuja', country: 'Nigeria', isCapital: true },
   { name: 'Lagos', country: 'Nigeria', isCapital: false },
-
-  // Sénégal
   { name: 'Dakar', country: 'Sénégal', isCapital: true },
-
-  // Burkina Faso
   { name: 'Ouagadougou', country: 'Burkina Faso', isCapital: true },
-
-  // Niger
   { name: 'Niamey', country: 'Niger', isCapital: true },
-
-  // Bénin
   { name: 'Porto-Novo', country: 'Bénin', isCapital: true },
   { name: 'Cotonou', country: 'Bénin', isCapital: false },
-
-  // Togo
   { name: 'Lomé', country: 'Togo', isCapital: true },
-
-  // Liberia
   { name: 'Monrovia', country: 'Liberia', isCapital: true },
-
-  // Sierra Leone
   { name: 'Freetown', country: 'Sierra Leone', isCapital: true },
-
-  // Mauritanie
   { name: 'Nouakchott', country: 'Mauritanie', isCapital: true },
-
-  // Guinée-Bissau
   { name: 'Bissau', country: 'Guinée-Bissau', isCapital: true },
-
-  // Gambie
   { name: 'Banjul', country: 'Gambie', isCapital: true },
-
-  // Cap-Vert
   { name: 'Praia', country: 'Cap-Vert', isCapital: true },
 
-  // South Africa
-  { name: 'Pretoria', country: 'South Africa', isCapital: true },
-  { name: 'Johannesburg', country: 'South Africa', isCapital: false },
-  { name: 'Cape Town', country: 'South Africa', isCapital: false },
-  { name: 'Durban', country: 'South Africa', isCapital: false },
+  // Afrique du Nord
+  { name: 'Alger', country: 'Algérie', isCapital: true },
+  { name: 'Le Caire', country: 'Égypte', isCapital: true },
+  { name: 'Tripoli', country: 'Libye', isCapital: true },
+  { name: 'Rabat', country: 'Maroc', isCapital: true },
+  { name: 'Casablanca', country: 'Maroc', isCapital: false },
+  { name: 'Tunis', country: 'Tunisie', isCapital: true },
+
+  // Afrique de l'Est
+  { name: 'Gitega', country: 'Burundi', isCapital: true },
+  { name: 'Bujumbura', country: 'Burundi', isCapital: false },
+  { name: 'Moroni', country: 'Comores', isCapital: true },
+  { name: 'Djibouti', country: 'Djibouti', isCapital: true },
+  { name: 'Asmara', country: 'Érythrée', isCapital: true },
+  { name: 'Addis-Abeba', country: 'Éthiopie', isCapital: true },
+  { name: 'Nairobi', country: 'Kenya', isCapital: true },
+  { name: 'Mombasa', country: 'Kenya', isCapital: false },
+  { name: 'Antananarivo', country: 'Madagascar', isCapital: true },
+  { name: 'Lilongwe', country: 'Malawi', isCapital: true },
+  { name: 'Port-Louis', country: 'Maurice', isCapital: true },
+  { name: 'Maputo', country: 'Mozambique', isCapital: true },
+  { name: 'Kigali', country: 'Rwanda', isCapital: true },
+  { name: 'Victoria', country: 'Seychelles', isCapital: true },
+  { name: 'Mogadiscio', country: 'Somalie', isCapital: true },
+  { name: 'Khartoum', country: 'Soudan', isCapital: true },
+  { name: 'Djouba', country: 'Soudan du Sud', isCapital: true },
+  { name: 'Dodoma', country: 'Tanzanie', isCapital: true },
+  { name: 'Dar es Salaam', country: 'Tanzanie', isCapital: false },
+  { name: 'Kampala', country: 'Ouganda', isCapital: true },
+  { name: 'Lusaka', country: 'Zambie', isCapital: true },
+  { name: 'Harare', country: 'Zimbabwe', isCapital: true },
+
+  // Afrique Centrale
+  { name: 'Luanda', country: 'Angola', isCapital: true },
+  { name: 'Yaoundé', country: 'Cameroun', isCapital: true },
+  { name: 'Douala', country: 'Cameroun', isCapital: false },
+  { name: 'Bangui', country: 'République Centrafricaine', isCapital: true },
+  { name: 'N\'Djaména', country: 'Tchad', isCapital: true },
+  { name: 'Brazzaville', country: 'République du Congo', isCapital: true },
+  { name: 'Kinshasa', country: 'RD Congo', isCapital: true },
+  { name: 'Malabo', country: 'Guinée Équatoriale', isCapital: true },
+  { name: 'Libreville', country: 'Gabon', isCapital: true },
+  { name: 'São Tomé', country: 'Sao Tomé-et-Principe', isCapital: true },
+
+  // Afrique Australe
+  { name: 'Gaborone', country: 'Botswana', isCapital: true },
+  { name: 'Mbabane', country: 'Eswatini', isCapital: true },
+  { name: 'Maseru', country: 'Lesotho', isCapital: true },
+  { name: 'Windhoek', country: 'Namibie', isCapital: true },
+  { name: 'Pretoria', country: 'Afrique du Sud', isCapital: true },
+  { name: 'Johannesburg', country: 'Afrique du Sud', isCapital: false },
+  { name: 'Le Cap', country: 'Afrique du Sud', isCapital: false },
+  { name: 'Durban', country: 'Afrique du Sud', isCapital: false },
+
+  // Europe
+  { name: 'Berne', country: 'Suisse', isCapital: true },
+  { name: 'Zurich', country: 'Suisse', isCapital: false },
+  { name: 'Genève', country: 'Suisse', isCapital: false },
+  { name: 'Londres', country: 'Royaume-Uni', isCapital: true },
+  { name: 'Bruxelles', country: 'Belgique', isCapital: true },
+  { name: 'Paris', country: 'France', isCapital: true },
+  { name: 'Berlin', country: 'Allemagne', isCapital: true },
+  { name: 'Rome', country: 'Italie', isCapital: true },
+  { name: 'Abu Dhabi', country: 'Émirats Arabes Unis', isCapital: true },
+  { name: 'Dubaï', country: 'Émirats Arabes Unis', isCapital: false },
+
+  // Amérique du Nord
+  { name: 'Washington D.C.', country: 'États-Unis', isCapital: true },
+  { name: 'New York', country: 'États-Unis', isCapital: false },
+  { name: 'Ottawa', country: 'Canada', isCapital: true },
+  { name: 'Toronto', country: 'Canada', isCapital: false },
 ];
 
-// Aéroports majeurs d'Afrique de l'Ouest, Afrique du Sud et Guinée
+// Aéroports majeurs
 export const AFRICAN_AIRPORTS: Airport[] = [
-  // Mali
-  {
-    code: 'BKO',
-    name: 'Bamako-Sénou International Airport',
-    city: 'Bamako',
-    country: 'Mali'
-  },
+  // Afrique de l'Ouest
+  { code: 'BKO', name: 'Bamako-Sénou International Airport (BKO)', city: 'Bamako', country: 'Mali' },
+  { code: 'CKY', name: 'Conakry International Airport (CKY)', city: 'Conakry', country: 'Guinée' },
+  { code: 'ABJ', name: 'Félix-Houphouët-Boigny International Airport (ABJ)', city: 'Abidjan', country: 'Côte d\'Ivoire' },
+  { code: 'ACC', name: 'Kotoka International Airport (ACC)', city: 'Accra', country: 'Ghana' },
+  { code: 'ABV', name: 'Nnamdi Azikiwe International Airport (ABV)', city: 'Abuja', country: 'Nigeria' },
+  { code: 'LOS', name: 'Murtala Muhammed International Airport (LOS)', city: 'Lagos', country: 'Nigeria' },
+  { code: 'DSS', name: 'Blaise Diagne International Airport (DSS)', city: 'Dakar', country: 'Sénégal' },
+  { code: 'OUA', name: 'Ouagadougou Airport (OUA)', city: 'Ouagadougou', country: 'Burkina Faso' },
+  { code: 'NIM', name: 'Diori Hamani International Airport (NIM)', city: 'Niamey', country: 'Niger' },
+  { code: 'COO', name: 'Cadjehoun Airport (COO)', city: 'Cotonou', country: 'Bénin' },
+  { code: 'LFW', name: 'Gnassingbé Eyadéma International Airport (LFW)', city: 'Lomé', country: 'Togo' },
+  { code: 'ROB', name: 'Roberts International Airport (ROB)', city: 'Monrovia', country: 'Liberia' },
+  { code: 'FNA', name: 'Lungi International Airport (FNA)', city: 'Freetown', country: 'Sierra Leone' },
+  { code: 'NKC', name: 'Nouakchott International Airport (NKC)', city: 'Nouakchott', country: 'Mauritanie' },
+  { code: 'OXB', name: 'Osvaldo Vieira International Airport (OXB)', city: 'Bissau', country: 'Guinée-Bissau' },
+  { code: 'BJL', name: 'Banjul International Airport (BJL)', city: 'Banjul', country: 'Gambie' },
+  { code: 'RAI', name: 'Praia International Airport (RAI)', city: 'Praia', country: 'Cap-Vert' },
 
-  // Guinée (Conakry)
-  {
-    code: 'CKY',
-    name: 'Conakry International Airport (Gbessia)',
-    city: 'Conakry',
-    country: 'Guinée'
-  },
+  // Afrique du Nord
+  { code: 'ALG', name: 'Houari Boumediene Airport (ALG)', city: 'Alger', country: 'Algérie' },
+  { code: 'CAI', name: 'Cairo International Airport (CAI)', city: 'Le Caire', country: 'Égypte' },
+  { code: 'TIP', name: 'Tripoli International Airport (TIP)', city: 'Tripoli', country: 'Libye' },
+  { code: 'CMN', name: 'Mohammed V International Airport (CMN)', city: 'Casablanca', country: 'Maroc' },
+  { code: 'RBA', name: 'Rabat-Salé Airport (RBA)', city: 'Rabat', country: 'Maroc' },
+  { code: 'TUN', name: 'Tunis-Carthage International Airport (TUN)', city: 'Tunis', country: 'Tunisie' },
 
-  // Côte d'Ivoire
-  {
-    code: 'ABJ',
-    name: 'Félix-Houphouët-Boigny International Airport',
-    city: 'Abidjan',
-    country: 'Côte d\'Ivoire'
-  },
+  // Afrique de l'Est
+  { code: 'BJM', name: 'Bujumbura International Airport (BJM)', city: 'Bujumbura', country: 'Burundi' },
+  { code: 'HAH', name: 'Moroni International Airport (HAH)', city: 'Moroni', country: 'Comores' },
+  { code: 'JIB', name: 'Djibouti-Ambouli International Airport (JIB)', city: 'Djibouti', country: 'Djibouti' },
+  { code: 'ASM', name: 'Asmara International Airport (ASM)', city: 'Asmara', country: 'Érythrée' },
+  { code: 'ADD', name: 'Addis Ababa Bole International Airport (ADD)', city: 'Addis-Abeba', country: 'Éthiopie' },
+  { code: 'NBO', name: 'Jomo Kenyatta International Airport (NBO)', city: 'Nairobi', country: 'Kenya' },
+  { code: 'MBA', name: 'Moi International Airport (MBA)', city: 'Mombasa', country: 'Kenya' },
+  { code: 'TNR', name: 'Ivato International Airport (TNR)', city: 'Antananarivo', country: 'Madagascar' },
+  { code: 'LLW', name: 'Lilongwe International Airport (LLW)', city: 'Lilongwe', country: 'Malawi' },
+  { code: 'MRU', name: 'Sir Seewoosagur Ramgoolam International Airport (MRU)', city: 'Port-Louis', country: 'Maurice' },
+  { code: 'MPM', name: 'Maputo International Airport (MPM)', city: 'Maputo', country: 'Mozambique' },
+  { code: 'KGL', name: 'Kigali International Airport (KGL)', city: 'Kigali', country: 'Rwanda' },
+  { code: 'SEZ', name: 'Seychelles International Airport (SEZ)', city: 'Victoria', country: 'Seychelles' },
+  { code: 'MGQ', name: 'Aden Adde International Airport (MGQ)', city: 'Mogadiscio', country: 'Somalie' },
+  { code: 'KRT', name: 'Khartoum International Airport (KRT)', city: 'Khartoum', country: 'Soudan' },
+  { code: 'JUB', name: 'Juba International Airport (JUB)', city: 'Djouba', country: 'Soudan du Sud' },
+  { code: 'DAR', name: 'Julius Nyerere International Airport (DAR)', city: 'Dar es Salaam', country: 'Tanzanie' },
+  { code: 'EBB', name: 'Entebbe International Airport (EBB)', city: 'Kampala', country: 'Ouganda' },
+  { code: 'LUN', name: 'Kenneth Kaunda International Airport (LUN)', city: 'Lusaka', country: 'Zambie' },
+  { code: 'HRE', name: 'Robert Gabriel Mugabe International Airport (HRE)', city: 'Harare', country: 'Zimbabwe' },
 
-  // Ghana
-  {
-    code: 'ACC',
-    name: 'Kotoka International Airport',
-    city: 'Accra',
-    country: 'Ghana'
-  },
+  // Afrique Centrale
+  { code: 'LAD', name: 'Quatro de Fevereiro Airport (LAD)', city: 'Luanda', country: 'Angola' },
+  { code: 'NSI', name: 'Yaoundé Nsimalen International Airport (NSI)', city: 'Yaoundé', country: 'Cameroun' },
+  { code: 'DLA', name: 'Douala International Airport (DLA)', city: 'Douala', country: 'Cameroun' },
+  { code: 'BGF', name: 'Bangui M\'Poko International Airport (BGF)', city: 'Bangui', country: 'République Centrafricaine' },
+  { code: 'NDJ', name: 'N\'Djamena International Airport (NDJ)', city: 'N\'Djaména', country: 'Tchad' },
+  { code: 'BZV', name: 'Maya-Maya Airport (BZV)', city: 'Brazzaville', country: 'République du Congo' },
+  { code: 'FIH', name: 'N\'djili International Airport (FIH)', city: 'Kinshasa', country: 'RD Congo' },
+  { code: 'SSG', name: 'Malabo International Airport (SSG)', city: 'Malabo', country: 'Guinée Équatoriale' },
+  { code: 'LBV', name: 'Libreville International Airport (LBV)', city: 'Libreville', country: 'Gabon' },
+  { code: 'TMS', name: 'São Tomé International Airport (TMS)', city: 'São Tomé', country: 'Sao Tomé-et-Principe' },
 
-  // Nigeria
-  {
-    code: 'ABV',
-    name: 'Nnamdi Azikiwe International Airport',
-    city: 'Abuja',
-    country: 'Nigeria'
-  },
-  {
-    code: 'LOS',
-    name: 'Murtala Muhammed International Airport',
-    city: 'Lagos',
-    country: 'Nigeria'
-  },
+  // Afrique Australe
+  { code: 'GBE', name: 'Sir Seretse Khama International Airport (GBE)', city: 'Gaborone', country: 'Botswana' },
+  { code: 'SHO', name: 'King Mswati III International Airport (SHO)', city: 'Mbabane', country: 'Eswatini' },
+  { code: 'MSU', name: 'Moshoeshoe I International Airport (MSU)', city: 'Maseru', country: 'Lesotho' },
+  { code: 'WDH', name: 'Hosea Kutako International Airport (WDH)', city: 'Windhoek', country: 'Namibie' },
+  { code: 'JNB', name: 'OR Tambo International Airport (JNB)', city: 'Johannesburg', country: 'Afrique du Sud' },
+  { code: 'CPT', name: 'Cape Town International Airport (CPT)', city: 'Le Cap', country: 'Afrique du Sud' },
+  { code: 'DUR', name: 'King Shaka International Airport (DUR)', city: 'Durban', country: 'Afrique du Sud' },
 
-  // Sénégal
-  {
-    code: 'DSS',
-    name: 'Blaise Diagne International Airport',
-    city: 'Dakar',
-    country: 'Sénégal'
-  },
+  // Europe
+  { code: 'ZRH', name: 'Zurich Airport (ZRH)', city: 'Zurich', country: 'Suisse' },
+  { code: 'GVA', name: 'Geneva Airport (GVA)', city: 'Genève', country: 'Suisse' },
+  { code: 'LHR', name: 'London Heathrow Airport (LHR)', city: 'Londres', country: 'Royaume-Uni' },
+  { code: 'BRU', name: 'Brussels Airport (BRU)', city: 'Bruxelles', country: 'Belgique' },
+  { code: 'CDG', name: 'Charles de Gaulle Airport (CDG)', city: 'Paris', country: 'France' },
+  { code: 'FRA', name: 'Frankfurt Airport (FRA)', city: 'Berlin', country: 'Allemagne' },
+  { code: 'FCO', name: 'Leonardo da Vinci Airport (FCO)', city: 'Rome', country: 'Italie' },
+  { code: 'DXB', name: 'Dubai International Airport (DXB)', city: 'Dubaï', country: 'Émirats Arabes Unis' },
 
-  // Burkina Faso
-  {
-    code: 'OUA',
-    name: 'Ouagadougou Airport',
-    city: 'Ouagadougou',
-    country: 'Burkina Faso'
-  },
-
-  // Niger
-  {
-    code: 'NIM',
-    name: 'Diori Hamani International Airport',
-    city: 'Niamey',
-    country: 'Niger'
-  },
-
-  // Bénin
-  {
-    code: 'COO',
-    name: 'Cadjehoun Airport',
-    city: 'Cotonou',
-    country: 'Bénin'
-  },
-
-  // Togo
-  {
-    code: 'LFW',
-    name: 'Gnassingbé Eyadéma International Airport',
-    city: 'Lomé',
-    country: 'Togo'
-  },
-
-  // Liberia
-  {
-    code: 'ROB',
-    name: 'Roberts International Airport',
-    city: 'Monrovia',
-    country: 'Liberia'
-  },
-
-  // Sierra Leone
-  {
-    code: 'FNA',
-    name: 'Lungi International Airport',
-    city: 'Freetown',
-    country: 'Sierra Leone'
-  },
-
-  // South Africa
-  {
-    code: 'JNB',
-    name: 'OR Tambo International Airport',
-    city: 'Johannesburg',
-    country: 'South Africa'
-  },
-  {
-    code: 'CPT',
-    name: 'Cape Town International Airport',
-    city: 'Cape Town',
-    country: 'South Africa'
-  },
-  {
-    code: 'DUR',
-    name: 'King Shaka International Airport',
-    city: 'Durban',
-    country: 'South Africa'
-  },
-  {
-    code: 'PRY',
-    name: 'Wonderboom Airport',
-    city: 'Pretoria',
-    country: 'South Africa'
-  },
+  // Amérique du Nord
+  { code: 'JFK', name: 'John F. Kennedy International Airport (JFK)', city: 'New York', country: 'États-Unis' },
+  { code: 'IAD', name: 'Washington Dulles International Airport (IAD)', city: 'Washington D.C.', country: 'États-Unis' },
+  { code: 'YYZ', name: 'Toronto Pearson International Airport (YYZ)', city: 'Toronto', country: 'Canada' },
 ];
 
 // Fonctions utilitaires

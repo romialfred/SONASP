@@ -1,6 +1,13 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { roundUpToFixed } from '@/utils/numberUtils';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: { finalY: number };
+  }
+}
 
 interface PackingListData {
   expeditionLotNumber: string;

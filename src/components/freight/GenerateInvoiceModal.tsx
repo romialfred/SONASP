@@ -289,8 +289,8 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         <div className="p-6">
           {activeTab === 'bullion' && (
             <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-900">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <p className="text-sm text-slate-800">
                   Ce document génère un résumé détaillé de toutes les barres incluses dans l'expédition avec les signatures requises.
                 </p>
               </div>
@@ -350,7 +350,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                 <Button
                   onClick={generateBullionSummary}
                   disabled={generating}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   {generating ? 'Génération...' : 'Générer Bullion Summary'}
@@ -361,8 +361,8 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
           {activeTab === 'invoice' && (
             <div className="space-y-6">
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <p className="text-sm text-green-900">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <p className="text-sm text-slate-800">
                   Cette facture sera utilisée pour les besoins de la douane. Les informations de l'expédition sont pré-remplies.
                 </p>
               </div>
@@ -522,7 +522,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                 <Button
                   onClick={generateExportInvoice}
                   disabled={generating}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   {generating ? 'Génération...' : 'Générer Export Invoice'}

@@ -139,7 +139,7 @@ export default function FreightShipmentDetails() {
               <Button
                 onClick={handleSendToRefinery}
                 disabled={actionLoading}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+                className="bg-emerald-600 hover:bg-emerald-700"
               >
                 {actionLoading ? (
                   <>

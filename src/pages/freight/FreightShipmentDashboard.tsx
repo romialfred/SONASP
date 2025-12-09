@@ -13,23 +13,23 @@ import { useNotification } from '@/contexts/NotificationContext';
 const STATUS_LABELS: Record<FreightShipmentStatus, { label: string; color: string; bgColor: string }> = {
   pending: {
     label: 'En Attente',
-    color: 'text-yellow-700',
-    bgColor: 'bg-yellow-100',
+    color: 'text-gray-700',
+    bgColor: 'bg-gray-100',
   },
   approved: {
     label: 'Approuvé',
     color: 'text-blue-700',
-    bgColor: 'bg-blue-100',
+    bgColor: 'bg-blue-50',
   },
   shipped_to_refinery: {
     label: 'Expédié',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100',
+    color: 'text-slate-700',
+    bgColor: 'bg-slate-100',
   },
   received_at_refinery: {
     label: 'Reçu',
-    color: 'text-green-700',
-    bgColor: 'bg-green-100',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
   },
 };
 
@@ -104,7 +104,7 @@ export default function FreightShipmentDashboard() {
           </div>
           <Button
             onClick={() => navigate('/freight/shipments/create')}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nouvelle Expédition
@@ -123,70 +123,70 @@ export default function FreightShipmentDashboard() {
             </div>
           </Card>
 
-          <Card className="p-4 bg-yellow-50">
+          <Card className="p-4 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-yellow-700 uppercase tracking-wide">En Attente</p>
-                <p className="text-2xl font-bold text-yellow-900 mt-1">{stats.pending}</p>
+                <p className="text-xs text-gray-600 uppercase tracking-wide">En Attente</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.pending}</p>
               </div>
-              <Package className="w-8 h-8 text-yellow-600" />
+              <Package className="w-8 h-8 text-gray-400" />
             </div>
           </Card>
 
-          <Card className="p-4 bg-blue-50">
+          <Card className="p-4 border border-blue-200 bg-blue-50/50">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-700 uppercase tracking-wide">Approuvé</p>
                 <p className="text-2xl font-bold text-blue-900 mt-1">{stats.approved}</p>
               </div>
-              <Package className="w-8 h-8 text-blue-600" />
+              <Package className="w-8 h-8 text-blue-500" />
             </div>
           </Card>
 
-          <Card className="p-4 bg-purple-50">
+          <Card className="p-4 border border-slate-200 bg-slate-50/50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-purple-700 uppercase tracking-wide">Expédié</p>
-                <p className="text-2xl font-bold text-purple-900 mt-1">{stats.shipped}</p>
+                <p className="text-xs text-slate-700 uppercase tracking-wide">Expédié</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats.shipped}</p>
               </div>
-              <Package className="w-8 h-8 text-purple-600" />
+              <Package className="w-8 h-8 text-slate-500" />
             </div>
           </Card>
 
-          <Card className="p-4 bg-green-50">
+          <Card className="p-4 border border-emerald-200 bg-emerald-50/50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-green-700 uppercase tracking-wide">Reçu</p>
-                <p className="text-2xl font-bold text-green-900 mt-1">{stats.received}</p>
+                <p className="text-xs text-emerald-700 uppercase tracking-wide">Reçu</p>
+                <p className="text-2xl font-bold text-emerald-900 mt-1">{stats.received}</p>
               </div>
-              <Package className="w-8 h-8 text-green-600" />
+              <Package className="w-8 h-8 text-emerald-500" />
             </div>
           </Card>
         </div>
 
         {/* Value Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+          <Card className="p-4 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs opacity-90 uppercase tracking-wide">Or Pur Total</p>
-                <p className="text-3xl font-bold mt-1">{stats.totalOz.toFixed(3)} oz</p>
-                <p className="text-xs opacity-75 mt-1">
+                <p className="text-xs text-amber-700 uppercase tracking-wide font-medium">Or Pur Total</p>
+                <p className="text-3xl font-bold text-amber-900 mt-1">{stats.totalOz.toFixed(3)} oz</p>
+                <p className="text-xs text-amber-600 mt-1">
                   {(stats.totalOz * 31.1035).toFixed(2)} g
                 </p>
               </div>
-              <TrendingUp className="w-10 h-10 opacity-75" />
+              <TrendingUp className="w-10 h-10 text-amber-600" />
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+          <Card className="p-4 border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs opacity-90 uppercase tracking-wide">Valeur Totale</p>
-                <p className="text-3xl font-bold mt-1">${stats.totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-                <p className="text-xs opacity-75 mt-1">USD</p>
+                <p className="text-xs text-emerald-700 uppercase tracking-wide font-medium">Valeur Totale</p>
+                <p className="text-3xl font-bold text-emerald-900 mt-1">${stats.totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+                <p className="text-xs text-emerald-600 mt-1">USD</p>
               </div>
-              <TrendingUp className="w-10 h-10 opacity-75" />
+              <TrendingUp className="w-10 h-10 text-emerald-600" />
             </div>
           </Card>
         </div>

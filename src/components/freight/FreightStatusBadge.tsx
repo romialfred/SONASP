@@ -14,33 +14,33 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         return {
           label: 'En Attente Douane',
           icon: Package,
-          bgColor: 'bg-yellow-100',
-          textColor: 'text-yellow-800',
-          borderColor: 'border-yellow-200'
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-700',
+          borderColor: 'border-gray-200'
         };
       case 'customs_approved':
         return {
           label: 'Approuvé Douane',
           icon: CheckCircle,
-          bgColor: 'bg-emerald-100',
-          textColor: 'text-emerald-800',
+          bgColor: 'bg-emerald-50',
+          textColor: 'text-emerald-700',
           borderColor: 'border-emerald-200'
         };
       case 'ready_for_transport':
         return {
           label: 'Prêt Transport',
           icon: Truck,
-          bgColor: 'bg-blue-100',
-          textColor: 'text-blue-800',
+          bgColor: 'bg-blue-50',
+          textColor: 'text-blue-700',
           borderColor: 'border-blue-200'
         };
       case 'shipped_to_refinery':
         return {
           label: 'Expédié',
           icon: Plane,
-          bgColor: 'bg-purple-100',
-          textColor: 'text-purple-800',
-          borderColor: 'border-purple-200'
+          bgColor: 'bg-slate-100',
+          textColor: 'text-slate-700',
+          borderColor: 'border-slate-200'
         };
       default:
         return {

@@ -13,6 +13,7 @@ interface ConfirmState {
   message: string;
   type: 'danger' | 'warning' | 'info';
   onConfirm: () => void;
+  onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
 }
@@ -65,27 +66,47 @@ export function useCustomAlert() {
   };
 
   const showConfirm = (
+    title: string,
     message: string,
-    onConfirm: () => void,
     options?: {
-      title?: string;
       type?: 'danger' | 'warning' | 'info';
       confirmText?: string;
       cancelText?: string;
     }
-  ) => {
-    setConfirmState({
-      isOpen: true,
-      message,
-      onConfirm,
-      type: options?.type || 'warning',
-      title: options?.title,
-      confirmText: options?.confirmText,
-      cancelText: options?.cancelText
+  ): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const handleConfirm = () => {
+        resolve(true);
+      };
+
+      const handleCancel = () => {
+        resolve(false);
+      };
+
+      setConfirmState({
+        isOpen: true,
+        message,
+        type: options?.type || 'warning',
+        title,
+        confirmText: options?.confirmText,
+        cancelText: options?.cancelText,
+        onConfirm: handleConfirm,
+        onCancel: handleCancel
+      });
     });
   };
 
   const closeConfirm = () => {
+    if (confirmState.onCancel) {
+      confirmState.onCancel();
+    }
+    setConfirmState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmState.onConfirm) {
+      confirmState.onConfirm();
+    }
     setConfirmState(prev => ({ ...prev, isOpen: false }));
   };
 
@@ -99,6 +120,7 @@ export function useCustomAlert() {
     showWarning,
     closeAlert,
     showConfirm,
-    closeConfirm
+    closeConfirm,
+    handleConfirmAction
   };
 }

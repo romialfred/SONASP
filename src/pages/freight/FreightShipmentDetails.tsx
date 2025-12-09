@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { FreightStatusBadge } from '@/components/freight/FreightStatusBadge';
 import { PDFViewer } from '@/components/ui/PDFViewer';
+import { CustomConfirm } from '@/components/ui/CustomConfirm';
+import { CustomAlert } from '@/components/ui/CustomAlert';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
@@ -15,7 +17,15 @@ export default function FreightShipmentDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
-  const { showAlert, showConfirm } = useCustomAlert();
+  const {
+    showAlert,
+    showConfirm,
+    alertState,
+    confirmState,
+    closeAlert,
+    closeConfirm,
+    handleConfirmAction
+  } = useCustomAlert();
 
   const [shipment, setShipment] = useState<FreightShipment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,20 +54,23 @@ export default function FreightShipmentDetails() {
   };
 
   const handleSendToRefinery = async () => {
-    if (!id || !shipment) return;
-
-    const confirmed = await showConfirm(
-      'Confirmer l\'expédition à la raffinerie',
-      `Êtes-vous sûr de vouloir marquer cette expédition comme "Expédiée à la Raffinerie" ?\n\n` +
-      `Référence: ${shipment.reference_number}\n` +
-      `Destination: ${shipment.destination_refinery?.name || 'Non spécifiée'}\n` +
-      `Poids total: ${shipment.total_pure_gold_oz.toFixed(4)} oz\n\n` +
-      `Cette action ne peut pas être annulée.`
-    );
-
-    if (!confirmed) return;
+    if (!id || !shipment) {
+      showError('Erreur', 'Aucune expédition sélectionnée');
+      return;
+    }
 
     try {
+      const confirmed = await showConfirm(
+        'Confirmer l\'expédition à la raffinerie',
+        `Êtes-vous sûr de vouloir marquer cette expédition comme "Expédiée à la Raffinerie" ?\n\n` +
+        `Référence: ${shipment.reference_number}\n` +
+        `Destination: ${shipment.destination_refinery?.name || 'Non spécifiée'}\n` +
+        `Poids total: ${shipment.total_pure_gold_oz.toFixed(4)} oz\n\n` +
+        `Cette action ne peut pas être annulée.`
+      );
+
+      if (!confirmed) return;
+
       setActionLoading(true);
       await freightShipmentService.updateStatus(id, 'shipped_to_refinery');
 
@@ -68,7 +81,7 @@ export default function FreightShipmentDetails() {
 
       await loadShipment();
     } catch (error: any) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors de l\'envoi à la raffinerie:', error);
       showError('Erreur', error.message || 'Impossible de mettre à jour le statut');
     } finally {
       setActionLoading(false);
@@ -152,7 +165,7 @@ export default function FreightShipmentDetails() {
                 <Package className="w-5 h-5" />
                 Informations Générales
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Date d'Expédition</label>
                   <p className="text-gray-900 mt-1">
@@ -176,10 +189,10 @@ export default function FreightShipmentDetails() {
               {shipment.destination_refinery && (
                 <div className="mt-4 pt-4 border-t">
                   <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <Plane className="w-4 h-4" />
                     Raffinerie de Destination
                   </label>
-                  <p className="text-gray-900 mt-1">
+                  <p className="text-gray-900 mt-1 font-medium">
                     {shipment.destination_refinery.name} - {shipment.destination_refinery.location}, {shipment.destination_refinery.country}
                   </p>
                 </div>
@@ -193,119 +206,192 @@ export default function FreightShipmentDetails() {
               )}
             </Card>
 
-            {/* Weight Summary Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé des Poids</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <p className="text-sm text-amber-700 font-medium">Poids Brut</p>
-                  <p className="text-2xl font-bold text-amber-900 mt-1">
-                    {shipment.total_bullion_grams.toFixed(3)} g
-                  </p>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <p className="text-sm text-yellow-700 font-medium">Or Pur (g)</p>
-                  <p className="text-2xl font-bold text-yellow-900 mt-1">
-                    {shipment.total_pure_gold_grams.toFixed(3)} g
-                  </p>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <p className="text-sm text-orange-700 font-medium">Or Pur (oz)</p>
-                  <p className="text-2xl font-bold text-orange-900 mt-1">
-                    {shipment.total_pure_gold_oz.toFixed(4)} oz
-                  </p>
-                </div>
-                {shipment.total_pure_silver_grams > 0 && (
-                  <div className="bg-gray-50 p-4 rounded-lg col-span-3">
-                    <p className="text-sm text-gray-700 font-medium">Argent Pur</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
-                      {shipment.total_pure_silver_grams.toFixed(3)} g
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Financial Info Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Informations Financières
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Prix de l'Or (USD/oz)</label>
-                  <p className="text-gray-900 mt-1 font-semibold">
-                    ${shipment.gold_price_usd_per_oz.toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Taux de Change</label>
-                  <p className="text-gray-900 mt-1 font-semibold">
-                    {shipment.exchange_rate.toFixed(2)} {shipment.local_currency}/USD
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Valeur Totale (USD)</label>
-                  <p className="text-green-700 mt-1 font-bold text-lg">
-                    ${shipment.total_value_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Valeur Totale ({shipment.local_currency})
-                  </label>
-                  <p className="text-green-700 mt-1 font-bold text-lg">
-                    {shipment.total_value_local.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {shipment.local_currency}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Productions List */}
+            {/* Productions Table with Grand Total */}
             {shipment.productions && shipment.productions.length > 0 && (
               <Card className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Productions Incluses</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-blue-600" />
+                  Productions Incluses
+                </h2>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                       <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Bar Ref.</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 border">Date</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Poids Brut (g)</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Finesse (%)</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (g)</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 border">Or Pur (oz)</th>
+                        <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                          Bar Ref.
+                        </th>
+                        <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                          Date
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Poids Brut (g)
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Finesse (%)
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Or Pur (g)
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Or Pur (oz)
+                        </th>
+                        {shipment.total_pure_silver_grams > 0 && (
+                          <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                            Argent Pur (g)
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
-                      {shipment.productions.map((prod) => (
-                        <tr key={prod.id} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-sm font-medium text-gray-900 border">
+                      {shipment.productions.map((prod, index) => (
+                        <tr key={prod.id} className={`hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                          <td className="px-3 py-2 text-sm font-medium text-blue-900 border border-gray-300">
                             {prod.bar_reference}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 border">
+                          <td className="px-3 py-2 text-sm text-gray-600 border border-gray-300">
                             {new Date(prod.production_date).toLocaleDateString('fr-FR')}
                           </td>
-                          <td className="px-3 py-2 text-sm text-right text-gray-900 border">
+                          <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
                             {prod.bullion_grams.toFixed(3)}
                           </td>
-                          <td className="px-3 py-2 text-sm text-right text-gray-600 border">
+                          <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
                             {prod.estimated_fineness_pct.toFixed(2)}%
                           </td>
-                          <td className="px-3 py-2 text-sm text-right text-gray-900 border">
+                          <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
                             {prod.pure_gold_grams.toFixed(3)}
                           </td>
-                          <td className="px-3 py-2 text-sm text-right font-semibold text-amber-700 border">
+                          <td className="px-3 py-2 text-sm text-right font-medium text-amber-700 border border-gray-300">
                             {prod.pure_gold_oz.toFixed(6)}
                           </td>
+                          {shipment.total_pure_silver_grams > 0 && (
+                            <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
+                              {(prod.pure_silver_grams || 0).toFixed(3)}
+                            </td>
+                          )}
                         </tr>
                       ))}
+                      {/* Grand Total Row */}
+                      <tr className="bg-gradient-to-r from-amber-100 to-yellow-100 font-bold">
+                        <td colSpan={2} className="px-3 py-3 text-sm text-gray-900 border border-gray-400">
+                          GRAND TOTAL
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400">
+                          {shipment.total_bullion_grams.toFixed(3)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-gray-600 border border-gray-400">
+                          -
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400">
+                          {shipment.total_pure_gold_grams.toFixed(3)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400 text-base">
+                          {shipment.total_pure_gold_oz.toFixed(4)}
+                        </td>
+                        {shipment.total_pure_silver_grams > 0 && (
+                          <td className="px-3 py-3 text-sm text-right text-gray-900 border border-gray-400">
+                            {shipment.total_pure_silver_grams.toFixed(3)}
+                          </td>
+                        )}
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </Card>
             )}
+
+            {/* Financial Information Table */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                Informations Financières
+              </h2>
+
+              {/* Price & Exchange Rate Summary */}
+              <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div>
+                  <label className="text-sm font-medium text-green-700">Prix de l'Or (USD/oz)</label>
+                  <p className="text-gray-900 mt-1 font-bold text-lg">
+                    ${shipment.gold_price_usd_per_oz.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-green-700">Taux de Change</label>
+                  <p className="text-gray-900 mt-1 font-bold text-lg">
+                    {shipment.exchange_rate.toFixed(2)} {shipment.local_currency}/USD
+                  </p>
+                </div>
+              </div>
+
+              {/* Financial Details Table */}
+              {shipment.productions && shipment.productions.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-gradient-to-r from-green-50 to-emerald-50">
+                      <tr>
+                        <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
+                          Bar Ref.
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Or Pur (oz)
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Prix USD/oz
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Valeur (USD)
+                        </th>
+                        <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
+                          Valeur ({shipment.local_currency})
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shipment.productions.map((prod, index) => {
+                        const valueUsd = prod.pure_gold_oz * shipment.gold_price_usd_per_oz;
+                        const valueLocal = valueUsd * shipment.exchange_rate;
+                        return (
+                          <tr key={prod.id} className={`hover:bg-green-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                            <td className="px-3 py-2 text-sm font-medium text-blue-900 border border-gray-300">
+                              {prod.bar_reference}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-right text-amber-700 font-medium border border-gray-300">
+                              {prod.pure_gold_oz.toFixed(6)}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
+                              ${shipment.gold_price_usd_per_oz.toFixed(2)}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-right text-green-700 font-semibold border border-gray-300">
+                              ${valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-right text-green-700 font-semibold border border-gray-300">
+                              {valueLocal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {/* Total Row */}
+                      <tr className="bg-gradient-to-r from-green-200 to-emerald-200 font-bold">
+                        <td className="px-3 py-3 text-sm text-gray-900 border border-gray-400">
+                          TOTAL
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400 text-base">
+                          {shipment.total_pure_gold_oz.toFixed(4)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-gray-700 border border-gray-400">
+                          ${shipment.gold_price_usd_per_oz.toFixed(2)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-green-900 border border-gray-400 text-base">
+                          ${shipment.total_value_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-green-900 border border-gray-400 text-base">
+                          {shipment.total_value_local.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
           </div>
 
           {/* Sidebar */}
@@ -503,6 +589,27 @@ export default function FreightShipmentDetails() {
             </div>
           </div>
         )}
+
+        {/* Custom Alert */}
+        <CustomAlert
+          isOpen={alertState.isOpen}
+          message={alertState.message}
+          type={alertState.type}
+          title={alertState.title}
+          onClose={closeAlert}
+        />
+
+        {/* Custom Confirm */}
+        <CustomConfirm
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          type={confirmState.type}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          onConfirm={handleConfirmAction}
+          onCancel={closeConfirm}
+        />
       </div>
     </MainLayout>
   );

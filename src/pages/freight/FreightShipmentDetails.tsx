@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,8 @@ import { PDFViewer } from '@/components/ui/PDFViewer';
 import { CustomConfirm } from '@/components/ui/CustomConfirm';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
+import { freightDocumentService } from '@/services/freightDocumentService';
+import { BullionSummaryData, ExportInvoiceData } from '@/services/freightInvoiceGenerationService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { formatWeightGrams, formatWeightOunces, formatCurrency } from '@/utils/numberUtils';
@@ -32,6 +34,7 @@ export default function FreightShipmentDetails() {
   const [shipment, setShipment] = useState<FreightShipment | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [generatingDocs, setGeneratingDocs] = useState(false);
   const [viewingPdf, setViewingPdf] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,6 +90,109 @@ export default function FreightShipmentDetails() {
       showError('Erreur', error.message || 'Impossible de mettre à jour le statut');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleGenerateDocuments = async () => {
+    if (!shipment || !id) {
+      showError('Erreur', 'Données d\'expédition manquantes');
+      return;
+    }
+
+    try {
+      setGeneratingDocs(true);
+      showSuccess('Génération en cours', 'Création des documents PDF...');
+
+      const bullionData: BullionSummaryData = {
+        reportDate: new Date().toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        }),
+        shipmentNumber: shipment.reference_number,
+        bars: (shipment.productions || []).map(prod => ({
+          barNo: prod.bar_reference,
+          datePoured: new Date(prod.production_date).toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+          }),
+          dateShipped: new Date(shipment.shipment_date).toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+          }),
+          doreWeight: prod.bullion_grams,
+          smkGoldAssay: prod.estimated_fineness_pct,
+          smkSilverAssay: prod.estimated_silver_pct || 0,
+          auContent: prod.pure_gold_grams,
+          agContent: prod.silver_content_grams || 0,
+          auContentTroyOz: prod.pure_gold_oz,
+          agContentTroyOz: (prod.silver_content_grams || 0) / 31.1035,
+          valueUSD: prod.pure_gold_oz * shipment.gold_price_usd_per_oz
+        })),
+        signatures: (shipment.signatories || [])
+          .sort((a, b) => a.display_order - b.display_order)
+          .map(sig => ({
+            position: sig.position,
+            name: sig.full_name
+          }))
+      };
+
+      const invoiceData: ExportInvoiceData = {
+        shipmentDate: new Date(shipment.shipment_date).toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        }),
+        invoiceNumber: shipment.reference_number,
+        senderName: 'LA SOCIÉTÉ DES MINES DE KOMANA',
+        senderAddress: 'Komana Mine Site',
+        senderCity: 'Yanfolila',
+        senderCountry: 'Mali',
+        senderNIF: 'NIF-PLACEHOLDER',
+        recipientName: shipment.destination_refinery?.name || 'Raffinerie',
+        recipientAddress: shipment.destination_refinery?.address || '-',
+        recipientCity: shipment.destination_refinery?.city || '-',
+        recipientCountry: shipment.destination_refinery?.country || '-',
+        recipientPhone: shipment.destination_refinery?.phone || '-',
+        countryOfOrigin: 'Mali',
+        mineName: 'Komana Gold Mine',
+        awbNumber: 'AWB-' + shipment.reference_number,
+        lotNumber: shipment.reference_number,
+        numberOfBoxes: shipment.number_of_boxes,
+        boxType: shipment.box_type,
+        description: 'Gold Doré Bars',
+        metal: 'Gold (Au)',
+        netWeightKg: shipment.total_bullion_grams / 1000,
+        weightTroyOz: shipment.total_pure_gold_oz,
+        metalPriceCFAPerKg: (shipment.gold_price_usd_per_oz * 32.1507 * shipment.exchange_rate),
+        estimatedValueCFA: shipment.total_value_local,
+        boxReferences: (shipment.productions || [])
+          .map(p => p.bar_reference)
+          .join(', '),
+        exchangeRateFCFAUSD: shipment.exchange_rate,
+        totalPriceCFA: shipment.total_value_local,
+        totalPriceUSD: shipment.total_value_usd
+      };
+
+      const result = await freightDocumentService.generateAllDocuments(
+        id,
+        bullionData,
+        invoiceData
+      );
+
+      await loadShipment();
+
+      showSuccess(
+        'Documents générés',
+        `Bullion Summary et Invoice générés avec succès !`
+      );
+    } catch (error: any) {
+      console.error('Erreur génération documents:', error);
+      showError('Erreur de génération', error.message || 'Impossible de générer les documents');
+    } finally {
+      setGeneratingDocs(false);
     }
   };
 
@@ -475,10 +581,32 @@ export default function FreightShipmentDetails() {
 
             {/* Documents Card */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Documents Générés
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documents Générés
+                </h2>
+
+                {(!shipment.bullion_summary_pdf_path || !shipment.customs_invoice_pdf_path) && (
+                  <Button
+                    onClick={handleGenerateDocuments}
+                    disabled={generatingDocs}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                  >
+                    {generatingDocs ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Générer les Documents
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
               <div className="space-y-3">
                 {/* Packing List */}
                 {shipment.packing_list_pdf_path && (

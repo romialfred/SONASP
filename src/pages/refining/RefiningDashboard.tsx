@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Flame, CheckCircle, Package, TrendingUp } from 'lucide-react';
+import { Flame, CheckCircle, Package, TrendingUp, Eye, Truck } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -11,6 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { convertGramsToOunces, formatWeight } from '@/utils/salesUtils';
 import { formatDateStandard } from '@/utils/dateUtils';
+import { FreightStatusBadge } from '@/components/freight/FreightStatusBadge';
+import { formatWeightOunces } from '@/utils/numberUtils';
 
 interface Batch {
   id: string;
@@ -41,6 +43,21 @@ interface RefiningRecord {
   batches?: Batch;
 }
 
+interface FreightShipment {
+  id: string;
+  reference_number: string;
+  status: 'pending' | 'approved' | 'shipped_to_refinery' | 'received_at_refinery';
+  shipment_date: string;
+  production_count: number;
+  total_pure_gold_oz: number;
+  total_value_usd: number;
+  number_of_boxes: number;
+  destination_refinery?: {
+    id: string;
+    name: string;
+  };
+}
+
 export function RefiningDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -48,7 +65,7 @@ export function RefiningDashboard() {
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [refiningRecords, setRefiningRecords] = useState<RefiningRecord[]>([]);
-  const [freightShipmentsCount, setFreightShipmentsCount] = useState(0);
+  const [freightShipments, setFreightShipments] = useState<FreightShipment[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -96,8 +113,19 @@ export function RefiningDashboard() {
           .order('processed_at', { ascending: false }),
         supabase
           .from('freight_shipments')
-          .select('id', { count: 'exact', head: true })
+          .select(`
+            id,
+            reference_number,
+            status,
+            shipment_date,
+            production_count,
+            total_pure_gold_oz,
+            total_value_usd,
+            number_of_boxes,
+            destination_refinery:destination_refinery_id(id, name)
+          `)
           .in('status', ['shipped_to_refinery', 'received_at_refinery'])
+          .order('shipment_date', { ascending: false })
       ]);
 
       if (batchResult.error) {
@@ -119,7 +147,7 @@ export function RefiningDashboard() {
       if (freightResult.error) {
         console.error('Error fetching freight shipments:', freightResult.error);
       } else {
-        setFreightShipmentsCount(freightResult.count || 0);
+        setFreightShipments(freightResult.data || []);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -190,30 +218,94 @@ export function RefiningDashboard() {
           </div>
         ) : (
           <>
-            {/* Freight Shipments Alert */}
-            {freightShipmentsCount > 0 && (
-              <Card
-                className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate('/refining/freight-shipments')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Package className="w-6 h-6 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {freightShipmentsCount} Expédition{freightShipmentsCount > 1 ? 's' : ''} en Attente d'Approbation
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Des expéditions depuis le module Invoice & Consignment attendent votre validation
-                      </p>
-                    </div>
+            {/* Freight Shipments Section */}
+            {freightShipments.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-blue-600" />
+                      Expéditions Raffinerie ({freightShipments.length})
+                    </CardTitle>
                   </div>
-                  <button className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors">
-                    Voir les Expéditions →
-                  </button>
-                </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-100 border-b-2 border-slate-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Référence
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Date
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Productions
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Or Pur (oz)
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Valeur (USD)
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Boîtes
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Statut
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-800 uppercase tracking-wide">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {freightShipments.map((shipment) => (
+                          <tr
+                            key={shipment.id}
+                            className="hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/freight/${shipment.id}`)}
+                          >
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {shipment.reference_number}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(shipment.shipment_date).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+                              {shipment.production_count}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
+                              {formatWeightOunces(shipment.total_pure_gold_oz)}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">
+                              ${shipment.total_value_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm text-gray-700">
+                              {shipment.number_of_boxes}
+                            </td>
+                            <td className="px-4 py-3">
+                              <FreightStatusBadge status={shipment.status} size="sm" />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/freight/${shipment.id}`);
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                Détails
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
               </Card>
             )}
 

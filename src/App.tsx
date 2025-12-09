@@ -367,7 +367,7 @@ function AppRoutes() {
               path="/refining"
               element={
                 <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <RefiningDashboard />
+                  <RefiningProcess />
                 </ProtectedRoute>
               }
             />

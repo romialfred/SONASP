@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
-import { ErrorDialog } from '@/components/ui/ErrorDialog';
+import { BusinessErrorDialog } from '@/components/ui/BusinessErrorDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
@@ -94,6 +94,7 @@ export default function ShippingPreparationNew() {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorTitle, setErrorTitle] = useState('Erreur');
+  const [errorTechnicalDetails, setErrorTechnicalDetails] = useState<string | undefined>(undefined);
 
   // Form state
   const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
@@ -773,31 +774,32 @@ export default function ShippingPreparationNew() {
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error saving preparation:', error);
-      let errorMessage = 'Erreur inconnue';
+
+      // Extract business message and technical details
+      let businessMessage = 'Il y a eu un problème technique lors de l\'enregistrement de la préparation.';
+      let technicalDetails: string | undefined;
 
       if (error instanceof Error) {
-        errorMessage = error.message;
+        businessMessage = error.message;
+        // Check if error has technical details attached
+        const errorWithDetails = error as any;
+        if (errorWithDetails.technicalDetails) {
+          technicalDetails = errorWithDetails.technicalDetails;
+        } else {
+          // Fallback: use the original error message as technical details
+          technicalDetails = `Erreur: ${error.message}\nStack: ${error.stack || 'N/A'}`;
+        }
       } else if (typeof error === 'object' && error !== null) {
         const err = error as any;
-        if (err.message) errorMessage = err.message;
-        else if (err.error_description) errorMessage = err.error_description;
-        else if (err.hint) errorMessage = err.hint;
-        else errorMessage = JSON.stringify(error);
+        if (err.message) {
+          businessMessage = err.message;
+        }
+        technicalDetails = JSON.stringify(err, null, 2);
       }
 
-      // Check for specific database errors
-      if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
-        errorMessage = 'Les tables de shipping n\'existent pas dans la base de données. Veuillez appliquer la migration add_shipping_system.sql via le Dashboard Supabase.';
-      } else if (errorMessage.includes('storage') || errorMessage.includes('bucket')) {
-        errorMessage = 'Le bucket de stockage "shipping-documents" n\'existe pas. Veuillez le créer via le Dashboard Supabase (Storage section).';
-      } else if (errorMessage.includes('policy') || errorMessage.includes('RLS')) {
-        errorMessage = 'Erreur de permissions (RLS). Vérifiez que les politiques RLS sont configurées correctement.';
-      } else if (errorMessage.includes('no field')) {
-        errorMessage = 'Erreur de structure de données. Veuillez vérifier que la migration SQL a été appliquée correctement. Détails : ' + errorMessage;
-      }
-
-      setErrorTitle('Erreur lors de la sauvegarde');
-      setErrorMessage(errorMessage + '\n\nConsultez la console pour plus de détails.');
+      setErrorTitle('Erreur lors de l\'enregistrement');
+      setErrorMessage(businessMessage);
+      setErrorTechnicalDetails(technicalDetails);
       setShowErrorDialog(true);
     } finally {
       setSaving(false);
@@ -1438,11 +1440,12 @@ export default function ShippingPreparationNew() {
       )}
 
       {/* Error Dialog */}
-      <ErrorDialog
+      <BusinessErrorDialog
         isOpen={showErrorDialog}
         onClose={() => setShowErrorDialog(false)}
         title={errorTitle}
         message={errorMessage}
+        technicalDetails={errorTechnicalDetails}
       />
     </MainLayout>
   );

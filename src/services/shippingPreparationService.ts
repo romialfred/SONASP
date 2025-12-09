@@ -125,6 +125,21 @@ class ShippingPreparationService {
       console.warn('Invalid or missing status, defaulting to: waiting_for_customs_approval');
     }
 
+    // REGRESSION FIX: Convert empty strings to null for foreign key fields
+    // This prevents foreign key constraint violations
+    if (cleanPreparation.refinery_id === '') {
+      cleanPreparation.refinery_id = null;
+    }
+    if (cleanPreparation.freight_company_id === '') {
+      cleanPreparation.freight_company_id = null;
+    }
+    if (cleanPreparation.export_license_id === '') {
+      cleanPreparation.export_license_id = null;
+    }
+    if (cleanPreparation.mining_company_id === '') {
+      cleanPreparation.mining_company_id = null;
+    }
+
     const { data, error } = await supabase
       .from('shipping_preparations')
       .insert({
@@ -134,7 +149,10 @@ class ShippingPreparationService {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database error during shipping preparation creation:', error);
+      throw this.formatBusinessError(error);
+    }
     return data;
   }
 
@@ -492,6 +510,47 @@ class ShippingPreparationService {
     }
 
     return data;
+  }
+
+  private formatBusinessError(error: any): Error {
+    const technicalMessage = error.message || JSON.stringify(error);
+
+    if (technicalMessage.includes('foreign key constraint') || technicalMessage.includes('violates')) {
+      if (technicalMessage.includes('refinery_id')) {
+        const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. La raffinerie sélectionnée n\'est pas valide.');
+        businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+        return businessError;
+      }
+      if (technicalMessage.includes('freight_company_id')) {
+        const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. La compagnie de fret sélectionnée n\'est pas valide.');
+        businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+        return businessError;
+      }
+      if (technicalMessage.includes('export_license_id')) {
+        const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. La licence d\'exportation sélectionnée n\'est pas valide.');
+        businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+        return businessError;
+      }
+      const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. Certaines données sélectionnées ne sont pas valides.');
+      businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+      return businessError;
+    }
+
+    if (technicalMessage.includes('duplicate') || technicalMessage.includes('unique')) {
+      const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. Un enregistrement similaire existe déjà.');
+      businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+      return businessError;
+    }
+
+    if (technicalMessage.includes('permission') || technicalMessage.includes('policy')) {
+      const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. Vous n\'avez pas les permissions nécessaires pour effectuer cette action.');
+      businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+      return businessError;
+    }
+
+    const businessError: any = new Error('Il y a eu un problème technique lors de l\'enregistrement de la préparation. Veuillez réessayer ou contacter le support.');
+    businessError.technicalDetails = `Erreur technique: ${technicalMessage}\n\nCode: ${error.code}\nDétails: ${error.details || 'N/A'}`;
+    return businessError;
   }
 }
 

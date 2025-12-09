@@ -38,6 +38,8 @@ interface MiningCompany {
 interface Refinery {
   id: string;
   name: string;
+  location?: string;
+  country?: string;
 }
 
 interface TransportCompany {
@@ -48,6 +50,8 @@ interface TransportCompany {
 interface ExportLicense {
   id: string;
   license_number: string;
+  issue_date?: string;
+  expiry_date?: string;
 }
 
 export function ShippingPreparationDetailsEnhanced() {
@@ -133,7 +137,7 @@ export function ShippingPreparationDetailsEnhanced() {
       if (prep.refinery_id) {
         const { data } = await supabase
           .from('refinery_plants')
-          .select('id, name')
+          .select('id, name, location, country')
           .eq('id', prep.refinery_id)
           .maybeSingle();
         if (data) setRefinery(data);
@@ -151,7 +155,7 @@ export function ShippingPreparationDetailsEnhanced() {
       if (prep.export_license_id) {
         const { data } = await supabase
           .from('export_licenses')
-          .select('id, license_number')
+          .select('id, license_number, issue_date, expiry_date')
           .eq('id', prep.export_license_id)
           .maybeSingle();
         if (data) setLicense(data);
@@ -467,14 +471,25 @@ export function ShippingPreparationDetailsEnhanced() {
                         Informations d'Expédition
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5 mb-2">
                             <Building className="w-3 h-3" />
                             Raffinerie de Destination
                           </p>
-                          <p className="text-sm font-medium text-gray-900 mt-1">
-                            {refinery?.name || 'Non spécifiée'}
-                          </p>
+                          {refinery ? (
+                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                              <p className="text-sm font-semibold text-blue-900">
+                                {refinery.name}
+                              </p>
+                              {(refinery.location || refinery.country) && (
+                                <p className="text-xs text-blue-700 mt-1">
+                                  {[refinery.location, refinery.country].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">Non spécifiée</p>
+                          )}
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 flex items-center gap-1.5">
@@ -482,7 +497,16 @@ export function ShippingPreparationDetailsEnhanced() {
                             Mining Company
                           </p>
                           <p className="text-sm font-medium text-gray-900 mt-1">
-                            {miningCompany?.name || 'Non spécifiée'}
+                            {miningCompany?.name || 'Kourousa'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3" />
+                            Date de Création
+                          </p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {formatDate(preparation.created_at)}
                           </p>
                         </div>
                         <div>
@@ -495,10 +519,24 @@ export function ShippingPreparationDetailsEnhanced() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Numéro de License</p>
-                          <p className="text-sm font-medium text-gray-900 mt-1">
-                            {license?.license_number || 'Non spécifié'}
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <FileText className="w-3 h-3" />
+                            License d'Exportation
                           </p>
+                          {license ? (
+                            <div className="mt-1">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {license.license_number}
+                              </p>
+                              {license.expiry_date && (
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  Expire: {formatDate(license.expiry_date)}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic mt-1">Non spécifié</p>
+                          )}
                         </div>
                       </div>
                     </Card>

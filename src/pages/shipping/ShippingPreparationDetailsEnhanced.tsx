@@ -133,15 +133,26 @@ export function ShippingPreparationDetailsEnhanced() {
       setPreparation(prep);
 
       const items = await shippingPreparationService.getProductionItems(id);
-      setProductionItems(items);
+      setProductionItems(items || []);
 
       const sigs = await shippingPreparationService.getSignatories(id);
-      setSignatories(sigs);
+      setSignatories(sigs || []);
 
-      const docs = await shippingPreparationService.getDocuments(id);
-      setDocuments(docs);
+      try {
+        const docs = await shippingPreparationService.getDocuments(id);
+        setDocuments(docs || []);
+      } catch (docError) {
+        console.warn('Error loading documents:', docError);
+        setDocuments([]);
+      }
 
-      await loadCertificates();
+      try {
+        await loadCertificates();
+      } catch (certError) {
+        console.warn('Error loading certificates:', certError);
+        setCertificates([]);
+      }
+
       await loadStatusHistory(id);
 
       if (prep.refinery_id) {
@@ -342,7 +353,7 @@ export function ShippingPreparationDetailsEnhanced() {
     );
   }
 
-  const totalDocumentsCount = documents.length + certificates.length;
+  const totalDocumentsCount = (documents?.length || 0) + (certificates?.length || 0);
 
   return (
     <MainLayout>
@@ -565,23 +576,6 @@ export function ShippingPreparationDetailsEnhanced() {
                         </div>
                       )}
                     </div>
-
-                    {/* Résumé des Poids */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border border-blue-200">
-                        <p className="text-xs font-semibold text-blue-800 uppercase mb-2">Nombre de Boîtes</p>
-                        <p className="text-3xl font-bold text-blue-900">{preparation.total_boxes || 0}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-amber-50 to-yellow-100 p-5 rounded-lg border border-amber-200">
-                        <p className="text-xs font-semibold text-amber-800 uppercase mb-2">Poids Net Total</p>
-                        <p className="text-2xl font-bold text-amber-900">{formatWeight(preparation.total_net_weight_grams)} g</p>
-                        <p className="text-lg font-semibold text-amber-800 mt-1">{formatWeight(preparation.total_weight_oz)} oz</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-5 rounded-lg border border-emerald-200">
-                        <p className="text-xs font-semibold text-emerald-800 uppercase mb-2">Poids Brut Total</p>
-                        <p className="text-2xl font-bold text-emerald-900">{formatWeight(preparation.total_gross_weight_grams)} g</p>
-                      </div>
-                    </div>
                   </div>
                 );
               }
@@ -623,8 +617,8 @@ export function ShippingPreparationDetailsEnhanced() {
 
               if (activeTab === 'documents') {
                 const allDocs = [
-                  ...documents.map(doc => ({ ...doc, isDocument: true })),
-                  ...certificates.map(cert => ({
+                  ...(documents || []).map(doc => ({ ...doc, isDocument: true })),
+                  ...(certificates || []).map(cert => ({
                     id: cert.id,
                     title: `Certificat d'Essai - ${cert.bar_reference || 'N/A'}`,
                     file_name: cert.certificate_url?.split('/').pop() || 'certificate.pdf',
@@ -635,8 +629,8 @@ export function ShippingPreparationDetailsEnhanced() {
                 ];
 
                 const sortedDocuments = allDocs.sort((a, b) => {
-                  const typeA = getDocumentType(a.title);
-                  const typeB = getDocumentType(b.title);
+                  const typeA = getDocumentType(a.title || '');
+                  const typeB = getDocumentType(b.title || '');
                   return typeA.order - typeB.order;
                 });
 

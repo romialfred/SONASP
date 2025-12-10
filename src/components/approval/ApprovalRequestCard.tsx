@@ -71,7 +71,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
       }
 
       if (result.success) {
-        alert.success('Approval processed successfully');
+        alert.showSuccess('Approval processed successfully');
         onApproved?.();
       } else {
         alert.error('Error approving: ' + result.error);
@@ -102,7 +102,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
       const result = await rejectRequest(approval.id, user.email, rejectionReason);
 
       if (result.success) {
-        alert.success('Request rejected successfully');
+        alert.showSuccess('Request rejected successfully');
         onRejected?.();
       } else {
         alert.error('Error rejecting: ' + result.error);

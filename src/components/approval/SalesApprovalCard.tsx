@@ -86,7 +86,7 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
       const result = await approveRequest(approval.id, user.email);
 
       if (result.success) {
-        alert.success('Sale approved successfully! Customer has been notified.');
+        alert.showSuccess('Sale approved successfully! Customer has been notified.');
         onApproved?.();
       } else {
         alert.error('Error approving sale: ' + result.error);
@@ -116,7 +116,7 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
       const result = await rejectRequest(approval.id, user.email, rejectionReason);
 
       if (result.success) {
-        alert.success('Sale rejected successfully');
+        alert.showSuccess('Sale rejected successfully');
         onRejected?.();
       } else {
         alert.error('Error rejecting sale: ' + result.error);

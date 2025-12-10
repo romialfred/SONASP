@@ -21,7 +21,7 @@ export function SettingsPage() {
   });
 
   const handleSave = () => {
-    alert.success('Settings saved successfully!');
+    alert.showSuccess('Settings saved successfully!');
   };
 
   return (

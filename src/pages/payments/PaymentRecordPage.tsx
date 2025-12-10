@@ -234,17 +234,17 @@ export function PaymentRecordPage() {
 
             if (fxAnalysisResult.success) {
               console.log('[PaymentRecord] FX analysis created:', fxAnalysisResult.data);
-              alert.success('Payment recorded successfully with FX analysis!');
+              alert.showSuccess('Payment recorded successfully with FX analysis!');
             } else {
               console.warn('[PaymentRecord] FX analysis creation failed:', fxAnalysisResult.error);
-              alert.success('Payment recorded successfully (FX analysis skipped)');
+              alert.showSuccess('Payment recorded successfully (FX analysis skipped)');
             }
           } catch (fxError) {
             console.error('[PaymentRecord] Error creating FX analysis:', fxError);
-            alert.success('Payment recorded successfully (FX analysis skipped)');
+            alert.showSuccess('Payment recorded successfully (FX analysis skipped)');
           }
         } else {
-          alert.success('Payment recorded successfully!');
+          alert.showSuccess('Payment recorded successfully!');
         }
 
         navigate('/payments');

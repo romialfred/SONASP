@@ -359,7 +359,7 @@ export function SaleDetails() {
       const result = await approveSale(id, user.email, approvalNotes);
 
       if (result.success) {
-        alert.success('Sale approved successfully! Customer will be notified by email.');
+        alert.showSuccess('Sale approved successfully! Customer will be notified by email.');
         setShowApprovalModal(false);
 
         // Reload sale details to show updated status
@@ -398,7 +398,7 @@ export function SaleDetails() {
       const result = await rejectSale(id, user.email, rejectionReason);
 
       if (result.success) {
-        alert.success('Sale rejected successfully');
+        alert.showSuccess('Sale rejected successfully');
         setShowRejectionModal(false);
 
         // Reload sale details to show updated status
@@ -768,7 +768,7 @@ export function SaleDetails() {
                                 .single();
 
                               if (!error) {
-                                alert.success('Sale approved as customer (admin override)');
+                                alert.showSuccess('Sale approved as customer (admin override)');
                                 await loadSaleDetails();
                               } else {
                                 alert.error('Failed to override: ' + error.message);
@@ -800,7 +800,7 @@ export function SaleDetails() {
                                 .eq('id', id);
 
                               if (!error) {
-                                alert.success('Sale rejected (admin override)');
+                                alert.showSuccess('Sale rejected (admin override)');
                                 await loadSaleDetails();
                               } else {
                                 alert.error('Failed to override: ' + error.message);

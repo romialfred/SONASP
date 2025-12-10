@@ -198,15 +198,15 @@ export function ReceivingConfirm() {
       }
 
       if (batch.status === 'received_at_airport') {
-        alert.success('Batch validated for refinery transport.');
+        alert.showSuccess('Batch validated for refinery transport.');
       } else if (batch.status === 'validated_for_refinery') {
-        alert.success('Batch shipped to refinery.');
+        alert.showSuccess('Batch shipped to refinery.');
       } else if (isAirportReceipt) {
-        alert.success('Airport receipt confirmed.');
+        alert.showSuccess('Airport receipt confirmed.');
       } else if (isRefineryReceipt) {
-        alert.success('Refinery receipt confirmed.');
+        alert.showSuccess('Refinery receipt confirmed.');
       } else {
-        alert.success('Receipt confirmed successfully.');
+        alert.showSuccess('Receipt confirmed successfully.');
       }
 
       // Navigate with auto-refresh to update the receiving dashboard

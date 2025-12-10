@@ -463,7 +463,7 @@ export function SaleCreate() {
         throw error;
       }
 
-      alert.success(`Sale ${saleNumber} created successfully! Customer will receive approval email.`);
+      alert.showSuccess(`Sale ${saleNumber} created successfully! Customer will receive approval email.`);
 
       // Log success for audit
       console.log('[SaleCreate] Sale created successfully:', {

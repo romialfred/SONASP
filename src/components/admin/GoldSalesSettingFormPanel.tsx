@@ -185,7 +185,7 @@ export function GoldSalesSettingFormPanel({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {setting ? 'Modifier le Paramétrage' : 'Nouveau Paramétrage'}
+              {setting ? 'Modifier le Paramètre de Vente' : 'Nouveau Paramètre de Vente'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Configuration des règles de vente Mine-Client
@@ -250,7 +250,7 @@ export function GoldSalesSettingFormPanel({
                 </label>
                 <Select
                   value={formData.mining_company_id}
-                  onChange={(value) => setFormData({ ...formData, mining_company_id: value })}
+                  onChange={(e) => setFormData({ ...formData, mining_company_id: e.target.value })}
                   disabled={!!setting}
                   required
                 >
@@ -292,7 +292,7 @@ export function GoldSalesSettingFormPanel({
                 </label>
                 <Select
                   value={formData.customer_id}
-                  onChange={(value) => setFormData({ ...formData, customer_id: value })}
+                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
                   disabled={!!setting}
                   required
                 >
@@ -362,7 +362,7 @@ export function GoldSalesSettingFormPanel({
                 </label>
                 <Select
                   value={formData.sale_method}
-                  onChange={(value) => setFormData({ ...formData, sale_method: value as any })}
+                  onChange={(e) => setFormData({ ...formData, sale_method: e.target.value as any })}
                   required
                 >
                   {saleMethods.map((method) => (

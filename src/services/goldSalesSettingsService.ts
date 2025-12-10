@@ -146,6 +146,46 @@ export async function getGoldSalesSettingsByMiningCompany(miningCompanyId: strin
   }
 }
 
+// Vérifier si une configuration existe déjà pour le couple Mine-Client
+export async function checkDuplicateGoldSalesSetting(
+  miningCompanyId: string,
+  customerId: string,
+  excludeId?: string
+) {
+  try {
+    let query = supabase
+      .from('gold_sales_settings')
+      .select('id, mining_company_id, customer_id')
+      .eq('mining_company_id', miningCompanyId)
+      .eq('customer_id', customerId);
+
+    // Exclure un ID spécifique (pour les mises à jour)
+    if (excludeId) {
+      query = query.neq('id', excludeId);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      exists: !!data,
+      existingId: data?.id
+    };
+  } catch (error: any) {
+    console.error('Error checking duplicate gold sales setting:', error);
+    return {
+      success: false,
+      exists: false,
+      error: {
+        message: 'Erreur lors de la vérification des doublons.',
+        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+      }
+    };
+  }
+}
+
 // Créer une nouvelle configuration
 export async function createGoldSalesSetting(data: CreateGoldSalesSettingData) {
   try {
@@ -156,6 +196,22 @@ export async function createGoldSalesSetting(data: CreateGoldSalesSettingData) {
         error: {
           message: 'Vous devez être connecté pour effectuer cette action.',
           technicalDetails: userError?.message || 'User not authenticated'
+        }
+      };
+    }
+
+    // Vérifier les doublons avant l'insertion
+    const duplicateCheck = await checkDuplicateGoldSalesSetting(
+      data.mining_company_id,
+      data.customer_id
+    );
+
+    if (duplicateCheck.exists) {
+      return {
+        success: false,
+        error: {
+          message: 'Une configuration existe déjà pour ce couple Mine-Client. Vous ne pouvez pas créer de doublon.',
+          technicalDetails: 'Duplicate configuration found in pre-insert validation'
         }
       };
     }

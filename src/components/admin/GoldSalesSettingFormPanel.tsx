@@ -9,6 +9,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import {
   createGoldSalesSetting,
   updateGoldSalesSetting,
+  checkDuplicateGoldSalesSetting,
   getSaleMethods,
   type GoldSalesSettingView,
   type CreateGoldSalesSettingData
@@ -63,6 +64,8 @@ export function GoldSalesSettingFormPanel({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   const saleMethods = getSaleMethods();
   const selectedMethodDescription = saleMethods.find(m => m.value === formData.sale_method)?.description || '';
@@ -117,6 +120,49 @@ export function GoldSalesSettingFormPanel({
       setSelectedCustomer(null);
     }
   }, [formData.customer_id, customers]);
+
+  // Vérifier les doublons quand Mine et Client sont sélectionnés
+  useEffect(() => {
+    async function checkForDuplicate() {
+      // Ne vérifier que si on a les deux IDs et qu'on n'est pas en mode édition
+      // (en édition, on permet de modifier le même couple)
+      if (!formData.mining_company_id || !formData.customer_id) {
+        setDuplicateWarning(null);
+        return;
+      }
+
+      // En mode édition, exclure l'enregistrement actuel
+      const excludeId = setting?.id;
+
+      setCheckingDuplicate(true);
+      setDuplicateWarning(null);
+
+      try {
+        const result = await checkDuplicateGoldSalesSetting(
+          formData.mining_company_id,
+          formData.customer_id,
+          excludeId
+        );
+
+        if (result.success && result.exists) {
+          const mineName = miningCompanies.find(m => m.id === formData.mining_company_id)?.name || 'cette mine';
+          const customerName = customers.find(c => c.id === formData.customer_id)?.name || 'ce client';
+
+          setDuplicateWarning(
+            `⚠️ Une configuration existe déjà pour ${mineName} → ${customerName}. Vous ne pouvez pas créer de doublon.`
+          );
+        } else {
+          setDuplicateWarning(null);
+        }
+      } catch (error) {
+        console.error('Error checking duplicate:', error);
+      } finally {
+        setCheckingDuplicate(false);
+      }
+    }
+
+    checkForDuplicate();
+  }, [formData.mining_company_id, formData.customer_id, setting, miningCompanies, customers]);
 
   async function loadInitialData() {
     setLoadingData(true);
@@ -336,6 +382,39 @@ export function GoldSalesSettingFormPanel({
                 )}
               </div>
 
+              {/* Avertissement de Doublon */}
+              {duplicateWarning && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <AlertCircle className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-900 mb-1">
+                        Configuration Déjà Existante
+                      </p>
+                      <p className="text-sm text-red-700">
+                        {duplicateWarning}
+                      </p>
+                      <p className="text-xs text-red-600 mt-2">
+                        Une seule configuration est autorisée par couple Mine-Client.
+                        {!setting && ' Modifiez la configuration existante ou sélectionnez une autre combinaison.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Message de vérification en cours */}
+              {checkingDuplicate && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span>Vérification de l'unicité...</span>
+                  </div>
+                </div>
+              )}
+
               {/* Pourcentage Maximum */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -465,8 +544,8 @@ export function GoldSalesSettingFormPanel({
           <Button
             type="submit"
             onClick={handleSubmit}
-            disabled={loading || loadingData}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={loading || loadingData || !!duplicateWarning}
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

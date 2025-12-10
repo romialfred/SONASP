@@ -59,9 +59,7 @@ export function RefiningProcess() {
     miningCompanyId: '',
     datePreset: 'all',
     dateFrom: '',
-    dateTo: '',
-    minValue: '',
-    maxValue: ''
+    dateTo: ''
   });
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
@@ -166,15 +164,6 @@ export function RefiningProcess() {
         if (shipmentDate > toDate) return false;
       }
 
-      // Filtre par valeur
-      if (filters.minValue && shipment.total_value_usd < parseFloat(filters.minValue)) {
-        return false;
-      }
-
-      if (filters.maxValue && shipment.total_value_usd > parseFloat(filters.maxValue)) {
-        return false;
-      }
-
       return true;
     });
   }, [shipments, filters]);
@@ -186,8 +175,6 @@ export function RefiningProcess() {
     if (filters.refineryId) count++;
     if (filters.miningCompanyId) count++;
     if (filters.datePreset !== 'all') count++;
-    if (filters.minValue) count++;
-    if (filters.maxValue) count++;
     return count;
   }, [filters]);
 

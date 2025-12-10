@@ -54,7 +54,15 @@ export interface MonthlyInventorySummary {
 export async function addInventoryEntry(entry: GoldInventoryEntry) {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('User not authenticated');
+    if (userError || !user) {
+      return {
+        success: false,
+        error: {
+          message: 'Vous devez être connecté pour effectuer cette action.',
+          technicalDetails: userError?.message || 'User not authenticated'
+        }
+      };
+    }
 
     const inventoryData = {
       ...entry,
@@ -68,7 +76,28 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Customize error messages for common database errors
+      let userMessage = 'Une erreur est survenue lors de l\'ajout de l\'entrée d\'inventaire.';
+
+      if (error.message.includes('batch_id')) {
+        userMessage = 'Erreur de configuration: Une colonne obsolète est toujours présente dans la base de données. Veuillez contacter l\'administrateur système.';
+      } else if (error.message.includes('foreign key')) {
+        userMessage = 'L\'expédition sélectionnée n\'existe pas ou a été supprimée. Veuillez actualiser la page et réessayer.';
+      } else if (error.message.includes('duplicate')) {
+        userMessage = 'Cette entrée d\'inventaire existe déjà dans le système.';
+      } else if (error.message.includes('not null')) {
+        userMessage = 'Certains champs obligatoires sont manquants. Veuillez vérifier le formulaire.';
+      }
+
+      return {
+        success: false,
+        error: {
+          message: userMessage,
+          technicalDetails: `Code: ${error.code}\nMessage: ${error.message}\nDétails: ${error.details || 'N/A'}\nHint: ${error.hint || 'N/A'}`
+        }
+      };
+    }
 
     // Update freight shipment status to 'in_inventory' or another appropriate status
     if (entry.freight_shipment_id) {
@@ -84,9 +113,15 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
     }
 
     return { success: true, data };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding inventory entry:', error);
-    return { success: false, error };
+    return {
+      success: false,
+      error: {
+        message: 'Une erreur inattendue est survenue. Veuillez réessayer ou contacter le support technique.',
+        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+      }
+    };
   }
 }
 

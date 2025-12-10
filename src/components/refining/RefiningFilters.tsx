@@ -21,8 +21,6 @@ export interface FilterValues {
   datePreset: DatePreset;
   dateFrom: string;
   dateTo: string;
-  minValue: string;
-  maxValue: string;
 }
 
 const STATUS_OPTIONS = [
@@ -44,9 +42,7 @@ export function RefiningFilters({ onFilterChange, activeFiltersCount }: Refining
     miningCompanyId: '',
     datePreset: 'all',
     dateFrom: '',
-    dateTo: '',
-    minValue: '',
-    maxValue: ''
+    dateTo: ''
   });
 
   useEffect(() => {
@@ -150,16 +146,14 @@ export function RefiningFilters({ onFilterChange, activeFiltersCount }: Refining
       miningCompanyId: '',
       datePreset: 'all',
       dateFrom: '',
-      dateTo: '',
-      minValue: '',
-      maxValue: ''
+      dateTo: ''
     };
     setFilters(resetFilters);
   };
 
   const hasActiveFilters = filters.search || filters.status !== 'all' || filters.refineryId ||
                           filters.miningCompanyId || filters.datePreset !== 'all' ||
-                          filters.dateFrom || filters.dateTo || filters.minValue || filters.maxValue;
+                          filters.dateFrom || filters.dateTo;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -365,34 +359,6 @@ export function RefiningFilters({ onFilterChange, activeFiltersCount }: Refining
                 </div>
               </>
             )}
-
-            {/* Valeur minimum */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Valeur min. (USD)
-              </label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={filters.minValue}
-                onChange={(e) => setFilters({ ...filters, minValue: e.target.value })}
-                className="h-9 text-sm"
-              />
-            </div>
-
-            {/* Valeur maximum */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Valeur max. (USD)
-              </label>
-              <Input
-                type="number"
-                placeholder="999999"
-                value={filters.maxValue}
-                onChange={(e) => setFilters({ ...filters, maxValue: e.target.value })}
-                className="h-9 text-sm"
-              />
-            </div>
           </div>
 
           {/* Résumé des filtres actifs */}

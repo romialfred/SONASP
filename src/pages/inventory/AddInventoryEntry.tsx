@@ -10,6 +10,7 @@ import TextArea from '@/components/ui/TextArea';
 import DatePicker from '@/components/ui/DatePicker';
 import { FormField } from '@/components/ui/FormField';
 import { FileUpload } from '@/components/ui/FileUpload';
+import { UserFriendlyErrorModal } from '@/components/ui/UserFriendlyError';
 import { supabase } from '@/lib/supabase';
 import { addInventoryEntry, type GoldInventoryEntry } from '@/services/inventoryService';
 import { useAlert } from '@/hooks/useAlert';
@@ -164,6 +165,11 @@ export function AddInventoryEntry() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    technicalDetails?: string;
+  }>({ isOpen: false, message: '' });
 
   useEffect(() => {
     loadAvailableShipments();
@@ -508,14 +514,23 @@ export function AddInventoryEntry() {
       const result = await addInventoryEntry(entry);
 
       if (result.success) {
-        alert.success('Inventory entry added successfully!');
+        alert.success('Entrée d\'inventaire ajoutée avec succès!');
         navigate('/inventory');
       } else {
-        alert.error('Error adding inventory entry: ' + (result.error as any)?.message);
+        const err = result.error as any;
+        setErrorModal({
+          isOpen: true,
+          message: err?.message || 'Une erreur est survenue lors de l\'ajout de l\'entrée d\'inventaire.',
+          technicalDetails: err?.technicalDetails
+        });
       }
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      alert.error('Error: ' + error.message);
+      setErrorModal({
+        isOpen: true,
+        message: 'Une erreur inattendue est survenue. Veuillez réessayer.',
+        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -1223,6 +1238,16 @@ export function AddInventoryEntry() {
           </div>
         </div>
       </div>
+
+      {/* Error Modal */}
+      <UserFriendlyErrorModal
+        isOpen={errorModal.isOpen}
+        title="Erreur lors de l'ajout de l'inventaire"
+        message={errorModal.message}
+        technicalDetails={errorModal.technicalDetails}
+        onClose={() => setErrorModal({ isOpen: false, message: '' })}
+        variant="error"
+      />
     </MainLayout>
   );
 }

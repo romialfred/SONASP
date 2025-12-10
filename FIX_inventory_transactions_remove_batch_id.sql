@@ -1,40 +1,34 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
+-- =====================================================
+-- FIX: Remove batch_id from inventory_transactions
+-- Date: 2025-12-10
+-- Description: Supprime la colonne batch_id obsolète
+--              et assure que freight_shipment_id existe
+-- =====================================================
 
-dotenv.config();
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
-);
-
-const migrationSQL = `
--- Drop any existing triggers that might reference batch_id
+-- Étape 1: Supprimer les triggers et fonctions existants
 DROP TRIGGER IF EXISTS track_inventory_transaction ON gold_inventory;
 DROP FUNCTION IF EXISTS create_inventory_transaction CASCADE;
 
--- Check if inventory_transactions table exists and modify it
+-- Étape 2: Modifier la table inventory_transactions
 DO $$
 BEGIN
-  -- Check if batch_id column exists and drop it
+  -- Supprimer batch_id si elle existe
   IF EXISTS (
     SELECT 1
     FROM information_schema.columns
     WHERE table_name = 'inventory_transactions'
     AND column_name = 'batch_id'
   ) THEN
-    -- Drop the foreign key constraint first if it exists
     ALTER TABLE inventory_transactions
     DROP CONSTRAINT IF EXISTS inventory_transactions_batch_id_fkey;
 
-    -- Now drop the column
     ALTER TABLE inventory_transactions
     DROP COLUMN batch_id;
 
-    RAISE NOTICE 'Dropped batch_id column from inventory_transactions';
+    RAISE NOTICE 'Colonne batch_id supprimée de inventory_transactions';
   END IF;
 
-  -- Ensure freight_shipment_id column exists
+  -- Ajouter freight_shipment_id si elle n'existe pas
   IF NOT EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -44,11 +38,11 @@ BEGIN
     ALTER TABLE inventory_transactions
     ADD COLUMN freight_shipment_id UUID REFERENCES freight_shipments(id) ON DELETE SET NULL;
 
-    RAISE NOTICE 'Added freight_shipment_id column to inventory_transactions';
+    RAISE NOTICE 'Colonne freight_shipment_id ajoutée à inventory_transactions';
   END IF;
 END $$;
 
--- Recreate the trigger function without batch_id reference
+-- Étape 3: Recréer la fonction de trigger sans référence à batch_id
 CREATE OR REPLACE FUNCTION create_inventory_transaction()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -84,33 +78,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Recreate the trigger
-DROP TRIGGER IF EXISTS track_inventory_transaction ON gold_inventory;
+-- Étape 4: Recréer le trigger
 CREATE TRIGGER track_inventory_transaction
   AFTER INSERT ON gold_inventory
   FOR EACH ROW
   EXECUTE FUNCTION create_inventory_transaction();
-`;
 
-async function applyMigration() {
-  try {
-    console.log('🚀 Applying inventory_transactions fix migration...');
-
-    const { data, error } = await supabase.rpc('exec_sql', {
-      sql_query: migrationSQL
-    });
-
-    if (error) {
-      console.error('❌ Error applying migration:', error);
-      process.exit(1);
-    }
-
-    console.log('✅ Migration applied successfully!');
-    console.log('📊 Result:', data);
-  } catch (err) {
-    console.error('❌ Unexpected error:', err);
-    process.exit(1);
-  }
-}
-
-applyMigration();
+-- Confirmation
+RAISE NOTICE '✅ Migration terminée: batch_id supprimé, freight_shipment_id utilisé';

@@ -509,14 +509,64 @@ export function ShippingPreparationDetailsEnhanced() {
                           <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">License d'Exportation :</span>
                           <div>
                             {license ? (
-                              <>
-                                <span className="text-sm text-gray-900 font-medium">{license.license_number}</span>
-                                {license.expiry_date && (
-                                  <span className="text-sm text-gray-600 ml-2">
-                                    (Expire: {formatDate(license.expiry_date)})
-                                  </span>
-                                )}
-                              </>
+                              <div className="group relative inline-block">
+                                <span className="text-sm text-gray-900 font-medium cursor-help border-b border-dotted border-gray-400 hover:border-blue-500 hover:text-blue-600 transition-colors">
+                                  {license.license_number}
+                                </span>
+
+                                {/* Popup Tooltip */}
+                                <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute z-50 bottom-full left-0 mb-2 w-80 bg-white border border-gray-300 rounded-lg shadow-xl p-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-start justify-between border-b border-gray-200 pb-2">
+                                      <h4 className="font-semibold text-gray-900 text-sm">Détails de la Licence</h4>
+                                      <FileText className="w-4 h-4 text-blue-600" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                      <div className="flex justify-between">
+                                        <span className="text-xs font-medium text-gray-600">Numéro :</span>
+                                        <span className="text-xs text-gray-900 font-semibold">{license.license_number}</span>
+                                      </div>
+
+                                      {license.issue_date && (
+                                        <div className="flex justify-between">
+                                          <span className="text-xs font-medium text-gray-600">Date d'Émission :</span>
+                                          <span className="text-xs text-gray-900">{formatDate(license.issue_date)}</span>
+                                        </div>
+                                      )}
+
+                                      {license.expiry_date && (
+                                        <div className="flex justify-between">
+                                          <span className="text-xs font-medium text-gray-600">Date d'Expiration :</span>
+                                          <span className="text-xs text-gray-900">{formatDate(license.expiry_date)}</span>
+                                        </div>
+                                      )}
+
+                                      {license.expiry_date && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                          <div className="flex items-center gap-1.5">
+                                            {new Date(license.expiry_date) > new Date() ? (
+                                              <>
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span className="text-xs text-green-700 font-medium">Licence Valide</span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                <span className="text-xs text-red-700 font-medium">Licence Expirée</span>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Arrow pointing down */}
+                                  <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-white"></div>
+                                  <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-gray-300 -mt-px"></div>
+                                </div>
+                              </div>
                             ) : (
                               <span className="text-sm text-gray-500 italic">Non spécifié</span>
                             )}

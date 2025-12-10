@@ -164,26 +164,14 @@ export function InventoryManagement() {
               Track and manage pure gold inventory from refining to sales
             </p>
           </div>
-          <div className="relative group">
-            <Button
-              variant="primary"
-              onClick={handleAddStock}
-              className="gap-2"
-              disabled={availableBatchesCount === 0}
-            >
-              <Plus className="w-4 h-4" />
-              Add Stock Entry
-            </Button>
-            {availableBatchesCount === 0 && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="relative">
-                  <div className="absolute -top-4 right-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-gray-900"></div>
-                  <p className="font-medium mb-1">No Batches Available</p>
-                  <p className="text-gray-300">No processed batches are available for stock entry. Complete batch processing first.</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <Button
+            variant="primary"
+            onClick={handleAddStock}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Stock Entry
+          </Button>
         </div>
 
         {loading ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Flame, CheckCircle2, TrendingUp, Eye, AlertCircle, Archive, ArrowRight, Download, FileSpreadsheet, Columns } from 'lucide-react';
+import { Package, Flame, CheckCircle2, TrendingUp, AlertCircle, Archive, ArrowRight, Download, FileSpreadsheet, Columns } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -380,7 +380,7 @@ export function RefiningProcess() {
 
             {/* Tuiles KPI */}
             <div className="px-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Reçu */}
                 <Card className="p-6">
                   <div className="flex items-center justify-between">
@@ -394,22 +394,6 @@ export function RefiningProcess() {
                       {receivedCount}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">À raffiner</p>
-                  </div>
-                </Card>
-
-                {/* En Cours de Raffinage */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Flame className="w-6 h-6 text-orange-600" />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">En Raffinage</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      {processingCount}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">En cours</p>
                   </div>
                 </Card>
 
@@ -460,22 +444,6 @@ export function RefiningProcess() {
                     <p className="text-xs text-gray-500 mt-1">oz</p>
                   </div>
                 </Card>
-
-                {/* Valeur Totale */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-emerald-600" />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">Valeur</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
-                      ${(totalValue / 1000000).toFixed(2)}M
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">USD</p>
-                  </div>
-                </Card>
               </div>
             </div>
 
@@ -508,35 +476,36 @@ export function RefiningProcess() {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                            Référence
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">
+                            Numéro d'Expédition
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">
                             Statut
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                            Compagnie Minière
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">
+                            Compagnie minière
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">
                             Raffinerie
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                            Or Pur (g)
+                          <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 whitespace-nowrap">
+                            Or pur (g)
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                            Or Pur (oz)
+                          <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 whitespace-nowrap">
+                            Or pur (oz)
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                            Valeur (USD)
-                          </th>
-                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 whitespace-nowrap">
                             Actions
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {filteredShipments.map((shipment) => (
-                          <tr key={shipment.id} className="hover:bg-gray-50">
+                          <tr
+                            key={shipment.id}
+                            onClick={() => navigate(`/freight/shipments/${shipment.id}`)}
+                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-medium text-gray-900">
                                 {shipment.reference_number}
@@ -565,21 +534,8 @@ export function RefiningProcess() {
                                 {formatWeightOunces(shipment.total_pure_gold_oz)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <span className="text-sm font-semibold text-green-700">
-                                ${shipment.total_value_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <td className="px-6 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => navigate(`/freight/shipments/${shipment.id}`)}
-                                  className="text-blue-600 hover:text-blue-800"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
                                 {canChangeStatus(shipment.status) && (
                                   <Button
                                     variant="ghost"

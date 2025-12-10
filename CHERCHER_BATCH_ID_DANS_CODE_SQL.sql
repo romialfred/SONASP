@@ -6,6 +6,7 @@ DO $$
 DECLARE
   r RECORD;
   v_found_count INTEGER := 0;
+  v_func_def TEXT;
 BEGIN
   RAISE NOTICE '╔══════════════════════════════════════════════════════════════╗';
   RAISE NOTICE '║  Recherche de batch_id dans le code SQL                     ║';
@@ -19,16 +20,23 @@ BEGIN
   FOR r IN (
     SELECT
       p.proname as function_name,
-      pg_get_functiondef(p.oid) as function_definition
+      p.oid as func_oid
     FROM pg_proc p
     JOIN pg_namespace n ON p.pronamespace = n.oid
     WHERE n.nspname = 'public'
-      AND pg_get_functiondef(p.oid) LIKE '%batch_id%'
   ) LOOP
-    v_found_count := v_found_count + 1;
-    RAISE NOTICE '  ❌ TROUVÉ dans fonction: %', r.function_name;
-    RAISE NOTICE '     %', substring(r.function_definition from 1 for 200);
-    RAISE NOTICE '';
+    BEGIN
+      v_func_def := pg_get_functiondef(r.func_oid);
+      IF v_func_def LIKE '%batch_id%' THEN
+        v_found_count := v_found_count + 1;
+        RAISE NOTICE '  ❌ TROUVÉ dans fonction: %', r.function_name;
+        RAISE NOTICE '     %', substring(v_func_def from 1 for 200);
+        RAISE NOTICE '';
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- Skip functions that cause errors when retrieving definition
+      CONTINUE;
+    END;
   END LOOP;
 
   -- Search in trigger definitions
@@ -39,15 +47,23 @@ BEGIN
     SELECT
       t.tgname as trigger_name,
       c.relname as table_name,
-      p.proname as function_name
+      p.proname as function_name,
+      p.oid as func_oid
     FROM pg_trigger t
     JOIN pg_class c ON t.tgrelid = c.oid
     JOIN pg_proc p ON t.tgfoid = p.oid
-    WHERE pg_get_functiondef(p.oid) LIKE '%batch_id%'
   ) LOOP
-    v_found_count := v_found_count + 1;
-    RAISE NOTICE '  ❌ TROUVÉ dans trigger: % (table: %, function: %)',
-      r.trigger_name, r.table_name, r.function_name;
+    BEGIN
+      v_func_def := pg_get_functiondef(r.func_oid);
+      IF v_func_def LIKE '%batch_id%' THEN
+        v_found_count := v_found_count + 1;
+        RAISE NOTICE '  ❌ TROUVÉ dans trigger: % (table: %, function: %)',
+          r.trigger_name, r.table_name, r.function_name;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- Skip triggers that cause errors when retrieving definition
+      CONTINUE;
+    END;
   END LOOP;
 
   -- Search in views

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface GoldInventoryEntry {
   id?: string;
   entry_date: string;
-  batch_id: string;
+  freight_shipment_id?: string;
   refining_record_id?: string;
   weight_before_melting_grams: number;
   weight_after_melting_grams: number;
@@ -27,7 +27,7 @@ export interface InventoryTransaction {
   transaction_date: string;
   transaction_type: 'entry' | 'exit' | 'allocation' | 'deallocation' | 'adjustment';
   inventory_id: string;
-  batch_id?: string;
+  freight_shipment_id?: string;
   sale_id?: string;
   quantity_oz: number;
   quantity_grams?: number;
@@ -41,7 +41,7 @@ export interface InventoryTransaction {
 export interface MonthlyInventorySummary {
   month: string;
   total_entries: number;
-  total_batches: number;
+  total_shipments: number;
   total_entries_oz: number;
   total_exits_oz: number;
   available_stock_oz: number;
@@ -70,15 +70,18 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
 
     if (error) throw error;
 
-    const { error: batchUpdateError } = await supabase
-      .from('batches')
-      .update({
-        status: 'in_inventory',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', entry.batch_id);
+    // Update freight shipment status to 'in_inventory' or another appropriate status
+    if (entry.freight_shipment_id) {
+      const { error: shipmentUpdateError } = await supabase
+        .from('freight_shipments')
+        .update({
+          status: 'in_stock',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', entry.freight_shipment_id);
 
-    if (batchUpdateError) console.error('Error updating batch status:', batchUpdateError);
+      if (shipmentUpdateError) console.error('Error updating shipment status:', shipmentUpdateError);
+    }
 
     return { success: true, data };
   } catch (error) {

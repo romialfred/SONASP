@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Calculator, Info, Package, Calendar, MapPin, Weight, Beaker, Award, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Save, Calculator, Info, Package, Calendar, MapPin, Weight, Beaker, Award, TrendingUp, FileText, Upload } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,30 +14,31 @@ import { supabase } from '@/lib/supabase';
 import { addInventoryEntry, type GoldInventoryEntry } from '@/services/inventoryService';
 import { useAlert } from '@/hooks/useAlert';
 
-interface BatchDetails {
+interface ShipmentDetails {
   id: string;
-  batch_number: string;
-  weight_grams: number;
-  shipping_date: string;
-  origin_site_name: string;
-  airport_received_weight_grams: number | null;
-  airport_received_at: string | null;
-  refinery_received_weight_grams: number | null;
-  refinery_received_at: string | null;
+  reference_number: string;
+  shipment_date: string;
+  total_bullion_grams: number;
+  total_pure_gold_grams: number;
+  total_pure_gold_oz: number;
+  production_count: number;
+  destination_refinery?: {
+    name: string;
+    location: string;
+    country: string;
+  };
 }
 
-interface Batch {
+interface Shipment {
   id: string;
-  batch_number: string;
-  weight_grams: number;
-  metal_type: string;
+  reference_number: string;
+  shipment_date: string;
   status: string;
-  shipping_date: string;
-  origin_site_name?: string;
-  airport_received_weight_grams?: number;
-  airport_received_at?: string;
-  refinery_received_weight_grams?: number;
-  refinery_received_at?: string;
+  total_bullion_grams: number;
+  total_pure_gold_grams: number;
+  total_pure_gold_oz: number;
+  production_count: number;
+  destination_refinery_name?: string;
 }
 
 interface Refinery {
@@ -49,7 +50,7 @@ interface Refinery {
 
 interface FormData {
   entry_date: string;
-  batch_id: string;
+  shipment_id: string;
   weight_before_melting_grams: string;
   weight_after_melting_grams: string;
   fineness_percentage: string;
@@ -79,15 +80,15 @@ interface FieldGuidance {
 }
 
 const fieldGuidance: FieldGuidance = {
-  batch_id: {
-    title: 'Batch Selection',
-    description: 'Select a batch that has completed processing. Only batches with "processed" status are available for inventory entry.',
+  shipment_id: {
+    title: 'Shipment Selection',
+    description: 'Select a refined shipment that is ready for stock entry. Only shipments with "in_stock" status from the refinery are available.',
     icon: Package,
     color: 'blue',
   },
   weight_before_melting_grams: {
     title: 'Weight Before Melting',
-    description: 'The weight of the batch received at the refinery before the melting process. This value is auto-filled from refinery reception data.',
+    description: 'The total bullion weight of the shipment received at the refinery before the melting process. This value is auto-filled from shipment data.',
     icon: Weight,
     color: 'purple',
   },
@@ -120,15 +121,15 @@ const fieldGuidance: FieldGuidance = {
 export function AddInventoryEntry() {
   const navigate = useNavigate();
   const alert = useAlert();
-  const [batches, setBatches] = useState<Batch[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
   const [refineries, setRefineries] = useState<Refinery[]>([]);
-  const [selectedBatchDetails, setSelectedBatchDetails] = useState<BatchDetails | null>(null);
+  const [selectedShipmentDetails, setSelectedShipmentDetails] = useState<ShipmentDetails | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [activeField, setActiveField] = useState<string>('batch_id');
+  const [activeField, setActiveField] = useState<string>('shipment_id');
 
   const [formData, setFormData] = useState<FormData>({
     entry_date: new Date().toISOString().split('T')[0],
-    batch_id: '',
+    shipment_id: '',
     weight_before_melting_grams: '',
     weight_after_melting_grams: '',
     fineness_percentage: '',
@@ -152,7 +153,7 @@ export function AddInventoryEntry() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadAvailableBatches();
+    loadAvailableShipments();
     loadRefineries();
     loadMonthlyTotal();
   }, [formData.entry_date]);
@@ -164,57 +165,53 @@ export function AddInventoryEntry() {
     formData.fineness_percentage,
     formData.metal_retained_percentage,
     formData.weight_before_melting_grams,
-    selectedBatchDetails
+    selectedShipmentDetails
   ]);
 
   useEffect(() => {
-    if (formData.batch_id) {
-      loadBatchDetails();
+    if (formData.shipment_id) {
+      loadShipmentDetails();
     } else {
-      setSelectedBatchDetails(null);
+      setSelectedShipmentDetails(null);
     }
-  }, [formData.batch_id]);
+  }, [formData.shipment_id]);
 
-  async function loadAvailableBatches() {
+  async function loadAvailableShipments() {
     try {
       const { data, error } = await supabase
-        .from('batches')
+        .from('freight_shipments')
         .select(`
           id,
-          batch_number,
-          weight_grams,
-          metal_type,
+          reference_number,
+          shipment_date,
           status,
-          shipping_date,
-          mining_company:mining_company_id(name),
-          airport_received_weight_grams,
-          airport_received_at,
-          refinery_received_weight_grams,
-          refinery_received_at
+          total_bullion_grams,
+          total_pure_gold_grams,
+          total_pure_gold_oz,
+          production_count,
+          destination_refinery:destination_refinery_id(name, location, country)
         `)
-        .eq('status', 'processed')
-        .order('shipping_date', { ascending: false });
+        .eq('status', 'in_stock')
+        .order('shipment_date', { ascending: false });
 
       if (error) throw error;
 
-      const mappedBatches = (data || []).map((batch: any) => ({
-        id: batch.id,
-        batch_number: batch.batch_number,
-        weight_grams: batch.weight_grams,
-        metal_type: batch.metal_type,
-        status: batch.status,
-        shipping_date: batch.shipping_date,
-        origin_site_name: batch.mining_company?.name || 'Unknown',
-        airport_received_weight_grams: batch.airport_received_weight_grams,
-        airport_received_at: batch.airport_received_at,
-        refinery_received_weight_grams: batch.refinery_received_weight_grams,
-        refinery_received_at: batch.refinery_received_at,
+      const mappedShipments = (data || []).map((shipment: any) => ({
+        id: shipment.id,
+        reference_number: shipment.reference_number,
+        shipment_date: shipment.shipment_date,
+        status: shipment.status,
+        total_bullion_grams: shipment.total_bullion_grams,
+        total_pure_gold_grams: shipment.total_pure_gold_grams,
+        total_pure_gold_oz: shipment.total_pure_gold_oz,
+        production_count: shipment.production_count,
+        destination_refinery_name: shipment.destination_refinery?.name || 'Unknown Refinery',
       }));
 
-      setBatches(mappedBatches);
+      setShipments(mappedShipments);
     } catch (error) {
-      console.error('Error loading batches:', error);
-      alert.error('Failed to load available batches');
+      console.error('Error loading shipments:', error);
+      alert.error('Failed to load available shipments');
     }
   }
 
@@ -242,51 +239,48 @@ export function AddInventoryEntry() {
     }
   }
 
-  async function loadBatchDetails() {
+  async function loadShipmentDetails() {
     try {
       const { data, error } = await supabase
-        .from('batches')
+        .from('freight_shipments')
         .select(`
           id,
-          batch_number,
-          shipping_date,
-          weight_grams,
-          mining_company:mining_company_id(name),
-          airport_received_weight_grams,
-          airport_received_at,
-          refinery_received_weight_grams,
-          refinery_received_at
+          reference_number,
+          shipment_date,
+          total_bullion_grams,
+          total_pure_gold_grams,
+          total_pure_gold_oz,
+          production_count,
+          destination_refinery:destination_refinery_id(name, location, country)
         `)
-        .eq('id', formData.batch_id)
+        .eq('id', formData.shipment_id)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        const details: BatchDetails = {
+        const details: ShipmentDetails = {
           id: data.id,
-          batch_number: data.batch_number,
-          weight_grams: data.weight_grams,
-          shipping_date: data.shipping_date,
-          origin_site_name: data.mining_company?.name || 'Unknown',
-          airport_received_weight_grams: data.airport_received_weight_grams,
-          airport_received_at: data.airport_received_at,
-          refinery_received_weight_grams: data.refinery_received_weight_grams,
-          refinery_received_at: data.refinery_received_at,
+          reference_number: data.reference_number,
+          shipment_date: data.shipment_date,
+          total_bullion_grams: data.total_bullion_grams,
+          total_pure_gold_grams: data.total_pure_gold_grams,
+          total_pure_gold_oz: data.total_pure_gold_oz,
+          production_count: data.production_count,
+          destination_refinery: data.destination_refinery,
         };
 
-        setSelectedBatchDetails(details);
+        setSelectedShipmentDetails(details);
 
-        // Auto-fill weight before melting from refinery received weight
-        const weightBeforeMelting = details.refinery_received_weight_grams || details.weight_grams;
+        // Auto-fill weight before melting from shipment total bullion
         setFormData((prev) => ({
           ...prev,
-          weight_before_melting_grams: weightBeforeMelting.toString()
+          weight_before_melting_grams: details.total_bullion_grams.toString()
         }));
       }
     } catch (error) {
-      console.error('Error loading batch details:', error);
-      alert.error('Failed to load batch details');
+      console.error('Error loading shipment details:', error);
+      alert.error('Failed to load shipment details');
     }
   }
 
@@ -322,7 +316,7 @@ export function AddInventoryEntry() {
     const fineness = parseFloat(formData.fineness_percentage);
     const metalRetained = parseFloat(formData.metal_retained_percentage);
     const weightBefore = parseFloat(formData.weight_before_melting_grams);
-    const batchQuantity = selectedBatchDetails?.weight_grams || 0;
+    const shipmentQuantity = selectedShipmentDetails?.total_bullion_grams || 0;
 
     if (!weightAfter || !fineness || !metalRetained) {
       setCalculated((prev) => ({
@@ -341,9 +335,9 @@ export function AddInventoryEntry() {
     const finalFineOz = finalFineGrams / 28.3495;
     const yieldPercentage = weightBefore > 0 ? (weightAfter / weightBefore) * 100 : 0;
 
-    const varianceGrams = batchQuantity - finalFineGrams;
+    const varianceGrams = shipmentQuantity - finalFineGrams;
     const varianceOz = varianceGrams / 28.3495;
-    const variancePercentage = batchQuantity > 0 ? (varianceGrams / batchQuantity) * 100 : 0;
+    const variancePercentage = shipmentQuantity > 0 ? (varianceGrams / shipmentQuantity) * 100 : 0;
 
     setCalculated((prev) => ({
       ...prev,
@@ -374,7 +368,7 @@ export function AddInventoryEntry() {
   function validateForm(): boolean {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.batch_id) newErrors.batch_id = 'Please select a batch';
+    if (!formData.shipment_id) newErrors.shipment_id = 'Please select a shipment';
     if (!formData.weight_before_melting_grams)
       newErrors.weight_before_melting_grams = 'Weight before melting is required';
     if (!formData.weight_after_melting_grams)
@@ -405,7 +399,7 @@ export function AddInventoryEntry() {
     try {
       const entry: GoldInventoryEntry = {
         entry_date: formData.entry_date,
-        batch_id: formData.batch_id,
+        freight_shipment_id: formData.shipment_id,
         weight_before_melting_grams: parseFloat(formData.weight_before_melting_grams),
         weight_after_melting_grams: parseFloat(formData.weight_after_melting_grams),
         fineness_percentage: parseFloat(formData.fineness_percentage),
@@ -461,7 +455,7 @@ export function AddInventoryEntry() {
             <h1 className="font-heading text-3xl font-bold text-gray-900">
               Add Gold Inventory Entry
             </h1>
-            <p className="text-gray-600 mt-1">Add refined gold to inventory after processing</p>
+            <p className="text-gray-600 mt-1">Add refined gold shipments to inventory after processing</p>
           </div>
         </div>
 
@@ -485,26 +479,26 @@ export function AddInventoryEntry() {
                     />
                   </FormField>
 
-                  <FormField label="Batch (Processed Only)" required error={errors.batch_id}>
+                  <FormField label="Shipment (In Stock)" required error={errors.shipment_id}>
                     <Select
-                      value={formData.batch_id}
-                      onChange={(e) => handleInputChange('batch_id', e.target.value)}
-                      error={!!errors.batch_id}
-                      onFocus={() => setActiveField('batch_id')}
+                      value={formData.shipment_id}
+                      onChange={(e) => handleInputChange('shipment_id', e.target.value)}
+                      error={!!errors.shipment_id}
+                      onFocus={() => setActiveField('shipment_id')}
                     >
-                      <option value="">Select batch</option>
-                      {batches.map((batch) => {
-                        const shippingDate = batch.shipping_date
-                          ? new Date(batch.shipping_date).toLocaleDateString('fr-FR', {
+                      <option value="">Select shipment</option>
+                      {shipments.map((shipment) => {
+                        const shippingDate = shipment.shipment_date
+                          ? new Date(shipment.shipment_date).toLocaleDateString('fr-FR', {
                               year: 'numeric',
                               month: '2-digit',
                               day: '2-digit'
                             })
                           : 'N/A';
-                        const origin = batch.origin_site_name || 'Unknown';
+                        const refinery = shipment.destination_refinery_name || 'Unknown Refinery';
                         return (
-                          <option key={batch.id} value={batch.id}>
-                            {batch.batch_number} - {shippingDate} - {origin}
+                          <option key={shipment.id} value={shipment.id}>
+                            {shipment.reference_number} - {shippingDate} - {shipment.production_count} bars - {refinery}
                           </option>
                         );
                       })}
@@ -512,8 +506,8 @@ export function AddInventoryEntry() {
                   </FormField>
                 </div>
 
-                {/* Batch Information Display - Enhanced with Colored Background */}
-                {selectedBatchDetails && (
+                {/* Shipment Information Display - Enhanced with Colored Background */}
+                {selectedShipmentDetails && (
                   <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 shadow-sm">
                     {/* Decorative background pattern */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-200 rounded-full opacity-10 -mr-32 -mt-32" />
@@ -524,71 +518,72 @@ export function AddInventoryEntry() {
                         <div className="p-2.5 bg-blue-600 rounded-lg shadow-md">
                           <Info className="h-6 w-6 text-white" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900">Batch Information Summary</h3>
+                        <h3 className="text-lg font-bold text-gray-900">Shipment Information Summary</h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Weight Shipped */}
+                        {/* Total Bullion Weight */}
                         <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100 shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                             <Package className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Weight Shipped</span>
+                            <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Total Bullion</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">
-                            {selectedBatchDetails.weight_grams.toFixed(2)}
+                            {selectedShipmentDetails.total_bullion_grams.toFixed(2)}
                           </p>
                           <p className="text-xs text-gray-600 mt-1">grams</p>
                         </div>
 
-                        {/* Shipping Date */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100 shadow-sm">
+                        {/* Pure Gold Content */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-yellow-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Award className="h-4 w-4 text-yellow-600" />
+                            <span className="text-xs font-semibold text-yellow-800 uppercase tracking-wide">Pure Gold</span>
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {selectedShipmentDetails.total_pure_gold_oz.toFixed(4)}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">oz ({selectedShipmentDetails.total_pure_gold_grams.toFixed(2)}g)</p>
+                        </div>
+
+                        {/* Shipment Date */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-indigo-100 shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
                             <Calendar className="h-4 w-4 text-indigo-600" />
-                            <span className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">Shipping Date</span>
+                            <span className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">Shipment Date</span>
                           </div>
                           <p className="text-lg font-bold text-gray-900">
-                            {new Date(selectedBatchDetails.shipping_date).toLocaleDateString('fr-FR')}
+                            {new Date(selectedShipmentDetails.shipment_date).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
 
-                        {/* Origin */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100 shadow-sm">
+                        {/* Production Count */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-100 shadow-sm">
                           <div className="flex items-center gap-2 mb-2">
-                            <MapPin className="h-4 w-4 text-purple-600" />
-                            <span className="text-xs font-semibold text-purple-800 uppercase tracking-wide">Origin</span>
-                          </div>
-                          <p className="text-lg font-bold text-gray-900">
-                            {selectedBatchDetails.origin_site_name}
-                          </p>
-                        </div>
-
-                        {/* Airport Reception */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-orange-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Weight className="h-4 w-4 text-orange-600" />
-                            <span className="text-xs font-semibold text-orange-800 uppercase tracking-wide">Airport Received</span>
+                            <Package className="h-4 w-4 text-purple-600" />
+                            <span className="text-xs font-semibold text-purple-800 uppercase tracking-wide">Production Bars</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">
-                            {selectedBatchDetails.airport_received_weight_grams?.toFixed(2) || 'N/A'}
+                            {selectedShipmentDetails.production_count}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {formatDate(selectedBatchDetails.airport_received_at)}
-                          </p>
+                          <p className="text-xs text-gray-600 mt-1">bars included</p>
                         </div>
 
-                        {/* Refinery Reception */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-pink-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Weight className="h-4 w-4 text-pink-600" />
-                            <span className="text-xs font-semibold text-pink-800 uppercase tracking-wide">Refinery Received</span>
+                        {/* Destination Refinery */}
+                        {selectedShipmentDetails.destination_refinery && (
+                          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-pink-100 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-4 w-4 text-pink-600" />
+                              <span className="text-xs font-semibold text-pink-800 uppercase tracking-wide">Refinery</span>
+                            </div>
+                            <p className="text-lg font-bold text-gray-900">
+                              {selectedShipmentDetails.destination_refinery.name}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {selectedShipmentDetails.destination_refinery.location}, {selectedShipmentDetails.destination_refinery.country}
+                            </p>
                           </div>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {selectedBatchDetails.refinery_received_weight_grams?.toFixed(2) || 'N/A'}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {formatDate(selectedBatchDetails.refinery_received_at)}
-                          </p>
-                        </div>
+                        )}
 
                         {/* Weight Before Melting */}
                         <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-green-100 shadow-sm">
@@ -597,7 +592,7 @@ export function AddInventoryEntry() {
                             <span className="text-xs font-semibold text-green-800 uppercase tracking-wide">Before Melting</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">
-                            {(selectedBatchDetails.refinery_received_weight_grams || selectedBatchDetails.weight_grams).toFixed(2)}
+                            {selectedShipmentDetails.total_bullion_grams.toFixed(2)}
                           </p>
                           <p className="text-xs text-gray-600 mt-1">grams (auto-filled)</p>
                         </div>
@@ -615,7 +610,7 @@ export function AddInventoryEntry() {
                       label="Weight Before Melting (g)"
                       required
                       error={errors.weight_before_melting_grams}
-                      hint="Auto-filled from batch data"
+                      hint="Auto-filled from shipment data"
                     >
                       <Input
                         type="number"
@@ -626,7 +621,7 @@ export function AddInventoryEntry() {
                           handleInputChange('weight_before_melting_grams', e.target.value)
                         }
                         error={!!errors.weight_before_melting_grams}
-                        disabled={!!selectedBatchDetails}
+                        disabled={!!selectedShipmentDetails}
                         onFocus={() => setActiveField('weight_before_melting_grams')}
                       />
                     </FormField>
@@ -801,13 +796,32 @@ export function AddInventoryEntry() {
                       />
                     </FormField>
 
-                    <FormField label="Attach Documents" hint="Optional - Upload certificates, reports, etc.">
-                      <FileUpload
-                        onFileSelect={handleFileSelect}
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        multiple={true}
-                        maxSize={10 * 1024 * 1024}
-                      />
+                    <FormField label="Attach Documents" hint="Upload PDFs, reports, or add Assay Certificates">
+                      <div className="space-y-3">
+                        <FileUpload
+                          onFileSelect={handleFileSelect}
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          multiple={true}
+                          maxSize={10 * 1024 * 1024}
+                        />
+                        <div className="flex items-center gap-3 pt-2">
+                          <div className="flex-1 border-t border-gray-200"></div>
+                          <span className="text-xs text-gray-500 uppercase">Or</span>
+                          <div className="flex-1 border-t border-gray-200"></div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate('/documents/assay-certificates')}
+                          className="w-full gap-2"
+                          type="button"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Add Assay Certificate
+                        </Button>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Click above to navigate to the Assay Certificate module for detailed certificate management
+                        </p>
+                      </div>
                     </FormField>
                   </div>
                 </div>

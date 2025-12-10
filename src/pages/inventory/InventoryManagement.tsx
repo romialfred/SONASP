@@ -17,7 +17,7 @@ import {
 interface InventoryStatus {
   id: string;
   entry_date: string;
-  batch_number: string;
+  reference_number: string;
   final_fine_oz: number;
   quantity_available_oz: number;
   quantity_allocated_oz: number;
@@ -34,7 +34,7 @@ export function InventoryManagement() {
   const [loading, setLoading] = useState(true);
   const [inventoryEntries, setInventoryEntries] = useState<InventoryStatus[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<MonthlyInventorySummary[]>([]);
-  const [availableBatchesCount, setAvailableBatchesCount] = useState(0);
+  const [availableShipmentsCount, setAvailableShipmentsCount] = useState(0);
   const [metrics, setMetrics] = useState({
     totalStock: 0,
     availableStock: 0,
@@ -44,7 +44,7 @@ export function InventoryManagement() {
 
   useEffect(() => {
     loadInventoryData();
-    checkAvailableBatches();
+    checkAvailableShipments();
   }, []);
 
   async function loadInventoryData() {
@@ -74,18 +74,18 @@ export function InventoryManagement() {
     }
   }
 
-  async function checkAvailableBatches() {
+  async function checkAvailableShipments() {
     try {
       const { count, error } = await supabase
-        .from('batches')
+        .from('freight_shipments')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'processed');
+        .eq('status', 'in_stock');
 
       if (!error && count !== null) {
-        setAvailableBatchesCount(count);
+        setAvailableShipmentsCount(count);
       }
     } catch (error) {
-      console.error('Error checking available batches:', error);
+      console.error('Error checking available shipments:', error);
     }
   }
 
@@ -161,8 +161,13 @@ export function InventoryManagement() {
               Gold Inventory Management
             </h1>
             <p className="text-gray-600 mt-1">
-              Track and manage pure gold inventory from refining to sales
+              Track and manage pure gold inventory from refined shipments to sales
             </p>
+            {availableShipmentsCount > 0 && (
+              <p className="text-sm text-emerald-600 font-medium mt-2">
+                {availableShipmentsCount} shipment{availableShipmentsCount > 1 ? 's' : ''} ready for stock entry
+              </p>
+            )}
           </div>
           <Button
             variant="primary"
@@ -232,7 +237,7 @@ export function InventoryManagement() {
                             Entries
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                            Batches
+                            Shipments
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                             Added (oz)
@@ -264,7 +269,7 @@ export function InventoryManagement() {
                               {summary.total_entries}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-600">
-                              {summary.total_batches}
+                              {summary.total_shipments || 0}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-green-600">
                               +{summary.total_entries_oz.toFixed(2)}
@@ -306,16 +311,27 @@ export function InventoryManagement() {
                     <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 font-medium">No inventory entries yet</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      Start adding refined gold to inventory
+                      Start adding refined gold shipments to inventory
                     </p>
-                    <Button
-                      variant="primary"
-                      onClick={handleAddStock}
-                      className="mt-4 gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add First Entry
-                    </Button>
+                    {availableShipmentsCount > 0 ? (
+                      <div className="mt-4">
+                        <p className="text-sm text-emerald-600 font-medium mb-2">
+                          {availableShipmentsCount} refined shipment{availableShipmentsCount > 1 ? 's' : ''} ready for inventory
+                        </p>
+                        <Button
+                          variant="primary"
+                          onClick={handleAddStock}
+                          className="gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Stock Entry
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 mt-4">
+                        No refined shipments available. Complete refining process first.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -326,7 +342,7 @@ export function InventoryManagement() {
                             Date
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            Batch Number
+                            Reference Number
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                             Final Fine (oz)
@@ -355,7 +371,7 @@ export function InventoryManagement() {
                               {new Date(entry.entry_date).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {entry.batch_number}
+                              {entry.reference_number}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
                               {entry.final_fine_oz.toFixed(4)}

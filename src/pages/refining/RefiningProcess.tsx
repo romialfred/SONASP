@@ -68,8 +68,7 @@ export function RefiningProcess() {
         .from('freight_shipments')
         .select(`
           *,
-          destination_refinery:refineries!freight_shipments_destination_refinery_id_fkey(id, name),
-          mining_company:mining_companies(id, name)
+          destination_refinery:refineries!freight_shipments_destination_refinery_id_fkey(id, name)
         `)
         .in('status', ['received_at_refinery', 'processing', 'processed', 'in_stock'])
         .order('created_at', { ascending: false });
@@ -78,7 +77,25 @@ export function RefiningProcess() {
         console.error('Error fetching shipments:', error);
         showError('Erreur', 'Impossible de charger les expéditions');
       } else {
-        setShipments(data || []);
+        // Enrichir avec les données de mining_company depuis les productions
+        const enrichedData = await Promise.all((data || []).map(async (shipment) => {
+          const { data: productions } = await supabase
+            .from('freight_shipment_productions')
+            .select(`
+              production_id,
+              daily_production!inner(mining_company_id, mining_companies(id, name))
+            `)
+            .eq('freight_shipment_id', shipment.id)
+            .limit(1)
+            .single();
+
+          return {
+            ...shipment,
+            mining_company: productions?.daily_production?.mining_companies || null
+          };
+        }));
+
+        setShipments(enrichedData);
       }
     } catch (error) {
       console.error('Error:', error);

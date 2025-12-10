@@ -242,7 +242,7 @@ export function InventoryManagement() {
 
             {stockLevel < 100 && (
               <div className="relative overflow-hidden rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-6 shadow-md">
-                <div className="absolute top-0 right-0 w-48 h-48 opacity-5">
+                <div className="absolute top-0 right-0 w-24 h-24 opacity-5">
                   <AlertCircle className="w-full h-full" />
                 </div>
                 <div className="relative z-10 flex items-start gap-4">

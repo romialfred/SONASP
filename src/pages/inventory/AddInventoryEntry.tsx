@@ -112,7 +112,7 @@ const fieldGuidance: FieldGuidance = {
   },
   metal_retained_percentage: {
     title: 'Metal Retained',
-    description: 'The percentage of metal recovered during the refining process. Accounts for losses during melting, slag removal, and other processing steps.',
+    description: 'The percentage of metal recovered during the refining process (80-100%). Accounts for losses during melting, slag removal, and other processing steps. Values below 80% indicate significant processing issues.',
     icon: TrendingUp,
     color: 'green',
   },
@@ -163,6 +163,7 @@ export function AddInventoryEntry() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     loadAvailableShipments();
@@ -172,6 +173,7 @@ export function AddInventoryEntry() {
 
   useEffect(() => {
     calculateValues();
+    validateRealTime();
   }, [
     formData.weight_after_melting_grams,
     formData.fineness_percentage,
@@ -324,6 +326,33 @@ export function AddInventoryEntry() {
     }
   }
 
+  function validateRealTime() {
+    const warnings: string[] = [];
+
+    const fineness = parseFloat(formData.fineness_percentage) || 0;
+    const silver = parseFloat(formData.silver_percentage) || 0;
+    const weightBefore = parseFloat(formData.weight_before_melting_grams) || 0;
+    const weightAfter = parseFloat(formData.weight_after_melting_grams) || 0;
+    const metalRetained = parseFloat(formData.metal_retained_percentage) || 0;
+
+    // Check if Gold + Silver exceeds 100
+    if (fineness > 0 && silver > 0 && (fineness + silver) > 100) {
+      warnings.push('Gold Fineness + Silver Content cannot exceed 100%');
+    }
+
+    // Check if Weight After > Weight Before
+    if (weightAfter > 0 && weightBefore > 0 && weightAfter > weightBefore) {
+      warnings.push('Weight after melting cannot be greater than weight before melting');
+    }
+
+    // Check Metal Retained range
+    if (metalRetained > 0 && (metalRetained < 80 || metalRetained > 100)) {
+      warnings.push('Metal Retained must be between 80% and 100%');
+    }
+
+    setValidationWarnings(warnings);
+  }
+
   function calculateValues() {
     const weightAfter = parseFloat(formData.weight_after_melting_grams);
     const fineness = parseFloat(formData.fineness_percentage);
@@ -422,13 +451,35 @@ export function AddInventoryEntry() {
     if (!formData.processing_location) newErrors.processing_location = 'Processing location is required';
 
     const fineness = parseFloat(formData.fineness_percentage);
+    const silver = parseFloat(formData.silver_percentage) || 0;
+    const weightBefore = parseFloat(formData.weight_before_melting_grams);
+    const weightAfter = parseFloat(formData.weight_after_melting_grams);
+    const metalRetained = parseFloat(formData.metal_retained_percentage);
+
+    // Validation: Gold Fineness % + Silver Content % cannot exceed 100
+    if (fineness + silver > 100) {
+      newErrors.fineness_percentage = 'Gold Fineness + Silver Content cannot exceed 100%';
+      newErrors.silver_percentage = 'Gold Fineness + Silver Content cannot exceed 100%';
+    }
+
+    // Validation: Fineness range
     if (fineness < 0 || fineness > 100) {
       newErrors.fineness_percentage = 'Fineness must be between 0 and 100';
     }
 
-    const metalRetained = parseFloat(formData.metal_retained_percentage);
-    if (metalRetained < 0 || metalRetained > 100) {
-      newErrors.metal_retained_percentage = 'Metal retained must be between 0 and 100';
+    // Validation: Silver range
+    if (silver < 0 || silver > 100) {
+      newErrors.silver_percentage = 'Silver content must be between 0 and 100';
+    }
+
+    // Validation: Weight After Melting cannot be greater than Weight Before Melting
+    if (weightAfter > weightBefore) {
+      newErrors.weight_after_melting_grams = 'Weight after melting cannot exceed weight before melting';
+    }
+
+    // Validation: Metal Retained must be between 80 and 100
+    if (metalRetained < 80 || metalRetained > 100) {
+      newErrors.metal_retained_percentage = 'Metal retained must be between 80% and 100%';
     }
 
     setErrors(newErrors);
@@ -689,6 +740,28 @@ export function AddInventoryEntry() {
                   </div>
                 </div>
 
+                {/* Validation Warnings */}
+                {validationWarnings.length > 0 && (
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-red-900 mb-2">
+                          Validation Issues
+                        </p>
+                        <ul className="space-y-1">
+                          {validationWarnings.map((warning, index) => (
+                            <li key={index} className="text-sm text-red-800 flex items-start gap-2">
+                              <span className="text-red-500 mt-0.5">•</span>
+                              <span>{warning}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Purity & Retention */}
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Purity & Retention</h3>
@@ -749,13 +822,13 @@ export function AddInventoryEntry() {
                       label="Metal Retained (%)"
                       required
                       error={errors.metal_retained_percentage}
-                      hint="Percentage of metal retained after refining"
+                      hint="Must be between 80% and 100%"
                     >
                       <Input
                         type="number"
                         step="0.01"
                         placeholder="98.50"
-                        min="0"
+                        min="80"
                         max="100"
                         value={formData.metal_retained_percentage}
                         onChange={(e) =>

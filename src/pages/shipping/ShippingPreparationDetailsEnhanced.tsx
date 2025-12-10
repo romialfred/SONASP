@@ -204,10 +204,25 @@ export function ShippingPreparationDetailsEnhanced() {
   const loadCertificates = async () => {
     if (!id) return;
     try {
-      const certs = await getShippingCertificates(id);
-      setCertificates(certs);
+      const result = await getShippingCertificates(id);
+      if (result.success && result.data && Array.isArray(result.data)) {
+        const certsWithUrls = result.data.map(cert => {
+          const { data } = supabase.storage
+            .from('ASSAY-CERTIFICATES')
+            .getPublicUrl(cert.file_path);
+          return {
+            ...cert,
+            public_url: data.publicUrl
+          };
+        });
+        setCertificates(certsWithUrls as any);
+      } else {
+        console.warn('Failed to load certificates:', result.error);
+        setCertificates([]);
+      }
     } catch (error) {
       console.warn('Could not load certificates:', error);
+      setCertificates([]);
     }
   };
 
@@ -620,9 +635,9 @@ export function ShippingPreparationDetailsEnhanced() {
                   ...(documents || []).map(doc => ({ ...doc, isDocument: true })),
                   ...(certificates || []).map(cert => ({
                     id: cert.id,
-                    title: `Certificat d'Essai - ${cert.bar_reference || 'N/A'}`,
-                    file_name: cert.certificate_url?.split('/').pop() || 'certificate.pdf',
-                    document_url: cert.certificate_url,
+                    title: `Certificat d'Essai - ${cert.certificate_number || cert.file_name || 'N/A'}`,
+                    file_name: cert.file_name || 'certificate.pdf',
+                    document_url: (cert as any).public_url || '',
                     isDocument: false,
                     isCertificate: true
                   }))

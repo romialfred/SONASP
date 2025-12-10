@@ -4,22 +4,25 @@ Ce guide vous aide à trouver toutes les références à "batch_id" dans votre b
 
 ## 📋 Deux Méthodes Disponibles
 
-### Méthode 1 : Script SQL (Supabase SQL Editor)
+### Méthode 1 : Script SQL Simple (RECOMMANDÉ)
 
-**Fichier :** `SEARCH_BATCH_ID_EVERYWHERE.sql`
+**Fichier :** `SEARCH_BATCH_ID_SIMPLE.sql`
 
 **Comment l'utiliser :**
 1. Ouvrez Supabase Dashboard
 2. Allez dans "SQL Editor"
 3. Créez une nouvelle requête
-4. Copiez tout le contenu du fichier `SEARCH_BATCH_ID_EVERYWHERE.sql`
+4. Copiez tout le contenu du fichier `SEARCH_BATCH_ID_SIMPLE.sql`
 5. Exécutez la requête
 6. Examinez les résultats dans différents onglets
 
 **Avantages :**
-- Résultats détaillés avec définitions complètes
+- Version simple sans fonctions d'agrégation complexes
+- Pas d'erreur avec array_agg
+- Résultats clairs et lisibles
 - Pas besoin d'installer Node.js
-- Copie facile des résultats
+
+**Note :** `SEARCH_BATCH_ID_EVERYWHERE.sql` existe aussi mais peut causer des erreurs avec certaines configurations.
 
 ### Méthode 2 : Script Node.js (Ligne de Commande)
 

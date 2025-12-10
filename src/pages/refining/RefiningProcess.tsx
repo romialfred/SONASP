@@ -219,7 +219,7 @@ export function RefiningProcess() {
       },
       in_stock: {
         label: 'En Stock',
-        className: 'bg-purple-100 text-purple-800',
+        className: 'bg-teal-100 text-teal-800',
         icon: Archive
       }
     };
@@ -382,66 +382,66 @@ export function RefiningProcess() {
             <div className="px-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Reçu */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Package className="w-6 h-6 text-blue-600" />
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Package className="w-5 h-5 text-blue-600" />
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">Reçu</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      {receivedCount}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">À raffiner</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-600">Reçu</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {receivedCount}
+                      </p>
+                      <p className="text-xs text-gray-500">À raffiner</p>
+                    </div>
                   </div>
                 </Card>
 
                 {/* Raffinés */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">Raffinés</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      {processedCount}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Terminé</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-600">Raffinés</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {processedCount}
+                      </p>
+                      <p className="text-xs text-gray-500">Terminé</p>
+                    </div>
                   </div>
                 </Card>
 
                 {/* En Stock */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Archive className="w-6 h-6 text-purple-600" />
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                      <Archive className="w-5 h-5 text-teal-600" />
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">En Stock</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      {inStockCount}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Inventaire</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-600">En Stock</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {inStockCount}
+                      </p>
+                      <p className="text-xs text-gray-500">Inventaire</p>
+                    </div>
                   </div>
                 </Card>
 
                 {/* Total Or */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-shrink-0 w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-amber-600" />
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-amber-600" />
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-600">Total Or</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
-                      {formatWeightOunces(totalGoldOz)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">oz</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-600">Total Or</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatWeightOunces(totalGoldOz)}
+                      </p>
+                      <p className="text-xs text-gray-500">oz</p>
+                    </div>
                   </div>
                 </Card>
               </div>

@@ -244,7 +244,7 @@ export function AddInventoryEntry() {
       if (data && data.length > 0 && !formData.processing_location) {
         const defaultRefinery = data.find(r => r.name.toLowerCase().includes('rand'));
         if (defaultRefinery) {
-          setFormData(prev => ({ ...prev, processing_location: defaultRefinery.id }));
+          setFormData(prev => ({ ...prev, processing_location: defaultRefinery.name }));
         }
       }
     } catch (error) {
@@ -564,80 +564,80 @@ export function AddInventoryEntry() {
                         <h3 className="text-lg font-bold text-gray-900">Shipment Information Summary</h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {/* Total Bullion Weight */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Package className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Total Bullion</span>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-blue-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Package className="h-3 w-3 text-blue-600" />
+                            <span className="text-xs text-blue-800 uppercase tracking-wide">Total Bullion</span>
                           </div>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-lg text-gray-900">
                             {selectedShipmentDetails.total_bullion_grams.toFixed(2)}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">grams</p>
+                          <p className="text-xs text-gray-600">grams</p>
                         </div>
 
                         {/* Pure Gold Content */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-yellow-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Award className="h-4 w-4 text-yellow-600" />
-                            <span className="text-xs font-semibold text-yellow-800 uppercase tracking-wide">Pure Gold</span>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-yellow-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Award className="h-3 w-3 text-yellow-600" />
+                            <span className="text-xs text-yellow-800 uppercase tracking-wide">Pure Gold</span>
                           </div>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {selectedShipmentDetails.total_pure_gold_oz.toFixed(4)}
+                          <p className="text-lg text-gray-900">
+                            {selectedShipmentDetails.total_pure_gold_oz.toFixed(2)}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">oz ({selectedShipmentDetails.total_pure_gold_grams.toFixed(2)}g)</p>
+                          <p className="text-xs text-gray-600">oz ({selectedShipmentDetails.total_pure_gold_grams.toFixed(2)}g)</p>
                         </div>
 
                         {/* Shipment Date */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-indigo-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="h-4 w-4 text-indigo-600" />
-                            <span className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">Shipment Date</span>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-indigo-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="h-3 w-3 text-indigo-600" />
+                            <span className="text-xs text-indigo-800 uppercase tracking-wide">Shipment Date</span>
                           </div>
-                          <p className="text-lg font-bold text-gray-900">
+                          <p className="text-base text-gray-900">
                             {new Date(selectedShipmentDetails.shipment_date).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
 
                         {/* Production Count */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Package className="h-4 w-4 text-purple-600" />
-                            <span className="text-xs font-semibold text-purple-800 uppercase tracking-wide">Production Bars</span>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-purple-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Package className="h-3 w-3 text-purple-600" />
+                            <span className="text-xs text-purple-800 uppercase tracking-wide">Production Bars</span>
                           </div>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-lg text-gray-900">
                             {selectedShipmentDetails.production_count}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">bars included</p>
+                          <p className="text-xs text-gray-600">bars included</p>
                         </div>
 
                         {/* Destination Refinery */}
                         {selectedShipmentDetails.destination_refinery && (
-                          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-pink-100 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                              <MapPin className="h-4 w-4 text-pink-600" />
-                              <span className="text-xs font-semibold text-pink-800 uppercase tracking-wide">Refinery</span>
+                          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-pink-100 shadow-sm">
+                            <div className="flex items-center gap-2 mb-1">
+                              <MapPin className="h-3 w-3 text-pink-600" />
+                              <span className="text-xs text-pink-800 uppercase tracking-wide">Refinery</span>
                             </div>
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-base text-gray-900">
                               {selectedShipmentDetails.destination_refinery.name}
                             </p>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="text-xs text-gray-600">
                               {selectedShipmentDetails.destination_refinery.location}, {selectedShipmentDetails.destination_refinery.country}
                             </p>
                           </div>
                         )}
 
                         {/* Weight Before Melting */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-green-100 shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Beaker className="h-4 w-4 text-green-600" />
-                            <span className="text-xs font-semibold text-green-800 uppercase tracking-wide">Before Melting</span>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-green-100 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Beaker className="h-3 w-3 text-green-600" />
+                            <span className="text-xs text-green-800 uppercase tracking-wide">Before Melting</span>
                           </div>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-lg text-gray-900">
                             {selectedShipmentDetails.total_bullion_grams.toFixed(2)}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">grams (auto-filled)</p>
+                          <p className="text-xs text-gray-600">grams (auto-filled)</p>
                         </div>
                       </div>
                     </div>
@@ -779,21 +779,21 @@ export function AddInventoryEntry() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                       <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                         <p className="text-xs text-gray-600 mb-1">Final Fine (g)</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          {calculated.final_fine_grams.toFixed(4)}
+                        <p className="text-lg text-gray-900">
+                          {calculated.final_fine_grams.toFixed(2)}
                         </p>
                       </div>
 
                       <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                         <p className="text-xs text-gray-600 mb-1">Final Fine (oz)</p>
-                        <p className="text-xl font-bold text-primary-600">
-                          {calculated.final_fine_oz.toFixed(4)}
+                        <p className="text-lg text-primary-600">
+                          {calculated.final_fine_oz.toFixed(2)}
                         </p>
                       </div>
 
                       <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                         <p className="text-xs text-gray-600 mb-1">Yield %</p>
-                        <p className="text-xl font-semibold text-gray-700">
+                        <p className="text-lg text-gray-700">
                           {calculated.yield_percentage.toFixed(2)}%
                         </p>
                       </div>
@@ -807,21 +807,21 @@ export function AddInventoryEntry() {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                           <p className="text-xs text-gray-600 mb-1">Variance (g)</p>
-                          <p className={`text-lg font-bold ${calculated.variance_grams >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {calculated.variance_grams >= 0 ? '+' : ''}{calculated.variance_grams.toFixed(4)}
+                          <p className={`text-base ${calculated.variance_grams >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {calculated.variance_grams >= 0 ? '+' : ''}{calculated.variance_grams.toFixed(2)}
                           </p>
                         </div>
 
                         <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                           <p className="text-xs text-gray-600 mb-1">Variance (oz)</p>
-                          <p className={`text-lg font-bold ${calculated.variance_oz >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {calculated.variance_oz >= 0 ? '+' : ''}{calculated.variance_oz.toFixed(4)}
+                          <p className={`text-base ${calculated.variance_oz >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {calculated.variance_oz >= 0 ? '+' : ''}{calculated.variance_oz.toFixed(2)}
                           </p>
                         </div>
 
                         <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
                           <p className="text-xs text-gray-600 mb-1">Variance %</p>
-                          <p className={`text-lg font-bold ${calculated.variance_percentage >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          <p className={`text-base ${calculated.variance_percentage >= 0 ? 'text-red-600' : 'text-green-600'}`}>
                             {calculated.variance_percentage >= 0 ? '+' : ''}{calculated.variance_percentage.toFixed(2)}%
                           </p>
                         </div>
@@ -932,68 +932,90 @@ export function AddInventoryEntry() {
               {/* Shipment Information */}
               {selectedShipmentDetails && (
                 <Card className="overflow-hidden border-2 border-blue-200 shadow-lg">
-                  <CardHeader className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <Package className="h-6 w-6 text-white" />
+                  <CardHeader className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <Package className="h-4 w-4 text-white" />
                       </div>
-                      <CardTitle className="text-white">Shipment Analysis</CardTitle>
+                      <CardTitle className="text-white text-base">Shipment Analysis</CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 space-y-6">
+                  <CardContent className="p-4 space-y-4">
                     {/* Reference Info */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Shipment Reference</p>
-                      <p className="text-lg font-bold text-gray-900">{selectedShipmentDetails.reference_number}</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Shipment Reference</p>
+                      <p className="text-base text-gray-900 group relative inline-block cursor-help" title="Hover for details">
+                        {selectedShipmentDetails.reference_number}
+                        <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-2 w-80 bg-white border-2 border-blue-300 rounded-lg shadow-xl p-3">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Production Count:</span>
+                              <span className="text-gray-900">{selectedShipmentDetails.production_count} bars</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Total Bullion:</span>
+                              <span className="text-gray-900">{selectedShipmentDetails.total_bullion_grams.toFixed(2)}g</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Pure Gold:</span>
+                              <span className="text-gray-900">{selectedShipmentDetails.total_pure_gold_oz.toFixed(2)} oz</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Shipment Date:</span>
+                              <span className="text-gray-900">{new Date(selectedShipmentDetails.shipment_date).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </p>
                       <p className="text-xs text-gray-600 mt-1">
                         {selectedShipmentDetails.production_count} bars • {selectedShipmentDetails.total_bullion_grams.toFixed(2)}g
                       </p>
                     </div>
 
                     {/* Factory vs Refinery Comparison */}
-                    <div className="border-t pt-4">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quality Comparison</p>
+                    <div className="border-t pt-3">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Quality Comparison</p>
 
                       {/* Factory Values */}
-                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle className="h-4 w-4 text-blue-600" />
-                          <p className="text-xs font-bold text-blue-900 uppercase">Factory/Mine</p>
+                      <div className="mb-3 p-2.5 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <CheckCircle className="h-3 w-3 text-blue-600" />
+                          <p className="text-xs text-blue-900 uppercase">Factory/Mine</p>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Gold Fineness:</span>
-                            <span className="font-bold text-gray-900">{calculated.factory_fineness.toFixed(2)}%</span>
+                            <span className="text-gray-900">{calculated.factory_fineness.toFixed(2)}%</span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Silver Content:</span>
-                            <span className="font-bold text-gray-900">{calculated.factory_silver.toFixed(2)}%</span>
+                            <span className="text-gray-900">{calculated.factory_silver.toFixed(2)}%</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Refinery Values */}
-                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Beaker className="h-4 w-4 text-amber-600" />
-                          <p className="text-xs font-bold text-amber-900 uppercase">Refinery Results</p>
+                      <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Beaker className="h-3 w-3 text-amber-600" />
+                          <p className="text-xs text-amber-900 uppercase">Refinery Results</p>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Gold Fineness:</span>
-                            <span className="font-bold text-gray-900">
+                            <span className="text-gray-900">
                               {formData.fineness_percentage || '0.00'}%
                             </span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Silver Content:</span>
-                            <span className="font-bold text-gray-900">
+                            <span className="text-gray-900">
                               {formData.silver_percentage || '0.00'}%
                             </span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Impurities:</span>
-                            <span className="font-bold text-red-700">
+                            <span className="text-red-700">
                               {calculated.impurity_percentage.toFixed(2)}%
                             </span>
                           </div>
@@ -1003,36 +1025,36 @@ export function AddInventoryEntry() {
 
                     {/* Difference Analysis */}
                     {formData.fineness_percentage && (
-                      <div className="border-t pt-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      <div className="border-t pt-3">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
                           Variance Analysis
                         </p>
 
-                        <div className={`p-4 rounded-lg border-2 ${
+                        <div className={`p-2.5 rounded-lg border ${
                           calculated.fineness_difference < 0
                             ? 'bg-red-50 border-red-300'
                             : 'bg-green-50 border-green-300'
                         }`}>
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-start gap-2">
                             {calculated.fineness_difference < 0 ? (
-                              <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                              <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
                             ) : (
-                              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                             )}
                             <div className="flex-1">
-                              <p className={`text-sm font-bold ${
+                              <p className={`text-xs ${
                                 calculated.fineness_difference < 0 ? 'text-red-900' : 'text-green-900'
                               } mb-1`}>
                                 {calculated.fineness_difference < 0 ? 'Quality Loss Detected' : 'Quality Maintained'}
                               </p>
-                              <p className="text-xs text-gray-700 mb-2">
-                                Fineness difference: <span className="font-bold">
+                              <p className="text-xs text-gray-700 mb-1">
+                                Fineness difference: <span className="text-gray-900">
                                   {calculated.fineness_difference.toFixed(2)}%
                                 </span>
                               </p>
                               {calculated.fineness_difference < 0 && (
                                 <p className="text-xs text-gray-600">
-                                  The refinery fineness is lower than factory estimate, indicating potential quality issues or measurement differences.
+                                  The refinery fineness is lower than factory estimate.
                                 </p>
                               )}
                             </div>
@@ -1043,25 +1065,25 @@ export function AddInventoryEntry() {
 
                     {/* Financial Impact */}
                     {calculated.financial_loss_usd !== 0 && formData.fineness_percentage && (
-                      <div className="border-t pt-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      <div className="border-t pt-3">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
                           Financial Impact
                         </p>
 
-                        <div className={`p-4 rounded-lg border-2 ${
+                        <div className={`p-2.5 rounded-lg border ${
                           calculated.financial_loss_usd > 0
                             ? 'bg-red-50 border-red-300'
                             : 'bg-green-50 border-green-300'
                         }`}>
-                          <div className="flex items-start gap-3">
-                            <DollarSign className={`h-6 w-6 flex-shrink-0 ${
+                          <div className="flex items-start gap-2">
+                            <DollarSign className={`h-4 w-4 flex-shrink-0 ${
                               calculated.financial_loss_usd > 0 ? 'text-red-600' : 'text-green-600'
                             }`} />
                             <div className="flex-1">
-                              <p className="text-xs text-gray-600 mb-1">
+                              <p className="text-xs text-gray-600 mb-0.5">
                                 {calculated.financial_loss_usd > 0 ? 'Estimated Loss' : 'Value Preserved'}
                               </p>
-                              <p className={`text-2xl font-bold ${
+                              <p className={`text-lg ${
                                 calculated.financial_loss_usd > 0 ? 'text-red-900' : 'text-green-900'
                               }`}>
                                 ${Math.abs(calculated.financial_loss_usd).toLocaleString('en-US', {
@@ -1069,23 +1091,23 @@ export function AddInventoryEntry() {
                                   maximumFractionDigits: 2
                                 })}
                               </p>
-                              <p className="text-xs text-gray-600 mt-2">
+                              <p className="text-xs text-gray-600 mt-1">
                                 Based on gold price @ $2,000/oz
                               </p>
                               {calculated.financial_loss_usd > 0 && (
                                 <>
-                                  <div className="mt-3 pt-3 border-t border-red-200">
-                                    <p className="text-xs font-semibold text-red-800 mb-2">Potential Causes:</p>
-                                    <ul className="text-xs text-gray-700 space-y-1">
-                                      <li className="flex items-start gap-2">
+                                  <div className="mt-2 pt-2 border-t border-red-200">
+                                    <p className="text-xs text-red-800 mb-1">Potential Causes:</p>
+                                    <ul className="text-xs text-gray-700 space-y-0.5">
+                                      <li className="flex items-start gap-1.5">
                                         <span className="text-red-500 mt-0.5">•</span>
                                         <span>Measurement accuracy differences</span>
                                       </li>
-                                      <li className="flex items-start gap-2">
+                                      <li className="flex items-start gap-1.5">
                                         <span className="text-red-500 mt-0.5">•</span>
                                         <span>Processing losses during refining</span>
                                       </li>
-                                      <li className="flex items-start gap-2">
+                                      <li className="flex items-start gap-1.5">
                                         <span className="text-red-500 mt-0.5">•</span>
                                         <span>Sample variation between sites</span>
                                       </li>

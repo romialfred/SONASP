@@ -80,9 +80,7 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
       // Customize error messages for common database errors
       let userMessage = 'Une erreur est survenue lors de l\'ajout de l\'entrée d\'inventaire.';
 
-      if (error.message.includes('batch_id')) {
-        userMessage = 'Erreur de configuration: Une colonne obsolète est toujours présente dans la base de données. Veuillez contacter l\'administrateur système.';
-      } else if (error.message.includes('foreign key')) {
+      if (error.message.includes('foreign key')) {
         userMessage = 'L\'expédition sélectionnée n\'existe pas ou a été supprimée. Veuillez actualiser la page et réessayer.';
       } else if (error.message.includes('duplicate')) {
         userMessage = 'Cette entrée d\'inventaire existe déjà dans le système.';

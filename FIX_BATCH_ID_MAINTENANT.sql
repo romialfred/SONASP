@@ -400,7 +400,8 @@ BEGIN
       quantity_grams,
       balance_before_oz,
       balance_after_oz,
-      transaction_reference
+      transaction_reference,
+      created_by
     ) VALUES (
       'entry',
       gen_random_uuid(),
@@ -409,7 +410,8 @@ BEGIN
       326.59,
       0,
       10.5,
-      'FINAL TEST - DELETE ME'
+      'FINAL TEST - DELETE ME',
+      COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
     );
     
     RAISE NOTICE '';

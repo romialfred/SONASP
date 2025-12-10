@@ -8,6 +8,7 @@ DECLARE
   v_freight_id_exists BOOLEAN;
   v_constraint_count INTEGER;
   v_index_count INTEGER;
+  rec RECORD;
 BEGIN
   RAISE NOTICE '';
   RAISE NOTICE '╔══════════════════════════════════════════════════════════════╗';

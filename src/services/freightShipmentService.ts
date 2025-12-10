@@ -4,7 +4,10 @@ export type FreightShipmentStatus =
   | 'pending'
   | 'approved'
   | 'shipped_to_refinery'
-  | 'received_at_refinery';
+  | 'received_at_refinery'
+  | 'processing'
+  | 'processed'
+  | 'in_stock';
 
 export interface FreightShipment {
   id: string;
@@ -323,7 +326,8 @@ export const freightShipmentService = {
 
   async updateStatus(
     id: string,
-    status: FreightShipmentStatus
+    status: FreightShipmentStatus,
+    notes?: string
   ): Promise<FreightShipment> {
     const { data: userData } = await supabase.auth.getUser();
     const updates: any = { status };
@@ -337,6 +341,19 @@ export const freightShipmentService = {
     } else if (status === 'received_at_refinery') {
       updates.received_at = new Date().toISOString();
       updates.received_by = userData?.user?.id;
+    } else if (status === 'processing') {
+      updates.processing_started_at = new Date().toISOString();
+      updates.processing_started_by = userData?.user?.id;
+    } else if (status === 'processed') {
+      updates.processed_at = new Date().toISOString();
+      updates.processed_by = userData?.user?.id;
+    } else if (status === 'in_stock') {
+      updates.stocked_at = new Date().toISOString();
+      updates.stocked_by = userData?.user?.id;
+    }
+
+    if (notes) {
+      updates.refining_notes = notes;
     }
 
     return this.updateShipment(id, updates);

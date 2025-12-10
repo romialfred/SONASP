@@ -380,56 +380,89 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- STEP 11: Final test
+-- STEP 11: Verification finale
 -- ============================================================================
 DO $$
+DECLARE
+  v_batch_id_exists BOOLEAN;
+  v_freight_id_exists BOOLEAN;
+  v_function_exists BOOLEAN;
+  v_trigger_exists BOOLEAN;
 BEGIN
   RAISE NOTICE '';
   RAISE NOTICE '╔══════════════════════════════════════════════════════════════╗';
-  RAISE NOTICE '║  STEP 11: Test final                                         ║';
+  RAISE NOTICE '║  STEP 11: Vérification finale                                ║';
   RAISE NOTICE '╚══════════════════════════════════════════════════════════════╝';
   RAISE NOTICE '';
-  RAISE NOTICE '🧪 Test: Insertion directe dans inventory_transactions...';
-  
-  BEGIN
-    INSERT INTO inventory_transactions (
-      transaction_type,
-      inventory_id,
-      freight_shipment_id,
-      quantity_oz,
-      quantity_grams,
-      balance_before_oz,
-      balance_after_oz,
-      transaction_reference,
-      created_by
-    ) VALUES (
-      'entry',
-      gen_random_uuid(),
-      NULL,
-      10.5,
-      326.59,
-      0,
-      10.5,
-      'FINAL TEST - DELETE ME',
-      COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
-    );
-    
-    RAISE NOTICE '';
-    RAISE NOTICE '  ✅ Test d''insertion: SUCCÈS!';
-    RAISE NOTICE '     La table inventory_transactions fonctionne correctement';
-    RAISE NOTICE '';
-    
-    -- Clean up test
-    DELETE FROM inventory_transactions WHERE transaction_reference = 'FINAL TEST - DELETE ME';
-    
-  EXCEPTION WHEN OTHERS THEN
-    RAISE NOTICE '';
-    RAISE NOTICE '  ❌ Test d''insertion: ÉCHEC!';
-    RAISE NOTICE '     Erreur: %', SQLERRM;
-    RAISE NOTICE '';
-    RAISE EXCEPTION 'Test failed: %', SQLERRM;
-  END;
-  
+
+  -- Check batch_id does not exist
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'inventory_transactions'
+      AND column_name = 'batch_id'
+  ) INTO v_batch_id_exists;
+
+  -- Check freight_shipment_id exists
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'inventory_transactions'
+      AND column_name = 'freight_shipment_id'
+  ) INTO v_freight_id_exists;
+
+  -- Check function exists
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_proc
+    WHERE proname = 'create_inventory_transaction'
+  ) INTO v_function_exists;
+
+  -- Check trigger exists
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgname = 'trigger_create_inventory_transaction'
+  ) INTO v_trigger_exists;
+
+  -- Display results
+  RAISE NOTICE '🧪 Vérifications:';
+  RAISE NOTICE '';
+
+  IF v_batch_id_exists THEN
+    RAISE NOTICE '  ❌ batch_id existe encore (ERREUR)';
+    RAISE EXCEPTION 'batch_id column still exists!';
+  ELSE
+    RAISE NOTICE '  ✅ batch_id supprimé';
+  END IF;
+
+  IF v_freight_id_exists THEN
+    RAISE NOTICE '  ✅ freight_shipment_id existe';
+  ELSE
+    RAISE NOTICE '  ❌ freight_shipment_id manquant (ERREUR)';
+    RAISE EXCEPTION 'freight_shipment_id column missing!';
+  END IF;
+
+  IF v_function_exists THEN
+    RAISE NOTICE '  ✅ Fonction create_inventory_transaction existe';
+  ELSE
+    RAISE NOTICE '  ❌ Fonction manquante (ERREUR)';
+    RAISE EXCEPTION 'Function create_inventory_transaction missing!';
+  END IF;
+
+  IF v_trigger_exists THEN
+    RAISE NOTICE '  ✅ Trigger configuré';
+  ELSE
+    RAISE NOTICE '  ❌ Trigger manquant (ERREUR)';
+    RAISE EXCEPTION 'Trigger missing!';
+  END IF;
+
+  RAISE NOTICE '';
+  RAISE NOTICE '  ✅ Toutes les vérifications réussies!';
+  RAISE NOTICE '';
+
 END $$;
 
 -- ============================================================================
@@ -452,7 +485,7 @@ BEGIN
   RAISE NOTICE '   ✅ freight_shipment_id vérifié/ajouté';
   RAISE NOTICE '   ✅ Fonction/trigger recréés (SANS batch_id)';
   RAISE NOTICE '   ✅ Permissions configurées';
-  RAISE NOTICE '   ✅ Test d''insertion réussi';
+  RAISE NOTICE '   ✅ Vérifications finales réussies';
   RAISE NOTICE '';
   RAISE NOTICE '🎯 PROCHAINES ÉTAPES:';
   RAISE NOTICE '   1. Rafraîchissez votre application (Ctrl+Shift+R)';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp, Package, AlertCircle, Download } from 'lucide-react';
+import { Plus, TrendingUp, Package, AlertCircle, Download, Boxes, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -186,28 +186,90 @@ export function InventoryManagement() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {metricCards.map((metric) => (
-                <MetricCard key={metric.title} {...metric} />
+              {metricCards.map((metric, index) => (
+                <div
+                  key={metric.title}
+                  className={`relative overflow-hidden rounded-xl border-2 ${
+                    index === 0 ? 'border-primary-200 bg-gradient-to-br from-primary-50 to-amber-50' :
+                    index === 1 ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50' :
+                    index === 2 ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50' :
+                    'border-green-200 bg-gradient-to-br from-green-50 to-lime-50'
+                  } p-6 shadow-md hover:shadow-lg transition-all duration-300 group`}
+                >
+                  {/* Decorative background */}
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+                    <metric.icon className="w-full h-full text-gray-400" />
+                  </div>
+
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-xl ${metric.iconBgColor} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                        <metric.icon className={`h-6 w-6 ${metric.iconColor}`} />
+                      </div>
+                      {metric.changeType !== 'neutral' && (
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                          metric.changeType === 'positive' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {metric.changeType === 'positive' ? (
+                            <ArrowUpRight className="w-3 h-3" />
+                          ) : (
+                            <ArrowDownRight className="w-3 h-3" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                        {metric.title}
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {metric.value}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(metric.valueInGrams / 1000).toFixed(3)} kg
+                      </p>
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs font-medium text-gray-600">
+                          {metric.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
 
             {stockLevel < 100 && (
-              <Card className="border-orange-200 bg-orange-50">
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-orange-900">
-                        {stockLevel < 50 ? 'Critical Stock Level' : 'Low Stock Alert'}
-                      </p>
-                      <p className="text-sm text-orange-800">
-                        Available stock is {stockLevel < 50 ? 'critically' : ''} low at {stockLevel.toFixed(2)} oz.
-                        Consider increasing refining operations.
-                      </p>
+              <div className="relative overflow-hidden rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-6 shadow-md">
+                <div className="absolute top-0 right-0 w-48 h-48 opacity-5">
+                  <AlertCircle className="w-full h-full" />
+                </div>
+                <div className="relative z-10 flex items-start gap-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <AlertCircle className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-orange-900 mb-2">
+                      {stockLevel < 50 ? '⚠️ Critical Stock Level' : '📊 Low Stock Alert'}
+                    </h3>
+                    <p className="text-sm text-orange-800 mb-3">
+                      Available stock is {stockLevel < 50 ? 'critically' : ''} low at <span className="font-bold">{stockLevel.toFixed(2)} oz</span>.
+                      Consider increasing refining operations.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Boxes className="w-4 h-4 text-orange-600" />
+                        <span className="text-gray-600">Current: {stockLevel.toFixed(2)} oz</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-orange-600" />
+                        <span className="text-gray-600">Target: 100+ oz</span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             <Card>

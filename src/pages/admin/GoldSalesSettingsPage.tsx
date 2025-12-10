@@ -4,7 +4,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { UserFriendlyErrorModal } from '@/components/ui/UserFriendlyError';
-import { GoldSalesSettingForm } from '@/components/admin/GoldSalesSettingForm';
+import { GoldSalesSettingFormPanel } from '@/components/admin/GoldSalesSettingFormPanel';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import {
   getAllGoldSalesSettings,
@@ -276,9 +276,16 @@ export default function GoldSalesSettingsPage() {
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <span className="text-sm font-semibold text-blue-600">
-                            {setting.max_stock_percentage.toFixed(2)}%
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm font-semibold text-blue-600">
+                              {setting.max_stock_percentage.toFixed(2)}%
+                            </span>
+                            {setting.effective_date && (
+                              <span className="text-xs text-gray-500">
+                                Depuis: {new Date(setting.effective_date).toLocaleDateString('fr-FR')}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <span className="text-sm text-gray-900">
@@ -325,8 +332,8 @@ export default function GoldSalesSettingsPage() {
         </Card>
       </div>
 
-      {/* Form Modal */}
-      <GoldSalesSettingForm
+      {/* Form Panel */}
+      <GoldSalesSettingFormPanel
         setting={selectedSetting}
         isOpen={isFormOpen}
         onClose={handleFormClose}

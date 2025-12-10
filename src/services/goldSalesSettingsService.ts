@@ -11,6 +11,7 @@ export interface GoldSalesSetting {
   refining_fees_paid_by_customer: boolean;
   transport_fees_paid_by_customer: boolean;
   is_active: boolean;
+  effective_date: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,8 @@ export interface CreateGoldSalesSettingData {
   sale_method: SaleMethod;
   refining_fees_paid_by_customer: boolean;
   transport_fees_paid_by_customer: boolean;
+  is_active: boolean;
+  effective_date: string;
   notes?: string;
 }
 
@@ -43,6 +46,7 @@ export interface UpdateGoldSalesSettingData {
   refining_fees_paid_by_customer?: boolean;
   transport_fees_paid_by_customer?: boolean;
   is_active?: boolean;
+  effective_date?: string;
   notes?: string;
 }
 

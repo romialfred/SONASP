@@ -56,6 +56,7 @@ import { RefineryForm } from './pages/admin/RefineryForm';
 import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
+import GoldSalesSettingsPage from './pages/admin/GoldSalesSettingsPage';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
@@ -843,6 +844,15 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <GoldShippingWorkflow />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/gold-sales-settings"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <GoldSalesSettingsPage />
                 </ProtectedRoute>
               }
             />

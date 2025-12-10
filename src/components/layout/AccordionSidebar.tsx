@@ -157,6 +157,7 @@ const useMenuGroups = (): MenuGroup[] => {
       items: [
         { label: t('admin.userManagement'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
         { label: t('admin.parameters'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
+        { label: 'Gold Sales Settings', path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-600' },
         { label: t('workflow.title'), path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
         { label: t('audit.title'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],

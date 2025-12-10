@@ -31,6 +31,21 @@ const STATUS_LABELS: Record<FreightShipmentStatus, { label: string; color: strin
     color: 'text-emerald-700',
     bgColor: 'bg-emerald-50',
   },
+  processing: {
+    label: 'En Raffinage',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-50',
+  },
+  processed: {
+    label: 'Raffiné',
+    color: 'text-green-700',
+    bgColor: 'bg-green-50',
+  },
+  in_stock: {
+    label: 'En Stock',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-50',
+  },
 };
 
 export default function FreightShipmentDashboard() {
@@ -283,7 +298,11 @@ export default function FreightShipmentDashboard() {
                   </tr>
                 ) : (
                   filteredShipments.map((shipment) => {
-                    const statusConfig = STATUS_LABELS[shipment.status];
+                    const statusConfig = STATUS_LABELS[shipment.status] || {
+                      label: shipment.status,
+                      color: 'text-gray-700',
+                      bgColor: 'bg-gray-100'
+                    };
                     return (
                       <tr
                         key={shipment.id}

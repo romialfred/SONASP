@@ -235,7 +235,7 @@ export function GoldSalesSettingFormPanel({
                 </label>
                 <DatePicker
                   value={formData.effective_date}
-                  onChange={(date) => setFormData({ ...formData, effective_date: date })}
+                  onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">

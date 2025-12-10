@@ -40,7 +40,7 @@ BEGIN
       gi.certificate_number,
       'Inventaire #' || gi.id::text
     ) as name,
-    gi.entry_date
+    gi.entry_date::timestamp with time zone
   FROM gold_inventory gi
   WHERE gi.transaction_type = 'entry'
     AND COALESCE(gi.quantity_available_oz, 0) > 0

@@ -157,7 +157,7 @@ export function ShippingPreparationDetailsEnhanced() {
 
       if (prep.refinery_id) {
         const { data } = await supabase
-          .from('refineries')
+          .from('refinery_plants')
           .select('id, name, location, country')
           .eq('id', prep.refinery_id)
           .maybeSingle();
@@ -166,7 +166,7 @@ export function ShippingPreparationDetailsEnhanced() {
 
       if (prep.freight_company_id) {
         const { data } = await supabase
-          .from('freight_companies')
+          .from('transport_companies')
           .select('id, name')
           .eq('id', prep.freight_company_id)
           .maybeSingle();
@@ -255,10 +255,23 @@ export function ShippingPreparationDetailsEnhanced() {
           if (entry.changed_by) {
             const { data: userData } = await supabase
               .from('profiles')
-              .select('email')
+              .select('email, full_name, first_name, last_name')
               .eq('id', entry.changed_by)
               .maybeSingle();
-            userEmail = userData?.email || 'Utilisateur Inconnu';
+
+            if (userData) {
+              if (userData.email) {
+                userEmail = userData.email;
+              } else if (userData.full_name) {
+                userEmail = userData.full_name;
+              } else if (userData.first_name || userData.last_name) {
+                userEmail = [userData.first_name, userData.last_name].filter(Boolean).join(' ');
+              } else {
+                userEmail = 'Utilisateur';
+              }
+            } else {
+              userEmail = 'Utilisateur';
+            }
           }
           return {
             ...entry,

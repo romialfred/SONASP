@@ -141,6 +141,33 @@ export function RefiningProcess() {
           </div>
         ) : (
           <>
+            {/* Alert - Éléments en attente */}
+            {(approvedCount > 0 || refiningCount > 0) && (
+              <div className="px-6">
+                <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-orange-900">
+                        {approvedCount > 0 && (
+                          <span>{approvedCount} expédition{approvedCount > 1 ? 's' : ''} approuvée{approvedCount > 1 ? 's' : ''} en attente de raffinage</span>
+                        )}
+                        {approvedCount > 0 && refiningCount > 0 && (
+                          <span> • </span>
+                        )}
+                        {refiningCount > 0 && (
+                          <span>{refiningCount} expédition{refiningCount > 1 ? 's' : ''} en cours de raffinage</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-orange-700 mt-0.5">
+                        Ces expéditions nécessitent un suivi et une action
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Tuiles KPI */}
             <div className="px-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

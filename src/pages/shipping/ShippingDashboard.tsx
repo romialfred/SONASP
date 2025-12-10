@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Plus, TrendingUp, Box, Clock, CheckCircle, FileText } from 'lucide-react';
+import { Package, Plus, TrendingUp, Box, Clock, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -101,6 +101,23 @@ export default function ShippingDashboard() {
             Nouvelle Expédition
           </Button>
         </div>
+
+        {/* Alert - Éléments en attente */}
+        {stats.waiting_for_customs_approval > 0 && (
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  {stats.waiting_for_customs_approval} expédition{stats.waiting_for_customs_approval > 1 ? 's' : ''} en attente d'approbation douanière
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Ces expéditions nécessitent une validation avant de pouvoir être expédiées
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards - Compact Design */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

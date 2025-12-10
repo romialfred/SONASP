@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Eye, Package, TrendingUp } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Package, TrendingUp, AlertCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -110,6 +110,23 @@ export default function FreightShipmentDashboard() {
             Nouvelle Expédition
           </Button>
         </div>
+
+        {/* Alert - Éléments en attente */}
+        {stats.pending > 0 && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  {stats.pending} expédition{stats.pending > 1 ? 's' : ''} en attente de traitement
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Ces expéditions nécessitent une approbation avant l'envoi à la raffinerie
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

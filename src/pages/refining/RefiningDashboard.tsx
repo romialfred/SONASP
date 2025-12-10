@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Flame, CheckCircle, Package, TrendingUp, Eye, Truck } from 'lucide-react';
+import { Flame, CheckCircle, Package, TrendingUp, Eye, Truck, AlertCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -218,6 +218,31 @@ export function RefiningDashboard() {
           </div>
         ) : (
           <>
+            {/* Alert - Éléments en attente */}
+            {(validatedCount > 0 || freightShipments.filter(s => s.status === 'shipped_to_refinery').length > 0) && (
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-lg shadow-sm">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-orange-900">
+                      {validatedCount > 0 && (
+                        <span>{validatedCount} lot{validatedCount > 1 ? 's' : ''} prêt{validatedCount > 1 ? 's' : ''} pour le raffinage</span>
+                      )}
+                      {validatedCount > 0 && freightShipments.filter(s => s.status === 'shipped_to_refinery').length > 0 && (
+                        <span> • </span>
+                      )}
+                      {freightShipments.filter(s => s.status === 'shipped_to_refinery').length > 0 && (
+                        <span>{freightShipments.filter(s => s.status === 'shipped_to_refinery').length} expédition{freightShipments.filter(s => s.status === 'shipped_to_refinery').length > 1 ? 's' : ''} en transit</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-orange-700 mt-0.5">
+                      Ces éléments nécessitent une action de votre part
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Freight Shipments Section */}
             {freightShipments.length > 0 && (
               <Card>

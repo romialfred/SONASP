@@ -506,8 +506,8 @@ export default function FreightShipmentDetails() {
           <div className="space-y-4">
             {/* Timeline Card */}
             <Card className="overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3">
-                <h2 className="text-base font-semibold text-white flex items-center gap-2">
+              <div className="bg-gradient-to-r from-blue-500/70 to-blue-400/60 px-4 py-3">
+                <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Chronologie
                 </h2>
@@ -538,7 +538,7 @@ export default function FreightShipmentDetails() {
 
                   {shipment.shipped_at && (
                     <div className="flex gap-3">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-teal-500 rounded-full mt-2"></div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Expédiée</p>
                         <p className="text-xs text-gray-600">
@@ -566,8 +566,8 @@ export default function FreightShipmentDetails() {
             {/* Signatories Card */}
             {shipment.signatories && shipment.signatories.length > 0 && (
               <Card className="overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-purple-500 px-4 py-3">
-                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <div className="bg-gradient-to-r from-teal-500/70 to-teal-400/60 px-4 py-3">
+                  <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Signataires
                   </h2>
@@ -577,7 +577,7 @@ export default function FreightShipmentDetails() {
                     {shipment.signatories
                       .sort((a, b) => a.display_order - b.display_order)
                       .map((sig) => (
-                        <div key={sig.id} className="border-l-2 border-purple-400 pl-3">
+                        <div key={sig.id} className="border-l-2 border-teal-400 pl-3">
                           <p className="text-sm font-medium text-gray-900">{formatSignatoryName(sig.full_name)}</p>
                           <p className="text-xs text-gray-600">{sig.position}</p>
                         </div>
@@ -589,9 +589,9 @@ export default function FreightShipmentDetails() {
 
             {/* Documents Card */}
             <Card className="overflow-hidden">
-              <div className="bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-3">
+              <div className="bg-gradient-to-r from-amber-500/70 to-amber-400/60 px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     Documents Générés
                   </h2>
@@ -600,7 +600,7 @@ export default function FreightShipmentDetails() {
                     <Button
                       onClick={handleGenerateDocuments}
                       disabled={generatingDocs}
-                      className="bg-white hover:bg-gray-100 text-amber-700 disabled:bg-gray-200 disabled:text-gray-500 text-xs px-2 py-1"
+                      className="bg-white hover:bg-gray-100 text-amber-800 disabled:bg-gray-200 disabled:text-gray-500 text-xs px-2 py-1 shadow-sm"
                     >
                       {generatingDocs ? (
                         <>

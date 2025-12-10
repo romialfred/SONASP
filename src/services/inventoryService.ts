@@ -107,14 +107,14 @@ export async function getAllInventoryEntries(filters?: {
   startDate?: string;
   endDate?: string;
   transactionType?: 'entry' | 'exit';
-  batchId?: string;
+  shipmentId?: string;
 }) {
   try {
     let query = supabase
       .from('gold_inventory')
       .select(`
         *,
-        batch:batches(batch_number, metal_type),
+        freight_shipment:freight_shipments(reference_number, shipment_date),
         refining_record:refining_records(id),
         sale:sales(sale_number),
         creator:user_profiles!gold_inventory_created_by_fkey(full_name)
@@ -133,8 +133,8 @@ export async function getAllInventoryEntries(filters?: {
       query = query.eq('transaction_type', filters.transactionType);
     }
 
-    if (filters?.batchId) {
-      query = query.eq('batch_id', filters.batchId);
+    if (filters?.shipmentId) {
+      query = query.eq('freight_shipment_id', filters.shipmentId);
     }
 
     const { data, error } = await query;
@@ -186,8 +186,8 @@ export async function getInventoryTransactions(inventoryId?: string) {
       .from('inventory_transactions')
       .select(`
         *,
-        inventory:gold_inventory(id, batch_id),
-        batch:batches(batch_number),
+        inventory:gold_inventory(id, freight_shipment_id),
+        freight_shipment:freight_shipments(reference_number),
         sale:sales(sale_number),
         creator:user_profiles!inventory_transactions_created_by_fkey(full_name)
       `)
@@ -273,19 +273,19 @@ export async function checkInventorySufficient(quantityOz: number): Promise<bool
   }
 }
 
-export async function getInventoryForBatch(batchId: string) {
+export async function getInventoryForShipment(shipmentId: string) {
   try {
     const { data, error } = await supabase
       .from('gold_inventory')
       .select('*')
-      .eq('batch_id', batchId)
+      .eq('freight_shipment_id', shipmentId)
       .maybeSingle();
 
     if (error) throw error;
 
     return { success: true, data };
   } catch (error) {
-    console.error('Error fetching inventory for batch:', error);
+    console.error('Error fetching inventory for shipment:', error);
     return { success: false, data: null, error };
   }
 }
@@ -320,53 +320,23 @@ export async function calculateInventoryMetrics() {
   }
 }
 
-export async function getInventoryBySeller(sellerId: string, sellerType: 'mining_company' | 'mansa') {
+export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'mansa') {
   try {
-    if (sellerType === 'mining_company') {
-      const { data, error } = await supabase
-        .from('gold_inventory')
-        .select(`
-          quantity_available_oz,
-          quantity_allocated_oz,
-          quantity_sold_oz,
-          final_fine_oz,
-          final_fine_grams,
-          batch:batches!inner(
-            id,
-            batch_number,
-            mining_company_id
-          )
-        `)
-        .eq('transaction_type', 'entry')
-        .eq('batch.mining_company_id', sellerId);
+    const { data, error } = await supabase
+      .from('gold_inventory')
+      .select('quantity_available_oz, final_fine_grams, final_fine_oz')
+      .eq('transaction_type', 'entry');
 
-      if (error) throw error;
+    if (error) throw error;
 
-      const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
-      const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
+    const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
+    const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
 
-      return {
-        success: true,
-        availableOz: totalAvailableOz,
-        availableGrams: totalAvailableGrams
-      };
-    } else {
-      const { data, error } = await supabase
-        .from('gold_inventory')
-        .select('quantity_available_oz, final_fine_grams, final_fine_oz')
-        .eq('transaction_type', 'entry');
-
-      if (error) throw error;
-
-      const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
-      const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
-
-      return {
-        success: true,
-        availableOz: totalAvailableOz,
-        availableGrams: totalAvailableGrams
-      };
-    }
+    return {
+      success: true,
+      availableOz: totalAvailableOz,
+      availableGrams: totalAvailableGrams
+    };
   } catch (error) {
     console.error('Error fetching inventory by seller:', error);
     return {

@@ -96,30 +96,57 @@ export function InventoryManagement() {
 
   async function loadInventoryByCompany() {
     try {
-      // Get inventory grouped by mining company through freight_shipments
-      const { data, error } = await supabase
+      // Get inventory with freight_shipment_id
+      const { data: inventoryData, error: invError } = await supabase
         .from('gold_inventory')
         .select(`
+          id,
           final_fine_oz,
           quantity_available_oz,
           quantity_allocated_oz,
           quantity_sold_oz,
-          freight_shipment:freight_shipments (
+          freight_shipment_id
+        `)
+        .not('freight_shipment_id', 'is', null);
+
+      if (invError) throw invError;
+
+      if (!inventoryData || inventoryData.length === 0) {
+        return [];
+      }
+
+      // Get freight_shipment_productions to link shipments to productions
+      const shipmentIds = inventoryData.map(inv => inv.freight_shipment_id);
+      const { data: shipmentProductions, error: spError } = await supabase
+        .from('freight_shipment_productions')
+        .select(`
+          freight_shipment_id,
+          production:daily_production (
+            mining_company_id,
             mining_company:mining_companies (
               id,
               name,
               abbreviation
             )
           )
-        `);
+        `)
+        .in('freight_shipment_id', shipmentIds);
 
-      if (error) throw error;
+      if (spError) throw spError;
+
+      // Map shipment_id to mining_company (take first production's company for simplicity)
+      const shipmentToCompany = new Map<string, any>();
+      shipmentProductions?.forEach((sp: any) => {
+        if (sp.freight_shipment_id && sp.production?.mining_company && !shipmentToCompany.has(sp.freight_shipment_id)) {
+          shipmentToCompany.set(sp.freight_shipment_id, sp.production.mining_company);
+        }
+      });
 
       // Group by mining company
       const companyMap = new Map<string, MiningCompanyInventory>();
 
-      data?.forEach((item: any) => {
-        const company = item.freight_shipment?.mining_company;
+      inventoryData.forEach((item: any) => {
+        const company = shipmentToCompany.get(item.freight_shipment_id);
         if (!company) return;
 
         const companyId = company.id;

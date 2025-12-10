@@ -199,7 +199,8 @@ export function AddInventoryEntry() {
 
   async function loadAvailableShipments() {
     try {
-      const { data, error } = await supabase
+      // First, get all shipments with status 'in_stock'
+      const { data: allShipments, error: shipmentsError } = await supabase
         .from('freight_shipments')
         .select(`
           id,
@@ -215,9 +216,27 @@ export function AddInventoryEntry() {
         .eq('status', 'in_stock')
         .order('shipment_date', { ascending: false });
 
-      if (error) throw error;
+      if (shipmentsError) throw shipmentsError;
 
-      const mappedShipments = (data || []).map((shipment: any) => ({
+      // Get shipment IDs that are already in gold_inventory
+      const { data: inventoryEntries, error: inventoryError } = await supabase
+        .from('gold_inventory')
+        .select('freight_shipment_id')
+        .not('freight_shipment_id', 'is', null);
+
+      if (inventoryError) throw inventoryError;
+
+      // Create a Set of shipment IDs already in inventory for fast lookup
+      const shipmentsInInventory = new Set(
+        (inventoryEntries || []).map(entry => entry.freight_shipment_id)
+      );
+
+      // Filter out shipments that are already in inventory
+      const availableShipments = (allShipments || []).filter(
+        (shipment: any) => !shipmentsInInventory.has(shipment.id)
+      );
+
+      const mappedShipments = availableShipments.map((shipment: any) => ({
         id: shipment.id,
         reference_number: shipment.reference_number,
         shipment_date: shipment.shipment_date,

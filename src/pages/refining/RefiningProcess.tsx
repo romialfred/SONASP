@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Flame, CheckCircle2, TrendingUp, Eye, AlertCircle, Archive, ArrowRight } from 'lucide-react';
+import { Package, Flame, CheckCircle2, TrendingUp, Eye, AlertCircle, Archive, ArrowRight, Download, FileSpreadsheet, Columns } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +11,10 @@ import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useNotification } from '@/contexts/NotificationContext';
 import { formatWeightGrams, formatWeightOunces } from '@/utils/numberUtils';
 import { freightShipmentService, FreightShipmentStatus } from '@/services/freightShipmentService';
-import { ChangeStatusModal } from '@/components/refining/ChangeStatusModal';
+import { RefiningStatusChangeModal } from '@/components/refining/RefiningStatusChangeModal';
+import { RefiningFilters, FilterValues } from '@/components/refining/RefiningFilters';
+import { ColumnSelectorModal, AVAILABLE_COLUMNS } from '@/components/refining/ColumnSelectorModal';
+import { exportToExcel, exportToCSV } from '@/services/refiningExportService';
 
 interface FreightShipment {
   id: string;
@@ -49,6 +52,19 @@ export function RefiningProcess() {
   const [selectedShipment, setSelectedShipment] = useState<FreightShipment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
+  const [filters, setFilters] = useState<FilterValues>({
+    search: '',
+    status: 'all',
+    refineryId: '',
+    dateFrom: '',
+    dateTo: '',
+    minValue: '',
+    maxValue: ''
+  });
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    AVAILABLE_COLUMNS.filter(col => col.defaultVisible).map(col => col.id)
+  );
 
   useEffect(() => {
     fetchShipments();
@@ -105,14 +121,77 @@ export function RefiningProcess() {
     }
   }
 
-  // Calcul des métriques
-  const receivedCount = shipments.filter(s => s.status === 'received_at_refinery').length;
-  const processingCount = shipments.filter(s => s.status === 'processing').length;
-  const processedCount = shipments.filter(s => s.status === 'processed').length;
-  const inStockCount = shipments.filter(s => s.status === 'in_stock').length;
+  // Appliquer les filtres
+  const filteredShipments = useMemo(() => {
+    return shipments.filter(shipment => {
+      // Recherche textuelle
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch =
+          shipment.reference_number.toLowerCase().includes(searchLower) ||
+          shipment.mining_company?.name?.toLowerCase().includes(searchLower) ||
+          shipment.destination_refinery?.name?.toLowerCase().includes(searchLower);
 
-  const totalGoldOz = shipments.reduce((sum, s) => sum + (s.total_pure_gold_oz || 0), 0);
-  const totalValue = shipments.reduce((sum, s) => sum + (s.total_value_usd || 0), 0);
+        if (!matchesSearch) return false;
+      }
+
+      // Filtre par statut
+      if (filters.status !== 'all' && shipment.status !== filters.status) {
+        return false;
+      }
+
+      // Filtre par raffinerie
+      if (filters.refineryId && shipment.destination_refinery?.id !== filters.refineryId) {
+        return false;
+      }
+
+      // Filtre par date
+      if (filters.dateFrom) {
+        const shipmentDate = new Date(shipment.shipment_date);
+        const fromDate = new Date(filters.dateFrom);
+        if (shipmentDate < fromDate) return false;
+      }
+
+      if (filters.dateTo) {
+        const shipmentDate = new Date(shipment.shipment_date);
+        const toDate = new Date(filters.dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (shipmentDate > toDate) return false;
+      }
+
+      // Filtre par valeur
+      if (filters.minValue && shipment.total_value_usd < parseFloat(filters.minValue)) {
+        return false;
+      }
+
+      if (filters.maxValue && shipment.total_value_usd > parseFloat(filters.maxValue)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [shipments, filters]);
+
+  // Compter les filtres actifs
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.status !== 'all') count++;
+    if (filters.refineryId) count++;
+    if (filters.dateFrom) count++;
+    if (filters.dateTo) count++;
+    if (filters.minValue) count++;
+    if (filters.maxValue) count++;
+    return count;
+  }, [filters]);
+
+  // Calcul des métriques sur les données filtrées
+  const receivedCount = filteredShipments.filter(s => s.status === 'received_at_refinery').length;
+  const processingCount = filteredShipments.filter(s => s.status === 'processing').length;
+  const processedCount = filteredShipments.filter(s => s.status === 'processed').length;
+  const inStockCount = filteredShipments.filter(s => s.status === 'in_stock').length;
+
+  const totalGoldOz = filteredShipments.reduce((sum, s) => sum + (s.total_pure_gold_oz || 0), 0);
+  const totalValue = filteredShipments.reduce((sum, s) => sum + (s.total_value_usd || 0), 0);
 
   const getStatusBadge = (status: FreightShipmentStatus) => {
     const statusConfig = {
@@ -181,6 +260,22 @@ export function RefiningProcess() {
     return ['received_at_refinery', 'processing', 'processed'].includes(status);
   };
 
+  const handleExport = (selectedColumns: string[]) => {
+    setVisibleColumns(selectedColumns);
+    exportToExcel(filteredShipments, selectedColumns, 'processus_raffinage');
+    showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
+  };
+
+  const handleQuickExportExcel = () => {
+    exportToExcel(filteredShipments, visibleColumns, 'processus_raffinage');
+    showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
+  };
+
+  const handleQuickExportCSV = () => {
+    exportToCSV(filteredShipments, visibleColumns, 'processus_raffinage');
+    showSuccess('Export réussi', 'Le fichier CSV a été téléchargé avec succès');
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 -mx-6">
@@ -193,9 +288,54 @@ export function RefiningProcess() {
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 Suivi des expéditions en raffinage
+                {filteredShipments.length !== shipments.length && (
+                  <span className="ml-2 text-blue-600 font-medium">
+                    ({filteredShipments.length} sur {shipments.length} affichées)
+                  </span>
+                )}
               </p>
             </div>
+
+            {/* Boutons d'export */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleQuickExportCSV}
+                disabled={filteredShipments.length === 0}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                CSV
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleQuickExportExcel}
+                disabled={filteredShipments.length === 0}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Excel
+              </Button>
+              <Button
+                onClick={() => setIsColumnSelectorOpen(true)}
+                disabled={filteredShipments.length === 0}
+                className="gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Columns className="w-4 h-4" />
+                Personnaliser Export
+              </Button>
+            </div>
           </div>
+        </div>
+
+        {/* Filtres */}
+        <div className="px-6">
+          <RefiningFilters
+            onFilterChange={setFilters}
+            activeFiltersCount={activeFiltersCount}
+          />
         </div>
 
         {loading ? (
@@ -334,15 +474,19 @@ export function RefiningProcess() {
 
             {/* Tableau des Expéditions */}
             <div className="px-6">
-              {shipments.length === 0 ? (
+              {filteredShipments.length === 0 ? (
                 <Card className="p-12">
                   <div className="text-center">
                     <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-lg font-medium text-gray-500">
-                      Aucune expédition en raffinage
+                      {shipments.length === 0
+                        ? 'Aucune expédition en raffinage'
+                        : 'Aucune expédition ne correspond aux filtres'}
                     </p>
                     <p className="text-sm text-gray-400 mt-2">
-                      Les expéditions reçues apparaîtront ici
+                      {shipments.length === 0
+                        ? 'Les expéditions reçues apparaîtront ici'
+                        : 'Essayez de modifier vos critères de recherche'}
                     </p>
                   </div>
                 </Card>
@@ -350,7 +494,7 @@ export function RefiningProcess() {
                 <Card>
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Expéditions en Raffinage ({shipments.length})
+                      Expéditions en Raffinage ({filteredShipments.length})
                     </h3>
                   </div>
                   <div className="overflow-x-auto">
@@ -384,7 +528,7 @@ export function RefiningProcess() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {shipments.map((shipment) => (
+                        {filteredShipments.map((shipment) => (
                           <tr key={shipment.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-medium text-gray-900">
@@ -455,7 +599,7 @@ export function RefiningProcess() {
 
       {/* Modal de changement de statut */}
       {selectedShipment && (
-        <ChangeStatusModal
+        <RefiningStatusChangeModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
@@ -464,9 +608,19 @@ export function RefiningProcess() {
           onConfirm={handleConfirmStatusChange}
           currentStatus={selectedShipment.status}
           shipmentReference={selectedShipment.reference_number}
+          totalGoldOz={selectedShipment.total_pure_gold_oz}
+          totalValueUsd={selectedShipment.total_value_usd}
           loading={changingStatus}
         />
       )}
+
+      {/* Modal de sélection de colonnes */}
+      <ColumnSelectorModal
+        isOpen={isColumnSelectorOpen}
+        onClose={() => setIsColumnSelectorOpen(false)}
+        onConfirm={handleExport}
+        currentColumns={visibleColumns}
+      />
     </MainLayout>
   );
 }

@@ -503,111 +503,122 @@ export default function FreightShipmentDetails() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Timeline Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Chronologie
-              </h2>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Créée</p>
-                    <p className="text-xs text-gray-600">
-                      {new Date(shipment.created_at).toLocaleString('fr-FR')}
-                    </p>
+            <Card className="overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3">
+                <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Chronologie
+                </h2>
+              </div>
+              <div className="p-4">
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Créée</p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(shipment.created_at).toLocaleString('fr-FR')}
+                      </p>
+                    </div>
                   </div>
+
+                  {shipment.approved_at && (
+                    <div className="flex gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Approuvée</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(shipment.approved_at).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {shipment.shipped_at && (
+                    <div className="flex gap-3">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Expédiée</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(shipment.shipped_at).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {shipment.received_at && (
+                    <div className="flex gap-3">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Reçue</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(shipment.received_at).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {shipment.approved_at && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Approuvée</p>
-                      <p className="text-xs text-gray-600">
-                        {new Date(shipment.approved_at).toLocaleString('fr-FR')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {shipment.shipped_at && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Expédiée</p>
-                      <p className="text-xs text-gray-600">
-                        {new Date(shipment.shipped_at).toLocaleString('fr-FR')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {shipment.received_at && (
-                  <div className="flex gap-3">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Reçue</p>
-                      <p className="text-xs text-gray-600">
-                        {new Date(shipment.received_at).toLocaleString('fr-FR')}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </Card>
 
             {/* Signatories Card */}
             {shipment.signatories && shipment.signatories.length > 0 && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Signataires
-                </h2>
-                <div className="space-y-3">
-                  {shipment.signatories
-                    .sort((a, b) => a.display_order - b.display_order)
-                    .map((sig) => (
-                      <div key={sig.id} className="border-l-2 border-blue-500 pl-3">
-                        <p className="text-sm font-medium text-gray-900">{formatSignatoryName(sig.full_name)}</p>
-                        <p className="text-xs text-gray-600">{sig.position}</p>
-                      </div>
-                    ))}
+              <Card className="overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-600 to-purple-500 px-4 py-3">
+                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Signataires
+                  </h2>
+                </div>
+                <div className="p-4">
+                  <div className="space-y-3">
+                    {shipment.signatories
+                      .sort((a, b) => a.display_order - b.display_order)
+                      .map((sig) => (
+                        <div key={sig.id} className="border-l-2 border-purple-400 pl-3">
+                          <p className="text-sm font-medium text-gray-900">{formatSignatoryName(sig.full_name)}</p>
+                          <p className="text-xs text-gray-600">{sig.position}</p>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </Card>
             )}
 
             {/* Documents Card */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Documents Générés
-                </h2>
+            <Card className="overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Documents Générés
+                  </h2>
 
-                {(!shipment.bullion_summary_pdf_path || !shipment.customs_invoice_pdf_path) && (
-                  <Button
-                    onClick={handleGenerateDocuments}
-                    disabled={generatingDocs}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-                  >
-                    {generatingDocs ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Génération...
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="w-4 h-4 mr-2" />
-                        Générer les Documents
-                      </>
-                    )}
-                  </Button>
-                )}
+                  {(!shipment.bullion_summary_pdf_path || !shipment.customs_invoice_pdf_path) && (
+                    <Button
+                      onClick={handleGenerateDocuments}
+                      disabled={generatingDocs}
+                      className="bg-white hover:bg-gray-100 text-amber-700 disabled:bg-gray-200 disabled:text-gray-500 text-xs px-2 py-1"
+                    >
+                      {generatingDocs ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Génération...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-3 h-3 mr-1" />
+                          Générer
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="space-y-3">
+              <div className="p-4">
+                <div className="space-y-3">
                 {/* Packing List */}
                 {shipment.packing_list_pdf_path && (
                   <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
@@ -750,14 +761,15 @@ export default function FreightShipmentDetails() {
                     <p className="text-sm text-gray-500">Aucun document généré</p>
                   </div>
                 )}
+                </div>
               </div>
             </Card>
 
             {/* Status Info Card */}
             {shipment.status === 'shipped_to_refinery' && (
-              <Card className="p-6 bg-emerald-50 border-emerald-200">
+              <Card className="p-4 bg-emerald-50 border-emerald-200">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <h3 className="text-sm font-semibold text-emerald-900">Expédié à la Raffinerie</h3>
                     <p className="text-xs text-emerald-700 mt-1">

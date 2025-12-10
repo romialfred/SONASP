@@ -1,120 +1,131 @@
-# 🔍 DIAGNOSTIC SIMPLE - Étape par Étape
+# 📋 INSTRUCTIONS - Exécution du Diagnostic
 
-## ⚠️ Erreur Rencontrée
-
-La colonne `location` n'existe pas dans `refinery_plants`.
-
-## ✅ SOLUTION EN 3 ÉTAPES
-
-### ÉTAPE 1: Diagnostic (30 secondes)
-
-Dans Supabase SQL Editor, copiez-collez et exécutez:
-
-```sql
--- DIAGNOSTIC_SIMPLE.sql
-
--- Voir la structure de refinery_plants
-SELECT column_name 
-FROM information_schema.columns 
-WHERE table_name = 'refinery_plants'
-ORDER BY ordinal_position;
-```
-
-Cela vous montrera les colonnes réelles disponibles.
+## 🎯 Objectif
+Identifier EXACTEMENT où se cache le problème `batch_id` dans votre base de données.
 
 ---
 
-### ÉTAPE 2: Voir les Données (30 secondes)
+## ⚡ ÉTAPES (5 MINUTES)
 
+### Étape 1: Ouvrir Supabase SQL Editor
+```
+https://supabase.com/dashboard/project/boolqagzdqbahqnpawpb/sql
+```
+
+### Étape 2: Copier le Script
+1. Ouvrez le fichier: **`DIAGNOSTIC_COMPLET_INVENTORY_TRANSACTIONS.sql`**
+2. Sélectionnez TOUT (Ctrl+A)
+3. Copiez (Ctrl+C)
+
+### Étape 3: Exécuter dans Supabase
+1. Collez dans l'éditeur SQL (Ctrl+V)
+2. Cliquez sur **"Run"** (ou Ctrl+Enter)
+3. Attendez ~10 secondes
+
+### Étape 4: Copier les Résultats
+Le script va afficher plusieurs sections. **Copiez TOUT**, mais surtout:
+
+#### 🔴 SECTION CRITIQUE 1: "VUES AVEC batch_id"
+Cherchez cette partie:
+```
+╔══════════════════════════════════════════════════════════════╗
+║  SECTION 3: VUES AVEC batch_id                               ║
+╚══════════════════════════════════════════════════════════════╝
+```
+→ **Copiez TOUT ce qui suit jusqu'à la section suivante**
+
+#### 🔴 SECTION CRITIQUE 2: "FONCTIONS INSERT"
+Cherchez cette partie:
+```
+╔══════════════════════════════════════════════════════════════╗
+║  SECTION 7: FONCTIONS INSÉRANT dans inventory_transactions   ║
+╚══════════════════════════════════════════════════════════════╝
+```
+→ **Copiez la définition complète de chaque fonction**
+
+#### 🔴 SECTION CRITIQUE 3: "TEST D'INSERTION"
+Cherchez cette partie:
+```
+╔══════════════════════════════════════════════════════════════╗
+║  SECTION 10: TEST D'INSERTION DIRECTE                        ║
+╚══════════════════════════════════════════════════════════════╝
+```
+→ **Notez si vous voyez ✅ SUCCÈS ou ❌ ÉCHEC**
+
+---
+
+## 📤 Que M'envoyer
+
+### Format Idéal:
+```
+SECTION 3 - VUES AVEC batch_id:
+[Collez ici les résultats]
+
+SECTION 7 - FONCTIONS INSERT:
+[Collez ici les définitions de fonctions]
+
+SECTION 10 - TEST:
+[✅ SUCCÈS ou ❌ ÉCHEC + message d'erreur]
+
+SECTION 4 - INDEX (si vous voyez batch_id):
+[Collez ici]
+```
+
+---
+
+## 🎯 Ce que Je Vais Chercher
+
+### Dans les Vues:
 ```sql
--- Voir toutes les raffineries
-SELECT * FROM refinery_plants LIMIT 3;
-
--- Voir toutes les compagnies de fret
-SELECT * FROM freight_companies LIMIT 3;
-
--- Voir l'état de votre expédition
+-- ❌ COUPABLE si vous voyez:
 SELECT 
-  expedition_lot_number,
-  refinery_id,
-  freight_company_id,
-  shipped_to_company,
-  shipped_to_address
-FROM shipping_preparations
-WHERE id = '43bfabcf-c1ab-4f02-ba2f-37aa15278adf';
+  it.batch_id,  -- ← PROBLÈME ICI
+  ...
+FROM inventory_transactions it
 ```
 
----
-
-### ÉTAPE 3: Corriger (1 minute)
-
-Une fois que vous voyez les données ci-dessus, vous saurez:
-
-1. **Les colonnes disponibles** dans refinery_plants
-2. **Les UUIDs des raffineries** disponibles
-3. **Les UUIDs des compagnies de fret** disponibles
-4. **L'état actuel** de votre expédition
-
-Puis exécutez l'UPDATE:
-
+### Dans les Fonctions:
 ```sql
--- Remplacez les UUIDs par ceux que vous avez vus ci-dessus
-UPDATE shipping_preparations
-SET 
-  refinery_id = 'UUID_DE_LA_RAFFINERIE',
-  freight_company_id = 'UUID_DE_LA_COMPAGNIE_FRET'
-WHERE id = '43bfabcf-c1ab-4f02-ba2f-37aa15278adf';
+-- ❌ COUPABLE si vous voyez:
+INSERT INTO inventory_transactions (
+  batch_id,  -- ← PROBLÈME ICI
+  ...
+)
+```
+
+### Dans les Index:
+```
+-- ❌ COUPABLE si vous voyez:
+idx_inventory_transactions_batch_id
 ```
 
 ---
 
-## 📋 EXEMPLE CONCRET
+## ⏱️ Checklist Rapide
 
-Imaginez que vous voyez:
-
-**Raffineries:**
-```
-id: abc-123-... | name: Rand Refinery | country: South Africa
-```
-
-**Compagnies de Fret:**
-```
-id: def-456-... | name: Brinks
-```
-
-Alors votre UPDATE sera:
-
-```sql
-UPDATE shipping_preparations
-SET 
-  refinery_id = 'abc-123-...',
-  freight_company_id = 'def-456-...'
-WHERE id = '43bfabcf-c1ab-4f02-ba2f-37aa15278adf';
-```
+- [ ] J'ai ouvert Supabase SQL Editor
+- [ ] J'ai copié `DIAGNOSTIC_COMPLET_INVENTORY_TRANSACTIONS.sql`
+- [ ] J'ai exécuté le script (Ctrl+Enter)
+- [ ] J'ai attendu les résultats (~10 secondes)
+- [ ] J'ai copié les SECTIONS 3, 7, et 10
+- [ ] Je suis prêt à vous envoyer les résultats
 
 ---
 
-## ✅ Vérification Finale
+## 🚨 Si le Script Ne Fonctionne Pas
 
-```sql
-SELECT 
-  sp.expedition_lot_number,
-  r.name as raffinerie,
-  r.country,
-  f.name as compagnie_fret
-FROM shipping_preparations sp
-LEFT JOIN refinery_plants r ON r.id = sp.refinery_id
-LEFT JOIN freight_companies f ON f.id = sp.freight_company_id
-WHERE sp.id = '43bfabcf-c1ab-4f02-ba2f-37aa15278adf';
-```
+Si vous voyez une erreur lors de l'exécution du diagnostic:
 
-Si vous voyez les noms, c'est bon !
+1. **Copiez l'erreur complète**
+2. **Envoyez-moi**:
+   - Le message d'erreur
+   - Le code d'erreur (ex: 42703)
+   - La capture d'écran si possible
+
+Je créerai alors une version simplifiée du diagnostic.
 
 ---
 
-## 🎯 FICHIERS À UTILISER
+**Prêt? Exécutez le script et envoyez-moi les résultats!**
 
-1. **DIAGNOSTIC_SIMPLE.sql** - Commencez ici
-2. **QUICK_FIX_CORRECTED.sql** - Script complet corrigé
-
-**Temps total:** 2-3 minutes
+*Une fois que j'aurai les résultats, je créerai une correction SQL ciblée sur mesure.*

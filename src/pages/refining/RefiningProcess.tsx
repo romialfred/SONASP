@@ -56,6 +56,8 @@ export function RefiningProcess() {
     search: '',
     status: 'all',
     refineryId: '',
+    miningCompanyId: '',
+    datePreset: 'all',
     dateFrom: '',
     dateTo: '',
     minValue: '',
@@ -145,6 +147,11 @@ export function RefiningProcess() {
         return false;
       }
 
+      // Filtre par compagnie minière
+      if (filters.miningCompanyId && shipment.mining_company?.id !== filters.miningCompanyId) {
+        return false;
+      }
+
       // Filtre par date
       if (filters.dateFrom) {
         const shipmentDate = new Date(shipment.shipment_date);
@@ -177,8 +184,8 @@ export function RefiningProcess() {
     let count = 0;
     if (filters.status !== 'all') count++;
     if (filters.refineryId) count++;
-    if (filters.dateFrom) count++;
-    if (filters.dateTo) count++;
+    if (filters.miningCompanyId) count++;
+    if (filters.datePreset !== 'all') count++;
     if (filters.minValue) count++;
     if (filters.maxValue) count++;
     return count;
@@ -620,6 +627,7 @@ export function RefiningProcess() {
         onClose={() => setIsColumnSelectorOpen(false)}
         onConfirm={handleExport}
         currentColumns={visibleColumns}
+        previewData={filteredShipments}
       />
     </MainLayout>
   );

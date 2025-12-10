@@ -161,7 +161,7 @@ src/components/admin/GoldSalesSettingForm.tsx         [Ancien modal, remplacé]
 ### Étape 1: Appliquer la Migration SQL
 
 1. Ouvrez **Supabase SQL Editor**
-2. Copiez le contenu de `/tmp/improve_gold_sales_settings.sql`
+2. Copiez le contenu de `APPLY_GOLD_SALES_SETTINGS_MIGRATION.sql` (à la racine)
 3. Exécutez la migration
 4. Vérifiez le message de confirmation
 
@@ -330,7 +330,7 @@ npm run build
 ## 📚 Ressources
 
 - **Guide de migration**: `GOLD_SALES_SETTINGS_MIGRATION_GUIDE.md`
-- **Fichier SQL**: `/tmp/improve_gold_sales_settings.sql`
+- **Fichier SQL**: `APPLY_GOLD_SALES_SETTINGS_MIGRATION.sql` (à la racine)
 - **Composant formulaire**: `src/components/admin/GoldSalesSettingFormPanel.tsx`
 - **Service**: `src/services/goldSalesSettingsService.ts`
 

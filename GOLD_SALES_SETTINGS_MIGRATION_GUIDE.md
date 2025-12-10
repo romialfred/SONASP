@@ -31,7 +31,7 @@ Cette migration ajoute le champ `effective_date` (date de début d'application) 
 
 ### Étape 2: Copier le SQL
 
-Copiez le contenu du fichier `/tmp/improve_gold_sales_settings.sql` :
+Copiez le contenu du fichier **`APPLY_GOLD_SALES_SETTINGS_MIGRATION.sql`** (à la racine du projet) :
 
 ```sql
 -- Ajouter la colonne effective_date si elle n'existe pas

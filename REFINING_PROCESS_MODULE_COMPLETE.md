@@ -51,9 +51,11 @@ processed  →  in_stock
 
 ## Modifications Apportées
 
-### 1. Migration SQL (`/tmp/refining_statuses_migration.sql`)
+### 1. Migration SQL (`supabase/migrations/20251210_001_add_refining_statuses.sql`)
 
 **⚠️ IMPORTANT: Cette migration DOIT être appliquée dans Supabase SQL Editor**
+
+**Fichier:** `supabase/migrations/20251210_001_add_refining_statuses.sql`
 
 ```sql
 -- Ajoute 3 nouveaux statuts à l'enum freight_shipment_status
@@ -72,7 +74,7 @@ processed  →  in_stock
 
 1. Ouvrir Supabase Dashboard
 2. Aller dans SQL Editor
-3. Copier le contenu de `/tmp/refining_statuses_migration.sql`
+3. Copier le contenu de `supabase/migrations/20251210_001_add_refining_statuses.sql`
 4. Exécuter le script
 
 ---
@@ -371,7 +373,7 @@ Reçu → En Raffinage → Raffiné → En Stock
 
 | Fichier | Type | Lignes |
 |---------|------|--------|
-| `/tmp/refining_statuses_migration.sql` | SQL Migration | 110 |
+| `supabase/migrations/20251210_001_add_refining_statuses.sql` | SQL Migration | 110 |
 | `src/services/freightShipmentService.ts` | Service | +30 |
 | `src/components/refining/ChangeStatusModal.tsx` | Composant | 105 |
 | `src/pages/refining/RefiningProcess.tsx` | Page | 456 |
@@ -426,7 +428,7 @@ La migration SQL doit être appliquée AVANT d'utiliser les nouvelles fonctionna
 
 1. **Copier le fichier SQL**
    ```bash
-   cat /tmp/refining_statuses_migration.sql
+   cat supabase/migrations/20251210_001_add_refining_statuses.sql
    ```
 
 2. **Ouvrir Supabase Dashboard**
@@ -496,7 +498,7 @@ Pas d'erreurs TypeScript, pas de régressions.
 ### Fichiers de Référence
 
 - `ALERTS_ELEMENTS_EN_ATTENTE.md` - Alertes d'éléments en attente
-- `/tmp/refining_statuses_migration.sql` - Migration SQL
+- `supabase/migrations/20251210_001_add_refining_statuses.sql` - Migration SQL
 
 ### Support
 

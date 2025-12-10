@@ -157,7 +157,7 @@ export function ShippingPreparationDetailsEnhanced() {
 
       if (prep.refinery_id) {
         const { data } = await supabase
-          .from('refinery_plants')
+          .from('refineries')
           .select('id, name, location, country')
           .eq('id', prep.refinery_id)
           .maybeSingle();

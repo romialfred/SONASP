@@ -57,7 +57,7 @@ export function RefiningProcess() {
         .from('freight_shipments')
         .select(`
           *,
-          destination_refinery:refinery_plants!freight_shipments_destination_refinery_id_fkey(id, name),
+          destination_refinery:refineries!freight_shipments_destination_refinery_id_fkey(id, name),
           mining_company:mining_companies(id, name)
         `)
         .in('status', ['approved', 'shipped_to_refinery', 'received_at_refinery'])

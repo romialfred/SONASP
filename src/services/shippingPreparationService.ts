@@ -10,8 +10,8 @@ export interface ShippingPreparation {
   daily_production_id: string | null;
   mining_company_id: string | null;
   export_license_id: string | null;  // Primary license field
-  refinery_id: string | null;        // UUID reference to refinery_plants
-  freight_company_id: string | null; // UUID reference to freight_companies
+  refinery_id: string | null;        // UUID reference to refineries
+  freight_company_id: string | null; // UUID reference to transport_companies
   expedition_lot_number: string | null;
   seal_number: string | null;
   seal_numbers: string[];

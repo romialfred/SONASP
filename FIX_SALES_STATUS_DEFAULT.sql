@@ -17,7 +17,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_enum
     WHERE enumlabel = 'for_sale'
-    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'sale_status')
+      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'sale_status')
   ) THEN
     ALTER TYPE sale_status ADD VALUE 'for_sale';
     RAISE NOTICE '✅ Added status: for_sale';
@@ -26,11 +26,14 @@ BEGIN
   END IF;
 END $$;
 
--- 2. Changer le DEFAULT de la colonne status
-ALTER TABLE sales 
-  ALTER COLUMN status SET DEFAULT 'pending_management_approval'::sale_status;
+-- 2. Changer le DEFAULT de la colonne status (avec RAISE dans un bloc DO)
+DO $$
+BEGIN
+  ALTER TABLE sales 
+    ALTER COLUMN status SET DEFAULT 'pending_management_approval'::sale_status;
 
-RAISE NOTICE '✅ Changed sales.status DEFAULT to pending_management_approval';
+  RAISE NOTICE '✅ Changed sales.status DEFAULT to pending_management_approval';
+END $$;
 
 -- 3. Vérifier la configuration
 SELECT 
@@ -91,7 +94,7 @@ BEGIN
   END IF;
 END $$;
 
--- Afficher tous les status disponibles
+-- 5. Afficher tous les status disponibles
 SELECT 
   'Status disponibles dans sale_status:' as info,
   enumlabel as status,

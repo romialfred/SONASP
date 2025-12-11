@@ -182,16 +182,41 @@ export function InventoryManagement() {
 
   async function checkAvailableShipments() {
     try {
-      const { count, error } = await supabase
+      // Get all shipments with status 'in_stock'
+      const { data: allShipments, error: shipmentsError } = await supabase
         .from('freight_shipments')
-        .select('id', { count: 'exact', head: true })
+        .select('id')
         .eq('status', 'in_stock');
 
-      if (!error && count !== null) {
-        setAvailableShipmentsCount(count);
+      if (shipmentsError) throw shipmentsError;
+
+      if (!allShipments || allShipments.length === 0) {
+        setAvailableShipmentsCount(0);
+        return;
       }
+
+      // Get shipment IDs that are already in gold_inventory
+      const { data: inventoryEntries, error: inventoryError } = await supabase
+        .from('gold_inventory')
+        .select('freight_shipment_id')
+        .not('freight_shipment_id', 'is', null);
+
+      if (inventoryError) throw inventoryError;
+
+      // Create a Set of shipment IDs already in inventory
+      const shipmentsInInventory = new Set(
+        (inventoryEntries || []).map(entry => entry.freight_shipment_id)
+      );
+
+      // Count only shipments that are NOT already in inventory
+      const availableCount = allShipments.filter(
+        shipment => !shipmentsInInventory.has(shipment.id)
+      ).length;
+
+      setAvailableShipmentsCount(availableCount);
     } catch (error) {
       console.error('Error checking available shipments:', error);
+      setAvailableShipmentsCount(0);
     }
   }
 

@@ -374,50 +374,13 @@ export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mini
       };
     }
 
-    // For mining_company, get inventory through freight_shipments linked to their production
+    // For mining_company, use mining_company_id directly (added by migration)
     if (sellerType === 'mining_company') {
-      // Step 1: Get all production IDs for this mining company
-      const { data: productions, error: productionsError } = await supabase
-        .from('production')
-        .select('id')
-        .eq('mining_company_id', sellerId);
-
-      if (productionsError) throw productionsError;
-
-      if (!productions || productions.length === 0) {
-        return {
-          success: true,
-          availableOz: 0,
-          availableGrams: 0
-        };
-      }
-
-      const productionIds = productions.map(p => p.id);
-
-      // Step 2: Get freight shipments for these productions
-      const { data: shipments, error: shipmentsError } = await supabase
-        .from('freight_shipments')
-        .select('id')
-        .in('production_id', productionIds);
-
-      if (shipmentsError) throw shipmentsError;
-
-      if (!shipments || shipments.length === 0) {
-        return {
-          success: true,
-          availableOz: 0,
-          availableGrams: 0
-        };
-      }
-
-      const shipmentIds = shipments.map(s => s.id);
-
-      // Step 3: Get inventory for these shipments
       const { data: inventory, error: inventoryError } = await supabase
         .from('gold_inventory')
         .select('quantity_available_oz, final_fine_grams, final_fine_oz')
         .eq('transaction_type', 'entry')
-        .in('freight_shipment_id', shipmentIds);
+        .eq('mining_company_id', sellerId);
 
       if (inventoryError) throw inventoryError;
 

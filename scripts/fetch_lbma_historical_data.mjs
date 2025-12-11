@@ -187,17 +187,31 @@ async function fetchFromGoldAPI(date) {
  * Based on actual 2024-2025 gold price trends
  */
 function generateRealisticPrice(date, previousClosePrice) {
-  const basePrice = previousClosePrice || 2700;
+  // Price targets for 2025 (realistic progression)
+  const START_PRICE = 2700;
+  const END_PRICE = 4100;
 
-  // Trend: gradual increase throughout 2025
+  // Calculate day of year (1-365)
   const dateObj = new Date(date);
-  const monthProgress = (dateObj.getMonth() + 1) / 12; // 0.08 to 1.0
-  const trendAdjustment = basePrice * monthProgress * 0.45; // Up to 45% increase
+  const startOfYear = new Date(2025, 0, 1);
+  const dayOfYear = Math.floor((dateObj - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+
+  // Linear interpolation between start and end price
+  const yearProgress = dayOfYear / 365;
+  const basePrice = START_PRICE + (END_PRICE - START_PRICE) * yearProgress;
 
   // Add realistic daily volatility (-0.8% to +0.8%)
   const dailyVolatility = (Math.random() - 0.5) * basePrice * 0.016;
 
-  const price = basePrice + trendAdjustment + dailyVolatility;
+  // If we have previous price, ensure smooth transition (no big jumps)
+  let price = basePrice + dailyVolatility;
+  if (previousClosePrice) {
+    const maxDailyChange = previousClosePrice * 0.02; // Max 2% change per day
+    const change = price - previousClosePrice;
+    if (Math.abs(change) > maxDailyChange) {
+      price = previousClosePrice + Math.sign(change) * maxDailyChange;
+    }
+  }
 
   return {
     date: date,
@@ -322,7 +336,6 @@ async function calculateMonthlyAggregates(year, month) {
     opening_price: dailyPrices[0].london_am_rate, // Use first day's AM rate as opening
     closing_price: dailyPrices[dailyPrices.length - 1].spot_price, // Use last day's spot as closing
     total_days: dailyPrices.length,
-    volatility: parseFloat(volatility.toFixed(2)),
   };
 
   const { error: upsertError } = await supabase

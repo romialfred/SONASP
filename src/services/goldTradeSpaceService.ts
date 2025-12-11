@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentGoldPrice, getGoldPriceTrend } from './goldPriceService';
 
 export interface PricingMechanism {
-  mechanism: 'spot' | 'forward_7d' | 'forward_14d' | 'forward_30d' | 'in_process';
+  mechanism: 'spot' | 'forward_14d' | 'forward_30d' | 'in_process';
   displayName: string;
   pricePerOz: number;
   totalValue: number;
@@ -108,7 +108,7 @@ export async function calculatePricingComparison(
       settlementDays: 2,
     });
 
-    const forwardDays = [7, 14, 30];
+    const forwardDays = [14, 30];
     forwardDays.forEach((days) => {
       const forwardRate = forwardRates.find((fr) => fr.forward_days === days);
       const adjustmentPercentage = forwardRate?.adjustment_rate_percentage || (0.02 * days) / 7;
@@ -173,17 +173,17 @@ export async function calculatePricingComparison(
         spot_price_per_oz: spotPrice,
         spot_total_value: mechanisms[0].totalValue,
         spot_value_date: mechanisms[0].valueDate,
-        forward_7d_total_value: mechanisms[1].totalValue,
-        forward_7d_adjustment: mechanisms[1].adjustmentPercentage,
-        forward_7d_benefit: mechanisms[1].benefit,
-        forward_14d_total_value: mechanisms[2].totalValue,
-        forward_14d_adjustment: mechanisms[2].adjustmentPercentage,
-        forward_14d_benefit: mechanisms[2].benefit,
-        forward_30d_total_value: mechanisms[3].totalValue,
-        forward_30d_adjustment: mechanisms[3].adjustmentPercentage,
-        forward_30d_benefit: mechanisms[3].benefit,
-        in_process_estimated_value: mechanisms[4].totalValue,
-        in_process_benefit: mechanisms[4].benefit,
+        forward_7d_total_value: null,
+        forward_7d_adjustment: null,
+        forward_7d_benefit: null,
+        forward_14d_total_value: mechanisms[1].totalValue,
+        forward_14d_adjustment: mechanisms[1].adjustmentPercentage,
+        forward_14d_benefit: mechanisms[1].benefit,
+        forward_30d_total_value: mechanisms[2].totalValue,
+        forward_30d_adjustment: mechanisms[2].adjustmentPercentage,
+        forward_30d_benefit: mechanisms[2].benefit,
+        in_process_estimated_value: mechanisms[3].totalValue,
+        in_process_benefit: mechanisms[3].benefit,
         recommended_mechanism: recommendedMechanism.mechanism,
         recommendation_reason: recommendedMechanism.reason,
         gold_trend: trend,

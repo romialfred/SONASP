@@ -2,17 +2,25 @@
 
 ## Étape 1: Importer les Données Historiques (2024-2025)
 
-### Test Rapide (3 dates seulement)
+### Test Rapide
 
-Pour tester d'abord:
+**Option 1: Test avec 1 date (rapide)**
+
+```bash
+node scripts/test_one_date.mjs
+```
+
+**Option 2: Test avec 3 dates**
 
 ```bash
 node scripts/test_improved_fx.mjs
 ```
 
+**Note**: Les scripts peuvent être exécutés depuis la racine du projet ou depuis le dossier scripts/.
+
 ### Import Complet
 
-Exécutez ce script pour importer toutes les données historiques:
+Exécutez ce script pour importer toutes les données historiques (2024-2025):
 
 ```bash
 node scripts/fetch_historical_fx_rates_improved.mjs

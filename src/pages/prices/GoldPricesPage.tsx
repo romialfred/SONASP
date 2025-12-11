@@ -106,11 +106,13 @@ export function GoldPricesPage() {
   const loadDailyPrices = async () => {
     // Fetch daily gold prices from LBMA source stored in database
     // Data is sourced from London Bullion Market Association (LBMA) - the global authority for gold pricing
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('gold_prices_daily')
       .select('*')
       .gte('price_date', `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`)
       .lt('price_date', `${selectedMonth === 12 ? selectedYear + 1 : selectedYear}-${String(selectedMonth === 12 ? 1 : selectedMonth + 1).padStart(2, '0')}-01`)
+      .lte('price_date', today)
       .order('price_date', { ascending: true });
 
     if (error) throw error;
@@ -120,6 +122,10 @@ export function GoldPricesPage() {
   const loadMonthlyAggregates = async () => {
     // Fetch monthly aggregate gold prices from LBMA data
     // This includes average, high, low, opening, and closing prices for each month
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+
     const { data, error } = await supabase
       .from('gold_prices_monthly')
       .select('*')
@@ -127,16 +133,27 @@ export function GoldPricesPage() {
       .order('month', { ascending: true });
 
     if (error) throw error;
-    setMonthlyAggregates(data || []);
+
+    // Filter out future months if viewing current year
+    const filteredData = selectedYear === currentYear
+      ? (data || []).filter(m => m.month <= currentMonth)
+      : (data || []);
+
+    setMonthlyAggregates(filteredData);
   };
 
   const loadSalesComparison = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
     // Load sales price analysis
     const { data: salesData, error: salesError } = await supabase
       .from('v_sales_price_analysis')
       .select('*')
       .eq('year', selectedYear)
       .eq('month', selectedMonth)
+      .lte('sale_date', today)
       .order('sale_date', { ascending: false });
 
     if (salesError) throw salesError;
@@ -150,7 +167,13 @@ export function GoldPricesPage() {
       .order('month', { ascending: false });
 
     if (monthlyError) throw monthlyError;
-    setMonthlySalesVsMarket(monthlyData || []);
+
+    // Filter out future months if viewing current year
+    const filteredMonthlyData = selectedYear === currentYear
+      ? (monthlyData || []).filter(m => m.month <= currentMonth)
+      : (monthlyData || []);
+
+    setMonthlySalesVsMarket(filteredMonthlyData);
   };
 
   const exportToCSV = () => {

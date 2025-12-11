@@ -162,12 +162,15 @@ export function FxRatesPage() {
   };
 
   const loadDailyRates = async () => {
+    const today = new Date().toISOString().split('T')[0];
+
     let query = supabase
       .from('fx_rates_daily')
       .select(`
         *,
         fx_rate_sources!inner(name, code)
       `)
+      .lte('rate_date', today)
       .order('rate_date', { ascending: false })
       .limit(200);
 
@@ -192,6 +195,10 @@ export function FxRatesPage() {
   };
 
   const loadMonthlyRates = async () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+
     let query = supabase
       .from('fx_rates_monthly_aggregated')
       .select(`
@@ -218,7 +225,14 @@ export function FxRatesPage() {
     const { data, error } = await query;
 
     if (!error && data) {
-      setMonthlyRates(data.map(rate => ({
+      // Filter out future months
+      const filteredData = data.filter(rate => {
+        if (rate.year < currentYear) return true;
+        if (rate.year === currentYear && rate.month <= currentMonth) return true;
+        return false;
+      });
+
+      setMonthlyRates(filteredData.map(rate => ({
         ...rate,
         source_name: rate.fx_rate_sources?.name || 'Unknown',
       })));
@@ -226,12 +240,15 @@ export function FxRatesPage() {
   };
 
   const loadCustomerRates = async () => {
+    const today = new Date().toISOString().split('T')[0];
+
     let query = supabase
       .from('customer_fx_rates')
       .select(`
         *,
         customers!inner(name, email)
       `)
+      .lte('transaction_date', today)
       .order('transaction_date', { ascending: false })
       .limit(200);
 

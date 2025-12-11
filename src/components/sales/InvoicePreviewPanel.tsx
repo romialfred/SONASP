@@ -1,21 +1,34 @@
-import { Building2, User, FileText, Calendar, Package, DollarSign } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { formatCurrency } from '@/utils/salesUtils';
 
 export interface InvoicePreviewData {
   // Seller Information
   sellerName: string;
   sellerAddress?: string;
+  sellerCity?: string;
   sellerCountry: string;
+  sellerPhone?: string;
+  sellerLogo?: string;
 
   // Customer Information
   customerName: string;
   customerAddress?: string;
+  customerCity?: string;
   customerCountry?: string;
+  customerPhone?: string;
+  customerLogo?: string;
+
+  // Invoice Details
+  invoiceNumber?: string;
+  invoiceDate: string;
+  lotNumber?: string;
 
   // Sale Details
   quantityOz: number;
   quantityGrams: number;
+  quantityKg: number;
   pricePerOz: number;
+  pricePerKg: number;
   currency: string;
 
   // Pricing Details
@@ -26,12 +39,20 @@ export interface InvoicePreviewData {
   royaltiesPercentage: number;
   royaltiesAmount: number;
   finalAmount: number;
+  estimatedValue: number;
+
+  // Exchange Rate
+  exchangeRate?: number;
+  localCurrency?: string;
+  localCurrencyTotal?: number;
+  usdTotal?: number;
 
   // Additional Info
   mechanismType?: string;
   mechanismDisplayName?: string;
   valueDate?: string;
   settlementDays?: number;
+  paymentMethod?: string;
 }
 
 interface InvoicePreviewPanelProps {
@@ -42,194 +63,234 @@ interface InvoicePreviewPanelProps {
 export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProps) {
   if (!isVisible || !data) return null;
 
+  // Format conversion values
+  const troyOzToGrams = 31.1035;
+  const gramsToKg = 1000;
+
   return (
-    <div className="fixed right-0 top-0 h-screen w-[480px] bg-white border-l-2 border-gray-900 shadow-2xl z-50 overflow-y-auto">
-      <div className="sticky top-0 bg-white border-b-2 border-gray-900 p-6 shadow-md z-10">
+    <div className="fixed right-0 top-0 h-screen w-[580px] bg-white border-l-2 border-gray-900 shadow-2xl z-50 overflow-y-auto">
+      {/* Sticky Header */}
+      <div className="sticky top-0 bg-white border-b-2 border-gray-900 p-4 shadow-md z-10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gray-100 border-2 border-gray-900 rounded-lg flex items-center justify-center">
-            <FileText className="w-6 h-6 text-gray-900" />
+          <div className="w-10 h-10 bg-gray-100 border-2 border-gray-900 rounded flex items-center justify-center">
+            <FileText className="w-5 h-5 text-gray-900" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Invoice Preview</h2>
-            <p className="text-sm text-gray-600 mt-0.5">Live invoice calculation</p>
+            <h2 className="text-lg font-bold text-gray-900">Invoice Preview</h2>
+            <p className="text-xs text-gray-600">Live calculation</p>
           </div>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Invoice Header */}
-        <div className="bg-white rounded-lg p-6 border-2 border-gray-900">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Draft Invoice</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">#{`DRAFT-${Date.now().toString().slice(-6)}`}</p>
+      <div className="p-4">
+        {/* Main Invoice Container */}
+        <div className="bg-white border-2 border-gray-900">
+
+          {/* Seller and Client Header Section */}
+          <div className="grid grid-cols-2 border-b-2 border-gray-900">
+            {/* Seller */}
+            <div className="p-4 border-r-2 border-gray-900">
+              <div className="font-bold text-sm mb-2">Seller</div>
+              <div className="text-xs space-y-0.5">
+                <div className="font-bold">{data.sellerName}</div>
+                {data.sellerAddress && <div>{data.sellerAddress}</div>}
+                {data.sellerCity && <div>{data.sellerCity}</div>}
+                <div>{data.sellerCountry}</div>
+                {data.sellerPhone && <div>Tel: {data.sellerPhone}</div>}
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-gray-600 uppercase">Date</p>
-              <p className="text-sm font-bold text-gray-900 mt-1">
-                {new Date().toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </p>
+
+            {/* Client */}
+            <div className="p-4">
+              <div className="font-bold text-sm mb-2">Client</div>
+              <div className="text-xs space-y-0.5">
+                <div className="font-bold">{data.customerName}</div>
+                {data.customerAddress && <div>{data.customerAddress}</div>}
+                {data.customerCity && <div>{data.customerCity}</div>}
+                {data.customerCountry && <div>{data.customerCountry}</div>}
+                {data.customerPhone && <div>Tel: {data.customerPhone}</div>}
+              </div>
             </div>
           </div>
 
-          {data.mechanismDisplayName && (
-            <div className="bg-[#D4AF37] border-2 border-gray-900 rounded-lg px-4 py-2.5 flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-                {data.mechanismDisplayName}
-              </span>
+          {/* Logo Row (if logos available) */}
+          {(data.sellerLogo || data.customerLogo) && (
+            <div className="grid grid-cols-2 border-b-2 border-gray-900">
+              <div className="p-3 border-r-2 border-gray-900 flex items-center justify-center min-h-[80px]">
+                {data.sellerLogo && (
+                  <img src={data.sellerLogo} alt="Seller Logo" className="max-h-16 max-w-full object-contain" />
+                )}
+              </div>
+              <div className="p-3 flex items-center justify-center min-h-[80px]">
+                {data.customerLogo && (
+                  <img src={data.customerLogo} alt="Customer Logo" className="max-h-16 max-w-full object-contain" />
+                )}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Parties Information */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Seller */}
-          <div className="bg-white rounded-lg p-5 border-2 border-gray-900">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-gray-900" />
+          {/* Invoice Number and Date */}
+          <div className="p-3 border-b-2 border-gray-900 bg-white">
+            <div className="flex justify-between items-center text-sm">
+              <div>
+                <span className="font-bold">Facture N° : </span>
+                <span>{data.invoiceNumber || `DRAFT-${Date.now().toString().slice(-6)}`}</span>
               </div>
-              <h3 className="text-xs font-bold text-gray-900 uppercase">Seller</h3>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">{data.sellerName}</p>
-            {data.sellerAddress && (
-              <p className="text-xs text-gray-600 mt-1">{data.sellerAddress}</p>
-            )}
-            <p className="text-xs text-gray-600 mt-1">{data.sellerCountry}</p>
-          </div>
-
-          {/* Customer */}
-          <div className="bg-white rounded-lg p-5 border-2 border-gray-900">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-900" />
-              </div>
-              <h3 className="text-xs font-bold text-gray-900 uppercase">Customer</h3>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">{data.customerName}</p>
-            {data.customerAddress && (
-              <p className="text-xs text-gray-600 mt-1">{data.customerAddress}</p>
-            )}
-            {data.customerCountry && (
-              <p className="text-xs text-gray-600 mt-1">{data.customerCountry}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Product Details */}
-        <div className="bg-[#F5E6D3] rounded-lg p-5 border-2 border-gray-900">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="w-5 h-5 text-gray-900" />
-            <h3 className="font-bold text-gray-900 uppercase text-sm">Product Details</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center pb-2 border-b-2 border-gray-900">
-              <span className="text-sm text-gray-900 font-semibold">Fine Gold</span>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">{data.quantityOz.toFixed(3)} oz</p>
-                <p className="text-xs text-gray-700">({data.quantityGrams.toFixed(2)} g)</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-900 font-semibold">Price per oz</span>
-              <span className="font-bold text-gray-900">{formatCurrency(data.pricePerOz)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Calculations */}
-        <div className="bg-white rounded-lg border-2 border-gray-900 overflow-hidden">
-          <div className="bg-[#D4AF37] px-5 py-3 border-b-2 border-gray-900">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-gray-900" />
-              <h3 className="font-bold text-gray-900 text-sm uppercase">Financial Summary</h3>
-            </div>
-          </div>
-
-          <div className="p-5 space-y-3">
-            {/* Gross Proceeds */}
-            <div className="flex justify-between items-center py-3 px-4 bg-white border-2 border-gray-900 rounded">
-              <span className="text-sm font-semibold text-gray-900">Gross Proceeds</span>
-              <span className="text-lg font-bold text-gray-900">{formatCurrency(data.grossProceeds)}</span>
-            </div>
-
-            {/* Deductions */}
-            {data.freightCost > 0 && (
-              <div className="flex justify-between items-center pl-6 py-2">
-                <span className="text-sm text-gray-700">Less: Freight Cost</span>
-                <span className="font-semibold text-gray-900 text-sm">-{formatCurrency(data.freightCost)}</span>
-              </div>
-            )}
-
-            {data.otherCosts > 0 && (
-              <div className="flex justify-between items-center pl-6 py-2">
-                <span className="text-sm text-gray-700">Less: Other Costs</span>
-                <span className="font-semibold text-gray-900 text-sm">-{formatCurrency(data.otherCosts)}</span>
-              </div>
-            )}
-
-            {/* Net Proceeds */}
-            <div className="flex justify-between items-center py-3 px-4 bg-white border-2 border-gray-900 rounded">
-              <span className="text-sm font-semibold text-gray-900">Net Proceeds</span>
-              <span className="text-lg font-bold text-gray-900">{formatCurrency(data.netProceeds)}</span>
-            </div>
-
-            {/* Royalties */}
-            <div className="flex justify-between items-center pl-6 py-2">
-              <span className="text-sm text-gray-700">
-                Less: Royalties ({data.royaltiesPercentage}%)
-              </span>
-              <span className="font-semibold text-gray-900 text-sm">-{formatCurrency(data.royaltiesAmount)}</span>
-            </div>
-
-            {/* Final Amount */}
-            <div className="mt-4 pt-4 border-t-2 border-gray-900">
-              <div className="flex justify-between items-center py-4 px-5 bg-[#D4AF37] border-2 border-gray-900 rounded">
-                <span className="text-base font-bold text-gray-900 uppercase tracking-wide">Total Amount</span>
-                <span className="text-2xl font-bold text-gray-900">{formatCurrency(data.finalAmount)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Terms */}
-        {data.valueDate && (
-          <div className="bg-white rounded-lg p-5 border-2 border-gray-900">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-gray-900" />
-              <h3 className="font-bold text-gray-900 text-sm uppercase">Payment Terms</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-700">Value Date</span>
-                <span className="font-semibold text-gray-900">
-                  {new Date(data.valueDate).toLocaleDateString('en-US', {
+              <div>
+                <span className="font-bold">Invoice Date </span>
+                <span>
+                  {new Date(data.invoiceDate || Date.now()).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'
                   })}
                 </span>
               </div>
-              {data.settlementDays && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-700">Settlement Period</span>
-                  <span className="font-semibold text-gray-900">{data.settlementDays} days</span>
-                </div>
-              )}
             </div>
           </div>
-        )}
+
+          {/* Product Details Table */}
+          <div>
+            {/* Table Header */}
+            <div className="grid grid-cols-8 bg-[#D4AF37] border-b-2 border-gray-900 text-xs font-bold">
+              <div className="p-2 border-r-2 border-gray-900 text-center">Lot #</div>
+              <div className="col-span-2 p-2 border-r-2 border-gray-900 text-center">Description</div>
+              <div className="p-2 border-r-2 border-gray-900 text-center">Metal</div>
+              <div className="p-2 border-r-2 border-gray-900 text-center">Unit Price $/Oz</div>
+              <div className="p-2 border-r-2 border-gray-900 text-center">Net Weight (kg)</div>
+              <div className="p-2 border-r-2 border-gray-900 text-center">Weight (Troy Oz)</div>
+              <div className="p-2 text-center">Metal Price ({data.currency}/kg)</div>
+            </div>
+
+            {/* Table Header - Estimated Value (Second Row) */}
+            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+              <div className="p-2 text-xs font-bold text-center">Estimated Value ({data.currency})</div>
+            </div>
+
+            {/* Product Row */}
+            <div className="grid grid-cols-8 border-b-2 border-gray-900 text-xs">
+              <div className="p-2 border-r-2 border-gray-900 text-center">
+                {data.lotNumber || `${new Date().getFullYear()}/${Date.now().toString().slice(-4)}`}
+              </div>
+              <div className="col-span-2 p-2 border-r-2 border-gray-900">Fine Gold (Au)</div>
+              <div className="p-2 border-r-2 border-gray-900 text-center">Au</div>
+              <div className="p-2 border-r-2 border-gray-900 text-right">{data.pricePerOz.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div className="p-2 border-r-2 border-gray-900 text-right">{data.quantityKg.toFixed(3)}</div>
+              <div className="p-2 border-r-2 border-gray-900 text-right">{data.quantityOz.toFixed(2)}</div>
+              <div className="p-2 text-right">{data.pricePerKg.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            </div>
+
+            {/* Estimated Value Row */}
+            <div className="border-b-2 border-gray-900">
+              <div className="p-2 text-xs text-right font-bold">{data.grossProceeds.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            </div>
+
+            {/* Royalties Row */}
+            <div className="grid grid-cols-8 border-b-2 border-gray-900 text-xs">
+              <div className="col-span-2 p-2 border-r-2 border-gray-900">Royalties</div>
+              <div className="col-span-5 p-2 border-r-2 border-gray-900 text-right">{data.royaltiesPercentage}%</div>
+              <div className="p-2 text-right font-bold">{data.royaltiesAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            </div>
+
+            {/* Empty Row (spacing) */}
+            <div className="border-b-2 border-gray-900">
+              <div className="p-2">&nbsp;</div>
+            </div>
+
+            {/* Totals Section - Header Rows */}
+            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+              <div className="grid grid-cols-2 text-xs font-bold">
+                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>
+                  {data.localCurrency ? `Total prix ${data.localCurrency}` : `Total prix ${data.currency}`}
+                </div>
+                <div className="p-2 text-right">
+                  {data.localCurrencyTotal
+                    ? data.localCurrencyTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                    : data.grossProceeds.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+              <div className="grid grid-cols-2 text-xs font-bold">
+                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Total prix US$</div>
+                <div className="p-2 text-right">
+                  {(data.usdTotal || data.grossProceeds).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+              <div className="grid grid-cols-2 text-xs font-bold">
+                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Net Proceed</div>
+                <div className="p-2 text-right">
+                  {data.finalAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Text */}
+          <div className="p-4 border-b-2 border-gray-900 text-center text-sm italic">
+            <p>Finalize the present invoice for the amount of {formatCurrency(data.finalAmount)}...</p>
+          </div>
+
+          {/* Bottom Section - Conversion and Payment Terms */}
+          <div className="grid grid-cols-2">
+            {/* Left: Conversion Info */}
+            <div className="p-4 border-r-2 border-gray-900 text-xs space-y-1">
+              <div>1 troy oz = {troyOzToGrams.toFixed(4)} g</div>
+              <div>1 kg = {(1000 / troyOzToGrams).toFixed(4)} troy oz</div>
+              {data.exchangeRate && (
+                <div>Exchange Rate {data.localCurrency}/USD: {data.exchangeRate}</div>
+              )}
+            </div>
+
+            {/* Right: Payment Terms */}
+            <div className="p-3">
+              <table className="w-full text-xs border-2 border-gray-900">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-900 p-2 text-center font-bold" colSpan={2}>
+                      Payment Terms
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-900 p-2">Method</td>
+                    <td className="border border-gray-900 p-2">{data.paymentMethod || data.mechanismDisplayName || 'Spot Basis'}</td>
+                  </tr>
+                  {data.valueDate && (
+                    <tr>
+                      <td className="border border-gray-900 p-2">Value Date :</td>
+                      <td className="border border-gray-900 p-2">
+                        {new Date(data.valueDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </td>
+                    </tr>
+                  )}
+                  {data.settlementDays && (
+                    <tr>
+                      <td className="border border-gray-900 p-2">Settlement Period</td>
+                      <td className="border border-gray-900 p-2">{data.settlementDays} days</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
         {/* Footer Note */}
-        <div className="bg-gray-100 border-l-4 border-gray-900 rounded-r-lg p-4">
+        <div className="mt-4 bg-gray-50 border-l-4 border-gray-900 rounded-r p-3">
           <p className="text-xs text-gray-700 leading-relaxed">
-            <strong className="font-bold text-gray-900">Note:</strong> This is a live preview of the invoice.
-            The final PDF invoice will include additional details such as company logos,
-            signatures, and complete legal terms once the sale is created.
+            <strong className="font-bold text-gray-900">Note:</strong> This is a live preview.
+            The final PDF invoice will include company logos and complete legal terms.
           </p>
         </div>
       </div>

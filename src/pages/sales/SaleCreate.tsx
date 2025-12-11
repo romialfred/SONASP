@@ -300,21 +300,43 @@ export function SaleCreate() {
       .eq('id', formData.customerId)
       .single();
 
+    // Fetch full mining company details
+    const { data: miningCompanyData } = await supabase
+      .from('mining_companies')
+      .select('*')
+      .eq('id', formData.miningCompanyId)
+      .single();
+
+    const quantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
+    const quantityGrams = quantityOz * 31.1035;
+    const quantityKg = quantityGrams / 1000;
+    const pricePerOz = parseFloat(formData.londonAMRate);
+    const pricePerKg = pricePerOz * (1000 / 31.1035); // Convert $/oz to $/kg
+
     const previewData: InvoicePreviewData = {
       // Seller Information
-      sellerName: selectedMiningCompany.name,
-      sellerAddress: selectedMiningCompany.abbreviation,
-      sellerCountry: selectedMiningCompany.country,
+      sellerName: miningCompanyData?.name || selectedMiningCompany.name,
+      sellerAddress: miningCompanyData?.abbreviation || selectedMiningCompany.abbreviation,
+      sellerCity: miningCompanyData?.city || '',
+      sellerCountry: miningCompanyData?.country || selectedMiningCompany.country,
+      sellerPhone: miningCompanyData?.contact_person_phone || '',
 
       // Customer Information
       customerName: selectedCustomer.customer_name,
       customerAddress: customerData?.address || '',
+      customerCity: customerData?.city || '',
       customerCountry: customerData?.country || '',
+      customerPhone: customerData?.phone || '',
+
+      // Invoice Details
+      invoiceDate: new Date().toISOString(),
 
       // Sale Details
-      quantityOz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
-      quantityGrams: (typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1035,
-      pricePerOz: parseFloat(formData.londonAMRate),
+      quantityOz: quantityOz,
+      quantityGrams: quantityGrams,
+      quantityKg: quantityKg,
+      pricePerOz: pricePerOz,
+      pricePerKg: pricePerKg,
       currency: 'USD',
 
       // Pricing Details
@@ -325,6 +347,7 @@ export function SaleCreate() {
       royaltiesPercentage: 3,
       royaltiesAmount: calculations.royalties,
       finalAmount: calculations.finalAmount,
+      estimatedValue: calculations.grossProceeds,
 
       // Additional Info
       mechanismType: formData.mechanismType,
@@ -468,7 +491,7 @@ export function SaleCreate() {
 
   return (
     <MainLayout>
-      <div className={`transition-all duration-300 space-y-6 ${showInvoicePreview ? 'max-w-5xl mr-[500px] ml-auto' : 'max-w-5xl mx-auto'}`}>
+      <div className={`transition-all duration-300 space-y-6 ${showInvoicePreview ? 'max-w-5xl mr-[600px] ml-auto' : 'max-w-5xl mx-auto'}`}>
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button

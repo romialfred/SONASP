@@ -836,8 +836,8 @@ export function SaleCreate() {
 
         {/* Professional Invoice Preview */}
         {showCalculations && calculations && (
-          <Card className="border-2 border-blue-500 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <Card className="border-2 border-slate-300 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center gap-2">
                   <FileText className="h-6 w-6" />
@@ -849,7 +849,7 @@ export function SaleCreate() {
                     size="sm"
                     onClick={handlePreviewInvoice}
                     disabled={!invoicePdfBlob || generatingPdf}
-                    className="bg-white text-blue-600 hover:bg-blue-50 border-white"
+                    className="bg-white text-slate-700 hover:bg-slate-50 border-white"
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Preview PDF
@@ -859,14 +859,14 @@ export function SaleCreate() {
                     size="sm"
                     onClick={handleDownloadInvoice}
                     disabled={!invoicePdfBlob || generatingPdf}
-                    className="bg-white text-blue-600 hover:bg-blue-50 border-white"
+                    className="bg-white text-slate-700 hover:bg-slate-50 border-white"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download PDF
                   </Button>
                 </div>
               </div>
-              <p className="text-sm text-blue-100 mt-2">
+              <p className="text-sm text-slate-200 mt-2">
                 {generatingPdf ? 'Generating invoice...' : 'Draft invoice ready for download'}
               </p>
             </CardHeader>
@@ -874,7 +874,7 @@ export function SaleCreate() {
               {/* Summary Grid */}
               <div className="grid grid-cols-2 gap-6 mb-6">
                 {/* Seller Info */}
-                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-[#B8860B]">
                   <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
                     SELLER
@@ -888,7 +888,7 @@ export function SaleCreate() {
                 </div>
 
                 {/* Customer Info */}
-                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-purple-500">
+                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-slate-600">
                   <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <User className="h-4 w-4" />
                     CUSTOMER
@@ -919,9 +919,9 @@ export function SaleCreate() {
                   <span className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.londonAMRate))}</span>
                 </div>
 
-                <div className="flex justify-between items-center py-3 bg-green-50 px-3 rounded">
-                  <span className="font-semibold text-green-900">Gross Proceeds</span>
-                  <span className="text-lg font-bold text-green-700">{formatCurrency(calculations.grossProceeds)}</span>
+                <div className="flex justify-between items-center py-3 bg-amber-50 px-3 rounded">
+                  <span className="font-semibold text-amber-900">Gross Proceeds</span>
+                  <span className="text-lg font-bold text-amber-800">{formatCurrency(calculations.grossProceeds)}</span>
                 </div>
 
                 {calculations.freight > 0 && (
@@ -938,9 +938,9 @@ export function SaleCreate() {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center py-3 bg-blue-50 px-3 rounded">
-                  <span className="font-semibold text-blue-900">Net Proceeds</span>
-                  <span className="text-lg font-bold text-blue-700">{formatCurrency(calculations.netProceeds)}</span>
+                <div className="flex justify-between items-center py-3 bg-slate-50 px-3 rounded">
+                  <span className="font-semibold text-slate-800">Net Proceeds</span>
+                  <span className="text-lg font-bold text-slate-700">{formatCurrency(calculations.netProceeds)}</span>
                 </div>
 
                 <div className="flex justify-between items-center py-2 pl-6">
@@ -948,19 +948,19 @@ export function SaleCreate() {
                   <span className="font-semibold text-red-600">-{formatCurrency(calculations.royalties)}</span>
                 </div>
 
-                <div className="flex justify-between items-center py-4 bg-gradient-to-r from-indigo-600 to-purple-600 px-4 rounded-lg shadow-lg mt-4">
+                <div className="flex justify-between items-center py-4 bg-gradient-to-r from-[#B8860B] to-[#8B6914] px-4 rounded-lg shadow-lg mt-4">
                   <span className="text-lg font-bold text-white">TOTAL AMOUNT</span>
                   <span className="text-2xl font-bold text-white">{formatCurrency(calculations.finalAmount)}</span>
                 </div>
               </div>
 
               {/* PDF Notice */}
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <FileText className="h-5 w-5 text-slate-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-yellow-900">Professional Invoice PDF</p>
-                    <p className="text-xs text-yellow-700 mt-1">
+                    <p className="text-sm font-semibold text-slate-900">Professional Invoice PDF</p>
+                    <p className="text-xs text-slate-700 mt-1">
                       The professional PDF invoice includes company logos, detailed seller/customer information,
                       line items, payment terms, and meets international invoicing standards.
                       Use the buttons above to preview or download.

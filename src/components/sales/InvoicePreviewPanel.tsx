@@ -153,7 +153,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
           {/* Product Details Table */}
           <div>
             {/* Table Header */}
-            <div className="grid grid-cols-8 bg-[#D4AF37] border-b border-gray-900 text-xs font-bold">
+            <div className="grid grid-cols-8 bg-[#B8860B] text-white border-b border-gray-900 text-xs font-bold">
               <div className="p-1.5 border-r border-gray-900 text-center">Lot #</div>
               <div className="col-span-2 p-1.5 border-r border-gray-900 text-center">Description</div>
               <div className="p-1.5 border-r border-gray-900 text-center">Metal</div>
@@ -164,7 +164,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
             </div>
 
             {/* Table Header - Estimated Value (Second Row) */}
-            <div className="bg-[#D4AF37] border-b border-gray-900">
+            <div className="bg-[#B8860B] text-white border-b border-gray-900">
               <div className="p-1.5 text-xs font-bold text-center">Estimated Value ({data.currency})</div>
             </div>
 
@@ -199,7 +199,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
             </div>
 
             {/* Totals Section - Header Rows */}
-            <div className="bg-[#D4AF37] border-b border-gray-900">
+            <div className="bg-[#B8860B] text-white border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
                 <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>
                   {data.localCurrency ? `Total prix ${data.localCurrency}` : `Total prix ${data.currency}`}
@@ -213,7 +213,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
               </div>
             </div>
 
-            <div className="bg-[#D4AF37] border-b border-gray-900">
+            <div className="bg-[#B8860B] text-white border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
                 <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Total prix US$</div>
                 <div className="p-1.5 text-right">
@@ -222,7 +222,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
               </div>
             </div>
 
-            <div className="bg-[#D4AF37] border-b border-gray-900">
+            <div className="bg-[#B8860B] text-white border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
                 <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Net Proceed</div>
                 <div className="p-1.5 text-right">

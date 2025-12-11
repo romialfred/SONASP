@@ -71,9 +71,9 @@ export async function generateSaleInvoicePDF(invoiceData: InvoiceData): Promise<
   const margin = 15;
   let yPosition = margin;
 
-  // Colors
-  const primaryColor: [number, number, number] = [16, 185, 129]; // Emerald
-  const secondaryColor: [number, number, number] = [71, 85, 105]; // Slate
+  // Colors - Professional palette matching application design
+  const primaryColor: [number, number, number] = [184, 134, 11]; // Deep Gold #B8860B
+  const secondaryColor: [number, number, number] = [71, 85, 105]; // Slate Blue
   const textColor: [number, number, number] = [31, 41, 55]; // Gray-800
   const lightGray: [number, number, number] = [243, 244, 246]; // Gray-100
 

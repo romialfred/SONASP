@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle,
   Lightbulb,
+  Building2,
 } from 'lucide-react';
 import {
   calculatePricingComparison,
@@ -36,6 +37,15 @@ interface Customer {
 interface InventoryItem {
   id: string;
   quantity_available_oz: number;
+  seller_id?: string;
+  seller_type?: string;
+}
+
+interface MiningCompany {
+  id: string;
+  name: string;
+  abbreviation: string;
+  country: string;
 }
 
 export function GoldTradeSpace() {
@@ -44,7 +54,9 @@ export function GoldTradeSpace() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
+  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
 
+  const [selectedMiningCompany, setSelectedMiningCompany] = useState('');
   const [availableStock, setAvailableStock] = useState(0);
   const [quantityRecommendation, setQuantityRecommendation] = useState<QuantityRecommendation | null>(null);
 
@@ -64,13 +76,18 @@ export function GoldTradeSpace() {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    fetchInventoryByMiningCompany();
+  }, [selectedMiningCompany, inventory]);
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [customersRes, inventoryRes, refineriesRes] = await Promise.all([
+      const [customersRes, inventoryRes, refineriesRes, miningCompaniesRes] = await Promise.all([
         supabase.from('customers').select('id, name, email, country').order('name'),
-        supabase.from('gold_inventory').select('id, quantity_available_oz').gt('quantity_available_oz', 0),
+        supabase.from('gold_inventory').select('id, quantity_available_oz, seller_id, seller_type').gt('quantity_available_oz', 0),
         getApprovedRefineries(),
+        supabase.from('mining_companies').select('id, name, abbreviation, country').eq('is_active', true).order('name'),
       ]);
 
       if (customersRes.data) {
@@ -79,25 +96,48 @@ export function GoldTradeSpace() {
 
       if (inventoryRes.data) {
         setInventory(inventoryRes.data);
-        const totalStock = inventoryRes.data.reduce((sum, item) => sum + item.quantity_available_oz, 0);
-        setAvailableStock(totalStock);
-
-        if (totalStock > 0) {
-          const recResult = await getQuantityRecommendation(totalStock);
-          if (recResult.success && recResult.data) {
-            setQuantityRecommendation(recResult.data);
-          }
-        }
       }
 
       if (refineriesRes.success && refineriesRes.data) {
         setRefineries(refineriesRes.data);
+      }
+
+      if (miningCompaniesRes.data) {
+        setMiningCompanies(miningCompaniesRes.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
       showError('Failed to load marketplace data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInventoryByMiningCompany = async () => {
+    if (!selectedMiningCompany) {
+      setAvailableStock(0);
+      setQuantityRecommendation(null);
+      return;
+    }
+
+    try {
+      const filteredInventory = inventory.filter(
+        item => item.seller_id === selectedMiningCompany && item.seller_type === 'mining_company'
+      );
+
+      const totalStock = filteredInventory.reduce((sum, item) => sum + item.quantity_available_oz, 0);
+      setAvailableStock(totalStock);
+
+      if (totalStock > 0) {
+        const recResult = await getQuantityRecommendation(totalStock);
+        if (recResult.success && recResult.data) {
+          setQuantityRecommendation(recResult.data);
+        }
+      } else {
+        setQuantityRecommendation(null);
+      }
+    } catch (error) {
+      console.error('Error filtering inventory:', error);
     }
   };
 
@@ -191,7 +231,71 @@ export function GoldTradeSpace() {
             isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
           }`}
         >
-          {quantityRecommendation && (
+          {/* Mining Company Selection */}
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <Store className="w-6 h-6 text-blue-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Select Mining Company</h3>
+                  <p className="text-sm text-gray-600">Choose the mine to view available stock and create simulation</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mining Company (Seller) <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={selectedMiningCompany}
+                  onChange={(e) => setSelectedMiningCompany(e.target.value)}
+                  className="w-full"
+                >
+                  <option value="">Select a mining company...</option>
+                  {miningCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name} ({company.abbreviation}) - {company.country}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {selectedMiningCompany && (
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Available Stock for Selected Mine</p>
+                      <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
+                        {availableStock.toFixed(3)} oz
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(availableStock * 31.1035).toFixed(2)} g
+                      </p>
+                    </div>
+                    {availableStock > 0 && (
+                      <CheckCircle className="w-8 h-8 text-green-500" />
+                    )}
+                    {availableStock === 0 && (
+                      <AlertCircle className="w-8 h-8 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!selectedMiningCompany && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-800">
+                      Please select a mining company to view available inventory and start price simulation.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {quantityRecommendation && selectedMiningCompany && (
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
               <div className="p-5 space-y-3">
                 <div className="flex items-start gap-3">
@@ -239,13 +343,16 @@ export function GoldTradeSpace() {
               </Card>
             )}
 
-            <PricingCalculator
-              availableStockOz={availableStock}
-              onMechanismSelect={(mechanism, comparison) => {
-                handleMechanismSelect(mechanism);
-                handleCalculationComplete(comparison);
-              }}
-            />
+            {selectedMiningCompany && availableStock > 0 && (
+              <PricingCalculator
+                availableStockOz={availableStock}
+                miningCompanyId={selectedMiningCompany}
+                onMechanismSelect={(mechanism, comparison) => {
+                  handleMechanismSelect(mechanism);
+                  handleCalculationComplete(comparison);
+                }}
+              />
+            )}
 
             {comparisonData && comparisonData.mechanisms && (
               <FinancialComparison
@@ -334,22 +441,24 @@ export function GoldTradeSpace() {
             )}
 
           {/* Trading Information Card */}
-          <Card className="bg-amber-50 border-amber-200">
-            <div className="p-5 space-y-3">
-              <div className="flex items-center gap-2 text-amber-800">
-                <AlertCircle className="w-5 h-5" />
-                <h4 className="font-semibold">Trading Information</h4>
+          {selectedMiningCompany && (
+            <Card className="bg-amber-50 border-amber-200">
+              <div className="p-5 space-y-3">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <AlertCircle className="w-5 h-5" />
+                  <h4 className="font-semibold">Trading Information</h4>
+                </div>
+                <div className="text-xs text-amber-900 space-y-2">
+                  <p><strong>Available Stock:</strong> {availableStock.toFixed(2)} oz</p>
+                  <p><strong>Trading Hours:</strong> 7:30 AM - 4:30 PM EST</p>
+                  <p><strong>Order Type:</strong> Good Until Cancelled</p>
+                  <p className="border-t border-amber-200 pt-2 mt-2">
+                    All orders are subject to management approval and market conditions
+                  </p>
+                </div>
               </div>
-              <div className="text-xs text-amber-900 space-y-2">
-                <p><strong>Available Stock:</strong> {availableStock.toFixed(2)} oz</p>
-                <p><strong>Trading Hours:</strong> 7:30 AM - 4:30 PM EST</p>
-                <p><strong>Order Type:</strong> Good Until Cancelled</p>
-                <p className="border-t border-amber-200 pt-2 mt-2">
-                  All orders are subject to management approval and market conditions
-                </p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </MainLayout>

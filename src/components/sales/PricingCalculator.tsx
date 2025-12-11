@@ -9,10 +9,11 @@ import { calculatePricingComparison, type PricingComparison, type PricingMechani
 
 interface PricingCalculatorProps {
   availableStockOz: number;
+  miningCompanyId?: string;
   onMechanismSelect?: (mechanism: PricingMechanism, comparison: PricingComparison) => void;
 }
 
-export function PricingCalculator({ availableStockOz, onMechanismSelect }: PricingCalculatorProps) {
+export function PricingCalculator({ availableStockOz, miningCompanyId, onMechanismSelect }: PricingCalculatorProps) {
   const navigate = useNavigate();
   const [quantityOz, setQuantityOz] = useState<string>('');
   const [unit, setUnit] = useState<'oz' | 'g'>('oz');
@@ -70,7 +71,9 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
       state: {
         mechanismData: mechanism,
         quantityOz: getQuantityInOz(),
-        availableStockOz
+        availableStockOz,
+        preselectedSellerId: miningCompanyId,
+        lockSeller: true
       }
     });
   };

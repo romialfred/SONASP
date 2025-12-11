@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Package, AlertCircle, CheckCircle, Building2, User, FileText, Download, Eye, Lock } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Package, AlertCircle, CheckCircle, Building2, User, FileText, Lock } from 'lucide-react';
 import type { PricingMechanism } from '@/services/goldTradeSpaceService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -407,10 +407,9 @@ export function SaleCreate() {
 
     setShowCalculations(true);
 
-    // Generate invoice preview and PDF automatically
+    // Generate invoice preview data only (no PDF generation)
     setTimeout(() => {
       updateInvoicePreviewData();
-      generateInvoicePreview();
     }, 100);
   };
 
@@ -559,11 +558,11 @@ export function SaleCreate() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="py-4">
-              <div className="grid grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
+            <CardContent className="py-3">
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Price per oz</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                  <p className="text-xl font-bold text-emerald-700">
                     ${mechanismData.pricePerOz.toFixed(2)}
                   </p>
                   {mechanismData.adjustmentPercentage !== 0 && (
@@ -574,32 +573,24 @@ export function SaleCreate() {
                     </p>
                   )}
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Simulated Quantity (Editable)</p>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.001"
-                      value={typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')}
-                      onChange={(e) => handleInputChange('quantityOz', e.target.value)}
-                      className="text-xl font-bold text-gray-900 border-emerald-300 focus:border-emerald-500"
-                      placeholder="0.000"
-                    />
-                    <span className="text-sm font-semibold text-gray-600">oz</span>
-                  </div>
+                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-1">Simulated Quantity</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1035).toFixed(2)} g
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
+                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Estimated Value</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-xl font-bold text-gray-900">
                     ${(((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
+                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Value Date</p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-base font-bold text-gray-900">
                     {new Date(mechanismData.valueDate).toLocaleDateString()}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{mechanismData.settlementDays} days</p>
@@ -837,37 +828,13 @@ export function SaleCreate() {
         {/* Professional Invoice Preview */}
         {showCalculations && calculations && (
           <Card className="border-2 border-slate-300 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <FileText className="h-6 w-6" />
-                  Professional Invoice
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreviewInvoice}
-                    disabled={!invoicePdfBlob || generatingPdf}
-                    className="bg-white text-slate-700 hover:bg-slate-50 border-white"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Preview PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadInvoice}
-                    disabled={!invoicePdfBlob || generatingPdf}
-                    className="bg-white text-slate-700 hover:bg-slate-50 border-white"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-              <p className="text-sm text-slate-200 mt-2">
-                {generatingPdf ? 'Generating invoice...' : 'Draft invoice ready for download'}
+            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-600 text-white py-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Professional Invoice
+              </CardTitle>
+              <p className="text-sm text-slate-200 mt-1">
+                Invoice calculation summary
               </p>
             </CardHeader>
             <CardContent className="p-6">

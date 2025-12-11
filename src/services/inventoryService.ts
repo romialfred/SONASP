@@ -355,6 +355,85 @@ export async function calculateInventoryMetrics() {
 
 export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'mansa') {
   try {
+    // If no seller specified, return total inventory
+    if (!sellerId || !sellerType) {
+      const { data, error } = await supabase
+        .from('gold_inventory')
+        .select('quantity_available_oz, final_fine_grams, final_fine_oz')
+        .eq('transaction_type', 'entry');
+
+      if (error) throw error;
+
+      const totalAvailableOz = (data || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
+      const totalAvailableGrams = (data || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
+
+      return {
+        success: true,
+        availableOz: totalAvailableOz,
+        availableGrams: totalAvailableGrams
+      };
+    }
+
+    // For mining_company, get inventory through freight_shipments linked to their production
+    if (sellerType === 'mining_company') {
+      // Step 1: Get all production IDs for this mining company
+      const { data: productions, error: productionsError } = await supabase
+        .from('production')
+        .select('id')
+        .eq('mining_company_id', sellerId);
+
+      if (productionsError) throw productionsError;
+
+      if (!productions || productions.length === 0) {
+        return {
+          success: true,
+          availableOz: 0,
+          availableGrams: 0
+        };
+      }
+
+      const productionIds = productions.map(p => p.id);
+
+      // Step 2: Get freight shipments for these productions
+      const { data: shipments, error: shipmentsError } = await supabase
+        .from('freight_shipments')
+        .select('id')
+        .in('production_id', productionIds);
+
+      if (shipmentsError) throw shipmentsError;
+
+      if (!shipments || shipments.length === 0) {
+        return {
+          success: true,
+          availableOz: 0,
+          availableGrams: 0
+        };
+      }
+
+      const shipmentIds = shipments.map(s => s.id);
+
+      // Step 3: Get inventory for these shipments
+      const { data: inventory, error: inventoryError } = await supabase
+        .from('gold_inventory')
+        .select('quantity_available_oz, final_fine_grams, final_fine_oz')
+        .eq('transaction_type', 'entry')
+        .in('freight_shipment_id', shipmentIds);
+
+      if (inventoryError) throw inventoryError;
+
+      const totalAvailableOz = (inventory || []).reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0);
+      const totalAvailableGrams = (inventory || []).reduce((sum, item) => sum + (item.final_fine_grams || 0) * (item.quantity_available_oz || 0) / (item.final_fine_oz || 1), 0);
+
+      return {
+        success: true,
+        availableOz: totalAvailableOz,
+        availableGrams: totalAvailableGrams
+      };
+    }
+
+    // For Mansa (when selling their own inventory to external customers)
+    // This would be inventory that has been purchased from mining companies
+    // For now, return all available inventory as it belongs to Mansa after purchase
     const { data, error } = await supabase
       .from('gold_inventory')
       .select('quantity_available_oz, final_fine_grams, final_fine_oz')

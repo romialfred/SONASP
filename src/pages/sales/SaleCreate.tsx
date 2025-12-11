@@ -189,6 +189,11 @@ export function SaleCreate() {
       newErrors.miningCompanyId = 'Please select a seller';
     }
 
+    // Check if seller has inventory
+    if (formData.miningCompanyId && availableInventoryOz === 0) {
+      newErrors.miningCompanyId = 'This mining company has no inventory available. Please add gold to inventory first.';
+    }
+
     if (!formData.customerId) {
       newErrors.customerId = 'Please select a customer';
     }
@@ -518,22 +523,31 @@ export function SaleCreate() {
                 </FormField>
 
                 {selectedMiningCompany && (
-                  <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900">{selectedMiningCompany.name}</p>
-                        <p className="text-sm text-gray-600">{selectedMiningCompany.abbreviation} • {selectedMiningCompany.country}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-600">Available Inventory</p>
-                        <p className="text-lg font-bold text-blue-700">
-                          {loadingInventory ? '...' : `${availableInventoryOz.toFixed(3)} oz`}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {loadingInventory ? '' : `${availableInventory.availableGrams.toFixed(2)} g`}
-                        </p>
+                  <div className="mt-3">
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">{selectedMiningCompany.name}</p>
+                          <p className="text-sm text-gray-600">{selectedMiningCompany.abbreviation} • {selectedMiningCompany.country}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-600">Available Inventory</p>
+                          <p className={`text-lg font-bold ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
+                            {loadingInventory ? '...' : `${availableInventoryOz.toFixed(3)} oz`}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {loadingInventory ? '' : `${availableInventory.availableGrams.toFixed(2)} g`}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {!loadingInventory && availableInventoryOz === 0 && (
+                      <Alert type="warning" title="No Inventory Available" className="mt-3">
+                        This mining company currently has no gold available in inventory.
+                        Gold must be refined and added to inventory before creating a sale.
+                      </Alert>
+                    )}
                   </div>
                 )}
               </div>

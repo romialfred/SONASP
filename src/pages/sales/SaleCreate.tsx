@@ -543,57 +543,57 @@ export function SaleCreate() {
         {/* Pricing Mechanism Info (from Gold Trade Space) */}
         {mechanismData && (
           <Card className="border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 to-teal-50">
-            <CardHeader className="border-b border-emerald-200 bg-emerald-100/50">
+            <CardHeader className="border-b border-emerald-200 bg-emerald-100/50 py-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-emerald-900 flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
+                  <CardTitle className="text-emerald-900 flex items-center gap-2 text-base">
+                    <TrendingUp className="h-4 w-4" />
                     Selected Pricing Mechanism
                   </CardTitle>
-                  <p className="text-sm text-emerald-700 mt-1">{mechanismData.description}</p>
+                  <p className="text-xs text-emerald-700 mt-0.5">{mechanismData.description}</p>
                 </div>
-                <div className="px-4 py-2 bg-emerald-600 text-white rounded-lg">
-                  <p className="text-xs font-semibold mb-1">MECHANISM</p>
-                  <p className="text-lg font-bold">{mechanismData.displayName}</p>
+                <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg">
+                  <p className="text-xs mb-0.5">MECHANISM</p>
+                  <p className="text-base">{mechanismData.displayName}</p>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="py-3">
-              <div className="grid grid-cols-4 gap-3">
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Price per oz</p>
-                  <p className="text-xl font-bold text-emerald-700">
+            <CardContent className="py-2">
+              <div className="grid grid-cols-4 gap-2">
+                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-0.5">Price per oz</p>
+                  <p className="text-lg text-emerald-700">
                     ${mechanismData.pricePerOz.toFixed(2)}
                   </p>
                   {mechanismData.adjustmentPercentage !== 0 && (
-                    <p className={`text-xs font-semibold mt-1 ${
+                    <p className={`text-xs mt-0.5 ${
                       mechanismData.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {mechanismData.adjustmentPercentage > 0 ? '+' : ''}{mechanismData.adjustmentPercentage.toFixed(3)}%
                     </p>
                   )}
                 </div>
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Simulated Quantity</p>
-                  <p className="text-xl font-bold text-gray-900">
+                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-0.5">Simulated Quantity</p>
+                  <p className="text-lg text-gray-900">
                     {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1035).toFixed(2)} g
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Estimated Value</p>
-                  <p className="text-xl font-bold text-gray-900">
+                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-0.5">Estimated Value</p>
+                  <p className="text-lg text-gray-900">
                     ${(((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Value Date</p>
-                  <p className="text-base font-bold text-gray-900">
+                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-0.5">Value Date</p>
+                  <p className="text-sm text-gray-900">
                     {new Date(mechanismData.valueDate).toLocaleDateString()}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{mechanismData.settlementDays} days</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{mechanismData.settlementDays} days</p>
                 </div>
               </div>
             </CardContent>
@@ -632,29 +632,29 @@ export function SaleCreate() {
 
                 {selectedMiningCompany && (
                   <div>
-                    <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                    <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Building2 className="h-5 w-5 text-blue-600" />
-                            <h3 className="text-lg font-bold text-gray-900">{selectedMiningCompany.name}</h3>
+                        <div className="flex-1 ml-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Building2 className="h-4 w-4 text-blue-600" />
+                            <h3 className="text-base text-gray-900">{selectedMiningCompany.name}</h3>
                           </div>
 
-                          <div className="space-y-1.5 text-sm">
+                          <div className="space-y-1 text-sm ml-6">
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600 font-medium">Code:</span>
-                              <span className="text-gray-900 font-semibold">{selectedMiningCompany.abbreviation}</span>
+                              <span className="text-gray-600">Code:</span>
+                              <span className="text-gray-900">{selectedMiningCompany.abbreviation}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600 font-medium">Country:</span>
+                              <span className="text-gray-600">Country:</span>
                               <span className="text-gray-900">{selectedMiningCompany.country}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-right ml-4 bg-white rounded-lg px-4 py-3 border border-blue-200 shadow-sm">
-                          <p className="text-xs text-gray-600 font-medium mb-1">Available Inventory</p>
-                          <p className={`text-2xl font-bold ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
+                        <div className="text-right ml-4 bg-white rounded-lg px-3 py-2 border border-blue-200 shadow-sm">
+                          <p className="text-xs text-gray-600 mb-0.5">Available Inventory</p>
+                          <p className={`text-xl ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
                             {loadingInventory ? '...' : `${availableInventoryOz.toFixed(3)} oz`}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
@@ -663,10 +663,10 @@ export function SaleCreate() {
                         </div>
                       </div>
 
-                      <div className="mt-3 pt-3 border-t border-blue-200">
+                      <div className="mt-2 pt-2 border-t border-blue-200">
                         <div className="flex items-center gap-2 text-xs text-blue-800">
-                          <Lock className="h-3.5 w-3.5" />
-                          <span className="font-medium">Seller information is based on stock ownership and cannot be changed</span>
+                          <Lock className="h-3 w-3" />
+                          <span>Seller information is based on stock ownership and cannot be changed</span>
                         </div>
                       </div>
                     </div>
@@ -711,23 +711,23 @@ export function SaleCreate() {
                 </FormField>
 
                 {selectedCustomer && (
-                  <div className="mt-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-3">
-                      <User className="h-5 w-5 text-purple-600" />
-                      <h4 className="font-semibold text-gray-900">{selectedCustomer.customer_name}</h4>
+                  <div className="mt-3 px-4 py-2.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2 ml-2">
+                      <User className="h-4 w-4 text-purple-600" />
+                      <h4 className="text-sm text-gray-900">{selectedCustomer.customer_name}</h4>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Max Stock %</p>
-                        <p className="text-lg font-bold text-purple-700">{selectedCustomer.max_stock_percentage}%</p>
+                    <div className="grid grid-cols-3 gap-2 ml-6">
+                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
+                        <p className="text-xs text-gray-600 mb-0.5">Max Stock %</p>
+                        <p className="text-base text-purple-700">{selectedCustomer.max_stock_percentage}%</p>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Sale Method</p>
-                        <p className="text-sm font-semibold text-gray-900">{selectedCustomer.sale_method}</p>
+                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
+                        <p className="text-xs text-gray-600 mb-0.5">Sale Method</p>
+                        <p className="text-sm text-gray-900">{selectedCustomer.sale_method}</p>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Fees</p>
-                        <div className="text-xs space-y-1">
+                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
+                        <p className="text-xs text-gray-600 mb-0.5">Fees</p>
+                        <div className="text-xs space-y-0.5">
                           <p className={selectedCustomer.refining_fees_paid_by_customer ? 'text-green-600' : 'text-red-600'}>
                             Refining: {selectedCustomer.refining_fees_paid_by_customer ? 'Customer' : 'Seller'}
                           </p>

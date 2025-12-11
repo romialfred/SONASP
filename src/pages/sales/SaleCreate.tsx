@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Package, AlertCircle, CheckCircle, Building2, User, FileText, Download, Eye } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Package, AlertCircle, CheckCircle, Building2, User, FileText, Download, Eye, Lock } from 'lucide-react';
 import type { PricingMechanism } from '@/services/goldTradeSpaceService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -28,6 +28,7 @@ import {
   downloadInvoicePDF,
   type InvoiceData
 } from '@/services/saleInvoiceService';
+import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 
 interface MiningCompany {
   id: string;
@@ -43,14 +44,16 @@ export function SaleCreate() {
   const { user } = useAuth();
   const alert = useAlert();
 
-  // Extract data from navigation state (from Gold Trade Space simulation)
+  // Extract data from navigation state (from Gold Trade Space simulation or Inventory)
   const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
   const initialQuantity = (location.state as any)?.quantityOz || 0;
   const availableFromState = (location.state as any)?.availableStockOz;
+  const preselectedSellerId = (location.state as any)?.preselectedSellerId; // New: preselected seller from inventory
+  const isSellerLocked = (location.state as any)?.lockSeller || false; // New: lock seller field
 
   const [formData, setFormData] = useState({
     customerId: '',
-    miningCompanyId: '',
+    miningCompanyId: preselectedSellerId || '',
     quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '',
     freightCost: '',
@@ -71,6 +74,8 @@ export function SaleCreate() {
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [invoicePdfBlob, setInvoicePdfBlob] = useState<Blob | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
 
   useEffect(() => {
     fetchMiningCompanies();
@@ -164,6 +169,11 @@ export function SaleCreate() {
   const availableInventoryOz = availableFromState || availableInventory.availableOz;
 
   const handleInputChange = (field: string, value: string) => {
+    // Prevent changing seller if locked
+    if (field === 'miningCompanyId' && isSellerLocked) {
+      return;
+    }
+
     if (field === 'miningCompanyId') {
       const company = miningCompanies.find(c => c.id === value);
       setSelectedMiningCompany(company || null);
@@ -180,6 +190,7 @@ export function SaleCreate() {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
     setShowCalculations(false);
+    setShowInvoicePreview(false); // Hide preview when data changes
   };
 
   const validateForm = (): boolean => {
@@ -279,6 +290,53 @@ export function SaleCreate() {
     }
   };
 
+  const updateInvoicePreviewData = async () => {
+    if (!calculations || !selectedMiningCompany || !selectedCustomer) return;
+
+    // Fetch full customer details
+    const { data: customerData } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', formData.customerId)
+      .single();
+
+    const previewData: InvoicePreviewData = {
+      // Seller Information
+      sellerName: selectedMiningCompany.name,
+      sellerAddress: selectedMiningCompany.abbreviation,
+      sellerCountry: selectedMiningCompany.country,
+
+      // Customer Information
+      customerName: selectedCustomer.customer_name,
+      customerAddress: customerData?.address || '',
+      customerCountry: customerData?.country || '',
+
+      // Sale Details
+      quantityOz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
+      quantityGrams: (typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1035,
+      pricePerOz: parseFloat(formData.londonAMRate),
+      currency: 'USD',
+
+      // Pricing Details
+      grossProceeds: calculations.grossProceeds,
+      freightCost: calculations.freight,
+      otherCosts: calculations.otherCosts,
+      netProceeds: calculations.netProceeds,
+      royaltiesPercentage: 3,
+      royaltiesAmount: calculations.royalties,
+      finalAmount: calculations.finalAmount,
+
+      // Additional Info
+      mechanismType: formData.mechanismType,
+      mechanismDisplayName: formData.mechanismDisplayName,
+      valueDate: mechanismData?.valueDate,
+      settlementDays: mechanismData?.settlementDays
+    };
+
+    setInvoicePreviewData(previewData);
+    setShowInvoicePreview(true);
+  };
+
   const handleCalculate = async () => {
     if (!validateForm()) return;
 
@@ -300,8 +358,9 @@ export function SaleCreate() {
 
     setShowCalculations(true);
 
-    // Generate invoice preview automatically
+    // Generate invoice preview and PDF automatically
     setTimeout(() => {
+      updateInvoicePreviewData();
       generateInvoicePreview();
     }, 100);
   };
@@ -409,7 +468,7 @@ export function SaleCreate() {
 
   return (
     <MainLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className={`transition-all duration-300 space-y-6 ${showInvoicePreview ? 'max-w-5xl mr-[500px] ml-auto' : 'max-w-5xl mx-auto'}`}>
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button
@@ -502,16 +561,27 @@ export function SaleCreate() {
               {/* Seller (Mining Company) */}
               <div>
                 <FormField
-                  label="Seller (Mining Company)"
+                  label={
+                    <div className="flex items-center gap-2">
+                      <span>Seller (Mining Company)</span>
+                      {isSellerLocked && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-xs font-semibold">
+                          <Lock className="w-3 h-3" />
+                          Locked
+                        </div>
+                      )}
+                    </div>
+                  }
                   required
                   error={errors.miningCompanyId}
-                  hint="The mining company selling the gold"
+                  hint={isSellerLocked ? "Seller is pre-selected from inventory and cannot be changed" : "The mining company selling the gold"}
                 >
                   <Select
                     value={formData.miningCompanyId}
                     onChange={(e) => handleInputChange('miningCompanyId', e.target.value)}
                     error={!!errors.miningCompanyId}
-                    disabled={miningCompanies.length === 1}
+                    disabled={isSellerLocked || miningCompanies.length === 1}
+                    className={isSellerLocked ? 'bg-blue-50 cursor-not-allowed' : ''}
                   >
                     <option value="">Select seller</option>
                     {miningCompanies.map((company) => (
@@ -860,6 +930,12 @@ export function SaleCreate() {
           </Alert>
         )}
       </div>
+
+      {/* Invoice Preview Panel */}
+      <InvoicePreviewPanel
+        data={invoicePreviewData}
+        isVisible={showInvoicePreview}
+      />
     </MainLayout>
   );
 }

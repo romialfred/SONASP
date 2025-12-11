@@ -541,6 +541,9 @@ export function InventoryManagement() {
                           <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             % of Total
                           </th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -577,6 +580,26 @@ export function InventoryManagement() {
                                   {percentOfTotal.toFixed(1)}%
                                 </span>
                               </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    navigate('/sales/create', {
+                                      state: {
+                                        preselectedSellerId: company.company_id,
+                                        lockSeller: true,
+                                        availableStockOz: company.available_stock
+                                      }
+                                    });
+                                  }}
+                                  disabled={company.available_stock === 0}
+                                  className="gap-1.5 text-xs"
+                                >
+                                  <ArrowUpRight className="w-3.5 h-3.5" />
+                                  Continue With Spot Basis
+                                </Button>
+                              </td>
                             </tr>
                           );
                         })}
@@ -604,6 +627,7 @@ export function InventoryManagement() {
                           <td className="px-4 py-3 text-sm text-right font-bold text-primary-700">
                             100%
                           </td>
+                          <td className="px-4 py-3"></td>
                         </tr>
                       </tfoot>
                     </table>

@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Calendar } from 'lucide-react';
 
 interface MonthlyData {
@@ -98,7 +98,6 @@ export function MonthlyProductionBarChart({ data }: MonthlyProductionBarChartPro
             layout="vertical"
             margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
             <XAxis
               type="number"
               tick={{ fontSize: 12, fill: '#64748b' }}

@@ -401,7 +401,6 @@ export function GoldPricesPage() {
                   <div className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={dailyPrices}>
-                      <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="price_date"
                         tickFormatter={(value) => new Date(value).getDate().toString()}
@@ -565,7 +564,6 @@ export function GoldPricesPage() {
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthlyAggregates}>
-                      <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="month"
                         tickFormatter={(value) => monthNames[value - 1].substring(0, 3)}
@@ -722,7 +720,6 @@ export function GoldPricesPage() {
                   <div className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={monthlySalesVsMarket.slice().reverse()}>
-                        <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey="month"
                           tickFormatter={(value) => monthNames[value - 1].substring(0, 3)}

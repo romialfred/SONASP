@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
+import { ComposedChartWidget } from '@/components/charts/ComposedChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 import { FxRateComparison } from '@/components/fx/FxRateComparison';
 import { LiveFxRatePanel } from '@/components/prices/LiveFxRatePanel';
@@ -746,14 +747,17 @@ export function FxRatesPage() {
                   <CardTitle>Monthly Rate Trends</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BarChartWidget
+                  <ComposedChartWidget
                     data={getMonthlyChartData()}
-                    bars={CURRENCY_PAIRS.map((p, idx) => ({
-                      dataKey: p.value,
-                      color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][idx % 5],
-                      name: p.value
-                    })).filter(bar =>
+                    bars={[
+                      { dataKey: 'USD/XOF', color: '#10b981', name: 'USD/XOF', yAxisId: 'left' }
+                    ].filter(bar =>
                       monthlyRates.some(r => r.currency_pair === bar.dataKey)
+                    )}
+                    lines={[
+                      { dataKey: 'USD/GNF', color: '#f59e0b', name: 'USD/GNF', yAxisId: 'right' }
+                    ].filter(line =>
+                      monthlyRates.some(r => r.currency_pair === line.dataKey)
                     )}
                     height={300}
                   />

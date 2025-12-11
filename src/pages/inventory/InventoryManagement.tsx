@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { supabase } from '@/lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import {
   getCurrentInventoryStatus,
   getMonthlyInventorySummary,
@@ -422,7 +422,6 @@ export function InventoryManagement() {
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={companyChartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                           <XAxis
                             dataKey="name"
                             tick={{ fontSize: 12 }}
@@ -467,7 +466,6 @@ export function InventoryManagement() {
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={monthlyChartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                           <XAxis
                             dataKey="month"
                             tick={{ fontSize: 12 }}

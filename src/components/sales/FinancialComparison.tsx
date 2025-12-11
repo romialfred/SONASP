@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { TrendingUp, Award, DollarSign, Percent } from 'lucide-react';
 import { type PricingMechanism } from '@/services/goldTradeSpaceService';
 
@@ -102,7 +102,6 @@ export function FinancialComparison({ mechanisms, recommendedMechanism }: Financ
           <h3 className="text-lg font-semibold text-gray-900">Total Value Comparison</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={comparisonData}>
-              <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
@@ -125,7 +124,6 @@ export function FinancialComparison({ mechanisms, recommendedMechanism }: Financ
           <h3 className="text-lg font-semibold text-gray-900">Financial Benefit Analysis</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={benefitData}>
-              <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis
                 yAxisId="left"

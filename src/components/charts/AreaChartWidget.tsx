@@ -21,7 +21,7 @@ export function AreaChartWidget({
   data,
   areas,
   height = 300,
-  showGrid = true,
+  showGrid = false,
   showLegend = true
 }: AreaChartWidgetProps) {
   return (

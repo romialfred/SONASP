@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, Calendar } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';
@@ -104,7 +104,6 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
         <>
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="date"
                 tick={{ fill: '#6b7280', fontSize: 12 }}

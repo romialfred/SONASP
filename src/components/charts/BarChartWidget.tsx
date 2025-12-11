@@ -21,7 +21,7 @@ export function BarChartWidget({
   data,
   bars,
   height = 300,
-  showGrid = true,
+  showGrid = false,
   showLegend = true
 }: BarChartWidgetProps) {
   return (

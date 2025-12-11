@@ -225,7 +225,6 @@ function ProductionBrowserTab({
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={getChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="name"
                 angle={-45}
@@ -1285,7 +1284,6 @@ export function BudgetManagementPage() {
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                     <XAxis
                       type="number"
                       tick={{ fontSize: 11, fill: '#64748b' }}

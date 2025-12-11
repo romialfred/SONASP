@@ -155,38 +155,36 @@ export function ColumnSelectorModal({
   const previewRows = previewData.slice(0, 5);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="4xl">
-      <div className="space-y-5">
+    <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="3xl">
+      <div className="space-y-6 p-2">
         {/* Header with Steps */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Columns className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {step === 'selection' ? 'Sélection des Colonnes' : 'Aperçu de l\'Export'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {step === 'selection'
-                    ? 'Choisissez les colonnes à exporter'
-                    : 'Vérifiez les données avant l\'export'}
-                </p>
-              </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+              <Columns className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                {step === 'selection' ? 'Sélection des Colonnes' : 'Aperçu de l\'Export'}
+              </h3>
+              <p className="text-sm text-gray-600 mt-0.5">
+                {step === 'selection'
+                  ? 'Choisissez les colonnes à exporter'
+                  : 'Vérifiez les données avant l\'export'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-all ${
               step === 'selection' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
             }`}>
-              <span className="text-xs font-medium">1. Sélection</span>
+              <span className="text-xs font-semibold">1. Sélection</span>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-all ${
               step === 'preview' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
             }`}>
-              <span className="text-xs font-medium">2. Aperçu</span>
+              <span className="text-xs font-semibold">2. Aperçu</span>
             </div>
           </div>
         </div>
@@ -194,54 +192,56 @@ export function ColumnSelectorModal({
         {step === 'selection' ? (
           <>
             {/* Column Count Badge */}
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-                <Check className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-900">
+            <div className="flex items-center justify-between px-1">
+              <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
+                <Check className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">
                   {selectedColumns.length} colonne{selectedColumns.length > 1 ? 's' : ''} sélectionnée{selectedColumns.length > 1 ? 's' : ''}
                 </span>
               </div>
-              <div className="text-sm text-gray-600">
-                Sur {AVAILABLE_COLUMNS.length} disponibles
+              <div className="text-sm font-medium text-gray-600">
+                Sur <span className="font-bold text-gray-900">{AVAILABLE_COLUMNS.length}</span> disponibles
               </div>
             </div>
 
             {/* Category Filters */}
-            <div className="flex flex-wrap gap-2 pb-3 border-b border-gray-200">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat === 'all' ? 'Toutes' : cat}
-                </button>
-              ))}
+            <div className="px-1">
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-blue-600 text-white shadow-md scale-105'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {cat === 'all' ? 'Toutes' : cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={selectAll}
-                  className="text-xs gap-1.5"
+                  className="text-sm gap-2 hover:bg-blue-50 hover:text-blue-700"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-4 h-4" />
                   Tout sélectionner
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={deselectAll}
-                  className="text-xs gap-1.5"
+                  className="text-sm gap-2 hover:bg-red-50 hover:text-red-700"
                 >
-                  <EyeOff className="w-3.5 h-3.5" />
+                  <EyeOff className="w-4 h-4" />
                   Tout désélectionner
                 </Button>
               </div>
@@ -249,118 +249,124 @@ export function ColumnSelectorModal({
                 variant="ghost"
                 size="sm"
                 onClick={handleReset}
-                className="text-xs"
+                className="text-sm hover:bg-gray-100"
               >
                 Par défaut
               </Button>
             </div>
 
             {/* Column List */}
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
-              <div className="divide-y divide-gray-200">
-                {filteredColumns.map((column) => {
-                  const isSelected = selectedColumns.includes(column.id);
+            <div className="px-1">
+              <div className="max-h-96 overflow-y-auto border-2 border-gray-200 rounded-xl bg-white shadow-sm">
+                <div className="divide-y divide-gray-100">
+                  {filteredColumns.map((column) => {
+                    const isSelected = selectedColumns.includes(column.id);
 
-                  return (
-                    <button
-                      key={column.id}
-                      onClick={() => toggleColumn(column.id)}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                        isSelected ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected
-                            ? 'bg-blue-600 border-blue-600'
-                            : 'border-gray-300'
-                        }`}>
-                          {isSelected && (
-                            <Check className="w-3.5 h-3.5 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-sm font-medium ${
-                              isSelected ? 'text-blue-900' : 'text-gray-900'
-                            }`}>
-                              {column.label}
-                            </span>
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
-                              {column.category}
-                            </span>
+                    return (
+                      <button
+                        key={column.id}
+                        onClick={() => toggleColumn(column.id)}
+                        className={`w-full text-left px-5 py-3.5 hover:bg-gray-50 transition-all ${
+                          isSelected ? 'bg-blue-50 hover:bg-blue-100' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                            isSelected
+                              ? 'bg-blue-600 border-blue-600 shadow-sm'
+                              : 'border-gray-300 hover:border-blue-400'
+                          }`}>
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-white" />
+                            )}
                           </div>
-                          {column.description && (
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                              {column.description}
-                            </p>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-sm font-semibold ${
+                                isSelected ? 'text-blue-900' : 'text-gray-900'
+                              }`}>
+                                {column.label}
+                              </span>
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">
+                                {column.category}
+                              </span>
+                            </div>
+                            {column.description && (
+                              <p className="text-xs text-gray-500 leading-relaxed">
+                                {column.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </>
         ) : (
           <>
             {/* Preview Table */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-blue-900 mb-1">
-                    Aperçu des données
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    {previewRows.length} première{previewRows.length > 1 ? 's' : ''} ligne{previewRows.length > 1 ? 's' : ''} sur {previewData.length} au total
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-blue-700">Colonnes</p>
-                  <p className="text-lg font-bold text-blue-900">{selectedColumns.length}</p>
+            <div className="px-1">
+              <div className="bg-gradient-to-r from-blue-50 via-blue-100 to-indigo-100 rounded-xl p-5 border-2 border-blue-200 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-blue-900 mb-1">
+                      Aperçu des données
+                    </p>
+                    <p className="text-xs text-blue-700 font-medium">
+                      {previewRows.length} première{previewRows.length > 1 ? 's' : ''} ligne{previewRows.length > 1 ? 's' : ''} sur {previewData.length} au total
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-blue-700 font-medium">Colonnes</p>
+                    <p className="text-xl font-bold text-blue-900">{selectedColumns.length}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto max-h-96">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                    <tr>
-                      {selectedColumns.map(colId => {
-                        const col = AVAILABLE_COLUMNS.find(c => c.id === colId);
-                        return (
-                          <th
-                            key={colId}
-                            className="px-4 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap"
-                          >
-                            {col?.label || colId}
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {previewRows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        {selectedColumns.map(colId => (
-                          <td
-                            key={colId}
-                            className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap"
-                          >
-                            {getColumnValue(row, colId)}
-                          </td>
-                        ))}
+            <div className="px-1">
+              <div className="border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto max-h-96">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200 sticky top-0">
+                      <tr>
+                        {selectedColumns.map(colId => {
+                          const col = AVAILABLE_COLUMNS.find(c => c.id === colId);
+                          return (
+                            <th
+                              key={colId}
+                              className="px-5 py-3.5 text-left text-xs font-bold text-gray-700 whitespace-nowrap"
+                            >
+                              {col?.label || colId}
+                            </th>
+                          );
+                        })}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {previewRows.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-blue-50 transition-colors">
+                          {selectedColumns.map(colId => (
+                            <td
+                              key={colId}
+                              className="px-5 py-3 text-sm text-gray-900 whitespace-nowrap font-medium"
+                            >
+                              {getColumnValue(row, colId)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
             {previewData.length > 5 && (
-              <div className="text-center text-xs text-gray-500">
+              <div className="text-center text-sm text-gray-600 font-medium px-1">
                 + {previewData.length - 5} ligne{previewData.length - 5 > 1 ? 's' : ''} supplémentaire{previewData.length - 5 > 1 ? 's' : ''} seront exportées
               </div>
             )}
@@ -368,49 +374,51 @@ export function ColumnSelectorModal({
         )}
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-          <Button
-            variant="ghost"
-            onClick={step === 'selection' ? onClose : handleBack}
-            className="gap-2"
-          >
-            {step === 'selection' ? (
-              'Annuler'
-            ) : (
-              <>
-                <ChevronLeft className="w-4 h-4" />
-                Retour
-              </>
-            )}
-          </Button>
-
-          {step === 'selection' ? (
+        <div className="bg-gray-50 rounded-xl p-4 border-t-2 border-gray-200 mt-2">
+          <div className="flex items-center justify-between gap-4">
             <Button
-              onClick={handleNext}
-              disabled={selectedColumns.length === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+              variant="ghost"
+              onClick={step === 'selection' ? onClose : handleBack}
+              className="gap-2 px-5 py-2.5 text-sm font-semibold hover:bg-white"
             >
-              Suivant: Aperçu
-              <ChevronRight className="w-4 h-4" />
+              {step === 'selection' ? (
+                'Annuler'
+              ) : (
+                <>
+                  <ChevronLeft className="w-4 h-4" />
+                  Retour
+                </>
+              )}
             </Button>
-          ) : (
-            <div className="flex gap-2">
+
+            {step === 'selection' ? (
               <Button
-                onClick={() => handleConfirm('csv')}
-                className="bg-gray-600 hover:bg-gray-700 text-white gap-2"
+                onClick={handleNext}
+                disabled={selectedColumns.length === 0}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-2 px-6 py-2.5 text-sm font-bold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FileSpreadsheet className="w-4 h-4" />
-                Exporter CSV
+                Suivant: Aperçu
+                <ChevronRight className="w-4 h-4" />
               </Button>
-              <Button
-                onClick={() => handleConfirm('excel')}
-                className="bg-green-600 hover:bg-green-700 text-white gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Exporter Excel
-              </Button>
-            </div>
-          )}
+            ) : (
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => handleConfirm('csv')}
+                  className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white gap-2 px-5 py-2.5 text-sm font-bold shadow-md transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Exporter CSV
+                </Button>
+                <Button
+                  onClick={() => handleConfirm('excel')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white gap-2 px-5 py-2.5 text-sm font-bold shadow-md transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  Exporter Excel
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

@@ -30,6 +30,8 @@ DROP POLICY IF EXISTS "Allow read access to mining companies" ON mining_companie
 DROP POLICY IF EXISTS "mining_companies_select" ON mining_companies;
 DROP POLICY IF EXISTS "Enable read access for all users" ON mining_companies;
 DROP POLICY IF EXISTS "Allow authenticated users to read" ON mining_companies;
+DROP POLICY IF EXISTS "authenticated_users_can_read_mining_companies" ON mining_companies;
+DROP POLICY IF EXISTS "anon_users_can_read_mining_companies" ON mining_companies;
 
 -- 3. Créer une politique de lecture pour tous les utilisateurs authentifiés
 CREATE POLICY "authenticated_users_can_read_mining_companies"
@@ -39,7 +41,6 @@ CREATE POLICY "authenticated_users_can_read_mining_companies"
   USING (true);
 
 -- 4. Créer une politique de lecture pour les utilisateurs anonymes
--- Cela permet à l'application de fonctionner même sans authentification
 CREATE POLICY "anon_users_can_read_mining_companies"
   ON mining_companies
   FOR SELECT
@@ -66,11 +67,10 @@ BEGIN
   RAISE NOTICE '';
 
   IF v_count = 0 THEN
-    RAISE WARNING 'Aucune politique RLS trouvée! Les utilisateurs ne pourront pas lire les données.';
+    RAISE WARNING 'Aucune politique RLS trouvée!';
   ELSE
-    -- Afficher les politiques
     FOR v_policy IN (
-      SELECT policyname, cmd, roles::text, qual::text
+      SELECT policyname, cmd, roles::text
       FROM pg_policies
       WHERE schemaname = 'public'
         AND tablename = 'mining_companies'
@@ -91,7 +91,6 @@ DECLARE
   v_count INTEGER;
   r RECORD;
 BEGIN
-  -- Compter les mining companies
   SELECT COUNT(*) INTO v_count FROM mining_companies;
 
   RAISE NOTICE '';
@@ -111,56 +110,80 @@ BEGIN
   END IF;
 END $$;
 
--- 7. Appliquer les mêmes correctifs sur les tables liées
--- Ces tables doivent aussi être accessibles pour que la chaîne fonctionne
+-- 7. Appliquer les politiques sur les autres tables SI ELLES EXISTENT
+-- On vérifie d'abord si chaque table existe avant de créer les politiques
 
--- Production
-DROP POLICY IF EXISTS "authenticated_users_can_read_production" ON production;
-CREATE POLICY "authenticated_users_can_read_production"
-  ON production
-  FOR SELECT
-  TO authenticated
-  USING (true);
+-- Daily Production
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'daily_production') THEN
+    DROP POLICY IF EXISTS "authenticated_read_daily_production" ON daily_production;
+    DROP POLICY IF EXISTS "anon_read_daily_production" ON daily_production;
 
-CREATE POLICY "anon_users_can_read_production"
-  ON production
-  FOR SELECT
-  TO anon
-  USING (true);
+    CREATE POLICY "authenticated_read_daily_production"
+      ON daily_production FOR SELECT TO authenticated USING (true);
+    CREATE POLICY "anon_read_daily_production"
+      ON daily_production FOR SELECT TO anon USING (true);
+
+    RAISE NOTICE '✅ Politiques RLS créées pour daily_production';
+  END IF;
+END $$;
 
 -- Freight Shipments
-DROP POLICY IF EXISTS "authenticated_users_can_read_freight_shipments" ON freight_shipments;
-CREATE POLICY "authenticated_users_can_read_freight_shipments"
-  ON freight_shipments
-  FOR SELECT
-  TO authenticated
-  USING (true);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'freight_shipments') THEN
+    DROP POLICY IF EXISTS "authenticated_read_freight_shipments" ON freight_shipments;
+    DROP POLICY IF EXISTS "anon_read_freight_shipments" ON freight_shipments;
 
-CREATE POLICY "anon_users_can_read_freight_shipments"
-  ON freight_shipments
-  FOR SELECT
-  TO anon
-  USING (true);
+    CREATE POLICY "authenticated_read_freight_shipments"
+      ON freight_shipments FOR SELECT TO authenticated USING (true);
+    CREATE POLICY "anon_read_freight_shipments"
+      ON freight_shipments FOR SELECT TO anon USING (true);
+
+    RAISE NOTICE '✅ Politiques RLS créées pour freight_shipments';
+  END IF;
+END $$;
 
 -- Gold Inventory
-DROP POLICY IF EXISTS "authenticated_users_can_read_gold_inventory" ON gold_inventory;
-CREATE POLICY "authenticated_users_can_read_gold_inventory"
-  ON gold_inventory
-  FOR SELECT
-  TO authenticated
-  USING (true);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'gold_inventory') THEN
+    DROP POLICY IF EXISTS "authenticated_read_gold_inventory" ON gold_inventory;
+    DROP POLICY IF EXISTS "anon_read_gold_inventory" ON gold_inventory;
 
-CREATE POLICY "anon_users_can_read_gold_inventory"
-  ON gold_inventory
-  FOR SELECT
-  TO anon
-  USING (true);
+    CREATE POLICY "authenticated_read_gold_inventory"
+      ON gold_inventory FOR SELECT TO authenticated USING (true);
+    CREATE POLICY "anon_read_gold_inventory"
+      ON gold_inventory FOR SELECT TO anon USING (true);
+
+    RAISE NOTICE '✅ Politiques RLS créées pour gold_inventory';
+  END IF;
+END $$;
+
+-- Shipping
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'shipping') THEN
+    DROP POLICY IF EXISTS "authenticated_read_shipping" ON shipping;
+    DROP POLICY IF EXISTS "anon_read_shipping" ON shipping;
+
+    CREATE POLICY "authenticated_read_shipping"
+      ON shipping FOR SELECT TO authenticated USING (true);
+    CREATE POLICY "anon_read_shipping"
+      ON shipping FOR SELECT TO anon USING (true);
+
+    RAISE NOTICE '✅ Politiques RLS créées pour shipping';
+  END IF;
+END $$;
 
 -- 8. Message final
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '✅ Politiques RLS créées pour toutes les tables de la chaîne!';
+  RAISE NOTICE '========================================';
+  RAISE NOTICE '✅ POLITIQUES RLS CRÉÉES!';
+  RAISE NOTICE '========================================';
   RAISE NOTICE '';
   RAISE NOTICE '📋 PROCHAINES ÉTAPES:';
   RAISE NOTICE '  1. Rafraîchir l''application (Ctrl+Shift+R)';

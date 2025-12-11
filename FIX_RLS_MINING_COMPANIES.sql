@@ -38,18 +38,19 @@ CREATE POLICY "authenticated_users_can_read_mining_companies"
   TO authenticated
   USING (true);
 
--- 4. Créer une politique de lecture pour les utilisateurs anonymes (si nécessaire)
--- Décommentez cette ligne si vous voulez que l'application fonctionne sans authentification
--- CREATE POLICY "anon_users_can_read_mining_companies"
---   ON mining_companies
---   FOR SELECT
---   TO anon
---   USING (true);
+-- 4. Créer une politique de lecture pour les utilisateurs anonymes
+-- Cela permet à l'application de fonctionner même sans authentification
+CREATE POLICY "anon_users_can_read_mining_companies"
+  ON mining_companies
+  FOR SELECT
+  TO anon
+  USING (true);
 
 -- 5. Vérifier les politiques créées
 DO $$
 DECLARE
   v_count INTEGER;
+  v_policy RECORD;
 BEGIN
   SELECT COUNT(*)
   INTO v_count
@@ -69,7 +70,7 @@ BEGIN
   ELSE
     -- Afficher les politiques
     FOR v_policy IN (
-      SELECT policyname, cmd, roles, qual::text
+      SELECT policyname, cmd, roles::text, qual::text
       FROM pg_policies
       WHERE schemaname = 'public'
         AND tablename = 'mining_companies'
@@ -84,10 +85,11 @@ BEGIN
   RAISE NOTICE '========================================';
 END $$;
 
--- 6. Tester la lecture (en tant que rôle authenticated)
+-- 6. Tester la lecture
 DO $$
 DECLARE
   v_count INTEGER;
+  r RECORD;
 BEGIN
   -- Compter les mining companies
   SELECT COUNT(*) INTO v_count FROM mining_companies;
@@ -98,7 +100,7 @@ BEGIN
   RAISE NOTICE '';
 
   IF v_count = 0 THEN
-    RAISE WARNING 'Aucune mining company trouvée! Exécutez le script SEED_MINING_COMPANIES_MANUAL.sql';
+    RAISE WARNING 'Aucune mining company trouvée!';
   ELSE
     RAISE NOTICE '✅ Les mining companies sont accessibles!';
     RAISE NOTICE '';
@@ -120,12 +122,24 @@ CREATE POLICY "authenticated_users_can_read_production"
   TO authenticated
   USING (true);
 
+CREATE POLICY "anon_users_can_read_production"
+  ON production
+  FOR SELECT
+  TO anon
+  USING (true);
+
 -- Freight Shipments
 DROP POLICY IF EXISTS "authenticated_users_can_read_freight_shipments" ON freight_shipments;
 CREATE POLICY "authenticated_users_can_read_freight_shipments"
   ON freight_shipments
   FOR SELECT
   TO authenticated
+  USING (true);
+
+CREATE POLICY "anon_users_can_read_freight_shipments"
+  ON freight_shipments
+  FOR SELECT
+  TO anon
   USING (true);
 
 -- Gold Inventory
@@ -136,13 +150,22 @@ CREATE POLICY "authenticated_users_can_read_gold_inventory"
   TO authenticated
   USING (true);
 
-RAISE NOTICE '';
-RAISE NOTICE '✅ Politiques RLS créées pour toutes les tables de la chaîne!';
-RAISE NOTICE '';
-RAISE NOTICE '📋 PROCHAINES ÉTAPES:';
-RAISE NOTICE '  1. Rafraîchir l''application (Ctrl+Shift+R)';
-RAISE NOTICE '  2. Se connecter en tant qu''utilisateur authentifié';
-RAISE NOTICE '  3. Aller sur Gold Trade Space';
-RAISE NOTICE '  4. Sélectionner KGM dans le dropdown';
-RAISE NOTICE '';
-RAISE NOTICE '🎉 FIX TERMINÉ!';
+CREATE POLICY "anon_users_can_read_gold_inventory"
+  ON gold_inventory
+  FOR SELECT
+  TO anon
+  USING (true);
+
+-- 8. Message final
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '✅ Politiques RLS créées pour toutes les tables de la chaîne!';
+  RAISE NOTICE '';
+  RAISE NOTICE '📋 PROCHAINES ÉTAPES:';
+  RAISE NOTICE '  1. Rafraîchir l''application (Ctrl+Shift+R)';
+  RAISE NOTICE '  2. Aller sur Gold Trade Space';
+  RAISE NOTICE '  3. Sélectionner KGM dans le dropdown';
+  RAISE NOTICE '';
+  RAISE NOTICE '🎉 FIX TERMINÉ!';
+END $$;

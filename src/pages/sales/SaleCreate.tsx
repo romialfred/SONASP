@@ -575,10 +575,18 @@ export function SaleCreate() {
                   )}
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-1">Simulated Quantity</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
-                  </p>
+                  <p className="text-xs text-gray-600 mb-1">Simulated Quantity (Editable)</p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')}
+                      onChange={(e) => handleInputChange('quantityOz', e.target.value)}
+                      className="text-xl font-bold text-gray-900 border-emerald-300 focus:border-emerald-500"
+                      placeholder="0.000"
+                    />
+                    <span className="text-sm font-semibold text-gray-600">oz</span>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1035).toFixed(2)} g
                   </p>

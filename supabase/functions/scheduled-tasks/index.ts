@@ -99,19 +99,69 @@ Deno.serve(async (req: Request) => {
 
 async function fetchExchangeRates(supabase: any) {
   try {
-    console.log('Fetching exchange rates from ECB...');
-    return { success: true, message: 'Exchange rates fetched successfully' };
+    console.log('Fetching FX rates by calling fetch-daily-fx-rates edge function...');
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-daily-fx-rates`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Edge function returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log('FX rates fetched successfully:', result.data);
+      return { success: true, message: result.message || 'Exchange rates fetched successfully' };
+    } else {
+      throw new Error(result.message || 'Failed to fetch exchange rates');
+    }
   } catch (error) {
-    return { success: false, message: `Failed to fetch exchange rates: ${error}` };
+    console.error('Error fetching exchange rates:', error);
+    return { success: false, message: `Failed to fetch exchange rates: ${error instanceof Error ? error.message : error}` };
   }
 }
 
 async function fetchGoldPrices(supabase: any) {
   try {
-    console.log('Fetching gold prices...');
-    return { success: true, message: 'Gold prices fetched successfully' };
+    console.log('Fetching gold prices by calling fetch-daily-lbma-prices edge function...');
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-daily-lbma-prices`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Edge function returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log('Gold prices fetched successfully:', result.data);
+      return { success: true, message: result.message || 'Gold prices fetched successfully' };
+    } else {
+      throw new Error(result.message || 'Failed to fetch gold prices');
+    }
   } catch (error) {
-    return { success: false, message: `Failed to fetch gold prices: ${error}` };
+    console.error('Error fetching gold prices:', error);
+    return { success: false, message: `Failed to fetch gold prices: ${error instanceof Error ? error.message : error}` };
   }
 }
 

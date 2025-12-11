@@ -2,14 +2,26 @@
 
 ## Étape 1: Importer les Données Historiques (2024-2025)
 
+### Test Rapide (3 dates seulement)
+
+Pour tester d'abord:
+
+```bash
+node scripts/test_improved_fx.mjs
+```
+
+### Import Complet
+
 Exécutez ce script pour importer toutes les données historiques:
 
 ```bash
-node scripts/fetch_historical_fx_rates.mjs
+node scripts/fetch_historical_fx_rates_improved.mjs
 ```
 
 **Durée**: 20-30 minutes
 **Résultat**: Toutes les données de 2024-01-01 à 2025-12-11 seront importées
+
+**Note importante**: USD/GNF utilise des estimations basées sur le taux actuel car les APIs gratuites ne fournissent pas de données historiques pour GNF. Voir `EXPLICATION_PROBLEME_FX_HISTORIQUE.md` pour plus de détails.
 
 ## Étape 2: Vérifier les Données
 

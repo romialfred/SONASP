@@ -39,6 +39,7 @@ export interface InvoicePreviewData {
   royaltiesPercentage: number;
   royaltiesAmount: number;
   finalAmount: number;
+  finalAmountInWords?: string;
   estimatedValue: number;
 
   // Exchange Rate
@@ -68,11 +69,11 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
   const gramsToKg = 1000;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-[580px] bg-white border-l-2 border-gray-900 shadow-2xl z-50 overflow-y-auto">
+    <div className="fixed right-0 top-0 h-screen w-[580px] bg-white border-l border-gray-900 shadow-2xl z-50 overflow-y-auto">
       {/* Sticky Header */}
-      <div className="sticky top-0 bg-white border-b-2 border-gray-900 p-4 shadow-md z-10">
+      <div className="sticky top-0 bg-white border-b border-gray-900 p-4 shadow-md z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gray-100 border-2 border-gray-900 rounded flex items-center justify-center">
+          <div className="w-10 h-10 bg-gray-100 border border-gray-900 rounded flex items-center justify-center">
             <FileText className="w-5 h-5 text-gray-900" />
           </div>
           <div>
@@ -84,30 +85,30 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
 
       <div className="p-4">
         {/* Main Invoice Container */}
-        <div className="bg-white border-2 border-gray-900">
+        <div className="bg-white border border-gray-900">
 
           {/* Seller and Client Header Section */}
-          <div className="grid grid-cols-2 border-b-2 border-gray-900">
+          <div className="grid grid-cols-2 border-b border-gray-900">
             {/* Seller */}
-            <div className="p-4 border-r-2 border-gray-900">
-              <div className="font-bold text-sm mb-2">Seller</div>
-              <div className="text-xs space-y-0.5">
+            <div className="p-3 border-r border-gray-900">
+              <div className="font-bold text-xs mb-1.5">Seller</div>
+              <div className="text-xs space-y-0.5 leading-tight">
                 <div className="font-bold">{data.sellerName}</div>
                 {data.sellerAddress && <div>{data.sellerAddress}</div>}
                 {data.sellerCity && <div>{data.sellerCity}</div>}
-                <div>{data.sellerCountry}</div>
+                {!data.sellerCity && <div>{data.sellerCountry}</div>}
                 {data.sellerPhone && <div>Tel: {data.sellerPhone}</div>}
               </div>
             </div>
 
             {/* Client */}
-            <div className="p-4">
-              <div className="font-bold text-sm mb-2">Client</div>
-              <div className="text-xs space-y-0.5">
+            <div className="p-3">
+              <div className="font-bold text-xs mb-1.5">Client</div>
+              <div className="text-xs space-y-0.5 leading-tight">
                 <div className="font-bold">{data.customerName}</div>
                 {data.customerAddress && <div>{data.customerAddress}</div>}
-                {data.customerCity && <div>{data.customerCity}</div>}
-                {data.customerCountry && <div>{data.customerCountry}</div>}
+                {data.customerCity && data.customerCountry && <div>{data.customerCity} - {data.customerCountry}</div>}
+                {!data.customerCity && data.customerCountry && <div>{data.customerCountry}</div>}
                 {data.customerPhone && <div>Tel: {data.customerPhone}</div>}
               </div>
             </div>
@@ -115,8 +116,8 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
 
           {/* Logo Row (if logos available) */}
           {(data.sellerLogo || data.customerLogo) && (
-            <div className="grid grid-cols-2 border-b-2 border-gray-900">
-              <div className="p-3 border-r-2 border-gray-900 flex items-center justify-center min-h-[80px]">
+            <div className="grid grid-cols-2 border-b border-gray-900">
+              <div className="p-3 border-r border-gray-900 flex items-center justify-center min-h-[80px]">
                 {data.sellerLogo && (
                   <img src={data.sellerLogo} alt="Seller Logo" className="max-h-16 max-w-full object-contain" />
                 )}
@@ -130,8 +131,8 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
           )}
 
           {/* Invoice Number and Date */}
-          <div className="p-3 border-b-2 border-gray-900 bg-white">
-            <div className="flex justify-between items-center text-sm">
+          <div className="p-2.5 border-b border-gray-900 bg-white">
+            <div className="flex justify-between items-center text-xs">
               <div>
                 <span className="font-bold">Facture N° : </span>
                 <span>{data.invoiceNumber || `DRAFT-${Date.now().toString().slice(-6)}`}</span>
@@ -152,58 +153,58 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
           {/* Product Details Table */}
           <div>
             {/* Table Header */}
-            <div className="grid grid-cols-8 bg-[#D4AF37] border-b-2 border-gray-900 text-xs font-bold">
-              <div className="p-2 border-r-2 border-gray-900 text-center">Lot #</div>
-              <div className="col-span-2 p-2 border-r-2 border-gray-900 text-center">Description</div>
-              <div className="p-2 border-r-2 border-gray-900 text-center">Metal</div>
-              <div className="p-2 border-r-2 border-gray-900 text-center">Unit Price $/Oz</div>
-              <div className="p-2 border-r-2 border-gray-900 text-center">Net Weight (kg)</div>
-              <div className="p-2 border-r-2 border-gray-900 text-center">Weight (Troy Oz)</div>
-              <div className="p-2 text-center">Metal Price ({data.currency}/kg)</div>
+            <div className="grid grid-cols-8 bg-[#D4AF37] border-b border-gray-900 text-xs font-bold">
+              <div className="p-1.5 border-r border-gray-900 text-center">Lot #</div>
+              <div className="col-span-2 p-1.5 border-r border-gray-900 text-center">Description</div>
+              <div className="p-1.5 border-r border-gray-900 text-center">Metal</div>
+              <div className="p-1.5 border-r border-gray-900 text-center">Unit Price $/Oz</div>
+              <div className="p-1.5 border-r border-gray-900 text-center">Net Weight (kg)</div>
+              <div className="p-1.5 border-r border-gray-900 text-center">Weight (Troy Oz)</div>
+              <div className="p-1.5 text-center">Metal Price ({data.currency}/kg)</div>
             </div>
 
             {/* Table Header - Estimated Value (Second Row) */}
-            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
-              <div className="p-2 text-xs font-bold text-center">Estimated Value ({data.currency})</div>
+            <div className="bg-[#D4AF37] border-b border-gray-900">
+              <div className="p-1.5 text-xs font-bold text-center">Estimated Value ({data.currency})</div>
             </div>
 
             {/* Product Row */}
-            <div className="grid grid-cols-8 border-b-2 border-gray-900 text-xs">
-              <div className="p-2 border-r-2 border-gray-900 text-center">
+            <div className="grid grid-cols-8 border-b border-gray-900 text-xs">
+              <div className="p-1.5 border-r border-gray-900 text-center">
                 {data.lotNumber || `${new Date().getFullYear()}/${Date.now().toString().slice(-4)}`}
               </div>
-              <div className="col-span-2 p-2 border-r-2 border-gray-900">Fine Gold (Au)</div>
-              <div className="p-2 border-r-2 border-gray-900 text-center">Au</div>
-              <div className="p-2 border-r-2 border-gray-900 text-right">{data.pricePerOz.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              <div className="p-2 border-r-2 border-gray-900 text-right">{data.quantityKg.toFixed(3)}</div>
-              <div className="p-2 border-r-2 border-gray-900 text-right">{data.quantityOz.toFixed(2)}</div>
-              <div className="p-2 text-right">{data.pricePerKg.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+              <div className="col-span-2 p-1.5 border-r border-gray-900">Fine Gold (Au)</div>
+              <div className="p-1.5 border-r border-gray-900 text-center">Au</div>
+              <div className="p-1.5 border-r border-gray-900 text-right">{data.pricePerOz.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div className="p-1.5 border-r border-gray-900 text-right">{data.quantityKg.toFixed(3)}</div>
+              <div className="p-1.5 border-r border-gray-900 text-right">{data.quantityOz.toFixed(2)}</div>
+              <div className="p-1.5 text-right">{data.pricePerKg.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
 
             {/* Estimated Value Row */}
-            <div className="border-b-2 border-gray-900">
-              <div className="p-2 text-xs text-right font-bold">{data.grossProceeds.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            <div className="border-b border-gray-900">
+              <div className="p-1.5 text-xs text-right font-bold">{data.grossProceeds.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
 
             {/* Royalties Row */}
-            <div className="grid grid-cols-8 border-b-2 border-gray-900 text-xs">
-              <div className="col-span-2 p-2 border-r-2 border-gray-900">Royalties</div>
-              <div className="col-span-5 p-2 border-r-2 border-gray-900 text-right">{data.royaltiesPercentage}%</div>
-              <div className="p-2 text-right font-bold">{data.royaltiesAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            <div className="grid grid-cols-8 border-b border-gray-900 text-xs">
+              <div className="col-span-2 p-1.5 border-r border-gray-900">Royalties</div>
+              <div className="col-span-5 p-1.5 border-r border-gray-900 text-right">{data.royaltiesPercentage}%</div>
+              <div className="p-1.5 text-right font-bold">{data.royaltiesAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
 
             {/* Empty Row (spacing) */}
-            <div className="border-b-2 border-gray-900">
-              <div className="p-2">&nbsp;</div>
+            <div className="border-b border-gray-900">
+              <div className="p-1">&nbsp;</div>
             </div>
 
             {/* Totals Section - Header Rows */}
-            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+            <div className="bg-[#D4AF37] border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
-                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>
+                <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>
                   {data.localCurrency ? `Total prix ${data.localCurrency}` : `Total prix ${data.currency}`}
                 </div>
-                <div className="p-2 text-right">
+                <div className="p-1.5 text-right">
                   {data.localCurrencyTotal
                     ? data.localCurrencyTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
                     : data.grossProceeds.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -212,19 +213,19 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
               </div>
             </div>
 
-            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+            <div className="bg-[#D4AF37] border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
-                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Total prix US$</div>
-                <div className="p-2 text-right">
+                <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Total prix US$</div>
+                <div className="p-1.5 text-right">
                   {(data.usdTotal || data.grossProceeds).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#D4AF37] border-b-2 border-gray-900">
+            <div className="bg-[#D4AF37] border-b border-gray-900">
               <div className="grid grid-cols-2 text-xs font-bold">
-                <div className="p-2 border-r-2 border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Net Proceed</div>
-                <div className="p-2 text-right">
+                <div className="p-1.5 border-r border-gray-900 text-right" style={{ gridColumn: '1 / -2' }}>Net Proceed</div>
+                <div className="p-1.5 text-right">
                   {data.finalAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </div>
               </div>
@@ -232,14 +233,14 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
           </div>
 
           {/* Footer Text */}
-          <div className="p-4 border-b-2 border-gray-900 text-center text-sm italic">
-            <p>Finalize the present invoice for the amount of {formatCurrency(data.finalAmount)}...</p>
+          <div className="p-3 border-b border-gray-900 text-center text-xs italic">
+            <p>Finalize the present invoice for the amount of {formatCurrency(data.finalAmount)} ({data.finalAmountInWords || 'amount in words'})</p>
           </div>
 
           {/* Bottom Section - Conversion and Payment Terms */}
           <div className="grid grid-cols-2">
             {/* Left: Conversion Info */}
-            <div className="p-4 border-r-2 border-gray-900 text-xs space-y-1">
+            <div className="p-3 border-r border-gray-900 text-xs space-y-0.5">
               <div>1 troy oz = {troyOzToGrams.toFixed(4)} g</div>
               <div>1 kg = {(1000 / troyOzToGrams).toFixed(4)} troy oz</div>
               {data.exchangeRate && (
@@ -248,24 +249,24 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
             </div>
 
             {/* Right: Payment Terms */}
-            <div className="p-3">
-              <table className="w-full text-xs border-2 border-gray-900">
+            <div className="p-2.5">
+              <table className="w-full text-xs border border-gray-900">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="border border-gray-900 p-2 text-center font-bold" colSpan={2}>
+                    <th className="border border-gray-900 p-1.5 text-center font-bold" colSpan={2}>
                       Payment Terms
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="border border-gray-900 p-2">Method</td>
-                    <td className="border border-gray-900 p-2">{data.paymentMethod || data.mechanismDisplayName || 'Spot Basis'}</td>
+                    <td className="border border-gray-900 p-1.5">Method</td>
+                    <td className="border border-gray-900 p-1.5">{data.paymentMethod || data.mechanismDisplayName || 'Spot Basis'}</td>
                   </tr>
                   {data.valueDate && (
                     <tr>
-                      <td className="border border-gray-900 p-2">Value Date :</td>
-                      <td className="border border-gray-900 p-2">
+                      <td className="border border-gray-900 p-1.5">Value Date</td>
+                      <td className="border border-gray-900 p-1.5">
                         {new Date(data.valueDate).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
@@ -276,8 +277,8 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
                   )}
                   {data.settlementDays && (
                     <tr>
-                      <td className="border border-gray-900 p-2">Settlement Period</td>
-                      <td className="border border-gray-900 p-2">{data.settlementDays} days</td>
+                      <td className="border border-gray-900 p-1.5">Settlement Period</td>
+                      <td className="border border-gray-900 p-1.5">{data.settlementDays} days</td>
                     </tr>
                   )}
                 </tbody>

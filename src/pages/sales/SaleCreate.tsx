@@ -29,6 +29,7 @@ import {
   type InvoiceData
 } from '@/services/saleInvoiceService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
+import { formatNumberInWords } from '@/utils/numberToWords';
 
 interface MiningCompany {
   id: string;
@@ -99,6 +100,20 @@ export function SaleCreate() {
       setSelectedCustomer(null);
     }
   }, [formData.customerId, authorizedCustomers]);
+
+  // Auto-update invoice preview when form data changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.miningCompanyId && formData.customerId && formData.quantityOz && formData.londonAMRate) {
+        updateInvoicePreviewData();
+      } else {
+        setShowInvoicePreview(false);
+        setInvoicePreviewData(null);
+      }
+    }, 500); // Debounce to avoid too many updates
+
+    return () => clearTimeout(timer);
+  }, [formData.miningCompanyId, formData.customerId, formData.quantityOz, formData.londonAMRate, formData.freightCost, formData.otherCosts]);
 
   const fetchMiningCompanies = async () => {
     try {
@@ -313,6 +328,9 @@ export function SaleCreate() {
     const pricePerOz = parseFloat(formData.londonAMRate);
     const pricePerKg = pricePerOz * (1000 / 31.1035); // Convert $/oz to $/kg
 
+    // Calculate amount in words
+    const finalAmountInWords = formatNumberInWords(calculations.finalAmount);
+
     const previewData: InvoicePreviewData = {
       // Seller Information
       sellerName: miningCompanyData?.name || selectedMiningCompany.name,
@@ -347,6 +365,7 @@ export function SaleCreate() {
       royaltiesPercentage: 3,
       royaltiesAmount: calculations.royalties,
       finalAmount: calculations.finalAmount,
+      finalAmountInWords: finalAmountInWords,
       estimatedValue: calculations.grossProceeds,
 
       // Additional Info

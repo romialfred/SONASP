@@ -24,6 +24,7 @@ import {
   type PricingMechanism,
   type QuantityRecommendation,
 } from '@/services/goldTradeSpaceService';
+import { getInventoryBySeller } from '@/services/inventoryService';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
 
@@ -32,13 +33,6 @@ interface Customer {
   name: string;
   email: string;
   country: string;
-}
-
-interface InventoryItem {
-  id: string;
-  quantity_available_oz: number;
-  seller_id?: string;
-  seller_type?: string;
 }
 
 interface MiningCompany {
@@ -52,7 +46,6 @@ export function GoldTradeSpace() {
   const { showSuccess, showError } = useAlert();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
 
@@ -78,24 +71,19 @@ export function GoldTradeSpace() {
 
   useEffect(() => {
     fetchInventoryByMiningCompany();
-  }, [selectedMiningCompany, inventory]);
+  }, [selectedMiningCompany]);
 
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [customersRes, inventoryRes, refineriesRes, miningCompaniesRes] = await Promise.all([
+      const [customersRes, refineriesRes, miningCompaniesRes] = await Promise.all([
         supabase.from('customers').select('id, name, email, country').order('name'),
-        supabase.from('gold_inventory').select('id, quantity_available_oz, seller_id, seller_type').gt('quantity_available_oz', 0),
         getApprovedRefineries(),
         supabase.from('mining_companies').select('id, name, abbreviation, country').eq('is_active', true).order('name'),
       ]);
 
       if (customersRes.data) {
         setCustomers(customersRes.data);
-      }
-
-      if (inventoryRes.data) {
-        setInventory(inventoryRes.data);
       }
 
       if (refineriesRes.success && refineriesRes.data) {
@@ -121,23 +109,31 @@ export function GoldTradeSpace() {
     }
 
     try {
-      const filteredInventory = inventory.filter(
-        item => item.seller_id === selectedMiningCompany && item.seller_type === 'mining_company'
-      );
+      // Use the proper service to get inventory by seller
+      // This follows the chain: production -> freight_shipments -> gold_inventory
+      const result = await getInventoryBySeller(selectedMiningCompany, 'mining_company');
 
-      const totalStock = filteredInventory.reduce((sum, item) => sum + item.quantity_available_oz, 0);
-      setAvailableStock(totalStock);
+      if (result.success) {
+        const totalStock = result.availableOz || 0;
+        setAvailableStock(totalStock);
 
-      if (totalStock > 0) {
-        const recResult = await getQuantityRecommendation(totalStock);
-        if (recResult.success && recResult.data) {
-          setQuantityRecommendation(recResult.data);
+        if (totalStock > 0) {
+          const recResult = await getQuantityRecommendation(totalStock);
+          if (recResult.success && recResult.data) {
+            setQuantityRecommendation(recResult.data);
+          }
+        } else {
+          setQuantityRecommendation(null);
         }
       } else {
+        console.error('Error fetching inventory:', result.error);
+        setAvailableStock(0);
         setQuantityRecommendation(null);
       }
     } catch (error) {
-      console.error('Error filtering inventory:', error);
+      console.error('Error fetching inventory:', error);
+      setAvailableStock(0);
+      setQuantityRecommendation(null);
     }
   };
 

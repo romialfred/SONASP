@@ -42,8 +42,10 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     try {
       const result = await calculatePricingComparison(qtyInOz);
       if (result.success && result.data) {
+        // Filter out Forward 7 Days mechanism
+        const filteredMechanisms = result.data.mechanisms.filter(m => m.mechanism !== 'forward_7');
         // Sort mechanisms by benefit (highest to lowest)
-        const sortedMechanisms = [...result.data.mechanisms].sort((a, b) => b.benefit - a.benefit);
+        const sortedMechanisms = [...filteredMechanisms].sort((a, b) => b.benefit - a.benefit);
         setComparison({
           ...result.data,
           mechanisms: sortedMechanisms
@@ -192,7 +194,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
             </div>
           </Card>
 
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             {comparison.mechanisms.map((mechanism, index) => {
               const isRecommended = mechanism.mechanism === comparison.recommendedMechanism;
               const isSelected = mechanism.mechanism === selectedMechanism;

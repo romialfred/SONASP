@@ -192,7 +192,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-5 gap-3">
             {comparison.mechanisms.map((mechanism, index) => {
               const isRecommended = mechanism.mechanism === comparison.recommendedMechanism;
               const isSelected = mechanism.mechanism === selectedMechanism;
@@ -202,7 +202,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
               return (
                 <Card
                   key={mechanism.mechanism}
-                  className={`cursor-pointer transition-all duration-300 ease-in-out hover:scale-125 ${
+                  className={`cursor-pointer transition-all duration-200 ease-in-out hover:scale-105 ${
                     isSelected
                       ? 'ring-2 ring-blue-500 shadow-lg'
                       : isBestOption
@@ -211,22 +211,22 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                   } ${bgColor}`}
                   onClick={() => handleSelectMechanism(mechanism)}
                 >
-                  <div className="p-5 space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
+                  <div className="p-3 space-y-2">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
                         {getMechanismIcon(mechanism.mechanism)}
                         <div>
-                          <h4 className="font-semibold text-gray-900">{mechanism.displayName}</h4>
-                          <p className="text-xs text-gray-500 mt-0.5">{mechanism.settlementDays} days</p>
+                          <h4 className="font-semibold text-sm text-gray-900">{mechanism.displayName}</h4>
+                          <p className="text-xs text-gray-500">{mechanism.settlementDays} days</p>
                         </div>
                       </div>
                       {getMechanismBadge(index, comparison.mechanisms.length, isRecommended)}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex justify-between items-baseline">
-                        <span className="text-sm text-gray-600">Price per oz:</span>
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-xs text-gray-600">Price per oz:</span>
+                        <span className="text-base font-bold text-gray-900">
                           ${mechanism.pricePerOz.toFixed(2)}
                         </span>
                       </div>
@@ -234,7 +234,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                       {mechanism.adjustmentPercentage !== 0 && (
                         <div className="flex justify-between items-baseline">
                           <span className="text-xs text-gray-500">Adjustment:</span>
-                          <span className={`text-sm font-semibold ${
+                          <span className={`text-xs font-semibold ${
                             mechanism.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
                             {mechanism.adjustmentPercentage > 0 ? '+' : ''}{mechanism.adjustmentPercentage.toFixed(3)}%
@@ -242,17 +242,17 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                         </div>
                       )}
 
-                      <div className="border-t border-gray-200 pt-2 mt-2">
+                      <div className="border-t border-gray-200 pt-1.5 mt-1.5">
                         <div className="flex justify-between items-baseline">
-                          <span className="text-sm font-semibold text-gray-700">Total Value:</span>
-                          <span className="text-xl font-bold text-gray-900">
+                          <span className="text-xs font-semibold text-gray-700">Total Value:</span>
+                          <span className="text-base font-bold text-gray-900">
                             ${mechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       </div>
 
                       {mechanism.benefit !== 0 && (
-                        <div className={`text-center py-2 px-3 rounded text-sm font-semibold ${
+                        <div className={`text-center py-1 px-2 rounded text-xs font-semibold ${
                           mechanism.benefit > 0
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
@@ -261,7 +261,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                         </div>
                       )}
 
-                      <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                      <div className="text-xs text-gray-500 pt-1 border-t border-gray-100">
                         <div className="flex justify-between">
                           <span>Value Date:</span>
                           <span className="font-medium">{new Date(mechanism.valueDate).toLocaleDateString()}</span>
@@ -269,12 +269,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-600 border-t border-gray-100 pt-3">
+                    <p className="text-xs text-gray-600 border-t border-gray-100 pt-2 line-clamp-2">
                       {mechanism.description}
                     </p>
 
                     {isSelected && (
-                      <div className="pt-2">
+                      <div className="pt-1">
                         <Button
                           className="w-full"
                           size="sm"

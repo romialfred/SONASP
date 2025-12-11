@@ -324,9 +324,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Current Price</p>
                   <p className="text-3xl font-bold text-gray-900 mt-1">
-                    ${latestPrice?.london_am_rate.toFixed(2) || 'N/A'}
+                    {latestPrice ? `$${latestPrice.london_am_rate.toFixed(2)}` : 'N/A'}
                   </p>
-                  {previousPrice && (
+                  {previousPrice && latestPrice && (
                     <p className={`text-sm mt-1 flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {priceChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                       {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent.toFixed(2)}%)
@@ -340,7 +340,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Month High</p>
                   <p className="text-3xl font-bold text-green-600 mt-1">
-                    ${Math.max(...dailyPrices.map(p => p.high_price)).toFixed(2)}
+                    {dailyPrices.length > 0
+                      ? `$${Math.max(...dailyPrices.map(p => p.high_price)).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Highest daily peak</p>
                 </CardContent>
@@ -350,7 +352,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Month Low</p>
                   <p className="text-3xl font-bold text-red-600 mt-1">
-                    ${Math.min(...dailyPrices.map(p => p.low_price)).toFixed(2)}
+                    {dailyPrices.length > 0
+                      ? `$${Math.min(...dailyPrices.map(p => p.low_price)).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Lowest daily dip</p>
                 </CardContent>
@@ -360,22 +364,43 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Month Average</p>
                   <p className="text-3xl font-bold text-primary-600 mt-1">
-                    ${(dailyPrices.reduce((sum, p) => sum + p.average_price, 0) / dailyPrices.length).toFixed(2)}
+                    {dailyPrices.length > 0
+                      ? `$${(dailyPrices.reduce((sum, p) => sum + p.average_price, 0) / dailyPrices.length).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">{dailyPrices.length} trading days</p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* No Data Message */}
+            {dailyPrices.length === 0 && (
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 text-amber-900">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <p className="font-semibold">No LBMA Price Data Available</p>
+                      <p className="text-sm mt-1">
+                        Historical gold price data from London Bullion Market Association (LBMA) needs to be imported for {monthNames[selectedMonth - 1]} {selectedYear}.
+                        Please contact your system administrator to load historical price data.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Price Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Price Movement - {monthNames[selectedMonth - 1]} {selectedYear}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={dailyPrices}>
+            {dailyPrices.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Daily Price Movement - {monthNames[selectedMonth - 1]} {selectedYear}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={dailyPrices}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="price_date"
@@ -410,8 +435,10 @@ export function GoldPricesPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Daily Prices Table */}
+            {dailyPrices.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Daily Price Details</CardTitle>
@@ -471,6 +498,7 @@ export function GoldPricesPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
           </>
         )}
 
@@ -483,7 +511,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Year Average</p>
                   <p className="text-3xl font-bold text-gray-900 mt-1">
-                    ${(monthlyAggregates.reduce((sum, m) => sum + parseFloat(m.average_price.toString()), 0) / monthlyAggregates.length).toFixed(2)}
+                    {monthlyAggregates.length > 0
+                      ? `$${(monthlyAggregates.reduce((sum, m) => sum + parseFloat(m.average_price.toString()), 0) / monthlyAggregates.length).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">{monthlyAggregates.length} months</p>
                 </CardContent>
@@ -493,7 +523,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Year High</p>
                   <p className="text-3xl font-bold text-green-600 mt-1">
-                    ${Math.max(...monthlyAggregates.map(m => parseFloat(m.high_price.toString()))).toFixed(2)}
+                    {monthlyAggregates.length > 0
+                      ? `$${Math.max(...monthlyAggregates.map(m => parseFloat(m.high_price.toString()))).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Peak price</p>
                 </CardContent>
@@ -503,7 +535,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Year Low</p>
                   <p className="text-3xl font-bold text-red-600 mt-1">
-                    ${Math.min(...monthlyAggregates.map(m => parseFloat(m.low_price.toString()))).toFixed(2)}
+                    {monthlyAggregates.length > 0
+                      ? `$${Math.min(...monthlyAggregates.map(m => parseFloat(m.low_price.toString()))).toFixed(2)}`
+                      : 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Lowest price</p>
                 </CardContent>
@@ -513,7 +547,9 @@ export function GoldPricesPage() {
                 <CardContent className="pt-6">
                   <p className="text-sm text-gray-600">Total Trading Days</p>
                   <p className="text-3xl font-bold text-primary-600 mt-1">
-                    {monthlyAggregates.reduce((sum, m) => sum + m.total_days, 0)}
+                    {monthlyAggregates.length > 0
+                      ? monthlyAggregates.reduce((sum, m) => sum + m.total_days, 0)
+                      : '0'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Across {monthlyAggregates.length} months</p>
                 </CardContent>

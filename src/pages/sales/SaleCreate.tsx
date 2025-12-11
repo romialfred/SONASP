@@ -828,12 +828,12 @@ export function SaleCreate() {
         {/* Professional Invoice Preview */}
         {showCalculations && calculations && (
           <Card className="border-2 border-slate-300 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-600 text-white py-3">
+            <CardHeader className="bg-[#B8860B] text-white py-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Professional Invoice
               </CardTitle>
-              <p className="text-sm text-slate-200 mt-1">
+              <p className="text-sm text-white/90 mt-1">
                 Invoice calculation summary
               </p>
             </CardHeader>

@@ -24,12 +24,21 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config();
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+// Try service role key first (for admin operations), fallback to anon key
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||
+                    process.env.VITE_SUPABASE_SERVICE_KEY ||
+                    process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Missing Supabase credentials');
+  console.error('Required in .env:');
+  console.error('  VITE_SUPABASE_URL=your_url');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your_service_key (for imports)');
+  console.error('  OR VITE_SUPABASE_ANON_KEY=your_anon_key');
   process.exit(1);
 }
+
+const usingServiceKey = !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -228,32 +237,29 @@ async function insertDailyPrices(dailyData) {
     const current = dailyData[i];
     const previous = i > 0 ? dailyData[i - 1] : null;
 
-    // CRITICAL: London AM Fix = Previous day's closing price
+    // CRITICAL: London AM Fix = Previous day's closing price (spot_price)
     const londonAM = previous ? previous.price : current.price;
 
     // London PM Fix typically within 0.3% of AM
     const londonPM = londonAM * (0.997 + Math.random() * 0.006);
 
-    // Intraday volatility
-    const opening = londonAM * (0.998 + Math.random() * 0.004);
-    const closing = current.price;
-    const high = Math.max(opening, closing, londonAM, londonPM) * (1 + Math.random() * 0.005);
-    const low = Math.min(opening, closing, londonAM, londonPM) * (1 - Math.random() * 0.005);
-    const average = (opening + closing + high + low) / 4;
+    // Intraday volatility for high/low
+    const spotPrice = current.price;
+    const high = Math.max(londonAM, londonPM, spotPrice) * (1 + Math.random() * 0.005);
+    const low = Math.min(londonAM, londonPM, spotPrice) * (1 - Math.random() * 0.005);
+    const average = (londonAM + londonPM + spotPrice + high + low) / 5;
 
     records.push({
       price_date: current.date,
-      opening_price: parseFloat(opening.toFixed(2)),
-      closing_price: parseFloat(closing.toFixed(2)),
+      london_am_rate: parseFloat(londonAM.toFixed(2)), // Previous day's spot price
+      london_pm_rate: parseFloat(londonPM.toFixed(2)),
+      spot_price: parseFloat(spotPrice.toFixed(2)),
+      average_price: parseFloat(average.toFixed(2)),
       high_price: parseFloat(high.toFixed(2)),
       low_price: parseFloat(low.toFixed(2)),
-      london_am_rate: parseFloat(londonAM.toFixed(2)), // Previous day's close
-      london_pm_rate: parseFloat(londonPM.toFixed(2)),
-      spot_price: parseFloat(current.price.toFixed(2)),
-      average_price: parseFloat(average.toFixed(2)),
       source: current.source,
       currency: 'USD',
-      data_points: 50 + Math.floor(Math.random() * 100),
+      notes: `LBMA data for ${current.date}`,
     });
   }
 
@@ -313,8 +319,8 @@ async function calculateMonthlyAggregates(year, month) {
     average_price: parseFloat(avgPrice.toFixed(2)),
     high_price: Math.max(...dailyPrices.map(d => d.high_price)),
     low_price: Math.min(...dailyPrices.map(d => d.low_price)),
-    opening_price: dailyPrices[0].opening_price,
-    closing_price: dailyPrices[dailyPrices.length - 1].closing_price,
+    opening_price: dailyPrices[0].london_am_rate, // Use first day's AM rate as opening
+    closing_price: dailyPrices[dailyPrices.length - 1].spot_price, // Use last day's spot as closing
     total_days: dailyPrices.length,
     volatility: parseFloat(volatility.toFixed(2)),
   };
@@ -338,7 +344,15 @@ async function calculateMonthlyAggregates(year, month) {
 
 async function main() {
   console.log('🚀 Starting LBMA Historical Data Import\n');
-  console.log('='.repeat(60));
+
+  if (usingServiceKey) {
+    console.log('✅ Using Service Role Key (admin permissions)');
+  } else {
+    console.log('⚠️  Using Anon Key (may have RLS restrictions)');
+    console.log('   If import fails, add SUPABASE_SERVICE_ROLE_KEY to .env');
+  }
+
+  console.log('\n' + '='.repeat(60));
   console.log('📊 Data Source Priority:');
   console.log('   1. Metals-API (Official LBMA data)');
   console.log('   2. Gold-API (Alternative source)');

@@ -6,9 +6,15 @@
  *
  * Key Features:
  * - Fetches official LBMA London AM/PM Fix prices
- * - Previous day's closing price becomes today's London AM Fix
+ * - Previous day's spot price (closing) becomes today's London AM Fix
  * - Automatically calculates monthly aggregates at month-end
  * - Handles weekends and holidays (skips non-trading days)
+ *
+ * Table Structure:
+ * - Uses spot_price as the day's closing price
+ * - london_am_rate = previous trading day's spot_price
+ * - Columns: price_date, london_am_rate, london_pm_rate, spot_price,
+ *   average_price, high_price, low_price, source, currency, notes
  *
  * Trigger Schedule:
  * - Daily at 16:45 GMT (after London PM Fix at 15:00 GMT)
@@ -192,42 +198,39 @@ serve(async (req: Request) => {
       throw new Error('Unable to fetch gold price from any source');
     }
 
-    // Get previous trading day's closing price
+    // Get previous trading day's spot price (which represents closing)
     const { data: previousDay } = await supabase
       .from('gold_prices_daily')
-      .select('closing_price, price_date')
+      .select('spot_price, price_date')
       .order('price_date', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    // CRITICAL: London AM = Previous day's closing price
-    const londonAM = previousDay ? previousDay.closing_price : closingPrice * 0.995;
+    // CRITICAL: London AM = Previous day's spot price (closing price)
+    const londonAM = previousDay ? previousDay.spot_price : closingPrice * 0.995;
 
-    // London PM typically within 0.3% of closing
+    // London PM typically within 0.3% of spot price
     const londonPM = closingPrice * (0.997 + Math.random() * 0.006);
 
-    // Calculate intraday prices
-    const opening = londonAM * (0.998 + Math.random() * 0.004);
-    const high = Math.max(opening, closingPrice, londonAM, londonPM) * (1 + Math.random() * 0.005);
-    const low = Math.min(opening, closingPrice, londonAM, londonPM) * (1 - Math.random() * 0.005);
-    const average = (opening + closingPrice + high + low) / 4;
+    // Calculate intraday prices (high/low based on AM, PM, and spot)
+    const high = Math.max(closingPrice, londonAM, londonPM) * (1 + Math.random() * 0.005);
+    const low = Math.min(closingPrice, londonAM, londonPM) * (1 - Math.random() * 0.005);
+    const average = (closingPrice + high + low + londonAM + londonPM) / 5;
 
-    // Insert daily price
+    // Insert daily price (using actual table columns only)
     const { error: insertError } = await supabase
       .from('gold_prices_daily')
       .insert({
         price_date: todayStr,
-        opening_price: parseFloat(opening.toFixed(2)),
-        closing_price: parseFloat(closingPrice.toFixed(2)),
-        high_price: parseFloat(high.toFixed(2)),
-        low_price: parseFloat(low.toFixed(2)),
         london_am_rate: parseFloat(londonAM.toFixed(2)),
         london_pm_rate: parseFloat(londonPM.toFixed(2)),
         spot_price: parseFloat(closingPrice.toFixed(2)),
+        high_price: parseFloat(high.toFixed(2)),
+        low_price: parseFloat(low.toFixed(2)),
         average_price: parseFloat(average.toFixed(2)),
         source: 'API (Automated)',
         currency: 'USD',
-        data_points: 100,
+        notes: 'Automated daily import at market close',
       });
 
     if (insertError) {
@@ -269,8 +272,8 @@ serve(async (req: Request) => {
             average_price: parseFloat(avgPrice.toFixed(2)),
             high_price: Math.max(...monthlyData.map((d: any) => d.high_price)),
             low_price: Math.min(...monthlyData.map((d: any) => d.low_price)),
-            opening_price: monthlyData[0].opening_price,
-            closing_price: monthlyData[monthlyData.length - 1].closing_price,
+            opening_price: monthlyData[0].london_am_rate,
+            closing_price: monthlyData[monthlyData.length - 1].spot_price,
             total_days: monthlyData.length,
             volatility: parseFloat(volatility.toFixed(2)),
           }, {
@@ -288,8 +291,8 @@ serve(async (req: Request) => {
         data: {
           date: todayStr,
           london_am_rate: londonAM,
-          closing_price: closingPrice,
-          previous_close_used: previousDay?.closing_price || null,
+          spot_price: closingPrice,
+          previous_spot_used: previousDay?.spot_price || null,
           monthly_aggregate_created: monthlyAggregateCreated,
         },
       }),

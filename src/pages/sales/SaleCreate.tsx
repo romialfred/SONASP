@@ -127,8 +127,15 @@ export function SaleCreate() {
 
       setMiningCompanies(data || []);
 
+      // If preselectedSellerId is provided, set that seller
+      if (preselectedSellerId && data) {
+        const selectedCompany = data.find(c => c.id === preselectedSellerId);
+        if (selectedCompany) {
+          setSelectedMiningCompany(selectedCompany);
+        }
+      }
       // Auto-select first mining company if only one exists
-      if (data && data.length === 1) {
+      else if (data && data.length === 1) {
         setFormData(prev => ({ ...prev, miningCompanyId: data[0].id }));
         setSelectedMiningCompany(data[0]);
       }
@@ -569,13 +576,17 @@ export function SaleCreate() {
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Simulated Quantity</p>
-                  <p className="text-2xl font-bold text-gray-900">{initialQuantity.toFixed(3)} oz</p>
-                  <p className="text-xs text-gray-500 mt-1">{(initialQuantity * 31.1035).toFixed(2)} g</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1035).toFixed(2)} g
+                  </p>
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Estimated Value</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${((initialQuantity || 0) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${(((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-emerald-200">
@@ -600,56 +611,63 @@ export function SaleCreate() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Seller (Mining Company) */}
+              {/* Seller (Mining Company) - READ ONLY DISPLAY */}
               <div>
-                <FormField
-                  label={
-                    <div className="flex items-center gap-2">
-                      <span>Seller (Mining Company)</span>
-                      {isSellerLocked && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-xs font-semibold">
-                          <Lock className="w-3 h-3" />
-                          Locked
-                        </div>
-                      )}
-                    </div>
-                  }
-                  required
-                  error={errors.miningCompanyId}
-                  hint={isSellerLocked ? "Seller is pre-selected from inventory and cannot be changed" : "The mining company selling the gold"}
-                >
-                  <Select
-                    value={formData.miningCompanyId}
-                    onChange={(e) => handleInputChange('miningCompanyId', e.target.value)}
-                    error={!!errors.miningCompanyId}
-                    disabled={isSellerLocked || miningCompanies.length === 1}
-                    className={isSellerLocked ? 'bg-blue-50 cursor-not-allowed' : ''}
-                  >
-                    <option value="">Select seller</option>
-                    {miningCompanies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name} ({company.abbreviation}) - {company.country}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Seller (Mining Company)
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <p className="text-xs text-gray-600">Seller is determined by stock ownership from inventory</p>
+                </div>
+
+                {!selectedMiningCompany && formData.miningCompanyId === '' && (
+                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                    <Building2 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">No seller selected</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please start from Inventory Management or Gold Trade Space to select stock
+                    </p>
+                  </div>
+                )}
 
                 {selectedMiningCompany && (
-                  <div className="mt-3">
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-gray-900">{selectedMiningCompany.name}</p>
-                          <p className="text-sm text-gray-600">{selectedMiningCompany.abbreviation} • {selectedMiningCompany.country}</p>
+                  <div>
+                    <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Building2 className="h-5 w-5 text-blue-600" />
+                            <h3 className="text-lg font-bold text-gray-900">{selectedMiningCompany.name}</h3>
+                          </div>
+
+                          <div className="space-y-1.5 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 font-medium">Code:</span>
+                              <span className="text-gray-900 font-semibold">{selectedMiningCompany.abbreviation}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 font-medium">Country:</span>
+                              <span className="text-gray-900">{selectedMiningCompany.country}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-600">Available Inventory</p>
-                          <p className={`text-lg font-bold ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
+
+                        <div className="text-right ml-4 bg-white rounded-lg px-4 py-3 border border-blue-200 shadow-sm">
+                          <p className="text-xs text-gray-600 font-medium mb-1">Available Inventory</p>
+                          <p className={`text-2xl font-bold ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
                             {loadingInventory ? '...' : `${availableInventoryOz.toFixed(3)} oz`}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 mt-0.5">
                             {loadingInventory ? '' : `${availableInventory.availableGrams.toFixed(2)} g`}
                           </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <div className="flex items-center gap-2 text-xs text-blue-800">
+                          <Lock className="h-3.5 w-3.5" />
+                          <span className="font-medium">Seller information is based on stock ownership and cannot be changed</span>
                         </div>
                       </div>
                     </div>

@@ -106,10 +106,10 @@ SELECT
   year,
   month,
   currency_pair,
-  ROUND(average_rate, 2) as avg_rate,
-  ROUND(high_rate, 2) as high,
-  ROUND(low_rate, 2) as low,
-  total_days
+  ROUND(avg_rate, 2) as avg_rate,
+  ROUND(max_rate, 2) as max,
+  ROUND(min_rate, 2) as min,
+  data_points
 FROM fx_rates_monthly_aggregated
 WHERE year >= 2024
 ORDER BY year DESC, month DESC, currency_pair;

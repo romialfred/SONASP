@@ -271,13 +271,13 @@ async function calculateMonthlyAggregates(ecbSourceId) {
               month,
               source_id: ecbSourceId,
               currency_pair: pair,
-              average_rate: parseFloat(avgRate.toFixed(6)),
-              high_rate: Math.max(...rates),
-              low_rate: Math.min(...rates),
+              avg_rate: parseFloat(avgRate.toFixed(6)),
+              max_rate: Math.max(...rates),
+              min_rate: Math.min(...rates),
               opening_rate: monthlyData[0].rate,
               closing_rate: monthlyData[monthlyData.length - 1].rate,
-              total_days: monthlyData.length,
-              volatility: parseFloat(volatility.toFixed(6)),
+              data_points: monthlyData.length,
+              total_volume: parseFloat((rates.reduce((sum, r) => sum + r, 0)).toFixed(2)),
             }, {
               onConflict: 'year,month,source_id,currency_pair',
             });

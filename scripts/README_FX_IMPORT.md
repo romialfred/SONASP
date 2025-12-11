@@ -1,10 +1,12 @@
 # Scripts d'Import FX Rates - Guide d'Utilisation
 
-## 🚨 Problème Résolu: supabaseUrl is required
+## 🚨 Problèmes Résolus
+
+### 1. supabaseUrl is required ✅
 
 Les scripts ont été corrigés pour charger automatiquement le fichier `.env` depuis la racine du projet, même s'ils sont exécutés depuis le dossier `scripts/`.
 
-### Correction Appliquée
+**Correction Appliquée:**
 
 Tous les scripts utilisent maintenant:
 
@@ -20,6 +22,19 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 ```
 
 Cela permet d'exécuter les scripts depuis n'importe quel dossier.
+
+### 2. Could not find 'average_rate' column ✅
+
+Le script utilisait des noms de colonnes incorrects pour la table `fx_rates_monthly_aggregated`.
+
+**Colonnes corrigées:**
+- `average_rate` → `avg_rate` ✅
+- `high_rate` → `max_rate` ✅
+- `low_rate` → `min_rate` ✅
+- `total_days` → `data_points` ✅
+- `volatility` → `total_volume` ✅
+
+Voir `FX_RATES_COLUMN_FIX.md` pour les détails complets.
 
 ## Scripts Disponibles
 

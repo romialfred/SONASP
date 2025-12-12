@@ -85,83 +85,181 @@ COMMENT ON COLUMN table_name.column_name IS 'Première partie du commentaire. De
 
 ---
 
-### 2. RAISE NOTICE et DELETE en dehors d'un bloc DO $$
+### 2. 🔴 RAISE NOTICE EN DEHORS DE DO $$ (ERREUR RÉCURRENTE!)
 
-**❌ INCORRECT - ERREUR DE SYNTAXE:**
-```sql
--- Ceci cause: ERROR: 42601: syntax error at or near "RAISE"
-DELETE FROM my_table;
-RAISE NOTICE '✅ Table supprimée';
+**🚨 CETTE ERREUR SE RÉPÈTE DEPUIS 3 MOIS - ELLE EST MAINTENANT INTERDITE!**
+
+#### Erreur Typique
+
+```
+ERROR: 42601: syntax error at or near "RAISE"
+LINE 79: RAISE NOTICE '...'
 ```
 
-**✅ CORRECT - TOUJOURS dans un bloc DO $$:**
+#### Cause
+
+`RAISE` utilisé EN DEHORS d'un bloc PL/pgSQL.
+
+---
+
+#### ❌ EXEMPLES INCORRECTS (À NE JAMAIS FAIRE)
+
+**Erreur 1: Après DROP/ALTER**
+```sql
+DROP TRIGGER foo_trigger ON my_table;
+RAISE NOTICE 'Trigger supprimé';  -- ❌ ERREUR 42601!
+```
+
+**Erreur 2: Après DELETE**
+```sql
+DELETE FROM my_table;
+RAISE NOTICE 'Table supprimée';  -- ❌ ERREUR 42601!
+```
+
+**Erreur 3: Fin de script**
+```sql
+ALTER TABLE sales ALTER COLUMN status SET DEFAULT 'pending';
+-- ... autres commandes ...
+RAISE NOTICE '✅ FIX COMPLET!';  -- ❌ ERREUR 42601!
+```
+
+**Erreur 4: Mélangé avec SQL**
+```sql
+SELECT * FROM users;
+RAISE NOTICE 'Query done';  -- ❌ ERREUR 42601!
+
+ALTER TYPE my_enum ADD VALUE 'new';
+RAISE NOTICE 'Value added';  -- ❌ ERREUR 42601!
+```
+
+---
+
+#### ✅ CORRECTIONS OBLIGATOIRES
+
+**Fix 1: DROP puis DO $$**
+```sql
+DROP TRIGGER foo_trigger ON my_table;
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Trigger supprimé';
+END $$;
+```
+
+**Fix 2: Toutes les opérations dans DO $$**
 ```sql
 DO $$
 BEGIN
   DELETE FROM my_table;
-  RAISE NOTICE '✅ Table supprimée';
+  RAISE NOTICE 'Table supprimée';
 END $$;
 ```
 
-**❌ INCORRECT - Mélange de code:**
+**Fix 3: Messages regroupés**
 ```sql
--- Transaction ouverte
-BEGIN;
-
-DELETE FROM table1;
-RAISE NOTICE 'Table 1 supprimée';  -- ❌ ERREUR!
-
-DELETE FROM table2;
-RAISE NOTICE 'Table 2 supprimée';  -- ❌ ERREUR!
-
-COMMIT;
-```
-
-**✅ CORRECT - Chaque opération dans son bloc:**
-```sql
--- Transaction ouverte
-BEGIN;
+ALTER TABLE sales ALTER COLUMN status SET DEFAULT 'pending';
+DROP TRIGGER foo ON sales;
+ALTER TYPE sale_status ADD VALUE 'completed';
 
 DO $$
 BEGIN
-  DELETE FROM table1;
-  RAISE NOTICE '✅ Table 1 supprimée';
+  RAISE NOTICE '=== CONFIGURATION COMPLETE ===';
+  RAISE NOTICE 'DEFAULT changé';
+  RAISE NOTICE 'Trigger supprimé';
+  RAISE NOTICE 'Status ajouté';
 END $$;
-
-DO $$
-BEGIN
-  DELETE FROM table2;
-  RAISE NOTICE '✅ Table 2 supprimée';
-END $$;
-
-COMMIT;
 ```
 
-**OU ENCORE MIEUX - Toutes les opérations dans un seul bloc:**
+**Fix 4: Logique dans DO $$**
 ```sql
-BEGIN;
-
 DO $$
+DECLARE
+  user_count INT;
 BEGIN
-  DELETE FROM table1;
-  RAISE NOTICE '✅ Table 1 supprimée';
+  SELECT COUNT(*) INTO user_count FROM users;
+  RAISE NOTICE 'Query done: % utilisateurs', user_count;
 
-  DELETE FROM table2;
-  RAISE NOTICE '✅ Table 2 supprimée';
-
-  DELETE FROM table3;
-  RAISE NOTICE '✅ Table 3 supprimée';
-
-  RAISE NOTICE '';
-  RAISE NOTICE '✅ Toutes les tables ont été supprimées avec succès';
+  ALTER TYPE my_enum ADD VALUE IF NOT EXISTS 'new';
+  RAISE NOTICE 'Value added';
 END $$;
-
-COMMIT;
 ```
 
-**Raison:** `RAISE NOTICE` est une commande PL/pgSQL qui doit être utilisée dans un bloc anonyme `DO $$` ou dans une fonction. Elle ne peut pas être utilisée directement dans du SQL standard. PostgreSQL génère une erreur de syntaxe (42601) si on tente de l'utiliser en dehors d'un contexte procédural.
+---
 
-**Règle d'or:** Dès que vous utilisez `RAISE NOTICE`, `RAISE EXCEPTION`, ou toute autre commande PL/pgSQL, vous DEVEZ être dans un bloc `DO $$ BEGIN ... END $$;`
+#### 🛡️ RÈGLES STRICTES
+
+**1. RAISE peut UNIQUEMENT être utilisé dans:**
+
+| Contexte | Exemple |
+|----------|---------|
+| Bloc DO $$ | `DO $$ BEGIN RAISE NOTICE '...'; END $$;` |
+| Fonction PL/pgSQL | `CREATE FUNCTION ... BEGIN RAISE ...; END;` |
+| Trigger PL/pgSQL | `CREATE TRIGGER ... BEGIN RAISE ...; RETURN NEW; END;` |
+
+**2. RAISE NE PEUT JAMAIS être utilisé:**
+- Après DROP, ALTER, CREATE en SQL pur
+- Après DELETE, INSERT, UPDATE en SQL pur
+- À la fin d'un script sans DO $$
+- Dans du SQL standard
+
+**3. Pattern TOUJOURS correct:**
+```sql
+-- 1. Commandes SQL pures
+<SQL commands>
+
+-- 2. Messages dans DO $$
+DO $$
+BEGIN
+  RAISE NOTICE 'Messages';
+END $$;
+```
+
+---
+
+#### 🔍 VALIDATION AUTOMATIQUE
+
+**Avant CHAQUE script SQL:**
+
+```bash
+# Valider UN fichier
+node scripts/validate-sql-scripts.mjs mon_script.sql
+
+# Valider TOUS les fichiers
+node scripts/validate-sql-scripts.mjs --all
+
+# Le validateur détecte:
+# ✗ RAISE en dehors de DO $$  → ERREUR
+# ⚠ SELECT '...' pour message → AVERTISSEMENT
+```
+
+**Intégration obligatoire dans workflow:**
+
+```bash
+# .git/hooks/pre-commit
+git diff --cached --name-only | grep '\.sql$' | while read file; do
+  node scripts/validate-sql-scripts.mjs "$file" || exit 1
+done
+```
+
+---
+
+#### 📊 CHECKLIST AVANT EXÉCUTION
+
+Avant d'exécuter un script SQL:
+
+- [ ] ✅ Validation passée: `node scripts/validate-sql-scripts.mjs script.sql`
+- [ ] ✅ Aucun RAISE en dehors de DO $$
+- [ ] ✅ Tous les blocs DO $$ sont fermés avec `END $$;`
+- [ ] ✅ Les variables sont déclarées dans DECLARE
+- [ ] ✅ Script testé localement si possible
+
+---
+
+**Raison:** `RAISE` est une commande PL/pgSQL qui doit être dans un bloc procédural. PostgreSQL génère une erreur de syntaxe (42601) si utilisé en SQL pur. Cette erreur se répète depuis 3 mois et est maintenant sous tolérance zéro.
+
+**Règle d'or:** RAISE = DO $$. Toujours. Sans exception.
+
+**Outil de validation:** `/scripts/validate-sql-scripts.mjs` (OBLIGATOIRE avant exécution)
 
 ---
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award, Users, Building2, Factory, Truck } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -127,6 +127,12 @@ export function SalesDashboard() {
     completedSales: 0,
     pendingPayment: 0,
     pendingPaymentAmount: 0,
+    stakeholders: {
+      miningCompanies: 0,
+      customers: 0,
+      refineries: 0,
+      transportCompanies: 0,
+    },
   });
 
   const loadMetrics = useCallback(async () => {
@@ -177,12 +183,28 @@ export function SalesDashboard() {
         totalInventory = 0;
       }
 
+      // Load stakeholders data
+      const [miningCompaniesResult, customersResult, refineriesResult, transportCompaniesResult] = await Promise.all([
+        supabase.from('mining_companies').select('id', { count: 'exact', head: true }),
+        supabase.from('customers').select('id', { count: 'exact', head: true }),
+        supabase.from('refineries').select('id', { count: 'exact', head: true }),
+        supabase.from('transport_companies').select('id', { count: 'exact', head: true }),
+      ]);
+
+      const stakeholders = {
+        miningCompanies: miningCompaniesResult.count || 0,
+        customers: customersResult.count || 0,
+        refineries: refineriesResult.count || 0,
+        transportCompanies: transportCompaniesResult.count || 0,
+      };
+
       console.log('[SalesDashboard] Metrics loaded:', {
         totalInventory,
         pending,
         monthlyRevenue,
         completedThisMonth,
-        pendingPayment
+        pendingPayment,
+        stakeholders
       });
 
       setMetrics({
@@ -192,6 +214,7 @@ export function SalesDashboard() {
         completedSales: completedThisMonth,
         pendingPayment,
         pendingPaymentAmount,
+        stakeholders,
       });
     } catch (error: any) {
       console.error('[SalesDashboard] Error loading metrics:', error);
@@ -357,105 +380,117 @@ export function SalesDashboard() {
         )}
 
         {/* Modern Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Pending Sales Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-white" />
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">EN ATTENTE</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">EN ATTENTE</span>
                 </div>
               </div>
               <div>
                 <p className="text-blue-100 text-xs font-medium mb-1">Ventes en Attente</p>
-                <p className="text-white text-3xl font-bold mb-1">
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {metrics.pendingSales}
                 </p>
-                <p className="text-blue-100 text-xs">
-                  Nécessitent une approbation
+                <p className="text-blue-200 text-xs">
+                  Approbation requise
                 </p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
           {/* Pending Payment Amount Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-white" />
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">PAIEMENT</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">PAIEMENT</span>
                 </div>
               </div>
               <div>
-                <p className="text-amber-100 text-xs font-medium mb-1">En Attente de Paiement</p>
-                <p className="text-white text-3xl font-bold mb-1">
+                <p className="text-orange-100 text-xs font-medium mb-1">En Attente de Paiement</p>
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(metrics.pendingPaymentAmount)}
                 </p>
-                <p className="text-amber-100 text-xs">
-                  {metrics.pendingPayment} vente{metrics.pendingPayment > 1 ? 's' : ''} en attente
+                <p className="text-orange-200 text-xs">
+                  {metrics.pendingPayment} vente{metrics.pendingPayment > 1 ? 's' : ''}
                 </p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
           {/* Monthly Revenue Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">CE MOIS</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">CE MOIS</span>
                 </div>
               </div>
               <div>
-                <p className="text-emerald-100 text-xs font-medium mb-1">Revenus Mensuels</p>
-                <p className="text-white text-3xl font-bold mb-1">
+                <p className="text-teal-100 text-xs font-medium mb-1">Revenus Mensuels</p>
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(metrics.monthlyRevenue)}
                 </p>
-                <p className="text-emerald-100 text-xs">
-                  Total du mois en cours
+                <p className="text-teal-200 text-xs">
+                  Total mois en cours
                 </p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
-          {/* Completed Sales Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-violet-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Award className="w-6 h-6 text-white" />
+          {/* Stakeholders Card */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">MTD</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">PARTIES</span>
                 </div>
               </div>
               <div>
-                <p className="text-violet-100 text-xs font-medium mb-1">Ventes Complétées</p>
-                <p className="text-white text-3xl font-bold mb-1">
-                  {metrics.completedSales}
-                </p>
-                <p className="text-violet-100 text-xs">
-                  Ce mois-ci
-                </p>
+                <p className="text-slate-100 text-xs font-medium mb-2">Stakeholders</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Factory className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{metrics.stakeholders.miningCompanies}</span>
+                    <span className="text-slate-300 text-xs">Mines</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{metrics.stakeholders.customers}</span>
+                    <span className="text-slate-300 text-xs">Clients</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{metrics.stakeholders.refineries}</span>
+                    <span className="text-slate-300 text-xs">Raffin.</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{metrics.stakeholders.transportCompanies}</span>
+                    <span className="text-slate-300 text-xs">Transp.</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
         </div>
 

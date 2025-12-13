@@ -15,6 +15,11 @@ import {
   CheckCircle,
   Lightbulb,
   Building2,
+  MapPin,
+  Package,
+  ArrowRight,
+  Sparkles,
+  CircleDollarSign,
 } from 'lucide-react';
 import {
   calculatePricingComparison,
@@ -42,12 +47,18 @@ interface MiningCompany {
   country: string;
 }
 
+interface MiningCompanyWithStock extends MiningCompany {
+  availableStock: number;
+  loading: boolean;
+}
+
 export function GoldTradeSpace() {
   const { showSuccess, showError } = useAlert();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
-  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
+  const [miningCompaniesWithStock, setMiningCompaniesWithStock] = useState<MiningCompanyWithStock[]>([]);
+  const [totalStock, setTotalStock] = useState(0);
 
   const [selectedMiningCompany, setSelectedMiningCompany] = useState('');
   const [availableStock, setAvailableStock] = useState(0);
@@ -70,7 +81,9 @@ export function GoldTradeSpace() {
   }, []);
 
   useEffect(() => {
-    fetchInventoryByMiningCompany();
+    if (selectedMiningCompany) {
+      fetchInventoryByMiningCompany();
+    }
   }, [selectedMiningCompany]);
 
   const fetchInitialData = async () => {
@@ -91,7 +104,14 @@ export function GoldTradeSpace() {
       }
 
       if (miningCompaniesRes.data) {
-        setMiningCompanies(miningCompaniesRes.data);
+        const companiesWithStock: MiningCompanyWithStock[] = miningCompaniesRes.data.map(company => ({
+          ...company,
+          availableStock: 0,
+          loading: true,
+        }));
+        setMiningCompaniesWithStock(companiesWithStock);
+
+        await fetchAllMiningCompaniesStock(miningCompaniesRes.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -99,6 +119,48 @@ export function GoldTradeSpace() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAllMiningCompaniesStock = async (companies: MiningCompany[]) => {
+    let total = 0;
+
+    for (const company of companies) {
+      try {
+        const result = await getInventoryBySeller(company.id, 'mining_company');
+
+        if (result.success) {
+          const stockOz = result.availableOz || 0;
+          total += stockOz;
+
+          setMiningCompaniesWithStock(prev =>
+            prev.map(c =>
+              c.id === company.id
+                ? { ...c, availableStock: stockOz, loading: false }
+                : c
+            )
+          );
+        } else {
+          setMiningCompaniesWithStock(prev =>
+            prev.map(c =>
+              c.id === company.id
+                ? { ...c, availableStock: 0, loading: false }
+                : c
+            )
+          );
+        }
+      } catch (error) {
+        console.error(`Error fetching stock for ${company.name}:`, error);
+        setMiningCompaniesWithStock(prev =>
+          prev.map(c =>
+            c.id === company.id
+              ? { ...c, availableStock: 0, loading: false }
+              : c
+          )
+        );
+      }
+    }
+
+    setTotalStock(total);
   };
 
   const fetchInventoryByMiningCompany = async () => {
@@ -227,40 +289,192 @@ export function GoldTradeSpace() {
             isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
           }`}
         >
-          {/* Mining Company Selection */}
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <Store className="w-6 h-6 text-blue-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Select Mining Company</h3>
-                  <p className="text-sm text-gray-600">Choose the mine to view available stock and create simulation</p>
+          {/* Mining Company Selection with Elegant Tiles */}
+          {!selectedMiningCompany ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-8 h-8 text-amber-600" />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Sélectionnez une Mine</h2>
+                    <p className="text-gray-600">Cliquez sur une tuile pour voir le stock disponible et créer une simulation</p>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mining Company (Seller) <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  value={selectedMiningCompany}
-                  onChange={(e) => setSelectedMiningCompany(e.target.value)}
-                  className="w-full"
-                >
-                  <option value="">Select a mining company...</option>
-                  {miningCompanies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name} ({company.abbreviation}) - {company.country}
-                    </option>
-                  ))}
-                </Select>
+              {/* Global Overview Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-2xl">
+                <div className="absolute inset-0 bg-grid-white/10"></div>
+                <div className="relative p-8">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-6 h-6 text-amber-100" />
+                        <p className="text-amber-100 font-semibold text-sm uppercase tracking-wide">Stock Total Disponible</p>
+                      </div>
+                      <h3 className="text-5xl font-bold text-white tracking-tight">
+                        {totalStock.toFixed(3)} <span className="text-3xl text-amber-100">oz</span>
+                      </h3>
+                      <p className="text-amber-100 text-lg">
+                        {(totalStock * 31.1035).toFixed(2)} grammes
+                      </p>
+                      <div className="flex items-center gap-2 mt-4">
+                        <CircleDollarSign className="w-5 h-5 text-amber-200" />
+                        <p className="text-amber-100 text-sm">
+                          {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} mines actives
+                        </p>
+                      </div>
+                    </div>
+                    <div className="hidden md:block">
+                      <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Package className="w-16 h-16 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-40 h-40 bg-orange-400/20 rounded-full blur-3xl"></div>
               </div>
 
-              {selectedMiningCompany && (
+              {/* Individual Mining Company Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {miningCompaniesWithStock.map((company) => (
+                  <button
+                    key={company.id}
+                    onClick={() => {
+                      setSelectedMiningCompany(company.id);
+                      setAvailableStock(company.availableStock);
+                    }}
+                    disabled={company.loading || company.availableStock === 0}
+                    className={`group relative overflow-hidden rounded-2xl p-6 text-left transition-all duration-300 ${
+                      company.availableStock > 0
+                        ? 'bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 hover:border-blue-400 hover:shadow-2xl hover:scale-105 cursor-pointer'
+                        : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    {/* Background decoration */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 space-y-4">
+                      {/* Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg ${
+                              company.availableStock > 0
+                                ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                                : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                            }`}>
+                              {company.abbreviation}
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                            {company.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>{company.country}</span>
+                          </div>
+                        </div>
+                        {company.availableStock > 0 && (
+                          <div className="bg-green-100 text-green-700 rounded-full p-2 group-hover:scale-110 transition-transform">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+                      {/* Stock Information */}
+                      <div className="space-y-2">
+                        {company.loading ? (
+                          <div className="flex items-center gap-2 text-gray-500">
+                            <div className="animate-spin w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                            <span className="text-sm">Chargement...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-sm text-gray-600 font-medium">Stock disponible:</span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className={`text-3xl font-bold ${
+                                company.availableStock > 0 ? 'text-blue-700' : 'text-gray-400'
+                              }`}>
+                                {company.availableStock.toFixed(3)}
+                                <span className="text-xl text-gray-500 ml-1">oz</span>
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {(company.availableStock * 31.1035).toFixed(2)} grammes
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Action hint */}
+                      {company.availableStock > 0 && (
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-sm text-blue-600 font-medium group-hover:text-blue-700">
+                            Voir la simulation
+                          </span>
+                          <ArrowRight className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      )}
+
+                      {company.availableStock === 0 && !company.loading && (
+                        <div className="flex items-center gap-2 text-gray-500 text-sm pt-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>Aucun stock disponible</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hover glow effect */}
+                    {company.availableStock > 0 && (
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Store className="w-6 h-6 text-blue-600" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Mine Sélectionnée</h3>
+                      <p className="text-sm text-gray-600">
+                        {miningCompaniesWithStock.find(c => c.id === selectedMiningCompany)?.name}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedMiningCompany('');
+                      setAvailableStock(0);
+                      setQuantityRecommendation(null);
+                      setSelectedMechanism(null);
+                      setComparisonData(null);
+                    }}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Changer de mine
+                  </Button>
+                </div>
+
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Available Stock for Selected Mine</p>
+                      <p className="text-xs text-gray-600 mb-1">Stock Disponible</p>
                       <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
                         {availableStock.toFixed(3)} oz
                       </p>
@@ -271,25 +485,11 @@ export function GoldTradeSpace() {
                     {availableStock > 0 && (
                       <CheckCircle className="w-8 h-8 text-green-500" />
                     )}
-                    {availableStock === 0 && (
-                      <AlertCircle className="w-8 h-8 text-gray-400" />
-                    )}
                   </div>
                 </div>
-              )}
-
-              {!selectedMiningCompany && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-yellow-800">
-                      Please select a mining company to view available inventory and start price simulation.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
+              </div>
+            </Card>
+          )}
 
           {quantityRecommendation && selectedMiningCompany && (
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">

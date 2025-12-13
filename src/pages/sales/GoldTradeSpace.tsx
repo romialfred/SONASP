@@ -302,43 +302,45 @@ export function GoldTradeSpace() {
                 </div>
               </div>
 
-              {/* Global Overview Card */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-2xl">
+              {/* Global Overview Card - Compact */}
+              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-xl">
                 <div className="absolute inset-0 bg-grid-white/10"></div>
-                <div className="relative p-8">
+                <div className="relative p-5">
                   <div className="flex items-center justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-6 h-6 text-amber-100" />
-                        <p className="text-amber-100 font-semibold text-sm uppercase tracking-wide">Stock Total Disponible</p>
+                        <Sparkles className="w-5 h-5 text-amber-100" />
+                        <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">Stock Total Disponible</p>
                       </div>
-                      <h3 className="text-5xl font-bold text-white tracking-tight">
-                        {totalStock.toFixed(3)} <span className="text-3xl text-amber-100">oz</span>
+                      <h3 className="text-3xl font-bold text-white tracking-tight">
+                        {totalStock.toFixed(3)} <span className="text-xl text-amber-100">oz</span>
                       </h3>
-                      <p className="text-amber-100 text-lg">
+                      <p className="text-amber-100 text-sm">
                         {(totalStock * 31.1035).toFixed(2)} grammes
                       </p>
-                      <div className="flex items-center gap-2 mt-4">
-                        <CircleDollarSign className="w-5 h-5 text-amber-200" />
-                        <p className="text-amber-100 text-sm">
+                      <div className="flex items-center gap-2 mt-2">
+                        <CircleDollarSign className="w-4 h-4 text-amber-200" />
+                        <p className="text-amber-100 text-xs">
                           {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} mines actives
                         </p>
                       </div>
                     </div>
                     <div className="hidden md:block">
-                      <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Package className="w-16 h-16 text-white" />
+                      <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Package className="w-10 h-10 text-white" />
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-40 h-40 bg-orange-400/20 rounded-full blur-3xl"></div>
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-orange-400/20 rounded-full blur-3xl"></div>
               </div>
 
-              {/* Individual Mining Company Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {miningCompaniesWithStock.map((company) => (
+              {/* Individual Mining Company Cards - Compact & Sorted */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {miningCompaniesWithStock
+                  .sort((a, b) => b.availableStock - a.availableStock)
+                  .map((company) => (
                   <button
                     key={company.id}
                     onClick={() => {
@@ -346,9 +348,9 @@ export function GoldTradeSpace() {
                       setAvailableStock(company.availableStock);
                     }}
                     disabled={company.loading || company.availableStock === 0}
-                    className={`group relative overflow-hidden rounded-2xl p-6 text-left transition-all duration-300 ${
+                    className={`group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
                       company.availableStock > 0
-                        ? 'bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 hover:border-blue-400 hover:shadow-2xl hover:scale-105 cursor-pointer'
+                        ? 'bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 hover:border-blue-400 hover:shadow-xl hover:scale-105 cursor-pointer'
                         : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 cursor-not-allowed opacity-60'
                     }`}
                   >
@@ -356,12 +358,12 @@ export function GoldTradeSpace() {
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                     {/* Content */}
-                    <div className="relative z-10 space-y-4">
+                    <div className="relative z-10 space-y-3">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg ${
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg ${
                               company.availableStock > 0
                                 ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
                                 : 'bg-gradient-to-br from-gray-400 to-gray-500'
@@ -369,17 +371,17 @@ export function GoldTradeSpace() {
                               {company.abbreviation}
                             </div>
                           </div>
-                          <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                          <h3 className="text-sm font-bold text-gray-900 leading-tight mb-1">
                             {company.name}
                           </h3>
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MapPin className="w-4 h-4" />
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <MapPin className="w-3 h-3" />
                             <span>{company.country}</span>
                           </div>
                         </div>
                         {company.availableStock > 0 && (
-                          <div className="bg-green-100 text-green-700 rounded-full p-2 group-hover:scale-110 transition-transform">
-                            <CheckCircle className="w-5 h-5" />
+                          <div className="bg-green-100 text-green-700 rounded-full p-1.5 group-hover:scale-110 transition-transform">
+                            <CheckCircle className="w-4 h-4" />
                           </div>
                         )}
                       </div>
@@ -388,25 +390,25 @@ export function GoldTradeSpace() {
                       <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
 
                       {/* Stock Information */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {company.loading ? (
                           <div className="flex items-center gap-2 text-gray-500">
-                            <div className="animate-spin w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-                            <span className="text-sm">Chargement...</span>
+                            <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                            <span className="text-xs">Chargement...</span>
                           </div>
                         ) : (
                           <>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-sm text-gray-600 font-medium">Stock disponible:</span>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xs text-gray-600 font-medium">Stock disponible:</span>
                             </div>
-                            <div className="space-y-1">
-                              <p className={`text-3xl font-bold ${
+                            <div className="space-y-0.5">
+                              <p className={`text-2xl font-bold ${
                                 company.availableStock > 0 ? 'text-blue-700' : 'text-gray-400'
                               }`}>
                                 {company.availableStock.toFixed(3)}
-                                <span className="text-xl text-gray-500 ml-1">oz</span>
+                                <span className="text-base text-gray-500 ml-1">oz</span>
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs text-gray-600">
                                 {(company.availableStock * 31.1035).toFixed(2)} grammes
                               </p>
                             </div>
@@ -416,17 +418,17 @@ export function GoldTradeSpace() {
 
                       {/* Action hint */}
                       {company.availableStock > 0 && (
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-sm text-blue-600 font-medium group-hover:text-blue-700">
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs text-blue-600 font-medium group-hover:text-blue-700">
                             Voir la simulation
                           </span>
-                          <ArrowRight className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
 
                       {company.availableStock === 0 && !company.loading && (
-                        <div className="flex items-center gap-2 text-gray-500 text-sm pt-2">
-                          <AlertCircle className="w-4 h-4" />
+                        <div className="flex items-center gap-1 text-gray-500 text-xs pt-1">
+                          <AlertCircle className="w-3 h-3" />
                           <span>Aucun stock disponible</span>
                         </div>
                       )}
@@ -435,8 +437,8 @@ export function GoldTradeSpace() {
                     {/* Hover glow effect */}
                     {company.availableStock > 0 && (
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/20 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-400/20 rounded-full blur-3xl"></div>
                       </div>
                     )}
                   </button>

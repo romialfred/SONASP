@@ -9,6 +9,7 @@ DECLARE
   v_column_type TEXT;
   v_column_default TEXT;
   v_total_sales INT;
+  rec RECORD;
 BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'DIAGNOSTIC TABLE SALES';

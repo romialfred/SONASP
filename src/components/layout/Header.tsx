@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, User, Globe, HelpCircle } from 'lucide-react';
 import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -12,35 +13,93 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockNotifications: Notification[] = [
-    {
-      id: '1',
-      type: 'success',
-      title: 'Batch Received',
-      message: 'Batch #BT-2024-001 has been successfully received at airport',
-      time: '5 minutes ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'warning',
-      title: 'Weight Variance Detected',
-      message: 'Batch #BT-2024-002 has a 2.5% variance in weight',
-      time: '1 hour ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'info',
-      title: 'Approval Required',
-      message: 'Sale #SL-2024-015 is pending your approval',
-      time: '3 hours ago',
-      read: true
+  useEffect(() => {
+    fetchRecentActivities();
+
+    const channel = supabase
+      .channel('sales-activities')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => {
+        fetchRecentActivities();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchRecentActivities = async () => {
+    try {
+      setLoading(true);
+
+      const { data: salesData, error } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          sale_number,
+          total_amount,
+          quantity_oz,
+          created_at,
+          status,
+          customers (
+            name
+          ),
+          mining_companies (
+            abbreviation
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const formattedNotifications: Notification[] = salesData?.map((sale: any, index: number) => {
+        const timeAgo = getTimeAgo(new Date(sale.created_at));
+        const companyName = sale.mining_companies?.abbreviation || 'N/A';
+        const customerName = sale.customers?.name || 'N/A';
+        const amount = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(sale.total_amount || 0);
+        const quantity = sale.quantity_oz?.toFixed(2) || '0.00';
+
+        return {
+          id: sale.id,
+          type: index < 2 ? 'success' : 'info',
+          title: `Vente ${sale.sale_number}`,
+          message: `${companyName} → ${customerName} | ${amount} | ${quantity} oz`,
+          time: timeAgo,
+          read: index > 1,
+        };
+      }) || [];
+
+      setNotifications(formattedNotifications);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) return 'À l\'instant';
+    if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
+    if (diffInHours < 24) return `Il y a ${diffInHours}h`;
+    return `Il y a ${diffInDays}j`;
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const toggleLanguage = () => {
     const currentLang = i18n.language || 'en';
@@ -116,12 +175,19 @@ export function Header() {
                 />
                 <div className="absolute right-0 mt-2 z-20">
                   <NotificationPanel
-                    notifications={mockNotifications}
+                    notifications={notifications}
                     onNotificationClick={(id) => {
-                      console.log('Notification clicked:', id);
-                      setShowNotifications(false);
+                      const sale = notifications.find(n => n.id === id);
+                      if (sale) {
+                        navigate(`/sales/${id}`);
+                        setShowNotifications(false);
+                      }
                     }}
-                    onMarkAllRead={() => console.log('Mark all as read')}
+                    onMarkAllRead={() => {
+                      setNotifications(prev =>
+                        prev.map(n => ({ ...n, read: true }))
+                      );
+                    }}
                   />
                 </div>
               </>

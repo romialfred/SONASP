@@ -78,7 +78,10 @@ export function GlobalDashboardEnhanced() {
         `)
         .order('sale_date', { ascending: false });
 
-      if (salesError) throw salesError;
+      if (salesError) {
+        console.error('Error fetching sales:', salesError);
+        // Continue with empty data instead of throwing
+      }
 
       // Fetch active batches count
       const { count: batchesCount, error: batchesError } = await supabase
@@ -87,7 +90,9 @@ export function GlobalDashboardEnhanced() {
         .in('status', [
         ]);
 
-      if (batchesError) throw batchesError;
+      if (batchesError) {
+        console.error('Error fetching batches:', batchesError);
+      }
 
       // Fetch active customers count
       const { count: customersCount, error: customersError } = await supabase
@@ -95,7 +100,9 @@ export function GlobalDashboardEnhanced() {
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      if (customersError) throw customersError;
+      if (customersError) {
+        console.error('Error fetching customers:', customersError);
+      }
 
       // Calculate stats
       const now = new Date();
@@ -116,7 +123,10 @@ export function GlobalDashboardEnhanced() {
 
       const ROYALTY_RATE = 0.03;
 
-      salesData?.forEach((sale: any) => {
+      // Ensure salesData is an array
+      const salesArray = Array.isArray(salesData) ? salesData : [];
+
+      salesArray.forEach((sale: any) => {
         const saleDate = new Date(sale.sale_date || sale.created_at);
         const amount = sale.total_amount || 0;
         const royalty = amount * ROYALTY_RATE;
@@ -173,7 +183,7 @@ export function GlobalDashboardEnhanced() {
       }
 
       // Aggregate sales by month
-      salesData?.forEach((sale: any) => {
+      salesArray.forEach((sale: any) => {
         const saleDate = new Date(sale.sale_date || sale.created_at);
         const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -199,7 +209,7 @@ export function GlobalDashboardEnhanced() {
       }
 
       // Aggregate royalties by company and month
-      salesData?.forEach((sale: any) => {
+      salesArray.forEach((sale: any) => {
         const saleDate = new Date(sale.sale_date || sale.created_at);
         const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
         const companyName = sale.mining_companies?.abbreviation || 'Autre';
@@ -414,14 +424,28 @@ export function GlobalDashboardEnhanced() {
           </CardHeader>
           <CardContent>
             <div className="h-96">
-              <BarChartWidget
-                data={monthlyRoyaltiesByCompany.slice(-12)}
-                dataKey="value"
-                barColor="#B8860B"
-                title=""
-                showGrid
-                stacked
-              />
+              {monthlyRoyaltiesByCompany.length > 0 ? (
+                <BarChartWidget
+                  data={monthlyRoyaltiesByCompany.slice(-12)}
+                  bars={
+                    // Get all company names dynamically from the data
+                    Object.keys(monthlyRoyaltiesByCompany[0] || {})
+                      .filter(key => key !== 'month')
+                      .map((companyName, index) => ({
+                        dataKey: companyName,
+                        color: index === 0 ? '#B8860B' : index === 1 ? '#D4AF37' : '#F4C430',
+                        name: companyName
+                      }))
+                  }
+                  height={384}
+                  showGrid
+                  showLegend
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">Aucune donnée disponible</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

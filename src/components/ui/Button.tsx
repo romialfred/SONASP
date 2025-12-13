@@ -1,5 +1,5 @@
-import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { ButtonHTMLAttributes, ReactNode, forwardRef, ComponentType } from 'react';
+import { Loader2, LucideProps } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -7,7 +7,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
-  icon?: ReactNode;
+  icon?: ReactNode | ComponentType<LucideProps>;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -41,6 +41,27 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const widthStyles = fullWidth ? 'w-full' : '';
 
+    const renderIcon = () => {
+      if (!icon || loading) return null;
+
+      // Si icon est un composant (fonction), on l'instancie
+      if (typeof icon === 'function') {
+        const IconComponent = icon as ComponentType<LucideProps>;
+        return (
+          <span className="mr-2 flex items-center" data-testid="button-icon-wrapper">
+            <IconComponent className="h-4 w-4" />
+          </span>
+        );
+      }
+
+      // Sinon, c'est déjà un élément React, on l'affiche tel quel
+      return (
+        <span className="mr-2 flex items-center" data-testid="button-icon-wrapper">
+          {icon}
+        </span>
+      );
+    };
+
     return (
       <button
         ref={ref}
@@ -49,7 +70,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {icon && !loading && <span className="mr-2 flex items-center" data-testid="button-icon-wrapper">{icon}</span>}
+        {renderIcon()}
         {children}
       </button>
     );

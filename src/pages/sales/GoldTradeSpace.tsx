@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -53,6 +54,7 @@ interface MiningCompanyWithStock extends MiningCompany {
 }
 
 export function GoldTradeSpace() {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useAlert();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -203,54 +205,23 @@ export function GoldTradeSpace() {
     setSelectedMechanism(mechanism);
   };
 
-  const handleCreateSale = async () => {
-    if (!selectedMechanism || !selectedCustomer || !comparisonData) {
-      showError('Please select a pricing mechanism and customer');
+  const handleCreateSale = () => {
+    if (!selectedMechanism || !comparisonData) {
+      showError('Please complete the simulation first');
       return;
     }
 
-    setProcessingOrder(true);
-    try {
-      const pricingType =
-        selectedMechanism.mechanism === 'spot'
-          ? 'spot'
-          : selectedMechanism.mechanism === 'in_process'
-          ? 'in_process'
-          : 'forward';
-
-      const forwardDays =
-        selectedMechanism.mechanism === 'forward_7d'
-          ? 7
-          : selectedMechanism.mechanism === 'forward_14d'
-          ? 14
-          : selectedMechanism.mechanism === 'forward_30d'
-          ? 30
-          : undefined;
-
-      const result = await createGoldSale({
-        customerId: selectedCustomer,
+    // Navigate to sale creation with pre-filled data
+    navigate('/sales/new', {
+      state: {
+        mechanismData: selectedMechanism,
         quantityOz: comparisonData.quantityOz,
-        pricingMechanism: pricingType,
-        forwardDays,
-        refineryId: selectedRefinery || undefined,
-        batchId: selectedBatch || undefined,
-      });
-
-      if (result.success) {
-        showSuccess('Gold sale order created successfully!');
-        setSelectedMechanism(null);
-        setComparisonData(null);
-        setSelectedCustomer('');
-        fetchInitialData();
-      } else {
-        showError(result.error || 'Failed to create sale order');
+        availableStockOz: availableStock,
+        preselectedSellerId: selectedMiningCompany,
+        lockSeller: true,
+        preselectedCustomerId: selectedCustomer || null,
       }
-    } catch (error) {
-      console.error('Error creating sale:', error);
-      showError('An error occurred while creating the sale');
-    } finally {
-      setProcessingOrder(false);
-    }
+    });
   };
 
   const handleCalculationComplete = (comparison: any) => {
@@ -627,11 +598,11 @@ export function GoldTradeSpace() {
 
                     <Button
                       onClick={handleCreateSale}
-                      disabled={processingOrder || !selectedCustomer || (selectedMechanism.mechanism === 'in_process' && !selectedRefinery)}
+                      disabled={!comparisonData || (selectedMechanism.mechanism === 'in_process' && !selectedRefinery)}
                       className="w-full"
                       size="lg"
                     >
-                      {processingOrder ? 'Processing Order...' : 'Create Gold Sale Order'}
+                      Proceed to Sale Form
                     </Button>
                   </div>
                 </div>

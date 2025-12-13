@@ -51,9 +51,10 @@ export function SaleCreate() {
   const availableFromState = (location.state as any)?.availableStockOz;
   const preselectedSellerId = (location.state as any)?.preselectedSellerId; // New: preselected seller from inventory
   const isSellerLocked = (location.state as any)?.lockSeller || false; // New: lock seller field
+  const preselectedCustomerId = (location.state as any)?.preselectedCustomerId; // New: preselected customer
 
   const [formData, setFormData] = useState({
-    customerId: '',
+    customerId: preselectedCustomerId || '',
     miningCompanyId: preselectedSellerId || '',
     quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '',
@@ -212,7 +213,7 @@ export function SaleCreate() {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
     setShowCalculations(false);
-    setShowInvoicePreview(false); // Hide preview when data changes
+    // Don't hide preview - let the auto-update effect handle it
   };
 
   const validateForm = (): boolean => {

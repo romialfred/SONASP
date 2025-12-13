@@ -50,7 +50,7 @@ export const ROYALTY_RATE = 0.03;
 // MULTI-VENDOR BUSINESS RULES - PHASE 1.2
 // ============================================================================
 
-export type SellerType = 'mining_company' | 'mansa';
+export type SellerType = 'mining_company' | 'mansa_ressources';
 
 export interface Seller {
   id: string;
@@ -112,7 +112,7 @@ export async function getAvailableSellers(): Promise<{
       sellers.push({
         id: mansa.id,
         name: mansa.name || 'Mansa Resources',
-        type: 'mansa',
+        type: 'mansa_ressources',
         country: mansa.country,
         canSellTo: 'external_customers',
       });
@@ -191,7 +191,7 @@ export function validateSellerCustomerPair(
   }
 
   // Business Rule 2: External customers must buy from Mansa
-  if (!isMansaCustomer && sellerType !== 'mansa') {
+  if (!isMansaCustomer && sellerType !== 'mansa_ressources') {
     return {
       valid: false,
       error: 'External customers can only purchase from Mansa Resources.',

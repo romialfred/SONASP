@@ -353,7 +353,7 @@ export async function calculateInventoryMetrics() {
   }
 }
 
-export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'mansa') {
+export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'mansa_ressources') {
   try {
     // If no seller specified, return total inventory
     if (!sellerId || !sellerType) {

@@ -12,7 +12,7 @@ export interface CreatePreSaleData {
   sale_date?: string;
   notes?: string;
   seller_id?: string;
-  seller_type?: 'mining_company' | 'mansa';
+  seller_type?: 'mining_company' | 'mansa_ressources';
   payment_type?: 'bank_transfer' | 'cash' | 'check' | 'virtual';
   customer_bank_id?: string;
   fx_rate?: number;
@@ -214,7 +214,7 @@ export async function createPreSale(data: CreatePreSaleData) {
         sale_date: data.sale_date || new Date().toISOString().split('T')[0],
         notes: data.notes,
         seller_id: data.seller_id,
-        seller_type: data.seller_type || 'mansa',
+        seller_type: data.seller_type || 'mansa_ressources',
         is_internal_sale: false,
         payment_type: data.payment_type,
         customer_bank_id: data.customer_bank_id,

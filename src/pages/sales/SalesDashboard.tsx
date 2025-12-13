@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { Button } from '@/components/ui/Button';
@@ -277,41 +276,6 @@ export function SalesDashboard() {
       void loadSales();
   };
 
-  const metricsDisplay = [
-    {
-      title: 'Available Inventory',
-      value: formatWeight(metrics.availableInventory, 'oz'),
-      change: 'Fine gold ready for sale',
-      changeType: 'neutral' as const,
-      icon: DollarSign,
-      iconColor: 'text-primary-500',
-    },
-    {
-      title: 'Pending Sales',
-      value: String(metrics.pendingSales),
-      change: 'Awaiting approval',
-      changeType: 'neutral' as const,
-      icon: Clock,
-      iconColor: 'text-blue-500',
-    },
-    {
-      title: 'Monthly Revenue',
-      value: formatCurrency(metrics.monthlyRevenue),
-      change: 'Current month total',
-      changeType: 'positive' as const,
-      icon: TrendingUp,
-      iconColor: 'text-accent-500',
-    },
-    {
-      title: 'Completed Sales (MTD)',
-      value: String(metrics.completedSales),
-      change: `${metrics.pendingPayment} pending payment`,
-      changeType: 'neutral' as const,
-      icon: CheckCircle,
-      iconColor: 'text-accent-500',
-    },
-  ];
-
   const filteredSales = sales.filter((sale) => {
     const matchesSearch =
       sale.saleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -342,26 +306,27 @@ export function SalesDashboard() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        {/* Modern Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4 pb-6 border-b border-gray-200">
           <div>
-            <h1 className="font-heading text-3xl font-bold text-gray-900">
-              {t('nav.sales')}
+            <h1 className="font-heading text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent mb-2">
+              Gestion des Ventes
             </h1>
-            <p className="text-gray-600 mt-1">Sales Management Dashboard</p>
+            <p className="text-gray-600 text-lg">Tableau de bord des ventes d'or</p>
           </div>
           <div className="relative group">
             <Button
               onClick={() => {
                 void navigate('/sales/gold-trade-space');
               }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <Plus className="h-4 w-4" />
-              Create New Sale
+              <Plus className="h-5 w-5" />
+              Nouvelle Vente
             </Button>
             <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
               <p className="text-xs text-blue-900">
-                <strong>Note:</strong> Sales can only be created through the Gold Trade Space module for proper pricing mechanism selection.
+                <strong>Note:</strong> Les ventes doivent être créées via le module Gold Trade Space pour sélectionner le mécanisme de tarification approprié.
               </p>
             </div>
           </div>
@@ -386,50 +351,149 @@ export function SalesDashboard() {
           </Alert>
         )}
 
+        {/* Modern Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metricsDisplay.map((metric) => (
-            <MetricCard key={metric.title} {...metric} />
-          ))}
+          {/* Available Inventory Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">STOCK</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-amber-100 text-xs font-medium mb-1">Stock Disponible</p>
+                <p className="text-white text-3xl font-bold mb-1">
+                  {formatWeight(metrics.availableInventory, 'oz')}
+                </p>
+                <p className="text-amber-100 text-xs">
+                  {(metrics.availableInventory * 31.1035).toFixed(2)}g disponible
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Pending Sales Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">EN ATTENTE</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-blue-100 text-xs font-medium mb-1">Ventes en Attente</p>
+                <p className="text-white text-3xl font-bold mb-1">
+                  {metrics.pendingSales}
+                </p>
+                <p className="text-blue-100 text-xs">
+                  Nécessitent une approbation
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Monthly Revenue Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">CE MOIS</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-emerald-100 text-xs font-medium mb-1">Revenus Mensuels</p>
+                <p className="text-white text-3xl font-bold mb-1">
+                  {formatCurrency(metrics.monthlyRevenue)}
+                </p>
+                <p className="text-emerald-100 text-xs">
+                  Total du mois en cours
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Completed Sales Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-violet-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">MTD</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-violet-100 text-xs font-medium mb-1">Ventes Complétées</p>
+                <p className="text-white text-3xl font-bold mb-1">
+                  {metrics.completedSales}
+                </p>
+                <p className="text-violet-100 text-xs">
+                  {metrics.pendingPayment} en attente de paiement
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
         </div>
 
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Sales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6 flex flex-wrap gap-4">
-              <input
-                type="text"
-                placeholder="Search by sale number or customer..."
-                value={searchQuery}
-                  onChange={(event) => {
-                    setSearchQuery(event.target.value);
-                  }}
-                className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <select
-                value={statusFilter}
-                  onChange={(event) => {
-                    setStatusFilter(event.target.value as 'all' | SaleStatus);
-                  }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="pending_management_approval">Pending Management Approval</option>
-                <option value="management_approved">Management Approved</option>
-                <option value="pending_for_customer_approval">Pending Customer Approval</option>
-                <option value="customer_approved">Customer Approved</option>
-                <option value="waiting_for_payment">Waiting for Payment</option>
-                <option value="virtual_payment">Virtual Payment</option>
-                <option value="payment_received">Payment Received</option>
-                <option value="completed">Completed</option>
-                <option value="management_rejected">Management Rejected</option>
-                <option value="customer_rejected">Customer Rejected</option>
-              </select>
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 pb-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <CardTitle className="text-2xl font-bold text-gray-900">Ventes Actives</CardTitle>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Rechercher par numéro ou client..."
+                  value={searchQuery}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                    }}
+                  className="min-w-[280px] px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                />
+                <select
+                  value={statusFilter}
+                    onChange={(event) => {
+                      setStatusFilter(event.target.value as 'all' | SaleStatus);
+                    }}
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white min-w-[200px] transition-all"
+                >
+                  <option value="all">Tous les statuts</option>
+                  <option value="pending_management_approval">Approbation Management</option>
+                  <option value="management_approved">Approuvé Management</option>
+                  <option value="pending_for_customer_approval">Approbation Client</option>
+                  <option value="customer_approved">Approuvé Client</option>
+                  <option value="waiting_for_payment">En attente de paiement</option>
+                  <option value="virtual_payment">Paiement virtuel</option>
+                  <option value="payment_received">Paiement reçu</option>
+                  <option value="completed">Complété</option>
+                  <option value="management_rejected">Rejeté Management</option>
+                  <option value="customer_rejected">Rejeté Client</option>
+                </select>
+              </div>
             </div>
+          </CardHeader>
+          <CardContent className="p-6 bg-gray-50">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {activeSales.map((sale) => {
                   const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                 const StatusIcon = status.icon;
@@ -443,55 +507,61 @@ export function SalesDashboard() {
                       onClick={() => {
                         void navigate(`/sales/${sale.id}`);
                       }}
-                    className="group relative p-5 border-2 border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-lg transition-all cursor-pointer bg-white"
+                    className="group relative overflow-hidden rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-2xl transition-all duration-300 cursor-pointer bg-white"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-700 transition-colors">
+                    {/* Header */}
+                    <div className="p-6 pb-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors mb-1">
                             {sale.saleNumber}
                           </h3>
-                          <div className={`flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
-                            <StatusIcon className="h-3 w-3" />
-                            {status.label}
+                          <p className="text-sm text-gray-600 font-medium">{sale.customer}</p>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
+                            Voir <ArrowRight className="h-4 w-4" />
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 font-medium">{sale.customer}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Created: {new Date(sale.createdDate).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-                        <p className="text-2xl font-bold text-primary-700">
+
+                      {/* Total Amount - Large */}
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 mb-1">Montant Total</p>
+                        <p className="text-3xl font-bold text-gray-900">
                           {formatCurrency(sale.amount)}
                         </p>
                       </div>
+
+                      {/* Quantity and Price Grid */}
+                      <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Quantité</p>
+                          <p className="text-lg font-bold text-gray-700">
+                            {sale.quantity.toFixed(3)} oz
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Prix/oz</p>
+                          <p className="text-lg font-bold text-gray-700">
+                            {unitPrice}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Quantity</p>
-                        <p className="text-base font-semibold text-gray-900">
-                          {sale.quantity.toFixed(3)} oz
-                        </p>
+                    {/* Footer - Status and Date on same line */}
+                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold ${status.color}`}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        <span>{status.label}</span>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Price per oz</p>
-                        <p className="text-base font-semibold text-gray-900">
-                          {unitPrice}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="text-xs text-primary-600 font-semibold flex items-center gap-1">
-                        View Details
-                        <ArrowRight className="h-3 w-3" />
+                      <div className="text-xs text-gray-500">
+                        {new Date(sale.createdDate).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </div>
                     </div>
                   </div>
@@ -499,8 +569,14 @@ export function SalesDashboard() {
               })}
 
               {activeSales.length === 0 && !pageError && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">No active sales found matching your criteria</p>
+                <div className="col-span-full text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                      <DollarSign className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600 text-lg font-medium">Aucune vente active trouvée</p>
+                    <p className="text-gray-400 text-sm">Essayez de modifier vos critères de recherche ou créez une nouvelle vente</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -508,85 +584,88 @@ export function SalesDashboard() {
         </Card>
 
         {completedSales.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Completed Sales
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-200 pb-6">
+              <CardTitle className="flex items-center gap-3 text-2xl font-bold text-gray-900">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+                Ventes Complétées
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
+            <CardContent className="p-6 bg-gray-50">
+              <div className="overflow-x-auto bg-white rounded-lg">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-100 border-b-2 border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Sale Number
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Numéro
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Customer
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Client
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Quantity
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Quantité
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Amount
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Montant
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Status
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Statut
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-100 bg-white">
                     {completedSales.map((sale) => {
                       const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                       const StatusIcon = status.icon;
 
                       return (
-                        <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-gray-900">{sale.saleNumber}</span>
+                        <tr key={sale.id} className="hover:bg-emerald-50/50 transition-all duration-150 cursor-pointer" onClick={() => { void navigate(`/sales/${sale.id}`); }}>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className="text-sm font-bold text-gray-900">{sale.saleNumber}</span>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-700">{sale.customer}</span>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className="text-sm text-gray-700 font-medium">{sale.customer}</span>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">{sale.quantity.toFixed(3)} oz</span>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className="text-sm font-semibold text-gray-900">{sale.quantity.toFixed(3)} oz</span>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className="text-sm font-bold text-gray-900">{formatCurrency(sale.amount)}</span>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className="text-sm font-bold text-emerald-700">{formatCurrency(sale.amount)}</span>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className={`inline-flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
-                              <StatusIcon className="h-3 w-3" />
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold ${status.color}`}>
+                              <StatusIcon className="h-3.5 w-3.5" />
                               {status.label}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-6 py-5 whitespace-nowrap">
                             <span className="text-sm text-gray-600">
-                              {new Date(sale.createdDate).toLocaleDateString('en-US', {
+                              {new Date(sale.createdDate).toLocaleDateString('fr-FR', {
                                 year: 'numeric',
                                 month: 'short',
                                 day: 'numeric'
                               })}
                             </span>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <td className="px-6 py-5 whitespace-nowrap text-right">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 void navigate(`/sales/${sale.id}`);
                               }}
-                              className="text-xs"
+                              className="text-xs font-semibold hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
                             >
-                              View Details
+                              Voir Détails
                             </Button>
                           </td>
                         </tr>
@@ -597,8 +676,8 @@ export function SalesDashboard() {
               </div>
 
               {completedSales.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No completed sales to display</p>
+                <div className="text-center py-12 bg-white rounded-lg">
+                  <p className="text-gray-500 text-sm">Aucune vente complétée à afficher</p>
                 </div>
               )}
             </CardContent>

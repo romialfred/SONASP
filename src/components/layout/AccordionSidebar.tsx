@@ -31,6 +31,7 @@ import {
   ScanText,
   Lock,
   Award,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -158,6 +159,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('admin.userManagement'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
         { label: t('admin.parameters'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
         { label: 'Gold Sales Settings', path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-600' },
+        { label: 'Status Manager', path: '/admin/status-manager', icon: Layers, iconColor: 'text-teal-600' },
         { label: t('workflow.title'), path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
         { label: t('audit.title'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],

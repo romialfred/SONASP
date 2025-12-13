@@ -58,6 +58,7 @@ import { RefineriesPage } from './pages/admin/RefineriesPage';
 import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import GoldSalesSettingsPage from './pages/admin/GoldSalesSettingsPage';
+import StatusManagerPage from './pages/admin/StatusManagerPage';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
@@ -760,6 +761,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
                   <UserPermissionsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/status-manager"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SYSTEM_SETTINGS_MANAGE}>
+                  <StatusManagerPage />
                 </ProtectedRoute>
               }
             />

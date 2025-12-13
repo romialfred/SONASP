@@ -11,7 +11,6 @@ import { DomainRestriction } from './components/auth/DomainRestriction';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import ActivateAccount from './pages/auth/ActivateAccount';
-import { DashboardPage } from './pages/DashboardPage';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
 import { AuditTrailPage } from './pages/AuditTrailPage';
@@ -118,21 +117,12 @@ function AppRoutes() {
               }
             />
 
-            {/* Main dashboard - Modern Version */}
+            {/* Main dashboard */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
                   <GlobalDashboardEnhanced />
-                </ProtectedRoute>
-              }
-            />
-            {/* Legacy dashboard */}
-            <Route
-              path="/dashboard/legacy"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
                 </ProtectedRoute>
               }
             />
@@ -161,16 +151,8 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/dashboard/global-enhanced"
-              element={
-                <ProtectedRoute>
-                  <GlobalDashboardEnhanced />
-                </ProtectedRoute>
-              }
-            />
 
-            {/* Legacy dashboard routes */}
+            {/* Role-specific dashboards */}
             <Route
               path="/dashboard/management"
               element={

@@ -399,16 +399,28 @@ export function GlobalDashboardEnhanced() {
           </CardHeader>
           <CardContent>
             <div className="h-80">
-              <LineChartWidget
-                data={monthlySales.map(m => ({
-                  name: m.month,
-                  value: m.revenue,
-                }))}
-                dataKey="value"
-                lineColor="#10B981"
-                title=""
-                showGrid
-              />
+              {monthlySales.length > 0 ? (
+                <LineChartWidget
+                  data={monthlySales.map(m => ({
+                    name: m.month,
+                    value: m.revenue,
+                  }))}
+                  lines={[
+                    {
+                      dataKey: 'value',
+                      color: '#10B981',
+                      name: 'Revenue'
+                    }
+                  ]}
+                  height={320}
+                  showGrid
+                  showLegend
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">Aucune donnée disponible</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award, Users, Building2, Factory, Truck } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award, Users, Building2, Factory, Truck, Calendar } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { formatCurrency, formatWeight } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   saleSummaryListSchema,
   normalizeSaleStatus,
@@ -116,10 +117,14 @@ export function SalesDashboard() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | SaleStatus>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const mountedRef = useRef(false);
+  const [revenueByCustomer, setRevenueByCustomer] = useState<any[]>([]);
+  const [revenueByMiningCompany, setRevenueByMiningCompany] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({
     availableInventory: 0,
     pendingSales: 0,
@@ -222,6 +227,94 @@ export function SalesDashboard() {
     }
   }, []);
 
+  const loadChartData = useCallback(async () => {
+    try {
+      // Get last 12 months data
+      const now = new Date();
+      const last12Months = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+      // Load sales with customer and mining company info for completed sales
+      const { data: salesData, error } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          created_at,
+          final_proceeds,
+          status,
+          customer:customers(id, name),
+          mining_company:mining_companies(id, name)
+        `)
+        .gte('created_at', last12Months.toISOString())
+        .in('status', [SALES_STATUSES.COMPLETED, SALES_STATUSES.PAYMENT_RECEIVED]);
+
+      if (error) {
+        console.error('[SalesDashboard] Error loading chart data:', error);
+        return;
+      }
+
+      // Process data for monthly revenue by customer
+      const monthlyRevenueByCustomer: { [key: string]: { [month: string]: number } } = {};
+      const monthlyRevenueByMiningCompany: { [key: string]: { [month: string]: number } } = {};
+
+      salesData?.forEach((sale: any) => {
+        const date = new Date(sale.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const customerName = sale.customer?.name || 'Inconnu';
+        const miningCompanyName = sale.mining_company?.name || 'Inconnu';
+
+        // By customer
+        if (!monthlyRevenueByCustomer[customerName]) {
+          monthlyRevenueByCustomer[customerName] = {};
+        }
+        monthlyRevenueByCustomer[customerName][monthKey] =
+          (monthlyRevenueByCustomer[customerName][monthKey] || 0) + (sale.final_proceeds || 0);
+
+        // By mining company
+        if (!monthlyRevenueByMiningCompany[miningCompanyName]) {
+          monthlyRevenueByMiningCompany[miningCompanyName] = {};
+        }
+        monthlyRevenueByMiningCompany[miningCompanyName][monthKey] =
+          (monthlyRevenueByMiningCompany[miningCompanyName][monthKey] || 0) + (sale.final_proceeds || 0);
+      });
+
+      // Generate 12 months labels
+      const months = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      }
+
+      // Format data for charts - By Customer
+      const customerChartData = months.map(month => {
+        const monthLabel = new Date(month + '-01').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+        const dataPoint: any = { month: monthLabel };
+
+        Object.keys(monthlyRevenueByCustomer).forEach(customer => {
+          dataPoint[customer] = monthlyRevenueByCustomer[customer][month] || 0;
+        });
+
+        return dataPoint;
+      });
+
+      // Format data for charts - By Mining Company
+      const miningCompanyChartData = months.map(month => {
+        const monthLabel = new Date(month + '-01').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+        const dataPoint: any = { month: monthLabel };
+
+        Object.keys(monthlyRevenueByMiningCompany).forEach(company => {
+          dataPoint[company] = monthlyRevenueByMiningCompany[company][month] || 0;
+        });
+
+        return dataPoint;
+      });
+
+      setRevenueByCustomer(customerChartData);
+      setRevenueByMiningCompany(miningCompanyChartData);
+
+    } catch (error) {
+      console.error('[SalesDashboard] Error processing chart data:', error);
+    }
+  }, []);
 
   const loadSales = useCallback(async () => {
     setLoading(true);
@@ -291,11 +384,12 @@ export function SalesDashboard() {
   useEffect(() => {
     mountedRef.current = true;
     void loadSales();
+    void loadChartData();
 
     return () => {
       mountedRef.current = false;
     };
-  }, [loadSales]);
+  }, [loadSales, loadChartData]);
 
   const handleRetry = () => {
       if (!mountedRef.current) {
@@ -309,7 +403,25 @@ export function SalesDashboard() {
       sale.saleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sale.customer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    // Date filters
+    let matchesDateFrom = true;
+    let matchesDateTo = true;
+
+    if (dateFrom) {
+      const saleDate = new Date(sale.createdDate);
+      const fromDate = new Date(dateFrom);
+      matchesDateFrom = saleDate >= fromDate;
+    }
+
+    if (dateTo) {
+      const saleDate = new Date(sale.createdDate);
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999); // Include full day
+      matchesDateTo = saleDate <= toDate;
+    }
+
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
   });
 
   // Separate active and completed sales
@@ -495,33 +607,124 @@ export function SalesDashboard() {
         </div>
 
 
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Revenue by Customer Chart */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 pb-4">
+              <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Évolution des Revenus par Client (12 mois)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={revenueByCustomer}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {revenueByCustomer.length > 0 && Object.keys(revenueByCustomer[0])
+                    .filter(key => key !== 'month')
+                    .map((customer, index) => {
+                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                      return (
+                        <Line
+                          key={customer}
+                          type="monotone"
+                          dataKey={customer}
+                          stroke={colors[index % colors.length]}
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                        />
+                      );
+                    })}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Revenue by Mining Company Chart */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-teal-50 to-teal-100 border-b border-teal-200 pb-4">
+              <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Factory className="w-5 h-5 text-teal-600" />
+                Évolution des Revenus par Mine (12 mois)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={revenueByMiningCompany}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {revenueByMiningCompany.length > 0 && Object.keys(revenueByMiningCompany[0])
+                    .filter(key => key !== 'month')
+                    .map((company, index) => {
+                      const colors = ['#14b8a6', '#06b6d4', '#0ea5e9', '#6366f1', '#a855f7', '#d946ef'];
+                      return (
+                        <Bar
+                          key={company}
+                          dataKey={company}
+                          fill={colors[index % colors.length]}
+                        />
+                      );
+                    })}
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card className="border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 pb-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
               <CardTitle className="text-2xl font-bold text-gray-900">Ventes Actives</CardTitle>
-              <div className="flex items-center gap-3">
+              <Button
+                onClick={() => {
+                  void navigate('/sales/create');
+                }}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvelle Vente
+              </Button>
+            </div>
+
+            {/* Filters Section */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[250px]">
+                <label className="text-xs text-gray-600 font-medium mb-1 block">Recherche</label>
                 <input
                   type="text"
                   placeholder="Rechercher par numéro ou client..."
                   value={searchQuery}
-                    onChange={(event) => {
-                      setSearchQuery(event.target.value);
-                    }}
-                  className="min-w-[280px] px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm"
                 />
+              </div>
+
+              <div className="min-w-[180px]">
+                <label className="text-xs text-gray-600 font-medium mb-1 block">Statut</label>
                 <select
                   value={statusFilter}
-                    onChange={(event) => {
-                      setStatusFilter(event.target.value as 'all' | SaleStatus);
-                    }}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white min-w-[200px] transition-all"
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value as 'all' | SaleStatus);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all text-sm"
                 >
                   <option value="all">Tous les statuts</option>
-                  <option value="pending_management_approval">Approbation Management</option>
+                  <option value="create_sales">Création vente</option>
+                  <option value="pending_management_approval">En attente Management</option>
                   <option value="management_approved">Approuvé Management</option>
-                  <option value="pending_for_customer_approval">Approbation Client</option>
+                  <option value="pending_for_customer_approval">En attente Client</option>
                   <option value="customer_approved">Approuvé Client</option>
-                  <option value="waiting_for_payment">En attente de paiement</option>
+                  <option value="waiting_for_payment">Attente paiement</option>
                   <option value="virtual_payment">Paiement virtuel</option>
                   <option value="payment_received">Paiement reçu</option>
                   <option value="completed">Complété</option>
@@ -529,6 +732,49 @@ export function SalesDashboard() {
                   <option value="customer_rejected">Rejeté Client</option>
                 </select>
               </div>
+
+              <div className="min-w-[160px]">
+                <label className="text-xs text-gray-600 font-medium mb-1 block flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Date début
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => {
+                    setDateFrom(event.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all text-sm"
+                />
+              </div>
+
+              <div className="min-w-[160px]">
+                <label className="text-xs text-gray-600 font-medium mb-1 block flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Date fin
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => {
+                    setDateTo(event.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all text-sm"
+                />
+              </div>
+
+              {(dateFrom || dateTo) && (
+                <Button
+                  onClick={() => {
+                    setDateFrom('');
+                    setDateTo('');
+                  }}
+                  variant="secondary"
+                  className="text-sm py-2"
+                >
+                  Réinitialiser dates
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-6 bg-gray-50">

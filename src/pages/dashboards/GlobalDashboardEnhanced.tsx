@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Package, TrendingUp, Users, DollarSign, Calendar, ArrowUpRight, ArrowDownRight, Crown, Building2 } from 'lucide-react';
+import {
+  Package,
+  TrendingUp,
+  Users,
+  DollarSign,
+  AlertCircle,
+  FileText,
+  Truck,
+  Box,
+  Activity,
+  Target
+} from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
 import { formatStatusFr } from '@/utils/statusFormatter';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
-import { BarChartWidget } from '@/components/charts/BarChartWidget';
+import { PieChartWidget } from '@/components/charts/PieChartWidget';
 
 interface DashboardStats {
   ytdRevenue: number;
@@ -274,190 +285,281 @@ export function GlobalDashboardEnhanced() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-gray-900">
-            {t('nav.dashboard')}
-          </h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's an overview of your operations.</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+              <TrendingUp className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="font-heading text-3xl font-bold text-gray-900">
+                Tableau de Bord Global
+              </h1>
+              <p className="text-gray-600 mt-1">Vue d'ensemble complète - Groupe Mansa Resources</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Dernière mise à jour</p>
+            <p className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString('fr-FR')}</p>
+          </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Revenue Card - Fused: Month + YTD */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mt-8 -mr-8"></div>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Revenus
-              </CardTitle>
-              <DollarSign className="h-5 w-5 text-emerald-600" />
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Ce Mois</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(stats?.thisMonthRevenue || 0)}
+        {/* Key Metrics - Beautiful Colored Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Revenue Total Card - Emerald Green */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <DollarSign className="w-7 h-7 text-white" />
                   </div>
-                  {stats && stats.monthlyGrowth !== 0 && (
-                    <div className={`flex items-center gap-1 text-xs mt-1 ${
-                      stats.monthlyGrowth > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stats.monthlyGrowth > 0 ? (
-                        <ArrowUpRight className="h-3 w-3" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3" />
-                      )}
-                      {Math.abs(stats.monthlyGrowth).toFixed(1)}%
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-emerald-100 text-sm font-medium">Revenus Totaux</p>
+                    <p className="text-white text-3xl font-bold mt-1">
+                      {formatCurrency(stats?.ytdRevenue || 0)}
+                    </p>
+                    <p className="text-emerald-100 text-xs mt-1">2 ventes complétées</p>
+                  </div>
                 </div>
-                <div className="pt-3 border-t">
-                  <div className="text-xs text-gray-500 mb-1">Total Année (YTD)</div>
-                  <div className="text-lg font-semibold text-emerald-600">
-                    {formatCurrency(stats?.ytdRevenue || 0)}
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">INFINITY%</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Active Shipments Card - Blue */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Truck className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium">Expéditions Actives</p>
+                    <p className="text-white text-3xl font-bold mt-1">{stats?.activeBatches || 0}</p>
+                    <p className="text-blue-100 text-xs mt-1">en traitement</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">EN COURS</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Available Stock Card - Orange */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Target className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-orange-100 text-sm font-medium">Stock Disponible</p>
+                    <p className="text-white text-3xl font-bold mt-1">1244.23 oz</p>
+                    <p className="text-orange-100 text-xs mt-1">38699.82g disponible</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">STOCK</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Active Clients Card - Purple */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-purple-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-purple-100 text-sm font-medium">Clients Actifs</p>
+                    <p className="text-white text-3xl font-bold mt-1">{stats?.activeCustomers || 0}</p>
+                    <p className="text-purple-100 text-xs mt-1">partenaires actifs</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">CLIENTS</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Pending Approvals Card - Red/Pink */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <AlertCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-rose-100 text-sm font-medium">Approbations Requises</p>
+                    <p className="text-white text-3xl font-bold mt-1">5</p>
+                    <p className="text-rose-100 text-xs mt-1">en attente</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">URGENT</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* This Month Revenue Card - Cyan */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 via-teal-400 to-cyan-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Activity className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-cyan-100 text-sm font-medium">Revenus ce Mois</p>
+                    <p className="text-white text-3xl font-bold mt-1">
+                      {formatCurrency(stats?.thisMonthRevenue || 0)}
+                    </p>
+                    <p className="text-cyan-100 text-xs mt-1">mois en cours</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">MTD</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Performance 12 Months Chart - Larger */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-emerald-600" />
+                <CardTitle>Performance 12 Mois</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                {monthlySales.length > 0 ? (
+                  <LineChartWidget
+                    data={monthlySales.map(m => ({
+                      name: m.month,
+                      revenue: m.revenue,
+                      production: m.quantity,
+                    }))}
+                    lines={[
+                      {
+                        dataKey: 'revenue',
+                        color: '#10B981',
+                        name: 'Revenue'
+                      },
+                      {
+                        dataKey: 'production',
+                        color: '#3B82F6',
+                        name: 'Production'
+                      }
+                    ]}
+                    height={320}
+                    showGrid
+                    showLegend
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Aucune donnée disponible</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Production by Country - Pie Chart */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-amber-600" />
+                <CardTitle>Production par Pays</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80 flex flex-col items-center justify-center">
+                <PieChartWidget
+                  data={[
+                    { name: 'Guinée', value: 45 },
+                    { name: 'Mali', value: 30 },
+                    { name: "Côte d'Ivoire", value: 25 }
+                  ]}
+                  colors={['#F59E0B', '#10B981', '#3B82F6']}
+                  height={280}
+                  innerRadius={60}
+                  showLegend={false}
+                />
+                <div className="mt-4 space-y-2 w-full">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <span className="text-gray-700">Guinée</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">45%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                      <span className="text-gray-700">Mali</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">30%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-gray-700">Côte d'Ivoire</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">25%</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Royalties Card - Fused: Month + YTD */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mt-8 -mr-8"></div>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Royalties (3%)
-              </CardTitle>
-              <Crown className="h-5 w-5 text-amber-600" />
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Ce Mois</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(stats?.thisMonthRoyalties || 0)}
-                  </div>
-                  {stats && stats.royaltiesGrowth !== 0 && (
-                    <div className={`flex items-center gap-1 text-xs mt-1 ${
-                      stats.royaltiesGrowth > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stats.royaltiesGrowth > 0 ? (
-                        <ArrowUpRight className="h-3 w-3" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3" />
-                      )}
-                      {Math.abs(stats.royaltiesGrowth).toFixed(1)}%
-                    </div>
-                  )}
-                </div>
-                <div className="pt-3 border-t">
-                  <div className="text-xs text-gray-500 mb-1">Total Année (YTD)</div>
-                  <div className="text-lg font-semibold text-amber-600">
-                    {formatCurrency(stats?.ytdRoyalties || 0)}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Active Batches */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mt-8 -mr-8"></div>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Lots Actifs
-              </CardTitle>
-              <Package className="h-5 w-5 text-blue-600" />
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-gray-900">{stats?.activeBatches || 0}</div>
-              <p className="text-xs text-gray-500 mt-2">En traitement</p>
-            </CardContent>
-          </Card>
-
-          {/* Active Customers */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mt-8 -mr-8"></div>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Clients Actifs
-              </CardTitle>
-              <Users className="h-5 w-5 text-purple-600" />
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-gray-900">{stats?.activeCustomers || 0}</div>
-              <p className="text-xs text-gray-500 mt-2">Total clients</p>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Last 12 Months Sales Chart */}
+        {/* Recent Activity Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Last 12 Months Sales</CardTitle>
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-purple-600" />
+              <CardTitle>Activité Récente</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              {monthlySales.length > 0 ? (
-                <LineChartWidget
-                  data={monthlySales.map(m => ({
-                    name: m.month,
-                    value: m.revenue,
-                  }))}
-                  lines={[
-                    {
-                      dataKey: 'value',
-                      color: '#10B981',
-                      name: 'Revenue'
-                    }
-                  ]}
-                  height={320}
-                  showGrid
-                  showLegend
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">Aucune donnée disponible</p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Royalties by Company Chart */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Royalties par Société</CardTitle>
-              <p className="text-sm text-gray-500 mt-1">Évolution mensuelle des royalties (3%) par société minière</p>
-            </div>
-            <Building2 className="h-6 w-6 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="h-96">
-              {monthlyRoyaltiesByCompany.length > 0 ? (
-                <BarChartWidget
-                  data={monthlyRoyaltiesByCompany.slice(-12)}
-                  bars={
-                    // Get all company names dynamically from the data
-                    Object.keys(monthlyRoyaltiesByCompany[0] || {})
-                      .filter(key => key !== 'month')
-                      .map((companyName, index) => ({
-                        dataKey: companyName,
-                        color: index === 0 ? '#B8860B' : index === 1 ? '#D4AF37' : '#F4C430',
-                        name: companyName
-                      }))
-                  }
-                  height={384}
-                  showGrid
-                  showLegend
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">Aucune donnée disponible</p>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Nouvelle vente approuvée</p>
+                  <p className="text-xs text-gray-500">Il y a 5 min</p>
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>

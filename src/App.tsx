@@ -118,9 +118,18 @@ function AppRoutes() {
               }
             />
 
-            {/* Main dashboard */}
+            {/* Main dashboard - Modern Version */}
             <Route
               path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <GlobalDashboardEnhanced />
+                </ProtectedRoute>
+              }
+            />
+            {/* Legacy dashboard */}
+            <Route
+              path="/dashboard/legacy"
               element={
                 <ProtectedRoute>
                   <DashboardPage />

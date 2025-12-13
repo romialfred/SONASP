@@ -5,7 +5,7 @@
 Après analyse complète:
 - L'ENUM `sale_status` existe avec 15 valeurs ✓
 - La valeur par défaut est correcte ✓
-- **MAIS: La table `gold_sales` n'a PAS de colonne `status`!**
+- **MAIS: La table `sales` n'a PAS de colonne `status`!**
 
 ## Solution Immédiate
 
@@ -13,11 +13,11 @@ Après analyse complète:
 
 Dans Supabase SQL Editor, exécutez ce fichier:
 ```
-ADD_STATUS_TO_GOLD_SALES.sql
+ADD_STATUS_TO_SALES.sql
 ```
 
 Ce script va:
-1. Ajouter la colonne `status` à `gold_sales`
+1. Ajouter la colonne `status` à `sales`
 2. Définir la valeur par défaut
 3. Créer le trigger pour l'historique
 4. Vérifier que tout fonctionne
@@ -34,7 +34,7 @@ Trigger existe: OUI
 Valeur par défaut: 'pending_management_approval'::sale_status
 
 CORRECTION APPLIQUEE AVEC SUCCES!
-La table gold_sales est maintenant prete
+La table sales est maintenant prete
 ========================================
 ```
 
@@ -68,7 +68,7 @@ Les 15 statuts dans l'ENUM `sale_status`:
 
 ### Trigger Créé
 
-Le trigger `gold_sales_status_history_trigger` va automatiquement:
+Le trigger `sales_status_history_trigger` va automatiquement:
 - Enregistrer chaque changement de statut dans `unified_history`
 - Capturer l'utilisateur qui fait le changement
 - Stocker l'ancien et le nouveau statut

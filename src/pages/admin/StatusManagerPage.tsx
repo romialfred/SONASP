@@ -1,354 +1,195 @@
-/**
- * Status Manager Page
- * Interface ergonomique pour gérer les workflows dynamiques
- */
+import { useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Card } from '@/components/ui/Card';
+import { Tabs } from '@/components/ui/Tabs';
+import { Package, Plane, DollarSign, Settings, Eye } from 'lucide-react';
+import { PRODUCTION_STATUSES, ProductionStatus } from '@/constants/productionStatuses';
+import { SHIPPING_STATUSES, ShippingStatus } from '@/constants/shippingStatuses';
+import { SALES_STATUSES, STATUS_LABELS, STATUS_COLORS, SalesStatus } from '@/constants/salesStatuses';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Settings, History, Copy, Trash2, Power, PowerOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import {
-  getWorkflowTemplates,
-  getWorkflowWithDetails,
-  toggleWorkflowActive,
-  deleteWorkflowTemplate,
-  duplicateWorkflow,
-  validateWorkflowIntegrity,
-  WorkflowTemplate,
-  WorkflowWithDetails,
-} from '../../services/workflowManagerService';
-import { WorkflowEditor } from '../../components/admin/WorkflowEditor';
-import { WorkflowHistoryPanel } from '../../components/admin/WorkflowHistoryPanel';
+interface StatusInfo {
+  value: string;
+  label: string;
+  description: string;
+  color: string;
+  canTransitionTo: string[];
+}
 
 export default function StatusManagerPage() {
-  const [workflows, setWorkflows] = useState<WorkflowTemplate[]>([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'edit' | 'history'>('list');
-  const [filterType, setFilterType] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState('production');
 
-  useEffect(() => {
-    loadWorkflows();
-  }, [filterType]);
-
-  const loadWorkflows = async () => {
-    try {
-      setLoading(true);
-      const data = await getWorkflowTemplates(filterType === 'all' ? undefined : filterType);
-      setWorkflows(data);
-    } catch (error) {
-      console.error('Error loading workflows:', error);
-    } finally {
-      setLoading(false);
-    }
+  const getProductionStatuses = (): StatusInfo[] => {
+    return Object.entries(PRODUCTION_STATUSES).map(([key, value]) => ({
+      value: key,
+      label: value.label,
+      description: value.description,
+      color: value.bgColor + ' ' + value.color,
+      canTransitionTo: key === 'prepared' ? ['ready_for_customs'] : []
+    }));
   };
 
-  const handleSelectWorkflow = async (workflow: WorkflowTemplate) => {
-    try {
-      const fullWorkflow = await getWorkflowWithDetails(workflow.id);
-      setSelectedWorkflow(fullWorkflow);
-      setView('edit');
-    } catch (error) {
-      console.error('Error loading workflow details:', error);
-    }
+  const getShippingStatuses = (): StatusInfo[] => {
+    return Object.entries(SHIPPING_STATUSES).map(([key, value]) => ({
+      value: key,
+      label: value.label,
+      description: value.description,
+      color: value.bgColor + ' ' + value.textColor,
+      canTransitionTo: value.canTransitionTo
+    }));
   };
 
-  const handleToggleActive = async (workflowId: string, currentState: boolean) => {
-    try {
-      if (!currentState) {
-        const validation = await validateWorkflowIntegrity(workflowId);
-        if (!validation.isValid) {
-          alert(`Impossible d'activer ce workflow:\n${validation.errors.join('\n')}`);
-          return;
-        }
-      }
-
-      await toggleWorkflowActive(workflowId, !currentState);
-      await loadWorkflows();
-    } catch (error: any) {
-      console.error('Error toggling workflow:', error);
-      alert(error.message || 'Erreur lors de l\'activation du workflow');
-    }
+  const getSalesStatuses = (): StatusInfo[] => {
+    return Object.entries(SALES_STATUSES).map(([key, value]) => ({
+      value: value,
+      label: STATUS_LABELS[value as SalesStatus],
+      description: `Statut de vente: ${STATUS_LABELS[value as SalesStatus]}`,
+      color: STATUS_COLORS[value as SalesStatus],
+      canTransitionTo: []
+    }));
   };
 
-  const handleDuplicate = async (workflow: WorkflowTemplate) => {
-    const newName = prompt('Nom du nouveau workflow:', `${workflow.name} (Copie)`);
-    if (!newName) return;
-
-    try {
-      await duplicateWorkflow(workflow.id, newName);
-      await loadWorkflows();
-    } catch (error) {
-      console.error('Error duplicating workflow:', error);
-      alert('Erreur lors de la duplication du workflow');
-    }
-  };
-
-  const handleDelete = async (workflowId: string, workflowName: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${workflowName}"?\n\nCette action est irréversible.`)) {
-      return;
-    }
-
-    try {
-      await deleteWorkflowTemplate(workflowId);
-      await loadWorkflows();
-    } catch (error) {
-      console.error('Error deleting workflow:', error);
-      alert('Erreur lors de la suppression du workflow');
-    }
-  };
-
-  const getWorkflowTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      production: 'Production',
-      shipping: 'Expédition',
-      payment: 'Paiement',
-      refining: 'Raffinage',
-      sales: 'Ventes',
-    };
-    return labels[type] || type;
-  };
-
-  const getWorkflowTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      production: 'bg-blue-100 text-blue-800',
-      shipping: 'bg-purple-100 text-purple-800',
-      payment: 'bg-green-100 text-green-800',
-      refining: 'bg-orange-100 text-orange-800',
-      sales: 'bg-teal-100 text-teal-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
-
-  if (view === 'edit' && selectedWorkflow) {
+  const renderStatusCard = (status: StatusInfo) => {
     return (
-      <div className="h-full flex flex-col">
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <button
-                onClick={() => {
-                  setView('list');
-                  setSelectedWorkflow(null);
-                }}
-                className="text-sm text-gray-600 hover:text-gray-900 mb-2"
-              >
-                ← Retour à la liste
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">{selectedWorkflow.name}</h1>
-              <p className="text-sm text-gray-600 mt-1">{selectedWorkflow.description}</p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                icon={<History className="w-4 h-4" />}
-                onClick={() => setView('history')}
-              >
-                Historique
-              </Button>
-              <span className={`px-4 py-2 rounded-lg font-medium ${
-                selectedWorkflow.is_active
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {selectedWorkflow.is_active ? 'Actif' : 'Inactif'}
+      <Card key={status.value} className="p-4 hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`px-3 py-1 rounded-lg text-sm font-semibold border ${status.color}`}>
+                {status.label}
               </span>
             </div>
+            <p className="text-sm text-gray-600 mt-2">
+              {status.description}
+            </p>
           </div>
+          <button
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Voir les détails"
+          >
+            <Eye className="w-4 h-4 text-gray-600" />
+          </button>
         </div>
-        <div className="flex-1 overflow-auto">
-          <WorkflowEditor
-            workflow={selectedWorkflow}
-            onSave={async () => {
-              await loadWorkflows();
-              const updated = await getWorkflowWithDetails(selectedWorkflow.id);
-              setSelectedWorkflow(updated);
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
 
-  if (view === 'history' && selectedWorkflow) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <button
-                onClick={() => setView('edit')}
-                className="text-sm text-gray-600 hover:text-gray-900 mb-2"
-              >
-                ← Retour à l'éditeur
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Historique: {selectedWorkflow.name}</h1>
+        {status.canTransitionTo.length > 0 && (
+          <div className="border-t border-gray-200 pt-3 mt-3">
+            <p className="text-xs text-gray-500 font-medium mb-2">Transitions possibles:</p>
+            <div className="flex flex-wrap gap-2">
+              {status.canTransitionTo.map(nextStatus => {
+                const nextStatusLabel = activeTab === 'production'
+                  ? PRODUCTION_STATUSES[nextStatus as ProductionStatus]?.label
+                  : activeTab === 'shipping'
+                  ? SHIPPING_STATUSES[nextStatus as ShippingStatus]?.label
+                  : nextStatus;
+
+                return (
+                  <span
+                    key={nextStatus}
+                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium"
+                  >
+                    → {nextStatusLabel}
+                  </span>
+                );
+              })}
             </div>
           </div>
-        </div>
-        <div className="flex-1 overflow-auto p-6">
-          <WorkflowHistoryPanel workflowId={selectedWorkflow.id} />
-        </div>
-      </div>
+        )}
+      </Card>
     );
-  }
+  };
+
+  const tabs = [
+    {
+      id: 'production',
+      label: 'Production',
+      icon: <Package className="w-4 h-4" />
+    },
+    {
+      id: 'shipping',
+      label: 'Expédition',
+      icon: <Plane className="w-4 h-4" />
+    },
+    {
+      id: 'sales',
+      label: 'Ventes',
+      icon: <DollarSign className="w-4 h-4" />
+    }
+  ];
+
+  const getStatusesForTab = () => {
+    switch (activeTab) {
+      case 'production':
+        return getProductionStatuses();
+      case 'shipping':
+        return getShippingStatuses();
+      case 'sales':
+        return getSalesStatuses();
+      default:
+        return [];
+    }
+  };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-8">
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Gestionnaire de Workflows</h1>
-            <p className="text-teal-100">
-              Personnalisez les workflows de statuts pour chaque processus métier
+            <div className="flex items-center gap-3 mb-2">
+              <Settings className="w-8 h-8 text-amber-600" />
+              <h1 className="text-3xl font-bold text-gray-900">
+                Gestionnaire de Statuts
+              </h1>
+            </div>
+            <p className="text-gray-600">
+              Visualisez et gérez les statuts des différents modules de l'application
             </p>
           </div>
-          <Button
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => {
-              // TODO: Open create workflow modal
-              alert('Fonctionnalité en développement');
-            }}
-            className="bg-white text-teal-600 hover:bg-teal-50"
-          >
-            Nouveau Workflow
-          </Button>
         </div>
 
-        {/* Filtres */}
-        <div className="flex gap-2 mt-6">
-          {['all', 'production', 'shipping', 'payment', 'refining', 'sales'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterType === type
-                  ? 'bg-white text-teal-700'
-                  : 'bg-teal-500 text-white hover:bg-teal-400'
-              }`}
-            >
-              {type === 'all' ? 'Tous' : getWorkflowTypeLabel(type)}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Tabs */}
+        <Card className="p-1">
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        </Card>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-          </div>
-        ) : workflows.length === 0 ? (
-          <Card className="p-12 text-center">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Aucun workflow trouvé
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Créez votre premier workflow pour personnaliser vos processus métier
+        {/* Status Cards Grid */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {tabs.find(t => t.id === activeTab)?.label} - Statuts Disponibles
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {getStatusesForTab().length} statut(s) configuré(s)
             </p>
-            <Button
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => alert('Fonctionnalité en développement')}
-            >
-              Créer un workflow
-            </Button>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {workflows.map((workflow) => (
-              <Card
-                key={workflow.id}
-                className="p-6 hover:shadow-lg transition-shadow cursor-pointer group"
-                onClick={() => handleSelectWorkflow(workflow)}
-              >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        getWorkflowTypeColor(workflow.workflow_type)
-                      }`}>
-                        {getWorkflowTypeLabel(workflow.workflow_type)}
-                      </span>
-                      {workflow.is_active && (
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3" />
-                          Actif
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-teal-600 transition-colors">
-                      {workflow.name}
-                    </h3>
-                    {workflow.description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {workflow.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="border-t border-gray-200 pt-4 mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Version {workflow.version}</span>
-                    <span>
-                      {new Date(workflow.updated_at).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => handleToggleActive(workflow.id, workflow.is_active)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors ${
-                      workflow.is_active
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                    title={workflow.is_active ? 'Désactiver' : 'Activer'}
-                  >
-                    {workflow.is_active ? (
-                      <>
-                        <PowerOff className="w-4 h-4" />
-                        <span className="text-xs">Désactiver</span>
-                      </>
-                    ) : (
-                      <>
-                        <Power className="w-4 h-4" />
-                        <span className="text-xs">Activer</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => handleDuplicate(workflow)}
-                    className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                    title="Dupliquer"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(workflow.id, workflow.name)}
-                    className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                    title="Supprimer"
-                    disabled={workflow.is_active}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </Card>
-            ))}
           </div>
-        )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getStatusesForTab().map(status => renderStatusCard(status))}
+          </div>
+        </div>
+
+        {/* Info Box */}
+        <Card className="bg-amber-50 border-amber-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <Settings className="w-6 h-6 text-amber-700" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-amber-900 mb-2">
+                Statuts du Système
+              </h3>
+              <p className="text-sm text-amber-800">
+                Les statuts affichés ici sont définis dans le code de l'application et utilisés
+                pour suivre la progression des différents processus (production, expédition, ventes).
+                Chaque statut a des règles de transition spécifiques pour assurer l'intégrité des workflows.
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
-    </div>
+    </MainLayout>
   );
 }

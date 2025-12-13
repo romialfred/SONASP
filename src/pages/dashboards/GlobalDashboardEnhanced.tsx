@@ -226,7 +226,7 @@ export function GlobalDashboardEnhanced() {
       // Fetch production data for last 12 months
       const { data: productionData, error: productionError } = await supabase
         .from('daily_production')
-        .select('production_date, gold_produced_grams, gold_produced_oz')
+        .select('production_date, pure_gold_grams, estimated_oz')
         .gte('production_date', new Date(currentYear, currentMonth - 11, 1).toISOString())
         .order('production_date', { ascending: true });
 
@@ -250,21 +250,23 @@ export function GlobalDashboardEnhanced() {
           const monthKey = `${prodDate.getFullYear()}-${String(prodDate.getMonth() + 1).padStart(2, '0')}`;
 
           if (monthlyProductionData[monthKey]) {
-            monthlyProductionData[monthKey].production += prod.gold_produced_oz || 0;
+            monthlyProductionData[monthKey].production += prod.estimated_oz || 0;
           }
         });
       }
 
       setMonthlyProduction(Object.values(monthlyProductionData));
 
-      // Fetch gold prices for last 12 months
+      // Fetch gold prices for last 12 months from gold_prices_monthly
+      const startYear = currentMonth < 11 ? currentYear - 1 : currentYear;
       const { data: pricesData, error: pricesError } = await supabase
-        .from('lbma_gold_prices')
-        .select('price_date, usd_am')
-        .gte('price_date', new Date(currentYear, currentMonth - 11, 1).toISOString())
-        .order('price_date', { ascending: true });
+        .from('gold_prices_monthly')
+        .select('year, month, average_price')
+        .gte('year', startYear)
+        .order('year', { ascending: true })
+        .order('month', { ascending: true });
 
-      const monthlyPricesData: { [key: string]: { month: string; total: number; count: number } } = {};
+      const monthlyPricesData: { [key: string]: { month: string; price: number } } = {};
 
       // Initialize last 12 months for prices
       for (let i = 11; i >= 0; i--) {
@@ -273,27 +275,20 @@ export function GlobalDashboardEnhanced() {
         const monthLabel = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
         monthlyPricesData[monthKey] = {
           month: monthLabel,
-          total: 0,
-          count: 0,
+          price: 0,
         };
       }
 
       if (!pricesError && pricesData) {
         pricesData.forEach((price: any) => {
-          const priceDate = new Date(price.price_date);
-          const monthKey = `${priceDate.getFullYear()}-${String(priceDate.getMonth() + 1).padStart(2, '0')}`;
-
+          const monthKey = `${price.year}-${String(price.month).padStart(2, '0')}`;
           if (monthlyPricesData[monthKey]) {
-            monthlyPricesData[monthKey].total += price.usd_am || 0;
-            monthlyPricesData[monthKey].count += 1;
+            monthlyPricesData[monthKey].price = price.average_price || 0;
           }
         });
       }
 
-      const goldPricesArray = Object.values(monthlyPricesData).map(item => ({
-        month: item.month,
-        price: item.count > 0 ? item.total / item.count : 0,
-      }));
+      const goldPricesArray = Object.values(monthlyPricesData);
 
       setMonthlyGoldPrices(goldPricesArray);
 

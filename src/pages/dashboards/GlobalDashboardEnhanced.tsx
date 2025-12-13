@@ -305,26 +305,39 @@ export function GlobalDashboardEnhanced() {
 
         {/* Key Metrics - Beautiful Colored Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Revenue Total Card - Emerald Green */}
+          {/* Revenue Fused Card - Emerald Green */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600 shadow-xl">
             <div className="absolute inset-0 bg-grid-white/10"></div>
             <div className="relative p-6">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                     <DollarSign className="w-7 h-7 text-white" />
                   </div>
                   <div>
                     <p className="text-emerald-100 text-sm font-medium">Revenus Totaux</p>
-                    <p className="text-white text-3xl font-bold mt-1">
-                      {formatCurrency(stats?.ytdRevenue || 0)}
-                    </p>
-                    <p className="text-emerald-100 text-xs mt-1">2 ventes complétées</p>
                   </div>
                 </div>
                 <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
                   <span className="text-white text-xs font-semibold">INFINITY%</span>
                 </div>
+              </div>
+
+              {/* This Month Revenue */}
+              <div className="mb-4 pb-4 border-b border-white/20">
+                <p className="text-emerald-100 text-xs mb-1">Ce Mois</p>
+                <p className="text-white text-3xl font-bold">
+                  {formatCurrency(stats?.thisMonthRevenue || 0)}
+                </p>
+              </div>
+
+              {/* YTD Revenue */}
+              <div>
+                <p className="text-emerald-100 text-xs mb-1">Total Année (YTD)</p>
+                <p className="text-white text-2xl font-bold">
+                  {formatCurrency(stats?.ytdRevenue || 0)}
+                </p>
+                <p className="text-emerald-100 text-xs mt-1">2 ventes complétées</p>
               </div>
             </div>
             <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
@@ -416,31 +429,6 @@ export function GlobalDashboardEnhanced() {
                 </div>
                 <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
                   <span className="text-white text-xs font-semibold">URGENT</span>
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
-          </div>
-
-          {/* This Month Revenue Card - Cyan */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 via-teal-400 to-cyan-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Activity className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-cyan-100 text-sm font-medium">Revenus ce Mois</p>
-                    <p className="text-white text-3xl font-bold mt-1">
-                      {formatCurrency(stats?.thisMonthRevenue || 0)}
-                    </p>
-                    <p className="text-cyan-100 text-xs mt-1">mois en cours</p>
-                  </div>
-                </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">MTD</span>
                 </div>
               </div>
             </div>

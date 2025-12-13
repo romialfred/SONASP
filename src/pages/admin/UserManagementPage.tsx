@@ -291,9 +291,9 @@ export default function UserManagementPage() {
       const emailSent = result.email_sent !== false;
 
       if (emailSent) {
-        alert.showSuccess(`User created successfully! Email sent to ${formData.email}`);
+        alert.success(`User created successfully! Email sent to ${formData.email}`);
       } else {
-        alert.showSuccess(`User created successfully! ${result.message || ''}`);
+        alert.success(`User created successfully! ${result.message || ''}`);
 
         // Only show credentials modal if email was NOT sent
         setUserCredentials({
@@ -356,7 +356,7 @@ export default function UserManagementPage() {
         throw new Error(result.error || 'Failed to reset password');
       }
 
-      alert.showSuccess('Password reset successfully!');
+      alert.success('Password reset successfully!');
       if (result.temporary_password) {
         alert.info(`New Temporary Password: ${result.temporary_password}`, 10000);
       }
@@ -376,7 +376,7 @@ export default function UserManagementPage() {
 
       if (error) throw error;
 
-      alert.showSuccess(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      alert.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       await loadUsers();
     } catch (error: any) {
       console.error('[UserManagement] Error toggling user status:', error);
@@ -456,7 +456,7 @@ export default function UserManagementPage() {
         if (error) throw error;
       }
 
-      alert.showSuccess('Permissions updated successfully');
+      alert.success('Permissions updated successfully');
       setShowPermissionsModal(false);
       setSelectedUser(null);
     } catch (error: any) {
@@ -918,7 +918,7 @@ export default function UserManagementPage() {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(userCredentials.email);
-                      alert.showSuccess('Email copied to clipboard!');
+                      alert.success('Email copied to clipboard!');
                     }}
                     className="text-xs text-blue-600 hover:text-blue-700 mt-1"
                   >
@@ -939,7 +939,7 @@ export default function UserManagementPage() {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(userCredentials.temporary_password);
-                      alert.showSuccess('Password copied to clipboard!');
+                      alert.success('Password copied to clipboard!');
                     }}
                     className="text-xs text-blue-600 hover:text-blue-700 mt-1"
                   >
@@ -962,7 +962,7 @@ export default function UserManagementPage() {
                       onClick={() => {
                         if (userCredentials.activation_url) {
                           navigator.clipboard.writeText(userCredentials.activation_url);
-                          alert.showSuccess('Activation link copied to clipboard!');
+                          alert.success('Activation link copied to clipboard!');
                         }
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700 mt-1"
@@ -1024,7 +1024,7 @@ ${userCredentials.activation_url ? '5' : '4'}. Set up Two-Factor Authentication 
                     `.trim();
 
                     navigator.clipboard.writeText(text);
-                    alert.showSuccess('All credentials copied to clipboard!');
+                    alert.success('All credentials copied to clipboard!');
                   }}
                   className="w-full"
                 >

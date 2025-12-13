@@ -533,7 +533,7 @@ export function AddInventoryEntry() {
       const result = await addInventoryEntry(entry);
 
       if (result.success) {
-        alert.showSuccess('Entrée d\'inventaire ajoutée avec succès!');
+        alert.success('Entrée d\'inventaire ajoutée avec succès!');
         navigate('/inventory');
       } else {
         const err = result.error as any;

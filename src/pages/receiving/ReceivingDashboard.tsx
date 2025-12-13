@@ -105,7 +105,7 @@ export function ReceivingDashboard() {
       const result = await validateForRefinery(batchId, 'Validated by airport staff');
 
       if (result.success) {
-        alert.showSuccess('Batch validated successfully! Ready for refinery transport.');
+        alert.success('Batch validated successfully! Ready for refinery transport.');
 
         // Force immediate refresh of the dashboard
         if (refetch) {

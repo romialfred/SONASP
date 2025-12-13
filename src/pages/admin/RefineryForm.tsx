@@ -165,12 +165,12 @@ export function RefineryForm() {
           .eq('id', id);
 
         if (error) throw error;
-        alert.showSuccess('Refinery updated successfully');
+        alert.success('Refinery updated successfully');
       } else {
         const { error } = await supabase.from('refineries').insert([submitData]);
 
         if (error) throw error;
-        alert.showSuccess('Refinery created successfully');
+        alert.success('Refinery created successfully');
       }
 
       setTimeout(() => {

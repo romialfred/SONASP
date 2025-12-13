@@ -488,8 +488,11 @@ export function SaleCreate() {
         throw error;
       }
 
-      alert.showSuccess(`Sale ${saleNumber} created successfully!`);
-      navigate('/sales');
+      // Success - navigate to sales dashboard
+      alert.success(`Sale ${saleNumber} created successfully!`);
+      setTimeout(() => {
+        navigate('/sales');
+      }, 100);
     } catch (error: any) {
       console.error('Error creating sale:', error);
     } finally {

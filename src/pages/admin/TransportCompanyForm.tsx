@@ -162,7 +162,7 @@ export function TransportCompanyForm() {
           throw error;
         }
         console.log('Transport company updated successfully:', data);
-        alert.showSuccess('Transport company updated successfully');
+        alert.success('Transport company updated successfully');
       } else {
         console.log('Inserting new transport company');
         const { data, error } = await supabase
@@ -175,7 +175,7 @@ export function TransportCompanyForm() {
           throw error;
         }
         console.log('Transport company created successfully:', data);
-        alert.showSuccess('Transport company created successfully');
+        alert.success('Transport company created successfully');
       }
 
       setTimeout(() => {

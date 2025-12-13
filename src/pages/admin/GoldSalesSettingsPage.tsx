@@ -56,7 +56,7 @@ export default function GoldSalesSettingsPage() {
     const result = await deleteGoldSalesSetting(id);
 
     if (result.success) {
-      alert.showSuccess('Paramètre supprimé avec succès');
+      alert.success('Paramètre supprimé avec succès');
       loadSettings();
     } else {
       const err = result.error as any;
@@ -84,7 +84,7 @@ export default function GoldSalesSettingsPage() {
   }
 
   function handleFormSuccess() {
-    alert.showSuccess(selectedSetting ? 'Paramètre mis à jour avec succès' : 'Paramètre créé avec succès');
+    alert.success(selectedSetting ? 'Paramètre mis à jour avec succès' : 'Paramètre créé avec succès');
     loadSettings();
   }
 

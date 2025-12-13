@@ -145,7 +145,7 @@ export function VirtualPaymentsPage() {
       });
 
       if (result.success) {
-        alert.showSuccess('Virtual payment converted to actual successfully!');
+        alert.success('Virtual payment converted to actual successfully!');
         setShowConvertModal(false);
         resetForm();
         await loadData();
@@ -170,7 +170,7 @@ export function VirtualPaymentsPage() {
     try {
       const result = await markVirtualPaymentReceived(paymentId, user.id);
       if (result.success) {
-        alert.showSuccess('Payment marked as received');
+        alert.success('Payment marked as received');
         await loadData();
       } else {
         alert.error(result.error || 'Failed to mark payment');

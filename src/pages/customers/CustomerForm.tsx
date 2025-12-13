@@ -291,7 +291,7 @@ export function CustomerForm() {
       }
 
       // Show success message after everything is saved
-      alert.showSuccess(`Customer ${isEditMode ? 'updated' : 'created'} successfully`);
+      alert.success(`Customer ${isEditMode ? 'updated' : 'created'} successfully`);
 
       setSubmitSuccess(true);
       setTimeout(() => {

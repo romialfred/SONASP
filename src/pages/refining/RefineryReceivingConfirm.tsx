@@ -126,7 +126,7 @@ export function RefineryReceivingConfirm() {
       // This page needs refactoring to work without batch transitions
       // For now, just show success message
 
-      alert.showSuccess('Batch confirmed and validated for processing');
+      alert.success('Batch confirmed and validated for processing');
 
       // Navigate with auto-refresh to update the refining dashboard
       setTimeout(() => {

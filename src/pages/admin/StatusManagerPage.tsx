@@ -7,7 +7,7 @@ import { PRODUCTION_STATUSES, ProductionStatus } from '@/constants/productionSta
 import { SHIPPING_STATUSES, ShippingStatus } from '@/constants/shippingStatuses';
 import { SALES_STATUSES, STATUS_LABELS, STATUS_COLORS, SalesStatus } from '@/constants/salesStatuses';
 import { PAYMENT_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_DESCRIPTIONS, PAYMENT_STATUS_TRANSITIONS, PaymentStatus } from '@/constants/paymentStatuses';
-import { StatusEditorModal, StatusFormData } from '@/components/admin/StatusEditorModal';
+import { StatusFormPanel } from '@/components/admin/StatusFormPanel';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 
@@ -70,10 +70,11 @@ export default function StatusManagerPage() {
     setIsEditorOpen(true);
   };
 
-  const handleSaveStatus = (updatedStatus: StatusFormData) => {
+  const handleSaveStatus = (updatedStatus: StatusInfo) => {
     console.log('Statut mis à jour:', updatedStatus);
     showSuccess('Les modifications seront appliquées dans une prochaine version');
     setIsEditorOpen(false);
+    setEditingStatus(null);
   };
 
   const renderStatusCard = (status: StatusInfo, showActions = true) => {
@@ -324,14 +325,16 @@ export default function StatusManagerPage() {
         )}
       </div>
 
-      {/* Editor Modal */}
-      {editingStatus && (
-        <StatusEditorModal
-          isOpen={isEditorOpen}
-          onClose={() => setIsEditorOpen(false)}
-          onSave={handleSaveStatus}
+      {/* Editor Form Panel */}
+      {isEditorOpen && editingStatus && (
+        <StatusFormPanel
           status={editingStatus}
           availableStatuses={getAvailableStatusesForEditor()}
+          onSave={handleSaveStatus}
+          onCancel={() => {
+            setIsEditorOpen(false);
+            setEditingStatus(null);
+          }}
           module={tabs.find(t => t.id === activeTab)?.label || ''}
         />
       )}

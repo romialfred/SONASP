@@ -10,7 +10,9 @@ import {
   Activity,
   Target,
   Crown,
-  TrendingDown
+  TrendingDown,
+  Factory,
+  Building2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -32,6 +34,12 @@ interface DashboardStats {
   royaltiesGrowth: number;
   availableStock: number;
   ytdQuantitySold: number;
+  stakeholders: {
+    miningCompanies: number;
+    customers: number;
+    refineries: number;
+    transportCompanies: number;
+  };
 }
 
 interface MonthlySale {
@@ -178,6 +186,21 @@ export function GlobalDashboardEnhanced() {
         ? ((thisMonthRoyalties - previousMonthRoyalties) / previousMonthRoyalties) * 100
         : 0;
 
+      // Load stakeholders data
+      const [miningCompaniesResult, customersResult, refineriesResult, transportCompaniesResult] = await Promise.all([
+        supabase.from('mining_companies').select('id', { count: 'exact', head: true }),
+        supabase.from('customers').select('id', { count: 'exact', head: true }),
+        supabase.from('refineries').select('id', { count: 'exact', head: true }),
+        supabase.from('transport_companies').select('id', { count: 'exact', head: true }),
+      ]);
+
+      const stakeholders = {
+        miningCompanies: miningCompaniesResult.count || 0,
+        customers: customersResult.count || 0,
+        refineries: refineriesResult.count || 0,
+        transportCompanies: transportCompaniesResult.count || 0,
+      };
+
       // Calculate YTD quantity sold
       let ytdQuantitySold = 0;
       salesArray.forEach((sale: any) => {
@@ -286,6 +309,7 @@ export function GlobalDashboardEnhanced() {
         royaltiesGrowth,
         availableStock,
         ytdQuantitySold,
+        stakeholders,
       });
 
       // Calculate monthly sales for last 12 months
@@ -414,187 +438,118 @@ export function GlobalDashboardEnhanced() {
           </div>
         </div>
 
-        {/* Key Metrics - Beautiful Colored Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Revenue Fused Card - Emerald Green */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <DollarSign className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-emerald-100 text-sm font-medium">Revenus Totaux</p>
-                  </div>
+        {/* Key Metrics - Professional Compact Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Revenue Card - Teal */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">INFINITY%</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">REVENUS</span>
                 </div>
               </div>
-
-              {/* This Month Revenue */}
-              <div className="mb-4 pb-4 border-b border-white/20">
-                <p className="text-emerald-100 text-xs mb-1">Ce Mois</p>
-                <p className="text-white text-3xl font-bold">
+              <div>
+                <p className="text-teal-100 text-xs font-medium mb-1">Revenus Ce Mois</p>
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(stats?.thisMonthRevenue || 0)}
                 </p>
-              </div>
-
-              {/* YTD Revenue */}
-              <div>
-                <p className="text-emerald-100 text-xs mb-1">Total Année (YTD)</p>
-                <p className="text-white text-2xl font-bold">
-                  {formatCurrency(stats?.ytdRevenue || 0)}
+                <p className="text-teal-200 text-xs">
+                  YTD: {formatCurrency(stats?.ytdRevenue || 0)}
                 </p>
-                <p className="text-emerald-100 text-xs mt-1">2 ventes complétées</p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
-          {/* Active Shipments Card - Blue */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Truck className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">Expéditions Actives</p>
-                    <p className="text-white text-3xl font-bold mt-1">{stats?.activeBatches || 0}</p>
-                    <p className="text-blue-100 text-xs mt-1">en traitement</p>
-                  </div>
+          {/* Stock Card - Orange */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Target className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">EN COURS</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">STOCK</span>
                 </div>
               </div>
-            </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
-          </div>
-
-          {/* Available Stock Card - Orange */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Target className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-orange-100 text-sm font-medium">Stock Disponible</p>
-                  </div>
-                </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">STOCK</span>
-                </div>
-              </div>
-
-              {/* Available Stock */}
-              <div className="mb-4 pb-4 border-b border-white/20">
-                <p className="text-orange-100 text-xs mb-1">Disponible</p>
-                <p className="text-white text-3xl font-bold">
+              <div>
+                <p className="text-orange-100 text-xs font-medium mb-1">Stock Disponible</p>
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {formatNumber(stats?.availableStock || 0)} oz
                 </p>
-              </div>
-
-              {/* YTD Quantity Sold */}
-              <div>
-                <p className="text-orange-100 text-xs mb-1">Vendu YTD</p>
-                <p className="text-white text-2xl font-bold">
-                  {formatNumber(stats?.ytdQuantitySold || 0)} oz
+                <p className="text-orange-200 text-xs">
+                  Vendu YTD: {formatNumber(stats?.ytdQuantitySold || 0)} oz
                 </p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
-          {/* Royalties Card - Gold/Amber */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-500 via-amber-600 to-yellow-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Crown className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-yellow-100 text-sm font-medium">Royalties (3%)</p>
-                  </div>
+          {/* Royalties Card - Amber */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">3%</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">3%</span>
                 </div>
               </div>
-
-              {/* This Month Royalties */}
-              <div className="mb-4 pb-4 border-b border-white/20">
-                <p className="text-yellow-100 text-xs mb-1">Ce Mois</p>
-                <p className="text-white text-3xl font-bold">
+              <div>
+                <p className="text-amber-100 text-xs font-medium mb-1">Royalties Ce Mois</p>
+                <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(stats?.thisMonthRoyalties || 0)}
                 </p>
-              </div>
-
-              {/* YTD Royalties */}
-              <div>
-                <p className="text-yellow-100 text-xs mb-1">Total Année (YTD)</p>
-                <p className="text-white text-2xl font-bold">
-                  {formatCurrency(stats?.ytdRoyalties || 0)}
+                <p className="text-amber-200 text-xs">
+                  YTD: {formatCurrency(stats?.ytdRoyalties || 0)}
                 </p>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
 
-          {/* Active Clients Card - Purple */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-purple-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Users className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-purple-100 text-sm font-medium">Clients Actifs</p>
-                    <p className="text-white text-3xl font-bold mt-1">{stats?.activeCustomers || 0}</p>
-                    <p className="text-purple-100 text-xs mt-1">partenaires actifs</p>
-                  </div>
+          {/* Stakeholders Card - Slate */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-lg">
+            <div className="absolute inset-0 bg-grid-white/5"></div>
+            <div className="relative p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">CLIENTS</span>
+                <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">PARTIES</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-100 text-xs font-medium mb-2">Stakeholders</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Factory className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{stats?.stakeholders.miningCompanies || 0}</span>
+                    <span className="text-slate-300 text-xs">Mines</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{stats?.stakeholders.customers || 0}</span>
+                    <span className="text-slate-300 text-xs">Clients</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{stats?.stakeholders.refineries || 0}</span>
+                    <span className="text-slate-300 text-xs">Raffin.</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-slate-200" />
+                    <span className="text-white text-sm font-semibold">{stats?.stakeholders.transportCompanies || 0}</span>
+                    <span className="text-slate-300 text-xs">Transp.</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
-          </div>
-
-          {/* Pending Approvals Card - Red/Pink */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <AlertCircle className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-rose-100 text-sm font-medium">Approbations Requises</p>
-                    <p className="text-white text-3xl font-bold mt-1">5</p>
-                    <p className="text-rose-100 text-xs mt-1">en attente</p>
-                  </div>
-                </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">URGENT</span>
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
           </div>
         </div>
 

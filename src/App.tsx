@@ -20,6 +20,8 @@ import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
 import { AirportDashboard } from './pages/dashboards/AirportDashboard';
 import { RefineryDashboard } from './pages/dashboards/RefineryDashboard';
 import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
+import { ProductionDashboardModern } from './pages/dashboards/ProductionDashboardModern';
+import { GlobalDashboardEnhanced } from './pages/dashboards/GlobalDashboardEnhanced';
 import { AssayCertificatesPage } from './pages/documents/AssayCertificatesPage';
 import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
@@ -141,6 +143,24 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+            {/* Modern dashboards */}
+            <Route
+              path="/dashboard/production-modern"
+              element={
+                <ProtectedRoute>
+                  <ProductionDashboardModern />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/global-enhanced"
+              element={
+                <ProtectedRoute>
+                  <GlobalDashboardEnhanced />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Legacy dashboard routes */}
             <Route
               path="/dashboard/management"

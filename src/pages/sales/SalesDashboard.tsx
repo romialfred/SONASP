@@ -233,7 +233,7 @@ export function SalesDashboard() {
       const now = new Date();
       const last12Months = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-      // Load sales with customer and mining company info for completed sales
+      // Load all sales with customer and mining company info (including pending)
       const { data: salesData, error } = await supabase
         .from('sales')
         .select(`
@@ -244,8 +244,7 @@ export function SalesDashboard() {
           customer:customers(id, name),
           mining_company:mining_companies(id, name)
         `)
-        .gte('created_at', last12Months.toISOString())
-        .in('status', [SALES_STATUSES.COMPLETED, SALES_STATUSES.PAYMENT_RECEIVED]);
+        .gte('created_at', last12Months.toISOString());
 
       if (error) {
         console.error('[SalesDashboard] Error loading chart data:', error);
@@ -618,30 +617,38 @@ export function SalesDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={revenueByCustomer}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {revenueByCustomer.length > 0 && Object.keys(revenueByCustomer[0])
-                    .filter(key => key !== 'month')
-                    .map((customer, index) => {
-                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-                      return (
-                        <Line
-                          key={customer}
-                          type="monotone"
-                          dataKey={customer}
-                          stroke={colors[index % colors.length]}
-                          strokeWidth={2}
-                          dot={{ r: 3 }}
-                        />
-                      );
-                    })}
-                </LineChart>
-              </ResponsiveContainer>
+              {revenueByCustomer.length === 0 || !revenueByCustomer.some(d => Object.keys(d).length > 1) ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                  <TrendingUp className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Aucune donnée disponible</p>
+                  <p className="text-xs mt-1">Les ventes apparaîtront ici au fur et à mesure</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={revenueByCustomer}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    {revenueByCustomer.length > 0 && Object.keys(revenueByCustomer[0])
+                      .filter(key => key !== 'month')
+                      .map((customer, index) => {
+                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                        return (
+                          <Line
+                            key={customer}
+                            type="monotone"
+                            dataKey={customer}
+                            stroke={colors[index % colors.length]}
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                          />
+                        );
+                      })}
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -654,27 +661,35 @@ export function SalesDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={revenueByMiningCompany}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {revenueByMiningCompany.length > 0 && Object.keys(revenueByMiningCompany[0])
-                    .filter(key => key !== 'month')
-                    .map((company, index) => {
-                      const colors = ['#14b8a6', '#06b6d4', '#0ea5e9', '#6366f1', '#a855f7', '#d946ef'];
-                      return (
-                        <Bar
-                          key={company}
-                          dataKey={company}
-                          fill={colors[index % colors.length]}
-                        />
-                      );
-                    })}
-                </BarChart>
-              </ResponsiveContainer>
+              {revenueByMiningCompany.length === 0 || !revenueByMiningCompany.some(d => Object.keys(d).length > 1) ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                  <Factory className="w-12 h-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Aucune donnée disponible</p>
+                  <p className="text-xs mt-1">Les ventes apparaîtront ici au fur et à mesure</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={revenueByMiningCompany}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    {revenueByMiningCompany.length > 0 && Object.keys(revenueByMiningCompany[0])
+                      .filter(key => key !== 'month')
+                      .map((company, index) => {
+                        const colors = ['#14b8a6', '#06b6d4', '#0ea5e9', '#6366f1', '#a855f7', '#d946ef'];
+                        return (
+                          <Bar
+                            key={company}
+                            dataKey={company}
+                            fill={colors[index % colors.length]}
+                          />
+                        );
+                      })}
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -24,6 +24,7 @@ interface Sale {
   customer: string;
   quantity: number;
   amount: number;
+  royalty: number;
   status: SaleStatus;
   createdDate: string;
 }
@@ -125,6 +126,7 @@ export function SalesDashboard() {
     monthlyRevenue: 0,
     completedSales: 0,
     pendingPayment: 0,
+    pendingPaymentAmount: 0,
   });
 
   const loadMetrics = useCallback(async () => {
@@ -148,6 +150,7 @@ export function SalesDashboard() {
       const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
       const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.length || 0;
       const pendingPayment = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.length || 0;
+      const pendingPaymentAmount = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
 
       // Try to load inventory (optional - won't break if table doesn't exist)
       let totalInventory = 0;
@@ -188,6 +191,7 @@ export function SalesDashboard() {
         monthlyRevenue,
         completedSales: completedThisMonth,
         pendingPayment,
+        pendingPaymentAmount,
       });
     } catch (error: any) {
       console.error('[SalesDashboard] Error loading metrics:', error);
@@ -237,6 +241,7 @@ export function SalesDashboard() {
         customer: extractCustomerName(sale.customer),
         quantity: sale.quantity_oz,
         amount: sale.final_proceeds,
+        royalty: sale.royalty_amount,
         status: normalizeSaleStatus(sale.status ?? undefined),
         createdDate: sale.created_at,
       }));
@@ -353,31 +358,6 @@ export function SalesDashboard() {
 
         {/* Modern Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Available Inventory Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 shadow-xl">
-            <div className="absolute inset-0 bg-grid-white/10"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Package className="w-6 h-6 text-white" />
-                </div>
-                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-xs font-semibold">STOCK</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-amber-100 text-xs font-medium mb-1">Stock Disponible</p>
-                <p className="text-white text-3xl font-bold mb-1">
-                  {formatWeight(metrics.availableInventory, 'oz')}
-                </p>
-                <p className="text-amber-100 text-xs">
-                  {(metrics.availableInventory * 31.1035).toFixed(2)}g disponible
-                </p>
-              </div>
-            </div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
-          </div>
-
           {/* Pending Sales Card */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 shadow-xl">
             <div className="absolute inset-0 bg-grid-white/10"></div>
@@ -397,6 +377,31 @@ export function SalesDashboard() {
                 </p>
                 <p className="text-blue-100 text-xs">
                   Nécessitent une approbation
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Pending Payment Amount Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">PAIEMENT</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-amber-100 text-xs font-medium mb-1">En Attente de Paiement</p>
+                <p className="text-white text-3xl font-bold mb-1">
+                  {formatCurrency(metrics.pendingPaymentAmount)}
+                </p>
+                <p className="text-amber-100 text-xs">
+                  {metrics.pendingPayment} vente{metrics.pendingPayment > 1 ? 's' : ''} en attente
                 </p>
               </div>
             </div>
@@ -446,7 +451,7 @@ export function SalesDashboard() {
                   {metrics.completedSales}
                 </p>
                 <p className="text-violet-100 text-xs">
-                  {metrics.pendingPayment} en attente de paiement
+                  Ce mois-ci
                 </p>
               </div>
             </div>
@@ -507,53 +512,59 @@ export function SalesDashboard() {
                       onClick={() => {
                         void navigate(`/sales/${sale.id}`);
                       }}
-                    className="group relative overflow-hidden rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-2xl transition-all duration-300 cursor-pointer bg-white"
+                    className="group relative overflow-hidden rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
                   >
                     {/* Header */}
-                    <div className="p-6 pb-4">
-                      <div className="flex items-start justify-between mb-3">
+                    <div className="p-5 pb-3">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors mb-1">
+                          <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors mb-0.5">
                             {sale.saleNumber}
                           </h3>
-                          <p className="text-sm text-gray-600 font-medium">{sale.customer}</p>
+                          <p className="text-xs text-gray-600">{sale.customer}</p>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
-                            Voir <ArrowRight className="h-4 w-4" />
+                          <div className="flex items-center gap-0.5 text-emerald-600 text-xs font-semibold">
+                            Voir <ArrowRight className="h-3 w-3" />
                           </div>
                         </div>
                       </div>
 
-                      {/* Total Amount - Large */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-1">Montant Total</p>
-                        <p className="text-3xl font-bold text-gray-900">
+                      {/* Total Amount */}
+                      <div className="mt-3 mb-3">
+                        <p className="text-xs text-gray-500 mb-0.5">Montant Total</p>
+                        <p className="text-xl font-bold text-gray-900">
                           {formatCurrency(sale.amount)}
                         </p>
                       </div>
 
-                      {/* Quantity and Price Grid */}
-                      <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100">
+                      {/* Quantity, Price and Royalties Grid */}
+                      <div className="grid grid-cols-3 gap-3 pb-3 border-b border-gray-100">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Quantité</p>
-                          <p className="text-lg font-bold text-gray-700">
+                          <p className="text-xs text-gray-500 mb-0.5">Quantité</p>
+                          <p className="text-sm font-semibold text-gray-700">
                             {sale.quantity.toFixed(3)} oz
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Prix/oz</p>
-                          <p className="text-lg font-bold text-gray-700">
+                          <p className="text-xs text-gray-500 mb-0.5">Prix/oz</p>
+                          <p className="text-sm font-semibold text-gray-700">
                             {unitPrice}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Royalties</p>
+                          <p className="text-sm font-semibold text-emerald-600">
+                            {formatCurrency(sale.royalty)}
                           </p>
                         </div>
                       </div>
                     </div>
 
                     {/* Footer - Status and Date on same line */}
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold ${status.color}`}>
-                        <StatusIcon className="h-3.5 w-3.5" />
+                    <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                      <div className={`inline-flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
+                        <StatusIcon className="h-3 w-3" />
                         <span>{status.label}</span>
                       </div>
                       <div className="text-xs text-gray-500">

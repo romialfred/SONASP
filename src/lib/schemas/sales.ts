@@ -29,6 +29,7 @@ export const saleSummarySchema = z.object({
   created_at: z.string(),
   quantity_oz: numericField,
   final_proceeds: numericField,
+  royalty_amount: numericField,
   customer: saleCustomerSchema,
 });
 

@@ -141,7 +141,7 @@ export default function StatusManagerPage() {
             <div className="flex gap-3">
               <Button
                 variant="secondary"
-                icon={History}
+                icon={<History className="w-4 h-4" />}
                 onClick={() => setView('history')}
               >
                 Historique
@@ -206,7 +206,7 @@ export default function StatusManagerPage() {
           </div>
           <Button
             variant="primary"
-            icon={Plus}
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => {
               // TODO: Open create workflow modal
               alert('Fonctionnalité en développement');
@@ -252,7 +252,7 @@ export default function StatusManagerPage() {
             </p>
             <Button
               variant="primary"
-              icon={Plus}
+              icon={<Plus className="w-4 h-4" />}
               onClick={() => alert('Fonctionnalité en développement')}
             >
               Créer un workflow

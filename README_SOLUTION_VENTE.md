@@ -1,99 +1,49 @@
-# ✅ SOLUTION - Erreur Création de Vente
+# 🔴 Solution: Erreur "Failed to create sale"
 
-## 🔴 PROBLÈME
+## ⚡ DIAGNOSTIC
 
+**Erreur console:**
 ```
-ERROR: invalid input value for enum sale_status: ""
-CONTEXT: PL/pgSQL function set_initial_sale_status()
-```
-
-## 💡 CAUSE
-
-Un **trigger PostgreSQL** `set_initial_sale_status()` compare le status avec une **string vide** (`''`), ce qui est invalide pour un enum.
-
-## ⚡ SOLUTION (1 minute)
-
-### 1️⃣ Ouvrir Supabase
-
-Dashboard → SQL Editor → New Query
-
-### 2️⃣ Copier le fichier
-
-Ouvrir: **`COPIER_COLLER_CE_SQL.sql`**
-
-Tout sélectionner (Ctrl+A) et copier (Ctrl+C)
-
-### 3️⃣ Coller et Exécuter
-
-Coller dans SQL Editor → Cliquer **Run**
-
-### 4️⃣ Vérifier
-
-Vous devriez voir:
-```
-✅ Test 1 RÉUSSI: Insertion avec status explicite
-✅ Test 2 RÉUSSI: Insertion SANS status (DEFAULT)
-🎉🎉🎉 FIX COMPLET ET TESTÉ!
+code: "42703"
+message: "record \"new\" has no field \"quantity_grams\""
 ```
 
-### 5️⃣ Tester l'Application
-
-Recharger la page → Créer une vente → ✅ Fonctionne!
+**Cause:** Un trigger dans Supabase référence `quantity_grams` (n'existe pas).
 
 ---
 
-## 📁 FICHIERS CRÉÉS
+## ✅ SOLUTION RAPIDE (2 minutes)
 
-| Fichier | Usage |
-|---------|-------|
-| **`COPIER_COLLER_CE_SQL.sql`** | ⭐ SQL prêt à exécuter |
-| `SOLUTION_TRIGGER_SALES.md` | Documentation détaillée |
-| `FIX_SALES_TRIGGER_IMMEDIATE.sql` | Version alternative |
+### Étapes:
 
----
-
-## 🎯 CE QUE ÇA FAIT
-
-1. ✅ Supprime le trigger problématique
-2. ✅ Change le DEFAULT à `'pending_management_approval'`
-3. ✅ Ajoute `'for_sale'` pour compatibilité
-4. ✅ Teste automatiquement
+1. **Ouvrir Supabase** → https://app.supabase.com
+2. **SQL Editor** (menu gauche) → **New Query**
+3. **Copier le fichier:** `COPIER_COLLER_CE_SQL_FIX_VENTE.sql`
+4. **Coller** dans SQL Editor
+5. **Cliquer:** Run (ou Ctrl+Enter)
+6. **Voir:** ✅ FIX APPLIQUÉ ET VÉRIFIÉ!
+7. **Rafraîchir** l'application (F5)
+8. **Tester** la création de vente → ça fonctionne!
 
 ---
 
-## 🛡️ SÉCURITÉ
+## 📋 Le SQL Fait Quoi?
 
-- ✅ **Pas de perte de données**
-- ✅ **Pas de downtime**
-- ✅ **Testé automatiquement**
-- ✅ **Rétrocompatible**
-
----
-
-## 🚀 APRÈS LE FIX
-
-Le workflow sera:
-
-```
-CREATE SALE
-  ↓
-Status: pending_management_approval (automatique)
-  ↓
-MANAGEMENT APPROVES
-  ↓
-Status: pending_for_customer_approval
-  ↓
-CUSTOMER APPROVES
-  ↓
-Status: waiting_for_payment
-  ↓
-PAYMENT RECEIVED
-  ↓
-Status: completed
-```
+1. Supprime les triggers obsolètes
+2. Ajoute les statuses ENUM manquants
+3. Configure le status par défaut
+4. Teste l'insertion
 
 ---
 
-**Temps**: 1 minute  
-**Difficulté**: Très facile  
-**Status**: ✅ PRÊT À APPLIQUER
+## ✅ Après le Fix
+
+- ✅ Création de vente fonctionne
+- ✅ Aucune erreur HTTP 400
+- ✅ Workflow complet disponible
+
+---
+
+**FICHIER À UTILISER:** `COPIER_COLLER_CE_SQL_FIX_VENTE.sql`
+
+🚀 Prêt!

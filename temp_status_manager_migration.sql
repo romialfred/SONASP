@@ -11,9 +11,14 @@
     - RLS activé sur toutes les tables
     - Policies pour admins et gestionnaires
     - Audit trail complet
+
+  MIGRATION IDEMPOTENTE - Peut être exécutée plusieurs fois sans erreur
 */
 
+-- =============================================================================
 -- TYPES ENUM
+-- =============================================================================
+
 DO $$ BEGIN
   CREATE TYPE workflow_type AS ENUM (
     'production',
@@ -41,7 +46,10 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
--- TABLE: workflow_templates
+-- =============================================================================
+-- TABLE: workflow_templates (SANS contraintes inline)
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS workflow_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(200) NOT NULL,
@@ -55,11 +63,15 @@ CREATE TABLE IF NOT EXISTS workflow_templates (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Index
 CREATE INDEX IF NOT EXISTS idx_workflow_templates_type ON workflow_templates(workflow_type);
 CREATE INDEX IF NOT EXISTS idx_workflow_templates_company ON workflow_templates(mining_company_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_templates_active ON workflow_templates(is_active, workflow_type);
 
--- TABLE: workflow_statuses
+-- =============================================================================
+-- TABLE: workflow_statuses (SANS contraintes inline)
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS workflow_statuses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workflow_template_id UUID NOT NULL REFERENCES workflow_templates(id) ON DELETE CASCADE,
@@ -73,15 +85,34 @@ CREATE TABLE IF NOT EXISTS workflow_statuses (
   icon VARCHAR(50),
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  CONSTRAINT unique_status_key_per_workflow UNIQUE (workflow_template_id, status_key),
-  CONSTRAINT unique_order_index_per_workflow UNIQUE (workflow_template_id, order_index)
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Contraintes ajoutées séparément
+DO $$ BEGIN
+  ALTER TABLE workflow_statuses
+  ADD CONSTRAINT unique_status_key_per_workflow UNIQUE (workflow_template_id, status_key);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE workflow_statuses
+  ADD CONSTRAINT unique_order_index_per_workflow UNIQUE (workflow_template_id, order_index);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Index
 CREATE INDEX IF NOT EXISTS idx_workflow_statuses_template ON workflow_statuses(workflow_template_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_statuses_order ON workflow_statuses(workflow_template_id, order_index);
 
--- TABLE: workflow_transitions
+-- =============================================================================
+-- TABLE: workflow_transitions (SANS contraintes inline)
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS workflow_transitions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workflow_template_id UUID NOT NULL REFERENCES workflow_templates(id) ON DELETE CASCADE,
@@ -91,16 +122,35 @@ CREATE TABLE IF NOT EXISTS workflow_transitions (
   requires_approval BOOLEAN DEFAULT false,
   approval_roles TEXT[] DEFAULT '{}',
   conditions JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  CONSTRAINT unique_transition UNIQUE (workflow_template_id, from_status_id, to_status_id),
-  CONSTRAINT no_self_transition CHECK (from_status_id != to_status_id)
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Contraintes ajoutées séparément
+DO $$ BEGIN
+  ALTER TABLE workflow_transitions
+  ADD CONSTRAINT unique_transition UNIQUE (workflow_template_id, from_status_id, to_status_id);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE workflow_transitions
+  ADD CONSTRAINT no_self_transition CHECK (from_status_id != to_status_id);
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Index
 CREATE INDEX IF NOT EXISTS idx_workflow_transitions_template ON workflow_transitions(workflow_template_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_transitions_from ON workflow_transitions(from_status_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_transitions_to ON workflow_transitions(to_status_id);
 
+-- =============================================================================
 -- TABLE: workflow_history
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS workflow_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workflow_template_id UUID NOT NULL REFERENCES workflow_templates(id) ON DELETE CASCADE,
@@ -113,15 +163,20 @@ CREATE TABLE IF NOT EXISTS workflow_history (
   changed_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Index
 CREATE INDEX IF NOT EXISTS idx_workflow_history_template ON workflow_history(workflow_template_id, changed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_workflow_history_version ON workflow_history(workflow_template_id, version);
 
+-- =============================================================================
 -- ROW LEVEL SECURITY
+-- =============================================================================
+
 ALTER TABLE workflow_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workflow_statuses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workflow_transitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workflow_history ENABLE ROW LEVEL SECURITY;
 
+-- Policies workflow_templates
 DROP POLICY IF EXISTS "Users can view workflow templates" ON workflow_templates;
 CREATE POLICY "Users can view workflow templates"
   ON workflow_templates FOR SELECT
@@ -140,6 +195,7 @@ CREATE POLICY "Admins can manage workflow templates"
     )
   );
 
+-- Policies workflow_statuses
 DROP POLICY IF EXISTS "Users can view workflow statuses" ON workflow_statuses;
 CREATE POLICY "Users can view workflow statuses"
   ON workflow_statuses FOR SELECT
@@ -158,6 +214,7 @@ CREATE POLICY "Admins can manage workflow statuses"
     )
   );
 
+-- Policies workflow_transitions
 DROP POLICY IF EXISTS "Users can view workflow transitions" ON workflow_transitions;
 CREATE POLICY "Users can view workflow transitions"
   ON workflow_transitions FOR SELECT
@@ -176,6 +233,7 @@ CREATE POLICY "Admins can manage workflow transitions"
     )
   );
 
+-- Policies workflow_history
 DROP POLICY IF EXISTS "Users can view workflow history" ON workflow_history;
 CREATE POLICY "Users can view workflow history"
   ON workflow_history FOR SELECT
@@ -188,7 +246,10 @@ CREATE POLICY "System can insert workflow history"
   TO authenticated
   WITH CHECK (true);
 
+-- =============================================================================
 -- FONCTIONS
+-- =============================================================================
+
 CREATE OR REPLACE FUNCTION increment_workflow_version()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -238,7 +299,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- =============================================================================
 -- TRIGGERS
+-- =============================================================================
+
 DROP TRIGGER IF EXISTS trigger_increment_version_on_status_change ON workflow_statuses;
 CREATE TRIGGER trigger_increment_version_on_status_change
   AFTER INSERT OR UPDATE OR DELETE ON workflow_statuses
@@ -257,7 +321,10 @@ CREATE TRIGGER trigger_log_status_changes
   FOR EACH ROW
   EXECUTE FUNCTION log_workflow_change();
 
--- DONNÉES INITIALES
+-- =============================================================================
+-- DONNÉES INITIALES (workflow par défaut)
+-- =============================================================================
+
 DO $$
 DECLARE
   v_workflow_id UUID;
@@ -266,14 +333,20 @@ DECLARE
   v_ready_customs_id UUID;
   v_shipped_id UUID;
 BEGIN
+  -- Vérifier si le workflow existe déjà
   IF NOT EXISTS (SELECT 1 FROM workflow_templates WHERE name = 'Workflow Production Standard') THEN
+
+    -- Créer le workflow
     INSERT INTO workflow_templates (
       name, workflow_type, description, is_active
     ) VALUES (
-      'Workflow Production Standard', 'production',
-      'Workflow de production standard avec 4 étapes principales', true
+      'Workflow Production Standard',
+      'production',
+      'Workflow de production standard avec 4 étapes principales',
+      true
     ) RETURNING id INTO v_workflow_id;
 
+    -- Ajouter les statuts
     INSERT INTO workflow_statuses (
       workflow_template_id, status_key, status_label, status_color,
       description, order_index, is_initial, is_final, icon
@@ -287,16 +360,54 @@ BEGIN
       (v_workflow_id, 'shipped', 'Expédié', '#8B5CF6',
        'Production expédiée vers la destination', 3, false, true, 'Truck');
 
-    SELECT id INTO v_prepared_id FROM workflow_statuses WHERE workflow_template_id = v_workflow_id AND status_key = 'prepared';
-    SELECT id INTO v_in_safe_id FROM workflow_statuses WHERE workflow_template_id = v_workflow_id AND status_key = 'in_safe';
-    SELECT id INTO v_ready_customs_id FROM workflow_statuses WHERE workflow_template_id = v_workflow_id AND status_key = 'ready_for_customs';
-    SELECT id INTO v_shipped_id FROM workflow_statuses WHERE workflow_template_id = v_workflow_id AND status_key = 'shipped';
+    -- Récupérer les IDs des statuts
+    SELECT id INTO v_prepared_id FROM workflow_statuses
+      WHERE workflow_template_id = v_workflow_id AND status_key = 'prepared';
+    SELECT id INTO v_in_safe_id FROM workflow_statuses
+      WHERE workflow_template_id = v_workflow_id AND status_key = 'in_safe';
+    SELECT id INTO v_ready_customs_id FROM workflow_statuses
+      WHERE workflow_template_id = v_workflow_id AND status_key = 'ready_for_customs';
+    SELECT id INTO v_shipped_id FROM workflow_statuses
+      WHERE workflow_template_id = v_workflow_id AND status_key = 'shipped';
 
+    -- Ajouter les transitions
     INSERT INTO workflow_transitions (
       workflow_template_id, from_status_id, to_status_id, transition_label, requires_approval
     ) VALUES
       (v_workflow_id, v_prepared_id, v_in_safe_id, 'Mettre en coffre', false),
       (v_workflow_id, v_in_safe_id, v_ready_customs_id, 'Préparer douane', false),
       (v_workflow_id, v_ready_customs_id, v_shipped_id, 'Expédier', true);
+
   END IF;
+END $$;
+
+-- =============================================================================
+-- VÉRIFICATION FINALE
+-- =============================================================================
+
+DO $$
+DECLARE
+  v_table_count INTEGER;
+  v_workflow_count INTEGER;
+BEGIN
+  -- Vérifier que les tables existent
+  SELECT COUNT(*) INTO v_table_count
+  FROM information_schema.tables
+  WHERE table_schema = 'public'
+    AND table_name IN ('workflow_templates', 'workflow_statuses', 'workflow_transitions', 'workflow_history');
+
+  IF v_table_count != 4 THEN
+    RAISE EXCEPTION 'Erreur: Toutes les tables n''ont pas été créées (trouvé: %)', v_table_count;
+  END IF;
+
+  -- Vérifier qu'au moins un workflow existe
+  SELECT COUNT(*) INTO v_workflow_count FROM workflow_templates;
+
+  IF v_workflow_count = 0 THEN
+    RAISE WARNING 'Aucun workflow trouvé - vérifiez les données initiales';
+  END IF;
+
+  RAISE NOTICE '✓ Migration Status Manager terminée avec succès!';
+  RAISE NOTICE '  - % tables créées', v_table_count;
+  RAISE NOTICE '  - % workflow(s) configuré(s)', v_workflow_count;
 END $$;

@@ -101,17 +101,17 @@ export default function StatusManagerPage() {
     {
       id: 'production',
       label: 'Production',
-      icon: <Package className="w-4 h-4" />
+      icon: Package
     },
     {
       id: 'shipping',
       label: 'Expédition',
-      icon: <Plane className="w-4 h-4" />
+      icon: Plane
     },
     {
       id: 'sales',
       label: 'Ventes',
-      icon: <DollarSign className="w-4 h-4" />
+      icon: DollarSign
     }
   ];
 
@@ -151,7 +151,7 @@ export default function StatusManagerPage() {
           <Tabs
             tabs={tabs}
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onChange={setActiveTab}
           />
         </Card>
 

@@ -6,11 +6,11 @@ import {
   Users,
   DollarSign,
   AlertCircle,
-  FileText,
   Truck,
-  Box,
   Activity,
-  Target
+  Target,
+  Crown,
+  TrendingDown
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -30,6 +30,8 @@ interface DashboardStats {
   thisMonthRoyalties: number;
   ytdRoyalties: number;
   royaltiesGrowth: number;
+  availableStock: number;
+  ytdQuantitySold: number;
 }
 
 interface MonthlySale {
@@ -37,6 +39,16 @@ interface MonthlySale {
   revenue: number;
   quantity: number;
   salesCount: number;
+}
+
+interface MonthlyProduction {
+  month: string;
+  production: number;
+}
+
+interface MonthlyGoldPrice {
+  month: string;
+  price: number;
 }
 
 interface MonthlyRoyaltyByCompany {
@@ -55,6 +67,8 @@ export function GlobalDashboardEnhanced() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlySales, setMonthlySales] = useState<MonthlySale[]>([]);
+  const [monthlyProduction, setMonthlyProduction] = useState<MonthlyProduction[]>([]);
+  const [monthlyGoldPrices, setMonthlyGoldPrices] = useState<MonthlyGoldPrice[]>([]);
   const [monthlyRoyaltiesByCompany, setMonthlyRoyaltiesByCompany] = useState<MonthlyRoyaltyByCompany[]>([]);
   const [companyRoyalties, setCompanyRoyalties] = useState<CompanyRoyalty[]>([]);
 
@@ -164,6 +178,102 @@ export function GlobalDashboardEnhanced() {
         ? ((thisMonthRoyalties - previousMonthRoyalties) / previousMonthRoyalties) * 100
         : 0;
 
+      // Calculate YTD quantity sold
+      let ytdQuantitySold = 0;
+      salesArray.forEach((sale: any) => {
+        const saleDate = new Date(sale.sale_date || sale.created_at);
+        if (saleDate >= ytdStart) {
+          ytdQuantitySold += sale.quantity_oz || 0;
+        }
+      });
+
+      // Fetch available stock from inventory
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('gold_inventory')
+        .select('quantity_grams, quantity_oz')
+        .eq('is_available', true);
+
+      let availableStock = 0;
+      if (!inventoryError && inventoryData) {
+        inventoryData.forEach((item: any) => {
+          availableStock += item.quantity_oz || 0;
+        });
+      }
+
+      // Fetch production data for last 12 months
+      const { data: productionData, error: productionError } = await supabase
+        .from('daily_production')
+        .select('production_date, gold_produced_grams, gold_produced_oz')
+        .gte('production_date', new Date(currentYear, currentMonth - 11, 1).toISOString())
+        .order('production_date', { ascending: true });
+
+      const monthlyProductionData: { [key: string]: MonthlyProduction } = {};
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Initialize last 12 months for production
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(currentYear, currentMonth - i, 1);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        monthlyProductionData[monthKey] = {
+          month: monthLabel,
+          production: 0,
+        };
+      }
+
+      if (!productionError && productionData) {
+        productionData.forEach((prod: any) => {
+          const prodDate = new Date(prod.production_date);
+          const monthKey = `${prodDate.getFullYear()}-${String(prodDate.getMonth() + 1).padStart(2, '0')}`;
+
+          if (monthlyProductionData[monthKey]) {
+            monthlyProductionData[monthKey].production += prod.gold_produced_oz || 0;
+          }
+        });
+      }
+
+      setMonthlyProduction(Object.values(monthlyProductionData));
+
+      // Fetch gold prices for last 12 months
+      const { data: pricesData, error: pricesError } = await supabase
+        .from('lbma_gold_prices')
+        .select('price_date, usd_am')
+        .gte('price_date', new Date(currentYear, currentMonth - 11, 1).toISOString())
+        .order('price_date', { ascending: true });
+
+      const monthlyPricesData: { [key: string]: { month: string; total: number; count: number } } = {};
+
+      // Initialize last 12 months for prices
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(currentYear, currentMonth - i, 1);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        monthlyPricesData[monthKey] = {
+          month: monthLabel,
+          total: 0,
+          count: 0,
+        };
+      }
+
+      if (!pricesError && pricesData) {
+        pricesData.forEach((price: any) => {
+          const priceDate = new Date(price.price_date);
+          const monthKey = `${priceDate.getFullYear()}-${String(priceDate.getMonth() + 1).padStart(2, '0')}`;
+
+          if (monthlyPricesData[monthKey]) {
+            monthlyPricesData[monthKey].total += price.usd_am || 0;
+            monthlyPricesData[monthKey].count += 1;
+          }
+        });
+      }
+
+      const goldPricesArray = Object.values(monthlyPricesData).map(item => ({
+        month: item.month,
+        price: item.count > 0 ? item.total / item.count : 0,
+      }));
+
+      setMonthlyGoldPrices(goldPricesArray);
+
       setStats({
         ytdRevenue,
         thisMonthRevenue,
@@ -174,11 +284,12 @@ export function GlobalDashboardEnhanced() {
         thisMonthRoyalties,
         ytdRoyalties,
         royaltiesGrowth,
+        availableStock,
+        ytdQuantitySold,
       });
 
       // Calculate monthly sales for last 12 months
       const monthlyData: { [key: string]: MonthlySale } = {};
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
       // Initialize last 12 months
       for (let i = 11; i >= 0; i--) {
@@ -370,20 +481,71 @@ export function GlobalDashboardEnhanced() {
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 shadow-xl">
             <div className="absolute inset-0 bg-grid-white/10"></div>
             <div className="relative p-6">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                     <Target className="w-7 h-7 text-white" />
                   </div>
                   <div>
                     <p className="text-orange-100 text-sm font-medium">Stock Disponible</p>
-                    <p className="text-white text-3xl font-bold mt-1">1244.23 oz</p>
-                    <p className="text-orange-100 text-xs mt-1">38699.82g disponible</p>
                   </div>
                 </div>
                 <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
                   <span className="text-white text-xs font-semibold">STOCK</span>
                 </div>
+              </div>
+
+              {/* Available Stock */}
+              <div className="mb-4 pb-4 border-b border-white/20">
+                <p className="text-orange-100 text-xs mb-1">Disponible</p>
+                <p className="text-white text-3xl font-bold">
+                  {formatNumber(stats?.availableStock || 0)} oz
+                </p>
+              </div>
+
+              {/* YTD Quantity Sold */}
+              <div>
+                <p className="text-orange-100 text-xs mb-1">Vendu YTD</p>
+                <p className="text-white text-2xl font-bold">
+                  {formatNumber(stats?.ytdQuantitySold || 0)} oz
+                </p>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
+          </div>
+
+          {/* Royalties Card - Gold/Amber */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-500 via-amber-600 to-yellow-600 shadow-xl">
+            <div className="absolute inset-0 bg-grid-white/10"></div>
+            <div className="relative p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Crown className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-yellow-100 text-sm font-medium">Royalties (3%)</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-xs font-semibold">3%</span>
+                </div>
+              </div>
+
+              {/* This Month Royalties */}
+              <div className="mb-4 pb-4 border-b border-white/20">
+                <p className="text-yellow-100 text-xs mb-1">Ce Mois</p>
+                <p className="text-white text-3xl font-bold">
+                  {formatCurrency(stats?.thisMonthRoyalties || 0)}
+                </p>
+              </div>
+
+              {/* YTD Royalties */}
+              <div>
+                <p className="text-yellow-100 text-xs mb-1">Total Année (YTD)</p>
+                <p className="text-white text-2xl font-bold">
+                  {formatCurrency(stats?.ytdRoyalties || 0)}
+                </p>
               </div>
             </div>
             <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mb-16 -mr-16"></div>
@@ -437,34 +599,34 @@ export function GlobalDashboardEnhanced() {
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Performance 12 Months Chart - Larger */}
-          <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Performance 12 Months Chart - Production & Revenue */}
+          <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-emerald-600" />
-                <CardTitle>Performance 12 Mois</CardTitle>
+                <CardTitle>Performance 12 Mois - Production & Revenus</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                {monthlySales.length > 0 ? (
+                {monthlyProduction.length > 0 ? (
                   <LineChartWidget
-                    data={monthlySales.map(m => ({
+                    data={monthlyProduction.map((m, idx) => ({
                       name: m.month,
-                      revenue: m.revenue,
-                      production: m.quantity,
+                      production: m.production,
+                      revenue: monthlySales[idx]?.revenue || 0,
                     }))}
                     lines={[
                       {
-                        dataKey: 'revenue',
-                        color: '#10B981',
-                        name: 'Revenue'
-                      },
-                      {
                         dataKey: 'production',
                         color: '#3B82F6',
-                        name: 'Production'
+                        name: 'Production (oz)'
+                      },
+                      {
+                        dataKey: 'revenue',
+                        color: '#10B981',
+                        name: 'Revenus ($)'
                       }
                     ]}
                     height={320}
@@ -480,77 +642,42 @@ export function GlobalDashboardEnhanced() {
             </CardContent>
           </Card>
 
-          {/* Production by Country - Pie Chart */}
+          {/* Gold Price 12 Months Chart */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-amber-600" />
-                <CardTitle>Production par Pays</CardTitle>
+                <TrendingUp className="w-5 h-5 text-amber-600" />
+                <CardTitle>Cours de l'Or - 12 Derniers Mois</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-80 flex flex-col items-center justify-center">
-                <PieChartWidget
-                  data={[
-                    { name: 'Guinée', value: 45 },
-                    { name: 'Mali', value: 30 },
-                    { name: "Côte d'Ivoire", value: 25 }
-                  ]}
-                  colors={['#F59E0B', '#10B981', '#3B82F6']}
-                  height={280}
-                  innerRadius={60}
-                  showLegend={false}
-                />
-                <div className="mt-4 space-y-2 w-full">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                      <span className="text-gray-700">Guinée</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">45%</span>
+              <div className="h-80">
+                {monthlyGoldPrices.length > 0 ? (
+                  <LineChartWidget
+                    data={monthlyGoldPrices.map(m => ({
+                      name: m.month,
+                      price: m.price,
+                    }))}
+                    lines={[
+                      {
+                        dataKey: 'price',
+                        color: '#F59E0B',
+                        name: 'Prix (USD/oz)'
+                      }
+                    ]}
+                    height={320}
+                    showGrid
+                    showLegend
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Aucune donnée disponible</p>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                      <span className="text-gray-700">Mali</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">30%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-gray-700">Côte d'Ivoire</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">25%</span>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Activity Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-purple-600" />
-              <CardTitle>Activité Récente</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Nouvelle vente approuvée</p>
-                  <p className="text-xs text-gray-500">Il y a 5 min</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Companies Royalties Summary */}
         <Card>

@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDefaultRoute } from '@/lib/permissions';
 import { Loading } from '@/components/ui/Loading';
@@ -10,6 +10,7 @@ interface PublicRouteProps {
 
 export function PublicRoute({ children }: PublicRouteProps) {
   const { user, loading, initialized } = useAuth();
+  const location = useLocation();
 
   if (loading || !initialized) {
     return (
@@ -20,8 +21,8 @@ export function PublicRoute({ children }: PublicRouteProps) {
   }
 
   if (user && user.is_active) {
-    const defaultRoute = getDefaultRoute(user.role);
-    return <Navigate to={defaultRoute} replace />;
+    const from = (location.state as any)?.from?.pathname || getDefaultRoute(user.role);
+    return <Navigate to={from} replace />;
   }
 
   return <>{children}</>;

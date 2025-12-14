@@ -169,13 +169,15 @@ export function PaymentsPage() {
     return configs[status as keyof typeof configs] || configs.default;
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+
+    // Utiliser le symbole $ au lieu de USD
+    const symbol = currency === 'USD' ? '$' : currency;
+    return `${symbol}${formatted}`;
   };
 
   const formatDate = (date: string | null) => {
@@ -400,111 +402,113 @@ export function PaymentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Invoice & Sale
+                    <tr className="border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
+                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                        Invoice & Vente
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Customer
+                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                        Client
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Amount
+                      <th className="px-4 py-3.5 text-right text-xs text-gray-600">
+                        Montant
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Due Date
+                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                        Date d'échéance
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Method
+                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                        Méthode
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Status
+                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
+                        Statut
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Docs
+                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
+                        Documents
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-100 bg-white">
                     {filteredPayments.map((payment) => {
                       const statusConfig = getStatusConfig(payment.payment_status_category);
                       return (
                         <tr
                           key={payment.id}
-                          className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                          className="hover:bg-blue-50/30 transition-all duration-200 cursor-pointer group border-b border-gray-50"
                           onClick={() => navigate(`/payments/${payment.id}`)}
                         >
-                          <td className="px-4 py-4">
+                          <td className="px-4 py-3.5">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${statusConfig.bgColor}`}>
-                                <FileText className={`h-4 w-4 ${statusConfig.color}`} />
+                              <div className={`p-2 rounded-lg ${statusConfig.bgColor} border border-opacity-20`}>
+                                <FileText className={`h-3.5 w-3.5 ${statusConfig.color}`} />
                               </div>
                               <div>
-                                <p className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                                <p className="text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
                                   {payment.invoice_number}
                                 </p>
-                                <p className="text-sm text-gray-500">{payment.sale_number}</p>
+                                <p className="text-xs text-gray-500">{payment.sale_number}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 rounded-full bg-primary-100">
-                                <User className="h-3.5 w-3.5 text-primary-600" />
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-1.5 rounded-full bg-amber-50 border border-amber-100">
+                                <User className="h-3.5 w-3.5 text-amber-600" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">{payment.customer_name}</p>
-                                <p className="text-sm text-gray-500">{payment.company_name}</p>
+                                <p className="text-sm text-gray-800">{payment.customer_name}</p>
+                                <p className="text-xs text-gray-500">{payment.company_name}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-right">
-                            <p className="font-bold text-gray-900 text-lg">
-                              {formatCurrency(payment.amount, payment.currency)}
-                            </p>
-                            <p className="text-xs text-gray-500 font-medium">{payment.currency}</p>
+                          <td className="px-4 py-3.5">
+                            <div className="text-right bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg py-2 px-3 border border-emerald-100">
+                              <p className="text-sm text-gray-900">
+                                {formatCurrency(payment.amount, payment.currency)}
+                              </p>
+                              <p className="text-xs text-gray-500">{payment.currency === 'USD' ? 'Dollars' : payment.currency}</p>
+                            </div>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-gray-400" />
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-2 px-3 border border-blue-100">
+                              <Calendar className="h-3.5 w-3.5 text-blue-600" />
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{formatDate(payment.due_date)}</p>
+                                <p className="text-xs text-gray-800">{formatDate(payment.due_date)}</p>
                                 {payment.days_overdue && payment.days_overdue > 0 && (
-                                  <p className="text-xs font-semibold text-red-600">
-                                    {payment.days_overdue}d overdue
+                                  <p className="text-xs text-red-600">
+                                    {payment.days_overdue}j en retard
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm text-gray-700 font-medium">
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-2 px-3 border border-purple-100">
+                              <CreditCard className="h-3.5 w-3.5 text-purple-600" />
+                              <span className="text-xs text-gray-700">
                                 {payment.payment_method?.replace(/_/g, ' ') || 'N/A'}
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-4 py-3.5 text-center">
                             <StatusBadge
                               label={payment.payment_status_category}
                               variant={statusConfig.variant}
                             />
                           </td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-4 py-3.5 text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md">
-                                <FileText className="h-3.5 w-3.5 text-gray-600" />
-                                <span className="text-sm font-medium text-gray-700">{payment.document_count || 0}</span>
+                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 rounded-lg border border-indigo-100">
+                                <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                                <span className="text-xs text-gray-700">{payment.document_count || 0}</span>
                               </div>
                               {payment.proof_count > 0 && (
                                 <CheckCircle className="h-4 w-4 text-green-500" />
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-4 py-3.5 text-center">
                             <Button
                               variant="outline"
                               size="sm"
@@ -512,9 +516,9 @@ export function PaymentsPage() {
                                 e.stopPropagation();
                                 navigate(`/payments/${payment.id}`);
                               }}
-                              className="opacity-70 group-hover:opacity-100 transition-opacity"
+                              className="opacity-70 group-hover:opacity-100 transition-all hover:bg-blue-50 hover:border-blue-200"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-3.5 w-3.5" />
                             </Button>
                           </td>
                         </tr>

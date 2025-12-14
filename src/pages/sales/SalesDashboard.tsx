@@ -791,7 +791,7 @@ export function SalesDashboard() {
           </CardHeader>
           <CardContent className="p-6 bg-gray-50">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {activeSales.map((sale) => {
                   const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                 const StatusIcon = status.icon;
@@ -799,68 +799,87 @@ export function SalesDashboard() {
                 const unitPrice =
                   sale.quantity > 0 ? formatCurrency(sale.amount / sale.quantity) : 'N/A';
 
+                // Get background color based on status
+                const getStatusBgColor = () => {
+                  if (status.color.includes('yellow')) return 'bg-yellow-50 border-yellow-200';
+                  if (status.color.includes('green')) return 'bg-green-50 border-green-200';
+                  if (status.color.includes('blue')) return 'bg-blue-50 border-blue-200';
+                  if (status.color.includes('indigo')) return 'bg-indigo-50 border-indigo-200';
+                  if (status.color.includes('orange')) return 'bg-orange-50 border-orange-200';
+                  if (status.color.includes('red')) return 'bg-red-50 border-red-200';
+                  if (status.color.includes('emerald')) return 'bg-emerald-50 border-emerald-200';
+                  if (status.color.includes('purple')) return 'bg-purple-50 border-purple-200';
+                  return 'bg-gray-50 border-gray-200';
+                };
+
+                const getIconColor = () => {
+                  if (status.color.includes('yellow')) return 'text-yellow-600 bg-yellow-100 border-yellow-300';
+                  if (status.color.includes('green')) return 'text-green-600 bg-green-100 border-green-300';
+                  if (status.color.includes('blue')) return 'text-blue-600 bg-blue-100 border-blue-300';
+                  if (status.color.includes('indigo')) return 'text-indigo-600 bg-indigo-100 border-indigo-300';
+                  if (status.color.includes('orange')) return 'text-orange-600 bg-orange-100 border-orange-300';
+                  if (status.color.includes('red')) return 'text-red-600 bg-red-100 border-red-300';
+                  if (status.color.includes('emerald')) return 'text-emerald-600 bg-emerald-100 border-emerald-300';
+                  if (status.color.includes('purple')) return 'text-purple-600 bg-purple-100 border-purple-300';
+                  return 'text-gray-600 bg-gray-100 border-gray-300';
+                };
+
                 return (
                     <div
                       key={sale.id}
                       onClick={() => {
                         void navigate(`/sales/${sale.id}`);
                       }}
-                    className="group relative overflow-hidden rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
+                    className={`group relative overflow-hidden rounded-lg border-2 hover:shadow-lg transition-all duration-300 cursor-pointer ${getStatusBgColor()}`}
                   >
+                    {/* Status Icon - Large and Prominent */}
+                    <div className="absolute top-2 right-2">
+                      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${getIconColor()}`}>
+                        <StatusIcon className="h-5 w-5" />
+                      </div>
+                    </div>
+
                     {/* Header */}
-                    <div className="p-5 pb-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors mb-0.5">
-                            {sale.saleNumber}
-                          </h3>
-                          <p className="text-xs text-gray-600">{sale.customer}</p>
-                        </div>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="flex items-center gap-0.5 text-emerald-600 text-xs font-semibold">
-                            Voir <ArrowRight className="h-3 w-3" />
-                          </div>
-                        </div>
+                    <div className="p-3">
+                      <div className="pr-12 mb-2">
+                        <h3 className="text-sm font-bold text-gray-900 group-hover:text-emerald-600 transition-colors mb-0.5 truncate">
+                          {sale.saleNumber}
+                        </h3>
+                        <p className="text-xs text-gray-600 truncate">{sale.customer}</p>
                       </div>
 
                       {/* Total Amount */}
-                      <div className="mt-3 mb-3">
+                      <div className="mt-2 mb-2 bg-white/50 rounded p-2">
                         <p className="text-xs text-gray-500 mb-0.5">Montant Total</p>
-                        <p className="text-xl font-bold text-gray-900">
+                        <p className="text-base font-bold text-gray-900">
                           {formatCurrency(sale.amount)}
                         </p>
                       </div>
 
-                      {/* Quantity, Price and Royalties Grid */}
-                      <div className="grid grid-cols-3 gap-3 pb-3 border-b border-gray-100">
+                      {/* Quantity and Royalties */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
                         <div>
                           <p className="text-xs text-gray-500 mb-0.5">Quantité</p>
-                          <p className="text-sm font-semibold text-gray-700">
-                            {sale.quantity.toFixed(3)} oz
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Prix/oz</p>
-                          <p className="text-sm font-semibold text-gray-700">
-                            {unitPrice}
+                          <p className="text-xs font-semibold text-gray-700">
+                            {sale.quantity.toFixed(2)} oz
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 mb-0.5">Royalties</p>
-                          <p className="text-sm font-semibold text-emerald-600">
+                          <p className="text-xs font-semibold text-emerald-600">
                             {formatCurrency(sale.royalty)}
                           </p>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Footer - Status and Date on same line */}
-                    <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                      <div className={`inline-flex items-center gap-1 px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}`}>
+                      {/* Status Badge */}
+                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 border rounded-full text-xs font-semibold ${status.color}`}>
                         <StatusIcon className="h-3 w-3" />
-                        <span>{status.label}</span>
+                        <span className="truncate">{status.label}</span>
                       </div>
-                      <div className="text-xs text-gray-500">
+
+                      {/* Date at bottom */}
+                      <div className="mt-2 pt-2 border-t border-gray-200/50 text-xs text-gray-500">
                         {new Date(sale.createdDate).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: 'short',
@@ -868,6 +887,9 @@ export function SalesDashboard() {
                         })}
                       </div>
                     </div>
+
+                    {/* Hover indicator */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                   </div>
                 );
               })}

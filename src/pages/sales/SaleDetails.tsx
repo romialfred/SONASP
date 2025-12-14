@@ -15,7 +15,12 @@ import {
   Award,
   TrendingUp,
   AlertCircle,
-  FileText
+  FileText,
+  Package,
+  Gem,
+  Receipt,
+  FlaskConical,
+  Download
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -213,6 +218,27 @@ export function SaleDetails() {
 
       const record = parsed.data;
 
+      // Load YTD data for this customer
+      let ytdGoldSold = 0;
+      let ytdAvgPrice = 0;
+      let ytdAmount = 0;
+
+      if (record.customer?.id) {
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
+
+        const { data: ytdSales } = await supabase
+          .from('sales')
+          .select('quantity_oz, unit_price, final_proceeds')
+          .eq('customer_id', record.customer.id)
+          .gte('created_at', startOfYear);
+
+        if (ytdSales && ytdSales.length > 0) {
+          ytdGoldSold = ytdSales.reduce((sum, s) => sum + (s.quantity_oz || 0), 0);
+          ytdAmount = ytdSales.reduce((sum, s) => sum + (s.final_proceeds || 0), 0);
+          ytdAvgPrice = ytdGoldSold > 0 ? ytdAmount / ytdGoldSold : 0;
+        }
+      }
+
       setSale({
         id: record.id,
         saleNumber: record.sale_number,
@@ -224,9 +250,9 @@ export function SaleDetails() {
           email: record.customer?.email ?? '',
           country: record.customer?.country ?? '',
           phone: record.customer?.phone ?? '',
-          ytdGoldSold: 0,
-          ytdAvgPrice: 0,
-          ytdAmount: 0,
+          ytdGoldSold,
+          ytdAvgPrice,
+          ytdAmount,
           isBestCustomer: false,
         },
         quantity: record.quantity_oz,
@@ -577,7 +603,7 @@ export function SaleDetails() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary-600" />
-                    Sale Calculations Report
+                    Financial Overview
                   </CardTitle>
                   <div className="text-right text-xs text-gray-600">
                     <p>Report Date</p>
@@ -712,7 +738,7 @@ export function SaleDetails() {
           {/* Right sidebar column - Sticky sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 space-y-6">
-            <Card className="border-2 border-gray-200 sticky top-6">
+            <Card className="border-2 border-gray-200">
               <CardHeader className="bg-gray-50">
                 <CardTitle className="text-base">Management Actions</CardTitle>
               </CardHeader>
@@ -867,6 +893,134 @@ export function SaleDetails() {
             </div>
           </div>
         </div>
+
+        {/* Documents Section */}
+        <Card className="mt-6 border-2 border-primary-200">
+          <CardHeader className="bg-gradient-to-r from-primary-50 to-blue-50">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary-600" />
+              Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Packing List */}
+              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <Package className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Packing List</h4>
+                      <p className="text-xs text-gray-500">Export Documentation</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* Bullion Summary */}
+              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                      <Gem className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Bullion Summary</h4>
+                      <p className="text-xs text-gray-500">Gold Bars Details</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* Invoice for Customer */}
+              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                      <Receipt className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Invoice for Customer</h4>
+                      <p className="text-xs text-gray-500">Customer Invoice</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* Assay Lab Certificate */}
+              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                      <FlaskConical className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Assay Lab Certificate</h4>
+                      <p className="text-xs text-gray-500">Quality Analysis</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sales Invoice */}
+              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                      <FileText className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Sales Invoice</h4>
+                      <p className="text-xs text-gray-500">Official Sales Record</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {showApprovalModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

@@ -430,8 +430,57 @@ export function SaleCreate() {
 
     setSubmitting(true);
     try {
+      const requestedQuantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
+
+      // CRITICAL: Validate stock availability before creating sale
+      // Get available stock for the selected mining company
+      const { data: availableStock, error: stockError } = await supabase
+        .from('daily_production')
+        .select('quantity_grams')
+        .eq('mining_company_id', formData.miningCompanyId)
+        .eq('status', 'in_safe');
+
+      if (stockError) {
+        console.error('Error checking stock:', stockError);
+        alert.error('Unable to verify stock availability. Please try again.');
+        throw stockError;
+      }
+
+      const totalAvailableGrams = (availableStock || []).reduce((sum, item) => sum + (item.quantity_grams || 0), 0);
+      const totalAvailableOz = totalAvailableGrams / 31.1035;
+
+      // Get already sold quantity for this mining company
+      const { data: existingSales, error: salesError } = await supabase
+        .from('sales')
+        .select('quantity_oz')
+        .eq('seller_id', formData.miningCompanyId);
+
+      if (salesError) {
+        console.error('Error checking existing sales:', salesError);
+        alert.error('Unable to verify existing sales. Please try again.');
+        throw salesError;
+      }
+
+      const totalSoldOz = (existingSales || []).reduce((sum, sale) => sum + (sale.quantity_oz || 0), 0);
+      const remainingAvailableOz = totalAvailableOz - totalSoldOz;
+
+      // Validate: requested quantity must not exceed remaining available stock
+      if (requestedQuantityOz > remainingAvailableOz) {
+        const deficitOz = requestedQuantityOz - remainingAvailableOz;
+        const deficitGrams = deficitOz * 31.1035;
+
+        alert.error(
+          `Stock insuffisant! Vous essayez de vendre ${requestedQuantityOz.toFixed(2)} oz ` +
+          `mais seulement ${remainingAvailableOz.toFixed(2)} oz sont disponibles. ` +
+          `Déficit: ${deficitOz.toFixed(2)} oz (${deficitGrams.toFixed(2)}g)`
+        );
+
+        setSubmitting(false);
+        return;
+      }
+
       const calculations = calculateSaleProceeds(
-        typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
+        requestedQuantityOz,
         parseFloat(formData.londonAMRate),
         parseFloat(formData.freightCost) || 0,
         parseFloat(formData.otherCosts) || 0
@@ -464,7 +513,7 @@ export function SaleCreate() {
             seller_id: formData.miningCompanyId,
             seller_type: 'mining_company',
             is_internal_sale: false,
-            quantity_oz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
+            quantity_oz: requestedQuantityOz,
             london_am_rate: parseFloat(formData.londonAMRate),
             freight_cost: parseFloat(formData.freightCost) || 0,
             other_costs: parseFloat(formData.otherCosts) || 0,

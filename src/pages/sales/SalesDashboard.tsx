@@ -233,17 +233,10 @@ export function SalesDashboard() {
       const now = new Date();
       const last12Months = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-      // Load all sales with customer and mining company info (including pending)
+      // Load all sales (no joins to avoid relation issues)
       const { data: salesData, error } = await supabase
         .from('sales')
-        .select(`
-          id,
-          created_at,
-          final_proceeds,
-          status,
-          customer:customers(id, name),
-          mining_company:mining_companies(id, name)
-        `)
+        .select('id, created_at, final_proceeds, status, seller_id, seller_type, customer_id')
         .gte('created_at', last12Months.toISOString());
 
       if (error) {
@@ -251,15 +244,44 @@ export function SalesDashboard() {
         return;
       }
 
+      if (!salesData || salesData.length === 0) {
+        console.log('[SalesDashboard] No sales data found');
+        setRevenueByCustomer([]);
+        setRevenueByMiningCompany([]);
+        return;
+      }
+
+      // Get unique customer IDs and seller IDs
+      const customerIds = [...new Set(salesData.map(s => s.customer_id).filter(Boolean))];
+      const sellerIds = [...new Set(salesData.filter(s => s.seller_type === 'mining_company').map(s => s.seller_id).filter(Boolean))];
+
+      // Load customers in parallel
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, name')
+        .in('id', customerIds);
+
+      // Load mining companies in parallel
+      const { data: miningCompaniesData } = await supabase
+        .from('mining_companies')
+        .select('id, name')
+        .in('id', sellerIds);
+
+      // Create lookup maps
+      const customerMap = new Map(customersData?.map(c => [c.id, c.name]) || []);
+      const miningCompanyMap = new Map(miningCompaniesData?.map(m => [m.id, m.name]) || []);
+
       // Process data for monthly revenue by customer
       const monthlyRevenueByCustomer: { [key: string]: { [month: string]: number } } = {};
       const monthlyRevenueByMiningCompany: { [key: string]: { [month: string]: number } } = {};
 
-      salesData?.forEach((sale: any) => {
+      salesData.forEach((sale: any) => {
         const date = new Date(sale.created_at);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const customerName = sale.customer?.name || 'Inconnu';
-        const miningCompanyName = sale.mining_company?.name || 'Inconnu';
+        const customerName = customerMap.get(sale.customer_id) || 'Client Inconnu';
+        const miningCompanyName = sale.seller_type === 'mining_company'
+          ? (miningCompanyMap.get(sale.seller_id) || 'Mine Inconnue')
+          : 'Autre';
 
         // By customer
         if (!monthlyRevenueByCustomer[customerName]) {
@@ -446,28 +468,12 @@ export function SalesDashboard() {
     <MainLayout>
       <div className="space-y-6">
         {/* Modern Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4 pb-6 border-b border-gray-200">
+        <div className="pb-6 border-b border-gray-200">
           <div>
             <h1 className="font-heading text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent mb-2">
               Gestion des Ventes
             </h1>
-            <p className="text-gray-600 text-lg">Tableau de bord des ventes d'or</p>
-          </div>
-          <div className="relative group">
-            <Button
-              onClick={() => {
-                void navigate('/sales/gold-trade-space');
-              }}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <Plus className="h-5 w-5" />
-              Nouvelle Vente
-            </Button>
-            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              <p className="text-xs text-blue-900">
-                <strong>Note:</strong> Les ventes doivent être créées via le module Gold Trade Space pour sélectionner le mécanisme de tarification approprié.
-              </p>
-            </div>
+            <p className="text-gray-600 text-lg">Les ventes sont créées exclusivement via Gold Trade Space</p>
           </div>
         </div>
 
@@ -696,17 +702,8 @@ export function SalesDashboard() {
 
         <Card className="border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 pb-6">
-            <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+            <div className="mb-4">
               <CardTitle className="text-2xl font-bold text-gray-900">Ventes Actives</CardTitle>
-              <Button
-                onClick={() => {
-                  void navigate('/sales/create');
-                }}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nouvelle Vente
-              </Button>
             </div>
 
             {/* Filters Section */}

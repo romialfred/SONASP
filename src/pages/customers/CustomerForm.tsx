@@ -267,26 +267,42 @@ export function CustomerForm() {
 
       // Save bank accounts
       if (formData.banks && formData.banks.length > 0 && customerId) {
-        const banksToInsert = formData.banks.map(bank => ({
-          customer_id: customerId,
-          bank_name: bank.bankName,
-          account_number: bank.accountNumber || null,
-          swift_code: bank.swiftCode || null,
-          iban: bank.iban || null,
-          currency: bank.currency,
-          country: bank.country,
-          city: bank.city,
-          is_primary: bank.isPrimary || false,
-          is_active: bank.isActive !== false,
-        }));
+        // Validate banks before inserting
+        const invalidBanks = formData.banks.filter(
+          bank => !bank.bankName || !bank.bankName.trim() ||
+                  !bank.country || !bank.country.trim() ||
+                  !bank.city || !bank.city.trim() ||
+                  !bank.currency || !bank.currency.trim()
+        );
 
-        const { error: banksError } = await supabase
-          .from('customer_banks')
-          .insert(banksToInsert);
+        if (invalidBanks.length > 0) {
+          throw new Error('All bank accounts must have a name, country, city, and currency. Please complete all required fields.');
+        }
 
-        if (banksError) {
-          console.error('Error saving banks:', banksError);
-          throw new Error('Failed to save bank accounts: ' + banksError.message);
+        const banksToInsert = formData.banks
+          .filter(bank => bank.bankName && bank.bankName.trim() && bank.bankName !== '__other__')
+          .map(bank => ({
+            customer_id: customerId,
+            bank_name: bank.bankName.trim(),
+            account_number: bank.accountNumber?.trim() || null,
+            swift_code: bank.swiftCode?.trim() || null,
+            iban: bank.iban?.trim() || null,
+            currency: bank.currency,
+            country: bank.country,
+            city: bank.city.trim(),
+            is_primary: bank.isPrimary || false,
+            is_active: bank.isActive !== false,
+          }));
+
+        if (banksToInsert.length > 0) {
+          const { error: banksError } = await supabase
+            .from('customer_banks')
+            .insert(banksToInsert);
+
+          if (banksError) {
+            console.error('Error saving banks:', banksError);
+            throw new Error('Failed to save bank accounts: ' + banksError.message);
+          }
         }
       }
 

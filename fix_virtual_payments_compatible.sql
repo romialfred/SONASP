@@ -13,7 +13,6 @@
 -- STEP 1: Fix NOT NULL constraints
 -- =====================================================
 
--- bank_name and reference_number are NOT NULL but should be nullable for virtual payments
 DO $$
 BEGIN
   -- Check and remove NOT NULL from bank_name
@@ -73,7 +72,10 @@ BEGIN
 END;
 $$;
 
-RAISE NOTICE '✓ Function calculate_virtual_payment_due_date() created';
+DO $$
+BEGIN
+  RAISE NOTICE '✓ Function calculate_virtual_payment_due_date() created';
+END $$;
 
 -- =====================================================
 -- STEP 3: Create trigger function for virtual payment creation
@@ -138,31 +140,31 @@ BEGIN
         created_at
       ) VALUES (
         -- Required fields
-        NEW.id,                              -- sale_id
-        NEW.customer_id,                     -- customer_id
-        v_expected_date,                     -- expected_date
-        NEW.final_proceeds,                  -- amount
-        COALESCE(NEW.currency, 'USD'),       -- currency
-        'pending',                           -- status
+        NEW.id,
+        NEW.customer_id,
+        v_expected_date,
+        NEW.final_proceeds,
+        COALESCE(NEW.currency, 'USD'),
+        'pending',
         -- Virtual payment specific fields
-        true,                                -- is_virtual = true
-        'virtual',                           -- payment_type = 'virtual'
-        NEW.mechanism_type,                  -- mechanism_type from sale
-        NOW(),                               -- auto_credited_at
-        v_virtual_due_date,                  -- virtual_due_date
-        v_invoice_number,                    -- invoice_number
+        true,
+        'virtual',
+        NEW.mechanism_type,
+        NOW(),
+        v_virtual_due_date,
+        v_invoice_number,
         -- Nullable fields - will be filled later
-        NULL,                                -- bank_name (to be filled)
-        NULL,                                -- reference_number (to be filled)
-        NULL,                                -- payment_method (to be filled)
-        NULL,                                -- actual_date (to be filled)
-        NULL,                                -- account_number
-        NULL,                                -- transaction_id
-        NULL,                                -- proof_url
-        NULL,                                -- payment_proof_url
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         -- Audit fields
-        NEW.created_by,                      -- created_by
-        NOW()                                -- created_at
+        NEW.created_by,
+        NOW()
       );
 
       RAISE NOTICE '✓ Virtual payment created for sale % (Invoice: %)', NEW.sale_number, v_invoice_number;
@@ -175,23 +177,27 @@ BEGIN
 END;
 $$;
 
-RAISE NOTICE '✓ Function create_virtual_payment_on_approval() created';
+DO $$
+BEGIN
+  RAISE NOTICE '✓ Function create_virtual_payment_on_approval() created';
+END $$;
 
 -- =====================================================
 -- STEP 4: Create trigger on sales table
 -- =====================================================
 
--- Drop the trigger if it exists
 DROP TRIGGER IF EXISTS trigger_create_virtual_payment_on_approval ON sales;
 
--- Create new trigger
 CREATE TRIGGER trigger_create_virtual_payment_on_approval
   AFTER INSERT OR UPDATE OF status
   ON sales
   FOR EACH ROW
   EXECUTE FUNCTION create_virtual_payment_on_approval();
 
-RAISE NOTICE '✓ Trigger created on sales table';
+DO $$
+BEGIN
+  RAISE NOTICE '✓ Trigger created on sales table';
+END $$;
 
 -- =====================================================
 -- STEP 5: Backfill existing customer_approved sales
@@ -316,30 +322,30 @@ BEGIN
   ) INTO v_trigger_exists;
 
   RAISE NOTICE '';
-  RAISE NOTICE '╔════════════════════════════════════════════════════════╗';
-  RAISE NOTICE '║  Virtual Payments System - Setup Complete             ║';
-  RAISE NOTICE '╚════════════════════════════════════════════════════════╝';
+  RAISE NOTICE '========================================================';
+  RAISE NOTICE '  Virtual Payments System - Setup Complete';
+  RAISE NOTICE '========================================================';
   RAISE NOTICE '';
-  RAISE NOTICE '📊 Current State:';
-  RAISE NOTICE '   ├─ Total payments:        %', v_total_payments;
-  RAISE NOTICE '   ├─ Virtual payments:      %', v_virtual_payments;
-  RAISE NOTICE '   ├─ Actual payments:       %', v_actual_payments;
-  RAISE NOTICE '   ├─ Pending virtuals:      %', v_pending_virtuals;
-  RAISE NOTICE '   └─ Sales awaiting payment: %', v_sales_awaiting;
+  RAISE NOTICE 'Current State:';
+  RAISE NOTICE '   - Total payments:        %', v_total_payments;
+  RAISE NOTICE '   - Virtual payments:      %', v_virtual_payments;
+  RAISE NOTICE '   - Actual payments:       %', v_actual_payments;
+  RAISE NOTICE '   - Pending virtuals:      %', v_pending_virtuals;
+  RAISE NOTICE '   - Sales awaiting payment: %', v_sales_awaiting;
   RAISE NOTICE '';
-  RAISE NOTICE '⚙️  System Components:';
-  RAISE NOTICE '   ├─ Trigger: trigger_create_virtual_payment_on_approval [%]', 
+  RAISE NOTICE 'System Components:';
+  RAISE NOTICE '   - Trigger: trigger_create_virtual_payment_on_approval [%]', 
     CASE WHEN v_trigger_exists THEN 'ACTIVE' ELSE 'MISSING' END;
-  RAISE NOTICE '   ├─ Function: create_virtual_payment_on_approval()';
-  RAISE NOTICE '   └─ Helper: calculate_virtual_payment_due_date()';
+  RAISE NOTICE '   - Function: create_virtual_payment_on_approval()';
+  RAISE NOTICE '   - Helper: calculate_virtual_payment_due_date()';
   RAISE NOTICE '';
-  RAISE NOTICE '✅ System ready!';
+  RAISE NOTICE 'System ready!';
   RAISE NOTICE '   When a sale status changes to "customer_approved",';
   RAISE NOTICE '   a virtual payment will be automatically created.';
   RAISE NOTICE '';
-  RAISE NOTICE '💡 Next steps:';
+  RAISE NOTICE 'Next steps:';
   RAISE NOTICE '   1. Open /payments in your application';
   RAISE NOTICE '   2. You should see % pending virtual payment(s)', v_pending_virtuals;
-  RAISE NOTICE '   3. When actual payment is received, convert virtual→actual';
+  RAISE NOTICE '   3. When actual payment is received, convert virtual to actual';
   RAISE NOTICE '';
 END $$;

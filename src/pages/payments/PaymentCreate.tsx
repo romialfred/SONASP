@@ -111,7 +111,7 @@ export function PaymentCreate() {
           seller_id,
           customers!inner(name)
         `)
-        .eq('status', 'waiting_for_payment')
+        .in('status', ['customer_approved', 'waiting_for_payment'])
         .order('created_at', { ascending: false });
 
       if (salesError) throw salesError;
@@ -416,7 +416,7 @@ export function PaymentCreate() {
 
         {sales.length === 0 && (
           <Alert variant="info" title="No Sales Awaiting Payment">
-            There are no sales with status "waiting_for_payment". Please ensure sales are approved by customers first.
+            There are no sales approved by customers yet. Sales must be approved by customers before recording payment. Check the Sales Dashboard for pending approvals.
           </Alert>
         )}
 

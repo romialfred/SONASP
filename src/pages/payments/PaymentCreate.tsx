@@ -96,7 +96,7 @@ export function PaymentCreate() {
     try {
       setLoading(true);
 
-      // Fetch sales with broader status criteria
+      // Fetch sales with valid status criteria
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
@@ -112,7 +112,7 @@ export function PaymentCreate() {
           seller_id,
           customers!inner(name)
         `)
-        .or('status.eq.customer_approved,status.eq.waiting_for_payment,status.eq.approved,status.eq.completed')
+        .or('status.eq.customer_approved,status.eq.waiting_for_payment,status.eq.completed')
         .order('created_at', { ascending: false });
 
       if (salesError) throw salesError;
@@ -436,7 +436,7 @@ export function PaymentCreate() {
                 <li>Make sure sales have been approved by customers</li>
                 <li>Verify that sales don't already have approved payments</li>
                 <li>Check the Sales Dashboard for pending customer approvals</li>
-                <li>Ensure sales status is 'customer_approved', 'waiting_for_payment', 'approved', or 'completed'</li>
+                <li>Ensure sales status is 'customer_approved', 'waiting_for_payment', or 'completed'</li>
               </ul>
             </div>
           </Alert>

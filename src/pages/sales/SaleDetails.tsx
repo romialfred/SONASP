@@ -573,37 +573,40 @@ export function SaleDetails() {
   return (
     <MainLayout>
       <div className="space-y-6 w-full px-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              void navigate('/sales');
-            }}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Sales
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="font-heading text-3xl font-bold text-gray-900">
-                {sale.saleNumber}
-              </h1>
-              <div className={`flex items-center gap-1 px-3 py-1.5 border rounded-full text-sm font-semibold ${status.color}`}>
-                <StatusIcon className="h-4 w-4" />
-                {status.label}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                void navigate('/sales');
+              }}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Sales
+            </Button>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="font-heading text-2xl font-bold text-gray-900">
+                  {sale.saleNumber}
+                </h1>
+                <div className={`flex items-center gap-1 px-3 py-1 border rounded-full text-sm font-semibold ${status.color}`}>
+                  <StatusIcon className="h-4 w-4" />
+                  {status.label}
+                </div>
               </div>
             </div>
-            <p className="text-gray-600 mt-1">
-              Created by {sale.createdBy} on {new Date(sale.createdDate).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
           </div>
+          <p className="text-xs text-gray-500">
+            Created by {sale.createdBy} on {new Date(sale.createdDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            })} at {new Date(sale.createdDate).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
         </div>
 
         {(sale.status === 'pending' || sale.status === 'pending_management_approval') && (
@@ -855,168 +858,137 @@ export function SaleDetails() {
           {/* Right sidebar column - Sticky sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 space-y-6">
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="bg-gray-50">
-                <CardTitle className="text-base">Management Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {(sale.status === 'pending' || sale.status === 'pending_management_approval') ? (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={() => {
-                        setShowApprovalModal(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve Sale
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowRejectionModal(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Reject Sale
-                    </Button>
-                  </div>
-                ) : sale.status === 'pending_for_customer_approval' ? (
-                  <div className="space-y-4">
-                    <div className="text-center py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                      <Clock className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
-                      <p className="text-sm font-semibold text-indigo-900 mb-1">
-                        Awaiting Customer Approval
-                      </p>
-                      <p className="text-xs text-indigo-700">
-                        Email sent to customer
-                      </p>
+            {/* Only show Management Actions if there are actionable items */}
+            {(sale.status === 'pending' ||
+              sale.status === 'pending_management_approval' ||
+              sale.status === 'pending_for_customer_approval') && (
+              <Card className="border-2 border-gray-200">
+                <CardHeader className="bg-gray-50">
+                  <CardTitle className="text-base">Management Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {(sale.status === 'pending' || sale.status === 'pending_management_approval') ? (
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => {
+                          setShowApprovalModal(true);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve Sale
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowRejectionModal(true);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject Sale
+                      </Button>
                     </div>
-                    <div className="pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-600 mb-3 text-center">
-                        Administrator override options:
-                      </p>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={async () => {
-                            if (!id || !user?.email) return;
-                            setIsApproving(true);
-                            try {
-                              const { data, error } = await supabase
-                                .from('sales')
-                                .update({ status: 'customer_approved' })
-                                .eq('id', id)
-                                .select()
-                                .single();
+                  ) : sale.status === 'pending_for_customer_approval' ? (
+                    <div className="space-y-4">
+                      <div className="text-center py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                        <Clock className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
+                        <p className="text-sm font-semibold text-indigo-900 mb-1">
+                          Awaiting Customer Approval
+                        </p>
+                        <p className="text-xs text-indigo-700">
+                          Email sent to customer
+                        </p>
+                      </div>
+                      <div className="pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-600 mb-3 text-center">
+                          Administrator override options:
+                        </p>
+                        <div className="space-y-2">
+                          <Button
+                            onClick={async () => {
+                              if (!id || !user?.email) return;
+                              setIsApproving(true);
+                              try {
+                                const { data, error } = await supabase
+                                  .from('sales')
+                                  .update({ status: 'customer_approved' })
+                                  .eq('id', id)
+                                  .select()
+                                  .single();
 
-                              if (!error) {
-                                alert.success('Sale approved as customer (admin override)');
-                                await loadSaleDetails();
-                              } else {
-                                alert.error('Failed to override: ' + error.message);
+                                if (!error) {
+                                  alert.success('Sale approved as customer (admin override)');
+                                  await loadSaleDetails();
+                                } else {
+                                  alert.error('Failed to override: ' + error.message);
+                                }
+                              } catch (err: any) {
+                                alert.error('Error: ' + err.message);
+                              } finally {
+                                setIsApproving(false);
                               }
-                            } catch (err: any) {
-                              alert.error('Error: ' + err.message);
-                            } finally {
-                              setIsApproving(false);
-                            }
-                          }}
-                          disabled={isApproving}
-                          size="sm"
-                          className="w-full bg-green-600 hover:bg-green-700 text-xs"
-                        >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Approve as Customer
-                        </Button>
-                        <Button
-                          onClick={async () => {
-                            if (!id || !user?.email) return;
-                            const reason = prompt('Rejection reason:');
-                            if (!reason) return;
+                            }}
+                            disabled={isApproving}
+                            size="sm"
+                            className="w-full bg-green-600 hover:bg-green-700 text-xs"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Approve as Customer
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              if (!id || !user?.email) return;
+                              const reason = prompt('Rejection reason:');
+                              if (!reason) return;
 
-                            setIsRejecting(true);
-                            try {
-                              const { error } = await supabase
-                                .from('sales')
-                                .update({ status: 'customer_rejected' })
-                                .eq('id', id);
+                              setIsRejecting(true);
+                              try {
+                                const { error } = await supabase
+                                  .from('sales')
+                                  .update({ status: 'customer_rejected' })
+                                  .eq('id', id);
 
-                              if (!error) {
-                                alert.success('Sale rejected (admin override)');
-                                await loadSaleDetails();
-                              } else {
-                                alert.error('Failed to override: ' + error.message);
+                                if (!error) {
+                                  alert.success('Sale rejected (admin override)');
+                                  await loadSaleDetails();
+                                } else {
+                                  alert.error('Failed to override: ' + error.message);
+                                }
+                              } catch (err: any) {
+                                alert.error('Error: ' + err.message);
+                              } finally {
+                                setIsRejecting(false);
                               }
-                            } catch (err: any) {
-                              alert.error('Error: ' + err.message);
-                            } finally {
-                              setIsRejecting(false);
-                            }
-                          }}
-                          disabled={isRejecting}
-                          size="sm"
-                          variant="outline"
-                          className="w-full text-red-600 border-red-600 hover:bg-red-50 text-xs"
-                        >
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Reject as Customer
-                        </Button>
+                            }}
+                            disabled={isRejecting}
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-red-600 border-red-600 hover:bg-red-50 text-xs"
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Reject as Customer
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <StatusIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      This sale has been {status.label.toLowerCase()}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Sales Workflow Progress Panel */}
             <SalesWorkflowProgressPanel currentStatus={sale.status} />
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-blue-600" />
-                  Important Notes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-xs text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p>Approval sends automatic email notification to customer</p>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p>Customer has 7 days to approve or reject the sale</p>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p>Rejection requires detailed reason for audit trail</p>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                    <p>All actions are logged for compliance purposes</p>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
             </div>
           </div>
         </div>
 
         {/* Documents Section - Dynamic List */}
         <Card className="mt-6 border-2 border-primary-200">
-          <CardHeader className="bg-gradient-to-r from-primary-50 to-blue-50">
+          <CardHeader className="bg-gradient-to-r from-primary-50 to-blue-50 py-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary-600" />
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-primary-600" />
                 Documents
               </CardTitle>
               <div className="text-xs text-gray-600">
@@ -1026,63 +998,56 @@ export function SaleDetails() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4">
             {documents.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No documents available yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {documents.map((doc) => {
                   const Icon = doc.icon;
                   return (
                     <div
                       key={doc.type}
-                      className={`group relative overflow-hidden rounded-lg border-2 transition-all duration-200 ${
+                      className={`group relative overflow-hidden rounded-lg border transition-all duration-200 ${
                         doc.available
-                          ? `${doc.bgColor} cursor-pointer hover:shadow-lg`
+                          ? `${doc.bgColor} cursor-pointer hover:shadow-md`
                           : 'bg-gray-50 border-gray-200 opacity-60'
                       }`}
                     >
-                      <div className="p-4">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      <div className="p-3">
+                        <div className="flex flex-col items-center mb-2">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${
                             doc.available ? `${doc.bgColor} border` : 'bg-gray-100'
                           }`}>
-                            <Icon className={`w-6 h-6 ${doc.available ? doc.color : 'text-gray-400'}`} />
+                            <Icon className={`w-5 h-5 ${doc.available ? doc.color : 'text-gray-400'}`} />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-semibold ${
-                              doc.available ? 'text-gray-900 group-hover:text-primary-600' : 'text-gray-500'
-                            } transition-colors truncate`}>
-                              {doc.label}
-                            </h4>
-                            <p className="text-xs text-gray-500 mt-0.5">{doc.description}</p>
-                            {doc.generatedDate && doc.available && (
-                              <p className="text-xs text-gray-400 mt-1">
-                                Generated: {new Date(doc.generatedDate).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
+                          <h4 className={`text-xs font-semibold text-center ${
+                            doc.available ? 'text-gray-900 group-hover:text-primary-600' : 'text-gray-500'
+                          } transition-colors line-clamp-2`}>
+                            {doc.label}
+                          </h4>
+                          <p className="text-xs text-gray-500 text-center mt-1 line-clamp-1">{doc.description}</p>
                         </div>
 
                         {doc.available ? (
                           <Button
                             size="sm"
                             variant="outline"
-                            className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                            className="w-full flex items-center justify-center gap-1 text-xs py-1 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
                             onClick={() => {
                               // TODO: Implement actual PDF generation and download
                               alert.info(`Generating ${doc.label}...`);
                             }}
                           >
-                            <Download className="w-4 h-4" />
-                            Download PDF
+                            <Download className="w-3 h-3" />
+                            Download
                           </Button>
                         ) : (
-                          <div className="w-full text-center py-2 px-3 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">
-                            Not yet generated
+                          <div className="w-full text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">
+                            Not available
                           </div>
                         )}
                       </div>
@@ -1093,6 +1058,34 @@ export function SaleDetails() {
             )}
           </CardContent>
         </Card>
+
+        {/* Important Notes - Inline at bottom */}
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-semibold text-blue-900 mb-2">Important Notes</h4>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-blue-700">
+                <span className="flex items-center gap-1">
+                  <div className="w-1 h-1 bg-blue-600 rounded-full" />
+                  Approval sends automatic email to customer
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-1 h-1 bg-blue-600 rounded-full" />
+                  Customer has 7 days to approve/reject
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-1 h-1 bg-blue-600 rounded-full" />
+                  Rejection requires detailed reason
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-1 h-1 bg-blue-600 rounded-full" />
+                  All actions logged for compliance
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {showApprovalModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

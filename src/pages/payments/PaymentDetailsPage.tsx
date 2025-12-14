@@ -14,6 +14,70 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
 
+interface TimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  status: 'completed' | 'pending' | 'in_progress';
+  icon: any;
+}
+
+function Timeline({ events }: { events: TimelineEvent[] }) {
+  const sortedEvents = [...events].sort((a, b) =>
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  return (
+    <div className="relative">
+      {sortedEvents.map((event, index) => {
+        const Icon = event.icon;
+        const isLast = index === sortedEvents.length - 1;
+
+        return (
+          <div key={event.id} className="relative pb-8">
+            {!isLast && (
+              <div className="absolute left-4 top-10 -ml-px h-full w-0.5 bg-gray-200" />
+            )}
+            <div className="relative flex items-start space-x-4">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                event.status === 'completed'
+                  ? 'bg-green-100'
+                  : event.status === 'in_progress'
+                  ? 'bg-blue-100'
+                  : 'bg-gray-100'
+              }`}>
+                <Icon className={`h-4 w-4 ${
+                  event.status === 'completed'
+                    ? 'text-green-600'
+                    : event.status === 'in_progress'
+                    ? 'text-blue-600'
+                    : 'text-gray-400'
+                }`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div>
+                  <p className="font-medium text-gray-900">{event.title}</p>
+                  <p className="text-sm text-gray-600">{event.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(event.timestamp).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface PaymentDetails {
   id: string;
   sale_id: string;

@@ -20,7 +20,10 @@ import {
   Gem,
   Receipt,
   FlaskConical,
-  Download
+  Download,
+  Phone,
+  ShoppingCart,
+  Coins
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -47,6 +50,8 @@ interface SaleDetailsCustomer {
   ytdGoldSold: number;
   ytdAvgPrice: number;
   ytdAmount: number;
+  ytdTransactions: number;
+  ytdRoyalties: number;
   isBestCustomer: boolean;
 }
 
@@ -141,6 +146,19 @@ const getPaymentTerms = (mechanismType: string | null | undefined) => {
   }
 };
 
+interface SaleDocument {
+  type: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  bgColor: string;
+  available: boolean;
+  generatedDate?: string;
+  documentId?: string;
+  fileUrl?: string;
+}
+
 export function SaleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -151,6 +169,7 @@ export function SaleDetails() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalNotes, setApprovalNotes] = useState('');
   const [sale, setSale] = useState<SaleDetailsView | null>(null);
+  const [documents, setDocuments] = useState<SaleDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
@@ -222,19 +241,23 @@ export function SaleDetails() {
       let ytdGoldSold = 0;
       let ytdAvgPrice = 0;
       let ytdAmount = 0;
+      let ytdTransactions = 0;
+      let ytdRoyalties = 0;
 
       if (record.customer?.id) {
         const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
 
         const { data: ytdSales } = await supabase
           .from('sales')
-          .select('quantity_oz, unit_price, final_proceeds')
+          .select('quantity_oz, unit_price, final_proceeds, royalty_amount')
           .eq('customer_id', record.customer.id)
           .gte('created_at', startOfYear);
 
         if (ytdSales && ytdSales.length > 0) {
+          ytdTransactions = ytdSales.length;
           ytdGoldSold = ytdSales.reduce((sum, s) => sum + (s.quantity_oz || 0), 0);
           ytdAmount = ytdSales.reduce((sum, s) => sum + (s.final_proceeds || 0), 0);
+          ytdRoyalties = ytdSales.reduce((sum, s) => sum + (s.royalty_amount || 0), 0);
           ytdAvgPrice = ytdGoldSold > 0 ? ytdAmount / ytdGoldSold : 0;
         }
       }
@@ -253,6 +276,8 @@ export function SaleDetails() {
           ytdGoldSold,
           ytdAvgPrice,
           ytdAmount,
+          ytdTransactions,
+          ytdRoyalties,
           isBestCustomer: false,
         },
         quantity: record.quantity_oz,
@@ -269,6 +294,64 @@ export function SaleDetails() {
         },
         mechanismType: record.mechanism_type ?? null,
       });
+
+      // Initialize documents list
+      // TODO: Load real documents from database/storage
+      const documentsData: SaleDocument[] = [
+        {
+          type: 'packing_list',
+          label: 'Packing List',
+          description: 'Export documentation for customs',
+          icon: Package,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+          available: true,
+          generatedDate: record.created_at,
+        },
+        {
+          type: 'bullion_summary',
+          label: 'Bullion Summary',
+          description: 'Gold bars details and specifications',
+          icon: Gem,
+          color: 'text-amber-600',
+          bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+          available: true,
+          generatedDate: record.created_at,
+        },
+        {
+          type: 'customer_invoice',
+          label: 'Invoice for Customer',
+          description: 'Customer invoice with pricing details',
+          icon: Receipt,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
+          available: true,
+          generatedDate: record.created_at,
+        },
+        {
+          type: 'assay_certificate',
+          label: 'Assay Lab Certificate',
+          description: 'Quality analysis from certified lab',
+          icon: FlaskConical,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+          available: false, // Not yet implemented
+        },
+        {
+          type: 'sales_invoice',
+          label: 'Sales Invoice',
+          description: 'Official sales record',
+          icon: FileText,
+          color: 'text-indigo-600',
+          bgColor: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+          available: true,
+          generatedDate: record.created_at,
+        },
+      ];
+
+      if (mountedRef.current) {
+        setDocuments(documentsData);
+      }
     } catch (error) {
       console.error('Error fetching sale details:', error);
       if (!mountedRef.current) {
@@ -544,53 +627,87 @@ export function SaleDetails() {
                   Customer Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4">
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-gray-900">{sale.customer.name}</h3>
-                        {sale.customer.isBestCustomer && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 border border-yellow-300 rounded-full">
-                            <Award className="h-3 w-3 text-yellow-600" />
-                            <span className="text-xs font-semibold text-yellow-700">Best Customer</span>
-                          </div>
-                        )}
+                  {/* Compact Customer Info */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <User className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="space-y-2 mt-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail className="h-4 w-4" />
-                          {sale.customer.email}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-bold text-gray-900">{sale.customer.name}</h3>
+                          {sale.customer.isBestCustomer && (
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 border border-yellow-300 rounded-full">
+                              <Award className="h-3 w-3 text-yellow-600" />
+                              <span className="text-xs font-semibold text-yellow-700">Best</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="h-4 w-4" />
-                          {sale.customer.country}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <User className="h-4 w-4" />
-                          {sale.customer.phone}
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {sale.customer.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {sale.customer.country}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {sale.customer.phone}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  {/* YTD Performance - 5 tuiles */}
+                  <div>
                     <div className="flex items-center gap-2 mb-3">
                       <TrendingUp className="h-4 w-4 text-blue-600" />
-                      <h4 className="text-sm font-semibold text-gray-900">YTD Customer Performance</h4>
+                      <h4 className="text-sm font-semibold text-gray-900">YTD Performance (2025)</h4>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Gold Sold</p>
-                        <p className="text-lg font-bold text-gray-900">{sale.customer.ytdGoldSold.toFixed(2)} oz</p>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Gem className="h-3.5 w-3.5 text-amber-600" />
+                          <p className="text-xs font-medium text-amber-900">Gold Sold</p>
+                        </div>
+                        <p className="text-lg font-bold text-amber-900">{sale.customer.ytdGoldSold.toFixed(2)} oz</p>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Avg Price</p>
-                        <p className="text-lg font-bold text-gray-900">${sale.customer.ytdAvgPrice.toLocaleString()}</p>
+
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                          <p className="text-xs font-medium text-green-900">Avg Price</p>
+                        </div>
+                        <p className="text-lg font-bold text-green-900">${sale.customer.ytdAvgPrice.toFixed(0)}</p>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-1">Total Amount</p>
-                        <p className="text-lg font-bold text-gray-900">{formatCurrency(sale.customer.ytdAmount)}</p>
+
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="h-3.5 w-3.5 text-blue-600" />
+                          <p className="text-xs font-medium text-blue-900">Total Amount</p>
+                        </div>
+                        <p className="text-lg font-bold text-blue-900">{formatCurrency(sale.customer.ytdAmount)}</p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <ShoppingCart className="h-3.5 w-3.5 text-purple-600" />
+                          <p className="text-xs font-medium text-purple-900">Transactions</p>
+                        </div>
+                        <p className="text-lg font-bold text-purple-900">{sale.customer.ytdTransactions}</p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-lg p-3 border border-rose-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Coins className="h-3.5 w-3.5 text-rose-600" />
+                          <p className="text-xs font-medium text-rose-900">Royalties Paid</p>
+                        </div>
+                        <p className="text-lg font-bold text-rose-900">{formatCurrency(Math.abs(sale.customer.ytdRoyalties))}</p>
                       </div>
                     </div>
                   </div>
@@ -894,131 +1011,86 @@ export function SaleDetails() {
           </div>
         </div>
 
-        {/* Documents Section */}
+        {/* Documents Section - Dynamic List */}
         <Card className="mt-6 border-2 border-primary-200">
           <CardHeader className="bg-gradient-to-r from-primary-50 to-blue-50">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary-600" />
-              Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Packing List */}
-              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      <Package className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Packing List</h4>
-                      <p className="text-xs text-gray-500">Export Documentation</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-
-              {/* Bullion Summary */}
-              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-                      <Gem className="w-6 h-6 text-amber-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Bullion Summary</h4>
-                      <p className="text-xs text-gray-500">Gold Bars Details</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-
-              {/* Invoice for Customer */}
-              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                      <Receipt className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Invoice for Customer</h4>
-                      <p className="text-xs text-gray-500">Customer Invoice</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-
-              {/* Assay Lab Certificate */}
-              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                      <FlaskConical className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Assay Lab Certificate</h4>
-                      <p className="text-xs text-gray-500">Quality Analysis</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-
-              {/* Sales Invoice */}
-              <div className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary-400 hover:shadow-lg transition-all duration-200 cursor-pointer bg-white">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                      <FileText className="w-6 h-6 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Sales Invoice</h4>
-                      <p className="text-xs text-gray-500">Official Sales Record</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary-600" />
+                Documents
+              </CardTitle>
+              <div className="text-xs text-gray-600">
+                <span className="font-semibold">{documents.filter(d => d.available).length}</span>
+                {' / '}
+                <span>{documents.length}</span> available
               </div>
             </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {documents.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No documents available yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map((doc) => {
+                  const Icon = doc.icon;
+                  return (
+                    <div
+                      key={doc.type}
+                      className={`group relative overflow-hidden rounded-lg border-2 transition-all duration-200 ${
+                        doc.available
+                          ? `${doc.bgColor} cursor-pointer hover:shadow-lg`
+                          : 'bg-gray-50 border-gray-200 opacity-60'
+                      }`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                            doc.available ? `${doc.bgColor} border` : 'bg-gray-100'
+                          }`}>
+                            <Icon className={`w-6 h-6 ${doc.available ? doc.color : 'text-gray-400'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className={`font-semibold ${
+                              doc.available ? 'text-gray-900 group-hover:text-primary-600' : 'text-gray-500'
+                            } transition-colors truncate`}>
+                              {doc.label}
+                            </h4>
+                            <p className="text-xs text-gray-500 mt-0.5">{doc.description}</p>
+                            {doc.generatedDate && doc.available && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                Generated: {new Date(doc.generatedDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {doc.available ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full flex items-center justify-center gap-2 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
+                            onClick={() => {
+                              // TODO: Implement actual PDF generation and download
+                              alert.info(`Generating ${doc.label}...`);
+                            }}
+                          >
+                            <Download className="w-4 h-4" />
+                            Download PDF
+                          </Button>
+                        ) : (
+                          <div className="w-full text-center py-2 px-3 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">
+                            Not yet generated
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

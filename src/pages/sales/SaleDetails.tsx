@@ -41,6 +41,7 @@ import { useAlert } from '@/hooks/useAlert';
 import { approveSale, rejectSale } from '@/services/salesService';
 import { useAuth } from '@/contexts/AuthContext';
 import { SalesWorkflowProgressPanel } from '@/components/sales/SalesWorkflowProgressPanel';
+import { getSaleDocuments, downloadSaleDocument, type SaleDocument } from '@/services/saleDocumentsService';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -146,18 +147,7 @@ const getPaymentTerms = (mechanismType: string | null | undefined) => {
   }
 };
 
-interface SaleDocument {
-  type: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-  color: string;
-  bgColor: string;
-  available: boolean;
-  generatedDate?: string;
-  documentId?: string;
-  fileUrl?: string;
-}
+// SaleDocument interface is now imported from saleDocumentsService
 
 export function SaleDetails() {
   const { id } = useParams();
@@ -295,62 +285,19 @@ export function SaleDetails() {
         mechanismType: record.mechanism_type ?? null,
       });
 
-      // Initialize documents list
-      // TODO: Load real documents from database/storage
-      const documentsData: SaleDocument[] = [
-        {
-          type: 'packing_list',
-          label: 'Packing List',
-          description: 'Export documentation for customs',
-          icon: Package,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
-          available: true,
-          generatedDate: record.created_at,
-        },
-        {
-          type: 'bullion_summary',
-          label: 'Bullion Summary',
-          description: 'Gold bars details and specifications',
-          icon: Gem,
-          color: 'text-amber-600',
-          bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
-          available: true,
-          generatedDate: record.created_at,
-        },
-        {
-          type: 'customer_invoice',
-          label: 'Invoice for Customer',
-          description: 'Customer invoice with pricing details',
-          icon: Receipt,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
-          available: true,
-          generatedDate: record.created_at,
-        },
-        {
-          type: 'assay_certificate',
-          label: 'Assay Lab Certificate',
-          description: 'Quality analysis from certified lab',
-          icon: FlaskConical,
-          color: 'text-purple-600',
-          bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
-          available: false, // Not yet implemented
-        },
-        {
-          type: 'sales_invoice',
-          label: 'Sales Invoice',
-          description: 'Official sales record',
-          icon: FileText,
-          color: 'text-indigo-600',
-          bgColor: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
-          available: true,
-          generatedDate: record.created_at,
-        },
-      ];
+      // Load real documents from database/storage
+      const documentsResult = await getSaleDocuments(record.id);
 
-      if (mountedRef.current) {
-        setDocuments(documentsData);
+      if (documentsResult.success && documentsResult.data) {
+        if (mountedRef.current) {
+          setDocuments(documentsResult.data);
+        }
+      } else {
+        console.warn('Failed to load documents:', documentsResult.error);
+        // Set empty documents array if loading fails
+        if (mountedRef.current) {
+          setDocuments([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching sale details:', error);
@@ -1006,11 +953,25 @@ export function SaleDetails() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                {documents.map((doc) => {
-                  const Icon = doc.icon;
+                {documents.map((doc, index) => {
+                  // Map icon name string to actual icon component
+                  const getIconComponent = (iconName: string): LucideIcon => {
+                    const iconMap: Record<string, LucideIcon> = {
+                      Package,
+                      Gem,
+                      Receipt,
+                      FlaskConical,
+                      FileText,
+                    };
+                    return iconMap[iconName] || FileText;
+                  };
+
+                  const Icon = getIconComponent(doc.icon);
+                  const docKey = doc.documentId || `${doc.type}-${index}`;
+
                   return (
                     <div
-                      key={doc.type}
+                      key={docKey}
                       className={`group relative overflow-hidden rounded-lg border transition-all duration-200 ${
                         doc.available
                           ? `${doc.bgColor} cursor-pointer hover:shadow-md`
@@ -1037,13 +998,35 @@ export function SaleDetails() {
                             size="sm"
                             variant="outline"
                             className="w-full flex items-center justify-center gap-1 text-xs py-1 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                            onClick={() => {
-                              // TODO: Implement actual PDF generation and download
-                              alert.info(`Generating ${doc.label}...`);
+                            onClick={async () => {
+                              // If document has direct URL, open it
+                              if (doc.fileUrl) {
+                                window.open(doc.fileUrl, '_blank');
+                                return;
+                              }
+
+                              // Otherwise, try to download via service
+                              try {
+                                const result = await downloadSaleDocument(
+                                  doc.type,
+                                  doc.documentId,
+                                  id
+                                );
+
+                                if (result.success && result.url) {
+                                  window.open(result.url, '_blank');
+                                } else {
+                                  alert.info(`Generating ${doc.label}...`);
+                                  // For generated documents (bullion summary, sales invoice),
+                                  // this would trigger PDF generation
+                                }
+                              } catch (error: any) {
+                                alert.error(`Failed to download: ${error.message}`);
+                              }
                             }}
                           >
                             <Download className="w-3 h-3" />
-                            Download
+                            {doc.fileName ? 'Download' : 'View'}
                           </Button>
                         ) : (
                           <div className="w-full text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">

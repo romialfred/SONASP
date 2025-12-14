@@ -96,6 +96,7 @@ export function PaymentCreate() {
     try {
       setLoading(true);
 
+      // Fetch sales with broader status criteria
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
@@ -111,13 +112,26 @@ export function PaymentCreate() {
           seller_id,
           customers!inner(name)
         `)
-        .in('status', ['customer_approved', 'waiting_for_payment'])
+        .or('status.eq.customer_approved,status.eq.waiting_for_payment,status.eq.approved,status.eq.completed')
         .order('created_at', { ascending: false });
 
       if (salesError) throw salesError;
 
+      // Filter out sales that already have approved payments
+      let filteredSalesData = salesData || [];
+      if (salesData && salesData.length > 0) {
+        const { data: existingPayments } = await supabase
+          .from('payments')
+          .select('sale_id, status')
+          .in('sale_id', salesData.map((s: any) => s.id))
+          .eq('status', 'approved');
+
+        const paidSaleIds = new Set(existingPayments?.map(p => p.sale_id) || []);
+        filteredSalesData = salesData.filter((sale: any) => !paidSaleIds.has(sale.id));
+      }
+
       const enrichedSales = await Promise.all(
-        (salesData || []).map(async (sale: any) => {
+        (filteredSalesData || []).map(async (sale: any) => {
           let sellerName = 'N/A';
 
           if (sale.seller_type === 'mining_company' && sale.seller_id) {
@@ -414,9 +428,23 @@ export function PaymentCreate() {
           </div>
         </div>
 
-        {sales.length === 0 && (
+        {sales.length === 0 && !loading && (
           <Alert variant="info" title="No Sales Awaiting Payment">
-            There are no sales approved by customers yet. Sales must be approved by customers before recording payment. Check the Sales Dashboard for pending approvals.
+            <div className="space-y-2">
+              <p>There are no sales approved by customers yet that are awaiting payment recording.</p>
+              <ul className="text-sm list-disc list-inside mt-2 space-y-1">
+                <li>Make sure sales have been approved by customers</li>
+                <li>Verify that sales don't already have approved payments</li>
+                <li>Check the Sales Dashboard for pending customer approvals</li>
+                <li>Ensure sales status is 'customer_approved', 'waiting_for_payment', 'approved', or 'completed'</li>
+              </ul>
+            </div>
+          </Alert>
+        )}
+
+        {sales.length > 0 && (
+          <Alert variant="success" title={`${sales.length} Sale(s) Ready for Payment`}>
+            <p>Select a sale below to create a payment record. All listed sales have been approved and are ready for payment processing.</p>
           </Alert>
         )}
 

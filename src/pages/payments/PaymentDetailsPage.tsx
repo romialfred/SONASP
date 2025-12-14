@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Download, FileText, CheckCircle, Clock,
   XCircle, Package, Truck, Building2, DollarSign,
-  User, Calendar, CreditCard, AlertCircle, MapPin,
-  Phone, Mail, FileCheck, Upload, Eye, BadgeCheck
+  User, Calendar, CreditCard, AlertCircle, Award,
+  Shield, Zap, Eye, ExternalLink
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
+import { collectPaymentDocuments, PaymentDocument } from '@/services/paymentDocumentsService';
 
 interface TimelineEvent {
   id: string;
@@ -25,50 +26,42 @@ interface TimelineEvent {
 
 function Timeline({ events }: { events: TimelineEvent[] }) {
   const sortedEvents = [...events].sort((a, b) =>
-    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
   return (
-    <div className="relative">
+    <div className="space-y-4">
       {sortedEvents.map((event, index) => {
         const Icon = event.icon;
         const isLast = index === sortedEvents.length - 1;
 
+        const statusColors = {
+          completed: 'bg-green-100 text-green-600 border-green-200',
+          in_progress: 'bg-blue-100 text-blue-600 border-blue-200',
+          pending: 'bg-gray-100 text-gray-600 border-gray-200',
+        };
+
         return (
-          <div key={event.id} className="relative pb-8">
+          <div key={event.id} className="relative">
             {!isLast && (
-              <div className="absolute left-4 top-10 -ml-px h-full w-0.5 bg-gray-200" />
+              <div className="absolute left-5 top-12 w-0.5 h-full bg-gradient-to-b from-gray-300 to-transparent -ml-px" />
             )}
-            <div className="relative flex items-start space-x-4">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                event.status === 'completed'
-                  ? 'bg-green-100'
-                  : event.status === 'in_progress'
-                  ? 'bg-blue-100'
-                  : 'bg-gray-100'
-              }`}>
-                <Icon className={`h-4 w-4 ${
-                  event.status === 'completed'
-                    ? 'text-green-600'
-                    : event.status === 'in_progress'
-                    ? 'text-blue-600'
-                    : 'text-gray-400'
-                }`} />
+            <div className="flex items-start gap-4">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm ${statusColors[event.status]}`}>
+                <Icon className="h-5 w-5" />
               </div>
-              <div className="min-w-0 flex-1">
-                <div>
-                  <p className="font-medium text-gray-900">{event.title}</p>
-                  <p className="text-sm text-gray-600">{event.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(event.timestamp).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
+              <div className="flex-1 pt-1">
+                <p className="font-semibold text-gray-900">{event.title}</p>
+                <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {new Date(event.timestamp).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
               </div>
             </div>
           </div>
@@ -78,96 +71,72 @@ function Timeline({ events }: { events: TimelineEvent[] }) {
   );
 }
 
-interface PaymentDetails {
-  id: string;
-  sale_id: string;
-  customer_id: string;
-  invoice_number: string;
-  expected_date: string;
-  actual_date: string | null;
-  due_date: string | null;
-  amount: number;
-  currency: string;
-  fx_rate: number;
-  bank_name: string;
-  account_number: string;
-  reference_number: string;
-  transaction_id: string;
-  payment_method: string;
-  proof_url: string;
-  notes: string;
-  status: string;
-  created_at: string;
-  approved_at: string;
-  verified_at: string;
-  sale_number: string;
-  sale_date: string;
-  sale_total_amount: number;
-  net_proceeds: number;
-  sale_status: string;
-  london_am_rate: number;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  company_name: string;
-  customer_country: string;
-  payment_status_category: string;
-  days_overdue: number | null;
-  document_count: number;
-  proof_count: number;
-  created_by_name: string;
-  created_by_email: string;
-  approved_by_name: string;
-  approved_by_email: string;
-  verified_by_name: string;
-  verified_by_email: string;
-}
+function DocumentCard({ document }: { document: PaymentDocument }) {
+  const iconMap = {
+    production: { icon: Package, color: 'bg-blue-100 text-blue-600', borderColor: 'border-blue-200' },
+    shipping: { icon: Truck, color: 'bg-purple-100 text-purple-600', borderColor: 'border-purple-200' },
+    refining: { icon: Zap, color: 'bg-amber-100 text-amber-600', borderColor: 'border-amber-200' },
+    sale: { icon: FileText, color: 'bg-green-100 text-green-600', borderColor: 'border-green-200' },
+    export_license: { icon: Shield, color: 'bg-red-100 text-red-600', borderColor: 'border-red-200' },
+    assay_certificate: { icon: Award, color: 'bg-indigo-100 text-indigo-600', borderColor: 'border-indigo-200' },
+    payment_proof: { icon: CheckCircle, color: 'bg-green-100 text-green-600', borderColor: 'border-green-200' },
+  };
 
-interface PaymentDocument {
-  id: string;
-  document_type: string;
-  document_name: string;
-  document_url: string;
-  file_size: number;
-  mime_type: string;
-  uploaded_at: string;
-  notes: string;
-  is_verified: boolean;
-  verified_at: string;
-}
+  const config = iconMap[document.type] || iconMap.sale;
+  const Icon = config.icon;
 
-interface PaymentHistory {
-  id: string;
-  changed_at: string;
-  change_type: string;
-  old_status: string;
-  new_status: string;
-  field_changes: any;
-  notes: string;
-}
-
-interface SaleLineItem {
-  id: string;
-  batch_id: string;
-  metal_type: string;
-  quantity_grams: number;
-  quantity_oz: number;
-  unit_price: number;
-  fineness_percentage: number;
-  fine_weight_oz: number;
-  line_total: number;
-}
-
-interface Batch {
-  id: string;
-  batch_number: string;
-  status: string;
-  weight_grams: number;
-  weight_oz: number;
-  created_at: string;
-  shipped_date: string;
-  received_at_airport_date: string;
-  received_at_refinery_date: string;
+  return (
+    <div className={`p-4 border-2 ${config.borderColor} rounded-lg hover:shadow-md transition-all bg-white`}>
+      <div className="flex items-start gap-3">
+        <div className={`p-2.5 rounded-lg ${config.color} shadow-sm`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 truncate">{document.name}</p>
+          {document.metadata?.description && (
+            <p className="text-sm text-gray-600 mt-1">{document.metadata.description}</p>
+          )}
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-xs text-gray-500">
+              {new Date(document.uploadedAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+            {document.size && (
+              <p className="text-xs text-gray-500">
+                {(document.size / 1024).toFixed(1)} KB
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(document.url, '_blank')}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              View
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = document.url;
+                link.download = document.name;
+                link.click();
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Download
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function PaymentDetailsPage() {
@@ -176,17 +145,17 @@ export function PaymentDetailsPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
 
-  const [payment, setPayment] = useState<PaymentDetails | null>(null);
+  const [payment, setPayment] = useState<any>(null);
+  const [sale, setSale] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
   const [documents, setDocuments] = useState<PaymentDocument[]>([]);
-  const [history, setHistory] = useState<PaymentHistory[]>([]);
-  const [saleLineItems, setSaleLineItems] = useState<SaleLineItem[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'history' | 'batches'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'activity'>('overview');
 
   useEffect(() => {
     if (id) {
       fetchPaymentDetails();
+      fetchDocuments();
     }
   }, [id]);
 
@@ -194,115 +163,48 @@ export function PaymentDetailsPage() {
     try {
       setLoading(true);
 
-      // First fetch payment
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .select('*')
         .eq('id', id)
-        .maybeSingle();
+        .single();
 
       if (paymentError) throw paymentError;
-      if (!paymentData) {
-        setLoading(false);
-        return;
-      }
+      setPayment(paymentData);
 
-      // Then fetch related sale
-      let sale: any = {};
       if (paymentData.sale_id) {
         const { data: saleData } = await supabase
           .from('sales')
-          .select('id, sale_number, sale_date, total_amount, net_proceeds, status, london_am_rate, customer_id')
-          .eq('id', paymentData.sale_id)
-          .maybeSingle();
-        sale = saleData || {};
-      }
-
-      // Then fetch related customer
-      let customer: any = {};
-      const customerId = paymentData.customer_id || sale?.customer_id;
-      if (customerId) {
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .select('id, name, email, phone, country, contact_person')
-          .eq('id', customerId)
-          .maybeSingle();
-
-        if (!customerError && customerData) {
-          customer = customerData;
-        } else if (customerError) {
-          console.error('Error fetching customer:', customerError);
-        }
-      }
-
-      const daysOverdue = paymentData.due_date
-        ? Math.floor((new Date().getTime() - new Date(paymentData.due_date).getTime()) / (1000 * 60 * 60 * 24))
-        : null;
-
-      let paymentStatusCategory = 'unknown';
-      if (paymentData.status === 'approved') paymentStatusCategory = 'paid';
-      else if (paymentData.status === 'pending' && daysOverdue && daysOverdue > 0) paymentStatusCategory = 'overdue';
-      else if (paymentData.status === 'pending') paymentStatusCategory = 'pending';
-      else if (paymentData.status === 'rejected') paymentStatusCategory = 'rejected';
-
-      const processedPayment = {
-        ...paymentData,
-        sale_number: sale.sale_number,
-        sale_date: sale.sale_date,
-        sale_total_amount: sale.total_amount,
-        net_proceeds: sale.net_proceeds,
-        sale_status: sale.status,
-        london_am_rate: sale.london_am_rate,
-        customer_name: customer.name || 'N/A',
-        customer_email: customer.email || 'N/A',
-        customer_phone: customer.phone || 'N/A',
-        company_name: customer.contact_person || customer.name || 'N/A',
-        customer_country: customer.country || 'N/A',
-        payment_status_category: paymentStatusCategory,
-        days_overdue: daysOverdue,
-        document_count: 0,
-        proof_count: paymentData.proof_url ? 1 : 0,
-        created_by_name: '',
-        created_by_email: '',
-        approved_by_name: '',
-        approved_by_email: '',
-        verified_by_name: '',
-        verified_by_email: '',
-        invoice_number: paymentData.invoice_number || `INV-${paymentData.id.slice(0, 8)}`,
-      };
-
-      setPayment(processedPayment);
-
-      setDocuments([]);
-      setHistory([]);
-
-      if (paymentData?.sale_id) {
-        const { data: lineItems, error: lineItemsError } = await supabase
-          .from('sales_line_items')
           .select('*')
-          .eq('sale_id', paymentData.sale_id);
+          .eq('id', paymentData.sale_id)
+          .single();
 
-        if (!lineItemsError && lineItems) {
-          setSaleLineItems(lineItems);
+        setSale(saleData);
 
-          const batchIds = lineItems.map((item) => item.batch_id).filter(Boolean);
-          if (batchIds.length > 0) {
-            const { data: batchData, error: batchError } = await supabase
-              .from('batches')
-              .select('*')
-              .in('id', batchIds);
+        if (saleData?.customer_id) {
+          const { data: customerData } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', saleData.customer_id)
+            .single();
 
-            if (!batchError && batchData) {
-              setBatches(batchData);
-            }
-          }
+          setCustomer(customerData);
         }
       }
     } catch (error: any) {
       console.error('Error fetching payment details:', error);
-      addToast('Failed to load payment details', 'error');
+      addToast(`Failed to load payment details: ${error?.message || 'Unknown error'}`, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const docs = await collectPaymentDocuments(id!);
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
     }
   };
 
@@ -310,65 +212,72 @@ export function PaymentDetailsPage() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
       month: 'long',
       day: 'numeric',
-    });
-  };
-
-  const formatDateTime = (date: string | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
   const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'paid':
-      case 'approved':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'overdue':
-        return 'error';
-      case 'rejected':
-        return 'error';
-      default:
-        return 'default';
-    }
+    if (status === 'approved') return 'success';
+    if (status === 'pending') return 'warning';
+    if (status === 'rejected') return 'error';
+    return 'default';
   };
 
-  const getDocumentIcon = (type: string) => {
-    switch (type) {
-      case 'invoice':
-        return FileText;
-      case 'payment_proof':
-        return FileCheck;
-      case 'receipt':
-        return CheckCircle;
-      default:
-        return FileText;
-    }
+  const timelineEvents: TimelineEvent[] = [
+    {
+      id: '1',
+      title: 'Payment Created',
+      description: `Payment record created for ${payment?.invoice_number || 'N/A'}`,
+      timestamp: payment?.created_at || new Date().toISOString(),
+      status: 'completed',
+      icon: FileText,
+    },
+    {
+      id: '2',
+      title: payment?.status === 'approved' ? 'Payment Approved' : 'Awaiting Approval',
+      description: payment?.status === 'approved'
+        ? 'Payment has been approved and processed'
+        : 'Payment is pending approval',
+      timestamp: payment?.updated_at || payment?.created_at || new Date().toISOString(),
+      status: payment?.status === 'approved' ? 'completed' : 'pending',
+      icon: payment?.status === 'approved' ? CheckCircle : Clock,
+    },
+  ];
+
+  const documentsByCategory = documents.reduce((acc, doc) => {
+    const category = doc.type;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(doc);
+    return acc;
+  }, {} as Record<string, PaymentDocument[]>);
+
+  const categoryLabels = {
+    production: 'Production Documents',
+    shipping: 'Shipping Documents',
+    refining: 'Refining Documents',
+    sale: 'Sales Documents',
+    export_license: 'Export Licenses',
+    assay_certificate: 'Quality Control Certificates',
+    payment_proof: 'Payment Proof',
   };
 
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-2 text-gray-600">Loading payment details...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
+            <p className="mt-4 text-gray-600 font-medium">Loading payment details...</p>
           </div>
         </div>
       </MainLayout>
@@ -378,10 +287,12 @@ export function PaymentDetailsPage() {
   if (!payment) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">Payment not found</p>
-          <Button className="mt-4" onClick={() => navigate('/payments')}>
+        <div className="text-center py-16">
+          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Payment Not Found</h3>
+          <p className="text-gray-600 mb-6">The payment you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/payments')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Payments
           </Button>
         </div>
@@ -389,462 +300,259 @@ export function PaymentDetailsPage() {
     );
   }
 
-  const timelineEvents = [
-    ...(batches.length > 0
-      ? batches.flatMap((batch) => [
-          {
-            id: `batch-${batch.id}-shipped`,
-            title: 'Batch Shipped from Factory',
-            description: `Batch ${batch.batch_number} - ${batch.weight_grams}g`,
-            timestamp: batch.shipped_date || batch.created_at,
-            status: 'completed' as const,
-            icon: Package,
-          },
-          batch.received_at_airport_date && {
-            id: `batch-${batch.id}-airport`,
-            title: 'Received at Airport',
-            description: `Batch ${batch.batch_number}`,
-            timestamp: batch.received_at_airport_date,
-            status: 'completed' as const,
-            icon: MapPin,
-          },
-          batch.received_at_refinery_date && {
-            id: `batch-${batch.id}-refinery`,
-            title: 'Received at Refinery',
-            description: `Batch ${batch.batch_number}`,
-            timestamp: batch.received_at_refinery_date,
-            status: 'completed' as const,
-            icon: Building2,
-          },
-        ]).filter(Boolean)
-      : []),
-    {
-      id: 'sale-created',
-      title: 'Sale Created',
-      description: `Sale ${payment.sale_number}`,
-      timestamp: payment.sale_date,
-      status: 'completed' as const,
-      icon: DollarSign,
-    },
-    {
-      id: 'payment-created',
-      title: 'Payment Record Created',
-      description: `Invoice ${payment.invoice_number}`,
-      timestamp: payment.created_at,
-      status: 'completed' as const,
-      icon: FileText,
-    },
-    payment.approved_at && {
-      id: 'payment-approved',
-      title: 'Payment Approved',
-      description: `Approved by ${payment.approved_by_name}`,
-      timestamp: payment.approved_at,
-      status: 'completed' as const,
-      icon: CheckCircle,
-    },
-    payment.verified_at && {
-      id: 'payment-verified',
-      title: 'Payment Verified',
-      description: `Verified by ${payment.verified_by_name}`,
-      timestamp: payment.verified_at,
-      status: 'completed' as const,
-      icon: BadgeCheck,
-    },
-  ].filter(Boolean) as Array<{
-    id: string;
-    title: string;
-    description: string;
-    timestamp: string;
-    status: 'completed' | 'pending' | 'in_progress';
-    icon: any;
-  }>;
-
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/payments')}>
+        {/* Header with Gradient */}
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/payments')}
+              className="text-white border-white hover:bg-white hover:text-primary-600"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div>
-              <h1 className="font-heading text-3xl font-bold text-gray-900">
-                Payment Details
-              </h1>
-              <p className="text-gray-600 mt-1">{payment.invoice_number}</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              className="text-white border-white hover:bg-white hover:text-primary-600"
+            >
               <Download className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
-            <StatusBadge
-              label={payment.payment_status_category}
-              variant={getStatusVariant(payment.payment_status_category)}
-            />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Payment Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold mb-2">Payment Details</h1>
+            <p className="text-primary-100 text-lg">{payment.invoice_number || `INV-${payment.id.slice(0, 8).toUpperCase()}`}</p>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-8 w-8" />
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Invoice Number</label>
-                  <p className="mt-1 text-gray-900 font-medium">{payment.invoice_number}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Sale Number</label>
-                  <p className="mt-1 text-gray-900 font-medium">{payment.sale_number}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Amount</label>
-                  <p className="mt-1 text-2xl font-bold text-primary-600">
-                    {formatCurrency(payment.amount, payment.currency)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Currency</label>
-                  <p className="mt-1 text-gray-900 font-medium">{payment.currency}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Payment Method</label>
-                  <p className="mt-1 text-gray-900">
-                    {payment.payment_method ? payment.payment_method.replace(/_/g, ' ').toUpperCase() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">FX Rate</label>
-                  <p className="mt-1 text-gray-900">{payment.fx_rate || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Expected Date</label>
-                  <p className="mt-1 text-gray-900">{formatDate(payment.expected_date)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Due Date</label>
-                  <p className="mt-1 text-gray-900">{formatDate(payment.due_date)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Actual Payment Date</label>
-                  <p className="mt-1 text-gray-900">{formatDate(payment.actual_date)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Days Overdue</label>
-                  <p className={`mt-1 font-medium ${payment.days_overdue && payment.days_overdue > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {payment.days_overdue && payment.days_overdue > 0 ? `${payment.days_overdue} days` : 'On Time'}
-                  </p>
+                  <p className="text-sm text-primary-100">Amount</p>
+                  <p className="text-xl font-bold">{formatCurrency(payment.amount || 0, payment.currency || 'USD')}</p>
                 </div>
               </div>
+            </div>
 
-              {payment.notes && (
-                <div className="mt-6">
-                  <label className="text-sm font-medium text-gray-500">Notes</label>
-                  <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">{payment.notes}</p>
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-8 w-8" />
+                <div>
+                  <p className="text-sm text-primary-100">Due Date</p>
+                  <p className="text-xl font-bold">{formatDate(payment.expected_date)}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-gray-900">{payment.customer_name}</p>
-                      <p className="text-sm text-gray-500">{payment.company_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                    <p className="text-sm text-gray-600">{payment.customer_email}</p>
-                  </div>
-                  {payment.customer_phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-gray-400" />
-                      <p className="text-sm text-gray-600">{payment.customer_phone}</p>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-gray-400" />
-                    <p className="text-sm text-gray-600">{payment.customer_country}</p>
-                  </div>
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-8 w-8" />
+                <div>
+                  <p className="text-sm text-primary-100">Method</p>
+                  <p className="text-xl font-bold">{payment.bank_name || 'Bank Transfer'}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Banking Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Bank Name</label>
-                    <p className="mt-1 text-gray-900">{payment.bank_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Account Number</label>
-                    <p className="mt-1 text-gray-900 font-mono">
-                      {payment.account_number || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Reference Number</label>
-                    <p className="mt-1 text-gray-900 font-mono">{payment.reference_number}</p>
-                  </div>
-                  {payment.transaction_id && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Transaction ID</label>
-                      <p className="mt-1 text-gray-900 font-mono">{payment.transaction_id}</p>
-                    </div>
-                  )}
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                {payment.status === 'approved' ? <CheckCircle className="h-8 w-8" /> : <Clock className="h-8 w-8" />}
+                <div>
+                  <p className="text-sm text-primary-100">Status</p>
+                  <p className="text-xl font-bold capitalize">{payment.status || 'Pending'}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Tabs */}
         <div className="border-b border-gray-200">
-          <nav className="flex gap-4">
+          <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'overview'
-                  ? 'border-primary-500 text-primary-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Transaction Timeline
-            </button>
-            <button
-              onClick={() => setActiveTab('batches')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'batches'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Gold Sold ({saleLineItems.length})
+              Overview
             </button>
             <button
               onClick={() => setActiveTab('documents')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'documents'
-                  ? 'border-primary-500 text-primary-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Documents ({documents.length})
             </button>
             <button
-              onClick={() => setActiveTab('history')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'history'
-                  ? 'border-primary-500 text-primary-600'
+              onClick={() => setActiveTab('activity')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'activity'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              History ({history.length})
+              Activity
             </button>
           </nav>
         </div>
 
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Transaction Timeline</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Track the complete journey from factory shipping to payment
-              </p>
-            </CardHeader>
-            <CardContent>
-              <Timeline events={timelineEvents} />
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === 'batches' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Gold Batches Sold</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {saleLineItems.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No batch information available</p>
-              ) : (
-                <div className="space-y-4">
-                  {saleLineItems.map((item, index) => {
-                    const batch = batches.find((b) => b.id === item.batch_id);
-                    return (
-                      <div
-                        key={item.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-100 rounded-lg">
-                              <Package className="h-5 w-5 text-amber-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {batch ? batch.batch_number : `Line ${index + 1}`}
-                              </p>
-                              <p className="text-sm text-gray-500">{item.metal_type}</p>
-                            </div>
-                          </div>
-                          {batch && (
-                            <StatusBadge label={batch.status} variant="info" />
-                          )}
-                        </div>
-                        <div className="grid grid-cols-4 gap-4">
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Quantity</label>
-                            <p className="mt-1 text-sm font-medium text-gray-900">
-                              {item.quantity_oz.toFixed(4)} oz
-                            </p>
-                            <p className="text-xs text-gray-500">{item.quantity_grams.toFixed(3)} g</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Fineness</label>
-                            <p className="mt-1 text-sm font-medium text-gray-900">
-                              {item.fineness_percentage}%
-                            </p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Unit Price</label>
-                            <p className="mt-1 text-sm font-medium text-gray-900">
-                              ${item.unit_price.toFixed(2)}/oz
-                            </p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Line Total</label>
-                            <p className="mt-1 text-sm font-bold text-primary-600">
-                              {formatCurrency(item.line_total, payment.currency)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div className="border-t pt-4 mt-4">
-                    <div className="flex justify-between items-center">
-                      <p className="font-medium text-gray-900">Total Sale Amount</p>
-                      <p className="text-2xl font-bold text-primary-600">
-                        {formatCurrency(payment.sale_total_amount, payment.currency)}
-                      </p>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sale Information */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <FileText className="h-5 w-5" />
+                  Sale Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Sale Number</span>
+                  <span className="text-gray-900 font-semibold">{sale?.sale_number || 'N/A'}</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Sale Date</span>
+                  <span className="text-gray-900 font-semibold">{formatDate(sale?.sale_date)}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Total Amount</span>
+                  <span className="text-gray-900 font-semibold">{formatCurrency(sale?.total_amount || 0, 'USD')}</span>
+                </div>
+                <div className="flex justify-between py-3">
+                  <span className="text-gray-600 font-medium">Status</span>
+                  <StatusBadge label={sale?.status || 'Unknown'} variant={getStatusVariant(sale?.status)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Information */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-green-900">
+                  <User className="h-5 w-5" />
+                  Customer Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Name</span>
+                  <span className="text-gray-900 font-semibold">{customer?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Email</span>
+                  <span className="text-gray-900 font-semibold">{customer?.email || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Phone</span>
+                  <span className="text-gray-900 font-semibold">{customer?.phone || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-3">
+                  <span className="text-gray-600 font-medium">Country</span>
+                  <span className="text-gray-900 font-semibold">{customer?.country || 'N/A'}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Information */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-amber-50 to-amber-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-amber-900">
+                  <DollarSign className="h-5 w-5" />
+                  Payment Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Amount</span>
+                  <span className="text-gray-900 font-bold text-lg">{formatCurrency(payment.amount || 0, payment.currency || 'USD')}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Currency</span>
+                  <span className="text-gray-900 font-semibold">{payment.currency || 'USD'}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">FX Rate</span>
+                  <span className="text-gray-900 font-semibold">{payment.fx_rate ? payment.fx_rate.toFixed(4) : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Payment Method</span>
+                  <span className="text-gray-900 font-semibold">{payment.bank_name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-3">
+                  <span className="text-gray-600 font-medium">Reference</span>
+                  <span className="text-gray-900 font-semibold">{payment.reference_number || 'N/A'}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Timeline */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-purple-900">
+                  <Clock className="h-5 w-5" />
+                  Transaction Timeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Timeline events={timelineEvents} />
+              </CardContent>
+            </Card>
+          </div>
         )}
 
+        {/* Documents Tab */}
         {activeTab === 'documents' && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Payment Documents</CardTitle>
-                <Button size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Document
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {documents.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No documents uploaded yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => {
-                    const Icon = getDocumentIcon(doc.document_type);
-                    return (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <Icon className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{doc.document_name}</p>
-                            <p className="text-sm text-gray-500">
-                              {doc.document_type.replace(/_/g, ' ')} •{' '}
-                              {formatDateTime(doc.uploaded_at)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {doc.is_verified && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            {documents.length === 0 ? (
+              <Card className="shadow-lg">
+                <CardContent className="py-16 text-center">
+                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Documents Available</h3>
+                  <p className="text-gray-600">Documents from production, shipping, and other processes will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              Object.entries(documentsByCategory).map(([category, docs]) => (
+                <Card key={category} className="shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+                    <CardTitle>{categoryLabels[category as keyof typeof categoryLabels] || category}</CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">{docs.length} document(s)</p>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {docs.map((doc) => (
+                        <DocumentCard key={doc.id} document={doc} />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         )}
 
-        {activeTab === 'history' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment History</CardTitle>
+        {/* Activity Tab */}
+        {activeTab === 'activity' && (
+          <Card className="shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-b">
+              <CardTitle>Activity History</CardTitle>
             </CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No history available</p>
-              ) : (
-                <div className="space-y-3">
-                  {history.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg"
-                    >
-                      <div className="p-2 bg-gray-100 rounded-lg">
-                        <Clock className="h-4 w-4 text-gray-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-gray-900">
-                            {item.change_type.replace(/_/g, ' ').toUpperCase()}
-                          </p>
-                          <p className="text-sm text-gray-500">{formatDateTime(item.changed_at)}</p>
-                        </div>
-                        {item.old_status && item.new_status && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            Status changed from{' '}
-                            <span className="font-medium">{item.old_status}</span> to{' '}
-                            <span className="font-medium">{item.new_status}</span>
-                          </p>
-                        )}
-                        {item.notes && <p className="text-sm text-gray-600 mt-1">{item.notes}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <CardContent className="pt-6">
+              <Timeline events={timelineEvents} />
             </CardContent>
           </Card>
         )}

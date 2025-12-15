@@ -101,45 +101,61 @@ export class AdvancedAnalyticsService {
     endDate: string,
     miningCompanyId?: string
   ): Promise<ProductionKPIs> {
-    let query = supabase
-      .from('daily_production')
-      .select('bullion_grams, pure_gold_grams, estimated_oz, silver_content_grams, estimated_fineness_pct')
-      .gte('production_date', startDate)
-      .lte('production_date', endDate)
-      .neq('status', 'cancelled');
+    try {
+      let query = supabase
+        .from('daily_production')
+        .select('bullion_grams, pure_gold_grams, estimated_oz, silver_content_grams, estimated_fineness_pct')
+        .gte('production_date', startDate)
+        .lte('production_date', endDate)
+        .neq('status', 'cancelled');
 
-    if (miningCompanyId) {
-      query = query.eq('mining_company_id', miningCompanyId);
-    }
+      if (miningCompanyId) {
+        query = query.eq('mining_company_id', miningCompanyId);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) throw error;
+      if (error) {
+        console.error('Error fetching production KPIs:', error);
+        throw error;
+      }
 
-    const totals = (data || []).reduce(
-      (acc, prod) => ({
-        totalBullionGrams: acc.totalBullionGrams + (prod.bullion_grams || 0),
-        totalPureGoldGrams: acc.totalPureGoldGrams + (prod.pure_gold_grams || 0),
-        totalPureGoldOz: acc.totalPureGoldOz + (prod.estimated_oz || 0),
-        totalSilverGrams: acc.totalSilverGrams + (prod.silver_content_grams || 0),
-        avgFinenessPct: acc.avgFinenessPct + (prod.estimated_fineness_pct || 0),
-        productionCount: acc.productionCount + 1,
-      }),
-      {
+      const totals = (data || []).reduce(
+        (acc, prod) => ({
+          totalBullionGrams: acc.totalBullionGrams + (prod.bullion_grams || 0),
+          totalPureGoldGrams: acc.totalPureGoldGrams + (prod.pure_gold_grams || 0),
+          totalPureGoldOz: acc.totalPureGoldOz + (prod.estimated_oz || 0),
+          totalSilverGrams: acc.totalSilverGrams + (prod.silver_content_grams || 0),
+          avgFinenessPct: acc.avgFinenessPct + (prod.estimated_fineness_pct || 0),
+          productionCount: acc.productionCount + 1,
+        }),
+        {
+          totalBullionGrams: 0,
+          totalPureGoldGrams: 0,
+          totalPureGoldOz: 0,
+          totalSilverGrams: 0,
+          avgFinenessPct: 0,
+          productionCount: 0,
+        }
+      );
+
+      return {
+        ...totals,
+        avgFinenessPct: totals.productionCount > 0 ? totals.avgFinenessPct / totals.productionCount : 0,
+        period: `${startDate} to ${endDate}`,
+      };
+    } catch (error) {
+      console.error('Error in getGlobalProductionKPIs:', error);
+      return {
         totalBullionGrams: 0,
         totalPureGoldGrams: 0,
         totalPureGoldOz: 0,
         totalSilverGrams: 0,
         avgFinenessPct: 0,
         productionCount: 0,
-      }
-    );
-
-    return {
-      ...totals,
-      avgFinenessPct: totals.productionCount > 0 ? totals.avgFinenessPct / totals.productionCount : 0,
-      period: `${startDate} to ${endDate}`,
-    };
+        period: `${startDate} to ${endDate}`,
+      };
+    }
   }
 
   /**
@@ -149,54 +165,65 @@ export class AdvancedAnalyticsService {
     startDate: string,
     endDate: string
   ): Promise<ProductionByCompany[]> {
-    const { data: productions, error: prodError } = await supabase
-      .from('daily_production')
-      .select('mining_company_id, bullion_grams, estimated_oz, estimated_fineness_pct')
-      .gte('production_date', startDate)
-      .lte('production_date', endDate)
-      .neq('status', 'cancelled');
+    try {
+      const { data: productions, error: prodError } = await supabase
+        .from('daily_production')
+        .select('mining_company_id, bullion_grams, estimated_oz, estimated_fineness_pct')
+        .gte('production_date', startDate)
+        .lte('production_date', endDate)
+        .neq('status', 'cancelled');
 
-    if (prodError) throw prodError;
-
-    const { data: companies, error: compError } = await supabase
-      .from('mining_companies')
-      .select('id, name');
-
-    if (compError) throw compError;
-
-    const companyMap = new Map(companies?.map((c) => [c.id, c.name]) || []);
-
-    const companyTotals = (productions || []).reduce((acc, prod) => {
-      const companyId = prod.mining_company_id || 'unknown';
-      if (!acc[companyId]) {
-        acc[companyId] = {
-          totalBullionGrams: 0,
-          totalPureGoldOz: 0,
-          productionCount: 0,
-          avgFinenessPct: 0,
-        };
+      if (prodError) {
+        console.error('Error fetching production by company:', prodError);
+        return [];
       }
-      acc[companyId].totalBullionGrams += prod.bullion_grams || 0;
-      acc[companyId].totalPureGoldOz += prod.estimated_oz || 0;
-      acc[companyId].productionCount += 1;
-      acc[companyId].avgFinenessPct += prod.estimated_fineness_pct || 0;
-      return acc;
-    }, {} as Record<string, any>);
 
-    const totalOz = Object.values(companyTotals).reduce(
-      (sum: number, c: any) => sum + c.totalPureGoldOz,
-      0
-    );
+      const { data: companies, error: compError } = await supabase
+        .from('mining_companies')
+        .select('id, name');
 
-    return Object.entries(companyTotals).map(([companyId, totals]: [string, any]) => ({
-      companyId,
-      companyName: companyMap.get(companyId) || 'Unknown',
-      totalBullionGrams: totals.totalBullionGrams,
-      totalPureGoldOz: totals.totalPureGoldOz,
-      productionCount: totals.productionCount,
-      avgFinenessPct: totals.productionCount > 0 ? totals.avgFinenessPct / totals.productionCount : 0,
-      percentage: totalOz > 0 ? (totals.totalPureGoldOz / totalOz) * 100 : 0,
-    }));
+      if (compError) {
+        console.error('Error fetching mining companies:', compError);
+        return [];
+      }
+
+      const companyMap = new Map(companies?.map((c) => [c.id, c.name]) || []);
+
+      const companyTotals = (productions || []).reduce((acc, prod) => {
+        const companyId = prod.mining_company_id || 'unknown';
+        if (!acc[companyId]) {
+          acc[companyId] = {
+            totalBullionGrams: 0,
+            totalPureGoldOz: 0,
+            productionCount: 0,
+            avgFinenessPct: 0,
+          };
+        }
+        acc[companyId].totalBullionGrams += prod.bullion_grams || 0;
+        acc[companyId].totalPureGoldOz += prod.estimated_oz || 0;
+        acc[companyId].productionCount += 1;
+        acc[companyId].avgFinenessPct += prod.estimated_fineness_pct || 0;
+        return acc;
+      }, {} as Record<string, any>);
+
+      const totalOz = Object.values(companyTotals).reduce(
+        (sum: number, c: any) => sum + c.totalPureGoldOz,
+        0
+      );
+
+      return Object.entries(companyTotals).map(([companyId, totals]: [string, any]) => ({
+        companyId,
+        companyName: companyMap.get(companyId) || 'Unknown',
+        totalBullionGrams: totals.totalBullionGrams,
+        totalPureGoldOz: totals.totalPureGoldOz,
+        productionCount: totals.productionCount,
+        avgFinenessPct: totals.productionCount > 0 ? totals.avgFinenessPct / totals.productionCount : 0,
+        percentage: totalOz > 0 ? (totals.totalPureGoldOz / totalOz) * 100 : 0,
+      }));
+    } catch (error) {
+      console.error('Error in getProductionByCompany:', error);
+      return [];
+    }
   }
 
   /**
@@ -208,54 +235,62 @@ export class AdvancedAnalyticsService {
     periodType: 'month' | 'quarter' = 'month',
     miningCompanyId?: string
   ): Promise<ProductionByPeriod[]> {
-    let query = supabase
-      .from('daily_production')
-      .select('production_date, bullion_grams, estimated_oz')
-      .gte('production_date', startDate)
-      .lte('production_date', endDate)
-      .neq('status', 'cancelled')
-      .order('production_date', { ascending: true });
+    try {
+      let query = supabase
+        .from('daily_production')
+        .select('production_date, bullion_grams, estimated_oz')
+        .gte('production_date', startDate)
+        .lte('production_date', endDate)
+        .neq('status', 'cancelled')
+        .order('production_date', { ascending: true });
 
-    if (miningCompanyId) {
-      query = query.eq('mining_company_id', miningCompanyId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    const periodTotals: Record<string, ProductionByPeriod> = {};
-
-    (data || []).forEach((prod) => {
-      const date = new Date(prod.production_date);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const quarter = Math.ceil(month / 3);
-
-      const period = periodType === 'month'
-        ? `${year}-${String(month).padStart(2, '0')}`
-        : `${year}-Q${quarter}`;
-
-      const periodLabel = periodType === 'month'
-        ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-        : `Q${quarter} ${year}`;
-
-      if (!periodTotals[period]) {
-        periodTotals[period] = {
-          period,
-          periodLabel,
-          totalBullionGrams: 0,
-          totalPureGoldOz: 0,
-          productionCount: 0,
-        };
+      if (miningCompanyId) {
+        query = query.eq('mining_company_id', miningCompanyId);
       }
 
-      periodTotals[period].totalBullionGrams += prod.bullion_grams || 0;
-      periodTotals[period].totalPureGoldOz += prod.estimated_oz || 0;
-      periodTotals[period].productionCount += 1;
-    });
+      const { data, error } = await query;
 
-    return Object.values(periodTotals).sort((a, b) => a.period.localeCompare(b.period));
+      if (error) {
+        console.error('Error fetching production by period:', error);
+        return [];
+      }
+
+      const periodTotals: Record<string, ProductionByPeriod> = {};
+
+      (data || []).forEach((prod) => {
+        const date = new Date(prod.production_date);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const quarter = Math.ceil(month / 3);
+
+        const period = periodType === 'month'
+          ? `${year}-${String(month).padStart(2, '0')}`
+          : `${year}-Q${quarter}`;
+
+        const periodLabel = periodType === 'month'
+          ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : `Q${quarter} ${year}`;
+
+        if (!periodTotals[period]) {
+          periodTotals[period] = {
+            period,
+            periodLabel,
+            totalBullionGrams: 0,
+            totalPureGoldOz: 0,
+            productionCount: 0,
+          };
+        }
+
+        periodTotals[period].totalBullionGrams += prod.bullion_grams || 0;
+        periodTotals[period].totalPureGoldOz += prod.estimated_oz || 0;
+        periodTotals[period].productionCount += 1;
+      });
+
+      return Object.values(periodTotals).sort((a, b) => a.period.localeCompare(b.period));
+    } catch (error) {
+      console.error('Error in getProductionByPeriod:', error);
+      return [];
+    }
   }
 
   // ==================== FINANCIAL ANALYTICS ====================
@@ -267,27 +302,51 @@ export class AdvancedAnalyticsService {
     startDate: string,
     endDate: string
   ): Promise<FinancialKPIs> {
-    const { data: sales, error } = await supabase
-      .from('sales')
-      .select('quantity_oz, london_am_rate, gross_proceeds, final_proceeds, royalty_amount, freight_cost, other_costs')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .in('status', ['completed', 'payment_received']);
+    try {
+      const { data: sales, error } = await supabase
+        .from('sales')
+        .select('quantity_oz, london_am_rate, gross_proceeds, final_proceeds, royalty_amount, freight_cost, other_costs')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .in('status', ['completed', 'payment_received']);
 
-    if (error) throw error;
+      if (error) {
+        console.error('Error fetching financial KPIs:', error);
+        throw error;
+      }
 
-    const totals = (sales || []).reduce(
-      (acc, sale) => ({
-        totalRevenue: acc.totalRevenue + (sale.gross_proceeds || 0),
-        totalRoyalties: acc.totalRoyalties + (sale.royalty_amount || 0),
-        totalRefiningCosts: acc.totalRefiningCosts + 0, // Refining costs are in other_costs
-        totalTransportCosts: acc.totalTransportCosts + (sale.freight_cost || 0),
-        totalFreightCosts: acc.totalFreightCosts + (sale.freight_cost || 0),
-        netProceeds: acc.netProceeds + (sale.final_proceeds || 0),
-        totalQuantitySoldOz: acc.totalQuantitySoldOz + (sale.quantity_oz || 0),
-        salesCount: acc.salesCount + 1,
-      }),
-      {
+      const totals = (sales || []).reduce(
+        (acc, sale) => ({
+          totalRevenue: acc.totalRevenue + (sale.gross_proceeds || 0),
+          totalRoyalties: acc.totalRoyalties + (sale.royalty_amount || 0),
+          totalRefiningCosts: acc.totalRefiningCosts + 0, // Refining costs are in other_costs
+          totalTransportCosts: acc.totalTransportCosts + (sale.freight_cost || 0),
+          totalFreightCosts: acc.totalFreightCosts + (sale.freight_cost || 0),
+          netProceeds: acc.netProceeds + (sale.final_proceeds || 0),
+          totalQuantitySoldOz: acc.totalQuantitySoldOz + (sale.quantity_oz || 0),
+          salesCount: acc.salesCount + 1,
+        }),
+        {
+          totalRevenue: 0,
+          totalRoyalties: 0,
+          totalRefiningCosts: 0,
+          totalTransportCosts: 0,
+          totalFreightCosts: 0,
+          netProceeds: 0,
+          totalQuantitySoldOz: 0,
+          salesCount: 0,
+        }
+      );
+
+      return {
+        ...totals,
+        avgSalePrice: totals.totalQuantitySoldOz > 0
+          ? totals.totalRevenue / totals.totalQuantitySoldOz
+          : 0,
+      };
+    } catch (error) {
+      console.error('Error in getFinancialKPIs:', error);
+      return {
         totalRevenue: 0,
         totalRoyalties: 0,
         totalRefiningCosts: 0,
@@ -295,16 +354,9 @@ export class AdvancedAnalyticsService {
         totalFreightCosts: 0,
         netProceeds: 0,
         totalQuantitySoldOz: 0,
-        salesCount: 0,
-      }
-    );
-
-    return {
-      ...totals,
-      avgSalePrice: totals.totalQuantitySoldOz > 0
-        ? totals.totalRevenue / totals.totalQuantitySoldOz
-        : 0,
-    };
+        avgSalePrice: 0,
+      };
+    }
   }
 
   /**
@@ -314,56 +366,67 @@ export class AdvancedAnalyticsService {
     startDate: string,
     endDate: string
   ): Promise<RevenueByCompany[]> {
-    const { data: sales, error: salesError } = await supabase
-      .from('sales')
-      .select('seller_id, seller_type, quantity_oz, gross_proceeds, royalty_amount')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .in('status', ['completed', 'payment_received'])
-      .eq('seller_type', 'mining_company');
+    try {
+      const { data: sales, error: salesError } = await supabase
+        .from('sales')
+        .select('seller_id, seller_type, quantity_oz, gross_proceeds, royalty_amount')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .in('status', ['completed', 'payment_received'])
+        .eq('seller_type', 'mining_company');
 
-    if (salesError) throw salesError;
-
-    const { data: companies, error: compError } = await supabase
-      .from('mining_companies')
-      .select('id, name');
-
-    if (compError) throw compError;
-
-    const companyMap = new Map(companies?.map((c) => [c.id, c.name]) || []);
-
-    const companyRevenue: Record<string, any> = {};
-
-    (sales || []).forEach((sale) => {
-      const companyId = sale.seller_id || 'unknown';
-      if (!companyRevenue[companyId]) {
-        companyRevenue[companyId] = {
-          totalRevenue: 0,
-          totalRoyalties: 0,
-          totalQuantityOz: 0,
-          salesCount: 0,
-        };
+      if (salesError) {
+        console.error('Error fetching revenue by company:', salesError);
+        return [];
       }
-      companyRevenue[companyId].totalRevenue += sale.gross_proceeds || 0;
-      companyRevenue[companyId].totalRoyalties += sale.royalty_amount || 0;
-      companyRevenue[companyId].totalQuantityOz += sale.quantity_oz || 0;
-      companyRevenue[companyId].salesCount += 1;
-    });
 
-    const totalRevenue = Object.values(companyRevenue).reduce(
-      (sum: number, c: any) => sum + c.totalRevenue,
-      0
-    );
+      const { data: companies, error: compError } = await supabase
+        .from('mining_companies')
+        .select('id, name');
 
-    return Object.entries(companyRevenue).map(([companyId, totals]: [string, any]) => ({
-      companyId,
-      companyName: companyMap.get(companyId) || 'Unknown',
-      totalRevenue: totals.totalRevenue,
-      totalRoyalties: totals.totalRoyalties,
-      totalQuantityOz: totals.totalQuantityOz,
-      salesCount: totals.salesCount,
-      percentage: totalRevenue > 0 ? (totals.totalRevenue / totalRevenue) * 100 : 0,
-    }));
+      if (compError) {
+        console.error('Error fetching mining companies:', compError);
+        return [];
+      }
+
+      const companyMap = new Map(companies?.map((c) => [c.id, c.name]) || []);
+
+      const companyRevenue: Record<string, any> = {};
+
+      (sales || []).forEach((sale) => {
+        const companyId = sale.seller_id || 'unknown';
+        if (!companyRevenue[companyId]) {
+          companyRevenue[companyId] = {
+            totalRevenue: 0,
+            totalRoyalties: 0,
+            totalQuantityOz: 0,
+            salesCount: 0,
+          };
+        }
+        companyRevenue[companyId].totalRevenue += sale.gross_proceeds || 0;
+        companyRevenue[companyId].totalRoyalties += sale.royalty_amount || 0;
+        companyRevenue[companyId].totalQuantityOz += sale.quantity_oz || 0;
+        companyRevenue[companyId].salesCount += 1;
+      });
+
+      const totalRevenue = Object.values(companyRevenue).reduce(
+        (sum: number, c: any) => sum + c.totalRevenue,
+        0
+      );
+
+      return Object.entries(companyRevenue).map(([companyId, totals]: [string, any]) => ({
+        companyId,
+        companyName: companyMap.get(companyId) || 'Unknown',
+        totalRevenue: totals.totalRevenue,
+        totalRoyalties: totals.totalRoyalties,
+        totalQuantityOz: totals.totalQuantityOz,
+        salesCount: totals.salesCount,
+        percentage: totalRevenue > 0 ? (totals.totalRevenue / totalRevenue) * 100 : 0,
+      }));
+    } catch (error) {
+      console.error('Error in getRevenueByCompany:', error);
+      return [];
+    }
   }
 
   /**
@@ -374,51 +437,59 @@ export class AdvancedAnalyticsService {
     endDate: string,
     periodType: 'month' | 'quarter' = 'month'
   ): Promise<SalesPerformance[]> {
-    const { data, error } = await supabase
-      .from('sales')
-      .select('created_at, quantity_oz, gross_proceeds, london_am_rate')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .in('status', ['completed', 'payment_received'])
-      .order('created_at', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('created_at, quantity_oz, gross_proceeds, london_am_rate')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .in('status', ['completed', 'payment_received'])
+        .order('created_at', { ascending: true });
 
-    if (error) throw error;
-
-    const periodTotals: Record<string, any> = {};
-
-    (data || []).forEach((sale) => {
-      const date = new Date(sale.created_at);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const quarter = Math.ceil(month / 3);
-
-      const period = periodType === 'month'
-        ? `${year}-${String(month).padStart(2, '0')}`
-        : `${year}-Q${quarter}`;
-
-      const periodLabel = periodType === 'month'
-        ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-        : `Q${quarter} ${year}`;
-
-      if (!periodTotals[period]) {
-        periodTotals[period] = {
-          period,
-          periodLabel,
-          revenue: 0,
-          quantityOz: 0,
-          salesCount: 0,
-        };
+      if (error) {
+        console.error('Error fetching sales performance:', error);
+        return [];
       }
 
-      periodTotals[period].revenue += sale.gross_proceeds || 0;
-      periodTotals[period].quantityOz += sale.quantity_oz || 0;
-      periodTotals[period].salesCount += 1;
-    });
+      const periodTotals: Record<string, any> = {};
 
-    return Object.values(periodTotals).map((p: any) => ({
-      ...p,
-      avgPrice: p.quantityOz > 0 ? p.revenue / p.quantityOz : 0,
-    }));
+      (data || []).forEach((sale) => {
+        const date = new Date(sale.created_at);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const quarter = Math.ceil(month / 3);
+
+        const period = periodType === 'month'
+          ? `${year}-${String(month).padStart(2, '0')}`
+          : `${year}-Q${quarter}`;
+
+        const periodLabel = periodType === 'month'
+          ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : `Q${quarter} ${year}`;
+
+        if (!periodTotals[period]) {
+          periodTotals[period] = {
+            period,
+            periodLabel,
+            revenue: 0,
+            quantityOz: 0,
+            salesCount: 0,
+          };
+        }
+
+        periodTotals[period].revenue += sale.gross_proceeds || 0;
+        periodTotals[period].quantityOz += sale.quantity_oz || 0;
+        periodTotals[period].salesCount += 1;
+      });
+
+      return Object.values(periodTotals).map((p: any) => ({
+        ...p,
+        avgPrice: p.quantityOz > 0 ? p.revenue / p.quantityOz : 0,
+      }));
+    } catch (error) {
+      console.error('Error in getSalesPerformance:', error);
+      return [];
+    }
   }
 
   /**
@@ -428,56 +499,64 @@ export class AdvancedAnalyticsService {
     startDate: string,
     endDate: string
   ): Promise<CostBreakdown[]> {
-    const { data: sales, error } = await supabase
-      .from('sales')
-      .select('freight_cost, other_costs, royalty_amount')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .in('status', ['completed', 'payment_received']);
+    try {
+      const { data: sales, error } = await supabase
+        .from('sales')
+        .select('freight_cost, other_costs, royalty_amount')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .in('status', ['completed', 'payment_received']);
 
-    if (error) throw error;
-
-    const costs = (sales || []).reduce(
-      (acc, sale) => ({
-        freightCosts: acc.freightCosts + (sale.freight_cost || 0),
-        otherCosts: acc.otherCosts + (sale.other_costs || 0),
-        royalties: acc.royalties + (sale.royalty_amount || 0),
-        freightCount: acc.freightCount + (sale.freight_cost ? 1 : 0),
-        otherCount: acc.otherCount + (sale.other_costs ? 1 : 0),
-        royaltyCount: acc.royaltyCount + (sale.royalty_amount ? 1 : 0),
-      }),
-      {
-        freightCosts: 0,
-        otherCosts: 0,
-        royalties: 0,
-        freightCount: 0,
-        otherCount: 0,
-        royaltyCount: 0,
+      if (error) {
+        console.error('Error fetching cost breakdown:', error);
+        return [];
       }
-    );
 
-    const totalCosts = costs.freightCosts + costs.otherCosts + costs.royalties;
+      const costs = (sales || []).reduce(
+        (acc, sale) => ({
+          freightCosts: acc.freightCosts + (sale.freight_cost || 0),
+          otherCosts: acc.otherCosts + (sale.other_costs || 0),
+          royalties: acc.royalties + (sale.royalty_amount || 0),
+          freightCount: acc.freightCount + (sale.freight_cost ? 1 : 0),
+          otherCount: acc.otherCount + (sale.other_costs ? 1 : 0),
+          royaltyCount: acc.royaltyCount + (sale.royalty_amount ? 1 : 0),
+        }),
+        {
+          freightCosts: 0,
+          otherCosts: 0,
+          royalties: 0,
+          freightCount: 0,
+          otherCount: 0,
+          royaltyCount: 0,
+        }
+      );
 
-    return [
-      {
-        category: 'Freight & Transport',
-        amount: costs.freightCosts,
-        percentage: totalCosts > 0 ? (costs.freightCosts / totalCosts) * 100 : 0,
-        count: costs.freightCount,
-      },
-      {
-        category: 'Royalties (3%)',
-        amount: costs.royalties,
-        percentage: totalCosts > 0 ? (costs.royalties / totalCosts) * 100 : 0,
-        count: costs.royaltyCount,
-      },
-      {
-        category: 'Other Costs',
-        amount: costs.otherCosts,
-        percentage: totalCosts > 0 ? (costs.otherCosts / totalCosts) * 100 : 0,
-        count: costs.otherCount,
-      },
-    ];
+      const totalCosts = costs.freightCosts + costs.otherCosts + costs.royalties;
+
+      return [
+        {
+          category: 'Freight & Transport',
+          amount: costs.freightCosts,
+          percentage: totalCosts > 0 ? (costs.freightCosts / totalCosts) * 100 : 0,
+          count: costs.freightCount,
+        },
+        {
+          category: 'Royalties (3%)',
+          amount: costs.royalties,
+          percentage: totalCosts > 0 ? (costs.royalties / totalCosts) * 100 : 0,
+          count: costs.royaltyCount,
+        },
+        {
+          category: 'Other Costs',
+          amount: costs.otherCosts,
+          percentage: totalCosts > 0 ? (costs.otherCosts / totalCosts) * 100 : 0,
+          count: costs.otherCount,
+        },
+      ];
+    } catch (error) {
+      console.error('Error in getCostBreakdown:', error);
+      return [];
+    }
   }
 
   // ==================== BUDGET VS ACTUAL ====================
@@ -489,69 +568,98 @@ export class AdvancedAnalyticsService {
     year: number,
     miningCompanyId?: string
   ): Promise<BudgetVsActual[]> {
-    // Get budget data
-    let budgetQuery = supabase
-      .from('monthly_budgets')
-      .select('month, budget_oz, annual_budget_id, mining_company_id')
-      .eq('annual_budget_id', year);
+    try {
+      // First, get the annual budget for the specified year
+      let annualBudgetQuery = supabase
+        .from('annual_budgets')
+        .select('id, year, mining_company_id')
+        .eq('year', year);
 
-    if (miningCompanyId) {
-      budgetQuery = budgetQuery.eq('mining_company_id', miningCompanyId);
+      if (miningCompanyId) {
+        annualBudgetQuery = annualBudgetQuery.eq('mining_company_id', miningCompanyId);
+      }
+
+      const { data: annualBudgets, error: annualError } = await annualBudgetQuery;
+
+      if (annualError) {
+        console.error('Error fetching annual budgets:', annualError);
+        return [];
+      }
+
+      if (!annualBudgets || annualBudgets.length === 0) {
+        // No budget data available, return empty array
+        return [];
+      }
+
+      // Get all monthly budgets for the annual budget(s)
+      const annualBudgetIds = annualBudgets.map(b => b.id);
+
+      const { data: budgets, error: budgetError } = await supabase
+        .from('monthly_budgets')
+        .select('month, budget_oz, annual_budget_id, mining_company_id')
+        .in('annual_budget_id', annualBudgetIds);
+
+      if (budgetError) {
+        console.error('Error fetching monthly budgets:', budgetError);
+        return [];
+      }
+
+      // Get actual production data
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
+
+      let prodQuery = supabase
+        .from('daily_production')
+        .select('production_date, estimated_oz')
+        .gte('production_date', startDate)
+        .lte('production_date', endDate)
+        .neq('status', 'cancelled');
+
+      if (miningCompanyId) {
+        prodQuery = prodQuery.eq('mining_company_id', miningCompanyId);
+      }
+
+      const { data: productions, error: prodError } = await prodQuery;
+
+      if (prodError) {
+        console.error('Error fetching production data:', prodError);
+        return [];
+      }
+
+      // Aggregate actual by month
+      const actualByMonth: Record<number, number> = {};
+      (productions || []).forEach((prod) => {
+        const date = new Date(prod.production_date);
+        const month = date.getMonth() + 1;
+        actualByMonth[month] = (actualByMonth[month] || 0) + (prod.estimated_oz || 0);
+      });
+
+      // Combine budget and actual
+      const monthNames = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+
+      return (budgets || []).map((budget) => {
+        const month = budget.month;
+        const budgetOz = budget.budget_oz || 0;
+        const actualOz = actualByMonth[month] || 0;
+        const variance = actualOz - budgetOz;
+        const variancePct = budgetOz > 0 ? (variance / budgetOz) * 100 : 0;
+
+        return {
+          period: `${year}-${String(month).padStart(2, '0')}`,
+          periodLabel: `${monthNames[month - 1]} ${year}`,
+          budgetOz,
+          actualOz,
+          variance,
+          variancePct,
+        };
+      }).sort((a, b) => a.period.localeCompare(b.period));
+    } catch (error) {
+      console.error('Error in getBudgetVsActual:', error);
+      return [];
     }
-
-    const { data: budgets, error: budgetError } = await budgetQuery;
-
-    if (budgetError) throw budgetError;
-
-    // Get actual production data
-    const startDate = `${year}-01-01`;
-    const endDate = `${year}-12-31`;
-
-    let prodQuery = supabase
-      .from('daily_production')
-      .select('production_date, estimated_oz')
-      .gte('production_date', startDate)
-      .lte('production_date', endDate)
-      .neq('status', 'cancelled');
-
-    if (miningCompanyId) {
-      prodQuery = prodQuery.eq('mining_company_id', miningCompanyId);
-    }
-
-    const { data: productions, error: prodError } = await prodQuery;
-
-    if (prodError) throw prodError;
-
-    // Aggregate actual by month
-    const actualByMonth: Record<number, number> = {};
-    (productions || []).forEach((prod) => {
-      const date = new Date(prod.production_date);
-      const month = date.getMonth() + 1;
-      actualByMonth[month] = (actualByMonth[month] || 0) + (prod.estimated_oz || 0);
-    });
-
-    // Combine budget and actual
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    return (budgets || []).map((budget) => {
-      const month = budget.month;
-      const budgetOz = budget.budget_oz || 0;
-      const actualOz = actualByMonth[month] || 0;
-      const variance = actualOz - budgetOz;
-      const variancePct = budgetOz > 0 ? (variance / budgetOz) * 100 : 0;
-
-      return {
-        period: `${year}-${String(month).padStart(2, '0')}`,
-        periodLabel: `${monthNames[month - 1]} ${year}`,
-        budgetOz,
-        actualOz,
-        variance,
-        variancePct,
-      };
-    }).sort((a, b) => a.period.localeCompare(b.period));
   }
 
   // ==================== EXPORT FUNCTIONALITY ====================

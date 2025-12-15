@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DollarSign, Search, Download, CheckCircle, Clock, AlertCircle,
-  FileText, Plus, RefreshCw, Eye, User, Calendar, CreditCard,
+  FileText, Plus, RefreshCw, Zap, Calendar, CreditCard,
   Building2, TrendingUp
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -187,6 +187,29 @@ export function PaymentsPage() {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const translateStatus = (status: string) => {
+    const translations: Record<string, string> = {
+      'pending': 'En attente de paiement',
+      'paid': 'Payé',
+      'overdue': 'En retard',
+      'rejected': 'Rejeté',
+      'approved': 'Approuvé',
+      'cancelled': 'Annulé',
+    };
+    return translations[status] || status;
+  };
+
+  const calculateDaysUntilDue = (dueDate: string | null) => {
+    if (!dueDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   const filteredPayments = payments
@@ -402,61 +425,51 @@ export function PaymentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
-                        Numéro Invoice
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                    <tr className="border-b-2 border-gray-300 bg-gradient-to-r from-blue-600 to-blue-500">
+                      <th className="px-3 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wide">
                         Numéro Vente
                       </th>
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
-                        Client
+                      <th className="px-3 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wide">
+                        Numéro Facture
                       </th>
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
-                        Contact
-                      </th>
-                      <th className="px-3 py-3 text-right text-xs text-gray-600">
+                      <th className="px-3 py-3.5 text-right text-xs font-semibold text-white uppercase tracking-wide">
                         Montant
                       </th>
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
-                        Date échéance
+                      <th className="px-3 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wide">
+                        Date d'échéance
                       </th>
-                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                      <th className="px-3 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wide">
+                        Échéance
+                      </th>
+                      <th className="px-3 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wide">
                         Méthode
                       </th>
-                      <th className="px-3 py-3 text-center text-xs text-gray-600">
+                      <th className="px-3 py-3.5 text-center text-xs font-semibold text-white uppercase tracking-wide">
                         Statut
                       </th>
-                      <th className="px-3 py-3 text-center text-xs text-gray-600">
-                        Docs
-                      </th>
-                      <th className="px-3 py-3 text-center text-xs text-gray-600">
-                        Actions
+                      <th className="px-3 py-3.5 text-center text-xs font-semibold text-white uppercase tracking-wide">
+                        Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white">
-                    {filteredPayments.map((payment) => {
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredPayments.map((payment, index) => {
                       const statusConfig = getStatusConfig(payment.payment_status_category);
+                      const daysUntilDue = calculateDaysUntilDue(payment.due_date);
 
-                      // Couleur de fond pour la ligne entière selon le statut
-                      let rowBgColor = 'bg-white';
-                      if (payment.payment_status_category === 'paid') {
-                        rowBgColor = 'bg-emerald-50/40';
-                      } else if (payment.payment_status_category === 'pending') {
-                        rowBgColor = 'bg-amber-50/40';
-                      } else if (payment.payment_status_category === 'overdue') {
-                        rowBgColor = 'bg-red-50/40';
-                      } else if (payment.payment_status_category === 'rejected') {
-                        rowBgColor = 'bg-red-50/40';
-                      }
+                      // Couleurs alternées pour les lignes
+                      const isEven = index % 2 === 0;
+                      let rowBgColor = isEven ? 'bg-gray-50/50' : 'bg-white';
 
                       return (
                         <tr
                           key={payment.id}
-                          className={`${rowBgColor} hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group border-b border-gray-100`}
+                          className={`${rowBgColor} hover:bg-blue-50 transition-all duration-200 cursor-pointer group`}
                           onClick={() => navigate(`/payments/${payment.id}`)}
                         >
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-900 font-medium">{payment.sale_number}</span>
+                          </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <FileText className={`h-3.5 w-3.5 ${statusConfig.color}`} />
@@ -465,17 +478,8 @@ export function PaymentsPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="text-xs text-gray-700">{payment.sale_number}</span>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="text-xs text-gray-900">{payment.customer_name}</span>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="text-xs text-gray-700">{payment.company_name}</span>
-                          </td>
                           <td className="px-3 py-3 text-right whitespace-nowrap">
-                            <span className="text-sm text-gray-900">
+                            <span className="text-sm text-gray-900 font-semibold">
                               {formatCurrency(payment.amount, payment.currency)}
                             </span>
                           </td>
@@ -483,12 +487,23 @@ export function PaymentsPage() {
                             <div className="flex items-center gap-1.5">
                               <Calendar className="h-3 w-3 text-gray-400" />
                               <span className="text-xs text-gray-700">{formatDate(payment.due_date)}</span>
-                              {payment.days_overdue && payment.days_overdue > 0 && (
-                                <span className="text-xs text-red-600 ml-1">
-                                  (+{payment.days_overdue}j)
-                                </span>
-                              )}
                             </div>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            {daysUntilDue !== null && (
+                              <span className={`text-xs font-medium ${
+                                daysUntilDue < 0
+                                  ? 'text-red-600'
+                                  : daysUntilDue <= 7
+                                    ? 'text-orange-600'
+                                    : 'text-gray-700'
+                              }`}>
+                                {daysUntilDue < 0
+                                  ? `${Math.abs(daysUntilDue)} jours de retard`
+                                  : `${daysUntilDue} jour${daysUntilDue > 1 ? 's' : ''}`
+                                }
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
@@ -499,18 +514,17 @@ export function PaymentsPage() {
                             </div>
                           </td>
                           <td className="px-3 py-3 text-center whitespace-nowrap">
-                            <StatusBadge
-                              label={payment.payment_status_category}
-                              variant={statusConfig.variant}
-                            />
-                          </td>
-                          <td className="px-3 py-3 text-center whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className="text-xs text-gray-600">{payment.document_count || 0}</span>
-                              {payment.proof_count > 0 && (
-                                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                              )}
-                            </div>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              payment.payment_status_category === 'paid'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : payment.payment_status_category === 'pending'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  : payment.payment_status_category === 'overdue'
+                                    ? 'bg-red-100 text-red-800 border border-red-200'
+                                    : 'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`}>
+                              {translateStatus(payment.payment_status_category)}
+                            </span>
                           </td>
                           <td className="px-3 py-3 text-center whitespace-nowrap">
                             <Button
@@ -520,9 +534,9 @@ export function PaymentsPage() {
                                 e.stopPropagation();
                                 navigate(`/payments/${payment.id}`);
                               }}
-                              className="opacity-70 group-hover:opacity-100 transition-all"
+                              className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 group-hover:shadow-md transition-all"
                             >
-                              <Eye className="h-3 w-3" />
+                              <Zap className="h-3.5 w-3.5" />
                             </Button>
                           </td>
                         </tr>

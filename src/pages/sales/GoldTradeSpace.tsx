@@ -241,12 +241,12 @@ export function GoldTradeSpace() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Store className="w-8 h-8 text-amber-600" />
-              Gold Trade Space
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <Store className="w-7 h-7 text-amber-600" />
+              Espace Commercial
             </h1>
-            <p className="text-gray-600 mt-1">
-              Marketplace with intelligent pricing mechanisms and financial analysis
+            <p className="text-gray-600 mt-1 text-sm">
+              Place de marché avec mécanismes de tarification intelligents et analyse financière
             </p>
           </div>
         </div>
@@ -262,49 +262,53 @@ export function GoldTradeSpace() {
         >
           {/* Mining Company Selection with Elegant Tiles */}
           {!selectedMiningCompany ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-8 h-8 text-amber-600" />
+            <div className="space-y-4">
+              {/* Section Header and Stock Card on same line */}
+              <div className="flex items-stretch gap-4">
+                {/* Section Title */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <Building2 className="w-6 h-6 text-amber-600 flex-shrink-0" />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Sélectionnez une Mine</h2>
-                    <p className="text-gray-600">Cliquez sur une tuile pour voir le stock disponible et créer une simulation</p>
+                    <h2 className="text-lg font-bold text-gray-900">Sélectionnez une Mine</h2>
+                    <p className="text-gray-600 text-sm">Cliquez sur une tuile pour voir le stock et créer une simulation</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Global Overview Card - Compact */}
-              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-xl">
-                <div className="absolute inset-0 bg-grid-white/10"></div>
-                <div className="relative p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-amber-100" />
-                        <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">Stock Total Disponible</p>
-                      </div>
-                      <h3 className="text-3xl font-bold text-white tracking-tight">
-                        {totalStock.toFixed(3)} <span className="text-xl text-amber-100">oz</span>
-                      </h3>
-                      <p className="text-amber-100 text-sm">
-                        {(totalStock * 31.1035).toFixed(2)} grammes
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <CircleDollarSign className="w-4 h-4 text-amber-200" />
-                        <p className="text-amber-100 text-xs">
-                          {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} mines actives
-                        </p>
+                {/* Global Overview Card - Compact & Inline */}
+                <div className="flex-shrink-0 w-80">
+                  <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-lg h-full">
+                    <div className="absolute inset-0 bg-grid-white/10"></div>
+                    <div className="relative p-4 h-full flex items-center">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-100" />
+                            <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">Stock Total Disponible</p>
+                          </div>
+                          <h3 className="text-2xl font-bold text-white tracking-tight">
+                            {totalStock.toFixed(3)} <span className="text-base text-amber-100">oz</span>
+                          </h3>
+                          <p className="text-amber-100 text-xs">
+                            {(totalStock * 31.1035).toFixed(2)} grammes
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <CircleDollarSign className="w-3 h-3 text-amber-200" />
+                            <p className="text-amber-100 text-xs">
+                              {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} mines actives
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hidden md:block">
+                          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Package className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="hidden md:block">
-                      <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Package className="w-10 h-10 text-white" />
-                      </div>
-                    </div>
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                    <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-orange-400/20 rounded-full blur-2xl"></div>
                   </div>
                 </div>
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-orange-400/20 rounded-full blur-3xl"></div>
               </div>
 
               {/* Individual Mining Company Cards - Compact & Sorted */}
@@ -470,16 +474,16 @@ export function GoldTradeSpace() {
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">AI-Powered Quantity Recommendation</h3>
+                    <h3 className="font-semibold text-gray-900 text-lg">Recommandation de Quantité IA</h3>
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Recommended Quantity:</span>
+                        <span className="text-sm text-gray-700">Quantité Recommandée:</span>
                         <span className="text-xl font-bold text-purple-900">
                           {quantityRecommendation.recommendedQuantityOz.toFixed(2)} oz
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Percentage of Stock:</span>
+                        <span className="text-sm text-gray-700">Pourcentage du Stock:</span>
                         <span className="font-semibold text-purple-800">
                           {quantityRecommendation.recommendedPercentage}%
                         </span>
@@ -492,10 +496,10 @@ export function GoldTradeSpace() {
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {quantityRecommendation.riskLevel.toUpperCase()} RISK
+                          RISQUE {quantityRecommendation.riskLevel === 'low' ? 'FAIBLE' : quantityRecommendation.riskLevel === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
                         </span>
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                          {quantityRecommendation.confidenceScore}% Confidence
+                          {quantityRecommendation.confidenceScore}% de Confiance
                         </span>
                       </div>
                       </div>
@@ -504,7 +508,7 @@ export function GoldTradeSpace() {
                       </p>
                       <div className="text-xs text-gray-600 mt-2 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4" />
-                      <span><strong>Optimal Timing:</strong> {quantityRecommendation.optimalTiming}</span>
+                      <span><strong>Timing Optimal:</strong> {quantityRecommendation.optimalTiming}</span>
                       </div>
                     </div>
                   </div>
@@ -535,24 +539,24 @@ export function GoldTradeSpace() {
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-6 h-6 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Complete Your Order</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Finaliser Votre Commande</h3>
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Selected Mechanism:</span>
+                      <span className="text-sm text-gray-700">Mécanisme Sélectionné:</span>
                       <span className="font-semibold text-gray-900">{selectedMechanism.displayName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Quantity:</span>
+                      <span className="text-sm text-gray-700">Quantité:</span>
                       <span className="font-semibold text-gray-900">{comparisonData.quantityOz.toFixed(2)} oz</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Price per oz:</span>
+                      <span className="text-sm text-gray-700">Prix par oz:</span>
                       <span className="font-semibold text-gray-900">${selectedMechanism.pricePerOz.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between border-t border-blue-200 pt-2">
-                      <span className="text-base font-semibold text-gray-700">Total Value:</span>
+                      <span className="text-base font-semibold text-gray-700">Valeur Totale:</span>
                       <span className="text-xl font-bold text-blue-900">
                       ${selectedMechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
@@ -562,13 +566,13 @@ export function GoldTradeSpace() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Customer <span className="text-red-500">*</span>
+                      Sélectionner Client <span className="text-red-500">*</span>
                       </label>
                       <Select
                       value={selectedCustomer}
                       onChange={(e) => setSelectedCustomer(e.target.value)}
                       >
-                      <option value="">Choose a customer...</option>
+                      <option value="">Choisir un client...</option>
                       {customers.map((customer) => (
                         <option key={customer.id} value={customer.id}>
                           {customer.name} ({customer.country})
@@ -580,13 +584,13 @@ export function GoldTradeSpace() {
                     {selectedMechanism.mechanism === 'in_process' && (
                       <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Refinery <span className="text-red-500">*</span>
+                        Sélectionner Raffinerie <span className="text-red-500">*</span>
                       </label>
                       <Select
                         value={selectedRefinery}
                         onChange={(e) => setSelectedRefinery(e.target.value)}
                       >
-                        <option value="">Choose a refinery...</option>
+                        <option value="">Choisir une raffinerie...</option>
                         {refineries.map((refinery) => (
                           <option key={refinery.id} value={refinery.id}>
                             {refinery.refinery_name} - {refinery.refinery_location}
@@ -602,7 +606,7 @@ export function GoldTradeSpace() {
                       className="w-full"
                       size="lg"
                     >
-                      Proceed to Sale Form
+                      Continuer vers le Formulaire de Vente
                     </Button>
                   </div>
                 </div>
@@ -615,14 +619,14 @@ export function GoldTradeSpace() {
               <div className="p-5 space-y-3">
                 <div className="flex items-center gap-2 text-amber-800">
                   <AlertCircle className="w-5 h-5" />
-                  <h4 className="font-semibold">Trading Information</h4>
+                  <h4 className="font-semibold">Informations de Transaction</h4>
                 </div>
                 <div className="text-xs text-amber-900 space-y-2">
-                  <p><strong>Available Stock:</strong> {availableStock.toFixed(2)} oz</p>
-                  <p><strong>Trading Hours:</strong> 7:30 AM - 4:30 PM EST</p>
-                  <p><strong>Order Type:</strong> Good Until Cancelled</p>
+                  <p><strong>Stock Disponible:</strong> {availableStock.toFixed(2)} oz</p>
+                  <p><strong>Heures de Transaction:</strong> 7:30 AM - 4:30 PM EST</p>
+                  <p><strong>Type de Commande:</strong> Valable jusqu'à Annulation</p>
                   <p className="border-t border-amber-200 pt-2 mt-2">
-                    All orders are subject to management approval and market conditions
+                    Toutes les commandes sont soumises à l'approbation de la direction et aux conditions du marché
                   </p>
                 </div>
               </div>

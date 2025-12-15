@@ -63,7 +63,19 @@
     "duplicate": "Dupliquer",
     "move": "Déplacer",
     "sort": "Trier",
-    "group": "Grouper"
+    "group": "Grouper",
+    "allStatus": "Tous les statuts",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "justNow": "À l'instant",
+    "minutesAgo": "Il y a {{count}} min",
+    "hoursAgo": "Il y a {{count}}h",
+    "daysAgo": "Il y a {{count}}j"
+  },
+  "header": {
+    "appTitle": "Solutions de Gestion des Ventes d'Or",
+    "currentLanguage": "Actuel: {{language}}",
+    "helpCenter": "Centre d'Aide"
   },
   "auth": {
     "login": "Connexion",
@@ -146,7 +158,21 @@
     "refineries": "Raffineries",
     "virtualPayments": "Paiements virtuels",
     "forecast": "Prévisions",
-    "performance": "Performance"
+    "performance": "Performance",
+    "productionManagement": "Gestion de la Production",
+    "productionInSafe": "Production en Coffre",
+    "budgetForecasts": "Budget & Prévisions",
+    "shippingManagement": "Gestion des Expéditions",
+    "shippingPreparation": "Préparation d'Expédition",
+    "invoiceConsignment": "Facture & Consignation",
+    "refiningProcess": "Processus de Raffinage",
+    "inventoryMonitoring": "Suivi des Stocks",
+    "documentManagement": "Gestion des Documents",
+    "marketplace": "Marché",
+    "tradeSpace": "Espace Commercial",
+    "preSales": "Pré-Ventes",
+    "insights": "Analyses & Rapports",
+    "helpCenter": "Centre d'Aide"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -284,7 +310,10 @@
       "activeSales": "Ventes actives",
       "preferredCurrency": "Devise préférée",
       "paymentTerms": "Conditions de paiement",
-      "noCustomers": "Aucun client disponible"
+      "noCustomers": "Aucun client disponible",
+      "manageRelationships": "Gérer les relations et contacts clients",
+      "searchPlaceholder": "Rechercher par nom, pays ou email...",
+      "noCustomersFound": "Aucun client trouvé correspondant à vos critères."
     },
     "production": {
       "title": "Production",
@@ -299,7 +328,23 @@
       "prepared": "Préparé",
       "shipped": "Expédié",
       "received": "Reçu",
-      "noProduction": "Aucune production disponible"
+      "noProduction": "Aucune production disponible",
+      "dailyProductionSubtitle": "Production journalière et analyses de laboratoire préliminaires",
+      "budgetForecast": "Budget & Prévisions",
+      "exportCsv": "Exporter CSV",
+      "newProduction": "Nouvelle Production",
+      "allCompanies": "Toutes les Sociétés",
+      "productionInventory": "Inventaire de Production",
+      "bars": "barres",
+      "ozTotal": "oz total",
+      "filterBy": "Filtrer par:",
+      "to": "à",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette production?",
+      "confirmDeleteTitle": "Confirmer la suppression",
+      "errorLoadingData": "Erreur lors du chargement des données",
+      "errorDeleting": "Erreur lors de la suppression",
+      "errorReloading": "Erreur lors du rechargement",
+      "noDataToExport": "Aucune donnée à exporter"
     },
     "inventory": {
       "title": "Inventaire",

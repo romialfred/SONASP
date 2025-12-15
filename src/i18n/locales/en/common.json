@@ -63,7 +63,19 @@
     "duplicate": "Duplicate",
     "move": "Move",
     "sort": "Sort",
-    "group": "Group"
+    "group": "Group",
+    "allStatus": "All Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
+  "header": {
+    "appTitle": "Gold Sales Management Solutions",
+    "currentLanguage": "Current: {{language}}",
+    "helpCenter": "Help Center"
   },
   "auth": {
     "login": "Login",
@@ -146,7 +158,21 @@
     "refineries": "Refineries",
     "virtualPayments": "Virtual Payments",
     "forecast": "Forecast",
-    "performance": "Performance"
+    "performance": "Performance",
+    "productionManagement": "Production Management",
+    "productionInSafe": "Production In Safe",
+    "budgetForecasts": "Budget & Forecasts",
+    "shippingManagement": "Shipping Management",
+    "shippingPreparation": "Shipping Preparation",
+    "invoiceConsignment": "Invoice & Consignment",
+    "refiningProcess": "Refining Process",
+    "inventoryMonitoring": "Inventory Monitoring",
+    "documentManagement": "Document Management",
+    "marketplace": "Marketplace",
+    "tradeSpace": "Trade Space",
+    "preSales": "Pre-Sales",
+    "insights": "Insights & Reports",
+    "helpCenter": "Help Center"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -284,7 +310,10 @@
       "activeSales": "Active Sales",
       "preferredCurrency": "Preferred Currency",
       "paymentTerms": "Payment Terms",
-      "noCustomers": "No customers available"
+      "noCustomers": "No customers available",
+      "manageRelationships": "Manage customer relationships and contacts",
+      "searchPlaceholder": "Search by name, country, or email...",
+      "noCustomersFound": "No customers found matching your criteria."
     },
     "production": {
       "title": "Production",
@@ -299,7 +328,23 @@
       "prepared": "Prepared",
       "shipped": "Shipped",
       "received": "Received",
-      "noProduction": "No production available"
+      "noProduction": "No production available",
+      "dailyProductionSubtitle": "Daily production and preliminary laboratory analyses",
+      "budgetForecast": "Budget & Forecast",
+      "exportCsv": "Export CSV",
+      "newProduction": "New Production",
+      "allCompanies": "All Companies",
+      "productionInventory": "Production Inventory",
+      "bars": "bars",
+      "ozTotal": "oz total",
+      "filterBy": "Filter by:",
+      "to": "to",
+      "confirmDelete": "Are you sure you want to delete this production?",
+      "confirmDeleteTitle": "Confirm deletion",
+      "errorLoadingData": "Error loading data",
+      "errorDeleting": "Error deleting",
+      "errorReloading": "Error reloading",
+      "noDataToExport": "No data to export"
     },
     "inventory": {
       "title": "Inventory",

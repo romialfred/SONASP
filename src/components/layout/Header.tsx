@@ -93,10 +93,10 @@ export function Header() {
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInMinutes < 1) return 'À l\'instant';
-    if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
-    if (diffInHours < 24) return `Il y a ${diffInHours}h`;
-    return `Il y a ${diffInDays}j`;
+    if (diffInMinutes < 1) return t('common.justNow');
+    if (diffInMinutes < 60) return t('common.minutesAgo', { count: diffInMinutes });
+    if (diffInHours < 24) return t('common.hoursAgo', { count: diffInHours });
+    return t('common.daysAgo', { count: diffInDays });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -117,7 +117,7 @@ export function Header() {
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-gray-900">
-            Gold Sales Management Solutions
+            {t('header.appTitle')}
           </h1>
         </div>
 
@@ -148,7 +148,7 @@ export function Header() {
                     <span>{(i18n.language || 'en').startsWith('en') ? 'Français' : 'English'}</span>
                   </button>
                   <div className="px-4 py-2 text-xs text-gray-500 border-t border-gray-100 mt-1">
-                    {(i18n.language || 'en').startsWith('en') ? 'Current: English' : 'Actuel: Français'}
+                    {t('header.currentLanguage', { language: (i18n.language || 'en').startsWith('en') ? 'English' : 'Français' })}
                   </div>
                 </div>
               </>
@@ -231,7 +231,7 @@ export function Header() {
                     onClick={() => setShowUserMenu(false)}
                   >
                     <HelpCircle className="h-4 w-4" />
-                    Help Center
+                    {t('nav.helpCenter')}
                   </Link>
                   <div className="border-t border-gray-100 my-1" />
                   <button

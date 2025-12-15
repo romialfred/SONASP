@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -18,6 +19,7 @@ interface Customer {
 }
 
 export function CustomersPage() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -82,12 +84,12 @@ export function CustomersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-            <p className="text-gray-600 mt-1">Manage customer relationships and contacts</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('pages.customers.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('pages.customers.manageRelationships')}</p>
           </div>
           <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <Download className="w-4 h-4" />
-            Export
+            {t('common.export')}
           </button>
         </div>
 
@@ -98,7 +100,7 @@ export function CustomersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search by name, country, or email..."
+                  placeholder={t('pages.customers.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -109,10 +111,10 @@ export function CustomersPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
+                <option value="all">{t('common.allStatus')}</option>
+                <option value="active">{t('common.active')}</option>
+                <option value="inactive">{t('common.inactive')}</option>
+                <option value="pending">{t('common.status')}</option>
               </select>
             </div>
 
@@ -148,7 +150,7 @@ export function CustomersPage() {
 
             {filteredCustomers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">No customers found matching your criteria.</p>
+                <p className="text-gray-500">{t('pages.customers.noCustomersFound')}</p>
               </div>
             )}
           </div>

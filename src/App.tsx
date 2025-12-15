@@ -21,7 +21,7 @@ import { RefineryDashboard } from './pages/dashboards/RefineryDashboard';
 import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
 import { ProductionDashboardModern } from './pages/dashboards/ProductionDashboardModern';
 import { GlobalDashboardEnhanced } from './pages/dashboards/GlobalDashboardEnhanced';
-import { AssayCertificatesPage } from './pages/documents/AssayCertificatesPage';
+import { AssayCertificatesModern } from './pages/documents/AssayCertificatesModern';
 import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
 import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
 import { RefiningDashboard } from './pages/refining/RefiningDashboard';
@@ -320,7 +320,7 @@ function AppRoutes() {
               path="/documents/assay-certificates"
               element={
                 <ProtectedRoute>
-                  <AssayCertificatesPage />
+                  <AssayCertificatesModern />
                 </ProtectedRoute>
               }
             />

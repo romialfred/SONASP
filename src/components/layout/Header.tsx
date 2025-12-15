@@ -129,8 +129,8 @@ export function Header() {
               aria-label="Change language"
             >
               <Globe className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                {(i18n.language || 'en').startsWith('en') ? 'EN' : 'FR'}
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                {(i18n.language || 'en').startsWith('en') ? 'En' : 'Fr'}
               </span>
             </button>
             {showLanguageMenu && (

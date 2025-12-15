@@ -36,83 +36,83 @@ type StatusDisplay = {
   icon: LucideIcon;
 };
 
-const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
-  pending: StatusDisplay;
-} = {
-  create_sales: {
-    label: 'Creating Sale',
-    color: 'bg-gray-100 text-gray-800 border-gray-300',
-    icon: Clock,
-  },
-  pending: {
-    label: 'Pending Approval',
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    icon: Clock,
-  },
-  pending_management_approval: {
-    label: 'Pending Management Approval',
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    icon: Clock,
-  },
-  management_approved: {
-    label: 'Management Approved',
-    color: 'bg-blue-100 text-blue-800 border-blue-300',
-    icon: CheckCircle,
-  },
-  pending_for_customer_approval: {
-    label: 'Pending Customer Approval',
-    color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-    icon: Clock,
-  },
-  approved: {
-    label: 'Management Approved',
-    color: 'bg-blue-100 text-blue-800 border-blue-300',
-    icon: CheckCircle,
-  },
-  customer_approved: {
-    label: 'Customer Approved',
-    color: 'bg-green-100 text-green-800 border-green-300',
-    icon: CheckCircle,
-  },
-  waiting_for_payment: {
-    label: 'Waiting for Payment',
-    color: 'bg-orange-100 text-orange-800 border-orange-300',
-    icon: Clock,
-  },
-  virtual_payment: {
-    label: 'Virtual Payment',
-    color: 'bg-purple-100 text-purple-800 border-purple-300',
-    icon: DollarSign,
-  },
-  payment_received: {
-    label: 'Payment Received',
-    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    icon: DollarSign,
-  },
-  completed: {
-    label: 'Completed',
-    color: 'bg-gray-100 text-gray-800 border-gray-300',
-    icon: CheckCircle,
-  },
-  management_rejected: {
-    label: 'Management Rejected',
-    color: 'bg-red-100 text-red-800 border-red-300',
-    icon: XCircle,
-  },
-  customer_rejected: {
-    label: 'Customer Rejected',
-    color: 'bg-red-100 text-red-800 border-red-300',
-    icon: XCircle,
-  },
-  rejected: {
-    label: 'Rejected',
-    color: 'bg-red-100 text-red-800 border-red-300',
-    icon: XCircle,
-  },
-} as const;
-
 export function SalesDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
+    pending: StatusDisplay;
+  } = {
+    create_sales: {
+      label: t('pages.sales.statusCreateSales'),
+      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      icon: Clock,
+    },
+    pending: {
+      label: t('pages.sales.pendingSales'),
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      icon: Clock,
+    },
+    pending_management_approval: {
+      label: t('pages.sales.statusPendingManagement'),
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      icon: Clock,
+    },
+    management_approved: {
+      label: t('pages.sales.statusManagementApproved'),
+      color: 'bg-blue-100 text-blue-800 border-blue-300',
+      icon: CheckCircle,
+    },
+    pending_for_customer_approval: {
+      label: t('pages.sales.statusPendingCustomer'),
+      color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      icon: Clock,
+    },
+    approved: {
+      label: t('pages.sales.statusManagementApproved'),
+      color: 'bg-blue-100 text-blue-800 border-blue-300',
+      icon: CheckCircle,
+    },
+    customer_approved: {
+      label: t('pages.sales.statusCustomerApproved'),
+      color: 'bg-green-100 text-green-800 border-green-300',
+      icon: CheckCircle,
+    },
+    waiting_for_payment: {
+      label: t('pages.sales.statusWaitingPayment'),
+      color: 'bg-orange-100 text-orange-800 border-orange-300',
+      icon: Clock,
+    },
+    virtual_payment: {
+      label: t('pages.sales.statusVirtualPayment'),
+      color: 'bg-purple-100 text-purple-800 border-purple-300',
+      icon: DollarSign,
+    },
+    payment_received: {
+      label: t('pages.sales.statusPaymentReceived'),
+      color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      icon: DollarSign,
+    },
+    completed: {
+      label: t('pages.sales.statusCompleted'),
+      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      icon: CheckCircle,
+    },
+    management_rejected: {
+      label: t('pages.sales.statusManagementRejected'),
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: XCircle,
+    },
+    customer_rejected: {
+      label: t('pages.sales.statusCustomerRejected'),
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: XCircle,
+    },
+    rejected: {
+      label: t('pages.sales.statusManagementRejected'),
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: XCircle,
+    },
+  } as const;
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -278,10 +278,10 @@ export function SalesDashboard() {
       salesData.forEach((sale: any) => {
         const date = new Date(sale.created_at);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const customerName = customerMap.get(sale.customer_id) || 'Client Inconnu';
+        const customerName = customerMap.get(sale.customer_id) || t('pages.sales.unknownClient');
         const miningCompanyName = sale.seller_type === 'mining_company'
-          ? (miningCompanyMap.get(sale.seller_id) || 'Mine Inconnue')
-          : 'Autre';
+          ? (miningCompanyMap.get(sale.seller_id) || t('pages.sales.unknownMine'))
+          : t('pages.sales.other');
 
         // By customer
         if (!monthlyRevenueByCustomer[customerName]) {
@@ -307,7 +307,7 @@ export function SalesDashboard() {
 
       // Format data for charts - By Customer
       const customerChartData = months.map(month => {
-        const monthLabel = new Date(month + '-01').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+        const monthLabel = new Date(month + '-01').toLocaleDateString(i18n.language, { month: 'short', year: '2-digit' });
         const dataPoint: any = { month: monthLabel };
 
         Object.keys(monthlyRevenueByCustomer).forEach(customer => {
@@ -319,7 +319,7 @@ export function SalesDashboard() {
 
       // Format data for charts - By Mining Company
       const miningCompanyChartData = months.map(month => {
-        const monthLabel = new Date(month + '-01').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+        const monthLabel = new Date(month + '-01').toLocaleDateString(i18n.language, { month: 'short', year: '2-digit' });
         const dataPoint: any = { month: monthLabel };
 
         Object.keys(monthlyRevenueByMiningCompany).forEach(company => {
@@ -471,16 +471,16 @@ export function SalesDashboard() {
         <div className="pb-6 border-b border-gray-200">
           <div>
             <h1 className="font-heading text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent mb-2">
-              Gestion des Ventes
+              {t('pages.sales.salesManagement')}
             </h1>
-            <p className="text-gray-600 text-lg">Les ventes sont créées exclusivement via Gold Trade Space</p>
+            <p className="text-gray-600 text-lg">{t('pages.sales.subtitle')}</p>
           </div>
         </div>
 
         {pageError && (
           <Alert
             variant="error"
-            title="Sales data unavailable"
+            title={t('pages.sales.salesDataUnavailable')}
             className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
           >
             <span>{pageError}</span>
@@ -491,7 +491,7 @@ export function SalesDashboard() {
                   handleRetry();
                 }}
               >
-              Retry
+              {t('pages.sales.retry')}
             </Button>
           </Alert>
         )}
@@ -507,16 +507,16 @@ export function SalesDashboard() {
                   <Clock className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">EN ATTENTE</span>
+                  <span className="text-white text-xs font-medium">{t('pages.sales.pendingLabel')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-blue-100 text-xs font-medium mb-1">Ventes en Attente</p>
+                <p className="text-blue-100 text-xs font-medium mb-1">{t('pages.sales.pendingSalesCard')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {metrics.pendingSales}
                 </p>
                 <p className="text-blue-200 text-xs">
-                  Approbation requise
+                  {t('pages.sales.approvalRequired')}
                 </p>
               </div>
             </div>
@@ -531,16 +531,16 @@ export function SalesDashboard() {
                   <DollarSign className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">PAIEMENT</span>
+                  <span className="text-white text-xs font-medium">{t('pages.sales.paymentLabel')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-orange-100 text-xs font-medium mb-1">En Attente de Paiement</p>
+                <p className="text-orange-100 text-xs font-medium mb-1">{t('pages.sales.awaitingPayment')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(metrics.pendingPaymentAmount)}
                 </p>
                 <p className="text-orange-200 text-xs">
-                  {metrics.pendingPayment} vente{metrics.pendingPayment > 1 ? 's' : ''}
+                  {metrics.pendingPayment} {metrics.pendingPayment > 1 ? t('pages.sales.sales') : t('pages.sales.sale')}
                 </p>
               </div>
             </div>
@@ -555,16 +555,16 @@ export function SalesDashboard() {
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">CE MOIS</span>
+                  <span className="text-white text-xs font-medium">{t('pages.sales.thisMonthLabel')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-teal-100 text-xs font-medium mb-1">Revenus Mensuels</p>
+                <p className="text-teal-100 text-xs font-medium mb-1">{t('pages.sales.monthlyRevenue')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(metrics.monthlyRevenue)}
                 </p>
                 <p className="text-teal-200 text-xs">
-                  Total mois en cours
+                  {t('pages.sales.currentMonthTotal')}
                 </p>
               </div>
             </div>
@@ -579,31 +579,31 @@ export function SalesDashboard() {
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">PARTIES</span>
+                  <span className="text-white text-xs font-medium">{t('pages.sales.partiesLabel')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-slate-100 text-xs font-medium mb-2">Stakeholders</p>
+                <p className="text-slate-100 text-xs font-medium mb-2">{t('pages.sales.stakeholders')}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center gap-1.5">
                     <Factory className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{metrics.stakeholders.miningCompanies}</span>
-                    <span className="text-slate-300 text-xs">Mines</span>
+                    <span className="text-slate-300 text-xs">{t('pages.sales.mines')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{metrics.stakeholders.customers}</span>
-                    <span className="text-slate-300 text-xs">Clients</span>
+                    <span className="text-slate-300 text-xs">{t('pages.sales.clients')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{metrics.stakeholders.refineries}</span>
-                    <span className="text-slate-300 text-xs">Raffin.</span>
+                    <span className="text-slate-300 text-xs">{t('pages.sales.refineries')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{metrics.stakeholders.transportCompanies}</span>
-                    <span className="text-slate-300 text-xs">Transp.</span>
+                    <span className="text-slate-300 text-xs">{t('pages.sales.transport')}</span>
                   </div>
                 </div>
               </div>
@@ -619,15 +619,15 @@ export function SalesDashboard() {
             <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 pb-4">
               <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-600" />
-                Évolution des Revenus par Client (12 mois)
+                {t('pages.sales.revenueByCustomer')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {revenueByCustomer.length === 0 || !revenueByCustomer.some(d => Object.keys(d).length > 1) ? (
                 <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
                   <TrendingUp className="w-12 h-12 mb-3 opacity-30" />
-                  <p className="text-sm font-medium">Aucune donnée disponible</p>
-                  <p className="text-xs mt-1">Les ventes apparaîtront ici au fur et à mesure</p>
+                  <p className="text-sm font-medium">{t('pages.sales.noDataAvailable')}</p>
+                  <p className="text-xs mt-1">{t('pages.sales.salesWillAppear')}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
@@ -663,15 +663,15 @@ export function SalesDashboard() {
             <CardHeader className="bg-gradient-to-r from-teal-50 to-teal-100 border-b border-teal-200 pb-4">
               <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Factory className="w-5 h-5 text-teal-600" />
-                Évolution des Revenus par Mine (12 mois)
+                {t('pages.sales.revenueByMine')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {revenueByMiningCompany.length === 0 || !revenueByMiningCompany.some(d => Object.keys(d).length > 1) ? (
                 <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
                   <Factory className="w-12 h-12 mb-3 opacity-30" />
-                  <p className="text-sm font-medium">Aucune donnée disponible</p>
-                  <p className="text-xs mt-1">Les ventes apparaîtront ici au fur et à mesure</p>
+                  <p className="text-sm font-medium">{t('pages.sales.noDataAvailable')}</p>
+                  <p className="text-xs mt-1">{t('pages.sales.salesWillAppear')}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
@@ -703,16 +703,16 @@ export function SalesDashboard() {
         <Card className="border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 pb-6">
             <div className="mb-4">
-              <CardTitle className="text-2xl font-bold text-gray-900">Ventes Actives</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('pages.sales.activeSales')}</CardTitle>
             </div>
 
             {/* Filters Section */}
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[250px]">
-                <label className="text-xs text-gray-600 font-medium mb-1 block">Recherche</label>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">{t('pages.sales.searchLabel')}</label>
                 <input
                   type="text"
-                  placeholder="Rechercher par numéro ou client..."
+                  placeholder={t('pages.sales.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(event) => {
                     setSearchQuery(event.target.value);
@@ -722,7 +722,7 @@ export function SalesDashboard() {
               </div>
 
               <div className="min-w-[180px]">
-                <label className="text-xs text-gray-600 font-medium mb-1 block">Statut</label>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">{t('pages.sales.statusLabel')}</label>
                 <select
                   value={statusFilter}
                   onChange={(event) => {
@@ -730,25 +730,25 @@ export function SalesDashboard() {
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-all text-sm"
                 >
-                  <option value="all">Tous les statuts</option>
-                  <option value="create_sales">Création vente</option>
-                  <option value="pending_management_approval">En attente Management</option>
-                  <option value="management_approved">Approuvé Management</option>
-                  <option value="pending_for_customer_approval">En attente Client</option>
-                  <option value="customer_approved">Approuvé Client</option>
-                  <option value="waiting_for_payment">Attente paiement</option>
-                  <option value="virtual_payment">Paiement virtuel</option>
-                  <option value="payment_received">Paiement reçu</option>
-                  <option value="completed">Complété</option>
-                  <option value="management_rejected">Rejeté Management</option>
-                  <option value="customer_rejected">Rejeté Client</option>
+                  <option value="all">{t('pages.sales.allStatuses')}</option>
+                  <option value="create_sales">{t('pages.sales.statusCreateSales')}</option>
+                  <option value="pending_management_approval">{t('pages.sales.statusPendingManagement')}</option>
+                  <option value="management_approved">{t('pages.sales.statusManagementApproved')}</option>
+                  <option value="pending_for_customer_approval">{t('pages.sales.statusPendingCustomer')}</option>
+                  <option value="customer_approved">{t('pages.sales.statusCustomerApproved')}</option>
+                  <option value="waiting_for_payment">{t('pages.sales.statusWaitingPayment')}</option>
+                  <option value="virtual_payment">{t('pages.sales.statusVirtualPayment')}</option>
+                  <option value="payment_received">{t('pages.sales.statusPaymentReceived')}</option>
+                  <option value="completed">{t('pages.sales.statusCompleted')}</option>
+                  <option value="management_rejected">{t('pages.sales.statusManagementRejected')}</option>
+                  <option value="customer_rejected">{t('pages.sales.statusCustomerRejected')}</option>
                 </select>
               </div>
 
               <div className="min-w-[160px]">
                 <label className="text-xs text-gray-600 font-medium mb-1 block flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Date début
+                  {t('pages.sales.startDate')}
                 </label>
                 <input
                   type="date"
@@ -763,7 +763,7 @@ export function SalesDashboard() {
               <div className="min-w-[160px]">
                 <label className="text-xs text-gray-600 font-medium mb-1 block flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Date fin
+                  {t('pages.sales.endDate')}
                 </label>
                 <input
                   type="date"
@@ -784,7 +784,7 @@ export function SalesDashboard() {
                   variant="secondary"
                   className="text-sm py-2"
                 >
-                  Réinitialiser dates
+                  {t('pages.sales.resetDates')}
                 </Button>
               )}
             </div>
@@ -850,7 +850,7 @@ export function SalesDashboard() {
 
                       {/* Total Amount */}
                       <div className="mt-2 mb-2 bg-white/50 rounded p-2">
-                        <p className="text-xs text-gray-500 mb-0.5">Montant Total</p>
+                        <p className="text-xs text-gray-500 mb-0.5">{t('pages.sales.totalAmount')}</p>
                         <p className="text-base font-bold text-gray-900">
                           {formatCurrency(sale.amount)}
                         </p>
@@ -859,13 +859,13 @@ export function SalesDashboard() {
                       {/* Quantity and Royalties */}
                       <div className="grid grid-cols-2 gap-2 mb-2">
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Quantité</p>
+                          <p className="text-xs text-gray-500 mb-0.5">{t('pages.sales.quantity')}</p>
                           <p className="text-xs font-semibold text-gray-700">
                             {sale.quantity.toFixed(2)} oz
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Royalties</p>
+                          <p className="text-xs text-gray-500 mb-0.5">{t('pages.sales.royalties')}</p>
                           <p className="text-xs font-semibold text-emerald-600">
                             {formatCurrency(sale.royalty)}
                           </p>
@@ -880,7 +880,7 @@ export function SalesDashboard() {
 
                       {/* Date at bottom */}
                       <div className="mt-2 pt-2 border-t border-gray-200/50 text-xs text-gray-500">
-                        {new Date(sale.createdDate).toLocaleDateString('fr-FR', {
+                        {new Date(sale.createdDate).toLocaleDateString(i18n.language, {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric'
@@ -900,8 +900,8 @@ export function SalesDashboard() {
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
                       <DollarSign className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-600 text-lg font-medium">Aucune vente active trouvée</p>
-                    <p className="text-gray-400 text-sm">Essayez de modifier vos critères de recherche ou créez une nouvelle vente</p>
+                    <p className="text-gray-600 text-lg font-medium">{t('pages.sales.noActiveSales')}</p>
+                    <p className="text-gray-400 text-sm">{t('pages.sales.adjustSearchCriteria')}</p>
                   </div>
                 </div>
               )}
@@ -916,7 +916,7 @@ export function SalesDashboard() {
                 <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
                   <CheckCircle className="h-6 w-6 text-white" />
                 </div>
-                Ventes Complétées
+                {t('pages.sales.completedSales')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 bg-gray-50">
@@ -925,25 +925,25 @@ export function SalesDashboard() {
                   <thead className="bg-gray-100 border-b-2 border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Numéro
+                        {t('pages.sales.number')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Client
+                        {t('pages.sales.customer')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Quantité
+                        {t('pages.sales.quantity')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Montant
+                        {t('pages.sales.amount')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Statut
+                        {t('pages.sales.status')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Date
+                        {t('pages.sales.date')}
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Actions
+                        {t('pages.sales.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -974,7 +974,7 @@ export function SalesDashboard() {
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <span className="text-sm text-gray-600">
-                              {new Date(sale.createdDate).toLocaleDateString('fr-FR', {
+                              {new Date(sale.createdDate).toLocaleDateString(i18n.language, {
                                 year: 'numeric',
                                 month: 'short',
                                 day: 'numeric'
@@ -991,7 +991,7 @@ export function SalesDashboard() {
                               }}
                               className="text-xs font-semibold hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
                             >
-                              Voir Détails
+                              {t('pages.sales.viewDetails')}
                             </Button>
                           </td>
                         </tr>
@@ -1003,7 +1003,7 @@ export function SalesDashboard() {
 
               {completedSales.length === 0 && (
                 <div className="text-center py-12 bg-white rounded-lg">
-                  <p className="text-gray-500 text-sm">Aucune vente complétée à afficher</p>
+                  <p className="text-gray-500 text-sm">{t('pages.sales.noCompletedSales')}</p>
                 </div>
               )}
             </CardContent>

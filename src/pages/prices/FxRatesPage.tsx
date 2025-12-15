@@ -509,18 +509,19 @@ export function FxRatesPage() {
     <MainLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-1">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">FX Rates Management</h1>
-            <p className="text-gray-600 mt-1">Track and manage exchange rates from multiple sources</p>
+            <h1 className="text-2xl font-bold text-slate-700">FX Rates Management</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Track and manage exchange rates from multiple sources</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={handleRefresh}
               disabled={refreshing}
+              className="text-sm"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             {activeTab !== 'analysis' && activeTab !== 'comparison' && (
@@ -528,20 +529,21 @@ export function FxRatesPage() {
                 variant="outline"
                 onClick={exportToExcel}
                 disabled={loading}
+                className="text-sm"
               >
-                <FileDown className="w-4 h-4 mr-2" />
+                <FileDown className="w-3.5 h-3.5 mr-1.5" />
                 Export Excel
               </Button>
             )}
             {activeTab === 'daily' && (
-              <Button onClick={() => setShowAddModal(true)}>
-                <Plus className="w-4 h-4 mr-2" />
+              <Button onClick={() => setShowAddModal(true)} className="text-sm bg-[#B8860B] hover:bg-[#9a7109]">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Add Daily Rate
               </Button>
             )}
             {activeTab === 'customer' && (
-              <Button onClick={() => setShowCustomerRateModal(true)}>
-                <Plus className="w-4 h-4 mr-2" />
+              <Button onClick={() => setShowCustomerRateModal(true)} className="text-sm bg-[#B8860B] hover:bg-[#9a7109]">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Add Customer Rate
               </Button>
             )}
@@ -553,13 +555,13 @@ export function FxRatesPage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-6">
             <button
               onClick={() => setActiveTab('daily')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'daily'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[#B8860B] text-[#B8860B]'
+                  : 'border-transparent text-gray-500 hover:text-slate-700 hover:border-gray-300'
               }`}
             >
               <Calendar className="w-4 h-4 inline mr-2" />
@@ -567,10 +569,10 @@ export function FxRatesPage() {
             </button>
             <button
               onClick={() => setActiveTab('monthly')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'monthly'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[#B8860B] text-[#B8860B]'
+                  : 'border-transparent text-gray-500 hover:text-slate-700 hover:border-gray-300'
               }`}
             >
               <TrendingUp className="w-4 h-4 inline mr-2" />
@@ -578,10 +580,10 @@ export function FxRatesPage() {
             </button>
             <button
               onClick={() => setActiveTab('customer')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'customer'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[#B8860B] text-[#B8860B]'
+                  : 'border-transparent text-gray-500 hover:text-slate-700 hover:border-gray-300'
               }`}
             >
               <DollarSign className="w-4 h-4 inline mr-2" />
@@ -589,10 +591,10 @@ export function FxRatesPage() {
             </button>
             <button
               onClick={() => setActiveTab('comparison')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'comparison'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[#B8860B] text-[#B8860B]'
+                  : 'border-transparent text-gray-500 hover:text-slate-700 hover:border-gray-300'
               }`}
             >
               <Filter className="w-4 h-4 inline mr-2" />
@@ -600,10 +602,10 @@ export function FxRatesPage() {
             </button>
             <button
               onClick={() => setActiveTab('analysis')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'analysis'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[#B8860B] text-[#B8860B]'
+                  : 'border-transparent text-gray-500 hover:text-slate-700 hover:border-gray-300'
               }`}
             >
               <BarChart className="w-4 h-4 inline mr-2" />

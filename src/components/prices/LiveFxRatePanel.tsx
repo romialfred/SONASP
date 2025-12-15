@@ -94,24 +94,24 @@ export function LiveFxRatePanel() {
   return (
     <>
       {/* Live FX Rates Banner */}
-      <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 rounded-lg p-4 mb-6 shadow-lg">
+      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 rounded-xl p-3 mb-6 shadow-lg border border-slate-500/20">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Globe className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-500/20 p-2.5 rounded-lg border border-emerald-400/30">
+              <Globe className="w-5 h-5 text-emerald-300" />
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Live Foreign Exchange Rates</p>
-              <div className="flex items-baseline gap-3 mt-1">
-                <span className="text-2xl font-bold text-white">
+              <p className="text-slate-200 text-xs font-medium">Live Foreign Exchange Rates</p>
+              <div className="flex items-baseline gap-3 mt-0.5">
+                <span className="text-xl font-bold text-white">
                   {fxRates.size} Currency Pairs
                 </span>
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-emerald-300 font-medium">Real-time</span>
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-emerald-300 font-medium">Real-time</span>
                 </div>
               </div>
-              <p className="text-blue-200 text-xs mt-1">
+              <p className="text-slate-300 text-xs mt-0.5">
                 Updated: {lastUpdate.toLocaleTimeString()} • Source: Frankfurter API
               </p>
             </div>
@@ -119,11 +119,11 @@ export function LiveFxRatePanel() {
           <button
             onClick={() => fetchFxData(true)}
             disabled={refreshing}
-            className="bg-white/20 hover:bg-white/30 p-3 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg transition-colors disabled:opacity-50 border border-white/10"
             title="Refresh now"
           >
             <RefreshCw
-              className={`w-5 h-5 text-white ${refreshing ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 text-white ${refreshing ? 'animate-spin' : ''}`}
             />
           </button>
         </div>
@@ -160,36 +160,37 @@ export function LiveFxRatePanel() {
               key={currencyInfo.pair}
               className={`bg-gradient-to-br from-white ${
                 isPositive ? 'to-green-50 border-l-4 border-green-500' : 'to-red-50 border-l-4 border-red-500'
-              }`}
+              } transition-all hover:shadow-md`}
             >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
                   <div>
-                    <p className="text-xs text-gray-500 font-medium">
-                      {currencyInfo.label}
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">
+                      {currencyInfo.label.split(' / ')[0]} / {currencyInfo.label.split(' / ')[1].split(' ')[0]}
                     </p>
-                    <p className="text-lg font-bold text-gray-900 mt-1">
+                    <p className="text-base font-bold text-gray-900 mt-0.5">
                       {currencyInfo.pair}
                     </p>
                   </div>
-                  <div className="text-2xl">{currencyInfo.flag}</div>
+                  <div className="text-xl">{currencyInfo.flag}</div>
                 </div>
 
-                <div className="mt-3">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">
+                <div className="mt-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-bold text-gray-900">
                       {formatFxRate(rate.rate, currencyInfo.pair.includes('GNF') ? 2 : 6)}
                     </span>
+                    <span className="text-[10px] text-gray-400 uppercase font-medium">{currencyInfo.pair.split('/')[0]}</span>
                   </div>
 
                   <div className="flex items-center gap-1 mt-1">
                     {isPositive ? (
-                      <ArrowUpRight className="w-4 h-4 text-green-600" />
+                      <ArrowUpRight className="w-3.5 h-3.5 text-green-600" />
                     ) : (
-                      <ArrowDownRight className="w-4 h-4 text-red-600" />
+                      <ArrowDownRight className="w-3.5 h-3.5 text-red-600" />
                     )}
                     <p
-                      className={`text-sm font-medium ${
+                      className={`text-xs font-medium ${
                         isPositive ? 'text-green-600' : 'text-red-600'
                       }`}
                     >
@@ -199,8 +200,8 @@ export function LiveFxRatePanel() {
                     </p>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex justify-between text-xs text-gray-500">
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <div className="flex justify-between text-[10px] text-gray-500">
                       <span>Live Rate</span>
                       <span className="font-medium text-gray-700">
                         {formatFxRate(rate.rate, currencyInfo.pair.includes('GNF') ? 2 : 6)}
@@ -215,21 +216,21 @@ export function LiveFxRatePanel() {
       </div>
 
       {/* Info Bar */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs text-slate-600">
                 Last updated: {lastUpdate.toLocaleTimeString()}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-emerald-600">Live Data</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-xs font-medium text-emerald-600">Live Data</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Next update in: {countdown}s</span>
             {refreshing && (
               <span className="text-emerald-600 font-medium">Updating...</span>

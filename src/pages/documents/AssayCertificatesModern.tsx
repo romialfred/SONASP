@@ -369,110 +369,176 @@ export function AssayCertificatesModern() {
                 </div>
               </Card>
             ) : (
-              filteredShippings.map(shipping => (
-                <Card
-                  key={shipping.id}
-                  className="group hover:shadow-lg transition-all duration-200 border-l-4 border-[#B8860B]"
-                >
-                  <div className="p-4">
-                    {/* Expedition Header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Ship className="w-4 h-4 text-[#B8860B]" />
-                          <h3 className="font-bold text-gray-900 text-sm">
-                            {shipping.expedition_lot_number}
-                          </h3>
-                        </div>
-                        <div className="space-y-1 text-xs text-gray-600">
-                          <div className="flex items-center gap-1.5">
-                            <Package className="w-3 h-3" />
-                            <span>{shipping.shipped_to_company}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Scale className="w-3 h-3" />
-                            <span>{shipping.total_net_weight_grams.toFixed(0)}g</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3" />
-                            <span>
-                              {new Date(shipping.created_at).toLocaleDateString('fr-FR')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setUploadingForShipping(shipping.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
+              filteredShippings.map((shipping, idx) => {
+                // Gradient colors for tiles
+                const tileColors = [
+                  'from-blue-50 to-blue-100 border-l-4 border-blue-500',
+                  'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500',
+                  'from-amber-50 to-amber-100 border-l-4 border-amber-500',
+                  'from-purple-50 to-purple-100 border-l-4 border-purple-500',
+                  'from-rose-50 to-rose-100 border-l-4 border-rose-500',
+                  'from-cyan-50 to-cyan-100 border-l-4 border-cyan-500',
+                ];
+                const tileColor = tileColors[idx % tileColors.length];
 
-                    {/* Certificates List */}
-                    <div className="border-t border-gray-200 pt-3 space-y-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-700">
-                          Certificats ({shipping.certificates.length})
-                        </span>
-                      </div>
+                // Border animation colors based on approval status
+                const hasApproved = shipping.certificates.some(c => c.approval_status === 'approved');
+                const hasPending = shipping.certificates.some(c => c.approval_status === 'pending');
+                const borderAnimationColor = hasApproved ? 'hover:shadow-emerald-400/50' : 'hover:shadow-red-400/50';
 
-                      {shipping.certificates.length === 0 ? (
-                        <div className="text-center py-4 bg-gray-50 rounded-lg">
-                          <FileText className="h-8 w-8 mx-auto text-gray-300 mb-2" />
-                          <p className="text-xs text-gray-500">Aucun certificat</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setUploadingForShipping(shipping.id)}
-                            className="mt-2 text-xs"
-                          >
-                            Ajouter
-                          </Button>
-                        </div>
-                      ) : (
-                        shipping.certificates.map(cert => (
-                          <div
-                            key={cert.id}
-                            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                          >
-                            <div className="flex-1 min-w-0 mr-2">
-                              <div className="flex items-center gap-2 mb-1">
-                                <FileText className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                                <p className="text-xs font-medium text-gray-900 truncate">
-                                  {cert.file_name}
-                                </p>
-                              </div>
-                              {cert.parsed_data?.gold_content_gpt && (
-                                <p className="text-xs text-gray-600">
-                                  Au: {cert.parsed_data.gold_content_gpt} g/t
-                                </p>
-                              )}
+                return (
+                  <Card
+                    key={shipping.id}
+                    className={`group bg-gradient-to-br ${tileColor} hover:shadow-xl transition-all duration-300 relative overflow-hidden ${borderAnimationColor}`}
+                    style={{
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                    }}
+                    onMouseEnter={(e) => {
+                      const color = hasApproved ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${color}, 0 10px 30px rgba(0,0,0,0.15)`;
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div className="p-4">
+                      {/* Expedition Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="p-1.5 bg-white/70 rounded-lg">
+                              <Ship className="w-4 h-4 text-slate-700" />
                             </div>
-                            <div className="flex items-center gap-2">
-                              {getApprovalStatusBadge(cert.approval_status)}
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedCertificate(cert);
-                                  setShowPdfModal(true);
-                                }}
-                                className="h-7 w-7 p-0 bg-[#B8860B] hover:bg-[#9a7109] text-white"
-                                title="Voir le PDF"
+                            <h3 className="font-bold text-slate-900 text-base">
+                              {shipping.expedition_lot_number}
+                            </h3>
+                          </div>
+                          <div className="space-y-1.5 text-xs text-slate-700">
+                            <div className="flex items-center gap-2 bg-white/50 rounded px-2 py-1">
+                              <Package className="w-3.5 h-3.5 text-slate-600" />
+                              <span className="font-medium">{shipping.shipped_to_company}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-white/50 rounded px-2 py-1">
+                              <Scale className="w-3.5 h-3.5 text-slate-600" />
+                              <span className="font-medium">{(shipping.total_net_weight_grams / 1000).toFixed(2)} kg</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-white/50 rounded px-2 py-1">
+                              <Calendar className="w-3.5 h-3.5 text-slate-600" />
+                              <span className="font-medium">
+                                {new Date(shipping.created_at).toLocaleDateString('fr-FR', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUploadingForShipping(shipping.id)}
+                          className="h-8 w-8 p-0 bg-white/70 hover:bg-white"
+                        >
+                          <Plus className="w-4 h-4 text-slate-700" />
+                        </Button>
+                      </div>
+
+                      {/* Certificates List */}
+                      <div className="border-t border-white/50 pt-3 space-y-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-slate-700 bg-white/60 px-2 py-1 rounded">
+                            Certificats ({shipping.certificates.length})
+                          </span>
+                        </div>
+
+                        {shipping.certificates.length === 0 ? (
+                          <div className="text-center py-4 bg-white/60 rounded-lg border-2 border-dashed border-slate-300">
+                            <FileText className="h-8 w-8 mx-auto text-slate-400 mb-2" />
+                            <p className="text-xs text-slate-600 font-medium">Aucun certificat</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setUploadingForShipping(shipping.id)}
+                              className="mt-2 text-xs"
+                            >
+                              Ajouter
+                            </Button>
+                          </div>
+                        ) : (
+                          shipping.certificates.map(cert => {
+                            const certDate = cert.certificate_date
+                              ? new Date(cert.certificate_date).toLocaleDateString('fr-FR', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })
+                              : 'Date inconnue';
+
+                            return (
+                              <div
+                                key={cert.id}
+                                className="flex items-center justify-between p-2.5 bg-white/80 rounded-lg hover:bg-white transition-all hover:shadow-md group/cert"
                               >
-                                <Eye className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                                <div className="flex-1 min-w-0 mr-2">
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                                    <p className="text-xs font-semibold text-slate-900 truncate">
+                                      {cert.file_name.replace(/^[a-f0-9-]+_/, '').replace(/\.[^.]+$/, '')}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-xs">
+                                    {cert.parsed_data?.gold_content_gpt && (
+                                      <div className="flex items-center gap-1 bg-yellow-100 px-2 py-0.5 rounded">
+                                        <span className="font-bold text-yellow-800">Au:</span>
+                                        <span className="font-bold text-yellow-900">
+                                          {cert.parsed_data.gold_content_gpt} g/t
+                                        </span>
+                                      </div>
+                                    )}
+                                    {cert.parsed_data?.gold_purity_percentage && (
+                                      <div className="flex items-center gap-1 bg-amber-100 px-2 py-0.5 rounded">
+                                        <span className="font-semibold text-amber-800">
+                                          {cert.parsed_data.gold_purity_percentage}%
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{certDate}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {getApprovalStatusBadge(cert.approval_status)}
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedCertificate(cert);
+                                      setShowPdfModal(true);
+                                    }}
+                                    className={`h-8 w-8 p-0 transition-all ${
+                                      cert.approval_status === 'approved'
+                                        ? 'bg-emerald-500 hover:bg-emerald-600'
+                                        : 'bg-blue-500 hover:bg-blue-600'
+                                    } text-white shadow-md hover:shadow-lg`}
+                                    title="Visualiser le certificat"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                );
+              })
             )}
           </div>
         )}

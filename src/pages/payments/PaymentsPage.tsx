@@ -171,9 +171,9 @@ export function PaymentsPage() {
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount));
 
     // Utiliser le symbole $ au lieu de USD
     const symbol = currency === 'USD' ? '$' : currency;
@@ -402,113 +402,117 @@ export function PaymentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
-                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
-                        Invoice & Vente
+                    <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                        Numéro Invoice
                       </th>
-                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                        Numéro Vente
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
                         Client
                       </th>
-                      <th className="px-4 py-3.5 text-right text-xs text-gray-600">
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                        Contact
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs text-gray-600">
                         Montant
                       </th>
-                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
-                        Date d'échéance
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
+                        Date échéance
                       </th>
-                      <th className="px-4 py-3.5 text-left text-xs text-gray-600">
+                      <th className="px-3 py-3 text-left text-xs text-gray-600">
                         Méthode
                       </th>
-                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
+                      <th className="px-3 py-3 text-center text-xs text-gray-600">
                         Statut
                       </th>
-                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
-                        Documents
+                      <th className="px-3 py-3 text-center text-xs text-gray-600">
+                        Docs
                       </th>
-                      <th className="px-4 py-3.5 text-center text-xs text-gray-600">
+                      <th className="px-3 py-3 text-center text-xs text-gray-600">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
+                  <tbody className="bg-white">
                     {filteredPayments.map((payment) => {
                       const statusConfig = getStatusConfig(payment.payment_status_category);
+
+                      // Couleur de fond pour la ligne entière selon le statut
+                      let rowBgColor = 'bg-white';
+                      if (payment.payment_status_category === 'paid') {
+                        rowBgColor = 'bg-emerald-50/40';
+                      } else if (payment.payment_status_category === 'pending') {
+                        rowBgColor = 'bg-amber-50/40';
+                      } else if (payment.payment_status_category === 'overdue') {
+                        rowBgColor = 'bg-red-50/40';
+                      } else if (payment.payment_status_category === 'rejected') {
+                        rowBgColor = 'bg-red-50/40';
+                      }
+
                       return (
                         <tr
                           key={payment.id}
-                          className="hover:bg-blue-50/30 transition-all duration-200 cursor-pointer group border-b border-gray-50"
+                          className={`${rowBgColor} hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group border-b border-gray-100`}
                           onClick={() => navigate(`/payments/${payment.id}`)}
                         >
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${statusConfig.bgColor} border border-opacity-20`}>
-                                <FileText className={`h-3.5 w-3.5 ${statusConfig.color}`} />
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
-                                  {payment.invoice_number}
-                                </p>
-                                <p className="text-xs text-gray-500">{payment.sale_number}</p>
-                              </div>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <FileText className={`h-3.5 w-3.5 ${statusConfig.color}`} />
+                              <span className="text-xs text-gray-900 group-hover:text-blue-600 transition-colors">
+                                {payment.invoice_number}
+                              </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2.5">
-                              <div className="p-1.5 rounded-full bg-amber-50 border border-amber-100">
-                                <User className="h-3.5 w-3.5 text-amber-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-800">{payment.customer_name}</p>
-                                <p className="text-xs text-gray-500">{payment.company_name}</p>
-                              </div>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-700">{payment.sale_number}</span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-900">{payment.customer_name}</span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-700">{payment.company_name}</span>
+                          </td>
+                          <td className="px-3 py-3 text-right whitespace-nowrap">
+                            <span className="text-sm text-gray-900">
+                              {formatCurrency(payment.amount, payment.currency)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-3 w-3 text-gray-400" />
+                              <span className="text-xs text-gray-700">{formatDate(payment.due_date)}</span>
+                              {payment.days_overdue && payment.days_overdue > 0 && (
+                                <span className="text-xs text-red-600 ml-1">
+                                  (+{payment.days_overdue}j)
+                                </span>
+                              )}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5">
-                            <div className="text-right bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg py-2 px-3 border border-emerald-100">
-                              <p className="text-sm text-gray-900">
-                                {formatCurrency(payment.amount, payment.currency)}
-                              </p>
-                              <p className="text-xs text-gray-500">{payment.currency === 'USD' ? 'Dollars' : payment.currency}</p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-2 px-3 border border-blue-100">
-                              <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                              <div>
-                                <p className="text-xs text-gray-800">{formatDate(payment.due_date)}</p>
-                                {payment.days_overdue && payment.days_overdue > 0 && (
-                                  <p className="text-xs text-red-600">
-                                    {payment.days_overdue}j en retard
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-2 px-3 border border-purple-100">
-                              <CreditCard className="h-3.5 w-3.5 text-purple-600" />
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <CreditCard className="h-3 w-3 text-gray-400" />
                               <span className="text-xs text-gray-700">
                                 {payment.payment_method?.replace(/_/g, ' ') || 'N/A'}
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-center">
+                          <td className="px-3 py-3 text-center whitespace-nowrap">
                             <StatusBadge
                               label={payment.payment_status_category}
                               variant={statusConfig.variant}
                             />
                           </td>
-                          <td className="px-4 py-3.5 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 rounded-lg border border-indigo-100">
-                                <FileText className="h-3.5 w-3.5 text-indigo-600" />
-                                <span className="text-xs text-gray-700">{payment.document_count || 0}</span>
-                              </div>
+                          <td className="px-3 py-3 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="text-xs text-gray-600">{payment.document_count || 0}</span>
                               {payment.proof_count > 0 && (
-                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-center">
+                          <td className="px-3 py-3 text-center whitespace-nowrap">
                             <Button
                               variant="outline"
                               size="sm"
@@ -516,9 +520,9 @@ export function PaymentsPage() {
                                 e.stopPropagation();
                                 navigate(`/payments/${payment.id}`);
                               }}
-                              className="opacity-70 group-hover:opacity-100 transition-all hover:bg-blue-50 hover:border-blue-200"
+                              className="opacity-70 group-hover:opacity-100 transition-all"
                             >
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3 w-3" />
                             </Button>
                           </td>
                         </tr>

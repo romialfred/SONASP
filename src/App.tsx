@@ -46,6 +46,7 @@ import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
 import { PaymentRecordPage } from './pages/payments/PaymentRecordPage';
 import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
 import { AnalyticsDashboardEnhanced as AnalyticsDashboard } from './pages/analytics/AnalyticsDashboardEnhanced';
+import { AnalyticsIntelligenceCenter } from './pages/analytics/AnalyticsIntelligenceCenter';
 import { ReportsDashboard } from './pages/reports/ReportsDashboard';
 import { UserManagement } from './pages/admin/UserManagement';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
@@ -569,6 +570,14 @@ function AppRoutes() {
 
             <Route
               path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsIntelligenceCenter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/legacy"
               element={
                 <ProtectedRoute>
                   <AnalyticsDashboard />

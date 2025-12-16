@@ -323,58 +323,46 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
 ⚠️ Voulez-vous confirmer l'enregistrement de cette production ?
     `.trim();
 
-    // Afficher la confirmation
-    showConfirm(
-      confirmationMessage,
-      async () => {
-        try {
-          setLoading(true);
+    try {
+      setLoading(true);
 
-          const data = {
-            production_date: formData.production_date,
-            bullion_grams: bullionGramsToSave,
-            estimated_gold_pct: parseFloat(formData.estimated_gold_pct),
-            estimated_silver_pct: formData.estimated_silver_pct ? parseFloat(formData.estimated_silver_pct) : 0,
-            estimated_fineness_pct: parseFloat(formData.estimated_gold_pct),
-            bar_reference: formData.bar_reference || undefined,
-            mining_company_id: formData.mining_company_id || undefined,
-            notes: formData.notes || undefined,
-            site_id: userSiteId,
-          };
+      const data = {
+        production_date: formData.production_date,
+        bullion_grams: bullionGramsToSave,
+        estimated_gold_pct: parseFloat(formData.estimated_gold_pct),
+        estimated_silver_pct: formData.estimated_silver_pct ? parseFloat(formData.estimated_silver_pct) : 0,
+        estimated_fineness_pct: parseFloat(formData.estimated_gold_pct),
+        bar_reference: formData.bar_reference || undefined,
+        mining_company_id: formData.mining_company_id || undefined,
+        notes: formData.notes || undefined,
+        site_id: userSiteId,
+      };
 
-          console.log('📊 Données de production à enregistrer:', data);
-          console.log('👤 Utilisateur site_id:', userSiteId);
-          console.log('🏢 Mining company ID:', formData.mining_company_id);
+      console.log('📊 Données de production à enregistrer:', data);
+      console.log('👤 Utilisateur site_id:', userSiteId);
+      console.log('🏢 Mining company ID:', formData.mining_company_id);
 
-          if (production?.id) {
-            const updated = await dailyProductionService.updateProduction(production.id, data);
-            console.log('✅ Production mise à jour:', updated);
-            showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
-            // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
-            await new Promise(resolve => setTimeout(resolve, 1500));
-          } else {
-            const newProduction = await dailyProductionService.createProduction(data);
-            console.log('✅ Production créée:', newProduction);
-            showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
-            // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
-            await new Promise(resolve => setTimeout(resolve, 1500));
-          }
-
-          onSuccess();
-        } catch (error: any) {
-          console.error('Error saving production:', error);
-          showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
-        } finally {
-          setLoading(false);
-        }
-      },
-      {
-        title: production ? '✏️ Confirmer la Mise à Jour' : '✅ Confirmer l\'Enregistrement',
-        type: 'warning',
-        confirmText: production ? 'Mettre à jour' : 'Enregistrer',
-        cancelText: 'Annuler'
+      if (production?.id) {
+        const updated = await dailyProductionService.updateProduction(production.id, data);
+        console.log('✅ Production mise à jour:', updated);
+        showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
+        // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      } else {
+        const newProduction = await dailyProductionService.createProduction(data);
+        console.log('✅ Production créée:', newProduction);
+        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+        // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
-    );
+
+      onSuccess();
+    } catch (error: any) {
+      console.error('Error saving production:', error);
+      showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadDocuments = async (productionId: string) => {

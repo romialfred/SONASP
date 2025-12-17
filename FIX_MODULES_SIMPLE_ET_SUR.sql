@@ -1,27 +1,24 @@
 /*
   ==========================================
-  CORRECTION MODULES - VERSION SÉCURISÉE
+  CORRECTION MODULES - VERSION SIMPLE
   ==========================================
 
-  Cette version NE SUPPRIME PAS les modules existants
-  Elle les met à jour et ajoute les nouveaux
-  Les permissions utilisateurs sont préservées
+  Cette version est simplifiée et sans erreurs de syntaxe
+  Corrige le bug des anciens modules dans User Management
   ==========================================
 */
 
 -- ==========================================
--- STEP 1: DIAGNOSTIC INITIAL
+-- ETAPE 1: Vérifier l'état actuel
 -- ==========================================
 
-SELECT 'AVANT CORRECTION' as etape;
-
 SELECT
-  COUNT(*) as modules_avant,
+  COUNT(*) as total_modules_avant,
   COUNT(CASE WHEN is_active THEN 1 END) as actifs_avant
 FROM modules;
 
 -- ==========================================
--- STEP 2: AJOUTER sort_order SI MANQUANT
+-- ETAPE 2: Ajouter sort_order si besoin
 -- ==========================================
 
 DO $$
@@ -31,19 +28,16 @@ BEGIN
     WHERE table_name = 'modules' AND column_name = 'sort_order'
   ) THEN
     ALTER TABLE modules ADD COLUMN sort_order integer DEFAULT 0;
-    RAISE NOTICE '✓ Colonne sort_order ajoutée';
-  ELSE
-    RAISE NOTICE '✓ Colonne sort_order existe déjà';
   END IF;
 END $$;
 
 -- ==========================================
--- STEP 3: INSÉRER/METTRE À JOUR LES 43 MODULES
+-- ETAPE 3: Insérer/Mettre à jour les 43 modules
 -- ==========================================
 
 INSERT INTO modules (name, display_name, description, category, sort_order, is_active) VALUES
 
--- ========== BATCHES MANAGEMENT (8 modules) ==========
+-- BATCHES MANAGEMENT (8 modules)
 ('dashboard', 'Tableau de Bord', 'Tableaux de bord et vues d''ensemble', 'batches', 1, true),
 ('production_daily', 'Production Quotidienne', 'Enregistrement de la production quotidienne', 'batches', 2, true),
 ('production_view', 'Consultation Production', 'Voir les données de production', 'batches', 3, true),
@@ -53,7 +47,7 @@ INSERT INTO modules (name, display_name, description, category, sort_order, is_a
 ('documents_assay', 'Certificats d''Essai', 'Gestion des certificats d''essai', 'batches', 30, true),
 ('documents_export_licenses', 'Licences d''Export', 'Gestion des licences d''exportation', 'batches', 31, true),
 
--- ========== OPERATIONS (7 modules) ==========
+-- OPERATIONS (7 modules)
 ('freight_shipments', 'Expéditions de Fret', 'Gestion des expéditions de fret internationales', 'operations', 20, true),
 ('freight_customs', 'Douanes & Documents', 'Factures et documents douaniers', 'operations', 21, true),
 ('inventory_gold', 'Inventaire Or', 'Gestion du stock d''or', 'operations', 40, true),
@@ -62,7 +56,7 @@ INSERT INTO modules (name, display_name, description, category, sort_order, is_a
 ('refining_process', 'Processus de Raffinage', 'Gestion du processus de raffinage', 'operations', 51, true),
 ('refining_freight', 'Fret Raffinage', 'Expéditions vers raffineries', 'operations', 52, true),
 
--- ========== SALES MANAGEMENT (10 modules) ==========
+-- SALES MANAGEMENT (10 modules)
 ('sales_view', 'Consultation Ventes', 'Voir les ventes d''or', 'sales', 60, true),
 ('sales_create', 'Création Vente', 'Créer nouvelle vente', 'sales', 61, true),
 ('sales_trade_space', 'Espace Trading', 'Espace de trading et ventes en direct', 'sales', 62, true),
@@ -74,7 +68,7 @@ INSERT INTO modules (name, display_name, description, category, sort_order, is_a
 ('payments_approve', 'Approuver Paiements', 'Approuver les paiements clients', 'sales', 82, true),
 ('payments_virtual', 'Paiements Virtuels', 'Gérer les paiements virtuels', 'sales', 83, true),
 
--- ========== INSIGHTS & REPORTS (7 modules) ==========
+-- INSIGHTS & REPORTS (7 modules)
 ('analytics_dashboard', 'Tableau Analytique', 'Analyses et intelligence d''affaires', 'analytics', 90, true),
 ('analytics_intelligence', 'Intelligence Center', 'Centre d''intelligence avancée', 'analytics', 91, true),
 ('reports_generate', 'Génération Rapports', 'Générer et gérer les rapports', 'analytics', 92, true),
@@ -83,7 +77,7 @@ INSERT INTO modules (name, display_name, description, category, sort_order, is_a
 ('prices_gold', 'Prix de l''Or', 'Gestion des prix de l''or (LBMA)', 'analytics', 110, true),
 ('prices_fx_rates', 'Taux de Change', 'Gestion des taux FX (USD/CFA/GNF)', 'analytics', 111, true),
 
--- ========== ADMINISTRATION (11 modules) ==========
+-- ADMINISTRATION (11 modules)
 ('stakeholders_mining', 'Sociétés Minières', 'Gestion des sociétés minières', 'system', 120, true),
 ('stakeholders_depositors', 'Déposants', 'Gestion des déposants', 'system', 121, true),
 ('stakeholders_freight', 'Compagnies de Fret', 'Gestion des compagnies de transport', 'system', 122, true),
@@ -97,8 +91,6 @@ INSERT INTO modules (name, display_name, description, category, sort_order, is_a
 ('audit_trail', 'Journal d''Audit', 'Consultation des logs d''audit', 'system', 140, true),
 ('approvals_dashboard', 'Tableau Approbations', 'Gestion des workflows d''approbation', 'system', 141, true)
 
--- SI MODULE EXISTE: le mettre à jour
--- SI MODULE N'EXISTE PAS: l'insérer
 ON CONFLICT (name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   description = EXCLUDED.description,
@@ -108,11 +100,8 @@ ON CONFLICT (name) DO UPDATE SET
   updated_at = now();
 
 -- ==========================================
--- STEP 4: DÉSACTIVER LES ANCIENS MODULES
+-- ETAPE 4: Désactiver les anciens modules
 -- ==========================================
-
--- Optionnel: Désactiver les modules qui ne sont pas dans notre liste
--- Commentez cette section si vous voulez garder vos anciens modules actifs
 
 UPDATE modules SET is_active = false
 WHERE name NOT IN (
@@ -133,10 +122,8 @@ WHERE name NOT IN (
 );
 
 -- ==========================================
--- STEP 5: VÉRIFICATION FINALE
+-- ETAPE 5: Vérification finale
 -- ==========================================
-
-SELECT 'APRÈS CORRECTION' as etape;
 
 -- Compter les modules
 SELECT
@@ -145,51 +132,23 @@ SELECT
   COUNT(CASE WHEN NOT is_active THEN 1 END) as modules_inactifs
 FROM modules;
 
--- Résumé par catégorie (modules actifs seulement)
+-- Résumé par catégorie
 SELECT
   category,
-  COUNT(*) as nombre_modules,
-  STRING_AGG(display_name, ', ' ORDER BY sort_order) as liste_modules
+  COUNT(*) as nombre
 FROM modules
 WHERE is_active = true
 GROUP BY category
-ORDER BY
-  CASE category
-    WHEN 'batches' THEN 1
-    WHEN 'operations' THEN 2
-    WHEN 'sales' THEN 3
-    WHEN 'analytics' THEN 4
-    WHEN 'system' THEN 5
-  END;
+ORDER BY category;
 
--- Liste détaillée des modules actifs
+-- Liste tous les modules actifs
 SELECT
-  category as "Catégorie",
-  name as "Nom Technique",
-  display_name as "Nom Affiché",
-  sort_order as "Ordre",
-  is_active as "Actif"
-FROM modules
-WHERE is_active = true
-ORDER BY
-  CASE category
-    WHEN 'batches' THEN 1
-    WHEN 'operations' THEN 2
-    WHEN 'sales' THEN 3
-    WHEN 'analytics' THEN 4
-    WHEN 'system' THEN 5
-  END,
-  sort_order;
-
--- Modules désactivés (si vous voulez les voir)
-SELECT
-  'MODULES DÉSACTIVÉS' as info,
   name,
   display_name,
   category
 FROM modules
-WHERE is_active = false;
+WHERE is_active = true
+ORDER BY category, sort_order;
 
--- Message final
-SELECT '✅ CORRECTION TERMINÉE - 43 modules actifs' as status;
-SELECT '📊 Résultats attendus: batches=8, operations=7, sales=10, analytics=7, system=11' as info;
+-- Message de succès
+SELECT 'CORRECTION TERMINEE - 43 modules installes' as statut;

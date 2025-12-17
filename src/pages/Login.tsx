@@ -142,7 +142,7 @@ export function Login() {
             )}
 
             <FormField
-              label="Username"
+              label={t('auth.username')}
               error={errors.email}
               required
             >
@@ -151,7 +151,7 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 error={!!errors.email}
-                placeholder="username"
+                placeholder={t('auth.username').toLowerCase()}
               />
             </FormField>
 

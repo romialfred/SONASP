@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDefaultRoute } from '@/lib/permissions';
+import { supabase } from '@/lib/supabase';
 
 export function Login() {
   const { t, i18n } = useTranslation();
@@ -71,6 +72,29 @@ export function Login() {
     }
   };
 
+  const handleMicrosoftSSO = async () => {
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email openid profile',
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        setErrors({ general: error.message });
+      }
+    } catch (error: any) {
+      setErrors({ general: error.message || 'SSO authentication failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
       <div className="absolute top-4 right-4">
@@ -87,15 +111,14 @@ export function Login() {
 
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-6">
             <img
-              src="/image.png"
+              src="/horizontal_-_colorx10.png"
               alt="Mansa Logo"
-              className="h-24 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl">Mansa Gold Tracker</CardTitle>
-          <CardDescription>Gold Sales Management Solution - {t('auth.login')}</CardDescription>
+          <CardDescription className="text-base font-medium text-gray-700">Gold Sales Management Solution - {t('auth.login')}</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -178,11 +201,36 @@ export function Login() {
               {loading ? t('auth.loggingIn') : t('auth.loginButton')}
             </Button>
 
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2 border-2"
+              onClick={handleMicrosoftSSO}
+              disabled={loading}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="12" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="12" width="10" height="10" fill="#00A4EF"/>
+                <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+              </svg>
+              Sign in with Microsoft
+            </Button>
+
             {!showTwoFactor && (
               <button
                 type="button"
                 onClick={() => setShowTwoFactor(true)}
-                className="w-full text-sm text-gray-600 hover:text-gray-800"
+                className="w-full text-sm text-gray-600 hover:text-gray-800 mt-2"
               >
                 Enable 2FA for this login
               </button>

@@ -271,30 +271,19 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       <div className="p-4 border-b border-amber-200/40 bg-gradient-to-r from-amber-50/50 to-transparent backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
-                <img
-                  src="/image.png"
-                  alt="Mansa Logo"
-                  className="w-10 h-10 object-contain relative rounded-xl"
-                />
-              </div>
-              <div>
-                <h2 className="text-slate-900 font-semibold text-sm leading-tight tracking-tight">
-                  Mansa Resources
-                </h2>
-                <span className="block text-xs text-slate-500">
-                  Gold Tracker
-                </span>
-              </div>
+            <div className="flex items-center gap-2">
+              <img
+                src="/horizontal_-_colorx10.png"
+                alt="Mansa Logo"
+                className="h-12 w-auto object-contain"
+              />
             </div>
           )}
           {collapsed && (
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
               <img
-                src="/image.png"
+                src="/horizontal_-_colorx10.png"
                 alt="Mansa Logo"
                 className="w-10 h-10 object-contain mx-auto relative rounded-xl"
               />

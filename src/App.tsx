@@ -11,6 +11,7 @@ import { DomainRestriction } from './components/auth/DomainRestriction';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import ActivateAccount from './pages/auth/ActivateAccount';
+import { AuthCallback } from './pages/auth/AuthCallback';
 import { GoldPricesPage } from './pages/prices/GoldPricesPage';
 import { FxRatesPage } from './pages/prices/FxRatesPage';
 import { AuditTrailPage } from './pages/AuditTrailPage';
@@ -117,6 +118,10 @@ function AppRoutes() {
                   <ActivateAccount />
                 </PublicRoute>
               }
+            />
+            <Route
+              path="/auth/callback"
+              element={<AuthCallback />}
             />
 
             {/* Main dashboard */}

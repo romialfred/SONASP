@@ -88,7 +88,7 @@ export function GlobalDashboardEnhanced() {
     try {
       setLoading(true);
 
-      // Fetch sales data with customers and mining companies
+      // Fetch sales data with customers
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
@@ -100,13 +100,10 @@ export function GlobalDashboardEnhanced() {
           status,
           created_at,
           customer_id,
-          mining_company_id,
+          seller_id,
+          seller_type,
           customers (
             name
-          ),
-          mining_companies (
-            name,
-            abbreviation
           )
         `)
         .order('sale_date', { ascending: false });
@@ -213,13 +210,13 @@ export function GlobalDashboardEnhanced() {
       // Fetch available stock from inventory
       const { data: inventoryData, error: inventoryError } = await supabase
         .from('gold_inventory')
-        .select('quantity_grams, quantity_oz')
-        .eq('is_available', true);
+        .select('quantity_available_oz')
+        .gt('quantity_available_oz', 0);
 
       let availableStock = 0;
       if (!inventoryError && inventoryData) {
         inventoryData.forEach((item: any) => {
-          availableStock += item.quantity_oz || 0;
+          availableStock += item.quantity_available_oz || 0;
         });
       }
 
@@ -353,7 +350,8 @@ export function GlobalDashboardEnhanced() {
       salesArray.forEach((sale: any) => {
         const saleDate = new Date(sale.sale_date || sale.created_at);
         const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
-        const companyName = sale.mining_companies?.abbreviation || 'Autre';
+        // Use seller_type to determine company label (seller_id would need lookup)
+        const companyName = sale.seller_type === 'mining_company' ? 'Mining Co.' : 'Other';
         const royalty = (sale.total_amount || 0) * ROYALTY_RATE;
 
         if (royaltiesByCompanyMonth[monthKey]) {

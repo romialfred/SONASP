@@ -185,7 +185,7 @@ export function Login() {
               </FormField>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -195,13 +195,6 @@ export function Login() {
                 />
                 <span className="text-sm text-gray-700">{t('auth.rememberMe')}</span>
               </label>
-
-              <a
-                href="/forgot-password"
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Forgot Password ? contact Administrator
-              </a>
             </div>
 
             <Button
@@ -237,6 +230,19 @@ export function Login() {
               </svg>
               <span className="font-medium">Sign in with Microsoft</span>
             </Button>
+
+            <div className="text-center mt-4">
+              <p className="text-xs text-gray-600">
+                Forgot Password ?{' '}
+                <a
+                  href="mailto:admin@mansaresources.com"
+                  className="font-medium hover:underline"
+                >
+                  <span className="text-amber-600">contact</span>{' '}
+                  <span className="text-blue-600">Administrator</span>
+                </a>
+              </p>
+            </div>
           </form>
         </CardContent>
       </Card>

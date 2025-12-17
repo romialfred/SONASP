@@ -158,10 +158,29 @@ export function SalesDashboard() {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const pending = salesData?.filter(s => s.status === SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES)?.length || 0;
-      const monthlyRevenue = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+
+      // Monthly Revenue: All sales this month except rejected ones
+      const monthlyRevenue = salesData?.filter(s => {
+        const saleDate = new Date(s.created_at);
+        const isThisMonth = saleDate >= startOfMonth;
+        const isNotRejected = s.status !== SALES_STATUSES.MANAGEMENT_REJECTED && s.status !== SALES_STATUSES.CUSTOMER_REJECTED;
+        return isThisMonth && isNotRejected;
+      })?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+
       const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.length || 0;
-      const pendingPayment = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.length || 0;
-      const pendingPaymentAmount = salesData?.filter(s => s.status === SALES_STATUSES.CUSTOMER_APPROVED || s.status === SALES_STATUSES.WAITING_FOR_PAYMENT)?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+
+      // Pending Payment: All sales awaiting payment including virtual payments
+      const pendingPayment = salesData?.filter(s =>
+        s.status === SALES_STATUSES.CUSTOMER_APPROVED ||
+        s.status === SALES_STATUSES.WAITING_FOR_PAYMENT ||
+        s.status === SALES_STATUSES.VIRTUAL_PAYMENT
+      )?.length || 0;
+
+      const pendingPaymentAmount = salesData?.filter(s =>
+        s.status === SALES_STATUSES.CUSTOMER_APPROVED ||
+        s.status === SALES_STATUSES.WAITING_FOR_PAYMENT ||
+        s.status === SALES_STATUSES.VIRTUAL_PAYMENT
+      )?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
 
       // Try to load inventory (optional - won't break if table doesn't exist)
       let totalInventory = 0;

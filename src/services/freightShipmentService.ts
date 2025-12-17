@@ -27,8 +27,12 @@ export interface FreightShipment {
   total_value_usd: number;
   total_value_local: number;
   production_count: number;
+  packing_list_pdf_path?: string | null;
+  consignment_note_pdf_path?: string | null;
   bullion_summary_pdf_path?: string | null;
   customs_invoice_pdf_path?: string | null;
+  shipping_preparation_id?: string | null;
+  expedition_number?: string | null;
   notes?: string | null;
   approved_at?: string | null;
   approved_by?: string | null;
@@ -213,6 +217,7 @@ export const freightShipmentService = {
         expedition_lot_number,
         total_net_weight_grams,
         total_gross_weight_grams,
+        packing_list_url,
         items:shipping_production_items(
           id,
           daily_production_id,
@@ -263,6 +268,9 @@ export const freightShipmentService = {
         gold_price_usd_per_oz: data.gold_price_usd_per_oz,
         exchange_rate: data.exchange_rate,
         local_currency: data.local_currency,
+        shipping_preparation_id: data.shipping_preparation_ids[0] || null,
+        expedition_number: shippingPreps[0]?.expedition_lot_number || null,
+        packing_list_pdf_path: shippingPreps[0]?.packing_list_url || null,
         notes: data.notes,
         created_by: userData?.user?.id,
       })

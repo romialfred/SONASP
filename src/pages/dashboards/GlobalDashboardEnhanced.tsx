@@ -422,14 +422,14 @@ export function GlobalDashboardEnhanced() {
             </div>
             <div>
               <h1 className="font-heading text-3xl font-bold text-gray-900">
-                Tableau de Bord Global
+                {t('dashboard.globalDashboard')}
               </h1>
-              <p className="text-gray-600 mt-1">Vue d'ensemble complète - Groupe Mansa Resources</p>
+              <p className="text-gray-600 mt-1">{t('dashboard.completeOverview')}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500">Dernière mise à jour</p>
-            <p className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString('fr-FR')}</p>
+            <p className="text-sm text-gray-500">{t('dashboard.lastUpdated')}</p>
+            <p className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -444,16 +444,16 @@ export function GlobalDashboardEnhanced() {
                   <DollarSign className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">REVENUS</span>
+                  <span className="text-white text-xs font-medium">{t('dashboard.revenue')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-teal-100 text-xs font-medium mb-1">Revenus Ce Mois</p>
+                <p className="text-teal-100 text-xs font-medium mb-1">{t('dashboard.revenueThisMonth')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(stats?.thisMonthRevenue || 0)}
                 </p>
                 <p className="text-teal-200 text-xs">
-                  YTD: {formatCurrency(stats?.ytdRevenue || 0)}
+                  {t('dashboard.ytd')}: {formatCurrency(stats?.ytdRevenue || 0)}
                 </p>
               </div>
             </div>
@@ -468,16 +468,16 @@ export function GlobalDashboardEnhanced() {
                   <Target className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">STOCK</span>
+                  <span className="text-white text-xs font-medium">{t('dashboard.stock')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-orange-100 text-xs font-medium mb-1">Stock Disponible</p>
+                <p className="text-orange-100 text-xs font-medium mb-1">{t('dashboard.availableStock')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {formatNumber(stats?.availableStock || 0)} oz
                 </p>
                 <p className="text-orange-200 text-xs">
-                  Vendu YTD: {formatNumber(stats?.ytdQuantitySold || 0)} oz
+                  {t('dashboard.soldYtd')}: {formatNumber(stats?.ytdQuantitySold || 0)} oz
                 </p>
               </div>
             </div>
@@ -496,12 +496,12 @@ export function GlobalDashboardEnhanced() {
                 </div>
               </div>
               <div>
-                <p className="text-amber-100 text-xs font-medium mb-1">Royalties Ce Mois</p>
+                <p className="text-amber-100 text-xs font-medium mb-1">{t('dashboard.royaltiesThisMonth')}</p>
                 <p className="text-white text-2xl font-bold mb-0.5">
                   {formatCurrency(stats?.thisMonthRoyalties || 0)}
                 </p>
                 <p className="text-amber-200 text-xs">
-                  YTD: {formatCurrency(stats?.ytdRoyalties || 0)}
+                  {t('dashboard.ytd')}: {formatCurrency(stats?.ytdRoyalties || 0)}
                 </p>
               </div>
             </div>
@@ -516,31 +516,31 @@ export function GlobalDashboardEnhanced() {
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
-                  <span className="text-white text-xs font-medium">PARTIES</span>
+                  <span className="text-white text-xs font-medium">{t('dashboard.parties')}</span>
                 </div>
               </div>
               <div>
-                <p className="text-slate-100 text-xs font-medium mb-2">Stakeholders</p>
+                <p className="text-slate-100 text-xs font-medium mb-2">{t('dashboard.stakeholdersLabel')}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center gap-1.5">
                     <Factory className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{stats?.stakeholders.miningCompanies || 0}</span>
-                    <span className="text-slate-300 text-xs">Mines</span>
+                    <span className="text-slate-300 text-xs">{t('dashboard.mines')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{stats?.stakeholders.customers || 0}</span>
-                    <span className="text-slate-300 text-xs">Clients</span>
+                    <span className="text-slate-300 text-xs">{t('dashboard.clients')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{stats?.stakeholders.refineries || 0}</span>
-                    <span className="text-slate-300 text-xs">Raffin.</span>
+                    <span className="text-slate-300 text-xs">{t('dashboard.refinLabel')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5 text-slate-200" />
                     <span className="text-white text-sm font-semibold">{stats?.stakeholders.transportCompanies || 0}</span>
-                    <span className="text-slate-300 text-xs">Transp.</span>
+                    <span className="text-slate-300 text-xs">{t('dashboard.transpLabel')}</span>
                   </div>
                 </div>
               </div>
@@ -555,7 +555,7 @@ export function GlobalDashboardEnhanced() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-emerald-600" />
-                <CardTitle>Performance 12 Mois - Production & Revenus</CardTitle>
+                <CardTitle>{t('dashboard.performance12Months')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -571,12 +571,12 @@ export function GlobalDashboardEnhanced() {
                       {
                         dataKey: 'production',
                         color: '#3B82F6',
-                        name: 'Production (oz)'
+                        name: t('dashboard.productionOz')
                       },
                       {
                         dataKey: 'revenue',
                         color: '#10B981',
-                        name: 'Revenus ($)'
+                        name: t('dashboard.revenueUsd')
                       }
                     ]}
                     height={320}
@@ -585,7 +585,7 @@ export function GlobalDashboardEnhanced() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Aucune donnée disponible</p>
+                    <p className="text-gray-500">{t('dashboard.noDataAvailable')}</p>
                   </div>
                 )}
               </div>
@@ -597,7 +597,7 @@ export function GlobalDashboardEnhanced() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-amber-600" />
-                <CardTitle>Cours de l'Or - 12 Derniers Mois</CardTitle>
+                <CardTitle>{t('dashboard.goldPrice12Months')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -612,7 +612,7 @@ export function GlobalDashboardEnhanced() {
                       {
                         dataKey: 'price',
                         color: '#F59E0B',
-                        name: 'Prix (USD/oz)'
+                        name: t('dashboard.priceUsdOz')
                       }
                     ]}
                     height={320}
@@ -621,7 +621,7 @@ export function GlobalDashboardEnhanced() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Aucune donnée disponible</p>
+                    <p className="text-gray-500">{t('dashboard.noDataAvailable')}</p>
                   </div>
                 )}
               </div>
@@ -632,13 +632,13 @@ export function GlobalDashboardEnhanced() {
         {/* Companies Royalties Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>Résumé des Royalties par Société</CardTitle>
-            <p className="text-sm text-gray-500 mt-1">Performance des sociétés minières</p>
+            <CardTitle>{t('dashboard.royaltiesSummary')}</CardTitle>
+            <p className="text-sm text-gray-500 mt-1">{t('dashboard.miningCompanyPerformance')}</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {companyRoyalties.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Aucune donnée disponible</p>
+                <p className="text-gray-500 text-center py-8">{t('dashboard.noDataAvailable')}</p>
               ) : (
                 companyRoyalties.map((company, index) => (
                   <div key={company.companyName} className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
@@ -654,13 +654,13 @@ export function GlobalDashboardEnhanced() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <div className="text-xs text-gray-600 mb-1">Ce Mois</div>
+                          <div className="text-xs text-gray-600 mb-1">{t('dashboard.thisMonth')}</div>
                           <div className="text-lg font-bold text-gray-900">
                             {formatCurrency(company.thisMonth)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-600 mb-1">Total YTD</div>
+                          <div className="text-xs text-gray-600 mb-1">{t('dashboard.totalYtd')}</div>
                           <div className="text-lg font-bold text-amber-600">
                             {formatCurrency(company.ytd)}
                           </div>

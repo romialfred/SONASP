@@ -250,46 +250,14 @@ export function Login() {
         </p>
       </div>
 
-      {/* Waves at bottom - matching provided image with transparency */}
-      <div className="absolute bottom-0 left-0 right-0 z-0 opacity-60">
-        {/* Back wave - lightest orange */}
-        <svg
-          viewBox="0 0 1440 200"
-          className="w-full absolute bottom-0"
-          style={{ height: '220px' }}
-          preserveAspectRatio="none"
-        >
-          <path
-            fill="#f59e0b"
-            d="M0,100 C360,140 480,60 720,100 C960,140 1080,60 1440,100 L1440,200 L0,200 Z"
-          />
-        </svg>
-
-        {/* Middle wave - medium orange */}
-        <svg
-          viewBox="0 0 1440 180"
-          className="w-full absolute bottom-0"
-          style={{ height: '190px' }}
-          preserveAspectRatio="none"
-        >
-          <path
-            fill="#fb923c"
-            d="M0,80 C240,120 600,40 840,80 C1080,120 1200,40 1440,80 L1440,180 L0,180 Z"
-          />
-        </svg>
-
-        {/* Front wave - darkest orange */}
-        <svg
-          viewBox="0 0 1440 160"
-          className="w-full absolute bottom-0"
-          style={{ height: '170px' }}
-          preserveAspectRatio="none"
-        >
-          <path
-            fill="#f97316"
-            d="M0,70 C320,110 480,30 720,70 C960,110 1120,30 1440,70 L1440,160 L0,160 Z"
-          />
-        </svg>
+      {/* Waves at bottom - using provided image */}
+      <div className="absolute bottom-0 left-0 right-0 z-0 opacity-70">
+        <img
+          src="/waves-footer.png"
+          alt="Waves"
+          className="w-full h-auto object-cover"
+          style={{ maxHeight: '250px' }}
+        />
       </div>
 
       <style>{`

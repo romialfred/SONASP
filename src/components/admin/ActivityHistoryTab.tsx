@@ -31,16 +31,29 @@ const ACTION_TYPE_LABELS: Record<string, string> = {
 };
 
 const MODULE_LABELS: Record<string, string> = {
+  dashboard: 'Tableau de Bord',
   production: 'Production',
-  sales: 'Ventes',
   shipping: 'Expédition',
+  freight: 'Fret & Transport',
+  freight_customs: 'Douanes & Documents',
+  documents: 'Documents',
   inventory: 'Inventaire',
-  payments: 'Paiements',
+  receiving: 'Réception',
   refining: 'Raffinage',
-  freight: 'Fret',
-  customs: 'Douanes',
-  users: 'Utilisateurs',
-  settings: 'Paramètres'
+  sales: 'Ventes',
+  presales: 'Pré-Ventes',
+  customers: 'Clients',
+  payments: 'Paiements',
+  analytics: 'Analytique',
+  reports: 'Rapports',
+  licenses: 'Licences d\'Export',
+  performance: 'Performance & Budget',
+  prices: 'Prix & Taux de Change',
+  stakeholders: 'Parties Prenantes',
+  users: 'Gestion Utilisateurs',
+  settings: 'Paramètres Système',
+  audit: 'Audit & Conformité',
+  approvals: 'Approbations'
 };
 
 export default function ActivityHistoryTab({ userId }: ActivityHistoryTabProps) {

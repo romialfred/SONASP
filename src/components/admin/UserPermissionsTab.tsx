@@ -20,6 +20,15 @@ interface Module {
 
 const MODULES: Module[] = [
   {
+    id: 'dashboard',
+    name: 'Tableau de Bord',
+    description: 'Tableaux de bord et vues d\'ensemble',
+    permissions: [
+      { id: 'dashboard_view', label: 'Consulter', description: 'Voir tableau de bord' },
+      { id: 'dashboard_manage', label: 'Gérer', description: 'Gérer les dashboards' }
+    ]
+  },
+  {
     id: 'production',
     name: 'Production',
     description: 'Gestion de la production quotidienne et des lots',
@@ -32,22 +41,9 @@ const MODULES: Module[] = [
     ]
   },
   {
-    id: 'sales',
-    name: 'Ventes',
-    description: 'Gestion des ventes et des clients',
-    permissions: [
-      { id: 'sales_view', label: 'Consulter', description: 'Voir les ventes' },
-      { id: 'sales_create', label: 'Créer', description: 'Créer nouvelle vente' },
-      { id: 'sales_update', label: 'Modifier', description: 'Modifier les ventes' },
-      { id: 'sales_delete', label: 'Supprimer', description: 'Supprimer des ventes' },
-      { id: 'sales_approve', label: 'Approuver', description: 'Approuver les ventes' },
-      { id: 'sales_pricing', label: 'Tarification', description: 'Modifier les prix' }
-    ]
-  },
-  {
     id: 'shipping',
     name: 'Expédition',
-    description: 'Gestion des expéditions et de la logistique',
+    description: 'Préparation et gestion des expéditions',
     permissions: [
       { id: 'shipping_view', label: 'Consulter', description: 'Voir les expéditions' },
       { id: 'shipping_create', label: 'Créer', description: 'Préparer expédition' },
@@ -57,9 +53,42 @@ const MODULES: Module[] = [
     ]
   },
   {
+    id: 'freight',
+    name: 'Fret & Transport',
+    description: 'Gestion des expéditions de fret',
+    permissions: [
+      { id: 'freight_view', label: 'Consulter', description: 'Voir expéditions fret' },
+      { id: 'freight_create', label: 'Créer', description: 'Créer expédition fret' },
+      { id: 'freight_update', label: 'Modifier', description: 'Modifier expéditions' },
+      { id: 'freight_approve', label: 'Approuver', description: 'Approuver expéditions' }
+    ]
+  },
+  {
+    id: 'freight_customs',
+    name: 'Douanes & Documents',
+    description: 'Factures et documents douaniers',
+    permissions: [
+      { id: 'customs_view', label: 'Consulter', description: 'Voir documents douanes' },
+      { id: 'customs_create', label: 'Créer', description: 'Créer documents' },
+      { id: 'customs_update', label: 'Modifier', description: 'Modifier documents' },
+      { id: 'customs_approve', label: 'Approuver', description: 'Approuver documents' }
+    ]
+  },
+  {
+    id: 'documents',
+    name: 'Documents',
+    description: 'Certificats d\'essai et autres documents',
+    permissions: [
+      { id: 'documents_view', label: 'Consulter', description: 'Voir documents' },
+      { id: 'documents_upload', label: 'Télécharger', description: 'Télécharger documents' },
+      { id: 'documents_delete', label: 'Supprimer', description: 'Supprimer documents' },
+      { id: 'documents_approve', label: 'Approuver', description: 'Approuver certificats' }
+    ]
+  },
+  {
     id: 'inventory',
     name: 'Inventaire',
-    description: 'Gestion du stock et de l\'inventaire',
+    description: 'Gestion du stock or et argent',
     permissions: [
       { id: 'inventory_view', label: 'Consulter', description: 'Voir l\'inventaire' },
       { id: 'inventory_add', label: 'Ajouter', description: 'Ajouter au stock' },
@@ -68,14 +97,13 @@ const MODULES: Module[] = [
     ]
   },
   {
-    id: 'payments',
-    name: 'Paiements',
-    description: 'Gestion des paiements clients',
+    id: 'receiving',
+    name: 'Réception',
+    description: 'Réception et confirmation des lots',
     permissions: [
-      { id: 'payments_view', label: 'Consulter', description: 'Voir les paiements' },
-      { id: 'payments_record', label: 'Enregistrer', description: 'Enregistrer paiement' },
-      { id: 'payments_update', label: 'Modifier', description: 'Modifier paiements' },
-      { id: 'payments_approve', label: 'Approuver', description: 'Approuver paiements' }
+      { id: 'receiving_view', label: 'Consulter', description: 'Voir réceptions' },
+      { id: 'receiving_confirm', label: 'Confirmer', description: 'Confirmer réception' },
+      { id: 'receiving_reconcile', label: 'Réconcilier', description: 'Réconcilier écarts' }
     ]
   },
   {
@@ -89,20 +117,56 @@ const MODULES: Module[] = [
     ]
   },
   {
-    id: 'freight',
-    name: 'Fret & Douanes',
-    description: 'Gestion du fret et des documents douaniers',
+    id: 'sales',
+    name: 'Ventes',
+    description: 'Gestion des ventes d\'or',
     permissions: [
-      { id: 'freight_view', label: 'Consulter', description: 'Voir fret/douanes' },
-      { id: 'freight_create', label: 'Créer', description: 'Créer expédition fret' },
-      { id: 'freight_update', label: 'Modifier', description: 'Modifier documents' },
-      { id: 'freight_approve', label: 'Approuver', description: 'Approuver documents' }
+      { id: 'sales_view', label: 'Consulter', description: 'Voir les ventes' },
+      { id: 'sales_create', label: 'Créer', description: 'Créer nouvelle vente' },
+      { id: 'sales_update', label: 'Modifier', description: 'Modifier les ventes' },
+      { id: 'sales_delete', label: 'Supprimer', description: 'Supprimer des ventes' },
+      { id: 'sales_approve', label: 'Approuver', description: 'Approuver les ventes' },
+      { id: 'sales_pricing', label: 'Tarification', description: 'Modifier les prix' }
+    ]
+  },
+  {
+    id: 'presales',
+    name: 'Pré-Ventes',
+    description: 'Gestion des pré-ventes et estimations',
+    permissions: [
+      { id: 'presales_view', label: 'Consulter', description: 'Voir pré-ventes' },
+      { id: 'presales_create', label: 'Créer', description: 'Créer pré-vente' },
+      { id: 'presales_update', label: 'Modifier', description: 'Modifier pré-ventes' },
+      { id: 'presales_delete', label: 'Supprimer', description: 'Supprimer pré-ventes' }
+    ]
+  },
+  {
+    id: 'customers',
+    name: 'Clients',
+    description: 'Gestion des clients et profils',
+    permissions: [
+      { id: 'customers_view', label: 'Consulter', description: 'Voir clients' },
+      { id: 'customers_create', label: 'Créer', description: 'Créer nouveau client' },
+      { id: 'customers_update', label: 'Modifier', description: 'Modifier clients' },
+      { id: 'customers_delete', label: 'Supprimer', description: 'Supprimer clients' }
+    ]
+  },
+  {
+    id: 'payments',
+    name: 'Paiements',
+    description: 'Gestion des paiements clients',
+    permissions: [
+      { id: 'payments_view', label: 'Consulter', description: 'Voir les paiements' },
+      { id: 'payments_record', label: 'Enregistrer', description: 'Enregistrer paiement' },
+      { id: 'payments_update', label: 'Modifier', description: 'Modifier paiements' },
+      { id: 'payments_approve', label: 'Approuver', description: 'Approuver paiements' },
+      { id: 'payments_virtual', label: 'Paiements Virtuels', description: 'Gérer paiements virtuels' }
     ]
   },
   {
     id: 'analytics',
     name: 'Analytique',
-    description: 'Rapports et tableaux de bord',
+    description: 'Analyses et intelligence d\'affaires',
     permissions: [
       { id: 'analytics_view', label: 'Consulter', description: 'Voir rapports' },
       { id: 'analytics_export', label: 'Exporter', description: 'Exporter données' },
@@ -110,50 +174,164 @@ const MODULES: Module[] = [
     ]
   },
   {
-    id: 'admin',
-    name: 'Administration',
-    description: 'Paramètres système et utilisateurs',
+    id: 'reports',
+    name: 'Rapports',
+    description: 'Génération et gestion des rapports',
     permissions: [
-      { id: 'admin_users', label: 'Utilisateurs', description: 'Gérer utilisateurs' },
-      { id: 'admin_roles', label: 'Rôles', description: 'Gérer rôles et permissions' },
-      { id: 'admin_settings', label: 'Paramètres', description: 'Paramètres système' },
-      { id: 'admin_audit', label: 'Audit', description: 'Journal d\'audit' }
+      { id: 'reports_view', label: 'Consulter', description: 'Voir rapports' },
+      { id: 'reports_generate', label: 'Générer', description: 'Générer rapports' },
+      { id: 'reports_schedule', label: 'Planifier', description: 'Planifier rapports' },
+      { id: 'reports_export', label: 'Exporter', description: 'Exporter rapports' }
+    ]
+  },
+  {
+    id: 'licenses',
+    name: 'Licences d\'Export',
+    description: 'Gestion des licences d\'exportation',
+    permissions: [
+      { id: 'licenses_view', label: 'Consulter', description: 'Voir licences' },
+      { id: 'licenses_create', label: 'Créer', description: 'Créer licence' },
+      { id: 'licenses_update', label: 'Modifier', description: 'Modifier licences' },
+      { id: 'licenses_approve', label: 'Approuver', description: 'Approuver licences' }
+    ]
+  },
+  {
+    id: 'performance',
+    name: 'Performance & Budget',
+    description: 'Gestion des budgets et prévisions',
+    permissions: [
+      { id: 'performance_view', label: 'Consulter', description: 'Voir performance' },
+      { id: 'performance_budget', label: 'Budgets', description: 'Gérer budgets' },
+      { id: 'performance_forecast', label: 'Prévisions', description: 'Gérer prévisions' }
+    ]
+  },
+  {
+    id: 'prices',
+    name: 'Prix & Taux de Change',
+    description: 'Gestion des prix or et taux FX',
+    permissions: [
+      { id: 'prices_view', label: 'Consulter', description: 'Voir prix et taux' },
+      { id: 'prices_update', label: 'Modifier', description: 'Modifier prix' },
+      { id: 'prices_import', label: 'Importer', description: 'Importer données' }
+    ]
+  },
+  {
+    id: 'stakeholders',
+    name: 'Parties Prenantes',
+    description: 'Gestion des sociétés minières, raffineries, etc.',
+    permissions: [
+      { id: 'stakeholders_view', label: 'Consulter', description: 'Voir parties prenantes' },
+      { id: 'stakeholders_create', label: 'Créer', description: 'Créer partie prenante' },
+      { id: 'stakeholders_update', label: 'Modifier', description: 'Modifier parties prenantes' },
+      { id: 'stakeholders_delete', label: 'Supprimer', description: 'Supprimer parties prenantes' }
+    ]
+  },
+  {
+    id: 'users',
+    name: 'Gestion Utilisateurs',
+    description: 'Gestion des utilisateurs et permissions',
+    permissions: [
+      { id: 'users_view', label: 'Consulter', description: 'Voir utilisateurs' },
+      { id: 'users_create', label: 'Créer', description: 'Créer utilisateur' },
+      { id: 'users_update', label: 'Modifier', description: 'Modifier utilisateurs' },
+      { id: 'users_delete', label: 'Supprimer', description: 'Supprimer utilisateurs' },
+      { id: 'users_permissions', label: 'Permissions', description: 'Gérer permissions' }
+    ]
+  },
+  {
+    id: 'settings',
+    name: 'Paramètres Système',
+    description: 'Configuration et paramètres',
+    permissions: [
+      { id: 'settings_view', label: 'Consulter', description: 'Voir paramètres' },
+      { id: 'settings_update', label: 'Modifier', description: 'Modifier paramètres' },
+      { id: 'settings_status', label: 'Statuts', description: 'Gérer gestionnaire statuts' }
+    ]
+  },
+  {
+    id: 'audit',
+    name: 'Audit & Conformité',
+    description: 'Journal d\'audit et traçabilité',
+    permissions: [
+      { id: 'audit_view', label: 'Consulter', description: 'Voir journal audit' },
+      { id: 'audit_export', label: 'Exporter', description: 'Exporter logs audit' }
+    ]
+  },
+  {
+    id: 'approvals',
+    name: 'Approbations',
+    description: 'Gestion des workflows d\'approbation',
+    permissions: [
+      { id: 'approvals_view', label: 'Consulter', description: 'Voir approbations' },
+      { id: 'approvals_approve', label: 'Approuver', description: 'Approuver demandes' },
+      { id: 'approvals_reject', label: 'Rejeter', description: 'Rejeter demandes' }
     ]
   }
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   management: [
+    'dashboard_view', 'dashboard_manage',
     'production_view', 'production_create', 'production_update', 'production_delete', 'production_approve',
-    'sales_view', 'sales_create', 'sales_update', 'sales_delete', 'sales_approve', 'sales_pricing',
     'shipping_view', 'shipping_create', 'shipping_update', 'shipping_delete', 'shipping_status',
-    'inventory_view', 'inventory_add', 'inventory_adjust', 'inventory_transfer',
-    'payments_view', 'payments_record', 'payments_update', 'payments_approve',
-    'refining_view', 'refining_record', 'refining_approve',
     'freight_view', 'freight_create', 'freight_update', 'freight_approve',
+    'customs_view', 'customs_create', 'customs_update', 'customs_approve',
+    'documents_view', 'documents_upload', 'documents_delete', 'documents_approve',
+    'inventory_view', 'inventory_add', 'inventory_adjust', 'inventory_transfer',
+    'receiving_view', 'receiving_confirm', 'receiving_reconcile',
+    'refining_view', 'refining_record', 'refining_approve',
+    'sales_view', 'sales_create', 'sales_update', 'sales_delete', 'sales_approve', 'sales_pricing',
+    'presales_view', 'presales_create', 'presales_update', 'presales_delete',
+    'customers_view', 'customers_create', 'customers_update', 'customers_delete',
+    'payments_view', 'payments_record', 'payments_update', 'payments_approve', 'payments_virtual',
     'analytics_view', 'analytics_export', 'analytics_advanced',
-    'admin_users', 'admin_roles', 'admin_settings', 'admin_audit'
+    'reports_view', 'reports_generate', 'reports_schedule', 'reports_export',
+    'licenses_view', 'licenses_create', 'licenses_update', 'licenses_approve',
+    'performance_view', 'performance_budget', 'performance_forecast',
+    'prices_view', 'prices_update', 'prices_import',
+    'stakeholders_view', 'stakeholders_create', 'stakeholders_update', 'stakeholders_delete',
+    'users_view', 'users_create', 'users_update', 'users_delete', 'users_permissions',
+    'settings_view', 'settings_update', 'settings_status',
+    'audit_view', 'audit_export',
+    'approvals_view', 'approvals_approve', 'approvals_reject'
   ],
   factory: [
+    'dashboard_view',
     'production_view', 'production_create', 'production_update',
+    'shipping_view', 'shipping_create',
+    'documents_view', 'documents_upload',
     'inventory_view', 'inventory_add',
-    'shipping_view',
+    'licenses_view', 'licenses_create',
+    'reports_view',
     'analytics_view'
   ],
   airport: [
+    'dashboard_view',
     'shipping_view', 'shipping_update', 'shipping_status',
+    'freight_view',
+    'documents_view',
     'inventory_view',
+    'receiving_view', 'receiving_confirm', 'receiving_reconcile',
+    'reports_view',
     'analytics_view'
   ],
   refinery: [
+    'dashboard_view',
+    'freight_view',
+    'documents_view',
+    'inventory_view', 'inventory_add', 'inventory_adjust',
+    'receiving_view', 'receiving_confirm',
     'refining_view', 'refining_record',
-    'inventory_view',
+    'reports_view',
     'analytics_view'
   ],
   customer: [
+    'dashboard_view',
     'sales_view',
+    'presales_view',
     'payments_view',
-    'shipping_view',
+    'documents_view',
+    'reports_view',
     'analytics_view'
   ]
 };

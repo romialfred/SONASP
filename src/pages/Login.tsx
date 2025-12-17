@@ -250,27 +250,44 @@ export function Login() {
         </p>
       </div>
 
-      {/* Waves at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-0">
-        <svg viewBox="0 0 1440 320" className="w-full" preserveAspectRatio="none">
+      {/* Waves at bottom - matching provided image with transparency */}
+      <div className="absolute bottom-0 left-0 right-0 z-0 opacity-60">
+        {/* Back wave - lightest orange */}
+        <svg
+          viewBox="0 0 1440 200"
+          className="w-full absolute bottom-0"
+          style={{ height: '220px' }}
+          preserveAspectRatio="none"
+        >
           <path
             fill="#f59e0b"
-            fillOpacity="0.3"
-            d="M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,133.3C672,117,768,107,864,112C960,117,1056,139,1152,144C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            d="M0,100 C360,140 480,60 720,100 C960,140 1080,60 1440,100 L1440,200 L0,200 Z"
           />
         </svg>
-        <svg viewBox="0 0 1440 320" className="w-full -mt-24" preserveAspectRatio="none">
-          <path
-            fill="#f97316"
-            fillOpacity="0.4"
-            d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,165.3C960,181,1056,171,1152,154.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          />
-        </svg>
-        <svg viewBox="0 0 1440 320" className="w-full -mt-32" preserveAspectRatio="none">
+
+        {/* Middle wave - medium orange */}
+        <svg
+          viewBox="0 0 1440 180"
+          className="w-full absolute bottom-0"
+          style={{ height: '190px' }}
+          preserveAspectRatio="none"
+        >
           <path
             fill="#fb923c"
-            fillOpacity="0.5"
-            d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,235,864,234.7C960,235,1056,181,1152,144C1248,107,1344,85,1392,74.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            d="M0,80 C240,120 600,40 840,80 C1080,120 1200,40 1440,80 L1440,180 L0,180 Z"
+          />
+        </svg>
+
+        {/* Front wave - darkest orange */}
+        <svg
+          viewBox="0 0 1440 160"
+          className="w-full absolute bottom-0"
+          style={{ height: '170px' }}
+          preserveAspectRatio="none"
+        >
+          <path
+            fill="#f97316"
+            d="M0,70 C320,110 480,30 720,70 C960,110 1120,30 1440,70 L1440,160 L0,160 Z"
           />
         </svg>
       </div>

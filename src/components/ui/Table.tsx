@@ -61,16 +61,16 @@ export function Table<T extends Record<string, any>>({
 
   return (
     <div className={cn('w-full', className)}>
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-lg border border-gray-300">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-slate-700 border-b border-gray-300">
             <tr>
               {safeColumns.map((column) => (
                 <th
                   key={column.key}
                   className={cn(
-                    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
-                    column.sortable && 'cursor-pointer select-none hover:bg-gray-100'
+                    'px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider',
+                    column.sortable && 'cursor-pointer select-none hover:bg-slate-600'
                   )}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -80,9 +80,9 @@ export function Table<T extends Record<string, any>>({
                       <div className="flex flex-col">
                         {sortColumn === column.key ? (
                           sortDirection === 'asc' ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-4 w-4 text-white" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-4 w-4 text-white" />
                           )
                         ) : (
                           <ChevronDown className="h-4 w-4 text-gray-300" />
@@ -99,7 +99,7 @@ export function Table<T extends Record<string, any>>({
               <tr>
                 <td
                   colSpan={safeColumns.length || 1}
-                  className="px-6 py-8 text-center text-sm text-gray-500"
+                  className="px-6 py-8 text-center text-sm text-gray-700 bg-gray-50"
                 >
                   No data available
                 </td>
@@ -109,15 +109,16 @@ export function Table<T extends Record<string, any>>({
                 <tr
                   key={rowIndex}
                   className={cn(
-                    "hover:bg-gray-50",
-                    onRowClick && "cursor-pointer"
+                    "hover:bg-slate-50 transition-colors",
+                    onRowClick && "cursor-pointer",
+                    rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
                   )}
                   onClick={() => onRowClick?.(row)}
                 >
                   {safeColumns.map((column) => (
                     <td
                       key={column.key}
-                      className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap"
+                      className="px-6 py-4 text-sm text-gray-900"
                     >
                       {column.render
                         ? column.render(row[column.key], row)

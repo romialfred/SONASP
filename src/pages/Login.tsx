@@ -33,8 +33,6 @@ export function Login() {
 
     if (!email) {
       newErrors.email = t('validation.required');
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = t('validation.emailInvalid');
     }
 
     if (!password) {
@@ -118,7 +116,7 @@ export function Login() {
 
       <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-amber-500/30">
         <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-3">
             <img
               src="/horizontal_-_colorx10.png"
               alt="Mansa Logo"
@@ -126,10 +124,10 @@ export function Login() {
             />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-gray-900">
               {t('auth.login')}
             </h1>
-            <p className="text-sm font-bold text-amber-600">
+            <p className="text-base font-bold text-amber-600">
               Gold Sales Management Solution
             </p>
           </div>
@@ -144,16 +142,16 @@ export function Login() {
             )}
 
             <FormField
-              label={t('auth.email')}
+              label="Username"
               error={errors.email}
               required
             >
               <Input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 error={!!errors.email}
-                placeholder="user@example.com"
+                placeholder="username"
               />
             </FormField>
 
@@ -202,7 +200,7 @@ export function Login() {
                 href="/forgot-password"
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium"
               >
-                {t('auth.forgotPassword')}
+                Forgot Password ? contact Administrator
               </a>
             </div>
 

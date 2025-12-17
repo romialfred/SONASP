@@ -96,29 +96,43 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="absolute top-6 right-6 z-10">
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-100/50"
         >
-          <Globe className="h-4 w-4" />
-          <span className="text-sm font-medium">
+          <Globe className="h-5 w-5 text-amber-600" />
+          <span className="text-sm font-semibold text-gray-700">
             {i18n.language === 'en' ? 'Français' : 'English'}
           </span>
         </button>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-6">
+      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-amber-100/50">
+        <CardHeader className="text-center pb-4">
+          <div className="flex justify-center mb-8">
             <img
               src="/horizontal_-_colorx10.png"
               alt="Mansa Logo"
-              className="h-16 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
-          <CardDescription className="text-base font-medium text-gray-700">Gold Sales Management Solution - {t('auth.login')}</CardDescription>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t('auth.login')}
+            </h1>
+            <p className="text-sm text-gray-600">
+              Gold Sales Management Solution
+            </p>
+          </div>
         </CardHeader>
 
         <CardContent>
@@ -213,7 +227,7 @@ export function Login() {
             <Button
               type="button"
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 border-2"
+              className="w-full flex items-center justify-center gap-3 border-2 hover:bg-gray-50 transition-colors"
               onClick={handleMicrosoftSSO}
               disabled={loading}
             >
@@ -223,21 +237,37 @@ export function Login() {
                 <rect x="1" y="12" width="10" height="10" fill="#00A4EF"/>
                 <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
               </svg>
-              Sign in with Microsoft
+              <span className="font-medium">Sign in with Microsoft</span>
             </Button>
-
-            {!showTwoFactor && (
-              <button
-                type="button"
-                onClick={() => setShowTwoFactor(true)}
-                className="w-full text-sm text-gray-600 hover:text-gray-800 mt-2"
-              >
-                Enable 2FA for this login
-              </button>
-            )}
           </form>
         </CardContent>
       </Card>
+
+      <style>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </div>
   );
 }

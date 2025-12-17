@@ -17,6 +17,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -53,6 +54,8 @@ interface ForecastData {
 }
 
 export function ProductionInSafe() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [productions, setProductions] = useState<DailyProduction[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +67,6 @@ export function ProductionInSafe() {
     startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
-
-  const navigate = useNavigate();
 
   // Summary data
   const [summary, setSummary] = useState<SafeProductionSummary>({
@@ -196,9 +197,9 @@ export function ProductionInSafe() {
   const getTrafficLight = (variancePercent: number) => {
     // variance% = ((actual - target) / target) * 100
     // positive = exceeds target (good), negative = below target (bad)
-    if (variancePercent >= 0) return { color: 'bg-emerald-500', label: 'Excellent', textColor: 'text-emerald-700' };
-    if (variancePercent >= -10) return { color: 'bg-yellow-500', label: 'Attention', textColor: 'text-yellow-700' };
-    return { color: 'bg-red-500', label: 'Critique', textColor: 'text-red-700' };
+    if (variancePercent >= 0) return { color: 'bg-emerald-500', label: t('production.excellent'), textColor: 'text-emerald-700' };
+    if (variancePercent >= -10) return { color: 'bg-yellow-500', label: t('production.attention'), textColor: 'text-yellow-700' };
+    return { color: 'bg-red-500', label: t('production.critical'), textColor: 'text-red-700' };
   };
 
   const getOutlookIcon = (currentOz: number, index: number) => {
@@ -215,7 +216,7 @@ export function ProductionInSafe() {
 
   const exportToCSV = () => {
     if (productions.length === 0) {
-      alert('Aucune donnée à exporter');
+      alert(t('production.noDataToExport'));
       return;
     }
 
@@ -303,19 +304,19 @@ export function ProductionInSafe() {
           {/* Main Values */}
           <div className="space-y-2 mb-3">
             <div className="flex justify-between items-baseline">
-              <span className="text-xs font-medium text-gray-600">Actuel</span>
+              <span className="text-xs font-medium text-gray-600">{t('production.actual')}</span>
               <span className="text-xl font-bold text-gray-900">
                 {safeToFixed(data.actual, 0)} oz
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-600">Budget</span>
+              <span className="text-xs font-medium text-gray-600">{t('production.budget')}</span>
               <span className="text-sm font-medium text-gray-700">
                 {safeToFixed(data.budget, 0)} oz
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-600">Prévision</span>
+              <span className="text-xs font-medium text-gray-600">{t('production.forecast')}</span>
               <span className="text-sm font-medium text-gray-700">
                 {safeToFixed(data.forecast, 0)} oz
               </span>
@@ -330,7 +331,7 @@ export function ProductionInSafe() {
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${budgetStatus.color}`} />
-                <span className="text-xs font-medium text-gray-700">vs Budget</span>
+                <span className="text-xs font-medium text-gray-700">{t('production.vsBudget')}</span>
               </div>
               <span className={`text-xs font-semibold ${budgetStatus.textColor}`}>
                 {budgetStatus.label}
@@ -360,7 +361,7 @@ export function ProductionInSafe() {
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${forecastStatus.color}`} />
-                <span className="text-xs font-medium text-gray-700">vs Prévision</span>
+                <span className="text-xs font-medium text-gray-700">{t('production.vsForecast')}</span>
               </div>
               <span className={`text-xs font-semibold ${forecastStatus.textColor}`}>
                 {forecastStatus.label}
@@ -401,10 +402,10 @@ export function ProductionInSafe() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  Production en Coffre-Fort
+                  {t('production.productionInSafe')}
                 </h1>
                 <p className="text-xs text-gray-600">
-                  Tableau de bord Management Usine
+                  {t('production.factoryManagementDashboard')}
                 </p>
               </div>
             </div>
@@ -415,7 +416,7 @@ export function ProductionInSafe() {
             className="border-slate-300 hover:bg-slate-50 text-slate-700"
           >
             <Download className="w-4 h-4 mr-2" />
-            Exporter CSV
+            {t('production.exportCsv')}
           </Button>
         </div>
 
@@ -425,14 +426,14 @@ export function ProductionInSafe() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-2">
-                  Société Minière
+                  {t('production.miningCompany')}
                 </label>
                 <select
                   value={selectedCompany}
                   onChange={(e) => setSelectedCompany(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="all">Toutes</option>
+                  <option value="all">{t('production.allCompanies')}</option>
                   {miningCompanies.map(company => (
                     <option key={company.id} value={company.id}>{company.name}</option>
                   ))}
@@ -441,24 +442,24 @@ export function ProductionInSafe() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-2">
-                  Statut
+                  {t('production.status')}
                 </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="all">Tous</option>
-                  <option value="prepared">Préparé</option>
-                  <option value="ready_for_customs">Prêt pour Douane</option>
-                  <option value="shipped">Expédié</option>
-                  <option value="refined">Raffiné</option>
+                  <option value="all">{t('production.allStatuses')}</option>
+                  <option value="prepared">{t('production.prepared')}</option>
+                  <option value="ready_for_customs">{t('production.readyForCustoms')}</option>
+                  <option value="shipped">{t('production.shipped')}</option>
+                  <option value="refined">{t('production.refined')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-2">
-                  Date Début
+                  {t('production.startDate')}
                 </label>
                 <input
                   type="date"
@@ -470,7 +471,7 @@ export function ProductionInSafe() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-2">
-                  Date Fin
+                  {t('production.endDate')}
                 </label>
                 <input
                   type="date"
@@ -488,9 +489,9 @@ export function ProductionInSafe() {
           <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Inventaire des Barres</h3>
+                <h3 className="text-sm font-semibold text-gray-900">{t('production.barInventory')}</h3>
                 <p className="text-xs text-gray-600 mt-0.5">
-                  {summary.record_count} barre{summary.record_count > 1 ? 's' : ''} · {safeToFixed(summary.total_estimated_oz, 2)} oz au total
+                  {summary.record_count} {summary.record_count > 1 ? t('production.barsCount') : t('production.barCount')} · {safeToFixed(summary.total_estimated_oz, 2)} {t('production.ozTotal')}
                 </p>
               </div>
             </div>
@@ -501,31 +502,31 @@ export function ProductionInSafe() {
               <thead className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 border-b-2 border-slate-300">
                 <tr>
                   <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    DATE
+                    {t('production.date')}
                   </th>
                   <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    SOCIÉTÉ
+                    {t('production.company')}
                   </th>
                   <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    BULLION (G)
+                    {t('production.bullionG')}
                   </th>
                   <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    FINESSE %
+                    {t('production.finenessPercent')}
                   </th>
                   <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    OR PUR (G)
+                    {t('production.pureGoldG')}
                   </th>
                   <th className="px-3 py-2.5 text-right text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    OZ ESTIMÉES
+                    {t('production.estimatedOz')}
                   </th>
                   <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    RÉFÉRENCE
+                    {t('production.reference')}
                   </th>
                   <th className="px-3 py-2.5 text-center text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    OUTLOOK
+                    {t('production.outlook')}
                   </th>
                   <th className="px-3 py-2.5 text-left text-[10px] font-medium text-gray-700 uppercase tracking-wide whitespace-nowrap">
-                    STATUT
+                    {t('production.statusLabel')}
                   </th>
                 </tr>
               </thead>
@@ -533,13 +534,13 @@ export function ProductionInSafe() {
                 {loading ? (
                   <tr>
                     <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
-                      Chargement des données...
+                      {t('production.loadingData')}
                     </td>
                   </tr>
                 ) : productions.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
-                      Aucune production trouvée
+                      {t('production.noProductionFound')}
                     </td>
                   </tr>
                 ) : (
@@ -604,14 +605,14 @@ export function ProductionInSafe() {
                 <tfoot className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 border-t-2 border-slate-300">
                   <tr>
                     <td className="px-3 py-2.5 text-xs font-medium uppercase text-gray-900">
-                      TOTAL
+                      {t('production.total')}
                     </td>
                     <td className="px-3 py-2.5"></td>
                     <td className="px-3 py-2.5 text-xs text-right text-gray-900">
                       {safeToLocaleString(summary.total_bullion_grams, { maximumFractionDigits: 0 })}
                     </td>
                     <td className="px-3 py-2.5 text-xs text-right text-gray-700">
-                      Moy: {safeToFixed(summary.avg_fineness_pct, 2)}%
+                      {t('production.average')}: {safeToFixed(summary.avg_fineness_pct, 2)}%
                     </td>
                     <td className="px-3 py-2.5 text-xs text-right text-gray-900">
                       {safeToLocaleString(summary.total_pure_gold_grams, { maximumFractionDigits: 0 })}
@@ -620,7 +621,7 @@ export function ProductionInSafe() {
                       {safeToFixed(summary.total_estimated_oz, 2)}
                     </td>
                     <td colSpan={3} className="px-3 py-2.5 text-xs text-gray-900">
-                      {summary.record_count} barre{summary.record_count > 1 ? 's' : ''}
+                      {summary.record_count} {summary.record_count > 1 ? t('production.barsCount') : t('production.barCount')}
                     </td>
                   </tr>
                 </tfoot>
@@ -632,19 +633,19 @@ export function ProductionInSafe() {
         {/* KPI Tiles - 3 Period Cards Harmonized */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <PeriodCard
-            title="Week to Date"
+            title={t('production.weekToDate')}
             icon={Calendar}
             data={forecasts.wtd}
             borderColor="border-l-4 border-l-blue-500"
           />
           <PeriodCard
-            title="Month to Date"
+            title={t('production.monthToDate')}
             icon={CalendarDays}
             data={forecasts.mtd}
             borderColor="border-l-4 border-l-emerald-500"
           />
           <PeriodCard
-            title="Year to Date"
+            title={t('production.yearToDate')}
             icon={CalendarCheck}
             data={forecasts.ytd}
             borderColor="border-l-4 border-l-emerald-500"

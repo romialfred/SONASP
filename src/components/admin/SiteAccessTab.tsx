@@ -1,34 +1,36 @@
 import { useEffect, useState } from 'react';
-import { Plus, Building2, Edit, Trash2, Star, Calendar } from 'lucide-react';
+import { Building2, Star, Calendar, Check, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { Select } from '@/components/ui/Select';
-import { Input } from '@/components/ui/Input';
-import { TextArea } from '@/components/ui/TextArea';
-import { Table } from '@/components/ui/Table';
-import { userMiningAccessService, MiningCompanyAccess, AccessLevel } from '@/services/userMiningAccessService';
 import { supabase } from '@/lib/supabase';
 
 interface SiteAccessTabProps {
   userId: string;
 }
 
-interface MiningCompany {
+interface MiningCompanyAccess {
   id: string;
-  name: string;
-  code: string;
-  country: string;
+  mining_company_id: string;
+  access_level: string;
+  is_primary: boolean;
+  granted_at: string;
+  expires_at: string | null;
+  is_active: boolean;
+  mining_company?: {
+    id: string;
+    name: string;
+    code: string;
+    country: string;
+  };
 }
 
-const ACCESS_LEVEL_COLORS: Record<AccessLevel, string> = {
+const ACCESS_LEVEL_COLORS: Record<string, string> = {
   read: 'bg-blue-100 text-blue-700',
   write: 'bg-emerald-100 text-emerald-700',
   admin: 'bg-amber-100 text-amber-700',
   full: 'bg-purple-100 text-purple-700'
 };
 
-const ACCESS_LEVEL_LABELS: Record<AccessLevel, string> = {
+const ACCESS_LEVEL_LABELS: Record<string, string> = {
   read: 'Lecture',
   write: 'Écriture',
   admin: 'Administrateur',
@@ -37,221 +39,43 @@ const ACCESS_LEVEL_LABELS: Record<AccessLevel, string> = {
 
 export default function SiteAccessTab({ userId }: SiteAccessTabProps) {
   const [accesses, setAccesses] = useState<MiningCompanyAccess[]>([]);
-  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedAccess, setSelectedAccess] = useState<MiningCompanyAccess | null>(null);
-  const [formData, setFormData] = useState({
-    miningCompanyId: '',
-    accessLevel: 'read' as AccessLevel,
-    isPrimary: false,
-    expiresAt: '',
-    notes: ''
-  });
 
   useEffect(() => {
-    fetchData();
+    fetchAccess();
   }, [userId]);
 
-  const fetchData = async () => {
+  const fetchAccess = async () => {
     try {
       setLoading(true);
-      const [accessesData, companiesData] = await Promise.all([
-        userMiningAccessService.getUserAccess(userId),
-        fetchMiningCompanies()
-      ]);
-      setAccesses(accessesData);
-      setMiningCompanies(companiesData);
+      const { data, error } = await supabase
+        .from('user_mining_company_access')
+        .select(`
+          *,
+          mining_company:mining_companies(id, name, code, country)
+        `)
+        .eq('user_id', userId)
+        .order('is_primary', { ascending: false })
+        .order('granted_at', { ascending: false });
+
+      if (error) throw error;
+      setAccesses(data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching access:', error);
+      setAccesses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMiningCompanies = async () => {
-    const { data, error } = await supabase
-      .from('mining_companies')
-      .select('id, name, code, country')
-      .order('name');
-
-    if (error) throw error;
-    return data || [];
-  };
-
-  const handleOpenModal = (access?: MiningCompanyAccess) => {
-    if (access) {
-      setSelectedAccess(access);
-      setFormData({
-        miningCompanyId: access.mining_company_id,
-        accessLevel: access.access_level,
-        isPrimary: access.is_primary,
-        expiresAt: access.expires_at || '',
-        notes: access.notes || ''
-      });
-    } else {
-      setSelectedAccess(null);
-      setFormData({
-        miningCompanyId: '',
-        accessLevel: 'read',
-        isPrimary: false,
-        expiresAt: '',
-        notes: ''
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedAccess(null);
-    setFormData({
-      miningCompanyId: '',
-      accessLevel: 'read',
-      isPrimary: false,
-      expiresAt: '',
-      notes: ''
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Aucune expiration';
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
   };
-
-  const handleSubmit = async () => {
-    try {
-      if (selectedAccess) {
-        await userMiningAccessService.updateAccess(selectedAccess.id, {
-          accessLevel: formData.accessLevel,
-          isPrimary: formData.isPrimary,
-          expiresAt: formData.expiresAt || undefined,
-          notes: formData.notes || undefined
-        });
-      } else {
-        await userMiningAccessService.grantAccess({
-          userId,
-          miningCompanyId: formData.miningCompanyId,
-          accessLevel: formData.accessLevel,
-          isPrimary: formData.isPrimary,
-          expiresAt: formData.expiresAt || undefined,
-          notes: formData.notes || undefined
-        });
-      }
-      await fetchData();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error saving access:', error);
-      alert('Erreur lors de l\'enregistrement de l\'accès');
-    }
-  };
-
-  const handleRevoke = async (accessId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir révoquer cet accès?')) return;
-
-    try {
-      await userMiningAccessService.revokeAccess(accessId);
-      await fetchData();
-    } catch (error) {
-      console.error('Error revoking access:', error);
-      alert('Erreur lors de la révocation de l\'accès');
-    }
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Aucune';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
-
-  const columns = [
-    {
-      key: 'mining_company',
-      label: 'Site Minier',
-      render: (access: MiningCompanyAccess) => (
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-slate-600" />
-          <div>
-            <div className="text-sm font-medium text-slate-900">
-              {access.mining_company?.name}
-            </div>
-            <div className="text-xs text-slate-500">
-              {access.mining_company?.code} • {access.mining_company?.country}
-            </div>
-          </div>
-          {access.is_primary && (
-            <Star className="w-4 h-4 text-amber-500 fill-amber-500" title="Site principal" />
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'access_level',
-      label: 'Niveau d\'accès',
-      render: (access: MiningCompanyAccess) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            ACCESS_LEVEL_COLORS[access.access_level]
-          }`}
-        >
-          {ACCESS_LEVEL_LABELS[access.access_level]}
-        </span>
-      )
-    },
-    {
-      key: 'granted_at',
-      label: 'Accordé le',
-      render: (access: MiningCompanyAccess) => (
-        <div className="text-sm text-slate-900">{formatDate(access.granted_at)}</div>
-      )
-    },
-    {
-      key: 'expires_at',
-      label: 'Expire le',
-      render: (access: MiningCompanyAccess) => (
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <span className="text-sm text-slate-900">{formatDate(access.expires_at)}</span>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Statut',
-      render: (access: MiningCompanyAccess) => {
-        const isExpired = access.expires_at && new Date(access.expires_at) < new Date();
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              !access.is_active || isExpired
-                ? 'bg-red-100 text-red-700'
-                : 'bg-emerald-100 text-emerald-700'
-            }`}
-          >
-            {!access.is_active ? 'Révoqué' : isExpired ? 'Expiré' : 'Actif'}
-          </span>
-        );
-      }
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (access: MiningCompanyAccess) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleOpenModal(access)}
-            className="flex items-center gap-1"
-          >
-            <Edit className="w-3 h-3" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleRevoke(access.id)}
-            className="flex items-center gap-1 text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="w-3 h-3" />
-          </Button>
-        </div>
-      )
-    }
-  ];
 
   if (loading) {
     return (
@@ -263,141 +87,186 @@ export default function SiteAccessTab({ userId }: SiteAccessTabProps) {
     );
   }
 
+  const activeAccesses = accesses.filter(a => a.is_active);
+  const expiredAccesses = accesses.filter(a => !a.is_active);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
             Accès aux Sites Miniers
           </h3>
           <p className="text-sm text-slate-600">
-            {accesses.filter(a => a.is_active).length} accès actif{accesses.filter(a => a.is_active).length > 1 ? 's' : ''}
+            {activeAccesses.length} accès actif{activeAccesses.length > 1 ? 's' : ''}
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Ajouter un Accès
-        </Button>
       </div>
 
       {accesses.length === 0 ? (
         <Card className="p-12 text-center">
           <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-600">Aucun accès configuré</p>
-          <Button
-            variant="primary"
-            onClick={() => handleOpenModal()}
-            className="mt-4"
-          >
-            Ajouter le Premier Accès
-          </Button>
+          <p className="text-sm text-slate-500 mt-2">
+            L'utilisateur n'a accès à aucun site minier pour le moment
+          </p>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <Table
-            columns={columns}
-            data={accesses}
-            emptyMessage="Aucun accès trouvé"
-          />
-        </Card>
+        <>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600" />
+              Accès Actifs
+            </h4>
+
+            {activeAccesses.length === 0 ? (
+              <Card className="p-6 text-center">
+                <p className="text-sm text-slate-600">Aucun accès actif</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeAccesses.map((access) => {
+                  const company = access.mining_company;
+                  const isExpired = access.expires_at && new Date(access.expires_at) < new Date();
+
+                  return (
+                    <Card
+                      key={access.id}
+                      className={`p-6 hover:shadow-md transition-shadow ${
+                        access.is_primary ? 'border-amber-300 bg-amber-50/30' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Building2 className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-semibold text-slate-900">
+                              {company?.name || 'Site Inconnu'}
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              {company?.code} • {company?.country}
+                            </p>
+                          </div>
+                        </div>
+                        {access.is_primary && (
+                          <Star className="w-5 h-5 text-amber-500 fill-amber-500" title="Site principal" />
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                          <span className="text-xs text-slate-600">Niveau d'accès</span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              ACCESS_LEVEL_COLORS[access.access_level] || 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {ACCESS_LEVEL_LABELS[access.access_level] || access.access_level}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                          <span className="text-xs text-slate-600">Accordé le</span>
+                          <span className="text-xs text-slate-900">
+                            {formatDate(access.granted_at)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                          <span className="text-xs text-slate-600">Expire le</span>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span className={`text-xs ${isExpired ? 'text-red-600 font-medium' : 'text-slate-900'}`}>
+                              {formatDate(access.expires_at)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-xs text-slate-600">Statut</span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              isExpired
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}
+                          >
+                            {isExpired ? 'Expiré' : 'Actif'}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {expiredAccesses.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <X className="w-4 h-4 text-red-600" />
+                Accès Révoqués/Expirés ({expiredAccesses.length})
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {expiredAccesses.map((access) => {
+                  const company = access.mining_company;
+
+                  return (
+                    <Card
+                      key={access.id}
+                      className="p-6 bg-slate-50 border-slate-200 opacity-60"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-slate-200 rounded-lg">
+                          <Building2 className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-base font-semibold text-slate-700">
+                            {company?.name || 'Site Inconnu'}
+                          </h4>
+                          <p className="text-xs text-slate-500">
+                            {company?.code} • {company?.country}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-600">
+                          {ACCESS_LEVEL_LABELS[access.access_level]}
+                        </span>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                          Révoqué
+                        </span>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <Card className="p-4 bg-blue-50 border-blue-200">
+            <div className="flex items-start gap-3">
+              <Building2 className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                  À propos des Accès
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Les accès aux sites miniers définissent quelles compagnies minières l'utilisateur
+                  peut consulter et gérer dans l'application. Le site principal est le site par
+                  défaut affiché lors de la connexion. Les accès expirés sont conservés pour
+                  l'historique mais n'autorisent plus l'utilisateur à accéder aux données.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </>
       )}
-
-      <Modal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        title={selectedAccess ? 'Modifier l\'Accès' : 'Ajouter un Accès'}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Site Minier
-            </label>
-            <Select
-              value={formData.miningCompanyId}
-              onChange={(e) => setFormData(f => ({ ...f, miningCompanyId: e.target.value }))}
-              disabled={!!selectedAccess}
-              required
-            >
-              <option value="">Sélectionner un site</option>
-              {miningCompanies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.name} ({company.code})
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Niveau d'Accès
-            </label>
-            <Select
-              value={formData.accessLevel}
-              onChange={(e) => setFormData(f => ({ ...f, accessLevel: e.target.value as AccessLevel }))}
-              required
-            >
-              <option value="read">Lecture</option>
-              <option value="write">Écriture</option>
-              <option value="admin">Administrateur</option>
-              <option value="full">Complet</option>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isPrimary"
-              checked={formData.isPrimary}
-              onChange={(e) => setFormData(f => ({ ...f, isPrimary: e.target.checked }))}
-              className="rounded border-slate-300"
-            />
-            <label htmlFor="isPrimary" className="text-sm text-slate-700">
-              Définir comme site principal
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Date d'Expiration (Optionnel)
-            </label>
-            <Input
-              type="date"
-              value={formData.expiresAt}
-              onChange={(e) => setFormData(f => ({ ...f, expiresAt: e.target.value }))}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Notes (Optionnel)
-            </label>
-            <TextArea
-              value={formData.notes}
-              onChange={(e) => setFormData(f => ({ ...f, notes: e.target.value }))}
-              rows={3}
-              placeholder="Notes ou justification..."
-            />
-          </div>
-
-          <div className="flex items-center gap-2 pt-4">
-            <Button variant="secondary" onClick={handleCloseModal} className="flex-1">
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              className="flex-1"
-              disabled={!formData.miningCompanyId}
-            >
-              {selectedAccess ? 'Enregistrer' : 'Ajouter'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Activity, LogIn, Lock, Building2, Monitor } from 'lucide-react';
+import { ArrowLeft, User, Activity, LogIn, Lock, Building2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
@@ -8,10 +8,9 @@ import { Button } from '@/components/ui/Button';
 import { Tabs } from '@/components/ui/Tabs';
 import { Loading } from '@/components/ui/Loading';
 import UserStatsCard from '@/components/admin/UserStatsCard';
-import LoginHistoryTab from '@/components/admin/LoginHistoryTab';
+import LoginSessionsTab from '@/components/admin/LoginSessionsTab';
 import ActivityHistoryTab from '@/components/admin/ActivityHistoryTab';
 import SiteAccessTab from '@/components/admin/SiteAccessTab';
-import SessionsTab from '@/components/admin/SessionsTab';
 import UserPermissionsTab from '@/components/admin/UserPermissionsTab';
 
 interface UserProfile {
@@ -80,9 +79,9 @@ export default function UserDetailsPage() {
       <MainLayout>
         <div className="p-6">
           <Card className="p-6 text-center">
-            <p className="text-slate-600">User not found</p>
+            <p className="text-slate-600">Utilisateur introuvable</p>
             <Button onClick={() => navigate('/admin/users')} className="mt-4">
-              Back to Users
+              Retour à la Liste
             </Button>
           </Card>
         </div>
@@ -98,10 +97,10 @@ export default function UserDetailsPage() {
       content: <UserStatsCard userId={user.id} userProfile={user} />
     },
     {
-      id: 'login-history',
-      label: 'Historique Connexions',
+      id: 'login-sessions',
+      label: 'Historique & Sessions',
       icon: LogIn,
-      content: <LoginHistoryTab userId={user.id} />
+      content: <LoginSessionsTab userId={user.id} />
     },
     {
       id: 'activity-history',
@@ -120,12 +119,6 @@ export default function UserDetailsPage() {
       label: 'Accès aux Sites',
       icon: Building2,
       content: <SiteAccessTab userId={user.id} />
-    },
-    {
-      id: 'sessions',
-      label: 'Sessions Actives',
-      icon: Monitor,
-      content: <SessionsTab userId={user.id} />
     }
   ];
 

@@ -94,7 +94,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-start justify-center pt-8 pb-80 p-4 relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-start justify-center pt-4 pb-80 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
@@ -265,6 +265,9 @@ export function Login() {
       </div>
 
       <style>{`
+        body {
+          overflow: hidden;
+        }
         @keyframes blob {
           0% {
             transform: translate(0px, 0px) scale(1);

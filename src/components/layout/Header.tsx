@@ -54,7 +54,21 @@ export function Header() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        // Gestion silencieuse des erreurs communes
+        if (error.code === 'PGRST116' || error.message?.includes('0 rows')) {
+          // Table vide ou aucune donnée - Normal au démarrage
+          setNotifications([]);
+          return;
+        }
+        // Log seulement les erreurs réelles, pas les warnings
+        if (error.code !== '42P01') {
+          // 42P01 = table doesn't exist (géré silencieusement)
+          console.warn('Unable to fetch recent activities:', error.message);
+        }
+        setNotifications([]);
+        return;
+      }
 
       const formattedNotifications: Notification[] = salesData?.map((sale: any, index: number) => {
         const timeAgo = getTimeAgo(new Date(sale.created_at));
@@ -79,8 +93,12 @@ export function Header() {
       }) || [];
 
       setNotifications(formattedNotifications);
-    } catch (error) {
-      console.error('Error fetching activities:', error);
+    } catch (error: any) {
+      // Gestion silencieuse - ne pas polluer la console avec des erreurs attendues
+      if (error?.code !== 'PGRST116' && error?.code !== '42P01') {
+        console.warn('Unable to load recent activities:', error?.message || 'Unknown error');
+      }
+      setNotifications([]);
     } finally {
       setLoading(false);
     }

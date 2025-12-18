@@ -49,7 +49,8 @@ import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
 import { AnalyticsDashboardEnhanced as AnalyticsDashboard } from './pages/analytics/AnalyticsDashboardEnhanced';
 import { AnalyticsIntelligenceCenter } from './pages/analytics/AnalyticsIntelligenceCenter';
 import { ReportsDashboard } from './pages/reports/ReportsDashboard';
-import { UserManagementModern as UserManagement } from './pages/admin/UserManagementModern';
+import { UsersListPage } from './pages/admin/UsersListPage';
+import { UserManagementModern } from './pages/admin/UserManagementModern';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
@@ -758,7 +759,23 @@ function AppRoutes() {
               path="/users"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
-                  <UserManagement />
+                  <UsersListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/new"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserManagementModern />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/edit"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserManagementModern />
                 </ProtectedRoute>
               }
             />
@@ -766,7 +783,7 @@ function AppRoutes() {
               path="/admin/users"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
-                  <UserManagement />
+                  <UsersListPage />
                 </ProtectedRoute>
               }
             />

@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { RefinedCheckbox } from '@/components/ui/RefinedCheckbox';
+import { ToggleImproved } from '@/components/ui/ToggleImproved';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -749,7 +749,7 @@ export function UserManagementModern() {
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                          <RefinedCheckbox
+                                          <ToggleImproved
                                             checked={perm?.can_view || false}
                                             onChange={() => togglePermission(module.id, 'can_view')}
                                             size="md"
@@ -758,7 +758,7 @@ export function UserManagementModern() {
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                          <RefinedCheckbox
+                                          <ToggleImproved
                                             checked={perm?.can_create || false}
                                             onChange={() => togglePermission(module.id, 'can_create')}
                                             size="md"
@@ -767,7 +767,7 @@ export function UserManagementModern() {
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                          <RefinedCheckbox
+                                          <ToggleImproved
                                             checked={perm?.can_edit || false}
                                             onChange={() => togglePermission(module.id, 'can_edit')}
                                             size="md"
@@ -776,7 +776,7 @@ export function UserManagementModern() {
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                          <RefinedCheckbox
+                                          <ToggleImproved
                                             checked={perm?.can_delete || false}
                                             onChange={() => togglePermission(module.id, 'can_delete')}
                                             size="md"
@@ -785,7 +785,7 @@ export function UserManagementModern() {
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                          <RefinedCheckbox
+                                          <ToggleImproved
                                             checked={perm?.can_approve || false}
                                             onChange={() => togglePermission(module.id, 'can_approve')}
                                             size="md"

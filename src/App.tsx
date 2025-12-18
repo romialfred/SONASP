@@ -49,7 +49,7 @@ import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
 import { AnalyticsDashboardEnhanced as AnalyticsDashboard } from './pages/analytics/AnalyticsDashboardEnhanced';
 import { AnalyticsIntelligenceCenter } from './pages/analytics/AnalyticsIntelligenceCenter';
 import { ReportsDashboard } from './pages/reports/ReportsDashboard';
-import { UserManagement } from './pages/admin/UserManagement';
+import { UserManagementModern as UserManagement } from './pages/admin/UserManagementModern';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';

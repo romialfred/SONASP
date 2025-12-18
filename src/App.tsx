@@ -52,6 +52,7 @@ import { ReportsDashboard } from './pages/reports/ReportsDashboard';
 import { UsersListPage } from './pages/admin/UsersListPage';
 import { UserManagementModern } from './pages/admin/UserManagementModern';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
+import UserDetailsPage from './pages/admin/UserDetailsPage';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
@@ -776,6 +777,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
                   <UserManagementModern />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/:userId"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                  <UserDetailsPage />
                 </ProtectedRoute>
               }
             />

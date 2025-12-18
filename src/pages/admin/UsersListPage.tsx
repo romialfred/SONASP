@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   UserPlus, Search, Filter, Shield, Mail, Phone, Building2,
-  Edit, Lock, Unlock, MoreVertical, CheckCircle, XCircle
+  Edit, Lock, Unlock, MoreVertical, CheckCircle, XCircle, Eye
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -470,6 +470,13 @@ export function UsersListPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => navigate(`/users/${user.id}`)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
                             <button
                               onClick={() => navigate(`/users/edit?userId=${user.id}`)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

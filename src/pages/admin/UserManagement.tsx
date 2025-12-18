@@ -92,45 +92,100 @@ const generateSecurePassword = (): string => {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 };
 
-// Menu structure from AccordionSidebar
+// Menu structure matching EXACTLY AccordionSidebar
 const MENU_STRUCTURE = {
   overview: {
-    label: 'Overview',
+    label: 'Dashboard',
     icon: LayoutDashboard,
     color: 'blue',
     features: [
       { name: 'dashboard', label: 'Dashboard', path: '/dashboard' }
     ]
   },
-  batches: {
-    label: 'Batches Management',
+  production: {
+    label: 'Production Management',
     icon: Package,
-    color: 'green',
+    color: 'emerald',
     features: [
-      { name: 'batches', label: 'Batches', path: '/batches', sensitiveFields: ['weight_grams', 'final_purity_percent', 'assay_value'] },
-      { name: 'shipping', label: 'Shipping', path: '/shipping', sensitiveFields: ['declared_value', 'insurance_amount'] },
-      { name: 'refining', label: 'Refining', path: '/refining', sensitiveFields: ['pre_melting_weight', 'post_melting_weight', 'fineness_percent', 'metal_retained_percent', 'final_fine_grams'] }
+      { name: 'daily_production', label: 'Daily Production', path: '/production/daily', sensitiveFields: ['weight_grams', 'gold_purity_percent', 'gold_weight_grams', 'silver_weight_grams'] },
+      { name: 'production_in_safe', label: 'Production in Safe', path: '/production/in-safe', sensitiveFields: ['weight_grams', 'gold_content_grams'] },
+      { name: 'export_licenses', label: 'Export Licenses', path: '/production/licenses', sensitiveFields: ['authorized_weight_kg', 'remaining_quota_kg'] },
+      { name: 'budget_forecasts', label: 'Budget & Forecasts', path: '/performance/budgets', sensitiveFields: ['budget_amount', 'actual_amount', 'variance'] }
+    ]
+  },
+  shipping: {
+    label: 'Shipping Management',
+    icon: Truck,
+    color: 'blue',
+    features: [
+      { name: 'shipping_preparation', label: 'Shipping Preparation', path: '/shipping/preparation', sensitiveFields: ['total_weight_kg', 'total_weight_oz', 'declared_value'] },
+      { name: 'invoice_consignment', label: 'Invoice & Consignment', path: '/freight', sensitiveFields: ['freight_cost', 'insurance_amount', 'total_value'] }
+    ]
+  },
+  refining: {
+    label: 'Refining',
+    icon: FlaskConical,
+    color: 'teal',
+    features: [
+      { name: 'refining_process', label: 'Refining Process', path: '/refining', sensitiveFields: ['received_weight_grams', 'fineness_percent', 'fine_weight_grams', 'refining_cost'] }
+    ]
+  },
+  refinery_inventory: {
+    label: 'Refinery Inventory',
+    icon: Package,
+    color: 'amber',
+    features: [
+      { name: 'gold_inventory', label: 'Gold Inventory', path: '/inventory', sensitiveFields: ['quantity_grams', 'quantity_oz', 'value_usd', 'purity_percent'] },
+      { name: 'silver_inventory', label: 'Silver Inventory', path: '/inventory/silver', sensitiveFields: ['quantity_grams', 'quantity_oz', 'value_usd'] }
+    ]
+  },
+  documents: {
+    label: 'Document Management',
+    icon: FileText,
+    color: 'violet',
+    features: [
+      { name: 'assay_certificates', label: 'Assay Certificates', path: '/documents/assay-certificates', sensitiveFields: ['gold_content_percent', 'silver_content_percent', 'assay_value'] }
+    ]
+  },
+  marketplace: {
+    label: 'Marketplace',
+    icon: TrendingUp,
+    color: 'orange',
+    features: [
+      { name: 'trade_space', label: 'Trade Space', path: '/sales/trade-space', sensitiveFields: ['live_price', 'bid_price', 'ask_price'] },
+      { name: 'gold_prices', label: 'Gold Prices', path: '/gold-prices', sensitiveFields: ['london_am_rate', 'london_pm_rate', 'spot_price'] },
+      { name: 'fx_rates', label: 'FX Rates', path: '/fx-rates', sensitiveFields: ['usd_cfa_rate', 'usd_gnf_rate', 'exchange_spread'] }
     ]
   },
   sales: {
-    label: 'Sales Management',
+    label: 'Sales',
     icon: ShoppingCart,
-    color: 'amber',
+    color: 'pink',
     features: [
-      { name: 'customers', label: 'Customers', path: '/customers', sensitiveFields: ['credit_limit', 'total_purchases'] },
+      { name: 'presales', label: 'Pre-Sales', path: '/presales', sensitiveFields: ['estimated_price_per_oz', 'estimated_total_value'] },
       { name: 'sales', label: 'Sales', path: '/sales', sensitiveFields: ['sale_price_per_oz', 'total_amount', 'net_proceeds', 'commission_amount'] },
-      { name: 'payments', label: 'Payments', path: '/payments', sensitiveFields: ['amount', 'fx_rate', 'bank_name', 'account_number', 'reference_number', 'transaction_id'] },
-      { name: 'gold_prices', label: 'Gold Prices', path: '/gold-prices', sensitiveFields: ['london_am_rate', 'london_pm_rate', 'spot_price'] },
-      { name: 'fx_rates', label: 'FX Rates', path: '/fx-rates', sensitiveFields: ['usd_cfa_rate', 'usd_gnf_rate', 'exchange_spread'] }
+      { name: 'payments', label: 'Payments', path: '/payments', sensitiveFields: ['amount', 'fx_rate', 'bank_name', 'account_number', 'reference_number'] }
+    ]
+  },
+  stakeholders: {
+    label: 'Stakeholders',
+    icon: Users,
+    color: 'teal',
+    features: [
+      { name: 'mining_companies', label: 'Mining Companies', path: '/stakeholders/mining-companies' },
+      { name: 'freight_companies', label: 'Freight Companies', path: '/stakeholders/freight-companies' },
+      { name: 'refinery_plants', label: 'Refinery Plants', path: '/stakeholders/refinery-plants' },
+      { name: 'depositors', label: 'Depositors', path: '/stakeholders/depositors' },
+      { name: 'customers', label: 'Customers', path: '/customers', sensitiveFields: ['credit_limit', 'total_purchases', 'outstanding_balance'] }
     ]
   },
   insights: {
     label: 'Insights & Reports',
     icon: BarChart3,
-    color: 'indigo',
+    color: 'blue',
     features: [
-      { name: 'analytics', label: 'Analytics', path: '/analytics' },
-      { name: 'reports', label: 'Reports', path: '/reports', sensitiveFields: ['financial_data', 'profit_margins'] }
+      { name: 'analytics', label: 'Analytics', path: '/analytics', sensitiveFields: ['revenue_data', 'profit_margins', 'cost_analysis'] },
+      { name: 'reports', label: 'Reports', path: '/reports', sensitiveFields: ['financial_data', 'performance_metrics'] }
     ]
   },
   administration: {
@@ -139,7 +194,9 @@ const MENU_STRUCTURE = {
     color: 'red',
     features: [
       { name: 'users', label: 'Users Management', path: '/users' },
-      { name: 'parameters', label: 'Parameters', path: '/parameters', sensitiveFields: ['system_settings', 'api_keys'] },
+      { name: 'settings', label: 'Settings', path: '/parameters', sensitiveFields: ['system_settings', 'api_keys'] },
+      { name: 'gold_sales_settings', label: 'Gold Sales Settings', path: '/admin/gold-sales-settings', sensitiveFields: ['price_settings', 'commission_rates'] },
+      { name: 'status_manager', label: 'Status Manager', path: '/admin/status-manager' },
       { name: 'workflow', label: 'Workflow', path: '/admin/workflow' },
       { name: 'audit', label: 'Audit Trail', path: '/audit' }
     ]

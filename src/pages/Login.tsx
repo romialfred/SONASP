@@ -94,7 +94,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-start justify-center pt-8 pb-80 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
@@ -114,7 +114,7 @@ export function Login() {
         </button>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-amber-500/30">
+      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-amber-500/30 mt-4">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <img
@@ -247,8 +247,8 @@ export function Login() {
         </CardContent>
       </Card>
 
-      {/* Copyright */}
-      <div className="absolute bottom-6 left-0 right-0 text-center z-10">
+      {/* Copyright - positioned in the wave trough */}
+      <div className="absolute bottom-72 left-0 right-0 text-center z-10">
         <p className="text-sm text-gray-600 font-medium">
           © {new Date().getFullYear()} Mansa Resources. All rights reserved.
         </p>

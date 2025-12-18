@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Toggle } from '@/components/ui/Toggle';
+import { RefinedCheckbox } from '@/components/ui/RefinedCheckbox';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -650,102 +650,159 @@ export function UserManagementModern() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-700 border-b border-gray-300">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">
-                          Module
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase w-24">
-                          <Eye className="h-4 w-4 mx-auto" />
-                          <span className="text-xs mt-1 block">View</span>
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase w-24">
-                          <Edit className="h-4 w-4 mx-auto" />
-                          <span className="text-xs mt-1 block">Create</span>
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase w-24">
-                          <Edit className="h-4 w-4 mx-auto" />
-                          <span className="text-xs mt-1 block">Edit</span>
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase w-24">
-                          <Trash2 className="h-4 w-4 mx-auto" />
-                          <span className="text-xs mt-1 block">Delete</span>
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase w-24">
-                          <Check className="h-4 w-4 mx-auto" />
-                          <span className="text-xs mt-1 block">Approve</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {modules.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-700 bg-gray-50">
-                            No modules found. Please create modules in the system first.
-                          </td>
-                        </tr>
-                      ) : (
-                        modules.map((module, index) => {
-                          const perm = permissions[module.id];
-                          return (
-                            <tr
-                              key={module.id}
-                              className={`hover:bg-slate-50 transition-colors ${
-                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              }`}
-                            >
-                              <td className="px-6 py-4">
-                                <div>
-                                  <p className="font-medium text-gray-900">
-                                    {module.display_name}
-                                  </p>
-                                  <p className="text-xs text-gray-500">{module.description}</p>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <Toggle
-                                  checked={perm?.can_view || false}
-                                  onChange={() => togglePermission(module.id, 'can_view')}
-                                  size="md"
-                                />
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <Toggle
-                                  checked={perm?.can_create || false}
-                                  onChange={() => togglePermission(module.id, 'can_create')}
-                                  size="md"
-                                />
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <Toggle
-                                  checked={perm?.can_edit || false}
-                                  onChange={() => togglePermission(module.id, 'can_edit')}
-                                  size="md"
-                                />
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <Toggle
-                                  checked={perm?.can_delete || false}
-                                  onChange={() => togglePermission(module.id, 'can_delete')}
-                                  size="md"
-                                />
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <Toggle
-                                  checked={perm?.can_approve || false}
-                                  onChange={() => togglePermission(module.id, 'can_approve')}
-                                  size="md"
-                                />
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                {modules.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No modules found. Please create modules in the system first.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {(() => {
+                      // Grouper les modules par catégorie
+                      const modulesByCategory = modules.reduce((acc, module) => {
+                        const category = module.category || 'other';
+                        if (!acc[category]) {
+                          acc[category] = [];
+                        }
+                        acc[category].push(module);
+                        return acc;
+                      }, {} as Record<string, typeof modules>);
+
+                      // Ordre des catégories
+                      const categoryOrder = ['overview', 'batches', 'sales', 'operations', 'analytics', 'system', 'other'];
+                      const categoryLabels: Record<string, string> = {
+                        overview: 'Overview',
+                        batches: 'Batches Management',
+                        sales: 'Sales Management',
+                        operations: 'Operations',
+                        analytics: 'Analytics & Reports',
+                        system: 'System Administration',
+                        other: 'Other Modules',
+                      };
+
+                      const sortedCategories = Object.keys(modulesByCategory).sort((a, b) => {
+                        const indexA = categoryOrder.indexOf(a);
+                        const indexB = categoryOrder.indexOf(b);
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        return indexA - indexB;
+                      });
+
+                      return sortedCategories.map((category) => (
+                        <div key={category} className="space-y-4">
+                          {/* Category Header */}
+                          <div className="flex items-center gap-3">
+                            <div className="h-1 flex-shrink-0 w-8 bg-blue-600 rounded"></div>
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {categoryLabels[category] || category}
+                            </h3>
+                            <div className="h-px flex-1 bg-gray-200"></div>
+                          </div>
+
+                          {/* Modules Table for this category */}
+                          <div className="overflow-x-auto rounded-lg border border-gray-200">
+                            <table className="w-full">
+                              <thead className="bg-slate-700">
+                                <tr>
+                                  <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase">
+                                    Module
+                                  </th>
+                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
+                                    <Eye className="h-4 w-4 mx-auto mb-1" />
+                                    View
+                                  </th>
+                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
+                                    <Edit className="h-4 w-4 mx-auto mb-1" />
+                                    Create
+                                  </th>
+                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
+                                    <Edit className="h-4 w-4 mx-auto mb-1" />
+                                    Edit
+                                  </th>
+                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
+                                    <Trash2 className="h-4 w-4 mx-auto mb-1" />
+                                    Delete
+                                  </th>
+                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
+                                    <Check className="h-4 w-4 mx-auto mb-1" />
+                                    Approve
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {modulesByCategory[category].map((module, index) => {
+                                  const perm = permissions[module.id];
+                                  return (
+                                    <tr
+                                      key={module.id}
+                                      className={`hover:bg-blue-50 transition-colors ${
+                                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                      }`}
+                                    >
+                                      <td className="px-6 py-4">
+                                        <div>
+                                          <p className="font-semibold text-gray-900">
+                                            {module.display_name}
+                                          </p>
+                                          <p className="text-xs text-gray-500 mt-1">{module.description}</p>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="flex justify-center">
+                                          <RefinedCheckbox
+                                            checked={perm?.can_view || false}
+                                            onChange={() => togglePermission(module.id, 'can_view')}
+                                            size="md"
+                                          />
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="flex justify-center">
+                                          <RefinedCheckbox
+                                            checked={perm?.can_create || false}
+                                            onChange={() => togglePermission(module.id, 'can_create')}
+                                            size="md"
+                                          />
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="flex justify-center">
+                                          <RefinedCheckbox
+                                            checked={perm?.can_edit || false}
+                                            onChange={() => togglePermission(module.id, 'can_edit')}
+                                            size="md"
+                                          />
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="flex justify-center">
+                                          <RefinedCheckbox
+                                            checked={perm?.can_delete || false}
+                                            onChange={() => togglePermission(module.id, 'can_delete')}
+                                            size="md"
+                                          />
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="flex justify-center">
+                                          <RefinedCheckbox
+                                            checked={perm?.can_approve || false}
+                                            onChange={() => togglePermission(module.id, 'can_approve')}
+                                            size="md"
+                                          />
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

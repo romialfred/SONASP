@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Activity, LogIn, Lock, Building2, Monitor } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -65,19 +66,27 @@ export default function UserDetailsPage() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
   }
 
   if (!user) {
     return (
-      <div className="p-6">
-        <Card className="p-6 text-center">
-          <p className="text-slate-600">User not found</p>
-          <Button onClick={() => navigate('/admin/users')} className="mt-4">
-            Back to Users
-          </Button>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="p-6">
+          <Card className="p-6 text-center">
+            <p className="text-slate-600">User not found</p>
+            <Button onClick={() => navigate('/admin/users')} className="mt-4">
+              Back to Users
+            </Button>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -121,81 +130,83 @@ export default function UserDetailsPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/admin/users')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {user.full_name}
-            </h1>
-            <p className="text-sm text-slate-600">{user.email}</p>
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/admin/users')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Retour
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {user.full_name}
+              </h1>
+              <p className="text-sm text-slate-600">{user.email}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                user.is_active
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              {user.is_active ? 'Actif' : 'Inactif'}
+            </span>
+            {user.account_locked && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                Compte Verrouillé
+              </span>
+            )}
+            {user.two_factor_enabled && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                2FA Activé
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              user.is_active
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-100 text-slate-700'
-            }`}
-          >
-            {user.is_active ? 'Actif' : 'Inactif'}
-          </span>
-          {user.account_locked && (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-              Compte Verrouillé
-            </span>
-          )}
-          {user.two_factor_enabled && (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-              2FA Activé
-            </span>
-          )}
-        </div>
+
+        <Card className="p-4 bg-slate-50 border-slate-200">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-slate-600 mb-1">Rôle</p>
+              <p className="text-sm font-medium text-slate-900 capitalize">
+                {user.role}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600 mb-1">Titre du Poste</p>
+              <p className="text-sm font-medium text-slate-900">
+                {user.job_title || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600 mb-1">Département</p>
+              <p className="text-sm font-medium text-slate-900">
+                {user.department || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600 mb-1">Langue</p>
+              <p className="text-sm font-medium text-slate-900 uppercase">
+                {user.language_preference}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
-
-      <Card className="p-4 bg-slate-50 border-slate-200">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-xs text-slate-600 mb-1">Rôle</p>
-            <p className="text-sm font-medium text-slate-900 capitalize">
-              {user.role}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-600 mb-1">Titre du Poste</p>
-            <p className="text-sm font-medium text-slate-900">
-              {user.job_title || 'N/A'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-600 mb-1">Département</p>
-            <p className="text-sm font-medium text-slate-900">
-              {user.department || 'N/A'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-600 mb-1">Langue</p>
-            <p className="text-sm font-medium text-slate-900 uppercase">
-              {user.language_preference}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <Tabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
-    </div>
+    </MainLayout>
   );
 }

@@ -72,12 +72,12 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
         .gte('login_at', thirtyDaysAgo.toISOString());
 
       const { count: totalActions } = await supabase
-        .from('activity_logs')
+        .from('user_activity_logs')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
       const { count: recentActions } = await supabase
-        .from('activity_logs')
+        .from('user_activity_logs')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString());

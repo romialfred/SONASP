@@ -719,18 +719,6 @@
     "requestDate": "Request Date",
     "approvalDate": "Approval Date"
   },
-  "errors": {
-    "pageNotFound": "Page Not Found",
-    "unauthorized": "Unauthorized Access",
-    "serverError": "Server Error",
-    "networkError": "Network Error",
-    "loadingFailed": "Loading Failed",
-    "saveFailed": "Save Failed",
-    "deleteFailed": "Delete Failed",
-    "updateFailed": "Update Failed",
-    "hitSnag": "We hit a snag",
-    "errorOccurred": "This view encountered an error while loading. Please try refreshing the page or navigating to another section."
-  },
   "tradeSpace": {
     "title": "Trade Space",
     "subtitle": "Marketplace with intelligent pricing mechanisms and financial analysis",
@@ -771,7 +759,27 @@
     "orderTypeValue": "Good Until Cancelled",
     "approvalNotice": "All orders are subject to management approval and market conditions",
     "grams": "grams",
-    "oz": "oz"
+    "oz": "oz",
+    "salesFlowTitle": "Gold Sales Flow",
+    "salesFlowSubtitle": "Complete supply chain from mines to end buyers",
+    "stage1": "Stage 1: Mine Production",
+    "stage2": "Stage 2: Consolidation",
+    "stage3": "Stage 3: Redistribution",
+    "stage4": "Stage 4: End Buyers",
+    "mine": "Mine",
+    "toMansa": "to Mansa",
+    "goldAggregator": "Gold Aggregator",
+    "consolidatedStock": "Consolidated Stock",
+    "mansaSells": "Mansa Resources sells",
+    "primaryBuyer": "Primary Buyer",
+    "receives": "Receives",
+    "distributes": "Distributes",
+    "endBuyer": "End Buyer",
+    "fromAuramet": "from Auramet",
+    "minesCount": "Mining Operations",
+    "consolidation": "Consolidation Rate",
+    "primaryBuyerCount": "Primary Buyer",
+    "endBuyersCount": "End Buyers"
   },
   "errors": {
     "pageNotFound": "Page Not Found",

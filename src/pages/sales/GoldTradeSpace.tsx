@@ -10,6 +10,7 @@ import { Loading } from '@/components/ui/Loading';
 import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
 import { PricingCalculator } from '@/components/sales/PricingCalculator';
 import { FinancialComparison } from '@/components/sales/FinancialComparison';
+import { GoldSalesFlowDiagram } from '@/components/sales/GoldSalesFlowDiagram';
 import {
   Store,
   TrendingUp,
@@ -265,51 +266,12 @@ export function GoldTradeSpace() {
           {/* Mining Company Selection with Elegant Tiles */}
           {!selectedMiningCompany ? (
             <div className="space-y-4">
-              {/* Section Header and Stock Card on same line */}
-              <div className="flex items-stretch gap-4">
-                {/* Section Title */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <Building2 className="w-6 h-6 text-amber-600 flex-shrink-0" />
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{t('tradeSpace.selectMine')}</h2>
-                    <p className="text-gray-600 text-sm">{t('tradeSpace.clickTilePrompt')}</p>
-                  </div>
-                </div>
-
-                {/* Global Overview Card - Compact & Inline */}
-                <div className="flex-shrink-0 w-80">
-                  <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 shadow-lg h-full">
-                    <div className="absolute inset-0 bg-grid-white/10"></div>
-                    <div className="relative p-4 h-full flex items-center">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-amber-100" />
-                            <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">{t('tradeSpace.totalStockAvailable')}</p>
-                          </div>
-                          <h3 className="text-2xl font-bold text-white tracking-tight">
-                            {totalStock.toFixed(3)} <span className="text-base text-amber-100">{t('tradeSpace.oz')}</span>
-                          </h3>
-                          <p className="text-amber-100 text-xs">
-                            {(totalStock * 31.1035).toFixed(2)} {t('tradeSpace.grams')}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <CircleDollarSign className="w-3 h-3 text-amber-200" />
-                            <p className="text-amber-100 text-xs">
-                              {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} {t('tradeSpace.activeMines')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="hidden md:block">
-                          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <Package className="w-8 h-8 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                    <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-orange-400/20 rounded-full blur-2xl"></div>
-                  </div>
+              {/* Section Header */}
+              <div className="flex items-center gap-3">
+                <Building2 className="w-6 h-6 text-amber-600 flex-shrink-0" />
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">{t('tradeSpace.selectMine')}</h2>
+                  <p className="text-gray-600 text-sm">{t('tradeSpace.clickTilePrompt')}</p>
                 </div>
               </div>
 
@@ -634,6 +596,13 @@ export function GoldTradeSpace() {
               </div>
             </Card>
           )}
+        </div>
+
+        {/* Gold Sales Flow Diagram - Always visible at bottom */}
+        <div className={`transition-all duration-300 ${
+          isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
+        }`}>
+          <GoldSalesFlowDiagram />
         </div>
       </div>
     </MainLayout>

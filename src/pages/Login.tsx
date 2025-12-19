@@ -231,12 +231,15 @@ export function Login() {
               <span className="font-medium">Sign in with Microsoft</span>
             </Button>
 
-            <div className="text-center mt-4">
+            <div className="text-center mt-6 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-700 mb-1 font-medium">
+                Forgot Password?
+              </p>
               <p className="text-xs text-gray-600">
-                Forgot Password ?{' '}
+                Please{' '}
                 <a
                   href="mailto:admin@mansaresources.com"
-                  className="font-medium hover:underline"
+                  className="font-semibold hover:underline"
                 >
                   <span className="text-amber-600">contact</span>{' '}
                   <span className="text-blue-600">Administrator</span>
@@ -245,14 +248,14 @@ export function Login() {
             </div>
           </form>
         </CardContent>
-      </Card>
 
-      {/* Copyright - positioned in the wave trough */}
-      <div className="absolute bottom-72 left-0 right-0 text-center z-10">
-        <p className="text-sm text-gray-600 font-medium">
-          © {new Date().getFullYear()} Mansa Resources. All rights reserved.
-        </p>
-      </div>
+        {/* Footer with copyright inside card */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+          <p className="text-xs text-center text-gray-600">
+            © {new Date().getFullYear()} Mansa Resources. All rights reserved.
+          </p>
+        </div>
+      </Card>
 
       {/* Waves at bottom - using provided image */}
       <div className="absolute bottom-0 left-0 right-0 z-0 opacity-70">

@@ -165,30 +165,34 @@ export async function calculatePricingComparison(
       marketVolatility: volatility,
     };
 
-    const userId = (await supabase.auth.getUser()).data.user?.id;
-    if (userId) {
-      await supabase.from('pricing_mechanism_comparisons').insert({
-        user_id: userId,
-        quantity_oz: quantityOz,
-        spot_price_per_oz: spotPrice,
-        spot_total_value: mechanisms[0].totalValue,
-        spot_value_date: mechanisms[0].valueDate,
-        forward_7d_total_value: null,
-        forward_7d_adjustment: null,
-        forward_7d_benefit: null,
-        forward_14d_total_value: mechanisms[1].totalValue,
-        forward_14d_adjustment: mechanisms[1].adjustmentPercentage,
-        forward_14d_benefit: mechanisms[1].benefit,
-        forward_30d_total_value: mechanisms[2].totalValue,
-        forward_30d_adjustment: mechanisms[2].adjustmentPercentage,
-        forward_30d_benefit: mechanisms[2].benefit,
-        in_process_estimated_value: mechanisms[3].totalValue,
-        in_process_benefit: mechanisms[3].benefit,
-        recommended_mechanism: recommendedMechanism.mechanism,
-        recommendation_reason: recommendedMechanism.reason,
-        gold_trend: trend,
-        market_volatility: volatility,
-      });
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (userId) {
+        await supabase.from('pricing_mechanism_comparisons').insert({
+          user_id: userId,
+          quantity_oz: quantityOz,
+          spot_price_per_oz: spotPrice,
+          spot_total_value: mechanisms[0].totalValue,
+          spot_value_date: mechanisms[0].valueDate,
+          forward_7d_total_value: null,
+          forward_7d_adjustment: null,
+          forward_7d_benefit: null,
+          forward_14d_total_value: mechanisms[1].totalValue,
+          forward_14d_adjustment: mechanisms[1].adjustmentPercentage,
+          forward_14d_benefit: mechanisms[1].benefit,
+          forward_30d_total_value: mechanisms[2].totalValue,
+          forward_30d_adjustment: mechanisms[2].adjustmentPercentage,
+          forward_30d_benefit: mechanisms[2].benefit,
+          in_process_estimated_value: mechanisms[3].totalValue,
+          in_process_benefit: mechanisms[3].benefit,
+          recommended_mechanism: recommendedMechanism.mechanism,
+          recommendation_reason: recommendedMechanism.reason,
+          gold_trend: trend,
+          market_volatility: volatility,
+        });
+      }
+    } catch (insertError) {
+      console.warn('Unable to log pricing comparison:', insertError);
     }
 
     return { success: true, data: comparison };
@@ -309,20 +313,24 @@ export async function getQuantityRecommendation(
       riskLevel,
     };
 
-    await supabase.from('sale_quantity_recommendations').insert({
-      available_stock_oz: availableStockOz,
-      current_price_per_oz: currentPrice,
-      gold_trend: trend,
-      trend_strength: Math.abs((currentPrice - avg_price) / avg_price) * 100,
-      price_volatility: volatility,
-      avg_price_30d: avg_price,
-      recommended_quantity_oz: recommendedQuantityOz,
-      recommended_percentage: recommendedPercentage,
-      reasoning,
-      confidence_score: confidenceScore,
-      optimal_timing: optimalTiming,
-      risk_level: riskLevel,
-    });
+    try {
+      await supabase.from('sale_quantity_recommendations').insert({
+        available_stock_oz: availableStockOz,
+        current_price_per_oz: currentPrice,
+        gold_trend: trend,
+        trend_strength: Math.abs((currentPrice - avg_price) / avg_price) * 100,
+        price_volatility: volatility,
+        avg_price_30d: avg_price,
+        recommended_quantity_oz: recommendedQuantityOz,
+        recommended_percentage: recommendedPercentage,
+        reasoning,
+        confidence_score: confidenceScore,
+        optimal_timing: optimalTiming,
+        risk_level: riskLevel,
+      });
+    } catch (insertError) {
+      console.warn('Unable to log quantity recommendation:', insertError);
+    }
 
     return { success: true, data: recommendation };
   } catch (error: any) {
@@ -425,16 +433,20 @@ export async function createGoldSale(saleData: {
       return { success: false, error: saleError.message };
     }
 
-    await supabase.from('sale_pricing_details').insert({
-      sale_id: saleResult.id,
-      mechanism: saleData.pricingMechanism,
-      base_spot_price: comparisonResult.data.spotPrice,
-      forward_adjustment: selectedMechanism.adjustment,
-      forward_adjustment_percentage: selectedMechanism.adjustmentPercentage,
-      final_price_per_oz: selectedMechanism.pricePerOz,
-      total_value_usd: selectedMechanism.totalValue,
-      market_conditions: `${comparisonResult.data.goldTrend} trend, volatility: ${comparisonResult.data.marketVolatility.toFixed(2)}`,
-    });
+    try {
+      await supabase.from('sale_pricing_details').insert({
+        sale_id: saleResult.id,
+        mechanism: saleData.pricingMechanism,
+        base_spot_price: comparisonResult.data.spotPrice,
+        forward_adjustment: selectedMechanism.adjustment,
+        forward_adjustment_percentage: selectedMechanism.adjustmentPercentage,
+        final_price_per_oz: selectedMechanism.pricePerOz,
+        total_value_usd: selectedMechanism.totalValue,
+        market_conditions: `${comparisonResult.data.goldTrend} trend, volatility: ${comparisonResult.data.marketVolatility.toFixed(2)}`,
+      });
+    } catch (insertError) {
+      console.warn('Unable to log sale pricing details:', insertError);
+    }
 
     return { success: true, data: { saleId: saleResult.id } };
   } catch (error: any) {

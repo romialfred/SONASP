@@ -56,9 +56,21 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
           mechanisms: sortedMechanisms
         });
         setSelectedMechanism(result.data.recommendedMechanism);
+      } else {
+        console.error('Pricing calculation failed:', result.error);
+        alert(
+          `Unable to calculate pricing: ${result.error || 'Unknown error'}\n\n` +
+          `This may be caused by missing gold price data.\n\n` +
+          `Please contact your administrator to ensure the gold_prices_daily table is properly configured.`
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating pricing:', error);
+      alert(
+        `An unexpected error occurred while calculating pricing.\n\n` +
+        `Error: ${error?.message || 'Unknown error'}\n\n` +
+        `Please try again or contact support if the issue persists.`
+      );
     } finally {
       setLoading(false);
     }

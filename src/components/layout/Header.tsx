@@ -46,9 +46,6 @@ export function Header() {
           status,
           customers (
             name
-          ),
-          mining_companies (
-            abbreviation
           )
         `)
         .order('created_at', { ascending: false })
@@ -72,7 +69,6 @@ export function Header() {
 
       const formattedNotifications: Notification[] = salesData?.map((sale: any, index: number) => {
         const timeAgo = getTimeAgo(new Date(sale.created_at));
-        const companyName = sale.mining_companies?.abbreviation || 'N/A';
         const customerName = sale.customers?.name || 'N/A';
         const amount = new Intl.NumberFormat('en-US', {
           style: 'currency',
@@ -86,7 +82,7 @@ export function Header() {
           id: sale.id,
           type: index < 2 ? 'success' : 'info',
           title: `Vente ${sale.sale_number}`,
-          message: `${companyName} → ${customerName} | ${amount} | ${quantity} oz`,
+          message: `${customerName} | ${amount} | ${quantity} oz`,
           time: timeAgo,
           read: index > 1,
         };

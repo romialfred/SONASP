@@ -46,6 +46,31 @@ interface InvoiceData {
     iban: string;
   };
   notes: string;
+  customerLogoUrl?: string;
+  sellerLogoUrl?: string;
+  miningCompanyName?: string;
+}
+
+async function loadImageAsBase64(imageUrl: string): Promise<string | null> {
+  try {
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error loading image:', error);
+    return null;
+  }
 }
 
 export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Blob> {
@@ -60,24 +85,55 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Blob
   let yPosition = 20;
 
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 40, 'F');
+
+  let logoXPosition = 15;
+
+  if (invoiceData.sellerLogoUrl) {
+    try {
+      const logoData = await loadImageAsBase64(invoiceData.sellerLogoUrl);
+      if (logoData) {
+        doc.addImage(logoData, 'PNG', 15, 8, 30, 12);
+        logoXPosition = 50;
+      }
+    } catch (error) {
+      console.error('Error loading seller logo:', error);
+    }
+  }
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
-  doc.text('INVOICE', 15, 20);
+  doc.text('INVOICE', logoXPosition, 20);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(invoiceData.invoiceNumber, 15, 28);
+  doc.text(invoiceData.invoiceNumber, logoXPosition, 28);
+
+  if (invoiceData.miningCompanyName) {
+    doc.setFontSize(8);
+    doc.text(`From: ${invoiceData.miningCompanyName}`, logoXPosition, 33);
+  }
+
+  let customerLogoXPosition = pageWidth - 15;
+  if (invoiceData.customerLogoUrl) {
+    try {
+      const customerLogoData = await loadImageAsBase64(invoiceData.customerLogoUrl);
+      if (customerLogoData) {
+        doc.addImage(customerLogoData, 'PNG', pageWidth - 45, 8, 30, 12);
+        customerLogoXPosition = pageWidth - 50;
+      }
+    } catch (error) {
+      console.error('Error loading customer logo:', error);
+    }
+  }
 
   doc.setFontSize(9);
-  doc.text('Mansa Resources', pageWidth - 15, 15, { align: 'right' });
-  doc.text(invoiceData.companyAddress, pageWidth - 15, 20, { align: 'right' });
-  doc.text(`Tel: ${invoiceData.companyPhone}`, pageWidth - 15, 25, { align: 'right' });
-  doc.text(invoiceData.companyEmail, pageWidth - 15, 30, { align: 'right' });
+  doc.text('Mansa Resources', customerLogoXPosition, 25, { align: 'right' });
+  doc.text(invoiceData.companyAddress, customerLogoXPosition, 30, { align: 'right' });
+  doc.text(`Tel: ${invoiceData.companyPhone}`, customerLogoXPosition, 35, { align: 'right' });
 
-  yPosition = 45;
+  yPosition = 50;
 
   doc.setFillColor(...lightGray);
   doc.rect(15, yPosition, (pageWidth - 30) / 2 - 5, 35, 'F');

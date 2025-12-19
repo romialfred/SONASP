@@ -23,6 +23,12 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
 
   const GRAMS_PER_OZ = 31.1035;
 
+  useEffect(() => {
+    if (availableStockOz > 0) {
+      setQuantityOz(unit === 'oz' ? availableStockOz.toFixed(2) : (availableStockOz * GRAMS_PER_OZ).toFixed(2));
+    }
+  }, [availableStockOz, unit]);
+
   const getQuantityInOz = (): number => {
     const qty = parseFloat(quantityOz);
     if (isNaN(qty)) return 0;
@@ -120,28 +126,28 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity to Sell ({unit === 'oz' ? 'oz' : 'grams'})
+                Quantity to Sell - 100% of Available Stock ({unit === 'oz' ? 'oz' : 'grams'})
               </label>
               <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={quantityOz}
-                  onChange={(e) => setQuantityOz(e.target.value)}
-                  placeholder={`Enter quantity in ${unit}`}
-                  min="0"
-                  max={unit === 'oz' ? availableStockOz : availableStockOz * GRAMS_PER_OZ}
-                  step={unit === 'oz' ? '0.01' : '1'}
-                  className="flex-1"
-                />
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    value={quantityOz}
+                    readOnly
+                    className="bg-amber-50 border-amber-300 font-semibold text-amber-900 cursor-not-allowed"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-xs font-bold text-amber-700 bg-amber-200 px-2 py-1 rounded">
+                      100%
+                    </span>
+                  </div>
+                </div>
                 <Select
                   value={unit}
                   onChange={(e) => {
                     const newUnit = e.target.value as 'oz' | 'g';
-                    const currentOz = getQuantityInOz();
                     setUnit(newUnit);
-                    if (currentOz > 0) {
-                      setQuantityOz(newUnit === 'oz' ? currentOz.toFixed(2) : (currentOz * GRAMS_PER_OZ).toFixed(2));
-                    }
+                    setQuantityOz(newUnit === 'oz' ? availableStockOz.toFixed(2) : (availableStockOz * GRAMS_PER_OZ).toFixed(2));
                   }}
                   className="w-20"
                 >
@@ -149,9 +155,12 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
                   <option value="g">g</option>
                 </Select>
               </div>
-              {getQuantityInOz() > availableStockOz && (
-                <p className="text-xs text-red-600 mt-1">Quantity exceeds available stock</p>
-              )}
+              <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+                <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <p className="text-xs text-blue-800">
+                  <strong>Policy:</strong> All mines must sell 100% of their available stock. Partial sales are not permitted.
+                </p>
+              </div>
               {quantityOz && getQuantityInOz() > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
                   = {unit === 'oz' ? `${(getQuantityInOz() * GRAMS_PER_OZ).toFixed(2)} grams` : `${getQuantityInOz().toFixed(2)} oz`}

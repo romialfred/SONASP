@@ -75,6 +75,7 @@ export function GoldTradeSpace() {
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedRefinery, setSelectedRefinery] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('');
+  const [mansaResourcesId, setMansaResourcesId] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
   const [processingOrder, setProcessingOrder] = useState(false);
@@ -102,6 +103,16 @@ export function GoldTradeSpace() {
 
       if (customersRes.data) {
         setCustomers(customersRes.data);
+
+        const mansaResources = customersRes.data.find(c =>
+          c.name?.toLowerCase().includes('mansa resources') ||
+          c.name?.toLowerCase().includes('mansa ressources')
+        );
+
+        if (mansaResources) {
+          setMansaResourcesId(mansaResources.id);
+          setSelectedCustomer(mansaResources.id);
+        }
       }
 
       if (refineriesRes.success && refineriesRes.data) {
@@ -532,17 +543,36 @@ export function GoldTradeSpace() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('tradeSpace.selectCustomer')} <span className="text-red-500">*</span>
                       </label>
-                      <Select
-                      value={selectedCustomer}
-                      onChange={(e) => setSelectedCustomer(e.target.value)}
-                      >
-                      <option value="">{t('tradeSpace.selectCustomerPlaceholder')}</option>
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name} ({customer.country})
-                        </option>
-                      ))}
-                      </Select>
+                      <div className="relative">
+                        <Select
+                        value={selectedCustomer}
+                        disabled={!!mansaResourcesId}
+                        onChange={(e) => setSelectedCustomer(e.target.value)}
+                        className="bg-amber-50 border-amber-300 cursor-not-allowed"
+                        >
+                        <option value="">{t('tradeSpace.selectCustomerPlaceholder')}</option>
+                        {customers.map((customer) => (
+                          <option key={customer.id} value={customer.id}>
+                            {customer.name} ({customer.country})
+                          </option>
+                        ))}
+                        </Select>
+                        {mansaResourcesId && (
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-10 pointer-events-none">
+                            <span className="text-xs font-bold text-amber-700 bg-amber-200 px-2 py-1 rounded">
+                              Default
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {mansaResourcesId && (
+                        <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded-md border border-amber-200">
+                          <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                          <p className="text-xs text-amber-800">
+                            <strong>Policy:</strong> All mines sell exclusively to Mansa Resources S.A.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {selectedMechanism.mechanism === 'in_process' && (

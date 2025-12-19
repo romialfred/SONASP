@@ -4,8 +4,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { CustomAlert } from '@/components/ui/CustomAlert';
 import { Calendar, TrendingUp, Clock, Factory, DollarSign, AlertCircle } from 'lucide-react';
 import { calculatePricingComparison, type PricingComparison, type PricingMechanism } from '@/services/goldTradeSpaceService';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 interface PricingCalculatorProps {
   availableStockOz: number;
@@ -15,6 +17,11 @@ interface PricingCalculatorProps {
 
 export function PricingCalculator({ availableStockOz, miningCompanyId, onMechanismSelect }: PricingCalculatorProps) {
   const navigate = useNavigate();
+  const {
+    alertState,
+    showError,
+    closeAlert
+  } = useCustomAlert();
   const [quantityOz, setQuantityOz] = useState<string>('');
   const [unit, setUnit] = useState<'oz' | 'g'>('oz');
   const [comparison, setComparison] = useState<PricingComparison | null>(null);
@@ -47,15 +54,32 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
     const qtyInOz = getQuantityInOz();
     console.log('🔵 [SIMULATE] Calculated quantity in oz:', qtyInOz);
 
-    if (isNaN(qtyInOz) || qtyInOz <= 0 || qtyInOz > availableStockOz) {
+    // Add tolerance for floating point comparison (0.01 oz = ~0.31 grams tolerance)
+    const tolerance = 0.01;
+
+    if (isNaN(qtyInOz) || qtyInOz <= 0) {
       console.error('❌ [SIMULATE] Invalid quantity', {
         qtyInOz,
         isNaN: isNaN(qtyInOz),
-        isZeroOrNegative: qtyInOz <= 0,
-        exceedsStock: qtyInOz > availableStockOz,
-        availableStockOz
+        isZeroOrNegative: qtyInOz <= 0
       });
-      alert('Invalid quantity. Please check the amount.');
+      showError(
+        'The quantity entered is invalid. Please ensure you have entered a valid positive number.',
+        'Invalid Quantity'
+      );
+      return;
+    }
+
+    if (qtyInOz > (availableStockOz + tolerance)) {
+      console.error('❌ [SIMULATE] Quantity exceeds stock', {
+        qtyInOz,
+        availableStockOz,
+        difference: qtyInOz - availableStockOz
+      });
+      showError(
+        `The quantity entered (${qtyInOz.toFixed(2)} oz) exceeds available stock (${availableStockOz.toFixed(2)} oz).`,
+        'Insufficient Stock'
+      );
       return;
     }
 
@@ -96,10 +120,10 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
         console.error('❌ [SIMULATE] Calculation failed:', result.error);
         console.error('❌ [SIMULATE] Full result object:', JSON.stringify(result, null, 2));
 
-        alert(
+        showError(
           `Unable to calculate pricing: ${result.error || 'Unknown error'}\n\n` +
-          `This may be caused by missing gold price data.\n\n` +
-          `Please contact your administrator to ensure the gold_prices_daily table is properly configured.`
+          `This may be caused by missing gold price data. Please contact your administrator.`,
+          'Calculation Error'
         );
       }
     } catch (error: any) {
@@ -108,10 +132,10 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
       console.error('❌ [SIMULATE] Error name:', error?.name);
       console.error('❌ [SIMULATE] Error message:', error?.message);
 
-      alert(
-        `An unexpected error occurred while calculating pricing.\n\n` +
-        `Error: ${error?.message || 'Unknown error'}\n\n` +
-        `Please check the console for details and contact support if the issue persists.`
+      showError(
+        `An unexpected error occurred: ${error?.message || 'Unknown error'}\n\n` +
+        `Please check the console for details or contact support.`,
+        'Unexpected Error'
       );
     } finally {
       setLoading(false);
@@ -377,6 +401,15 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
           </Card>
         </div>
       )}
+
+      {/* Custom Alert Dialog */}
+      <CustomAlert
+        isOpen={alertState.isOpen}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   );
 }

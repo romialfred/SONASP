@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -55,6 +56,7 @@ interface MiningCompanyWithStock extends MiningCompany {
 
 export function GoldTradeSpace() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showSuccess, showError } = useAlert();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -243,10 +245,10 @@ export function GoldTradeSpace() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <Store className="w-7 h-7 text-amber-600" />
-              Espace Commercial
+              {t('tradeSpace.title')}
             </h1>
             <p className="text-gray-600 mt-1 text-sm">
-              Place de marché avec mécanismes de tarification intelligents et analyse financière
+              {t('tradeSpace.subtitle')}
             </p>
           </div>
         </div>
@@ -269,8 +271,8 @@ export function GoldTradeSpace() {
                 <div className="flex items-center gap-3 min-w-0">
                   <Building2 className="w-6 h-6 text-amber-600 flex-shrink-0" />
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">Sélectionnez une Mine</h2>
-                    <p className="text-gray-600 text-sm">Cliquez sur une tuile pour voir le stock et créer une simulation</p>
+                    <h2 className="text-lg font-bold text-gray-900">{t('tradeSpace.selectMine')}</h2>
+                    <p className="text-gray-600 text-sm">{t('tradeSpace.clickTilePrompt')}</p>
                   </div>
                 </div>
 
@@ -283,18 +285,18 @@ export function GoldTradeSpace() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-amber-100" />
-                            <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">Stock Total Disponible</p>
+                            <p className="text-amber-100 font-semibold text-xs uppercase tracking-wide">{t('tradeSpace.totalStockAvailable')}</p>
                           </div>
                           <h3 className="text-2xl font-bold text-white tracking-tight">
-                            {totalStock.toFixed(3)} <span className="text-base text-amber-100">oz</span>
+                            {totalStock.toFixed(3)} <span className="text-base text-amber-100">{t('tradeSpace.oz')}</span>
                           </h3>
                           <p className="text-amber-100 text-xs">
-                            {(totalStock * 31.1035).toFixed(2)} grammes
+                            {(totalStock * 31.1035).toFixed(2)} {t('tradeSpace.grams')}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <CircleDollarSign className="w-3 h-3 text-amber-200" />
                             <p className="text-amber-100 text-xs">
-                              {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} mines actives
+                              {miningCompaniesWithStock.filter(c => c.availableStock > 0).length} {t('tradeSpace.activeMines')}
                             </p>
                           </div>
                         </div>
@@ -369,22 +371,22 @@ export function GoldTradeSpace() {
                         {company.loading ? (
                           <div className="flex items-center gap-2 text-gray-500">
                             <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-                            <span className="text-xs">Chargement...</span>
+                            <span className="text-xs">{t('tradeSpace.loading')}</span>
                           </div>
                         ) : (
                           <>
                             <div className="flex items-baseline gap-1">
-                              <span className="text-xs text-gray-600 font-medium">Stock disponible:</span>
+                              <span className="text-xs text-gray-600 font-medium">{t('tradeSpace.stockAvailable')}</span>
                             </div>
                             <div className="space-y-0.5">
                               <p className={`text-2xl font-bold ${
                                 company.availableStock > 0 ? 'text-blue-700' : 'text-gray-400'
                               }`}>
                                 {company.availableStock.toFixed(3)}
-                                <span className="text-base text-gray-500 ml-1">oz</span>
+                                <span className="text-base text-gray-500 ml-1">{t('tradeSpace.oz')}</span>
                               </p>
                               <p className="text-xs text-gray-600">
-                                {(company.availableStock * 31.1035).toFixed(2)} grammes
+                                {(company.availableStock * 31.1035).toFixed(2)} {t('tradeSpace.grams')}
                               </p>
                             </div>
                           </>
@@ -395,7 +397,7 @@ export function GoldTradeSpace() {
                       {company.availableStock > 0 && (
                         <div className="flex items-center justify-between pt-1">
                           <span className="text-xs text-blue-600 font-medium group-hover:text-blue-700">
-                            Voir la simulation
+                            {t('tradeSpace.viewSimulation')}
                           </span>
                           <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -404,7 +406,7 @@ export function GoldTradeSpace() {
                       {company.availableStock === 0 && !company.loading && (
                         <div className="flex items-center gap-1 text-gray-500 text-xs pt-1">
                           <AlertCircle className="w-3 h-3" />
-                          <span>Aucun stock disponible</span>
+                          <span>{t('tradeSpace.noStockAvailable')}</span>
                         </div>
                       )}
                     </div>
@@ -427,7 +429,7 @@ export function GoldTradeSpace() {
                   <div className="flex items-center gap-3">
                     <Store className="w-6 h-6 text-blue-600" />
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Mine Sélectionnée</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{t('tradeSpace.selectedMine')}</h3>
                       <p className="text-sm text-gray-600">
                         {miningCompaniesWithStock.find(c => c.id === selectedMiningCompany)?.name}
                       </p>
@@ -444,16 +446,16 @@ export function GoldTradeSpace() {
                     variant="secondary"
                     size="sm"
                   >
-                    Changer de mine
+                    {t('tradeSpace.changeMine')}
                   </Button>
                 </div>
 
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Stock Disponible</p>
+                      <p className="text-xs text-gray-600 mb-1">{t('tradeSpace.availableStock')}</p>
                       <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {availableStock.toFixed(3)} oz
+                        {availableStock.toFixed(3)} {t('tradeSpace.oz')}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {(availableStock * 31.1035).toFixed(2)} g
@@ -474,16 +476,16 @@ export function GoldTradeSpace() {
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">Recommandation de Quantité IA</h3>
+                    <h3 className="font-semibold text-gray-900 text-lg">{t('tradeSpace.aiQuantityRecommendation')}</h3>
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Quantité Recommandée:</span>
+                        <span className="text-sm text-gray-700">{t('tradeSpace.recommendedQuantity')}</span>
                         <span className="text-xl font-bold text-purple-900">
-                          {quantityRecommendation.recommendedQuantityOz.toFixed(2)} oz
+                          {quantityRecommendation.recommendedQuantityOz.toFixed(2)} {t('tradeSpace.oz')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Pourcentage du Stock:</span>
+                        <span className="text-sm text-gray-700">{t('tradeSpace.stockPercentage')}</span>
                         <span className="font-semibold text-purple-800">
                           {quantityRecommendation.recommendedPercentage}%
                         </span>
@@ -496,10 +498,10 @@ export function GoldTradeSpace() {
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          RISQUE {quantityRecommendation.riskLevel === 'low' ? 'FAIBLE' : quantityRecommendation.riskLevel === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
+                          {t('tradeSpace.risk')} {quantityRecommendation.riskLevel === 'low' ? t('tradeSpace.lowRisk') : quantityRecommendation.riskLevel === 'medium' ? t('tradeSpace.mediumRisk') : t('tradeSpace.highRisk')}
                         </span>
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                          {quantityRecommendation.confidenceScore}% de Confiance
+                          {quantityRecommendation.confidenceScore}% {t('tradeSpace.confidence')}
                         </span>
                       </div>
                       </div>
@@ -508,7 +510,7 @@ export function GoldTradeSpace() {
                       </p>
                       <div className="text-xs text-gray-600 mt-2 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4" />
-                      <span><strong>Timing Optimal:</strong> {quantityRecommendation.optimalTiming}</span>
+                      <span><strong>{t('tradeSpace.optimalTiming')}</strong> {quantityRecommendation.optimalTiming}</span>
                       </div>
                     </div>
                   </div>
@@ -539,24 +541,24 @@ export function GoldTradeSpace() {
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-6 h-6 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Finaliser Votre Commande</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('tradeSpace.finalizeOrder')}</h3>
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Mécanisme Sélectionné:</span>
+                      <span className="text-sm text-gray-700">{t('tradeSpace.selectedMechanism')}</span>
                       <span className="font-semibold text-gray-900">{selectedMechanism.displayName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Quantité:</span>
-                      <span className="font-semibold text-gray-900">{comparisonData.quantityOz.toFixed(2)} oz</span>
+                      <span className="text-sm text-gray-700">{t('tradeSpace.quantity')}</span>
+                      <span className="font-semibold text-gray-900">{comparisonData.quantityOz.toFixed(2)} {t('tradeSpace.oz')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-700">Prix par oz:</span>
+                      <span className="text-sm text-gray-700">{t('tradeSpace.pricePerOz')}</span>
                       <span className="font-semibold text-gray-900">${selectedMechanism.pricePerOz.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between border-t border-blue-200 pt-2">
-                      <span className="text-base font-semibold text-gray-700">Valeur Totale:</span>
+                      <span className="text-base font-semibold text-gray-700">{t('tradeSpace.totalValue')}</span>
                       <span className="text-xl font-bold text-blue-900">
                       ${selectedMechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
@@ -566,13 +568,13 @@ export function GoldTradeSpace() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sélectionner Client <span className="text-red-500">*</span>
+                      {t('tradeSpace.selectCustomer')} <span className="text-red-500">*</span>
                       </label>
                       <Select
                       value={selectedCustomer}
                       onChange={(e) => setSelectedCustomer(e.target.value)}
                       >
-                      <option value="">Choisir un client...</option>
+                      <option value="">{t('tradeSpace.selectCustomerPlaceholder')}</option>
                       {customers.map((customer) => (
                         <option key={customer.id} value={customer.id}>
                           {customer.name} ({customer.country})
@@ -584,13 +586,13 @@ export function GoldTradeSpace() {
                     {selectedMechanism.mechanism === 'in_process' && (
                       <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sélectionner Raffinerie <span className="text-red-500">*</span>
+                        {t('tradeSpace.selectRefinery')} <span className="text-red-500">*</span>
                       </label>
                       <Select
                         value={selectedRefinery}
                         onChange={(e) => setSelectedRefinery(e.target.value)}
                       >
-                        <option value="">Choisir une raffinerie...</option>
+                        <option value="">{t('tradeSpace.selectRefineryPlaceholder')}</option>
                         {refineries.map((refinery) => (
                           <option key={refinery.id} value={refinery.id}>
                             {refinery.refinery_name} - {refinery.refinery_location}
@@ -606,7 +608,7 @@ export function GoldTradeSpace() {
                       className="w-full"
                       size="lg"
                     >
-                      Continuer vers le Formulaire de Vente
+                      {t('tradeSpace.continueToSaleForm')}
                     </Button>
                   </div>
                 </div>
@@ -619,14 +621,14 @@ export function GoldTradeSpace() {
               <div className="p-5 space-y-3">
                 <div className="flex items-center gap-2 text-amber-800">
                   <AlertCircle className="w-5 h-5" />
-                  <h4 className="font-semibold">Informations de Transaction</h4>
+                  <h4 className="font-semibold">{t('tradeSpace.transactionInformation')}</h4>
                 </div>
                 <div className="text-xs text-amber-900 space-y-2">
-                  <p><strong>Stock Disponible:</strong> {availableStock.toFixed(2)} oz</p>
-                  <p><strong>Heures de Transaction:</strong> 7:30 AM - 4:30 PM EST</p>
-                  <p><strong>Type de Commande:</strong> Valable jusqu'à Annulation</p>
+                  <p><strong>{t('tradeSpace.availableStock')}:</strong> {availableStock.toFixed(2)} {t('tradeSpace.oz')}</p>
+                  <p><strong>{t('tradeSpace.transactionHours')}</strong> {t('tradeSpace.transactionHoursValue')}</p>
+                  <p><strong>{t('tradeSpace.orderType')}</strong> {t('tradeSpace.orderTypeValue')}</p>
                   <p className="border-t border-amber-200 pt-2 mt-2">
-                    Toutes les commandes sont soumises à l'approbation de la direction et aux conditions du marché
+                    {t('tradeSpace.approvalNotice')}
                   </p>
                 </div>
               </div>

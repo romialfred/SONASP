@@ -1,9 +1,9 @@
 import { supabase } from './supabase';
 
 // Session timeout configuration
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-const WARNING_BEFORE_TIMEOUT = 60 * 1000; // Show warning 60 seconds before timeout
-const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const WARNING_BEFORE_TIMEOUT = 2 * 60 * 1000; // Show warning 2 minutes before timeout
+const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // Refresh token every 10 minutes
 
 export type SessionWarningCallback = () => void;
 export type SessionTimeoutCallback = () => void;
@@ -15,6 +15,8 @@ export class SessionManager {
   private isActive: boolean = true;
   private isRefreshing: boolean = false;
   private warningShown: boolean = false;
+  private consecutiveRefreshFailures: number = 0;
+  private maxConsecutiveFailures: number = 3;
 
   private onWarning: SessionWarningCallback | null = null;
   private onTimeout: SessionTimeoutCallback | null = null;
@@ -52,7 +54,7 @@ export class SessionManager {
   }
 
   public start() {
-    console.log('[SessionManager] Starting with 10-minute inactivity timeout');
+    console.log('[SessionManager] Starting with 30-minute inactivity timeout');
     this.updateActivity();
     this.startTokenRefresh();
     this.startInactivityCheck();
@@ -76,6 +78,12 @@ export class SessionManager {
       console.log('[SessionManager] User activity detected - hiding warning');
       this.warningShown = false;
     }
+
+    // Reset refresh failure counter on user activity
+    if (this.consecutiveRefreshFailures > 0) {
+      console.log('[SessionManager] Resetting refresh failure counter due to user activity');
+      this.consecutiveRefreshFailures = 0;
+    }
   }
 
   private startTokenRefresh() {
@@ -87,13 +95,36 @@ export class SessionManager {
         const { data: { session }, error } = await supabase.auth.refreshSession();
 
         if (error) {
-          console.error('[SessionManager] Token refresh failed:', error);
-          this.handleTimeout();
-        } else {
+          this.consecutiveRefreshFailures++;
+          console.error(`[SessionManager] Token refresh failed (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures}):`, error.message);
+
+          // Only logout after multiple consecutive failures
+          if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
+            console.error('[SessionManager] Multiple token refresh failures - logging out');
+            this.handleTimeout();
+          }
+        } else if (session) {
+          // Reset failure counter on successful refresh
+          this.consecutiveRefreshFailures = 0;
           console.log('[SessionManager] Token refreshed successfully');
+        } else {
+          // No error but no session - increment counter
+          this.consecutiveRefreshFailures++;
+          console.warn(`[SessionManager] No session after refresh (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures})`);
+
+          if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
+            console.error('[SessionManager] No valid session - logging out');
+            this.handleTimeout();
+          }
         }
       } catch (error) {
-        console.error('[SessionManager] Token refresh error:', error);
+        this.consecutiveRefreshFailures++;
+        console.error(`[SessionManager] Token refresh error (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures}):`, error);
+
+        if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
+          console.error('[SessionManager] Multiple token refresh errors - logging out');
+          this.handleTimeout();
+        }
       } finally {
         this.isRefreshing = false;
       }
@@ -106,18 +137,18 @@ export class SessionManager {
 
       const inactivityDuration = this.getInactivityDuration();
 
-      // Check if we should show warning (60 seconds before timeout)
+      // Check if we should show warning (2 minutes before timeout)
       if (inactivityDuration >= INACTIVITY_TIMEOUT - WARNING_BEFORE_TIMEOUT && !this.warningShown) {
-        console.log('[SessionManager] Showing inactivity warning (60 seconds before timeout)');
+        console.log('[SessionManager] Showing inactivity warning (2 minutes before timeout)');
         this.warningShown = true;
         if (this.onWarning) {
           this.onWarning();
         }
       }
 
-      // Check if session should timeout (10 minutes)
+      // Check if session should timeout (30 minutes)
       if (inactivityDuration >= INACTIVITY_TIMEOUT) {
-        console.log('[SessionManager] Session timeout due to inactivity (10 minutes)');
+        console.log('[SessionManager] Session timeout due to inactivity (30 minutes)');
         this.handleTimeout();
       }
     }, 1000); // Check every second for accuracy
@@ -162,6 +193,7 @@ export class SessionManager {
     console.log('[SessionManager] Session extended by user action');
     this.updateActivity();
     this.warningShown = false;
+    this.consecutiveRefreshFailures = 0;
   }
 
   public setOnWarning(callback: SessionWarningCallback) {

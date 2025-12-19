@@ -22,27 +22,29 @@ SMK vend 100% → HBR (Hummingbird Resources)
 
 ## Étapes d'Installation
 
-### 1. Appliquer les Scripts SQL
+### 1. Appliquer le Script SQL
 
-Dans Supabase SQL Editor, exécuter **dans cet ordre**:
+**Option A: Version Rapide (Recommandée)**
+1. Ouvrir Supabase Dashboard → SQL Editor
+2. Ouvrir le fichier: **`QUICK_FIX_SALES_FLOW.sql`**
+3. Copier TOUT le contenu
+4. Coller dans SQL Editor
+5. Cliquer sur **Run** (ou Ctrl+Enter)
 
-#### A. Créer les nouveaux clients et relations primaires
-```
-Fichier: SETUP_NEW_SALES_FLOW.sql
-```
-Ce script va:
-- Créer 5 nouveaux clients (MMME, HBR, Auranet, Aurion, CIG)
-- Configurer KGM → MMME
-- Configurer SMK → HBR
+**Option B: Avec Vérifications**
+1. Ouvrir Supabase Dashboard → SQL Editor
+2. Ouvrir le fichier: **`APPLY_COMPLETE_SALES_FLOW_UPDATE.sql`**
+3. Copier TOUT le contenu
+4. Coller dans SQL Editor
+5. Cliquer sur **Run** (ou Ctrl+Enter)
+6. Consulter les résultats de vérification
 
-#### B. Créer le système de distribution secondaire
-```
-Fichier: CREATE_SECONDARY_DISTRIBUTION_TABLE.sql
-```
-Ce script va:
-- Créer la table `secondary_distributions`
-- Configurer MMME → Auranet (93%), Aurion (5%), CIG (2%)
-- Configurer HBR → Auramet (100%)
+**Les deux options font:**
+- ✅ Créer 5 nouveaux clients (MMME, HBR, Auranet, Aurion, CIG)
+- ✅ Créer la table `secondary_distributions`
+- ✅ Configurer toutes les relations (KGM→MMME, SMK→HBR)
+- ✅ Configurer les distributions (MMME→93%,5%,2% / HBR→100%)
+- ✅ Mettre en place les validations automatiques
 
 ### 2. Vérifier l'Installation
 
@@ -173,10 +175,16 @@ Toutes les tables ont des politiques RLS (Row Level Security):
 
 ## Fichiers Créés
 
-- `SETUP_NEW_SALES_FLOW.sql` - Création des clients et relations primaires
-- `CREATE_SECONDARY_DISTRIBUTION_TABLE.sql` - Système de distribution secondaire
-- `GOLD_SALES_FLOW_IMPLEMENTATION_COMPLETE.md` - Documentation complète (EN)
-- `GUIDE_MISE_A_JOUR_FLUX_VENTES.md` - Ce guide (FR)
+### Scripts SQL:
+- **`QUICK_FIX_SALES_FLOW.sql`** - Script complet simplifié (recommandé)
+- **`APPLY_COMPLETE_SALES_FLOW_UPDATE.sql`** - Script complet avec vérifications
+- `SETUP_NEW_SALES_FLOW.sql` - (optionnel) Création des clients et relations primaires
+- `CREATE_SECONDARY_DISTRIBUTION_TABLE.sql` - (optionnel) Système de distribution secondaire
+
+### Documentation:
+- **`START_HERE_SALES_FLOW_UPDATE.md`** - Guide de démarrage rapide
+- **`GOLD_SALES_FLOW_IMPLEMENTATION_COMPLETE.md`** - Documentation complète (EN)
+- **`GUIDE_MISE_A_JOUR_FLUX_VENTES.md`** - Ce guide (FR)
 
 ## Support
 

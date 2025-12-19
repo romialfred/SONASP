@@ -27,17 +27,26 @@ SMK → HBR → Auramet (100%)
 
 ### Step 1: Apply Database Changes
 
+**Option A: Quick Version (Recommended)**
+1. Open Supabase Dashboard → SQL Editor
+2. Open file: **`QUICK_FIX_SALES_FLOW.sql`**
+3. Copy ALL content
+4. Paste into SQL Editor
+5. Click **Run** (or Ctrl+Enter)
+
+**Option B: With Verification Queries**
 1. Open Supabase Dashboard → SQL Editor
 2. Open file: **`APPLY_COMPLETE_SALES_FLOW_UPDATE.sql`**
 3. Copy ALL content
 4. Paste into SQL Editor
 5. Click **Run** (or Ctrl+Enter)
+6. Review verification results
 
-**That's it!** One file does everything:
+**Both options do the same:**
 - ✅ Creates 5 new customers
 - ✅ Creates secondary_distributions table
 - ✅ Configures all relationships
-- ✅ Shows verification results
+- ✅ Sets up validation triggers
 
 ### Step 2: Refresh Your App
 

@@ -109,8 +109,6 @@ INSERT INTO customers (
   'active'
 ) ON CONFLICT (email) DO NOTHING;
 
-RAISE NOTICE 'Step 1: Customers created successfully';
-
 -- ====================================
 -- PART 2: CREATE SECONDARY DISTRIBUTION TABLE
 -- ====================================
@@ -180,8 +178,6 @@ DROP TRIGGER IF EXISTS check_distribution_percentages ON secondary_distributions
 CREATE TRIGGER check_distribution_percentages
   BEFORE INSERT OR UPDATE ON secondary_distributions
   FOR EACH ROW EXECUTE FUNCTION validate_distribution_percentages();
-
-RAISE NOTICE 'Step 2: Secondary distributions table created';
 
 -- ====================================
 -- PART 3: CONFIGURE SALES RELATIONSHIPS
@@ -300,12 +296,8 @@ END $$;
 -- VERIFICATION QUERIES
 -- ====================================
 
-RAISE NOTICE 'Verification Results:';
-RAISE NOTICE '=====================';
-
 -- Show new customers
-SELECT '=== NEW CUSTOMERS ===' as section;
-SELECT name, country, status
+SELECT 'NEW CUSTOMERS' as section, name, country, status
 FROM customers
 WHERE name IN (
   'Mansa Management Middle East',
@@ -317,12 +309,11 @@ WHERE name IN (
 ORDER BY name;
 
 -- Show primary relationships
-SELECT '=== PRIMARY RELATIONSHIPS (Mine → Intermediary) ===' as section;
 SELECT
+  'PRIMARY RELATIONSHIPS' as section,
   mc.abbreviation as mine,
   c.name as intermediary,
-  gss.max_stock_percentage as percentage,
-  gss.notes
+  gss.max_stock_percentage as percentage
 FROM gold_sales_settings gss
 JOIN mining_companies mc ON mc.id = gss.mining_company_id
 JOIN customers c ON c.id = gss.customer_id
@@ -331,28 +322,13 @@ WHERE mc.abbreviation IN ('KGM', 'SMK')
 ORDER BY mc.abbreviation;
 
 -- Show secondary distributions
-SELECT '=== SECONDARY DISTRIBUTIONS (Intermediary → End Buyers) ===' as section;
 SELECT
+  'SECONDARY DISTRIBUTIONS' as section,
   ic.name as intermediary,
   ec.name as end_buyer,
-  sd.distribution_percentage as percentage,
-  sd.notes
+  sd.distribution_percentage as percentage
 FROM secondary_distributions sd
 JOIN customers ic ON ic.id = sd.intermediary_customer_id
 JOIN customers ec ON ec.id = sd.end_customer_id
 WHERE sd.is_active = true
 ORDER BY ic.name, sd.distribution_percentage DESC;
-
--- Summary
-SELECT '=== SUMMARY ===' as section;
-SELECT
-  COUNT(DISTINCT CASE WHEN mc.abbreviation IN ('KGM', 'SMK') THEN mc.id END) as mines,
-  COUNT(DISTINCT ic.id) as intermediaries,
-  COUNT(DISTINCT ec.id) as end_buyers,
-  SUM(sd.distribution_percentage) as total_distribution_percentage
-FROM secondary_distributions sd
-JOIN customers ic ON ic.id = sd.intermediary_customer_id
-JOIN customers ec ON ec.id = sd.end_customer_id
-LEFT JOIN gold_sales_settings gss ON gss.customer_id = ic.id
-LEFT JOIN mining_companies mc ON mc.id = gss.mining_company_id
-WHERE sd.is_active = true;

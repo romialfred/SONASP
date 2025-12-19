@@ -171,7 +171,7 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
             <div className="flex items-end">
               <Button
                 onClick={handleCalculate}
-                disabled={loading || !quantityOz || getQuantityInOz() <= 0 || getQuantityInOz() > availableStockOz}
+                disabled={loading || !quantityOz || getQuantityInOz() <= 0}
                 className="w-full"
               >
                 {loading ? 'Simulating...' : 'Simulate'}

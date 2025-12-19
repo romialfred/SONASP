@@ -30,6 +30,7 @@ import {
 } from '@/services/saleInvoiceService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
+import { createSaleInventoryTransactions } from '@/services/inventoryTransactionService';
 
 interface MiningCompany {
   id: string;
@@ -535,6 +536,28 @@ export function SaleCreate() {
         console.error('Database error:', error);
         alert.error('Failed to create sale. Please try again.');
         throw error;
+      }
+
+      // Create inventory transactions (exit for seller, entry for buyer)
+      if (data) {
+        const inventoryResult = await createSaleInventoryTransactions(
+          data.id,
+          formData.miningCompanyId,
+          'mining_company',
+          formData.customerId,
+          requestedQuantityOz,
+          user?.id
+        );
+
+        if (!inventoryResult.success) {
+          console.warn('Warning: Sale created but inventory transactions failed:', inventoryResult.error);
+          alert.warning(
+            `Sale ${saleNumber} created successfully, but inventory tracking encountered an issue. ` +
+            `Please verify inventory manually.`
+          );
+        } else {
+          console.log('Inventory transactions created successfully');
+        }
       }
 
       // Success - navigate to sales dashboard

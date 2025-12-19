@@ -90,16 +90,25 @@ export async function getCurrentGoldPrice(): Promise<{
   error?: string;
 }> {
   try {
+    console.log('🟡 [GOLD PRICE] Getting current gold price...');
     const today = new Date().toISOString().split('T')[0];
+    console.log('🟡 [GOLD PRICE] Today\'s date:', today);
 
+    console.log('🟡 [GOLD PRICE] Querying gold_prices_daily table...');
     const { data: existingData, error: fetchError } = await supabase
       .from('gold_prices_daily')
       .select('*')
       .eq('price_date', today)
       .maybeSingle();
 
+    console.log('🟡 [GOLD PRICE] Query result:', {
+      hasData: !!existingData,
+      hasError: !!fetchError,
+      errorCode: fetchError?.code
+    });
+
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching gold price:', fetchError);
+      console.error('❌ [GOLD PRICE] Error fetching gold price:', fetchError);
     }
 
     const now = new Date();
@@ -108,6 +117,7 @@ export async function getCurrentGoldPrice(): Promise<{
       : Infinity;
 
     const shouldUpdate = !existingData || dataAge > 60000;
+    console.log('🟡 [GOLD PRICE] Should update:', shouldUpdate, '(age:', dataAge, 'ms)');
 
     if (shouldUpdate) {
       const priceResult = await fetchGoldPrice();
@@ -144,9 +154,14 @@ export async function getCurrentGoldPrice(): Promise<{
     }
 
     if (existingData) {
+      console.log('✅ [GOLD PRICE] Returning existing data:', {
+        date: existingData.price_date,
+        price: existingData.london_am_rate
+      });
       return { success: true, data: existingData };
     }
 
+    console.log('🟡 [GOLD PRICE] No data for today, fetching latest...');
     const { data: latestData, error: latestError } = await supabase
       .from('gold_prices_daily')
       .select('*')
@@ -155,15 +170,22 @@ export async function getCurrentGoldPrice(): Promise<{
       .maybeSingle();
 
     if (latestError) {
+      console.error('❌ [GOLD PRICE] Error fetching latest:', latestError);
       return { success: false, error: latestError.message };
     }
 
     if (!latestData) {
+      console.error('❌ [GOLD PRICE] No gold price data available in database');
       return { success: false, error: 'No gold price data available' };
     }
 
+    console.log('✅ [GOLD PRICE] Returning latest data:', {
+      date: latestData.price_date,
+      price: latestData.london_am_rate
+    });
     return { success: true, data: latestData };
   } catch (error: any) {
+    console.error('❌ [GOLD PRICE] Exception:', error);
     return { success: false, error: error.message };
   }
 }

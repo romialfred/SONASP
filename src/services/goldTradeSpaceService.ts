@@ -71,18 +71,29 @@ export async function calculatePricingComparison(
   error?: string;
 }> {
   try {
+    console.log('🟢 [SERVICE] calculatePricingComparison called with quantity:', quantityOz);
+
+    console.log('🟢 [SERVICE] Fetching gold price, forward rates, and trend...');
     const [goldPriceResult, forwardRatesResult, trendResult] = await Promise.all([
       getCurrentGoldPrice(),
       getForwardRates(),
       getGoldPriceTrend(30),
     ]);
 
+    console.log('🟢 [SERVICE] Results received:', {
+      goldPrice: { success: goldPriceResult.success, hasData: !!goldPriceResult.data, error: goldPriceResult.error },
+      forwardRates: { success: forwardRatesResult.success, hasData: !!forwardRatesResult.data, error: forwardRatesResult.error },
+      trend: { success: trendResult.success, hasData: !!trendResult.data, error: trendResult.error }
+    });
+
     if (!goldPriceResult.success || !goldPriceResult.data) {
-      return { success: false, error: 'Unable to fetch current gold price' };
+      console.error('❌ [SERVICE] Failed to fetch gold price:', goldPriceResult.error);
+      return { success: false, error: `Unable to fetch current gold price: ${goldPriceResult.error}` };
     }
 
     if (!forwardRatesResult.success || !forwardRatesResult.data) {
-      return { success: false, error: 'Unable to fetch forward rates' };
+      console.error('❌ [SERVICE] Failed to fetch forward rates:', forwardRatesResult.error);
+      return { success: false, error: `Unable to fetch forward rates: ${forwardRatesResult.error}` };
     }
 
     const spotPrice = goldPriceResult.data.london_am_rate;
@@ -90,11 +101,19 @@ export async function calculatePricingComparison(
     const trend = trendResult.data?.trend || 'neutral';
     const volatility = trendResult.data?.volatility || 10;
 
+    console.log('🟢 [SERVICE] Extracted values:', {
+      spotPrice,
+      forwardRatesCount: forwardRates.length,
+      trend,
+      volatility
+    });
+
     const mechanisms: PricingMechanism[] = [];
 
     const spotValueDate = new Date();
     spotValueDate.setDate(spotValueDate.getDate() + 2);
 
+    console.log('🟢 [SERVICE] Creating Spot mechanism...');
     mechanisms.push({
       mechanism: 'spot',
       displayName: 'Spot Basis',
@@ -107,6 +126,7 @@ export async function calculatePricingComparison(
       description: 'Payment and delivery within 2 business days',
       settlementDays: 2,
     });
+    console.log('✅ [SERVICE] Spot mechanism created');
 
     const forwardDays = [14, 30];
     forwardDays.forEach((days) => {
@@ -153,7 +173,9 @@ export async function calculatePricingComparison(
       settlementDays: 7,
     });
 
+    console.log('🟢 [SERVICE] Determining recommended mechanism...');
     const recommendedMechanism = determineRecommendedMechanism(mechanisms, trend, volatility);
+    console.log('✅ [SERVICE] Recommended mechanism:', recommendedMechanism.mechanism);
 
     const comparison: PricingComparison = {
       quantityOz,
@@ -165,9 +187,18 @@ export async function calculatePricingComparison(
       marketVolatility: volatility,
     };
 
+    console.log('🟢 [SERVICE] Comparison object created:', {
+      mechanismsCount: comparison.mechanisms.length,
+      recommended: comparison.recommendedMechanism
+    });
+
     try {
+      console.log('🟢 [SERVICE] Attempting to log comparison to database...');
       const userId = (await supabase.auth.getUser()).data.user?.id;
+      console.log('🟢 [SERVICE] User ID:', userId);
+
       if (userId) {
+        console.log('🟢 [SERVICE] Inserting pricing comparison log...');
         await supabase.from('pricing_mechanism_comparisons').insert({
           user_id: userId,
           quantity_oz: quantityOz,
@@ -190,13 +221,17 @@ export async function calculatePricingComparison(
           gold_trend: trend,
           market_volatility: volatility,
         });
+        console.log('✅ [SERVICE] Pricing comparison logged to database');
       }
     } catch (insertError) {
-      console.warn('Unable to log pricing comparison:', insertError);
+      console.warn('⚠️ [SERVICE] Unable to log pricing comparison:', insertError);
     }
 
+    console.log('✅ [SERVICE] Returning successful result');
     return { success: true, data: comparison };
   } catch (error: any) {
+    console.error('❌ [SERVICE] Exception in calculatePricingComparison:', error);
+    console.error('❌ [SERVICE] Error stack:', error?.stack);
     return { success: false, error: error.message };
   }
 }

@@ -40,24 +40,62 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
   };
 
   const handleCalculate = async () => {
+    console.log('🔵 [SIMULATE] Button clicked - Starting calculation');
+    console.log('🔵 [SIMULATE] Available stock:', availableStockOz);
+    console.log('🔵 [SIMULATE] Quantity input:', quantityOz);
+
     const qtyInOz = getQuantityInOz();
+    console.log('🔵 [SIMULATE] Calculated quantity in oz:', qtyInOz);
+
     if (isNaN(qtyInOz) || qtyInOz <= 0 || qtyInOz > availableStockOz) {
+      console.error('❌ [SIMULATE] Invalid quantity', {
+        qtyInOz,
+        isNaN: isNaN(qtyInOz),
+        isZeroOrNegative: qtyInOz <= 0,
+        exceedsStock: qtyInOz > availableStockOz,
+        availableStockOz
+      });
+      alert('Invalid quantity. Please check the amount.');
       return;
     }
 
+    console.log('✅ [SIMULATE] Quantity validation passed');
     setLoading(true);
+    console.log('🔵 [SIMULATE] Loading state set to true');
+
     try {
+      console.log('🔵 [SIMULATE] Calling calculatePricingComparison...');
+      const startTime = Date.now();
+
       const result = await calculatePricingComparison(qtyInOz);
+
+      const duration = Date.now() - startTime;
+      console.log(`🔵 [SIMULATE] API call completed in ${duration}ms`);
+      console.log('🔵 [SIMULATE] Result:', {
+        success: result.success,
+        hasData: !!result.data,
+        error: result.error
+      });
+
       if (result.success && result.data) {
+        console.log('✅ [SIMULATE] Calculation successful');
+        console.log('🔵 [SIMULATE] Mechanisms count:', result.data.mechanisms?.length);
+        console.log('🔵 [SIMULATE] Recommended mechanism:', result.data.recommendedMechanism);
+
         // Sort mechanisms by benefit (highest to lowest)
         const sortedMechanisms = [...result.data.mechanisms].sort((a, b) => b.benefit - a.benefit);
+        console.log('✅ [SIMULATE] Mechanisms sorted');
+
         setComparison({
           ...result.data,
           mechanisms: sortedMechanisms
         });
         setSelectedMechanism(result.data.recommendedMechanism);
+        console.log('✅ [SIMULATE] State updated - Display should show');
       } else {
-        console.error('Pricing calculation failed:', result.error);
+        console.error('❌ [SIMULATE] Calculation failed:', result.error);
+        console.error('❌ [SIMULATE] Full result object:', JSON.stringify(result, null, 2));
+
         alert(
           `Unable to calculate pricing: ${result.error || 'Unknown error'}\n\n` +
           `This may be caused by missing gold price data.\n\n` +
@@ -65,14 +103,20 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
         );
       }
     } catch (error: any) {
-      console.error('Error calculating pricing:', error);
+      console.error('❌ [SIMULATE] Exception caught:', error);
+      console.error('❌ [SIMULATE] Error stack:', error?.stack);
+      console.error('❌ [SIMULATE] Error name:', error?.name);
+      console.error('❌ [SIMULATE] Error message:', error?.message);
+
       alert(
         `An unexpected error occurred while calculating pricing.\n\n` +
         `Error: ${error?.message || 'Unknown error'}\n\n` +
-        `Please try again or contact support if the issue persists.`
+        `Please check the console for details and contact support if the issue persists.`
       );
     } finally {
       setLoading(false);
+      console.log('🔵 [SIMULATE] Loading state set to false');
+      console.log('🔵 [SIMULATE] Calculation complete');
     }
   };
 

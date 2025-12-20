@@ -36,19 +36,19 @@ export function GoldSalesFlowDiagram() {
   const renderFlowNode = (node: any, label: string) => (
     <div className="flex-shrink-0 w-40">
       <div className="text-center mb-2">
-        <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-[10px] font-semibold text-slate-700">
+        <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700">
           {label}
         </span>
       </div>
-      <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${node.color} p-2.5 shadow-md`}>
+      <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${node.color} p-3 shadow-md`}>
         <div className="relative z-10 text-center text-white">
-          <div className="inline-flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg backdrop-blur-sm mb-1.5">
-            <Building2 className="w-4 h-4" />
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-lg backdrop-blur-sm mb-2">
+            <Building2 className="w-5 h-5" />
           </div>
-          <h3 className="text-sm font-bold mb-0.5">{node.name}</h3>
-          {node.fullName && <p className="text-[9px] text-white/80 mb-1.5">{node.fullName}</p>}
-          <div className="bg-white/20 backdrop-blur-sm rounded px-2 py-1">
-            <p className="text-lg font-bold">{node.percentage}%</p>
+          <h3 className="text-base font-bold mb-1">{node.name}</h3>
+          {node.fullName && <p className="text-xs text-white/80 mb-2">{node.fullName}</p>}
+          <div className="bg-white/20 backdrop-blur-sm rounded px-3 py-1.5">
+            <p className="text-xl font-bold">{node.percentage}%</p>
           </div>
         </div>
       </div>
@@ -57,19 +57,19 @@ export function GoldSalesFlowDiagram() {
 
   const renderEndBuyer = (buyer: any) => (
     <div key={buyer.id} className="group relative">
-      <div className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${buyer.color} p-2 shadow-md hover:shadow-lg transition-all duration-300`}>
+      <div className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${buyer.color} p-3 shadow-md hover:shadow-lg transition-all duration-300`}>
         <div className="relative z-10 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
-            <div className="p-1 bg-white/20 rounded backdrop-blur-sm">
-              <Building2 className="w-3 h-3" />
+            <div className="p-1.5 bg-white/20 rounded backdrop-blur-sm">
+              <Building2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-xs">{buyer.name}</p>
-              {buyer.fullName && <p className="text-[9px] text-white/70">{buyer.fullName}</p>}
+              <p className="font-bold text-sm">{buyer.name}</p>
+              {buyer.fullName && <p className="text-xs text-white/70">{buyer.fullName}</p>}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-base font-bold">{buyer.percentage}%</p>
+            <p className="text-lg font-bold">{buyer.percentage}%</p>
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@ export function GoldSalesFlowDiagram() {
         <div className="relative space-y-8">
           {/* Flow 1: KGM → MMME → Multiple End Buyers */}
           <div className="border border-blue-200 rounded-lg p-4 bg-blue-50/30">
-            <h3 className="text-sm font-bold text-blue-900 mb-3">Flow 1: KGM Production</h3>
+            <h3 className="text-base font-bold text-blue-900 mb-3">Flow 1: KGM Production</h3>
             <div className="flex items-center gap-3">
               {renderFlowNode(kgmFlow.mine, 'Mine')}
 
@@ -106,7 +106,7 @@ export function GoldSalesFlowDiagram() {
 
               <div className="flex-1 space-y-2">
                 <div className="text-center mb-2">
-                  <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-[10px] font-semibold text-slate-700">
+                  <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700">
                     {t('tradeSpace.endBuyers', 'End Buyers')}
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export function GoldSalesFlowDiagram() {
 
           {/* Flow 2: SMK → HBR → Auramet */}
           <div className="border border-green-200 rounded-lg p-4 bg-green-50/30">
-            <h3 className="text-sm font-bold text-green-900 mb-3">Flow 2: SMK Production</h3>
+            <h3 className="text-base font-bold text-green-900 mb-3">Flow 2: SMK Production</h3>
             <div className="flex items-center gap-3">
               {renderFlowNode(smkFlow.mine, 'Mine')}
 
@@ -129,7 +129,7 @@ export function GoldSalesFlowDiagram() {
 
               <div className="flex-1 space-y-2">
                 <div className="text-center mb-2">
-                  <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-[10px] font-semibold text-slate-700">
+                  <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700">
                     {t('tradeSpace.endBuyer', 'End Buyer')}
                   </span>
                 </div>

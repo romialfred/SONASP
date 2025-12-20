@@ -269,11 +269,7 @@ export function GoldTradeSpace() {
         <LiveGoldMarketPanel onCollapseChange={setIsPanelCollapsed} />
 
         {/* Main Content Area - Adjusts based on panel state */}
-        <div
-          className={`space-y-6 transition-all duration-300 ${
-            isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
-          }`}
-        >
+        <div className="space-y-6 max-w-full">
           {/* Mining Company Selection with Elegant Tiles */}
           {!selectedMiningCompany ? (
             <div className="space-y-4">
@@ -607,31 +603,10 @@ export function GoldTradeSpace() {
               </Card>
             )}
 
-          {/* Trading Information Card */}
-          {selectedMiningCompany && (
-            <Card className="bg-amber-50 border-amber-200">
-              <div className="p-5 space-y-3">
-                <div className="flex items-center gap-2 text-amber-800">
-                  <AlertCircle className="w-5 h-5" />
-                  <h4 className="font-semibold">{t('tradeSpace.transactionInformation')}</h4>
-                </div>
-                <div className="text-xs text-amber-900 space-y-2">
-                  <p><strong>{t('tradeSpace.availableStock')}:</strong> {availableStock.toFixed(2)} {t('tradeSpace.oz')}</p>
-                  <p><strong>{t('tradeSpace.transactionHours')}</strong> {t('tradeSpace.transactionHoursValue')}</p>
-                  <p><strong>{t('tradeSpace.orderType')}</strong> {t('tradeSpace.orderTypeValue')}</p>
-                  <p className="border-t border-amber-200 pt-2 mt-2">
-                    {t('tradeSpace.approvalNotice')}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </div>
 
         {/* Gold Sales Flow Diagram - Always visible at bottom */}
-        <div className={`transition-all duration-300 ${
-          isPanelCollapsed ? 'mr-0 max-w-full' : 'mr-80 max-w-6xl'
-        }`}>
+        <div className="max-w-full">
           <GoldSalesFlowDiagram />
         </div>
       </div>

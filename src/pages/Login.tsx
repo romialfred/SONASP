@@ -121,6 +121,7 @@ export function Login() {
             src="/sonasp_logo.png"
             alt="SONASP Logo"
             className="h-28 w-auto object-contain drop-shadow-2xl"
+            style={{ mixBlendMode: 'multiply' }}
           />
         </div>
 

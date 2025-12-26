@@ -16,8 +16,9 @@ i18n
         translation: frCommon,
       },
     },
-    fallbackLng: 'en',
-    supportedLngs: ['en', 'fr'],
+    fallbackLng: 'fr',
+    lng: 'fr',
+    supportedLngs: ['fr', 'en'],
     interpolation: {
       escapeValue: false,
     },

@@ -118,8 +118,8 @@ export function Login() {
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <img
-              src="/horizontal_-_colorx10.png"
-              alt="Mansa Logo"
+              src="/sonasp_logo.png"
+              alt="SONASP Logo"
               className="h-24 w-auto object-contain"
             />
           </div>
@@ -128,7 +128,7 @@ export function Login() {
               {t('auth.login')}
             </h1>
             <p className="text-base font-bold text-amber-600">
-              Gold Sales Management Solution
+              {t('auth.platformTitle')}
             </p>
           </div>
         </CardHeader>

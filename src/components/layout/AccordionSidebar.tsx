@@ -273,8 +273,8 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
           {!collapsed && (
             <div className="flex items-center gap-2">
               <img
-                src="/horizontal_-_colorx10.png"
-                alt="Mansa Logo"
+                src="/sonasp_logo.png"
+                alt="SONASP Logo"
                 className="h-12 w-auto object-contain"
               />
             </div>
@@ -283,8 +283,8 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
               <img
-                src="/horizontal_-_colorx10.png"
-                alt="Mansa Logo"
+                src="/sonasp_logo.png"
+                alt="SONASP Logo"
                 className="w-10 h-10 object-contain mx-auto relative rounded-xl"
               />
             </div>

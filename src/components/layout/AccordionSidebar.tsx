@@ -293,13 +293,11 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 alt="SONASP Logo"
                 className="h-10 w-auto object-contain"
               />
-              <div className="text-[14px] font-bold leading-tight text-gray-900">
+              <div className="text-[14px] font-bold leading-tight text-gray-900 whitespace-nowrap">
                 <span className="text-red-600 text-[16px]">S</span>ociété{' '}
                 <span className="text-red-600 text-[16px]">N</span>ationale des{' '}
                 <span className="text-red-600 text-[16px]">S</span>ubstances{' '}
-                <span className="text-red-600 text-[16px]">N</span>aturelles d'
-                <span className="text-red-600 text-[16px]">A</span>lgérie{' '}
-                <span className="text-red-600 text-[16px]">S</span>.<span className="text-red-600 text-[16px]">P</span>.
+                <span className="text-red-600 text-[16px]">N</span>aturelles
               </div>
             </div>
           )}

@@ -94,27 +94,27 @@ export function Login() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-slate-100 flex items-start justify-center pt-4 pb-80 p-4 relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-slate-100 flex items-start justify-center pt-4 pb-80 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="absolute top-6 right-6 z-10">
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-100/50"
+          className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-emerald-100/50"
         >
-          <Globe className="h-5 w-5 text-amber-600" />
+          <Globe className="h-5 w-5 text-emerald-600" />
           <span className="text-sm font-semibold text-gray-700">
             {i18n.language === 'en' ? 'Français' : 'English'}
           </span>
         </button>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-amber-500/30 mt-4">
+      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-emerald-500/30 mt-4">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <img
@@ -127,7 +127,7 @@ export function Login() {
             <h1 className="text-xl font-bold text-gray-900">
               {t('auth.login')}
             </h1>
-            <p className="text-base font-bold text-amber-600">
+            <p className="text-base font-bold text-emerald-600">
               {t('auth.platformTitle')}
             </p>
           </div>
@@ -206,42 +206,17 @@ export function Login() {
               {loading ? t('auth.loggingIn') : t('auth.loginButton')}
             </Button>
 
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-3 border-2 hover:bg-gray-50 transition-colors"
-              onClick={handleMicrosoftSSO}
-              disabled={loading}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
-                <rect x="12" y="1" width="10" height="10" fill="#7FBA00"/>
-                <rect x="1" y="12" width="10" height="10" fill="#00A4EF"/>
-                <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
-              </svg>
-              <span className="font-medium">Sign in with Microsoft</span>
-            </Button>
-
-            <div className="text-center mt-6 pt-4 border-t border-gray-200">
+            <div className="text-center mt-4 pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-700 mb-1 font-medium">
                 Forgot Password?
               </p>
               <p className="text-xs text-gray-600">
                 Please{' '}
                 <a
-                  href="mailto:admin@mansaresources.com"
+                  href="mailto:admin@sonasp.ml"
                   className="font-semibold hover:underline"
                 >
-                  <span className="text-amber-600">contact</span>{' '}
+                  <span className="text-emerald-600">contact</span>{' '}
                   <span className="text-blue-600">Administrator</span>
                 </a>
               </p>
@@ -252,15 +227,15 @@ export function Login() {
         {/* Footer with copyright inside card */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
           <p className="text-xs text-center text-gray-600">
-            © {new Date().getFullYear()} Mansa Resources. All rights reserved.
+            © {new Date().getFullYear()} SONASP. Tous droits réservés.
           </p>
         </div>
       </Card>
 
-      {/* Waves at bottom - using provided image */}
-      <div className="absolute bottom-0 left-0 right-0 z-0 opacity-70">
+      {/* Waves at bottom - using green waves */}
+      <div className="absolute bottom-0 left-0 right-0 z-0 opacity-80">
         <img
-          src="/waves-footer.png"
+          src="/waves-footer-green.svg"
           alt="Waves"
           className="w-full h-auto object-cover"
           style={{ maxHeight: '250px' }}

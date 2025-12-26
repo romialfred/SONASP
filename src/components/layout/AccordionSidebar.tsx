@@ -89,7 +89,7 @@ const useMenuGroups = (): MenuGroup[] => {
     {
       id: 'refinery-inventory',
       label: t('nav.inventoryMonitoring'),
-      groupIconColor: 'text-amber-600',
+      groupIconColor: 'text-emerald-600',
       groupIcon: Warehouse,
       items: [
         { label: t('nav.goldInventory'), path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
@@ -111,7 +111,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-orange-600',
       groupIcon: Store,
       items: [
-        { label: t('nav.tradeSpace'), path: '/sales/trade-space', icon: Store, iconColor: 'text-amber-600' },
+        { label: t('nav.tradeSpace'), path: '/sales/trade-space', icon: Store, iconColor: 'text-emerald-600' },
         { label: t('nav.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
         { label: t('nav.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
       ],
@@ -133,7 +133,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-teal-600',
       groupIcon: Handshake,
       items: [
-        { label: t('nav.miningCompanies'), path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-amber-700' },
+        { label: t('nav.miningCompanies'), path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-emerald-700' },
         { label: t('nav.freightCompanies'), path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
         { label: t('nav.refineryPlants'), path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
         { label: t('nav.depositors'), path: '/stakeholders/depositors', icon: Shield, iconColor: 'text-emerald-700' },
@@ -263,12 +263,12 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-gradient-to-b from-amber-50/60 via-transparent to-amber-50/40 h-screen border-r border-amber-200/30 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0 backdrop-blur-sm',
+        'bg-gradient-to-b from-emerald-50/60 via-transparent to-emerald-50/40 h-screen border-r border-emerald-200/30 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0 backdrop-blur-sm',
         collapsed ? 'w-[70px]' : 'w-[280px]'
       )}
     >
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-amber-200/40 bg-gradient-to-r from-amber-50/50 to-transparent backdrop-blur-sm">
+      <div className="p-4 border-b border-emerald-200/40 bg-gradient-to-r from-emerald-50/50 to-transparent backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       </div>
 
       {/* Toggle Button with "My Applications" */}
-      <div className="px-3 py-3 border-b border-amber-200/40 bg-gradient-to-r from-amber-50/30 to-transparent">
+      <div className="px-3 py-3 border-b border-emerald-200/40 bg-gradient-to-r from-emerald-50/30 to-transparent">
         <button
           onClick={toggleCollapse}
           className="w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent rounded-xl transition-all duration-300 group"

@@ -1,0 +1,13 @@
+<svg width="1920" height="300" viewBox="0 0 1920 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wave 1 - Light Green -->
+  <path d="M0 100 Q 480 50, 960 100 T 1920 100 L 1920 300 L 0 300 Z" fill="#d1fae5" opacity="0.6"/>
+
+  <!-- Wave 2 - Medium Green -->
+  <path d="M0 150 Q 480 120, 960 150 T 1920 150 L 1920 300 L 0 300 Z" fill="#a7f3d0" opacity="0.7"/>
+
+  <!-- Wave 3 - Darker Green -->
+  <path d="M0 200 Q 480 170, 960 200 T 1920 200 L 1920 300 L 0 300 Z" fill="#6ee7b7" opacity="0.8"/>
+
+  <!-- Wave 4 - Strong Green -->
+  <path d="M0 240 Q 480 220, 960 240 T 1920 240 L 1920 300 L 0 300 Z" fill="#34d399" opacity="0.9"/>
+</svg>

@@ -290,10 +290,9 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
             <div className="flex items-center gap-3 w-full">
               <div className="flex-shrink-0">
                 <img
-                  src="/sonasp_logo.png"
+                  src="/logo_transparent_sonasp.png"
                   alt="SONASP Logo"
                   className="h-12 w-12 object-contain"
-                  style={{ background: 'transparent' }}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -311,10 +310,9 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
               <img
-                src="/sonasp_logo.png"
+                src="/logo_transparent_sonasp.png"
                 alt="SONASP Logo"
                 className="w-10 h-10 object-contain mx-auto relative rounded-xl"
-                style={{ background: 'transparent' }}
               />
             </div>
           )}

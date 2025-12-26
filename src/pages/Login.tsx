@@ -118,10 +118,9 @@ export function Login() {
         {/* Logo outside the form card */}
         <div className="flex justify-center">
           <img
-            src="/sonasp_logo.png"
+            src="/logo_transparent_sonasp.png"
             alt="SONASP Logo"
             className="h-28 w-auto object-contain drop-shadow-2xl"
-            style={{ mixBlendMode: 'multiply' }}
           />
         </div>
 

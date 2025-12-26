@@ -194,12 +194,6 @@ export default function ArtisanMinierDashboard() {
               Tableau de Bord Analytique - SONASP
             </p>
           </div>
-          <Link to="/artisan-minier/liste">
-            <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700">
-              <UserPlus className="h-5 w-5 mr-2" />
-              Nouvel Artisan
-            </Button>
-          </Link>
         </div>
 
         {/* Barre de recherche */}

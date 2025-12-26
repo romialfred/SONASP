@@ -24,6 +24,13 @@ import { artisanMinierService } from '@/services/artisanMinierService';
 import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import {
+  SAHEL_COUNTRIES,
+  getRegionsByCountry,
+  getCitiesByRegion,
+  getPhonePrefix,
+  formatPhoneNumber
+} from '@/data/burkinaFasoData';
 
 interface ArtisanMinierFormWithTabsProps {
   artisan?: any;
@@ -42,6 +49,11 @@ export function ArtisanMinierFormWithTabs({
   const [cartePreview, setCartePreview] = useState<string | null>(null);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
+  const [selectedCountry, setSelectedCountry] = useState('Burkina Faso');
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [availableRegions, setAvailableRegions] = useState<any[]>([]);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+
   const [formData, setFormData] = useState({
     type_personne: 'physique',
     type_artisan: 'exploitant',
@@ -50,7 +62,8 @@ export function ArtisanMinierFormWithTabs({
     raison_sociale: '',
     date_naissance: '',
     lieu_naissance: '',
-    nationalite: 'Malienne',
+    nationalite: 'Burkinabé',
+    pays: 'Burkina Faso',
     sexe: 'M',
     telephone: '',
     email: '',
@@ -66,8 +79,36 @@ export function ArtisanMinierFormWithTabs({
     photo_url: ''
   });
 
+  // Charger les régions quand le pays change
+  useEffect(() => {
+    const regions = getRegionsByCountry(selectedCountry);
+    setAvailableRegions(regions);
+    setSelectedRegion('');
+    setAvailableCities([]);
+  }, [selectedCountry]);
+
+  // Charger les villes quand la région change
+  useEffect(() => {
+    if (selectedRegion) {
+      const cities = getCitiesByRegion(selectedCountry, selectedRegion);
+      setAvailableCities(cities);
+    } else {
+      setAvailableCities([]);
+    }
+  }, [selectedCountry, selectedRegion]);
+
+  // Initialiser avec les données du Burkina Faso
+  useEffect(() => {
+    const regions = getRegionsByCountry('Burkina Faso');
+    setAvailableRegions(regions);
+  }, []);
+
   useEffect(() => {
     if (artisan) {
+      const country = artisan.pays || 'Burkina Faso';
+      setSelectedCountry(country);
+      setSelectedRegion(artisan.region || '');
+
       setFormData({
         type_personne: artisan.type_personne || 'physique',
         type_artisan: artisan.type_artisan || 'exploitant',
@@ -76,7 +117,8 @@ export function ArtisanMinierFormWithTabs({
         raison_sociale: artisan.raison_sociale || '',
         date_naissance: artisan.date_naissance || '',
         lieu_naissance: artisan.lieu_naissance || '',
-        nationalite: artisan.nationalite || 'Malienne',
+        nationalite: artisan.nationalite || 'Burkinabé',
+        pays: country,
         sexe: artisan.sexe || 'M',
         telephone: artisan.telephone || '',
         email: artisan.email || '',
@@ -96,6 +138,21 @@ export function ArtisanMinierFormWithTabs({
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+    setFormData(prev => ({ ...prev, pays: country, region: '', commune: '' }));
+  };
+
+  const handleRegionChange = (region: string) => {
+    setSelectedRegion(region);
+    setFormData(prev => ({ ...prev, region, commune: '' }));
+  };
+
+  const handlePhoneChange = (phone: string) => {
+    const formattedPhone = formatPhoneNumber(phone, selectedCountry);
+    setFormData(prev => ({ ...prev, telephone: formattedPhone }));
   };
 
   const handleGeneratePreview = async () => {
@@ -319,11 +376,15 @@ export function ArtisanMinierFormWithTabs({
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nationalité
                     </label>
-                    <Input
+                    <Select
                       value={formData.nationalite}
                       onChange={(e) => handleInputChange('nationalite', e.target.value)}
-                      placeholder="Malienne"
-                    />
+                    >
+                      <option value="Burkinabé">Burkinabé</option>
+                      <option value="Malienne">Malienne</option>
+                      <option value="Nigérienne">Nigérienne</option>
+                      <option value="Autre">Autre</option>
+                    </Select>
                   </div>
                 </div>
               ) : (
@@ -345,19 +406,91 @@ export function ArtisanMinierFormWithTabs({
           {/* Tab 2: Identité & Contacts */}
           {activeTab === 'identite' && (
             <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                  Localisation
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pays *
+                    </label>
+                    <Select
+                      value={selectedCountry}
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                      required
+                    >
+                      {SAHEL_COUNTRIES.sort((a, b) => a.priority - b.priority).map(country => (
+                        <option key={country.code} value={country.name}>
+                          {country.flag} {country.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Région *
+                    </label>
+                    <Select
+                      value={selectedRegion}
+                      onChange={(e) => handleRegionChange(e.target.value)}
+                      required
+                    >
+                      <option value="">Sélectionner une région</option>
+                      {availableRegions.map(region => (
+                        <option key={region.name} value={region.name}>
+                          {region.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ville/Commune *
+                    </label>
+                    <Select
+                      value={formData.commune}
+                      onChange={(e) => handleInputChange('commune', e.target.value)}
+                      required
+                      disabled={!selectedRegion}
+                    >
+                      <option value="">Sélectionner une ville</option>
+                      {availableCities.map(city => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Téléphone *
                   </label>
-                  <Input
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) => handleInputChange('telephone', e.target.value)}
-                    required
-                    placeholder="+223 XX XX XX XX"
-                    icon={Phone}
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">
+                        {getPhonePrefix(selectedCountry)}
+                      </span>
+                    </div>
+                    <Input
+                      type="tel"
+                      value={formData.telephone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      required
+                      placeholder="XX XX XX XX"
+                      className="pl-20"
+                      icon={Phone}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Le préfixe {getPhonePrefix(selectedCountry)} sera ajouté automatiquement
+                  </p>
                 </div>
 
                 <div>
@@ -375,35 +508,13 @@ export function ArtisanMinierFormWithTabs({
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse
+                    Adresse complète
                   </label>
                   <Input
                     value={formData.adresse}
                     onChange={(e) => handleInputChange('adresse', e.target.value)}
-                    placeholder="Adresse complète"
+                    placeholder="Quartier, rue, numéro..."
                     icon={MapPin}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Commune
-                  </label>
-                  <Input
-                    value={formData.commune}
-                    onChange={(e) => handleInputChange('commune', e.target.value)}
-                    placeholder="Commune"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Région
-                  </label>
-                  <Input
-                    value={formData.region}
-                    onChange={(e) => handleInputChange('region', e.target.value)}
-                    placeholder="Région"
                   />
                 </div>
               </div>

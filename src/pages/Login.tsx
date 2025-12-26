@@ -114,24 +114,32 @@ export function Login() {
         </button>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl relative z-10 bg-white/95 backdrop-blur-sm border-2 border-emerald-500/30 mt-4">
-        <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-3">
-            <img
-              src="/sonasp_logo.png"
-              alt="SONASP Logo"
-              className="h-24 w-auto object-contain"
-            />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-xl font-bold text-gray-900">
-              {t('auth.login')}
-            </h1>
-            <p className="text-base font-bold text-emerald-600">
-              {t('auth.platformTitle')}
-            </p>
-          </div>
-        </CardHeader>
+      <div className="w-full max-w-md relative z-10 flex flex-col items-center gap-6">
+        {/* Logo outside the form card */}
+        <div className="flex justify-center">
+          <img
+            src="/sonasp_logo.png"
+            alt="SONASP Logo"
+            className="h-28 w-auto object-contain drop-shadow-2xl"
+          />
+        </div>
+
+        <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-2 border-emerald-500/30">
+          <CardHeader className="text-center pb-4">
+            <div className="space-y-3">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {t('auth.login')}
+              </h1>
+              <div className="text-center">
+                <p className="text-base font-bold text-emerald-600 leading-tight">
+                  Système National de Collecte
+                </p>
+                <p className="text-base font-bold text-emerald-600 leading-tight">
+                  et de la Traçabilité des Substances Précieuses
+                </p>
+              </div>
+            </div>
+          </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -231,6 +239,7 @@ export function Login() {
           </p>
         </div>
       </Card>
+      </div>
 
       {/* Waves at bottom - using green waves */}
       <div className="absolute bottom-0 left-0 right-0 z-0 opacity-80">

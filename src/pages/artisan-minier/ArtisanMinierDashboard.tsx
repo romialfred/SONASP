@@ -75,12 +75,6 @@ export default function ArtisanMinierDashboard() {
             Système National de Gestion de la Collecte de l'Or - SONASP
           </p>
         </div>
-
-        <Link to="/artisan-minier/nouveau">
-          <Button variant="primary" icon={UserPlus}>
-            Nouvel Artisan
-          </Button>
-        </Link>
       </div>
 
       {/* Barre de recherche */}
@@ -266,17 +260,7 @@ export default function ArtisanMinierDashboard() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Actions rapides
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/artisan-minier/nouveau" className="block">
-            <div className="p-4 border-2 border-emerald-200 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 transition-all cursor-pointer">
-              <UserPlus className="h-6 w-6 text-emerald-600 mb-2" />
-              <h4 className="font-semibold text-gray-900">Enregistrer un artisan</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Créer une nouvelle fiche artisan
-              </p>
-            </div>
-          </Link>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link to="/artisan-minier/cartes/validation" className="block">
             <div className="p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
               <CheckCircle className="h-6 w-6 text-blue-600 mb-2" />

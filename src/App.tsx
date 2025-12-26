@@ -93,6 +93,10 @@ import FreightShipmentCreate from './pages/freight/FreightShipmentCreate';
 import FreightShipmentDetails from './pages/freight/FreightShipmentDetails';
 import FreightShipmentsRefining from './pages/refining/FreightShipmentsRefining';
 import ArtisanMinierDashboard from './pages/artisan-minier/ArtisanMinierDashboard';
+import ArtisanMinierListe from './pages/artisan-minier/ArtisanMinierListe';
+import CarteSuivi from './pages/artisan-minier/CarteSuivi';
+import CarteValidation from './pages/artisan-minier/CarteValidation';
+import CarteExpirations from './pages/artisan-minier/CarteExpirations';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -229,6 +233,38 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <ArtisanMinierDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/liste"
+              element={
+                <ProtectedRoute>
+                  <ArtisanMinierListe />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/cartes/suivi"
+              element={
+                <ProtectedRoute>
+                  <CarteSuivi />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/cartes/validation"
+              element={
+                <ProtectedRoute>
+                  <CarteValidation />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/cartes/expirations"
+              element={
+                <ProtectedRoute>
+                  <CarteExpirations />
                 </ProtectedRoute>
               }
             />

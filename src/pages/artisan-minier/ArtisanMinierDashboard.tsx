@@ -223,77 +223,171 @@ export default function ArtisanMinierDashboard() {
 
         {/* KPIs avec Traffic Lights */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200">
-            <div className="flex items-start justify-between">
+          <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between p-6">
               <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium">Total Artisans</p>
-                <p className="text-3xl font-bold text-emerald-600 mt-2">
+                <p className="text-sm text-gray-600 font-medium mb-3">Total Artisans</p>
+                <p className="text-4xl font-bold text-emerald-600 mb-2">
                   {stats?.total || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Enregistrés</p>
+                <p className="text-xs text-gray-500">Enregistrés</p>
               </div>
-              <div className="p-3 bg-emerald-100 rounded-xl">
-                <Users className="h-6 w-6 text-emerald-600" />
+              <div className="p-3 bg-emerald-100 rounded-xl shadow-sm">
+                <Users className="h-7 w-7 text-emerald-600" />
               </div>
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
-            <div className="flex items-start justify-between">
+          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between p-6">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3">
                   <p className="text-sm text-gray-600 font-medium">Cartes Validées</p>
                   <div className={`w-3 h-3 rounded-full ${trafficLight.color} animate-pulse`}></div>
                 </div>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
+                <p className="text-4xl font-bold text-blue-600 mb-2">
                   {stats?.validees || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500">
                   Taux: {validationRate.toFixed(1)}% - {trafficLight.label}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <CheckCircle className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-blue-100 rounded-xl shadow-sm">
+                <CheckCircle className="h-7 w-7 text-blue-600" />
               </div>
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-200">
-            <div className="flex items-start justify-between">
+          <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between p-6">
               <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium">En Attente</p>
-                <p className="text-3xl font-bold text-orange-600 mt-2">
+                <p className="text-sm text-gray-600 font-medium mb-3">En Attente</p>
+                <p className="text-4xl font-bold text-orange-600 mb-2">
                   {stats?.en_cours || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">À valider</p>
+                <p className="text-xs text-gray-500">À valider</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Clock className="h-6 w-6 text-orange-600" />
+              <div className="p-3 bg-orange-100 rounded-xl shadow-sm">
+                <Clock className="h-7 w-7 text-orange-600" />
               </div>
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-white border-red-200">
-            <div className="flex items-start justify-between">
+          <Card className="bg-gradient-to-br from-red-50 to-white border-red-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between p-6">
               <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium">Alertes</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">
+                <p className="text-sm text-gray-600 font-medium mb-3">Alertes</p>
+                <p className="text-4xl font-bold text-red-600 mb-2">
                   {stats?.expirant_60_jours || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Expirent sous 60j</p>
+                <p className="text-xs text-gray-500">Expirent sous 60j</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-xl">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="p-3 bg-red-100 rounded-xl shadow-sm">
+                <AlertTriangle className="h-7 w-7 text-red-600" />
               </div>
             </div>
           </Card>
         </div>
 
+        {/* Graphique Donut Distribution par Statut */}
+        <Card className="shadow-lg border-gray-200">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg shadow-sm">
+                <PieChartIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Distribution des Cartes par Statut
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Vue d'ensemble de l'état des cartes professionnelles</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-8 bg-white">
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={statusDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  label={({ name, percent, value }) => {
+                    const statusLabels: any = {
+                      validees: 'Validées',
+                      en_cours: 'En cours',
+                      suspendues: 'Suspendues',
+                      expirees: 'Expirées'
+                    };
+                    return `${statusLabels[name] || name}: ${value} (${(percent * 100).toFixed(1)}%)`;
+                  }}
+                  outerRadius={120}
+                  innerRadius={70}
+                  fill="#8884d8"
+                  dataKey="value"
+                  paddingAngle={3}
+                >
+                  {statusDistribution.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[entry.name as keyof typeof COLORS] || '#94A3B8'}
+                      stroke="#fff"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any) => {
+                    const statusLabels: any = {
+                      validees: 'Validées',
+                      en_cours: 'En cours',
+                      suspendues: 'Suspendues',
+                      expirees: 'Expirées'
+                    };
+                    return [value, statusLabels[name] || name];
+                  }}
+                />
+                <Legend
+                  formatter={(value: any) => {
+                    const statusLabels: any = {
+                      validees: 'Validées',
+                      en_cours: 'En cours',
+                      suspendues: 'Suspendues',
+                      expirees: 'Expirées'
+                    };
+                    return statusLabels[value] || value;
+                  }}
+                  verticalAlign="bottom"
+                  height={50}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                <p className="text-2xl font-bold text-green-600">{stats?.validees || 0}</p>
+                <p className="text-xs text-gray-600 mt-1 font-medium">Validées</p>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
+                <p className="text-2xl font-bold text-orange-600">{stats?.en_cours || 0}</p>
+                <p className="text-xs text-gray-600 mt-1 font-medium">En cours</p>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-xl border-2 border-red-200">
+                <p className="text-2xl font-bold text-red-600">{stats?.suspendues || 0}</p>
+                <p className="text-xs text-gray-600 mt-1 font-medium">Suspendues</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
+                <p className="text-2xl font-bold text-gray-600">{stats?.expirees || 0}</p>
+                <p className="text-xs text-gray-600 mt-1 font-medium">Expirées</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Graphiques Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Distribution par Type d'Artisan */}
-          <Card>
-            <div className="p-4 border-b border-gray-200">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-5 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <PieChartIcon className="h-5 w-5 text-emerald-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -326,8 +420,8 @@ export default function ArtisanMinierDashboard() {
           </Card>
 
           {/* Distribution par Genre */}
-          <Card>
-            <div className="p-4 border-b border-gray-200">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-5 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -363,8 +457,8 @@ export default function ArtisanMinierDashboard() {
         {/* Graphiques Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Distribution par Région */}
-          <Card>
-            <div className="p-4 border-b border-gray-200">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-5 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-purple-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -386,8 +480,8 @@ export default function ArtisanMinierDashboard() {
           </Card>
 
           {/* Évolution Mensuelle */}
-          <Card>
-            <div className="p-4 border-b border-gray-200">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-5 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -413,70 +507,76 @@ export default function ArtisanMinierDashboard() {
 
         {/* Statistiques par statut */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">En Exploitation</h3>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Activity className="h-5 w-5 text-green-600" />
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">En Exploitation</h3>
+                <div className="p-3 bg-green-100 rounded-xl shadow-sm">
+                  <Activity className="h-6 w-6 text-green-600" />
+                </div>
               </div>
-            </div>
-            <p className="text-3xl font-bold text-green-600">{stats?.en_exploitation || 0}</p>
-            <p className="text-sm text-gray-600 mt-1">Cartes actives</p>
-            <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-600"
-                style={{ width: `${stats?.total > 0 ? ((stats.en_exploitation || 0) / stats.total) * 100 : 0}%` }}
-              ></div>
+              <p className="text-4xl font-bold text-green-600 mb-2">{stats?.en_exploitation || 0}</p>
+              <p className="text-sm text-gray-600 mb-4">Cartes actives</p>
+              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-600 transition-all duration-500"
+                  style={{ width: `${stats?.total > 0 ? ((stats.en_exploitation || 0) / stats.total) * 100 : 0}%` }}
+                ></div>
+              </div>
             </div>
           </Card>
 
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Suspendues</h3>
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Suspendues</h3>
+                <div className="p-3 bg-yellow-100 rounded-xl shadow-sm">
+                  <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                </div>
               </div>
-            </div>
-            <p className="text-3xl font-bold text-yellow-600">{stats?.suspendues || 0}</p>
-            <p className="text-sm text-gray-600 mt-1">Temporairement</p>
-            <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-yellow-600"
-                style={{ width: `${stats?.total > 0 ? ((stats.suspendues || 0) / stats.total) * 100 : 0}%` }}
-              ></div>
+              <p className="text-4xl font-bold text-yellow-600 mb-2">{stats?.suspendues || 0}</p>
+              <p className="text-sm text-gray-600 mb-4">Temporairement</p>
+              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-600 transition-all duration-500"
+                  style={{ width: `${stats?.total > 0 ? ((stats.suspendues || 0) / stats.total) * 100 : 0}%` }}
+                ></div>
+              </div>
             </div>
           </Card>
 
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Expirées</h3>
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-gray-600" />
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Expirées</h3>
+                <div className="p-3 bg-gray-100 rounded-xl shadow-sm">
+                  <Calendar className="h-6 w-6 text-gray-600" />
+                </div>
               </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-600">{stats?.expirees || 0}</p>
-            <p className="text-sm text-gray-600 mt-1">À renouveler</p>
-            <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gray-600"
-                style={{ width: `${stats?.total > 0 ? ((stats.expirees || 0) / stats.total) * 100 : 0}%` }}
-              ></div>
+              <p className="text-4xl font-bold text-gray-600 mb-2">{stats?.expirees || 0}</p>
+              <p className="text-sm text-gray-600 mb-4">À renouveler</p>
+              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gray-600 transition-all duration-500"
+                  style={{ width: `${stats?.total > 0 ? ((stats.expirees || 0) / stats.total) * 100 : 0}%` }}
+                ></div>
+              </div>
             </div>
           </Card>
         </div>
 
         {/* Alertes d'expiration */}
         {cartesExpirant && cartesExpirant.length > 0 && (
-          <Card className="border-orange-200 bg-orange-50">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <AlertTriangle className="h-6 w-6 text-orange-600" />
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm">
+            <div className="flex items-start gap-4 p-6">
+              <div className="p-4 bg-orange-100 rounded-xl shadow-sm">
+                <AlertTriangle className="h-7 w-7 text-orange-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   Cartes expirant prochainement
                 </h3>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-5 font-medium">
                   {cartesExpirant.length} carte(s) expire(nt) dans les 60 prochains jours
                 </p>
                 <div className="space-y-2">
@@ -520,40 +620,48 @@ export default function ArtisanMinierDashboard() {
         )}
 
         {/* Actions rapides */}
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Actions rapides
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/artisan-minier/cartes/validation" className="block">
-              <div className="p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
-                <CheckCircle className="h-6 w-6 text-blue-600 mb-2" />
-                <h4 className="font-semibold text-gray-900">Valider des cartes</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  {stats?.en_cours || 0} carte(s) en attente
-                </p>
-              </div>
-            </Link>
+        <Card className="shadow-sm">
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-5">
+              Actions rapides
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <Link to="/artisan-minier/cartes/validation" className="block">
+                <div className="p-5 border-2 border-blue-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <div className="p-3 bg-blue-100 rounded-xl inline-flex mb-3">
+                    <CheckCircle className="h-7 w-7 text-blue-600" />
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-2">Valider des cartes</h4>
+                  <p className="text-sm text-gray-600">
+                    {stats?.en_cours || 0} carte(s) en attente
+                  </p>
+                </div>
+              </Link>
 
-            <Link to="/artisan-minier/cartes/suivi" className="block">
-              <div className="p-4 border-2 border-purple-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer">
-                <BarChart3 className="h-6 w-6 text-purple-600 mb-2" />
-                <h4 className="font-semibold text-gray-900">Suivi des activités</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Statistiques et performances
-                </p>
-              </div>
-            </Link>
+              <Link to="/artisan-minier/cartes/suivi" className="block">
+                <div className="p-5 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <div className="p-3 bg-purple-100 rounded-xl inline-flex mb-3">
+                    <BarChart3 className="h-7 w-7 text-purple-600" />
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-2">Suivi des activités</h4>
+                  <p className="text-sm text-gray-600">
+                    Statistiques et performances
+                  </p>
+                </div>
+              </Link>
 
-            <Link to="/artisan-minier/liste" className="block">
-              <div className="p-4 border-2 border-emerald-200 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 transition-all cursor-pointer">
-                <Users className="h-6 w-6 text-emerald-600 mb-2" />
-                <h4 className="font-semibold text-gray-900">Gérer les artisans</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Liste complète et modifications
-                </p>
-              </div>
-            </Link>
+              <Link to="/artisan-minier/liste" className="block">
+                <div className="p-5 border-2 border-emerald-200 rounded-xl hover:border-emerald-400 hover:bg-emerald-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <div className="p-3 bg-emerald-100 rounded-xl inline-flex mb-3">
+                    <Users className="h-7 w-7 text-emerald-600" />
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-2">Gérer les artisans</h4>
+                  <p className="text-sm text-gray-600">
+                    Liste complète et modifications
+                  </p>
+                </div>
+              </Link>
+            </div>
           </div>
         </Card>
       </div>

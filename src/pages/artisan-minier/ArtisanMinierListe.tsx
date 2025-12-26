@@ -168,8 +168,8 @@ export default function ArtisanMinierListe() {
 
         {/* Search Bar */}
         {!showForm && (
-          <Card>
-            <div className="p-4">
+          <Card className="shadow-sm">
+            <div className="p-5">
               <div className="flex gap-4">
                 <div className="flex-1">
                   <Input
@@ -179,7 +179,7 @@ export default function ArtisanMinierListe() {
                     icon={Search}
                   />
                 </div>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="flex items-center gap-2 px-5">
                   <Filter className="h-4 w-4" />
                   Filtrer
                 </Button>
@@ -190,18 +190,20 @@ export default function ArtisanMinierListe() {
 
         {/* Liste des artisans */}
         {!showForm && (
-          <Card>
+          <Card className="shadow-sm">
             {loading ? (
               <div className="p-12">
                 <Loading />
               </div>
             ) : filteredArtisans.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="text-center py-16 px-6">
+                <div className="inline-flex p-5 bg-gray-100 rounded-full mb-5">
+                  <User className="h-16 w-16 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {searchQuery ? 'Aucun artisan trouvé' : 'Aucun artisan enregistré'}
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-7 text-base">
                   {searchQuery
                     ? 'Essayez de modifier vos critères de recherche'
                     : 'Commencez par enregistrer votre premier artisan minier'
@@ -214,7 +216,7 @@ export default function ArtisanMinierListe() {
                       setSelectedArtisan(null);
                       setShowForm(true);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-emerald-600 hover:bg-emerald-700 px-6 py-3"
                   >
                     <Plus className="h-5 w-5 mr-2" />
                     Enregistrer le premier artisan
@@ -227,40 +229,40 @@ export default function ArtisanMinierListe() {
                   <div
                     key={artisan.id}
                     onClick={() => handleEdit(artisan)}
-                    className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="p-5 hover:bg-gray-50 transition-all cursor-pointer hover:shadow-sm"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="p-3 bg-emerald-100 rounded-xl">
+                      <div className="flex items-center gap-5 flex-1">
+                        <div className="p-4 bg-emerald-100 rounded-xl shadow-sm">
                           {artisan.type_personne === 'physique' ? (
-                            <User className="h-6 w-6 text-emerald-600" />
+                            <User className="h-7 w-7 text-emerald-600" />
                           ) : (
-                            <Building2 className="h-6 w-6 text-emerald-600" />
+                            <Building2 className="h-7 w-7 text-emerald-600" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2">
                             {artisan.type_personne === 'physique'
                               ? `${artisan.nom} ${artisan.prenoms || ''}`
                               : artisan.raison_sociale
                             }
                           </h3>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 flex-wrap">
-                            <span className="flex items-center gap-1">
+                          <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                            <span className="flex items-center gap-1.5 font-medium">
                               <CreditCard className="h-4 w-4" />
                               {artisan.numero_carte || 'En attente'}
                             </span>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold">
                               {artisan.type_artisan}
                             </span>
                             {artisan.telephone && (
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1.5">
                                 <Phone className="h-4 w-4" />
                                 {artisan.telephone}
                               </span>
                             )}
                             {artisan.email && (
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1.5">
                                 <Mail className="h-4 w-4" />
                                 {artisan.email}
                               </span>
@@ -268,7 +270,7 @@ export default function ArtisanMinierListe() {
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <ChevronRight className="h-6 w-6 text-gray-400 flex-shrink-0" />
                     </div>
                   </div>
                 ))}

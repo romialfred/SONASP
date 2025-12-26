@@ -12,7 +12,10 @@ import {
   X,
   Eye,
   Calendar,
-  Briefcase
+  Briefcase,
+  Upload,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -77,8 +80,13 @@ export function ArtisanMinierFormWithTabs({
     date_expiration_piece: '',
     lieu_delivrance_piece: '',
     observations: '',
-    photo_url: ''
+    photo_url: '',
+    piece_identite_url: ''
   });
+
+  const [pieceIdentiteFile, setPieceIdentiteFile] = useState<File | null>(null);
+  const [uploadingPiece, setUploadingPiece] = useState(false);
+  const [ageError, setAgeError] = useState<string>('');
 
   // Charger les régions quand le pays change
   useEffect(() => {
@@ -132,13 +140,52 @@ export function ArtisanMinierFormWithTabs({
         date_expiration_piece: artisan.date_expiration_piece || '',
         lieu_delivrance_piece: artisan.lieu_delivrance_piece || '',
         observations: artisan.observations || '',
-        photo_url: artisan.photo_url || ''
+        photo_url: artisan.photo_url || '',
+        piece_identite_url: artisan.piece_identite_url || ''
       });
     }
   }, [artisan]);
 
   const handleInputChange = (field: string, value: any) => {
+    if (field === 'date_naissance' && value) {
+      const age = calculateAge(value);
+      if (age < 18) {
+        setAgeError('L\'artisan minier doit avoir au moins 18 ans');
+      } else {
+        setAgeError('');
+      }
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const calculateAge = (dateNaissance: string): number => {
+    const today = new Date();
+    const birthDate = new Date(dateNaissance);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age;
+  };
+
+  const handlePieceIdentiteUpload = async (file: File) => {
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      showError('Format de fichier non supporté. Utilisez JPG, PNG ou PDF');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Le fichier ne doit pas dépasser 5 Mo');
+      return;
+    }
+
+    setPieceIdentiteFile(file);
   };
 
   const handleCountryChange = (country: string) => {
@@ -184,16 +231,51 @@ export function ArtisanMinierFormWithTabs({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (ageError) {
+      showError(ageError);
+      return;
+    }
+
+    if (formData.type_personne === 'physique' && formData.date_naissance) {
+      const age = calculateAge(formData.date_naissance);
+      if (age < 18) {
+        showError('L\'artisan minier doit avoir au moins 18 ans');
+        return;
+      }
+    }
+
     try {
       setSaving(true);
 
+      let savedArtisan;
+
       if (artisan) {
-        await artisanMinierService.update(artisan.id, formData);
-        showSuccess('Artisan modifié avec succès!');
+        savedArtisan = await artisanMinierService.update(artisan.id, formData);
       } else {
-        await artisanMinierService.create(formData);
-        showSuccess('Artisan enregistré avec succès!');
+        savedArtisan = await artisanMinierService.create(formData);
       }
+
+      if (pieceIdentiteFile && savedArtisan?.id) {
+        setUploadingPiece(true);
+        try {
+          const pieceUrl = await artisanMinierService.uploadDocument(
+            savedArtisan.id,
+            pieceIdentiteFile,
+            'piece_identite'
+          );
+
+          await artisanMinierService.update(savedArtisan.id, {
+            piece_identite_url: pieceUrl
+          });
+        } catch (uploadError) {
+          console.error('Error uploading piece:', uploadError);
+          showError('Document uploadé mais erreur lors de la mise à jour');
+        } finally {
+          setUploadingPiece(false);
+        }
+      }
+
+      showSuccess(artisan ? 'Artisan modifié avec succès!' : 'Artisan enregistré avec succès!');
 
       setTimeout(() => {
         onSuccess();
@@ -339,13 +421,27 @@ export function ArtisanMinierFormWithTabs({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de naissance
+                      Date de naissance *
                     </label>
                     <Input
                       type="date"
                       value={formData.date_naissance}
                       onChange={(e) => handleInputChange('date_naissance', e.target.value)}
+                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                      required
                     />
+                    {ageError && (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{ageError}</span>
+                      </div>
+                    )}
+                    {formData.date_naissance && !ageError && (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                        <Check className="h-4 w-4" />
+                        <span>Âge: {calculateAge(formData.date_naissance)} ans</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -587,6 +683,99 @@ export function ArtisanMinierFormWithTabs({
                     onChange={(e) => handleInputChange('lieu_delivrance_piece', e.target.value)}
                     placeholder="Ville de délivrance"
                   />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Upload className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                        Document de Pièce d'Identité
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        Joignez une copie scannée de la pièce d'identité ou du passeport (JPG, PNG ou PDF - Max 5 Mo)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <input
+                        type="file"
+                        id="piece-identite-upload"
+                        accept="image/jpeg,image/jpg,image/png,application/pdf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePieceIdentiteUpload(file);
+                        }}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="piece-identite-upload"
+                        className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                      >
+                        <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          Cliquez pour sélectionner un fichier
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          JPG, PNG ou PDF (max. 5 Mo)
+                        </p>
+                      </label>
+                    </div>
+
+                    {pieceIdentiteFile && (
+                      <div className="bg-white border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <FileText className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {pieceIdentiteFile.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(pieceIdentiteFile.size / 1024).toFixed(2)} Ko
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPieceIdentiteFile(null)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {formData.piece_identite_url && !pieceIdentiteFile && (
+                      <div className="bg-white border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Check className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              Document déjà enregistré
+                            </p>
+                            <a
+                              href={formData.piece_identite_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Voir le document
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

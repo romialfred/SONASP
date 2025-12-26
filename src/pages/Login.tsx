@@ -114,19 +114,17 @@ export function Login() {
         </button>
       </div>
 
-      <div className="w-full max-w-md relative z-10 flex flex-col items-center gap-6">
-        {/* Logo outside the form card */}
-        <div className="flex justify-center">
-          <img
-            src="/logo_transparent_sonasp.png"
-            alt="SONASP Logo"
-            className="h-28 w-auto object-contain drop-shadow-2xl"
-          />
-        </div>
-
+      <div className="w-full max-w-md relative z-10">
         <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-2 border-emerald-500/30">
           <CardHeader className="text-center pb-4">
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <div className="flex justify-center mb-3">
+                <img
+                  src="/logo_transparent_sonasp.png"
+                  alt="SONASP Logo"
+                  className="h-24 w-auto object-contain drop-shadow-lg"
+                />
+              </div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {t('auth.login')}
               </h1>

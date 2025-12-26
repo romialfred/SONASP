@@ -43,7 +43,7 @@ Les erreurs 404 que vous voyez dans la console viennent du fait que **les tables
 
 ### Migration SQL à Appliquer
 
-Le fichier de migration SQL a été créé précédemment. Vous devez l'appliquer dans Supabase:
+Le fichier de migration SQL est prêt dans votre projet. Vous devez l'appliquer dans Supabase:
 
 1. **Ouvrir Supabase Dashboard**
    - Allez sur https://supabase.com
@@ -53,8 +53,9 @@ Le fichier de migration SQL a été créé précédemment. Vous devez l'applique
    - Cliquez sur "SQL Editor" dans le menu latéral
 
 3. **Appliquer la Migration**
-   - Copiez le contenu du fichier `/tmp/artisan_minier_migration.sql`
-   - Collez-le dans l'éditeur SQL
+   - Ouvrez le fichier `supabase/migrations/26122025_01_artisan_minier_migration.sql` dans votre projet
+   - Copiez TOUT le contenu (environ 400 lignes)
+   - Collez-le dans l'éditeur SQL de Supabase
    - Cliquez sur "Run"
 
 ### Tables qui seront créées:

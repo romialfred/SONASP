@@ -27,8 +27,8 @@
 2. Cliquez sur **"New Query"** pour créer une nouvelle requête
 
 ### Étape 3: Copier-coller le SQL
-1. Ouvrez le fichier: `/tmp/artisan_minier_migration.sql`
-2. **Copiez TOUT le contenu** du fichier
+1. Ouvrez le fichier: `supabase/migrations/26122025_01_artisan_minier_migration.sql`
+2. **Copiez TOUT le contenu** du fichier (environ 400 lignes)
 3. **Collez** dans l'éditeur SQL de Supabase
 4. Cliquez sur le bouton vert **"Run"** en bas à droite
 
@@ -121,4 +121,4 @@ Si vous avez des questions ou des problèmes:
 
 ---
 
-**Note**: Le fichier SQL complet est dans `/tmp/artisan_minier_migration.sql` (1400+ lignes de code professionnel)
+**Note**: Le fichier SQL complet est dans `supabase/migrations/26122025_01_artisan_minier_migration.sql` (environ 400 lignes de code professionnel avec triggers et RLS)

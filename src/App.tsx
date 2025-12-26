@@ -92,6 +92,7 @@ import FreightShipmentDashboard from './pages/freight/FreightShipmentDashboard';
 import FreightShipmentCreate from './pages/freight/FreightShipmentCreate';
 import FreightShipmentDetails from './pages/freight/FreightShipmentDetails';
 import FreightShipmentsRefining from './pages/refining/FreightShipmentsRefining';
+import ArtisanMinierDashboard from './pages/artisan-minier/ArtisanMinierDashboard';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -218,6 +219,16 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <HelpCenter />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Artisan Minier Routes */}
+            <Route
+              path="/artisan-minier"
+              element={
+                <ProtectedRoute>
+                  <ArtisanMinierDashboard />
                 </ProtectedRoute>
               }
             />

@@ -287,12 +287,20 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       <div className="p-4 border-b border-emerald-200/40 bg-gradient-to-r from-emerald-50/50 to-transparent backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 w-full">
               <img
                 src="/sonasp_logo.png"
                 alt="SONASP Logo"
-                className="h-12 w-auto object-contain"
+                className="h-10 w-auto object-contain"
               />
+              <div className="text-[14px] font-bold leading-tight text-gray-900">
+                <span className="text-red-600 text-[16px]">S</span>ociété{' '}
+                <span className="text-red-600 text-[16px]">N</span>ationale des{' '}
+                <span className="text-red-600 text-[16px]">S</span>ubstances{' '}
+                <span className="text-red-600 text-[16px]">N</span>aturelles d'
+                <span className="text-red-600 text-[16px]">A</span>lgérie{' '}
+                <span className="text-red-600 text-[16px]">S</span>.<span className="text-red-600 text-[16px]">P</span>.
+              </div>
             </div>
           )}
           {collapsed && (

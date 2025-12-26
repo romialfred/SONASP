@@ -73,7 +73,7 @@
     "daysAgo": "Il y a {{count}}j"
   },
   "header": {
-    "appTitle": "SONASP - Plateforme de Gestion de l'Or",
+    "appTitle": "Système National de Collecte et du Suivi de la Traçabilité de l'Or",
     "currentLanguage": "Actuel: {{language}}",
     "helpCenter": "Centre d'Aide"
   },

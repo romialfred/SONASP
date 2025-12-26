@@ -192,13 +192,56 @@ export const NIGER_REGIONS: Region[] = [
   }
 ];
 
+export const GUINEE_REGIONS: Region[] = [
+  {
+    name: 'Conakry',
+    country: 'Guinée',
+    cities: ['Conakry', 'Ratoma', 'Matam', 'Dixinn', 'Kaloum']
+  },
+  {
+    name: 'Boké',
+    country: 'Guinée',
+    cities: ['Boké', 'Boffa', 'Fria', 'Gaoual', 'Koundara']
+  },
+  {
+    name: 'Faranah',
+    country: 'Guinée',
+    cities: ['Faranah', 'Dabola', 'Dinguiraye', 'Kissidougou']
+  },
+  {
+    name: 'Kankan',
+    country: 'Guinée',
+    cities: ['Kankan', 'Kérouané', 'Kouroussa', 'Mandiana', 'Siguiri']
+  },
+  {
+    name: 'Kindia',
+    country: 'Guinée',
+    cities: ['Kindia', 'Coyah', 'Dubréka', 'Forécariah', 'Télimélé']
+  },
+  {
+    name: 'Labé',
+    country: 'Guinée',
+    cities: ['Labé', 'Koubia', 'Lélouma', 'Mali', 'Tougué']
+  },
+  {
+    name: 'Mamou',
+    country: 'Guinée',
+    cities: ['Mamou', 'Dalaba', 'Pita']
+  },
+  {
+    name: 'Nzérékoré',
+    country: 'Guinée',
+    cities: ['Nzérékoré', 'Beyla', 'Guéckédou', 'Lola', 'Macenta', 'Yomou']
+  }
+];
+
 export const SAHEL_COUNTRIES = [
   {
     code: 'BF',
     name: 'Burkina Faso',
     phonePrefix: '+226',
     flag: '🇧🇫',
-    priority: 1 // Priorité la plus haute
+    priority: 1
   },
   {
     code: 'ML',
@@ -213,6 +256,13 @@ export const SAHEL_COUNTRIES = [
     phonePrefix: '+227',
     flag: '🇳🇪',
     priority: 3
+  },
+  {
+    code: 'GN',
+    name: 'Guinée',
+    phonePrefix: '+224',
+    flag: '🇬🇳',
+    priority: 4
   }
 ];
 
@@ -225,6 +275,8 @@ export const getRegionsByCountry = (country: string): Region[] => {
       return MALI_REGIONS;
     case 'Niger':
       return NIGER_REGIONS;
+    case 'Guinée':
+      return GUINEE_REGIONS;
     default:
       return [];
   }

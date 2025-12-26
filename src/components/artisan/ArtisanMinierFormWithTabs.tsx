@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { TextArea } from '@/components/ui/TextArea';
 import { Tabs } from '@/components/ui/Tabs';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { artisanMinierService } from '@/services/artisanMinierService';
 import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
 import { CustomAlert } from '@/components/ui/CustomAlert';
@@ -151,8 +152,7 @@ export function ArtisanMinierFormWithTabs({
   };
 
   const handlePhoneChange = (phone: string) => {
-    const formattedPhone = formatPhoneNumber(phone, selectedCountry);
-    setFormData(prev => ({ ...prev, telephone: formattedPhone }));
+    setFormData(prev => ({ ...prev, telephone: phone }));
   };
 
   const handleGeneratePreview = async () => {
@@ -472,24 +472,15 @@ export function ArtisanMinierFormWithTabs({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Téléphone *
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">
-                        {getPhonePrefix(selectedCountry)}
-                      </span>
-                    </div>
-                    <Input
-                      type="tel"
-                      value={formData.telephone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      required
-                      placeholder="XX XX XX XX"
-                      className="pl-20"
-                      icon={Phone}
-                    />
-                  </div>
+                  <PhoneInput
+                    value={formData.telephone}
+                    onChange={handlePhoneChange}
+                    defaultCountry={selectedCountry}
+                    required
+                    placeholder="XX XX XX XX"
+                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Le préfixe {getPhonePrefix(selectedCountry)} sera ajouté automatiquement
+                    Sélectionnez l'indicatif pays et entrez le numéro
                   </p>
                 </div>
 

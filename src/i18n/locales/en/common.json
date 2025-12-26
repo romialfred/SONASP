@@ -173,7 +173,14 @@
     "tradeSpace": "Trade Space",
     "preSales": "Pre-Sales",
     "insights": "Insights & Reports",
-    "helpCenter": "Help Center"
+    "helpCenter": "Help Center",
+    "artisanMinier": "Artisan Miners",
+    "artisanDashboard": "Dashboard",
+    "nouvelArtisan": "New Artisan",
+    "listeArtisans": "Artisan List",
+    "suiviCartes": "Card Tracking",
+    "validationCartes": "Card Validation",
+    "expirations": "Expirations"
   },
   "dashboard": {
     "title": "Dashboard",

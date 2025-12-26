@@ -173,7 +173,14 @@
     "tradeSpace": "Espace Commercial",
     "preSales": "Pré-Ventes",
     "insights": "Analyses & Rapports",
-    "helpCenter": "Centre d'Aide"
+    "helpCenter": "Centre d'Aide",
+    "artisanMinier": "Artisans Miniers",
+    "artisanDashboard": "Tableau de Bord",
+    "nouvelArtisan": "Nouvel Artisan",
+    "listeArtisans": "Liste des Artisans",
+    "suiviCartes": "Suivi des Cartes",
+    "validationCartes": "Validation Cartes",
+    "expirations": "Expirations"
   },
   "dashboard": {
     "title": "Tableau de bord",

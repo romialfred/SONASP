@@ -32,6 +32,9 @@ import {
   Lock,
   Award,
   Layers,
+  UserPlus,
+  CheckCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -54,6 +57,20 @@ const useMenuGroups = (): MenuGroup[] => {
   const { t, i18n } = useTranslation();
 
   return useMemo(() => [
+    {
+      id: 'artisan-minier',
+      label: t('nav.artisanMinier'),
+      groupIconColor: 'text-emerald-700',
+      groupIcon: Users,
+      items: [
+        { label: t('nav.artisanDashboard'), path: '/artisan-minier', icon: LayoutDashboard, iconColor: 'text-emerald-700' },
+        { label: t('nav.nouvelArtisan'), path: '/artisan-minier/nouveau', icon: UserPlus, iconColor: 'text-green-600' },
+        { label: t('nav.listeArtisans'), path: '/artisan-minier/liste', icon: Users, iconColor: 'text-blue-600' },
+        { label: t('nav.suiviCartes'), path: '/artisan-minier/cartes/suivi', icon: TrendingUp, iconColor: 'text-purple-600' },
+        { label: t('nav.validationCartes'), path: '/artisan-minier/cartes/validation', icon: CheckCircle, iconColor: 'text-indigo-600' },
+        { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
+      ],
+    },
     {
       id: 'production',
       label: t('nav.productionManagement'),

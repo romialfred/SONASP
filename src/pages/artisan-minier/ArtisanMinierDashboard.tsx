@@ -13,6 +13,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -60,11 +61,16 @@ export default function ArtisanMinierDashboard() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
@@ -282,6 +288,7 @@ export default function ArtisanMinierDashboard() {
           </Link>
         </div>
       </Card>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

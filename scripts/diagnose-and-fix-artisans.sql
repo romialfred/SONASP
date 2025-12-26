@@ -36,21 +36,21 @@ BEGIN
   END IF;
 END $$;
 
--- ETAPE 3: Ajouter mining_company_id si manquante
+-- ETAPE 3: Supprimer mining_company_id si elle existe (non nécessaire)
 -- ============================================================================
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'SNP_artisans_miniers'
     AND column_name = 'mining_company_id'
   ) THEN
     ALTER TABLE "SNP_artisans_miniers"
-    ADD COLUMN mining_company_id uuid;
+    DROP COLUMN IF EXISTS mining_company_id;
 
-    RAISE NOTICE 'Colonne "mining_company_id" ajoutée';
+    RAISE NOTICE 'Colonne "mining_company_id" supprimée (non nécessaire)';
   ELSE
-    RAISE NOTICE 'Colonne "mining_company_id" existe déjà';
+    RAISE NOTICE 'Colonne "mining_company_id" n''existe pas (correct)';
   END IF;
 END $$;
 

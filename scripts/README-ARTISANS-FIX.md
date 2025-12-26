@@ -4,8 +4,9 @@
 
 Les données artisans ne s'affichent pas à cause de:
 1. Colonne `pays` manquante dans la table
-2. Relations incorrectes avec `mining_companies`
-3. Colonnes manquantes: `mining_company_id`, `updated_by`
+2. Relations incorrectes avec `mining_companies` (qui n'existent pas pour les artisans)
+3. Colonne manquante: `updated_by`
+4. Colonne incorrecte: `mining_company_id` (les artisans sont indépendants)
 
 ## Solution en 3 Étapes
 
@@ -59,9 +60,16 @@ Ce script va insérer 20 artisans test du Burkina Faso:
 ## Modifications Apportées au Code
 
 ### Service artisanMinierService.ts
-- Suppression des relations avec `mining_companies` qui n'existent pas
+- Suppression des relations avec `mining_companies` (les artisans sont indépendants)
+- Retrait de la propriété `mining_company_id` de l'interface TypeScript
+- Ajout de la propriété `pays` pour supporter plusieurs pays
 - Simplification des requêtes SELECT
 - Conservation de la relation avec `SNP_cartes_professionnelles`
+
+### Structure de la table
+- Ajout de la colonne `pays` (DEFAULT 'Burkina Faso')
+- Ajout de la colonne `updated_by` pour l'audit
+- **Suppression** de `mining_company_id` (non applicable aux artisans)
 
 ## Vérification Rapide
 

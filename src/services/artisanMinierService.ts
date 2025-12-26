@@ -19,11 +19,12 @@ export interface ArtisanMinier {
   telephone: string;
   telephone_secondaire?: string;
   email?: string;
-  adresse_complete: string;
+  adresse?: string;
   commune?: string;
   region?: string;
+  pays?: string;
 
-  type_piece_identite?: 'cni' | 'passeport' | 'permis_conduire' | 'attestation_identite';
+  type_piece_identite?: 'CNI' | 'Passeport' | 'Permis' | 'Autre';
   numero_piece_identite?: string;
   date_delivrance_piece?: string;
   date_expiration_piece?: string;
@@ -32,8 +33,6 @@ export interface ArtisanMinier {
 
   photo_url?: string;
 
-  site_exploitation?: string;
-  mining_company_id?: string;
   collecteur_id?: string;
 
   observations?: string;

@@ -64,11 +64,7 @@ export const artisanMinierService = {
   async getAll() {
     const { data, error } = await supabase
       .from('SNP_artisans_miniers')
-      .select(`
-        *,
-        mining_company:mining_companies(id, name),
-        collecteur:SNP_artisans_miniers!SNP_artisans_miniers_collecteur_id_fkey(id, nom, prenoms, numero_carte)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -80,8 +76,6 @@ export const artisanMinierService = {
       .from('SNP_artisans_miniers')
       .select(`
         *,
-        mining_company:mining_companies(id, name),
-        collecteur:SNP_artisans_miniers!SNP_artisans_miniers_collecteur_id_fkey(id, nom, prenoms, numero_carte),
         carte:SNP_cartes_professionnelles(*)
       `)
       .eq('id', id)
@@ -96,7 +90,6 @@ export const artisanMinierService = {
       .from('SNP_artisans_miniers')
       .select(`
         *,
-        mining_company:mining_companies(id, name),
         carte:SNP_cartes_professionnelles(*)
       `)
       .eq('numero_carte', numeroCarte)
@@ -111,7 +104,6 @@ export const artisanMinierService = {
       .from('SNP_artisans_miniers')
       .select(`
         *,
-        mining_company:mining_companies(id, name),
         carte:SNP_cartes_professionnelles(*)
       `)
       .eq('type_artisan', typeArtisan)
@@ -354,7 +346,6 @@ export const artisanMinierService = {
       .from('SNP_artisans_miniers')
       .select(`
         *,
-        mining_company:mining_companies(id, name),
         carte:SNP_cartes_professionnelles(*)
       `)
       .or(`nom.ilike.%${query}%,prenoms.ilike.%${query}%,numero_carte.ilike.%${query}%,telephone.ilike.%${query}%,raison_sociale.ilike.%${query}%`)

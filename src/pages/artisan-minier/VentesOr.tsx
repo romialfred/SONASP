@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
-  Filter,
-  Download,
   Eye,
   Edit2,
   Trash2,
-  CheckCircle,
-  Clock,
-  XCircle,
   DollarSign,
   Calendar,
   TrendingUp,
+  Clock,
+  Coins,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -42,6 +39,7 @@ const TYPE_OR_LABELS: Record<string, string> = {
 export default function VentesOr() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [ventes, setVentes] = useState<ArtisanGoldSale[]>([]);
   const [filteredVentes, setFilteredVentes] = useState<ArtisanGoldSale[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,12 +57,17 @@ export default function VentesOr() {
   const loadVentes = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await artisanGoldSalesService.getAll();
-      setVentes(data);
-      setFilteredVentes(data);
-    } catch (error) {
-      console.error('Error loading ventes:', error);
-      showError('Impossible de charger les ventes d\'or');
+      setVentes(data || []);
+      setFilteredVentes(data || []);
+    } catch (err: any) {
+      console.error('Error loading ventes:', err);
+      const errorMessage = err.message || 'Impossible de charger les ventes d\'or';
+      setError(errorMessage);
+      showError(errorMessage);
+      setVentes([]);
+      setFilteredVentes([]);
     } finally {
       setLoading(false);
     }
@@ -134,6 +137,36 @@ export default function VentesOr() {
       <MainLayout>
         <div className="flex justify-center items-center h-96">
           <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Ventes d'Or des Artisans</h1>
+            <p className="text-gray-600 mt-2">
+              Gestion de la collecte et des ventes d'or auprès des artisans miniers
+            </p>
+          </div>
+          <Card className="p-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <Coins className="w-16 h-16 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <p className="text-sm text-gray-500 mb-4">
+                La table des ventes d'or n'existe peut-être pas encore. Veuillez exécuter le script SQL de création.
+              </p>
+              <Button onClick={loadVentes}>
+                Réessayer
+              </Button>
+            </div>
+          </Card>
         </div>
       </MainLayout>
     );

@@ -38,9 +38,9 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'snp_artisan_ventes_or' AND column_name = 'acheteur_id'
   ) THEN
-    -- Ajouter la colonne acheteur_id (référence vers snp_mining_companies)
+    -- Ajouter la colonne acheteur_id (référence vers mining_companies)
     ALTER TABLE snp_artisan_ventes_or
-    ADD COLUMN acheteur_id uuid REFERENCES snp_mining_companies(id);
+    ADD COLUMN acheteur_id uuid REFERENCES mining_companies(id);
 
     COMMENT ON COLUMN snp_artisan_ventes_or.acheteur_id IS 'ID de la société acheteuse (doit être SONASP)';
 
@@ -60,12 +60,12 @@ DECLARE
 BEGIN
   -- Trouver SONASP
   SELECT id INTO sonasp_id
-  FROM snp_mining_companies
+  FROM mining_companies
   WHERE company_type = 'sonasp'
   LIMIT 1;
 
   IF sonasp_id IS NULL THEN
-    RAISE EXCEPTION 'SONASP n''existe pas dans la table snp_mining_companies. Veuillez d''abord exécuter RESUME-CORRECTIONS-27-12-2024.sql';
+    RAISE EXCEPTION 'SONASP n''existe pas dans la table mining_companies. Veuillez d''abord exécuter RESUME-CORRECTIONS-27-12-2024.sql';
   END IF;
 
   -- Mettre à jour toutes les ventes existantes pour lier à SONASP
@@ -86,7 +86,7 @@ DECLARE
   sonasp_id uuid;
 BEGIN
   SELECT id INTO sonasp_id
-  FROM snp_mining_companies
+  FROM mining_companies
   WHERE company_type = 'sonasp'
   AND is_active = true
   LIMIT 1;
@@ -115,7 +115,7 @@ BEGIN
 
   -- Vérifier que l'acheteur est bien SONASP
   IF NOT EXISTS (
-    SELECT 1 FROM snp_mining_companies
+    SELECT 1 FROM mining_companies
     WHERE id = NEW.acheteur_id
     AND company_type = 'sonasp'
   ) THEN
@@ -154,7 +154,7 @@ BEGIN
   ALTER TABLE snp_artisan_ventes_or
   ADD CONSTRAINT check_acheteur_is_sonasp CHECK (
     EXISTS (
-      SELECT 1 FROM snp_mining_companies
+      SELECT 1 FROM mining_companies
       WHERE id = acheteur_id
       AND company_type = 'sonasp'
     )
@@ -188,7 +188,7 @@ SELECT
   v.observations,
   v.statut,
   v.acheteur_id,
-  mc.company_name as acheteur_nom,
+  mc.name as acheteur_nom,
   mc.company_type as acheteur_type,
   v.created_at,
   v.updated_at,
@@ -196,7 +196,7 @@ SELECT
   v.updated_by
 FROM snp_artisan_ventes_or v
 LEFT JOIN snp_artisans_miniers a ON v.artisan_id = a.id
-LEFT JOIN snp_mining_companies mc ON v.acheteur_id = mc.id
+LEFT JOIN mining_companies mc ON v.acheteur_id = mc.id
 WHERE mc.company_type = 'sonasp';
 
 COMMENT ON VIEW snp_ventes_artisans_sonasp IS 'Vue des ventes artisans avec les détails de SONASP';
@@ -290,14 +290,14 @@ DECLARE
 BEGIN
   -- Afficher les informations de SONASP
   SELECT * INTO sonasp_rec
-  FROM snp_mining_companies
+  FROM mining_companies
   WHERE company_type = 'sonasp'
   LIMIT 1;
 
   IF sonasp_rec IS NOT NULL THEN
     RAISE NOTICE '═══════════════════════════════════════════════════════════';
     RAISE NOTICE '✓ SONASP configurée:';
-    RAISE NOTICE '  - Nom: %', sonasp_rec.company_name;
+    RAISE NOTICE '  - Nom: %', sonasp_rec.name;
     RAISE NOTICE '  - Type: %', sonasp_rec.company_type;
     RAISE NOTICE '  - ID: %', sonasp_rec.id;
     RAISE NOTICE '  - Statut: %', CASE WHEN sonasp_rec.is_active THEN 'Actif' ELSE 'Inactif' END;

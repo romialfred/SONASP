@@ -287,17 +287,63 @@ END $$;
 -- ÉTAPE 14: Création/Mise à jour de SONASP comme société minière
 -- ============================================================================
 
--- Vérifier si la table des sociétés minières existe
+-- Vérifier si la table des sociétés minières existe et la créer si nécessaire
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'snp_mining_companies') THEN
-    RAISE EXCEPTION 'La table snp_mining_companies n''existe pas. Veuillez d''abord créer la structure de base.';
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'mining_companies') THEN
+    -- Créer la table mining_companies
+    CREATE TABLE mining_companies (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name text NOT NULL UNIQUE,
+      abbreviation text,
+      code text UNIQUE,
+      company_type text DEFAULT 'standard' CHECK (company_type IN ('standard', 'sonasp', 'international')),
+      registration_number text,
+      tax_id text,
+      email text,
+      phone text,
+      website text,
+      address text,
+      city text,
+      country text NOT NULL DEFAULT 'BF',
+      is_active boolean DEFAULT true,
+      notes text,
+      metadata jsonb DEFAULT '{}'::jsonb,
+      created_at timestamptz DEFAULT now(),
+      updated_at timestamptz DEFAULT now(),
+      created_by uuid REFERENCES auth.users(id),
+      updated_by uuid REFERENCES auth.users(id)
+    );
+
+    -- Créer les index
+    CREATE INDEX idx_mining_companies_country ON mining_companies(country);
+    CREATE INDEX idx_mining_companies_active ON mining_companies(is_active);
+    CREATE INDEX idx_mining_companies_type ON mining_companies(company_type);
+
+    -- Activer RLS
+    ALTER TABLE mining_companies ENABLE ROW LEVEL SECURITY;
+
+    -- Créer les politiques RLS
+    CREATE POLICY "Utilisateurs authentifiés peuvent lire mining_companies"
+      ON mining_companies FOR SELECT TO authenticated USING (true);
+
+    CREATE POLICY "Utilisateurs authentifiés peuvent créer mining_companies"
+      ON mining_companies FOR INSERT TO authenticated WITH CHECK (true);
+
+    CREATE POLICY "Utilisateurs authentifiés peuvent modifier mining_companies"
+      ON mining_companies FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+    RAISE NOTICE 'Table mining_companies créée avec succès';
+  ELSE
+    RAISE NOTICE 'Table mining_companies existe déjà';
   END IF;
 END $$;
 
 -- Insérer ou mettre à jour SONASP
-INSERT INTO snp_mining_companies (
-  company_name,
+INSERT INTO mining_companies (
+  name,
+  abbreviation,
+  code,
   company_type,
   registration_number,
   tax_id,
@@ -309,23 +355,27 @@ INSERT INTO snp_mining_companies (
   is_active,
   notes
 ) VALUES (
-  'SONASP - Société Nationale des Substances Naturelles',
+  'Société Nationale des Substances Naturelles',
+  'SONASP',
+  'SONASP-BF-001',
   'sonasp',
   'BF-SONASP-2024',
   'SONASP-TAX-001',
   'contact@sonasp.bf',
   '+226 25 XX XX XX',
-  'Ouagadougou',
+  'Ouagadougou, Burkina Faso',
   'Ouagadougou',
   'BF',
   true,
-  'Société nationale - Collecteur principal auprès des artisans miniers'
+  'Société nationale - Collecteur principal auprès des artisans miniers. Peut vendre à l''international via l''Espace Trading.'
 )
-ON CONFLICT (company_name)
+ON CONFLICT (name)
 DO UPDATE SET
+  abbreviation = 'SONASP',
+  code = 'SONASP-BF-001',
   company_type = 'sonasp',
   is_active = true,
-  notes = 'Société nationale - Collecteur principal auprès des artisans miniers',
+  notes = 'Société nationale - Collecteur principal auprès des artisans miniers. Peut vendre à l''international via l''Espace Trading.',
   updated_at = now();
 
 -- ============================================================================
@@ -346,11 +396,12 @@ ORDER BY COALESCE(p.ordre, m.ordre), m.ordre;
 
 -- Afficher SONASP
 SELECT
-  company_name as "Société",
+  name as "Société",
+  abbreviation as "Abréviation",
   company_type as "Type",
   email as "Email",
   CASE WHEN is_active THEN 'Actif' ELSE 'Inactif' END as "Statut"
-FROM snp_mining_companies
+FROM mining_companies
 WHERE company_type = 'sonasp';
 
 RAISE NOTICE '✓ Restructuration complète terminée avec succès';

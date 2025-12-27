@@ -1,5 +1,15 @@
 # Guide d'Installation Complet - Corrections du 27 Décembre 2024
 
+## ⚠️ IMPORTANT: Ordre d'Exécution
+
+**EXÉCUTEZ LES SCRIPTS DANS CET ORDRE EXACT:**
+
+1. ✅ `RESUME-CORRECTIONS-27-12-2024.sql` ← **COMMENCE ICI** (crée mining_companies + modules)
+2. ✅ `IMPLEMENT-ARTISAN-SONASP-SALES-LOGIC.sql` (nécessite mining_companies)
+3. ✅ `VERIFY-SONASP-TRADING-SPACE.sql` (vérifie tout)
+
+---
+
 ## 📋 Vue d'ensemble
 
 Ce guide présente toutes les corrections apportées pour résoudre:

@@ -100,6 +100,8 @@ import CarteSuivi from './pages/artisan-minier/CarteSuivi';
 import CarteValidation from './pages/artisan-minier/CarteValidation';
 import CarteExpirations from './pages/artisan-minier/CarteExpirations';
 import VentesOr from './pages/artisan-minier/VentesOr';
+import VenteOrForm from './pages/artisan-minier/VenteOrForm';
+import VenteOrDetails from './pages/artisan-minier/VenteOrDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -284,6 +286,30 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <VentesOr />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/ventes-or/nouvelle"
+              element={
+                <ProtectedRoute>
+                  <VenteOrForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/ventes-or/:id"
+              element={
+                <ProtectedRoute>
+                  <VenteOrDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/ventes-or/:id/modifier"
+              element={
+                <ProtectedRoute>
+                  <VenteOrForm />
                 </ProtectedRoute>
               }
             />

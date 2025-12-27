@@ -45,7 +45,6 @@ import {
   LineChart,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { modulesService, Module } from '@/services/modulesService';
 
 interface MenuItem {
   label: string;
@@ -148,37 +147,8 @@ const getIconColor = (code: string): string => {
 
 const useMenuGroups = (): MenuGroup[] => {
   const { t, i18n } = useTranslation();
-  const [dbModules, setDbModules] = useState<Module[]>([]);
 
-  useEffect(() => {
-    const loadModules = async () => {
-      try {
-        const modules = await modulesService.getActiveHierarchy();
-        setDbModules(modules);
-      } catch (error) {
-        console.error('Error loading modules:', error);
-      }
-    };
-    loadModules();
-  }, []);
-
-  return useMemo(() => {
-    if (dbModules.length > 0) {
-      return dbModules.map(module => ({
-        id: module.code,
-        label: module.nom,
-        groupIconColor: getIconColor(module.code),
-        groupIcon: getIcon(module.icone),
-        items: (module.submodules || []).map(sub => ({
-          label: sub.nom,
-          path: sub.route || '#',
-          icon: getIcon(sub.icone),
-          iconColor: getIconColor(sub.code),
-        })),
-      }));
-    }
-
-    return [
+  return useMemo(() => [
     {
       id: 'artisan-minier',
       label: t('nav.artisanMinier'),
@@ -190,6 +160,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.suiviCartes'), path: '/artisan-minier/cartes/suivi', icon: TrendingUp, iconColor: 'text-purple-600' },
         { label: t('nav.validationCartes'), path: '/artisan-minier/cartes/validation', icon: CheckCircle, iconColor: 'text-indigo-600' },
         { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
+        { label: 'Ventes d\'Or', path: '/artisan-minier/ventes-or', icon: Coins, iconColor: 'text-yellow-600' },
       ],
     },
     {
@@ -210,8 +181,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-blue-600',
       groupIcon: Truck,
       items: [
-        // { label: 'Batch Management', path: '/batches', icon: Package, iconColor: 'text-blue-600' }, // Hidden as requested
-        { label: t('nav.shippingPreparation'), path: '/shipping/preparation', icon: PackagePlus, iconColor: 'text-emerald-600' },
+        { label: t('nav.shippingPreparation'), path: '/shipping/preparation', icon: Ship, iconColor: 'text-blue-600' },
         { label: t('nav.invoiceConsignment'), path: '/freight', icon: Truck, iconColor: 'text-cyan-600' },
       ],
     },
@@ -302,8 +272,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.audit'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],
     },
-  ];
-  }, [t, i18n.language, dbModules]);
+  ], [t, i18n.language]);
 };
 
 const STORAGE_KEY = 'sidebar:lastGroup';

@@ -142,7 +142,10 @@ CREATE INDEX IF NOT EXISTS idx_ventes_or_acheteur ON snp_artisan_ventes_or(achet
 CREATE INDEX IF NOT EXISTS idx_ventes_or_artisan ON snp_artisan_ventes_or(artisan_id);
 CREATE INDEX IF NOT EXISTS idx_ventes_or_date ON snp_artisan_ventes_or(date_vente);
 
-RAISE NOTICE 'Index créés pour optimiser les performances';
+DO $$
+BEGIN
+  RAISE NOTICE 'Index créés pour optimiser les performances';
+END $$;
 
 -- ============================================================================
 -- ÉTAPE 7: Vue pour les ventes artisans avec détails SONASP

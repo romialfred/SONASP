@@ -211,31 +211,16 @@ COMMENT ON TRIGGER trigger_set_sonasp_buyer ON snp_artisan_ventes_or IS
   'Définit automatiquement SONASP comme acheteur et empêche les ventes à d''autres clients';
 
 -- ============================================================================
--- ÉTAPE 7: Contrainte pour garantir que l'acheteur est SONASP
+-- ÉTAPE 7: Validation (gérée par le trigger)
 -- ============================================================================
+
+-- Note: La validation que l'acheteur est SONASP est gérée par le trigger
+-- trigger_set_sonasp_buyer qui vérifie automatiquement lors de chaque INSERT/UPDATE
+-- PostgreSQL ne permet pas de sous-requêtes dans les contraintes CHECK
 
 DO $$
 BEGIN
-  -- Supprimer la contrainte si elle existe
-  IF EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE table_name = 'snp_artisan_ventes_or'
-    AND constraint_name = 'check_acheteur_is_sonasp'
-  ) THEN
-    ALTER TABLE snp_artisan_ventes_or DROP CONSTRAINT check_acheteur_is_sonasp;
-  END IF;
-
-  -- Ajouter la nouvelle contrainte
-  ALTER TABLE snp_artisan_ventes_or
-  ADD CONSTRAINT check_acheteur_is_sonasp CHECK (
-    EXISTS (
-      SELECT 1 FROM mining_companies
-      WHERE id = acheteur_id
-      AND company_type = 'sonasp'
-    )
-  );
-
-  RAISE NOTICE '✓ Contrainte check_acheteur_is_sonasp ajoutée';
+  RAISE NOTICE '✓ Validation gérée par le trigger trigger_set_sonasp_buyer';
 END $$;
 
 -- ============================================================================

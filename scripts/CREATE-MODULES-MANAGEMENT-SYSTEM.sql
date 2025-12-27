@@ -209,11 +209,12 @@ BEGIN
   SELECT id INTO artisan_id FROM snp_modules WHERE code = 'artisan-minier';
 
   INSERT INTO snp_modules (code, nom, description, icone, route, parent_id, ordre, est_actif, est_visible_menu) VALUES
-    ('artisan-dashboard', 'Tableau de Bord', 'Vue d''ensemble artisans', 'LayoutDashboard', '/artisan-minier/dashboard', artisan_id, 1, true, true),
+    ('artisan-dashboard', 'Gestion des Artisans', 'Vue d''ensemble et gestion des artisans', 'LayoutDashboard', '/artisan-minier', artisan_id, 1, true, true),
     ('artisan-liste', 'Liste des Artisans', 'Répertoire complet', 'Users', '/artisan-minier/liste', artisan_id, 2, true, true),
     ('artisan-cartes-suivi', 'Suivi des Cartes', 'Suivi des cartes pro', 'CreditCard', '/artisan-minier/cartes/suivi', artisan_id, 3, true, true),
     ('artisan-cartes-validation', 'Validation Cartes', 'Valider les cartes', 'CheckCircle', '/artisan-minier/cartes/validation', artisan_id, 4, true, true),
-    ('artisan-cartes-expiration', 'Expirations', 'Cartes expirées/à renouveler', 'AlertCircle', '/artisan-minier/cartes/expirations', artisan_id, 5, true, true)
+    ('artisan-cartes-expiration', 'Expirations', 'Cartes expirées/à renouveler', 'AlertTriangle', '/artisan-minier/cartes/expirations', artisan_id, 5, true, true),
+    ('artisan-ventes-or', 'Ventes d''Or', 'Collecte et ventes d''or des artisans', 'Coins', '/artisan-minier/ventes-or', artisan_id, 6, true, true)
   ON CONFLICT (code) DO NOTHING;
 END $$;
 

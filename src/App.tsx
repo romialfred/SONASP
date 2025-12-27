@@ -99,6 +99,7 @@ import ArtisanMinierDetails from './pages/artisan-minier/ArtisanMinierDetails';
 import CarteSuivi from './pages/artisan-minier/CarteSuivi';
 import CarteValidation from './pages/artisan-minier/CarteValidation';
 import CarteExpirations from './pages/artisan-minier/CarteExpirations';
+import VentesOr from './pages/artisan-minier/VentesOr';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -275,6 +276,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <CarteExpirations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/ventes-or"
+              element={
+                <ProtectedRoute>
+                  <VentesOr />
                 </ProtectedRoute>
               }
             />

@@ -123,6 +123,12 @@ CREATE TRIGGER trigger_update_artisan_metrics
 
 ALTER TABLE snp_artisan_transactions ENABLE ROW LEVEL SECURITY;
 
+-- Supprimer les policies existantes si elles existent
+DROP POLICY IF EXISTS "Users can view all transactions" ON snp_artisan_transactions;
+DROP POLICY IF EXISTS "Authorized users can insert transactions" ON snp_artisan_transactions;
+DROP POLICY IF EXISTS "Authorized users can update transactions" ON snp_artisan_transactions;
+DROP POLICY IF EXISTS "Authorized users can delete transactions" ON snp_artisan_transactions;
+
 -- Politique de lecture: tous les utilisateurs authentifiés peuvent voir les transactions
 CREATE POLICY "Users can view all transactions"
   ON snp_artisan_transactions FOR SELECT

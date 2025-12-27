@@ -194,6 +194,12 @@ CREATE TRIGGER trigger_update_artisan_metrics_vente_or
 
 ALTER TABLE snp_artisan_ventes_or ENABLE ROW LEVEL SECURITY;
 
+-- Supprimer les policies existantes si elles existent
+DROP POLICY IF EXISTS "Users can view all gold sales" ON snp_artisan_ventes_or;
+DROP POLICY IF EXISTS "Authorized users can insert gold sales" ON snp_artisan_ventes_or;
+DROP POLICY IF EXISTS "Authorized users can update gold sales" ON snp_artisan_ventes_or;
+DROP POLICY IF EXISTS "Authorized users can delete gold sales" ON snp_artisan_ventes_or;
+
 -- Politique de lecture
 CREATE POLICY "Users can view all gold sales"
   ON snp_artisan_ventes_or FOR SELECT

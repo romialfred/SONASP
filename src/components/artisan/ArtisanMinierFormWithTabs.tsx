@@ -85,7 +85,9 @@ export function ArtisanMinierFormWithTabs({
   });
 
   const [pieceIdentiteFile, setPieceIdentiteFile] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPiece, setUploadingPiece] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [ageError, setAgeError] = useState<string>('');
 
   // Charger les régions quand le pays change
@@ -188,6 +190,30 @@ export function ArtisanMinierFormWithTabs({
     setPieceIdentiteFile(file);
   };
 
+  const handlePhotoUpload = async (file: File) => {
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      showError('Format de fichier non supporté. Utilisez JPG ou PNG');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      showError('La photo doit faire moins de 2 Mo');
+      return;
+    }
+
+    setPhotoFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const photoUrl = e.target?.result as string;
+      setFormData(prev => ({ ...prev, photo_url: photoUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
     setFormData(prev => ({ ...prev, pays: country, region: '', commune: '' }));
@@ -209,17 +235,29 @@ export function ArtisanMinierFormWithTabs({
         return;
       }
 
-      const carteData = {
-        numero_carte: artisan?.numero_carte || 'PREVIEW-001',
+      const artisanData = {
+        type_personne: formData.type_personne,
+        type_artisan: formData.type_artisan,
         nom: formData.nom,
         prenoms: formData.prenoms,
-        type_artisan: formData.type_artisan,
-        date_delivrance: new Date().toISOString().split('T')[0],
-        date_expiration: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        photo_url: formData.photo_url
+        raison_sociale: formData.raison_sociale,
+        telephone: formData.telephone,
+        region: formData.region,
+        site_exploitation: formData.commune,
+        photo_url: formData.photo_url,
+        adresse_complete: formData.adresse
       };
 
-      const preview = await carteProfessionnelleGeneratorService.generateCartePreview(carteData);
+      const carteData = {
+        numero_carte: artisan?.numero_carte || 'SONASP/AM/2025/PREVIEW',
+        date_delivrance: new Date().toISOString().split('T')[0],
+        date_expiration: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        statut: 'en_cours',
+        numero_securite: '0000000000',
+        qr_code_data: JSON.stringify({ numero_carte: artisan?.numero_carte || 'PREVIEW' })
+      };
+
+      const preview = await carteProfessionnelleGeneratorService.generatePreviewDataUrl(artisanData, carteData);
       setCartePreview(preview);
       setActiveTab('carte');
     } catch (error: any) {
@@ -253,6 +291,25 @@ export function ArtisanMinierFormWithTabs({
         savedArtisan = await artisanMinierService.update(artisan.id, formData);
       } else {
         savedArtisan = await artisanMinierService.create(formData);
+      }
+
+      if (photoFile && savedArtisan?.id) {
+        setUploadingPhoto(true);
+        try {
+          const photoUrl = await artisanMinierService.uploadDocument(
+            savedArtisan.id,
+            photoFile,
+            'photo'
+          );
+
+          await artisanMinierService.update(savedArtisan.id, {
+            photo_url: photoUrl
+          });
+        } catch (uploadError) {
+          console.error('Error uploading photo:', uploadError);
+        } finally {
+          setUploadingPhoto(false);
+        }
       }
 
       if (pieceIdentiteFile && savedArtisan?.id) {
@@ -687,6 +744,81 @@ export function ArtisanMinierFormWithTabs({
               </div>
 
               <div className="border-t border-gray-200 pt-6">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <User className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-emerald-900 mb-1">
+                        Photo d'Identité
+                      </h4>
+                      <p className="text-sm text-emerald-700">
+                        Photo d'identité format passeport qui sera utilisée sur la carte professionnelle (JPG ou PNG - Max 2 Mo)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <input
+                        type="file"
+                        id="photo-upload"
+                        accept="image/jpeg,image/jpg,image/png"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePhotoUpload(file);
+                        }}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="photo-upload"
+                        className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all"
+                      >
+                        <User className="h-12 w-12 text-gray-400 mb-3" />
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          Cliquez pour sélectionner une photo
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          JPG ou PNG (max. 2 Mo)
+                        </p>
+                      </label>
+                    </div>
+
+                    {photoFile && formData.photo_url && (
+                      <div className="bg-white border border-emerald-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-emerald-200">
+                            <img
+                              src={formData.photo_url}
+                              alt="Photo d'identité"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {photoFile.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(photoFile.size / 1024).toFixed(2)} Ko
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPhotoFile(null);
+                              setFormData(prev => ({ ...prev, photo_url: '' }));
+                            }}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                   <div className="flex items-start gap-3 mb-4">
                     <div className="p-2 bg-blue-100 rounded-lg">

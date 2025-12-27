@@ -77,9 +77,8 @@ export default function ArtisanMinierListe() {
   };
 
   const handleEdit = (artisan: any) => {
-    setSelectedArtisan(artisan);
-    setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Navigation vers la page de détails au lieu d'éditer inline
+    navigate(`/artisan-minier/${artisan.id}`);
   };
 
   const filteredArtisans = artisans.filter(artisan => {

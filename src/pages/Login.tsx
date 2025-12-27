@@ -120,7 +120,7 @@ export function Login() {
             <div className="space-y-4">
               <div className="flex justify-center mb-3">
                 <img
-                  src="/logo_transparent_sonasp.png"
+                  src="/logo_transparent_sonasp copy.png"
                   alt="SONASP Logo"
                   className="h-24 w-auto object-contain drop-shadow-lg"
                 />

@@ -231,8 +231,10 @@ CREATE OR REPLACE VIEW snp_ventes_artisans_sonasp AS
 SELECT
   v.id,
   v.artisan_id,
-  a.nom_complet as artisan_nom,
+  COALESCE(a.raison_sociale, CONCAT(a.nom, ' ', a.prenoms)) as artisan_nom,
   a.numero_carte as artisan_carte,
+  a.pays as artisan_pays,
+  a.type_artisan,
   v.date_vente,
   v.quantite_grammes,
   v.type_or,
@@ -255,7 +257,7 @@ SELECT
   v.created_by,
   v.updated_by
 FROM snp_artisan_ventes_or v
-LEFT JOIN snp_artisans_miniers a ON v.artisan_id = a.id
+LEFT JOIN "SNP_artisans_miniers" a ON v.artisan_id = a.id
 LEFT JOIN mining_companies mc ON v.acheteur_id = mc.id
 WHERE mc.company_type = 'sonasp';
 

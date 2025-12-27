@@ -6,7 +6,7 @@
 -- ============================================================================
 
 -- Artisan 1: Exploitant - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, email, adresse, commune, region, pays,
@@ -21,7 +21,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 2: Collecteur - Bobo-Dioulasso
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -34,7 +34,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 3: Exploitant - Koudougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -47,7 +47,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 4: Intermédiaire - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   raison_sociale, numero_registre_commerce,
   telephone, email, adresse, commune, region, pays,
@@ -60,7 +60,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 5: Exploitant - Dori
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -73,7 +73,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 6: Fournisseur - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   raison_sociale, numero_registre_commerce,
   telephone, email, adresse, commune, region, pays
@@ -84,7 +84,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 7: Exploitant - Banfora
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -97,7 +97,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 8: Collecteur - Fada N'Gourma
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -110,7 +110,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 9: Exploitant - Gaoua
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -123,7 +123,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 10: Intermédiaire - Ouahigouya
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, email, adresse, commune, region, pays,
@@ -136,7 +136,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 11: Exploitant - Tenkodogo
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -149,7 +149,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 12: Collecteur - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   raison_sociale, numero_registre_commerce,
   telephone, email, adresse, commune, region, pays
@@ -160,7 +160,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 13: Exploitant - Djibo
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -173,7 +173,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 14: Exploitant - Dédougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -186,7 +186,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 15: Intermédiaire - Bobo-Dioulasso
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, email, adresse, commune, region, pays,
@@ -199,7 +199,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 16: Exploitant - Manga
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -212,7 +212,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 17: Fournisseur - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   raison_sociale, numero_registre_commerce,
   telephone, email, adresse, commune, region, pays
@@ -223,7 +223,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 18: Collecteur - Ziniaré
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -236,7 +236,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 19: Exploitant - Léo
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   nom, prenoms, date_naissance, lieu_naissance, sexe, nationalite,
   telephone, adresse, commune, region, pays,
@@ -249,7 +249,7 @@ INSERT INTO "SNP_artisans_miniers" (
 );
 
 -- Artisan 20: Intermédiaire - Ouagadougou
-INSERT INTO "SNP_artisans_miniers" (
+INSERT INTO public.snp_artisans_miniers (
   numero_carte, type_personne, type_artisan,
   raison_sociale, numero_registre_commerce,
   telephone, email, adresse, commune, region, pays,

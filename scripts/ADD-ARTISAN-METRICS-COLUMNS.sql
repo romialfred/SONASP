@@ -1,7 +1,8 @@
 -- ============================================================================
 -- SCRIPT SQL: Ajout des Colonnes de Métriques Commerciales
--- Table: SNP_artisans_miniers
+-- Table: snp_artisans_miniers
 -- Date: 2025-01-27
+-- Version: 1.1 (Corrigée)
 -- ============================================================================
 --
 -- Ce script ajoute les colonnes nécessaires pour afficher les métriques
@@ -9,6 +10,12 @@
 --
 -- IMPORTANT: Ce script doit être exécuté dans Supabase SQL Editor
 --
+-- ⚠️ NOTE IMPORTANTE SUR LA CASSE:
+-- Ce script utilise "snp_artisans_miniers" (minuscules, sans guillemets)
+-- conformément aux conventions PostgreSQL. Si votre table a été créée avec
+-- des majuscules "SNP_artisans_miniers", PostgreSQL la stocke en minuscules.
+--
+-- Voir GUIDE-POSTGRESQL-NAMING.md pour plus de détails.
 -- ============================================================================
 
 -- 1. Quantité d'or vendu (en grammes)
@@ -17,13 +24,13 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
-    AND table_name = 'SNP_artisans_miniers'
+    AND table_name = 'snp_artisans_miniers'
     AND column_name = 'quantite_or_vendu_grammes'
   ) THEN
-    ALTER TABLE public."SNP_artisans_miniers"
+    ALTER TABLE public.snp_artisans_miniers
     ADD COLUMN quantite_or_vendu_grammes numeric(12, 3) DEFAULT 0 NOT NULL;
 
-    COMMENT ON COLUMN public."SNP_artisans_miniers".quantite_or_vendu_grammes
+    COMMENT ON COLUMN public.snp_artisans_miniers.quantite_or_vendu_grammes
     IS 'Quantité totale d''or vendu par l''artisan (en grammes)';
   END IF;
 END $$;
@@ -34,13 +41,13 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
-    AND table_name = 'SNP_artisans_miniers'
+    AND table_name = 'snp_artisans_miniers'
     AND column_name = 'chiffre_affaires_fcfa'
   ) THEN
-    ALTER TABLE public."SNP_artisans_miniers"
+    ALTER TABLE public.snp_artisans_miniers
     ADD COLUMN chiffre_affaires_fcfa numeric(15, 2) DEFAULT 0 NOT NULL;
 
-    COMMENT ON COLUMN public."SNP_artisans_miniers".chiffre_affaires_fcfa
+    COMMENT ON COLUMN public.snp_artisans_miniers.chiffre_affaires_fcfa
     IS 'Chiffre d''affaires total généré par l''artisan (en FCFA)';
   END IF;
 END $$;
@@ -51,13 +58,13 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
-    AND table_name = 'SNP_artisans_miniers'
+    AND table_name = 'snp_artisans_miniers'
     AND column_name = 'nombre_transactions'
   ) THEN
-    ALTER TABLE public."SNP_artisans_miniers"
+    ALTER TABLE public.snp_artisans_miniers
     ADD COLUMN nombre_transactions integer DEFAULT 0 NOT NULL;
 
-    COMMENT ON COLUMN public."SNP_artisans_miniers".nombre_transactions
+    COMMENT ON COLUMN public.snp_artisans_miniers.nombre_transactions
     IS 'Nombre total de transactions effectuées par l''artisan';
   END IF;
 END $$;
@@ -68,13 +75,13 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
-    AND table_name = 'SNP_artisans_miniers'
+    AND table_name = 'snp_artisans_miniers'
     AND column_name = 'derniere_transaction_date'
   ) THEN
-    ALTER TABLE public."SNP_artisans_miniers"
+    ALTER TABLE public.snp_artisans_miniers
     ADD COLUMN derniere_transaction_date date;
 
-    COMMENT ON COLUMN public."SNP_artisans_miniers".derniere_transaction_date
+    COMMENT ON COLUMN public.snp_artisans_miniers.derniere_transaction_date
     IS 'Date de la dernière transaction effectuée par l''artisan';
   END IF;
 END $$;
@@ -85,15 +92,15 @@ END $$;
 
 -- Index sur le chiffre d'affaires
 CREATE INDEX IF NOT EXISTS idx_artisans_chiffre_affaires
-ON public."SNP_artisans_miniers" USING btree (chiffre_affaires_fcfa DESC);
+ON public.snp_artisans_miniers USING btree (chiffre_affaires_fcfa DESC);
 
 -- Index sur la date de dernière transaction
 CREATE INDEX IF NOT EXISTS idx_artisans_derniere_transaction
-ON public."SNP_artisans_miniers" USING btree (derniere_transaction_date DESC NULLS LAST);
+ON public.snp_artisans_miniers USING btree (derniere_transaction_date DESC NULLS LAST);
 
 -- Index composite pour les filtres combinés
 CREATE INDEX IF NOT EXISTS idx_artisans_metrics_combined
-ON public."SNP_artisans_miniers" USING btree (pays, region, type_artisan, chiffre_affaires_fcfa DESC);
+ON public.snp_artisans_miniers USING btree (pays, region, type_artisan, chiffre_affaires_fcfa DESC);
 
 -- ============================================================================
 -- Fonction pour mettre à jour les métriques
@@ -106,7 +113,7 @@ CREATE OR REPLACE FUNCTION update_artisan_metrics(
 )
 RETURNS void AS $$
 BEGIN
-  UPDATE public."SNP_artisans_miniers"
+  UPDATE public.snp_artisans_miniers
   SET
     quantite_or_vendu_grammes = quantite_or_vendu_grammes + p_quantite_grammes,
     chiffre_affaires_fcfa = chiffre_affaires_fcfa + p_montant_fcfa,
@@ -125,12 +132,12 @@ COMMENT ON FUNCTION update_artisan_metrics IS
 -- ============================================================================
 
 -- Mettre à jour quelques artisans avec des données fictives pour tester
-UPDATE public."SNP_artisans_miniers"
+UPDATE public.snp_artisans_miniers
 SET
   quantite_or_vendu_grammes = (random() * 1000)::numeric(12,3),
   chiffre_affaires_fcfa = (random() * 50000000)::numeric(15,2),
   nombre_transactions = (random() * 50)::integer,
   derniere_transaction_date = CURRENT_DATE - (random() * 365)::integer
 WHERE id IN (
-  SELECT id FROM public."SNP_artisans_miniers" LIMIT 10
+  SELECT id FROM public.snp_artisans_miniers LIMIT 10
 );

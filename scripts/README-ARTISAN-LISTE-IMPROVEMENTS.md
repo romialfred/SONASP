@@ -52,6 +52,16 @@ Ces métriques sont visibles dans les deux modes d'affichage.
 
 ## Configuration de la Base de Données
 
+### ⚠️ Important : Erreur Corrigée
+
+Le script a été **corrigé** pour résoudre un problème de casse dans les noms de tables PostgreSQL.
+
+**Problème identifié** : Incohérence entre `"SNP_artisans_miniers"` (avec guillemets et majuscules) et `snp_artisans_miniers` (minuscules sans guillemets).
+
+**Solution** : Le script utilise maintenant systématiquement `snp_artisans_miniers` (tout en minuscules, sans guillemets), conformément aux conventions PostgreSQL.
+
+📖 **Voir** : `GUIDE-POSTGRESQL-NAMING.md` pour comprendre comment éviter ce type d'erreur à l'avenir.
+
 ### Colonnes Requises
 
 Pour afficher les métriques commerciales, vous devez exécuter le script SQL fourni :
@@ -71,11 +81,11 @@ Pour afficher les métriques commerciales, vous devez exécuter le script SQL fo
 3. **Exécuter le Script**
    - Collez le contenu dans l'éditeur SQL
    - Cliquez sur "Run" pour exécuter
-   - Vérifiez qu'il n'y a pas d'erreurs
+   - ✅ Le script devrait maintenant s'exécuter sans erreur
 
 ### Colonnes Ajoutées
 
-Le script ajoute les colonnes suivantes à la table `SNP_artisans_miniers` :
+Le script ajoute les colonnes suivantes à la table `snp_artisans_miniers` :
 
 | Colonne | Type | Description |
 |---------|------|-------------|

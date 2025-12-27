@@ -295,6 +295,7 @@ BEGIN
 END $$;
 
 -- Créer quelques activités pour les artisans en exploitation
+-- ✅ Colonnes vérifiées dans le DDL de snp_artisan_activities
 INSERT INTO snp_artisan_activities (
   artisan_id,
   carte_id,
@@ -302,8 +303,6 @@ INSERT INTO snp_artisan_activities (
   description,
   montant,
   quantite_grammes,
-  quantite_onces,
-  site,
   created_at
 )
 SELECT
@@ -311,18 +310,16 @@ SELECT
   c.id,
   CASE
     WHEN random() < 0.4 THEN 'vente'
-    WHEN random() < 0.7 THEN 'collecte'
-    ELSE 'depot'
+    WHEN random() < 0.7 THEN 'production'
+    ELSE 'achat'
   END,
   CASE
     WHEN random() < 0.4 THEN 'Vente d''or aurifère au comptoir SONASP'
-    WHEN random() < 0.7 THEN 'Collecte auprès des orpailleurs'
-    ELSE 'Dépôt de production mensuelle'
+    WHEN random() < 0.7 THEN 'Production mensuelle d''or'
+    ELSE 'Achat d''or auprès des orpailleurs'
   END,
   (500000 + random() * 5000000)::NUMERIC(15,2),
   (50 + random() * 500)::NUMERIC(10,3),
-  ((50 + random() * 500) * 0.03215)::NUMERIC(10,4),
-  'Ouagadougou',
   CURRENT_DATE - (random() * 90)::INTEGER * INTERVAL '1 day'
 FROM snp_cartes_professionnelles c
 WHERE c.statut = 'en_exploitation'

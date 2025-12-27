@@ -145,6 +145,31 @@ Pour TOUS les futurs scripts SQL:
 
 ---
 
+## 🔥 Correction Supplémentaire (27/12/2024)
+
+**Nouvelle erreur détectée immédiatement après la création de la documentation:**
+
+```
+ERROR: 42703: column "quantite_onces" of relation "snp_artisan_activities" does not exist
+LINE 305: quantite_onces,
+```
+
+**Cause:** Le script essayait d'insérer dans deux colonnes qui n'existent pas:
+- ❌ `quantite_onces` (n'existe pas dans la table)
+- ❌ `site` (n'existe pas dans la table)
+
+**Solution appliquée:**
+1. Export du DDL complet de la table `snp_artisan_activities`
+2. Vérification des colonnes existantes
+3. Suppression des colonnes inexistantes de l'INSERT
+4. Correction des valeurs de `type_activite` pour respecter la contrainte CHECK
+
+**Résultat:** Script corrigé et prêt à être exécuté
+
+**Leçon:** Cette erreur prouve l'importance absolue de la Règle #2 de la checklist: **TOUJOURS vérifier le DDL avant d'écrire un script**
+
+---
+
 ## 🎓 Formation Requise
 
 Tous les développeurs doivent:

@@ -139,6 +139,25 @@ Analyse détaillée de la table snp_artisans_miniers
 
 ---
 
+### ANALYSE-TABLE-ACTIVITIES.md
+Analyse détaillée de la table snp_artisan_activities
+
+**Créé suite à:** Erreur `column "quantite_onces" does not exist`
+
+**Contenu:**
+- Structure complète vérifiée
+- Liste des colonnes existantes
+- ❌ Liste des colonnes qui N'EXISTENT PAS (quantite_onces, site)
+- Contraintes CHECK pour type_activite
+- Foreign Keys détaillées
+- Templates d'INSERT corrects
+- Erreurs courantes et solutions
+- Exemples réels d'utilisation
+
+**Quand l'utiliser:** AVANT tout INSERT/UPDATE sur snp_artisan_activities
+
+---
+
 ## 🎯 Workflow de Développement SQL
 
 ### Pour créer un nouveau script:

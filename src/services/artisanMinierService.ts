@@ -62,7 +62,7 @@ export interface CarteStatistics {
 export const artisanMinierService = {
   async getAll() {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -72,10 +72,10 @@ export const artisanMinierService = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .eq('id', id)
       .single();
@@ -86,10 +86,10 @@ export const artisanMinierService = {
 
   async getByNumeroCarte(numeroCarte: string) {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .eq('numero_carte', numeroCarte)
       .single();
@@ -100,10 +100,10 @@ export const artisanMinierService = {
 
   async getByTypeArtisan(typeArtisan: string) {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .eq('type_artisan', typeArtisan)
       .order('created_at', { ascending: false });
@@ -114,7 +114,7 @@ export const artisanMinierService = {
 
   async getCollecteurs() {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select('id, nom, prenoms, numero_carte, telephone')
       .eq('type_artisan', 'collecteur')
       .order('nom');
@@ -127,7 +127,7 @@ export const artisanMinierService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .insert([
         {
           ...artisan,
@@ -137,7 +137,7 @@ export const artisanMinierService = {
       ])
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .single();
 
@@ -149,7 +149,7 @@ export const artisanMinierService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .update({
         ...updates,
         updated_by: user?.id
@@ -157,7 +157,7 @@ export const artisanMinierService = {
       .eq('id', id)
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .single();
 
@@ -167,7 +167,7 @@ export const artisanMinierService = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .delete()
       .eq('id', id);
 
@@ -212,7 +212,7 @@ export const artisanMinierService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { error: docError } = await supabase
-      .from('SNP_artisan_documents')
+      .from('snp_artisan_documents')
       .insert([
         {
           artisan_id: artisanId,
@@ -232,7 +232,7 @@ export const artisanMinierService = {
 
   async getDocuments(artisanId: string) {
     const { data, error } = await supabase
-      .from('SNP_artisan_documents')
+      .from('snp_artisan_documents')
       .select('*')
       .eq('artisan_id', artisanId)
       .order('uploaded_at', { ascending: false });
@@ -243,7 +243,7 @@ export const artisanMinierService = {
 
   async deleteDocument(documentId: string) {
     const { error } = await supabase
-      .from('SNP_artisan_documents')
+      .from('snp_artisan_documents')
       .delete()
       .eq('id', documentId);
 
@@ -252,7 +252,7 @@ export const artisanMinierService = {
 
   async getActivities(artisanId: string) {
     const { data, error } = await supabase
-      .from('SNP_artisan_activities')
+      .from('snp_artisan_activities')
       .select('*')
       .eq('artisan_id', artisanId)
       .order('created_at', { ascending: false })
@@ -278,7 +278,7 @@ export const artisanMinierService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_artisan_activities')
+      .from('snp_artisan_activities')
       .insert([
         {
           ...activity,
@@ -294,7 +294,7 @@ export const artisanMinierService = {
 
   async getStatistics(carteId: string) {
     const { data, error } = await supabase
-      .from('SNP_carte_statistics')
+      .from('snp_carte_statistics')
       .select('*')
       .eq('carte_id', carteId)
       .order('annee', { ascending: false })
@@ -306,7 +306,7 @@ export const artisanMinierService = {
 
   async getStatisticsSummary(artisanId: string) {
     const { data, error } = await supabase
-      .from('SNP_carte_statistics')
+      .from('snp_carte_statistics')
       .select('*')
       .eq('artisan_id', artisanId)
       .order('annee', { ascending: false })
@@ -342,10 +342,10 @@ export const artisanMinierService = {
 
   async searchArtisans(query: string) {
     const { data, error } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select(`
         *,
-        carte:SNP_cartes_professionnelles(*)
+        carte:snp_cartes_professionnelles(*)
       `)
       .or(`nom.ilike.%${query}%,prenoms.ilike.%${query}%,numero_carte.ilike.%${query}%,telephone.ilike.%${query}%,raison_sociale.ilike.%${query}%`)
       .order('created_at', { ascending: false })

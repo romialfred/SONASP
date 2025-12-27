@@ -25,10 +25,10 @@ export interface CarteProfessionnelle {
 export const carteProfessionnelleService = {
   async getByArtisanId(artisanId: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `)
       .eq('artisan_id', artisanId)
       .order('created_at', { ascending: false });
@@ -39,10 +39,10 @@ export const carteProfessionnelleService = {
 
   async getActiveCarteByArtisan(artisanId: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `)
       .eq('artisan_id', artisanId)
       .in('statut', ['validee', 'en_exploitation'])
@@ -56,11 +56,11 @@ export const carteProfessionnelleService = {
 
   async getById(carteId: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*),
-        valideur:auth.users!SNP_cartes_professionnelles_validee_par_fkey(id, email)
+        artisan:snp_artisans_miniers(*),
+        valideur:auth.users!snp_cartes_professionnelles_validee_par_fkey(id, email)
       `)
       .eq('id', carteId)
       .single();
@@ -71,10 +71,10 @@ export const carteProfessionnelleService = {
 
   async getByNumeroCarte(numeroCarte: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `)
       .eq('numero_carte', numeroCarte)
       .single();
@@ -85,13 +85,13 @@ export const carteProfessionnelleService = {
 
   async getCartesEnCours() {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `)
       .eq('statut', 'en_cours')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false});
 
     if (error) throw error;
     return data;
@@ -102,10 +102,10 @@ export const carteProfessionnelleService = {
     dateLimit.setDate(dateLimit.getDate() + joursRestants);
 
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `)
       .in('statut', ['validee', 'en_exploitation'])
       .lte('date_expiration', dateLimit.toISOString().split('T')[0])
@@ -121,10 +121,10 @@ export const carteProfessionnelleService = {
     mining_company_id?: string;
   }) {
     let query = supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select(`
         *,
-        artisan:SNP_artisans_miniers(*)
+        artisan:snp_artisans_miniers(*)
       `);
 
     if (filters?.statut) {
@@ -158,7 +158,7 @@ export const carteProfessionnelleService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .update({
         statut: 'validee',
         validee_par: user?.id,
@@ -172,7 +172,7 @@ export const carteProfessionnelleService = {
 
     if (data) {
       await supabase
-        .from('SNP_artisan_activities')
+        .from('snp_artisan_activities')
         .insert([
           {
             artisan_id: data.artisan_id,
@@ -191,7 +191,7 @@ export const carteProfessionnelleService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .update({
         statut: 'suspendue',
         suspendue_par: user?.id,
@@ -206,7 +206,7 @@ export const carteProfessionnelleService = {
 
     if (data) {
       await supabase
-        .from('SNP_artisan_activities')
+        .from('snp_artisan_activities')
         .insert([
           {
             artisan_id: data.artisan_id,
@@ -225,7 +225,7 @@ export const carteProfessionnelleService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .update({
         statut: 'validee',
         suspendue_par: null,
@@ -240,7 +240,7 @@ export const carteProfessionnelleService = {
 
     if (data) {
       await supabase
-        .from('SNP_artisan_activities')
+        .from('snp_artisan_activities')
         .insert([
           {
             artisan_id: data.artisan_id,
@@ -263,14 +263,14 @@ export const carteProfessionnelleService = {
     for (const oldCarte of oldCartes || []) {
       if (oldCarte.statut !== 'expiree' && oldCarte.statut !== 'annulee') {
         await supabase
-          .from('SNP_cartes_professionnelles')
+          .from('snp_cartes_professionnelles')
           .update({ statut: 'expiree' })
           .eq('id', oldCarte.id);
       }
     }
 
     const { data: artisan } = await supabase
-      .from('SNP_artisans_miniers')
+      .from('snp_artisans_miniers')
       .select('numero_carte')
       .eq('id', artisanId)
       .single();
@@ -280,7 +280,7 @@ export const carteProfessionnelleService = {
     const numeroSecurite = Math.floor(Math.random() * 9999999999).toString().padStart(10, '0');
 
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .insert([
         {
           artisan_id: artisanId,
@@ -303,7 +303,7 @@ export const carteProfessionnelleService = {
 
     if (data) {
       await supabase
-        .from('SNP_artisan_activities')
+        .from('snp_artisan_activities')
         .insert([
           {
             artisan_id: artisanId,
@@ -320,7 +320,7 @@ export const carteProfessionnelleService = {
 
   async updateCartePdfUrl(carteId: string, pdfUrl: string, rectoUrl?: string, versoUrl?: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .update({
         carte_pdf_url: pdfUrl,
         carte_recto_url: rectoUrl,
@@ -336,7 +336,7 @@ export const carteProfessionnelleService = {
 
   async updateQrCodeUrl(carteId: string, qrCodeUrl: string) {
     const { data, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .update({
         qr_code_url: qrCodeUrl
       })
@@ -350,7 +350,7 @@ export const carteProfessionnelleService = {
 
   async getDashboardStats() {
     const { data: cartes, error } = await supabase
-      .from('SNP_cartes_professionnelles')
+      .from('snp_cartes_professionnelles')
       .select('statut, date_expiration');
 
     if (error) throw error;

@@ -63,6 +63,7 @@ import { ParametersPage } from './pages/admin/ParametersPage';
 import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import GoldSalesSettingsPage from './pages/admin/GoldSalesSettingsPage';
 import StatusManagerPage from './pages/admin/StatusManagerPage';
+import ModulesManagement from './pages/admin/ModulesManagement';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
@@ -969,6 +970,15 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <GoldSalesSettingsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/modules"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ModulesManagement />
                 </ProtectedRoute>
               }
             />

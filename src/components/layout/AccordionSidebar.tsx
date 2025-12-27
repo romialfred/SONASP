@@ -35,8 +35,17 @@ import {
   UserPlus,
   CheckCircle,
   AlertTriangle,
+  Pickaxe,
+  Flame,
+  Ship,
+  Grid,
+  Calendar,
+  Plus,
+  FileCheck,
+  LineChart,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { modulesService, Module } from '@/services/modulesService';
 
 interface MenuItem {
   label: string;
@@ -53,10 +62,123 @@ interface MenuGroup {
   groupIcon?: React.ComponentType<{ className?: string }>;
 }
 
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  LayoutDashboard,
+  Package,
+  Truck,
+  FlaskConical,
+  Users,
+  ShoppingCart,
+  TrendingUp,
+  DollarSign,
+  BarChart3,
+  FileText,
+  Settings,
+  Shield,
+  GitBranch,
+  CreditCard,
+  Warehouse,
+  PackagePlus,
+  Sparkles,
+  Coins,
+  Building2,
+  Factory,
+  Handshake,
+  Store,
+  Activity,
+  ScanText,
+  Lock,
+  Award,
+  Layers,
+  UserPlus,
+  CheckCircle,
+  AlertTriangle,
+  Pickaxe,
+  Flame,
+  Ship,
+  Grid,
+  Calendar,
+  Plus,
+  FileCheck,
+  LineChart,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+};
+
+const getIcon = (iconName?: string): React.ComponentType<{ className?: string }> => {
+  if (!iconName) return Package;
+  return iconMap[iconName] || Package;
+};
+
+const getIconColor = (code: string): string => {
+  const colorMap: Record<string, string> = {
+    'artisan-minier': 'text-emerald-700',
+    'artisan-dashboard': 'text-emerald-700',
+    'artisan-liste': 'text-blue-600',
+    'artisan-cartes-suivi': 'text-purple-600',
+    'artisan-cartes-validation': 'text-indigo-600',
+    'artisan-cartes-expiration': 'text-orange-600',
+    'production': 'text-emerald-600',
+    'production-daily': 'text-emerald-600',
+    'production-safe': 'text-yellow-600',
+    'production-licenses': 'text-purple-600',
+    'production-budget': 'text-blue-600',
+    'shipping': 'text-blue-600',
+    'shipping-dashboard': 'text-blue-600',
+    'shipping-new': 'text-emerald-600',
+    'shipping-documents': 'text-violet-600',
+    'refining': 'text-teal-600',
+    'sales': 'text-pink-600',
+    'sales-dashboard': 'text-pink-600',
+    'sales-new': 'text-purple-600',
+    'sales-trade': 'text-emerald-600',
+    'customers': 'text-teal-700',
+    'payments': 'text-green-600',
+    'analytics': 'text-blue-600',
+    'administration': 'text-red-600',
+    'admin-users': 'text-slate-600',
+    'admin-roles': 'text-orange-600',
+    'admin-modules': 'text-yellow-600',
+    'admin-settings': 'text-orange-600',
+    'admin-audit': 'text-red-600',
+  };
+  return colorMap[code] || 'text-slate-600';
+};
+
 const useMenuGroups = (): MenuGroup[] => {
   const { t, i18n } = useTranslation();
+  const [dbModules, setDbModules] = useState<Module[]>([]);
 
-  return useMemo(() => [
+  useEffect(() => {
+    const loadModules = async () => {
+      try {
+        const modules = await modulesService.getActiveHierarchy();
+        setDbModules(modules);
+      } catch (error) {
+        console.error('Error loading modules:', error);
+      }
+    };
+    loadModules();
+  }, []);
+
+  return useMemo(() => {
+    if (dbModules.length > 0) {
+      return dbModules.map(module => ({
+        id: module.code,
+        label: module.nom,
+        groupIconColor: getIconColor(module.code),
+        groupIcon: getIcon(module.icone),
+        items: (module.submodules || []).map(sub => ({
+          label: sub.nom,
+          path: sub.route || '#',
+          icon: getIcon(sub.icone),
+          iconColor: getIconColor(sub.code),
+        })),
+      }));
+    }
+
+    return [
     {
       id: 'artisan-minier',
       label: t('nav.artisanMinier'),
@@ -180,7 +302,8 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.audit'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],
     },
-  ], [t, i18n.language]);
+  ];
+  }, [t, i18n.language, dbModules]);
 };
 
 const STORAGE_KEY = 'sidebar:lastGroup';

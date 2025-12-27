@@ -1,18 +1,52 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle, Clock, XCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertTriangle, CheckCircle2, User, CreditCard, Calendar, Check, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function CarteValidation() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+  const [cartesEnCours, setCartesEnCours] = useState<any[]>([]);
+  const [selectedCarte, setSelectedCarte] = useState<any>(null);
+  const { showAlert } = useCustomAlert();
 
   useEffect(() => {
-    // Simuler le chargement
-    setTimeout(() => setLoading(false), 500);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [dashboardStats, enCoursCartes] = await Promise.all([
+        carteProfessionnelleService.getDashboardStats(),
+        carteProfessionnelleService.getCartesEnCours()
+      ]);
+      setStats(dashboardStats);
+      setCartesEnCours(enCoursCartes || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      showAlert('error', 'Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleValider = async (carteId: string) => {
+    try {
+      await carteProfessionnelleService.valider(carteId);
+      showAlert('success', 'Carte validée avec succès');
+      await loadData();
+    } catch (error) {
+      console.error('Error validating carte:', error);
+      showAlert('error', 'Erreur lors de la validation');
+    }
+  };
 
   if (loading) {
     return <Loading />;
@@ -44,7 +78,7 @@ export default function CarteValidation() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-4xl font-bold text-orange-600">0</p>
+                  <p className="text-4xl font-bold text-orange-600">{stats?.en_cours || 0}</p>
                 </div>
               </div>
             </div>
@@ -63,13 +97,13 @@ export default function CarteValidation() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-4xl font-bold text-emerald-600">0</p>
+                  <p className="text-4xl font-bold text-emerald-600">{stats?.validees || 0}</p>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Rejetées */}
+          {/* Suspendues */}
           <Card className="bg-white border-red-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-red-300">
             <div className="flex items-center justify-between p-6">
               <div className="flex-1">
@@ -78,11 +112,11 @@ export default function CarteValidation() {
                     <XCircle className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Rejetées</p>
+                    <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Suspendues</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-4xl font-bold text-red-600">0</p>
+                  <p className="text-4xl font-bold text-red-600">{stats?.suspendues || 0}</p>
                 </div>
               </div>
             </div>
@@ -101,26 +135,89 @@ export default function CarteValidation() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-4xl font-bold text-blue-600">0</p>
+                  <p className="text-4xl font-bold text-blue-600">{stats?.total || 0}</p>
                 </div>
               </div>
             </div>
           </Card>
         </div>
 
-        <Card>
-          <div className="text-center py-16">
-            <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
-              <AlertTriangle className="h-12 w-12 text-gray-400" />
+        {cartesEnCours.length === 0 ? (
+          <Card>
+            <div className="text-center py-16">
+              <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
+                <CheckCircle className="h-12 w-12 text-gray-400" />
+              </div>
+              <p className="text-gray-600 text-lg font-medium mb-2">
+                Aucune carte en attente de validation pour le moment.
+              </p>
+              <p className="text-sm text-gray-500">
+                Les demandes de cartes professionnelles apparaîtront ici après l'enregistrement des artisans.
+              </p>
             </div>
-            <p className="text-gray-600 text-lg font-medium mb-2">
-              Aucune carte en attente de validation pour le moment.
-            </p>
-            <p className="text-sm text-gray-500">
-              Les demandes de cartes professionnelles apparaîtront ici après l'enregistrement des artisans.
-            </p>
-          </div>
-        </Card>
+          </Card>
+        ) : (
+          <Card className="shadow-sm">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white">
+              <h2 className="text-xl font-bold text-gray-900">
+                Cartes en attente de validation ({cartesEnCours.length})
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Vérifiez les informations et validez les cartes professionnelles
+              </p>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {cartesEnCours.map((carte) => (
+                <div key={carte.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="p-4 bg-orange-100 rounded-xl">
+                        <User className="h-8 w-8 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                          {carte.artisan?.type_personne === 'physique'
+                            ? `${carte.artisan?.nom} ${carte.artisan?.prenoms || ''}`
+                            : carte.artisan?.raison_sociale
+                          }
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <CreditCard className="h-4 w-4" />
+                            <span>N° {carte.numero_carte}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="h-4 w-4" />
+                            <span>Délivrance: {new Date(carte.date_delivrance).toLocaleDateString('fr-FR')}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="h-4 w-4" />
+                            <span>Expiration: {new Date(carte.date_expiration).toLocaleDateString('fr-FR')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold">
+                              {carte.artisan?.type_artisan}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        onClick={() => handleValider(carte.id)}
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Valider
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
     </MainLayout>
   );

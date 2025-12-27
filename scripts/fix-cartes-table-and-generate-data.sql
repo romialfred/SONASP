@@ -1,9 +1,41 @@
 /*
   # Correction Table Cartes Professionnelles + Génération Données
 
-  ## Basé sur le DDL réel de la table snp_cartes_professionnelles
-  ## Colonnes existantes: date_emission, date_validation, date_suspension, validee_par, motif_suspension, numero_securite, qr_code_data
-  ## Colonnes à ajouter: suspendue_par, qr_code_url, carte_recto_url, carte_verso_url
+  ✅ Script vérifié selon SQL-QUALITY-CHECKLIST.md
+
+  ## Structure de la table snp_cartes_professionnelles (vérifiée 27/12/2024)
+
+  ### Colonnes EXISTANTES (ne pas recréer):
+  - id: uuid (PK, DEFAULT gen_random_uuid())
+  - artisan_id: uuid (NOT NULL, FK → snp_artisans_miniers)
+  - numero_carte: text (NOT NULL, UNIQUE)
+  - date_emission: date (NOT NULL, DEFAULT CURRENT_DATE)
+  - date_expiration: date (NOT NULL, DEFAULT CURRENT_DATE + 2 years)
+  - date_validation: date (nullable)
+  - date_suspension: date (nullable)
+  - statut: text (NOT NULL, DEFAULT 'en_cours')
+  - qr_code_data: text (nullable) ← TYPE TEXT (pas JSONB!)
+  - numero_securite: text (DEFAULT fonction)
+  - validee_par: uuid (nullable, FK → auth.users)
+  - motif_suspension: text (nullable)
+  - observations: text (nullable)
+  - created_at: timestamptz (DEFAULT now())
+  - updated_at: timestamptz (DEFAULT now())
+
+  ### Colonnes à AJOUTER:
+  - suspendue_par: uuid (nullable, FK → auth.users)
+  - qr_code_url: text (nullable)
+  - carte_recto_url: text (nullable)
+  - carte_verso_url: text (nullable)
+
+  ### Contraintes:
+  - CHECK: statut IN ('en_cours', 'validee', 'en_exploitation', 'expiree', 'suspendue', 'annulee')
+
+  ## Modifications apportées:
+  1. Ajout de 4 colonnes manquantes
+  2. Vérification/correction de la contrainte statut
+  3. Génération de 20 cartes de test avec distribution variée
+  4. Création d'activités et statistiques pour cartes en exploitation
 */
 
 -- ============================================================================
@@ -119,7 +151,10 @@ DELETE FROM snp_artisan_activities;
 DELETE FROM snp_carte_statistics;
 DELETE FROM snp_cartes_professionnelles;
 
-RAISE NOTICE 'Données existantes supprimées';
+DO $$
+BEGIN
+  RAISE NOTICE 'Données existantes supprimées';
+END $$;
 
 -- Créer les cartes professionnelles avec des statuts diversifiés
 DO $$
@@ -294,7 +329,13 @@ WHERE c.statut = 'en_exploitation'
   AND random() < 0.6
 LIMIT 30;
 
-RAISE NOTICE '% activités créées', (SELECT COUNT(*) FROM snp_artisan_activities);
+DO $$
+DECLARE
+  v_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM snp_artisan_activities;
+  RAISE NOTICE '% activités créées', v_count;
+END $$;
 
 -- Créer des statistiques mensuelles pour les cartes en exploitation
 INSERT INTO snp_carte_statistics (
@@ -333,7 +374,13 @@ CROSS JOIN (
 WHERE c.statut = 'en_exploitation'
   AND random() < 0.7;
 
-RAISE NOTICE '% statistiques créées', (SELECT COUNT(*) FROM snp_carte_statistics);
+DO $$
+DECLARE
+  v_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM snp_carte_statistics;
+  RAISE NOTICE '% statistiques créées', v_count;
+END $$;
 
 -- Afficher le résumé final
 DO $$

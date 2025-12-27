@@ -98,6 +98,12 @@ CREATE TRIGGER trigger_update_module_timestamp
 
 ALTER TABLE snp_modules ENABLE ROW LEVEL SECURITY;
 
+-- Supprimer les policies existantes si elles existent
+DROP POLICY IF EXISTS "Users can view active modules" ON snp_modules;
+DROP POLICY IF EXISTS "Admins can insert modules" ON snp_modules;
+DROP POLICY IF EXISTS "Admins can update modules" ON snp_modules;
+DROP POLICY IF EXISTS "Admins can delete modules" ON snp_modules;
+
 -- Politique de lecture pour tous les utilisateurs authentifiés
 CREATE POLICY "Users can view active modules"
   ON snp_modules FOR SELECT

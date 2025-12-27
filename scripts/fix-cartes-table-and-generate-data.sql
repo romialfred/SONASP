@@ -334,42 +334,27 @@ BEGIN
   RAISE NOTICE '% activités créées', v_count;
 END $$;
 
--- Créer des statistiques mensuelles pour les cartes en exploitation
+-- Créer des statistiques pour les cartes en exploitation
+-- ✅ Colonnes vérifiées dans le DDL de snp_carte_statistics
 INSERT INTO snp_carte_statistics (
   carte_id,
-  artisan_id,
-  annee,
-  mois,
   nombre_ventes,
-  montant_total_ventes,
+  nombre_achats,
   quantite_totale_grammes,
-  quantite_totale_onces,
-  nombre_collectes,
-  nombre_depots,
-  nombre_transactions,
-  jours_actifs,
+  montant_total,
   derniere_activite
 )
 SELECT
   c.id,
-  c.artisan_id,
-  EXTRACT(YEAR FROM CURRENT_DATE)::INTEGER,
-  m.mois,
   (1 + random() * 5)::INTEGER,
-  ((200000 + random() * 3000000))::NUMERIC(15,2),
-  ((100 + random() * 800))::NUMERIC(10,3),
-  ((100 + random() * 800) * 0.03215)::NUMERIC(10,4),
-  (0 + random() * 3)::INTEGER,
-  (0 + random() * 2)::INTEGER,
-  (2 + random() * 10)::INTEGER,
-  (5 + random() * 20)::INTEGER,
+  (1 + random() * 3)::INTEGER,
+  (100 + random() * 800)::NUMERIC(15,3),
+  (200000 + random() * 3000000)::NUMERIC(15,2),
   CURRENT_DATE - (random() * 30)::INTEGER * INTERVAL '1 day'
 FROM snp_cartes_professionnelles c
-CROSS JOIN (
-  SELECT generate_series(1, EXTRACT(MONTH FROM CURRENT_DATE)::INTEGER) AS mois
-) m
 WHERE c.statut = 'en_exploitation'
-  AND random() < 0.7;
+  AND random() < 0.7
+ON CONFLICT (carte_id) DO NOTHING;
 
 DO $$
 DECLARE

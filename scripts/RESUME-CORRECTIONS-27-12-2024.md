@@ -170,6 +170,43 @@ LINE 305: quantite_onces,
 
 ---
 
+## 🔥 Correction Supplémentaire #2 (27/12/2024)
+
+**Nouvelle erreur détectée après la première correction:**
+
+```
+ERROR: column "artisan_id" of relation "snp_carte_statistics" does not exist
+LINE 340: artisan_id,
+```
+
+**Cause:** Le script essayait d'insérer dans NEUF colonnes qui n'existent pas:
+- ❌ `artisan_id`
+- ❌ `annee`
+- ❌ `mois`
+- ❌ `montant_total_ventes` (la vraie colonne s'appelle `montant_total`)
+- ❌ `quantite_totale_onces`
+- ❌ `nombre_collectes`
+- ❌ `nombre_depots`
+- ❌ `nombre_transactions`
+- ❌ `jours_actifs`
+
+**Solution appliquée:**
+1. Export du DDL complet de la table `snp_carte_statistics`
+2. Identification des SEULES colonnes existantes (8 colonnes)
+3. Réécriture complète de l'INSERT avec uniquement les colonnes existantes
+4. Ajout de `ON CONFLICT (carte_id) DO NOTHING` pour éviter les doublons
+5. Création de `ANALYSE-TABLE-STATISTICS.md` avec templates corrects
+
+**Résultat:** Script finalement corrigé et prêt à être exécuté
+
+**Double Leçon:**
+1. La même erreur s'est reproduite sur une autre table
+2. Cela prouve qu'il faut vérifier le DDL de **CHAQUE** table utilisée, pas seulement la première
+
+**Document créé:** `ANALYSE-TABLE-STATISTICS.md` avec structure complète
+
+---
+
 ## 🎓 Formation Requise
 
 Tous les développeurs doivent:

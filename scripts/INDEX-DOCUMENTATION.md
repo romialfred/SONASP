@@ -158,6 +158,24 @@ Analyse détaillée de la table snp_artisan_activities
 
 ---
 
+### ANALYSE-TABLE-STATISTICS.md
+Analyse détaillée de la table snp_carte_statistics
+
+**Créé suite à:** Erreur `column "artisan_id" does not exist`
+
+**Contenu:**
+- Structure complète vérifiée
+- Liste des colonnes existantes (8 colonnes seulement)
+- ❌ Liste des colonnes qui N'EXISTENT PAS (9 colonnes inexistantes!)
+- Contrainte UNIQUE sur carte_id
+- Templates d'INSERT corrects avec ON CONFLICT
+- Patterns UPSERT recommandés
+- Requêtes d'agrégation utiles
+
+**Quand l'utiliser:** AVANT tout INSERT/UPDATE sur snp_carte_statistics
+
+---
+
 ## 🎯 Workflow de Développement SQL
 
 ### Pour créer un nouveau script:

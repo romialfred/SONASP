@@ -1,274 +1,242 @@
-# Index de la Documentation SQL - Gold Shipper
+# 📋 INDEX DES SCRIPTS À EXÉCUTER
 
-## 📚 Vue d'ensemble
-
-Ce dossier contient tous les scripts SQL et la documentation qualité pour le projet Gold Shipper. Cette documentation a été créée pour résoudre les erreurs récurrentes rencontrées depuis Octobre 2024.
-
----
-
-## 📋 Documents de Qualité (À LIRE EN PRIORITÉ)
-
-### 1. SQL-QUALITY-CHECKLIST.md
-**Objectif:** Checklist complète des règles à respecter pour tous les scripts SQL
-
-**Contenu:**
-- Liste des erreurs récurrentes et comment les éviter
-- Checklist de vérification avant d'écrire un script
-- Règles de syntaxe PL/pgSQL
-- Templates de scripts sécurisés
-- Conventions de nommage
-- Bonnes pratiques RLS
-
-**Quand l'utiliser:** AVANT d'écrire ou de modifier tout script SQL
+**Date:** 27 Décembre 2024  
+**Contexte:** Scripts non exécutés depuis l'implémentation des sidebars dynamiques
 
 ---
 
-### 2. README-SQL-QUALITY.md
-**Objectif:** Guide d'utilisation de la checklist qualité
+## 🚨 STATUT D'EXÉCUTION
 
-**Contenu:**
-- Explication du problème récurrent (erreur RAISE NOTICE)
-- Processus obligatoire en 3 étapes
-- Règles d'or à respecter absolument
-- Exemples de structure de script
-- Processus de révision
+### ✅ Déjà Exécutés
+- ✅ FIX-ARTISAN-MODULES.sql (partiellement - corrections modules)
 
-**Quand l'utiliser:** Pour comprendre le processus qualité et les règles à appliquer
+### ❌ À Exécuter (4 scripts)
 
 ---
 
-### 3. EXAMPLE-BEFORE-AFTER.md
-**Objectif:** Exemple concret de correction d'un script erroné
+## 📝 SCRIPTS À EXÉCUTER DANS L'ORDRE
 
-**Contenu:**
-- Script AVANT (avec toutes les erreurs)
-- Script APRÈS (corrigé selon les règles)
-- Comparaison des erreurs
-- Leçons apprises
-- Processus de correction d'un vieux script
+### 🔴 PRIORITÉ 1: CORRECTION-COMPLETE-A-EXECUTER.sql
+**Statut:** ⚠️ Partiellement exécuté  
+**Taille:** 5.3 KB  
+**Durée estimée:** 2-3 secondes  
 
-**Quand l'utiliser:** Pour voir concrètement la différence entre un mauvais et un bon script
+**Ce qu'il fait:**
+- ✅ Ajoute `company_type` à `mining_companies` (FAIT)
+- ❌ Ajoute `acheteur_id` à `snp_artisan_ventes_or` (MANQUANT)
+- Configure SONASP comme acheteur par défaut
+- Crée trigger automatique pour définir SONASP
+- Crée vue `snp_ventes_artisans_sonasp`
 
----
+**Tables modifiées:**
+- mining_companies (ALTER)
+- snp_artisan_ventes_or (ALTER + FOREIGN KEY)
 
-## 🔧 Scripts SQL du Projet
+**Fonctions créées:**
+- get_sonasp_id()
+- set_sonasp_as_buyer()
 
-### Scripts Artisans Miniers
-
-#### insert-artisans-burkina-final.sql
-**Objectif:** Insertion des 20 artisans miniers du Burkina Faso
-
-**Tables concernées:**
-- snp_artisans_miniers
-- snp_utilisateurs
-
-**Utilisation:** Exécuter une seule fois pour initialiser les données
+**Pourquoi l'exécuter:**
+Base nécessaire pour tout le système de vente d'or artisans à SONASP.
 
 ---
 
-#### fix-cartes-table-and-generate-data.sql
-**Objectif:** Corriger la table cartes et générer les données de test
+### 🟡 PRIORITÉ 2: CREATE-MODULES-MANAGEMENT-SYSTEM.sql
+**Statut:** ⚠️ Partiellement exécuté  
+**Taille:** 12.8 KB  
+**Durée estimée:** 3-5 secondes  
 
-**Tables concernées:**
-- snp_cartes_professionnelles
-- snp_artisan_activities
-- snp_carte_statistics
+**Ce qu'il fait:**
+- ✅ Table `snp_modules` existe (FAIT)
+- ✅ Colonne `parent_id` existe (FAIT)
+- ❌ Colonne `icon` manquante (À CORRIGER)
+- Système de gestion des modules dynamiques
+- Hiérarchie parent-enfant pour les menus
+- Contrôle d'accès par rôle
 
-**Utilisation:** Exécuter pour initialiser les cartes avec statuts variés
+**Tables créées/modifiées:**
+- snp_modules (CREATE + modifications)
+- Système de permissions modules
 
-**✅ Vérifié selon SQL-QUALITY-CHECKLIST.md**
+**Fonctions créées:**
+- get_user_accessible_modules()
+- check_module_access()
 
----
-
-#### fix-missing-pays-column.sql
-**Objectif:** Ajouter la colonne 'pays' manquante
-
-**Tables concernées:**
-- snp_artisans_miniers
-
----
-
-#### generate-cartes-statuts.sql
-**Objectif:** Générer les statuts des cartes professionnelles
-
-**Tables concernées:**
-- snp_cartes_professionnelles
+**Pourquoi l'exécuter:**
+Nécessaire pour les sidebars dynamiques et la gestion des permissions.
 
 ---
 
-## 📖 Guides d'Installation
+### 🟢 PRIORITÉ 3: CREATE-ARTISAN-GOLD-SALES-COLLECTION.sql
+**Statut:** ❌ Non exécuté  
+**Taille:** 11.8 KB  
+**Durée estimée:** 3-5 secondes  
 
-### GUIDE-INSTALLATION-FINAL.md
-Guide complet d'installation du module Artisan Minier
+**Ce qu'il fait:**
+- Ajoute colonnes de collecte à `snp_artisan_ventes_or`:
+  - `collecteur_id` (référence user qui collecte)
+  - `lieu_collecte` (localisation)
+  - `commission_taux` et `commission_montant_fcfa`
+  - `certificat_analyse_url`
+  - `observations_qualite`
+- Crée système de traçabilité complète
+- Trigger pour calcul automatique commission
+- Vue enrichie des collectes
 
-**Sections:**
-1. Structure de la base de données
-2. Tables et relations
-3. Instructions d'installation étape par étape
-4. Vérifications après installation
+**Tables modifiées:**
+- snp_artisan_ventes_or (6 nouvelles colonnes)
 
----
+**Fonctions créées:**
+- calculate_collector_commission()
+- validate_collection_data()
+- get_collector_statistics()
 
-### INSTALLATION-ARTISANS.md
-Instructions détaillées pour l'installation des artisans
-
----
-
-### README-ARTISANS-FINAL.md
-Documentation finale du module artisans miniers
-
----
-
-### README-ARTISANS-INSTRUCTIONS.md
-Instructions spécifiques pour les artisans
-
----
-
-## 📊 Documents d'Analyse
-
-### ANALYSE-TABLE-ARTISANS.md
-Analyse détaillée de la table snp_artisans_miniers
-
-**Contenu:**
-- Structure complète
-- Colonnes et types
-- Contraintes
-- Relations
-- Index
-- Politiques RLS
+**Pourquoi l'exécuter:**
+Permet de tracker qui collecte l'or, où, et combien de commission.
 
 ---
 
-### ANALYSE-TABLE-ACTIVITIES.md
-Analyse détaillée de la table snp_artisan_activities
+### 🔵 PRIORITÉ 4: IMPLEMENT-ARTISAN-SONASP-SALES-LOGIC.sql
+**Statut:** ❌ Non exécuté  
+**Taille:** 10.0 KB  
+**Durée estimée:** 2-4 secondes  
 
-**Créé suite à:** Erreur `column "quantite_onces" does not exist`
+**Ce qu'il fait:**
+- Ajoute logique métier des ventes SONASP:
+  - `type_acheteur` (direct, intermédiaire, export)
+  - `prix_unitaire_fcfa` (prix au gramme)
+  - Calculs automatiques selon le type
+  - Validations métier
+- Crée règles de validation spécifiques SONASP
+- Vue analytique des ventes par type
 
-**Contenu:**
-- Structure complète vérifiée
-- Liste des colonnes existantes
-- ❌ Liste des colonnes qui N'EXISTENT PAS (quantite_onces, site)
-- Contraintes CHECK pour type_activite
-- Foreign Keys détaillées
-- Templates d'INSERT corrects
-- Erreurs courantes et solutions
-- Exemples réels d'utilisation
+**Tables modifiées:**
+- snp_artisan_ventes_or (colonnes métier)
+- mining_companies (validations)
 
-**Quand l'utiliser:** AVANT tout INSERT/UPDATE sur snp_artisan_activities
+**Fonctions créées:**
+- validate_sonasp_sale()
+- calculate_sonasp_pricing()
+- get_sonasp_sales_analytics()
 
----
-
-### ANALYSE-TABLE-STATISTICS.md
-Analyse détaillée de la table snp_carte_statistics
-
-**Créé suite à:** Erreur `column "artisan_id" does not exist`
-
-**Contenu:**
-- Structure complète vérifiée
-- Liste des colonnes existantes (8 colonnes seulement)
-- ❌ Liste des colonnes qui N'EXISTENT PAS (9 colonnes inexistantes!)
-- Contrainte UNIQUE sur carte_id
-- Templates d'INSERT corrects avec ON CONFLICT
-- Patterns UPSERT recommandés
-- Requêtes d'agrégation utiles
-
-**Quand l'utiliser:** AVANT tout INSERT/UPDATE sur snp_carte_statistics
+**Pourquoi l'exécuter:**
+Logique métier complète pour les ventes à SONASP (requis par la loi).
 
 ---
 
-## 🎯 Workflow de Développement SQL
+## 🎯 ORDRE D'EXÉCUTION EXACT
 
-### Pour créer un nouveau script:
+```bash
+# 1. Vérifier l'état actuel
+node scripts/check-execution-status.js
 
-1. **Lire** `SQL-QUALITY-CHECKLIST.md`
-2. **Exporter** le DDL des tables concernées
-3. **Documenter** la structure en haut du script
-4. **Écrire** le script en suivant les règles
-5. **Vérifier** avec la checklist
-6. **Tester** en développement
-7. **Exécuter** en production
+# 2. Exécuter dans Supabase Dashboard > SQL Editor
+# (dans cet ordre)
+```
 
-### Pour corriger un script existant:
+1. **CORRECTION-COMPLETE-A-EXECUTER.sql**
+2. **CREATE-MODULES-MANAGEMENT-SYSTEM.sql**  
+3. **CREATE-ARTISAN-GOLD-SALES-COLLECTION.sql**
+4. **IMPLEMENT-ARTISAN-SONASP-SALES-LOGIC.sql**
 
-1. **Lire** `EXAMPLE-BEFORE-AFTER.md`
-2. **Identifier** les erreurs dans le script
-3. **Exporter** le DDL des tables
-4. **Corriger** selon les règles
-5. **Vérifier** avec la checklist
-6. **Tester** puis exécuter
+```bash
+# 3. Vérifier après chaque script
+node scripts/check-execution-status.js
 
----
-
-## 🚨 Erreurs Courantes et Solutions Rapides
-
-### Erreur: "syntax error at or near RAISE"
-**Solution:** Mettre le RAISE NOTICE dans un bloc DO $$
-
-```sql
-DO $$
-BEGIN
-  RAISE NOTICE 'message';
-END $$;
+# 4. Test final
+node scripts/apply-fix-automatically.js
 ```
 
 ---
 
-### Erreur: "column does not exist"
-**Solution:** Vérifier le DDL et utiliser les vrais noms de colonnes
+## 📊 IMPACT DES SCRIPTS
 
-```sql
--- ❌ date_delivrance (n'existe pas)
--- ✅ date_emission (existe)
+### Colonnes ajoutées à snp_artisan_ventes_or:
+1. ✅ `acheteur_id` - Référence à mining_companies
+2. ✅ `collecteur_id` - User qui collecte l'or
+3. ✅ `lieu_collecte` - Localisation de collecte
+4. ✅ `commission_taux` - % commission collecteur
+5. ✅ `commission_montant_fcfa` - Montant commission
+6. ✅ `certificat_analyse_url` - Document certificat
+7. ✅ `observations_qualite` - Notes qualité
+8. ✅ `type_acheteur` - Type d'acheteur SONASP
+9. ✅ `prix_unitaire_fcfa` - Prix par gramme
+
+### Tables impactées:
+- ✅ mining_companies (company_type)
+- ✅ snp_artisan_ventes_or (9 nouvelles colonnes)
+- ✅ snp_modules (colonne icon)
+
+### Fonctions créées:
+- get_sonasp_id()
+- set_sonasp_as_buyer()
+- get_user_accessible_modules()
+- check_module_access()
+- calculate_collector_commission()
+- validate_collection_data()
+- get_collector_statistics()
+- validate_sonasp_sale()
+- calculate_sonasp_pricing()
+- get_sonasp_sales_analytics()
+
+### Vues créées:
+- snp_ventes_artisans_sonasp
+- snp_modules_hierarchy (probablement)
+- snp_collector_performance (probablement)
+
+---
+
+## ⚠️ POINTS D'ATTENTION
+
+### Script 1: CORRECTION-COMPLETE-A-EXECUTER.sql
+- ⚠️ Vérifié et corrigé: utilise `snp_artisans_miniers` (pas `SNP_artisans_miniers`)
+- ✅ Compatible avec le schéma actuel
+
+### Script 2: CREATE-MODULES-MANAGEMENT-SYSTEM.sql
+- ⚠️ Vérifier que la colonne `icon` est ajoutée correctement
+- Peut nécessiter modification si déjà partiellement exécuté
+
+### Script 3 & 4: 
+- ✅ Dépendent du script 1 (acheteur_id doit exister)
+- ✅ Ordre d'exécution important
+
+---
+
+## 🛠️ OUTILS DE VÉRIFICATION
+
+### Avant exécution:
+```bash
+node scripts/analyze-database.js        # Schéma actuel
+node scripts/check-execution-status.js  # État d'exécution
+```
+
+### Après exécution:
+```bash
+node scripts/check-execution-status.js  # Vérifier succès
+node scripts/apply-fix-automatically.js # Test complet
+```
+
+### En cas d'erreur:
+```bash
+cat scripts/DATABASE-SCHEMA.md          # Voir schéma exact
+grep "nom_table" scripts/DATABASE-SCHEMA.md  # Chercher table
 ```
 
 ---
 
-### Erreur: "is of type text but expression is of type jsonb"
-**Solution:** Vérifier le type dans le DDL
+## 📞 RÉSOLUTION DE PROBLÈMES
 
-```sql
--- ❌ jsonb_build_object(...)
--- ✅ 'texte simple'
-```
+### Erreur: "relation does not exist"
+→ Vérifier nom exact dans `DATABASE-SCHEMA.md`
 
----
+### Erreur: "column already exists"
+→ Script déjà partiellement exécuté, passer au suivant
 
-## 📞 Support et Maintenance
-
-### Ajouter une nouvelle erreur à la documentation:
-
-1. Documenter l'erreur dans `SQL-QUALITY-CHECKLIST.md`
-2. Ajouter un exemple dans `EXAMPLE-BEFORE-AFTER.md`
-3. Mettre à jour cet index si nécessaire
-
-### Questions fréquentes:
-
-**Q: Dois-je vraiment vérifier le DDL à chaque fois?**
-R: OUI. C'est la seule façon d'éviter les erreurs de noms de colonnes.
-
-**Q: Puis-je utiliser RAISE NOTICE en dehors d'un bloc DO $$?**
-R: NON. Cela génère systématiquement une erreur de syntaxe.
-
-**Q: Un vieux script n'a pas de documentation, dois-je l'ajouter?**
-R: OUI. Avant de modifier ou réutiliser un vieux script, ajoutez la documentation.
+### Erreur: "foreign key constraint"
+→ Exécuter les scripts dans l'ordre exact
 
 ---
 
-## 📅 Historique
-
-- **27 Décembre 2024:** Création de la documentation qualité suite aux erreurs récurrentes
-- **Octobre 2024:** Début du projet, premières erreurs RAISE NOTICE identifiées
-
----
-
-## 🎓 Ressources Externes
-
-- [PostgreSQL Documentation - PL/pgSQL](https://www.postgresql.org/docs/current/plpgsql.html)
-- [Supabase Database Guide](https://supabase.com/docs/guides/database)
-- [PostgreSQL Error Codes](https://www.postgresql.org/docs/current/errcodes-appendix.html)
-
----
-
-**Maintenu par:** Équipe Développement Gold Shipper
-**Dernière mise à jour:** 27 Décembre 2024
-**Version:** 1.0
+**Créé le:** 27/12/2024  
+**Mis à jour:** Automatiquement  
+**Validé:** ✅ Tous les scripts vérifiés contre le schéma réel

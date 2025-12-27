@@ -1,171 +1,157 @@
-# Outils de Gestion de Base de Données
+# 🛠️ Outils de Gestion de Base de Données
 
-Ces outils vous permettent d'exécuter des migrations SQL et d'analyser la structure de votre base de données Supabase directement depuis votre terminal.
+## 📊 Analyse et Documentation
 
-## 📋 Prérequis
-
-Les outils sont déjà configurés et prêts à l'emploi. Le package `pg` a été installé automatiquement.
-
-## 🔧 Outils Disponibles
-
-### 1. Analyser la Base de Données
-
-Cet outil vous permet de voir la structure complète de vos tables avant de créer des scripts SQL.
-
-**Lister toutes les tables:**
+### `analyze-database.js`
+**Utilisation:** Analyse complète de toutes les tables
 ```bash
 node scripts/analyze-database.js
 ```
 
-**Analyser une table spécifique:**
+**Ce qu'il fait:**
+- Détecte toutes les tables accessibles
+- Liste les colonnes de chaque table
+- Compte le nombre de lignes
+- Génère automatiquement:
+  - `DATABASE-SCHEMA.md` - Documentation lisible
+  - `database-schema.json` - Schéma pour scripts automatiques
+
+**Quand l'utiliser:**
+- Avant de créer TOUT nouveau script SQL
+- Après avoir ajouté des tables
+- Pour vérifier l'état actuel de la base
+
+## ✅ Validation et Tests
+
+### `apply-fix-automatically.js`
+**Utilisation:** Applique et teste les corrections
 ```bash
-node scripts/analyze-database.js nom_table
+node scripts/apply-fix-automatically.js
 ```
 
-**Exemples:**
+**Ce qu'il fait:**
+- Vérifie la présence des colonnes nécessaires
+- Configure SONASP automatiquement (si possible)
+- Lie les ventes à SONASP
+- Affiche un rapport détaillé
+
+**Quand l'utiliser:**
+- Après avoir exécuté un script SQL dans Supabase
+- Pour vérifier que tout est configuré correctement
+
+## 📝 Scripts SQL Principaux
+
+### `CORRECTION-COMPLETE-A-EXECUTER.sql`
+**Utilisation:** Script SQL complet à exécuter DANS Supabase Dashboard
+
+**Ce qu'il fait:**
+- Ajoute `company_type` à mining_companies
+- Configure SONASP
+- Ajoute `acheteur_id` aux ventes
+- Crée triggers automatiques
+- Crée la vue des ventes SONASP
+
+**Comment l'exécuter:**
+1. Ouvrir Supabase Dashboard > SQL Editor
+2. Copier-coller le contenu complet
+3. Cliquer "Run"
+
+## 📚 Documentation de Référence
+
+### `DATABASE-SCHEMA.md`
+Généré automatiquement par `analyze-database.js`
+
+**Contenu:**
+- Liste COMPLÈTE de toutes les tables
+- TOUTES les colonnes de chaque table
+- Nombre de lignes par table
+
+**Utilisation:**
+- Référence OBLIGATOIRE avant d'écrire du SQL
+- Source de vérité pour les noms de tables/colonnes
+
+### `SQL-QUALITY-CHECKLIST.md`
+Guide des bonnes pratiques SQL
+
+**Contenu:**
+- Règles à respecter TOUJOURS
+- Procédure standard de validation
+- Erreurs fréquentes à éviter
+- Templates de scripts sécurisés
+
+## 🔄 Workflow Recommandé
+
+### Pour Créer un Nouveau Script SQL:
+
 ```bash
-# Voir toutes les tables
+# 1. Analyser la base (met à jour DATABASE-SCHEMA.md)
 node scripts/analyze-database.js
 
-# Analyser la structure de SNP_artisans_miniers
-node scripts/analyze-database.js SNP_artisans_miniers
+# 2. Consulter le schéma
+cat scripts/DATABASE-SCHEMA.md
 
-# Analyser mining_companies
-node scripts/analyze-database.js mining_companies
+# 3. Identifier les tables nécessaires
+grep "ma_table" scripts/DATABASE-SCHEMA.md
 
-# Analyser snp_artisan_ventes_or
-node scripts/analyze-database.js snp_artisan_ventes_or
+# 4. Écrire le script SQL en utilisant les noms EXACTS
+
+# 5. Exécuter dans Supabase Dashboard SQL Editor
+
+# 6. Vérifier avec le script de test
+node scripts/apply-fix-automatically.js
 ```
 
-**Affichage:**
-- Liste des colonnes avec types et contraintes
-- Clés primaires et étrangères
-- Index
-- Contraintes CHECK et UNIQUE
-- Nombre de lignes dans la table
+## 🚨 En Cas d'Erreur
 
----
+### Erreur: "relation does not exist"
 
-### 2. Exécuter des Migrations SQL
+**Cause:** Nom de table incorrect
 
-Cet outil exécute vos fichiers SQL directement sur la base de données Supabase.
-
-**Usage:**
+**Solution:**
 ```bash
-node scripts/run-migration.js <nom_fichier.sql>
+# Vérifier le nom exact
+node scripts/analyze-database.js
+grep -i "nom_table" scripts/DATABASE-SCHEMA.md
 ```
 
-**Exemples:**
+### Erreur: "column does not exist"
+
+**Cause:** Colonne inexistante ou mal orthographiée
+
+**Solution:**
 ```bash
-# Exécuter le script de correction SONASP
-node scripts/run-migration.js FIX-COMPANY-TYPE-AND-SONASP.sql
-
-# Exécuter n'importe quel script SQL
-node scripts/run-migration.js mon-script.sql
+# Lister les colonnes de la table
+grep -A 50 "### nom_table" scripts/DATABASE-SCHEMA.md
 ```
 
-**Affichage:**
-- Progression de l'exécution
-- Messages NOTICE de PostgreSQL (les RAISE NOTICE)
-- Confirmation de succès ou erreurs détaillées
-- Nombre de lignes affectées
+### Erreur: SQL échoue dans Supabase
 
----
+**Solution:**
+1. Copier le message d'erreur COMPLET
+2. Identifier la ligne problématique
+3. Vérifier dans DATABASE-SCHEMA.md
+4. Corriger et réessayer
 
-## 📝 Workflow Recommandé
+## 🎯 Règles Essentielles
 
-### Étape 1: Analyser la base de données
-
-Avant de créer un script SQL, analysez toujours la structure des tables concernées:
-
-```bash
-# Analyser la table principale
-node scripts/analyze-database.js mining_companies
-
-# Analyser la table des ventes
-node scripts/analyze-database.js snp_artisan_ventes_or
-
-# Analyser la table des artisans
-node scripts/analyze-database.js SNP_artisans_miniers
-```
-
-Notez:
-- Les noms exacts des colonnes
-- Les types de données
-- Les contraintes existantes
-- Les relations entre tables
-
-### Étape 2: Créer votre script SQL
-
-Créez votre fichier `.sql` dans le dossier `scripts/` en utilisant les vrais noms de colonnes que vous avez observés.
-
-### Étape 3: Exécuter la migration
-
-```bash
-node scripts/run-migration.js votre-script.sql
-```
-
-### Étape 4: Vérifier les résultats
-
-Si besoin, ré-analysez la table pour confirmer les changements:
-
-```bash
-node scripts/analyze-database.js nom_table
-```
-
----
-
-## 🚨 Exemple Complet
-
-### Scénario: Corriger les ventes artisans
-
-```bash
-# 1. Analyser la structure actuelle
-node scripts/analyze-database.js mining_companies
-node scripts/analyze-database.js snp_artisan_ventes_or
-
-# 2. Observer les colonnes disponibles
-# Vous verrez: contact_person_email, contact_person_phone, etc.
-
-# 3. Exécuter le script de correction
-node scripts/run-migration.js FIX-COMPANY-TYPE-AND-SONASP.sql
-
-# 4. Vérifier les changements
-node scripts/analyze-database.js mining_companies
-```
-
----
-
-## 💡 Avantages
-
-Ces outils vous permettent de:
-
-1. **Éviter les erreurs de nom de colonne** - Vous voyez la structure réelle avant de coder
-2. **Exécuter rapidement** - Pas besoin de copier-coller dans l'interface Supabase
-3. **Voir les logs PostgreSQL** - Tous les RAISE NOTICE apparaissent dans le terminal
-4. **Déboguer facilement** - Messages d'erreur détaillés avec le numéro de ligne
-5. **Automatiser** - Possibilité d'intégrer dans des scripts CI/CD
-
----
-
-## 🔐 Sécurité
-
-Les scripts utilisent la variable `SUPABASE_DB_URL` du fichier `.env` qui contient:
-- L'URL de connexion PostgreSQL directe
-- Les identifiants sécurisés
-- Le certificat SSL
-
-**Important:** Ne commitez jamais le fichier `.env` dans Git!
-
----
+1. **TOUJOURS** exécuter `analyze-database.js` avant de créer du SQL
+2. **TOUJOURS** vérifier dans `DATABASE-SCHEMA.md` que la table existe
+3. **JAMAIS** deviner un nom de table ou colonne
+4. **TOUJOURS** utiliser les noms EXACTS (case-sensitive)
 
 ## 📞 Support
 
-Si vous rencontrez une erreur:
+Si les outils ne fonctionnent pas:
 
-1. Vérifiez que `SUPABASE_DB_URL` est défini dans `.env`
-2. Analysez d'abord la table avec `analyze-database.js`
-3. Vérifiez les noms de colonnes dans votre script SQL
-4. Consultez le message d'erreur complet affiché
+```bash
+# Vérifier les variables d'environnement
+cat .env | grep SUPABASE
 
-Pour plus d'aide, référez-vous aux fichiers README dans le dossier `scripts/`.
+# Tester la connexion
+node scripts/auto-analyze.js
+```
+
+---
+
+**Créé le:** 27 Décembre 2024
+**Mis à jour:** Automatiquement par les scripts

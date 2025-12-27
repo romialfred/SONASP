@@ -132,7 +132,7 @@ SELECT
   mc.name as acheteur_nom, mc.company_type as acheteur_type,
   v.created_at, v.updated_at
 FROM snp_artisan_ventes_or v
-LEFT JOIN "SNP_artisans_miniers" a ON v.artisan_id = a.id
+LEFT JOIN snp_artisans_miniers a ON v.artisan_id = a.id
 LEFT JOIN mining_companies mc ON v.acheteur_id = mc.id
 WHERE mc.company_type = 'sonasp';
 

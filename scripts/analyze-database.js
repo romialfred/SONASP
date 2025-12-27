@@ -1,132 +1,156 @@
 #!/usr/bin/env node
 
-/**
- * Utilitaire pour analyser la structure de la base de données Supabase
- * Usage: node scripts/analyze-database.js [nom_table]
- */
-
-import pg from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-
-const { Client } = pg;
+import { writeFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 config({ path: join(__dirname, '../.env') });
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ ERREUR: Variables manquantes dans .env');
-  process.exit(1);
-}
-
-// Construire l'URL de connexion PostgreSQL à partir de l'URL Supabase
-const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
-if (!projectRef) {
-  console.error('❌ ERREUR: URL Supabase invalide');
-  process.exit(1);
-}
-
-const dbUrl = `postgresql://postgres.${projectRef}:${supabaseKey.split('.')[2] || 'password'}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`;
-
-async function listAllTables(client) {
-  const query = `
-    SELECT tablename
-    FROM pg_tables
-    WHERE schemaname = 'public'
-    ORDER BY tablename;
-  `;
-
-  const result = await client.query(query);
-
-  console.log('\n📊 TABLES DU PROJET:\n');
-  console.log('━'.repeat(70));
-
-  for (const row of result.rows) {
-    const countResult = await client.query(`SELECT COUNT(*) as count FROM "${row.tablename}"`);
-    const count = countResult.rows[0].count;
-    console.log(`  ✓ ${row.tablename.padEnd(40)} (${count} lignes)`);
-  }
-
-  console.log('\n━'.repeat(70));
-  console.log(`\n💡 Usage: node scripts/analyze-database.js nom_table\n`);
-}
-
-async function analyzeTable(client, tableName) {
-  console.log(`\n🔍 ANALYSE: ${tableName}\n`);
-  console.log('━'.repeat(100));
-
-  const columnsQuery = `
-    SELECT
-      column_name,
-      data_type,
-      character_maximum_length,
-      is_nullable,
-      column_default
-    FROM information_schema.columns
-    WHERE table_name = $1 AND table_schema = 'public'
-    ORDER BY ordinal_position;
-  `;
-
+async function analyzeTable(tableName) {
   try {
-    const result = await client.query(columnsQuery, [tableName]);
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1)
+      .maybeSingle();
 
-    if (result.rows.length === 0) {
-      console.log(`❌ Table "${tableName}" introuvable\n`);
-      return;
+    if (error) {
+      return { exists: false, error: error.message };
     }
 
-    console.log('\n📋 COLONNES:\n');
-    result.rows.forEach(col => {
-      const nullable = col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL';
-      const maxLen = col.character_maximum_length ? `(${col.character_maximum_length})` : '';
-      const defaultVal = col.column_default ? `DEFAULT ${col.column_default.substring(0, 30)}` : '';
+    if (!data) {
+      return { exists: true, columns: [], count: 0 };
+    }
 
-      console.log(`  • ${col.column_name.padEnd(35)} ${col.data_type}${maxLen.padEnd(8)} ${nullable.padEnd(10)} ${defaultVal}`);
-    });
+    const columns = Object.keys(data);
 
-    const countResult = await client.query(`SELECT COUNT(*) FROM "${tableName}"`);
-    console.log(`\n📊 Lignes: ${countResult.rows[0].count}\n`);
+    const { count } = await supabase
+      .from(tableName)
+      .select('*', { count: 'exact', head: true });
 
-    console.log('━'.repeat(100));
-    console.log('');
-
+    return { exists: true, columns, count, sample: data };
   } catch (err) {
-    console.error('❌ Erreur:', err.message);
+    return { exists: false, error: err.message };
   }
 }
 
 async function main() {
-  console.log('🔌 Connexion...');
+  console.log('🔍 ANALYSE COMPLÈTE DE LA BASE DE DONNÉES\n');
+  console.log('━'.repeat(70));
 
-  // Utiliser une connexion simple sans pooler
-  const simpleUrl = `postgresql://postgres:${supabaseKey}@db.${projectRef}.supabase.co:5432/postgres`;
+  const tablesToCheck = [
+    'mining_companies',
+    'snp_artisan_ventes_or',
+    'SNP_artisans_miniers',
+    'snp_artisans_miniers',
+    'artisans_miniers',
+    'snp_cartes_professionnelles',
+    'snp_carte_statistics',
+    'snp_artisan_activities',
+    'daily_production',
+    'sales',
+    'customers',
+    'shipping_preparations',
+    'export_licenses'
+  ];
 
-  const client = new Client({ connectionString: simpleUrl });
+  const results = {};
 
-  try {
-    await client.connect();
+  for (const table of tablesToCheck) {
+    const result = await analyzeTable(table);
+    results[table] = result;
 
-    const tableName = process.argv[2];
-
-    if (tableName) {
-      await analyzeTable(client, tableName);
+    if (result.exists) {
+      console.log(`\n✅ ${table}`);
+      console.log(`   Lignes: ${result.count}`);
+      console.log(`   Colonnes (${result.columns.length}):`);
+      result.columns.forEach(col => console.log(`     - ${col}`));
     } else {
-      await listAllTables(client);
+      console.log(`\n❌ ${table} - N'EXISTE PAS`);
     }
-
-  } catch (err) {
-    console.error('❌ Connexion échouée');
-    console.error('Essayez d\'ajouter SUPABASE_DB_URL dans votre .env');
-    console.error('Format: postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres');
-  } finally {
-    await client.end();
   }
+
+  // Générer un fichier de référence
+  const timestamp = new Date().toISOString().split('T')[0];
+  const report = {
+    date: timestamp,
+    project: process.env.VITE_SUPABASE_URL,
+    tables: results
+  };
+
+  const outputPath = join(__dirname, 'database-schema.json');
+  writeFileSync(outputPath, JSON.stringify(report, null, 2));
+
+  console.log('\n━'.repeat(70));
+  console.log(`\n📄 Schéma sauvegardé: ${outputPath}`);
+
+  // Créer un document Markdown
+  let mdContent = `# Schéma de Base de Données\n\n`;
+  mdContent += `**Date:** ${timestamp}\n\n`;
+  mdContent += `## Tables Existantes\n\n`;
+
+  for (const [table, info] of Object.entries(results)) {
+    if (info.exists) {
+      mdContent += `### ${table}\n\n`;
+      mdContent += `- **Nombre de lignes:** ${info.count}\n`;
+      mdContent += `- **Colonnes:**\n`;
+      info.columns.forEach(col => {
+        mdContent += `  - \`${col}\`\n`;
+      });
+      mdContent += `\n`;
+    }
+  }
+
+  mdContent += `## Tables Non Trouvées\n\n`;
+  for (const [table, info] of Object.entries(results)) {
+    if (!info.exists) {
+      mdContent += `- ❌ \`${table}\`\n`;
+    }
+  }
+
+  const mdPath = join(__dirname, 'DATABASE-SCHEMA.md');
+  writeFileSync(mdPath, mdContent);
+
+  console.log(`📄 Documentation créée: ${mdPath}\n`);
+
+  // Identifier la bonne table des artisans
+  const artisanTables = Object.entries(results)
+    .filter(([name, info]) => info.exists && name.toLowerCase().includes('artisan'))
+    .filter(([name, info]) => !name.includes('vente') && !name.includes('activities'));
+
+  console.log('━'.repeat(70));
+  console.log('\n🎯 TABLE DES ARTISANS DÉTECTÉE:\n');
+
+  if (artisanTables.length > 0) {
+    artisanTables.forEach(([name, info]) => {
+      console.log(`✅ ${name} (${info.count} lignes)`);
+      console.log('   Colonnes clés:');
+      const keyCols = info.columns.filter(c =>
+        ['id', 'nom', 'prenom', 'prenoms', 'numero_carte', 'type_artisan', 'pays'].some(
+          key => c.toLowerCase().includes(key.toLowerCase())
+        )
+      );
+      keyCols.forEach(col => console.log(`     - ${col}`));
+    });
+  } else {
+    console.log('❌ Aucune table d\'artisans trouvée');
+  }
+
+  console.log('\n');
 }
 
-main();
+main().catch(err => {
+  console.error('❌ ERREUR:', err.message);
+  process.exit(1);
+});

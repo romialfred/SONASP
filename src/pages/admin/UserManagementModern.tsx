@@ -20,7 +20,7 @@ import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { createUserDirect } from '@/services/userManagementService';
-import { loadModules, loadUserPermissions, saveUserPermissions, type Module, type ModulePermission } from '@/services/modulesService';
+import { modulesService, type Module } from '@/services/modulesService';
 import type { UserRole } from '@/types/auth';
 
 interface UserFormData {
@@ -85,7 +85,7 @@ export function UserManagementModern() {
       setMiningCompanies(companies || []);
 
       // Charger les modules depuis la base de données
-      const loadedModules = await loadModules();
+      const loadedModules = await modulesService.getAll();
       setModules(loadedModules);
 
       // Initialiser les permissions

@@ -1,178 +1,233 @@
-/**
- * Modules Service
- * Service pour charger les modules depuis Supabase
- */
-
 import { supabase } from '@/lib/supabase';
 
 export interface Module {
   id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  category?: string;
-  icon?: string;
-  is_active: boolean;
+  code: string;
+  nom: string;
+  description?: string;
+  icone?: string;
+  route?: string;
+  parent_id?: string;
+  parent_nom?: string;
+  parent_code?: string;
+  ordre: number;
+  est_actif: boolean;
+  est_visible_menu: boolean;
+  permissions_requises: string[];
   created_at?: string;
+  updated_at?: string;
+  submodules?: Module[];
 }
 
-export interface ModulePermission {
-  module_id: string;
-  module_name: string;
-  display_name: string;
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_approve: boolean;
-}
+export const modulesService = {
+  async getAll(): Promise<Module[]> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_modules')
+        .select('*')
+        .order('ordre', { ascending: true });
 
-/**
- * Charger tous les modules actifs
- */
-export async function loadModules(): Promise<Module[]> {
-  try {
-    const { data, error } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('is_active', true)
-      .order('display_name');
-
-    if (error) {
-      console.error('Error loading modules:', error);
-      return [];
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching modules:', error);
+      throw error;
     }
+  },
 
-    return data || [];
-  } catch (error) {
-    console.error('Failed to load modules:', error);
-    return [];
-  }
-}
+  async getActive(): Promise<Module[]> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_modules_actifs')
+        .select('*');
 
-/**
- * Charger les modules par catégorie
- */
-export async function loadModulesByCategory(category: string): Promise<Module[]> {
-  try {
-    const { data, error } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('is_active', true)
-      .eq('category', category)
-      .order('display_name');
-
-    if (error) {
-      console.error('Error loading modules by category:', error);
-      return [];
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching active modules:', error);
+      throw error;
     }
+  },
 
-    return data || [];
-  } catch (error) {
-    console.error('Failed to load modules by category:', error);
-    return [];
-  }
-}
+  async getById(id: string): Promise<Module | null> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_modules')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-/**
- * Charger les permissions d'un utilisateur
- */
-export async function loadUserPermissions(userId: string): Promise<Record<string, ModulePermission>> {
-  try {
-    const { data, error } = await supabase
-      .from('user_permissions')
-      .select(`
-        *,
-        modules:module_id (
-          name,
-          display_name
-        )
-      `)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error loading user permissions:', error);
-      return {};
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching module:', error);
+      throw error;
     }
+  },
 
-    const permissions: Record<string, ModulePermission> = {};
+  async getByCode(code: string): Promise<Module | null> {
+    try {
+      const { data, error} = await supabase
+        .from('snp_modules')
+        .select('*')
+        .eq('code', code)
+        .maybeSingle();
 
-    data?.forEach((perm: any) => {
-      permissions[perm.module_id] = {
-        module_id: perm.module_id,
-        module_name: perm.modules?.name || '',
-        display_name: perm.modules?.display_name || '',
-        can_view: perm.can_read || false,
-        can_create: perm.can_write || false,
-        can_edit: perm.can_write || false,
-        can_delete: perm.can_delete || false,
-        can_approve: perm.can_approve || false,
-      };
-    });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching module by code:', error);
+      throw error;
+    }
+  },
 
-    return permissions;
-  } catch (error) {
-    console.error('Failed to load user permissions:', error);
-    return {};
-  }
-}
+  async getHierarchy(): Promise<Module[]> {
+    try {
+      const allModules = await this.getAll();
 
-/**
- * Sauvegarder les permissions d'un utilisateur
- */
-export async function saveUserPermissions(
-  userId: string,
-  permissions: Record<string, ModulePermission>,
-  grantedBy: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Supprimer les anciennes permissions
-    await supabase
-      .from('user_permissions')
-      .delete()
-      .eq('user_id', userId);
+      const parentModules = allModules.filter(m => !m.parent_id);
+      const childModules = allModules.filter(m => m.parent_id);
 
-    // Préparer les nouvelles permissions
-    const permsToInsert = Object.values(permissions)
-      .filter(perm => perm.can_view || perm.can_create || perm.can_edit || perm.can_delete || perm.can_approve)
-      .map(perm => ({
-        user_id: userId,
-        module_id: perm.module_id,
-        can_read: perm.can_view,
-        can_write: perm.can_create || perm.can_edit,
-        can_delete: perm.can_delete,
-        can_approve: perm.can_approve,
-        granted_by: grantedBy,
+      const hierarchy = parentModules.map(parent => ({
+        ...parent,
+        submodules: childModules
+          .filter(child => child.parent_id === parent.id)
+          .sort((a, b) => a.ordre - b.ordre)
       }));
 
-    if (permsToInsert.length > 0) {
-      const { error } = await supabase
-        .from('user_permissions')
-        .insert(permsToInsert);
-
-      if (error) {
-        console.error('Error saving permissions:', error);
-        return { success: false, error: error.message };
-      }
+      return hierarchy.sort((a, b) => a.ordre - b.ordre);
+    } catch (error) {
+      console.error('Error fetching module hierarchy:', error);
+      throw error;
     }
+  },
 
-    return { success: true };
-  } catch (error: any) {
-    console.error('Failed to save permissions:', error);
-    return { success: false, error: error.message };
+  async getActiveHierarchy(): Promise<Module[]> {
+    try {
+      const allModules = await this.getActive();
+
+      const parentModules = allModules.filter(m => !m.parent_id && m.est_actif && m.est_visible_menu);
+      const childModules = allModules.filter(m => m.parent_id && m.est_actif && m.est_visible_menu);
+
+      const hierarchy = parentModules.map(parent => ({
+        ...parent,
+        submodules: childModules
+          .filter(child => child.parent_id === parent.id)
+          .sort((a, b) => a.ordre - b.ordre)
+      }));
+
+      return hierarchy.sort((a, b) => a.ordre - b.ordre);
+    } catch (error) {
+      console.error('Error fetching active module hierarchy:', error);
+      throw error;
+    }
+  },
+
+  async create(module: Partial<Module>): Promise<Module> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_modules')
+        .insert([{
+          code: module.code,
+          nom: module.nom,
+          description: module.description,
+          icone: module.icone,
+          route: module.route,
+          parent_id: module.parent_id,
+          ordre: module.ordre || 0,
+          est_actif: module.est_actif !== undefined ? module.est_actif : true,
+          est_visible_menu: module.est_visible_menu !== undefined ? module.est_visible_menu : true,
+          permissions_requises: module.permissions_requises || []
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error('Error creating module:', error);
+      throw new Error(error.message || 'Impossible de créer le module');
+    }
+  },
+
+  async update(id: string, updates: Partial<Module>): Promise<Module> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_modules')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error('Error updating module:', error);
+      throw new Error(error.message || 'Impossible de mettre à jour le module');
+    }
+  },
+
+  async toggleActive(id: string): Promise<Module> {
+    try {
+      const module = await this.getById(id);
+      if (!module) throw new Error('Module non trouvé');
+
+      return await this.update(id, {
+        est_actif: !module.est_actif
+      });
+    } catch (error: any) {
+      console.error('Error toggling module active state:', error);
+      throw error;
+    }
+  },
+
+  async toggleVisibility(id: string): Promise<Module> {
+    try {
+      const module = await this.getById(id);
+      if (!module) throw new Error('Module non trouvé');
+
+      return await this.update(id, {
+        est_visible_menu: !module.est_visible_menu
+      });
+    } catch (error: any) {
+      console.error('Error toggling module visibility:', error);
+      throw error;
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('snp_modules')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error deleting module:', error);
+      throw new Error(error.message || 'Impossible de supprimer le module');
+    }
+  },
+
+  async reorder(moduleId: string, newOrder: number): Promise<void> {
+    try {
+      await this.update(moduleId, { ordre: newOrder });
+    } catch (error) {
+      console.error('Error reordering module:', error);
+      throw error;
+    }
+  },
+
+  async getUserModules(userId: string): Promise<Module[]> {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_modules', { user_id: userId });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching user modules:', error);
+      return await this.getActive();
+    }
   }
-}
-
-/**
- * Obtenir les catégories de modules disponibles
- */
-export function getModuleCategories(): Array<{ id: string; label: string; icon: string; color: string }> {
-  return [
-    { id: 'overview', label: 'Overview', icon: '📊', color: 'blue' },
-    { id: 'batches', label: 'Batches', icon: '📦', color: 'green' },
-    { id: 'sales', label: 'Sales', icon: '💰', color: 'amber' },
-    { id: 'operations', label: 'Operations', icon: '⚙️', color: 'indigo' },
-    { id: 'analytics', label: 'Analytics', icon: '📈', color: 'purple' },
-    { id: 'system', label: 'System', icon: '🔧', color: 'red' },
-  ];
-}
+};

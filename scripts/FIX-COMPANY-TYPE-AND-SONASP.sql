@@ -1,6 +1,11 @@
 /*
   # Correction: Ajout de company_type et configuration SONASP
 
+  Ce script s'adapte à la structure RÉELLE de mining_companies:
+  - contact_person_email (au lieu de email)
+  - contact_person_phone (au lieu de phone)
+  - Ajout de company_type
+
   1. Modifications apportées
     - Ajout de la colonne company_type si manquante
     - Configuration de SONASP avec company_type = 'sonasp'
@@ -25,6 +30,7 @@ BEGIN
     ALTER TABLE mining_companies
     ADD COLUMN company_type text DEFAULT 'standard' CHECK (company_type IN ('standard', 'sonasp', 'international'));
 
+    -- Créer l'index
     CREATE INDEX IF NOT EXISTS idx_mining_companies_type ON mining_companies(company_type);
 
     RAISE NOTICE '✓ Colonne company_type ajoutée avec succès';
@@ -44,17 +50,17 @@ BEGIN
   -- Vérifier si SONASP existe
   SELECT COUNT(*) INTO sonasp_count
   FROM mining_companies
-  WHERE name LIKE '%SONASP%' OR abbreviation = 'SONASP';
+  WHERE name LIKE '%SONASP%' OR abbreviation = 'SONASP' OR code LIKE '%SONASP%';
 
   IF sonasp_count > 0 THEN
-    -- Mettre à jour SONASP
+    -- Mettre à jour SONASP existante
     UPDATE mining_companies
     SET
       company_type = 'sonasp',
       abbreviation = 'SONASP',
       is_active = true,
       updated_at = now()
-    WHERE name LIKE '%SONASP%' OR abbreviation = 'SONASP';
+    WHERE name LIKE '%SONASP%' OR abbreviation = 'SONASP' OR code LIKE '%SONASP%';
 
     RAISE NOTICE '✓ SONASP mise à jour avec company_type = sonasp';
   ELSE
@@ -66,8 +72,9 @@ BEGIN
       company_type,
       registration_number,
       tax_id,
-      email,
-      phone,
+      contact_person_email,
+      contact_person_phone,
+      contact_person_name,
       address,
       city,
       country,
@@ -82,6 +89,7 @@ BEGIN
       'SONASP-TAX-001',
       'contact@sonasp.bf',
       '+226 25 XX XX XX',
+      'Direction Générale',
       'Ouagadougou, Burkina Faso',
       'Ouagadougou',
       'BF',

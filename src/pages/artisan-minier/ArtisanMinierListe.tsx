@@ -4,49 +4,128 @@ import { useNavigate } from 'react-router-dom';
 import {
   UserPlus,
   Search,
-  Filter,
   User,
   Building2,
   Phone,
   Mail,
   CreditCard,
-  ChevronRight,
   Plus,
   Download,
-  LayoutGrid,
-  LayoutList,
-  X,
+  Calendar,
+  Clock,
+  Coins,
   TrendingUp,
-  Coins
+  Receipt,
+  AlertCircle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Loading } from '@/components/ui/Loading';
-import { Select } from '@/components/ui/Select';
 import { artisanMinierService } from '@/services/artisanMinierService';
+import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
 import { ArtisanMinierFormWithTabs } from '@/components/artisan/ArtisanMinierFormWithTabs';
 import { cn } from '@/utils/cn';
 
-type ViewMode = 'table' | 'grid';
+type TypeArtisan = 'collecteur' | 'fournisseur' | 'exploitant' | 'intermediaire';
+
+interface ArtisanWithStats {
+  id: string;
+  numero_carte: string;
+  type_personne: 'physique' | 'morale';
+  type_artisan: TypeArtisan;
+  nom?: string;
+  prenoms?: string;
+  raison_sociale?: string;
+  telephone?: string;
+  email?: string;
+  region?: string;
+  commune?: string;
+  photo_url?: string;
+  created_at?: string;
+  quantite_or_vendu_grammes?: number;
+  chiffre_affaires_fcfa?: number;
+  total_taxes_fcfa?: number;
+  carte?: {
+    date_expiration?: string;
+    statut?: string;
+  };
+}
+
+const TYPE_COLORS = {
+  collecteur: {
+    gradient: 'from-purple-600 to-purple-700',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-300',
+    badge: 'bg-purple-100 text-purple-800'
+  },
+  fournisseur: {
+    gradient: 'from-teal-600 to-teal-700',
+    bg: 'bg-teal-50',
+    text: 'text-teal-700',
+    border: 'border-teal-300',
+    badge: 'bg-teal-100 text-teal-800'
+  },
+  exploitant: {
+    gradient: 'from-blue-600 to-blue-700',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-300',
+    badge: 'bg-blue-100 text-blue-800'
+  },
+  intermediaire: {
+    gradient: 'from-orange-600 to-orange-700',
+    bg: 'bg-orange-50',
+    text: 'text-orange-700',
+    border: 'border-orange-300',
+    badge: 'bg-orange-100 text-orange-800'
+  }
+};
+
+const TYPE_LABELS = {
+  collecteur: 'Collecteurs',
+  fournisseur: 'Fournisseurs',
+  exploitant: 'Exploitants',
+  intermediaire: 'Intermédiaires'
+};
+
+function calculateTimeUntilExpiration(expirationDate?: string) {
+  if (!expirationDate) return { expired: true, years: 0, months: 0, days: 0, text: 'Non définie' };
+
+  const now = new Date();
+  const expiry = new Date(expirationDate);
+  const diffMs = expiry.getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return { expired: true, years: 0, months: 0, days: 0, text: 'Expirée' };
+  }
+
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const years = Math.floor(diffDays / 365);
+  const months = Math.floor((diffDays % 365) / 30);
+  const days = diffDays % 30;
+
+  let text = '';
+  if (years > 0) text += `${years} an${years > 1 ? 's' : ''}`;
+  if (months > 0) text += `${text ? ', ' : ''}${months} mois`;
+  if (years === 0 && days > 0) text += `${text ? ', ' : ''}${days} jour${days > 1 ? 's' : ''}`;
+
+  return { expired: false, years, months, days, text: text || '< 1 jour' };
+}
 
 export default function ArtisanMinierListe() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [artisans, setArtisans] = useState<any[]>([]);
+  const [artisans, setArtisans] = useState<ArtisanWithStats[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selectedArtisan, setSelectedArtisan] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    region: '',
-    sexe: '',
-    type_artisan: '',
-    pays: ''
-  });
+  const [activeTab, setActiveTab] = useState<TypeArtisan>('collecteur');
 
   useEffect(() => {
     loadArtisans();
@@ -56,7 +135,31 @@ export default function ArtisanMinierListe() {
     try {
       setLoading(true);
       const data = await artisanMinierService.getAll();
-      setArtisans(data || []);
+
+      const artisansWithCartes = await Promise.all(
+        (data || []).map(async (artisan: any) => {
+          try {
+            const cartes = await carteProfessionnelleService.getByArtisanId(artisan.id);
+            const carteActive = cartes?.[0];
+            return {
+              ...artisan,
+              carte: carteActive,
+              quantite_or_vendu_grammes: artisan.quantite_or_vendu_grammes || 0,
+              chiffre_affaires_fcfa: artisan.chiffre_affaires_fcfa || 0,
+              total_taxes_fcfa: artisan.total_taxes_fcfa || 0
+            };
+          } catch {
+            return {
+              ...artisan,
+              quantite_or_vendu_grammes: artisan.quantite_or_vendu_grammes || 0,
+              chiffre_affaires_fcfa: artisan.chiffre_affaires_fcfa || 0,
+              total_taxes_fcfa: artisan.total_taxes_fcfa || 0
+            };
+          }
+        })
+      );
+
+      setArtisans(artisansWithCartes);
     } catch (error) {
       console.error('Error loading artisans:', error);
       setArtisans([]);
@@ -76,12 +179,13 @@ export default function ArtisanMinierListe() {
     setSelectedArtisan(null);
   };
 
-  const handleEdit = (artisan: any) => {
-    // Navigation vers la page de détails au lieu d'éditer inline
+  const handleCardClick = (artisan: any) => {
     navigate(`/artisan-minier/${artisan.id}`);
   };
 
   const filteredArtisans = artisans.filter(artisan => {
+    if (artisan.type_artisan !== activeTab) return false;
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = (
@@ -94,53 +198,41 @@ export default function ArtisanMinierListe() {
       if (!matchesSearch) return false;
     }
 
-    if (filters.region && artisan.region !== filters.region) return false;
-    if (filters.sexe && artisan.sexe !== filters.sexe) return false;
-    if (filters.type_artisan && artisan.type_artisan !== filters.type_artisan) return false;
-    if (filters.pays && artisan.pays !== filters.pays) return false;
-
     return true;
   });
 
-  const uniqueRegions = Array.from(new Set(artisans.map(a => a.region).filter(Boolean))).sort();
-  const uniquePays = Array.from(new Set(artisans.map(a => a.pays).filter(Boolean))).sort();
-
-  const clearFilters = () => {
-    setFilters({
-      region: '',
-      sexe: '',
-      type_artisan: '',
-      pays: ''
-    });
+  const countsByType = {
+    collecteur: artisans.filter(a => a.type_artisan === 'collecteur').length,
+    fournisseur: artisans.filter(a => a.type_artisan === 'fournisseur').length,
+    exploitant: artisans.filter(a => a.type_artisan === 'exploitant').length,
+    intermediaire: artisans.filter(a => a.type_artisan === 'intermediaire').length
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== '');
-
   const exportToCSV = () => {
-    if (artisans.length === 0) return;
+    if (filteredArtisans.length === 0) return;
 
     const headers = [
-      'Type Personne',
       'Type Artisan',
-      'Nom',
-      'Prénoms',
-      'Raison Sociale',
+      'Nom/Raison Sociale',
+      'N° Carte',
       'Téléphone',
       'Email',
-      'Commune',
-      'Région'
+      'Région',
+      'Or Vendu (g)',
+      'CA (FCFA)',
+      'Taxes (FCFA)'
     ];
 
-    const rows = artisans.map(a => [
-      a.type_personne || '',
+    const rows = filteredArtisans.map(a => [
       a.type_artisan || '',
-      a.nom || '',
-      a.prenoms || '',
-      a.raison_sociale || '',
+      a.type_personne === 'physique' ? `${a.nom} ${a.prenoms || ''}` : a.raison_sociale || '',
+      a.numero_carte || '',
       a.telephone || '',
       a.email || '',
-      a.commune || '',
-      a.region || ''
+      a.region || '',
+      a.quantite_or_vendu_grammes?.toString() || '0',
+      a.chiffre_affaires_fcfa?.toString() || '0',
+      a.total_taxes_fcfa?.toString() || '0'
     ]);
 
     const csvContent = [
@@ -151,21 +243,20 @@ export default function ArtisanMinierListe() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `artisans_miniers_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `artisans_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
   return (
     <MainLayout>
-      <div className="space-y-4">
-        {/* Header */}
+      <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Liste des Artisans Miniers
             </h1>
             <p className="text-sm text-gray-600 mt-0.5">
-              {filteredArtisans.length} artisan(s) enregistré(s)
+              {artisans.length} artisan(s) enregistré(s) au total
             </p>
           </div>
 
@@ -174,11 +265,11 @@ export default function ArtisanMinierListe() {
               onClick={exportToCSV}
               variant="outline"
               size="sm"
-              disabled={artisans.length === 0}
+              disabled={filteredArtisans.length === 0}
               className="text-xs"
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
-              Exporter CSV
+              Exporter
             </Button>
             {!showForm && (
               <Button
@@ -196,7 +287,6 @@ export default function ArtisanMinierListe() {
           </div>
         </div>
 
-        {/* Form Section - Inline */}
         {showForm && (
           <ArtisanMinierFormWithTabs
             artisan={selectedArtisan}
@@ -205,149 +295,56 @@ export default function ArtisanMinierListe() {
           />
         )}
 
-        {/* Search Bar and Controls */}
         {!showForm && (
-          <Card className="shadow-sm">
-            <div className="p-4">
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Rechercher un artisan (nom, prénom, n° carte, téléphone...)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    icon={Search}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={showFilters ? 'primary' : 'outline'}
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center gap-2 text-xs px-4"
-                  >
-                    <Filter className="h-3.5 w-3.5" />
-                    Filtrer
-                    {hasActiveFilters && (
-                      <span className="ml-1 px-1.5 py-0.5 bg-emerald-600 text-white rounded-full text-xs">
-                        {Object.values(filters).filter(v => v).length}
-                      </span>
-                    )}
-                  </Button>
-                  <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          <>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="border-b border-gray-200">
+                <div className="flex overflow-x-auto">
+                  {(['collecteur', 'fournisseur', 'exploitant', 'intermediaire'] as TypeArtisan[]).map((type) => (
                     <button
-                      onClick={() => setViewMode('grid')}
+                      key={type}
+                      onClick={() => setActiveTab(type)}
                       className={cn(
-                        'px-3 py-2 text-xs font-medium transition-colors',
-                        viewMode === 'grid'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                        'flex-1 min-w-[140px] px-6 py-4 text-sm font-semibold transition-all relative',
+                        'hover:bg-gray-50 focus:outline-none',
+                        activeTab === type
+                          ? `${TYPE_COLORS[type].text} bg-gradient-to-b ${TYPE_COLORS[type].gradient.replace('from-', 'from-').replace('to-', 'to-')} bg-opacity-5`
+                          : 'text-gray-600'
                       )}
                     >
-                      <LayoutGrid className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('table')}
-                      className={cn(
-                        'px-3 py-2 text-xs font-medium transition-colors border-l',
-                        viewMode === 'table'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      <div className="flex items-center justify-center gap-2">
+                        <span>{TYPE_LABELS[type]}</span>
+                        <span className={cn(
+                          'px-2.5 py-0.5 rounded-full text-xs font-bold',
+                          activeTab === type
+                            ? TYPE_COLORS[type].badge
+                            : 'bg-gray-200 text-gray-700'
+                        )}>
+                          {countsByType[type]}
+                        </span>
+                      </div>
+                      {activeTab === type && (
+                        <div className={cn(
+                          'absolute bottom-0 left-0 right-0 h-1',
+                          `bg-gradient-to-r ${TYPE_COLORS[type].gradient}`
+                        )} />
                       )}
-                    >
-                      <LayoutList className="h-4 w-4" />
                     </button>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Filters Panel */}
-              {showFilters && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                        Région
-                      </label>
-                      <Select
-                        value={filters.region}
-                        onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-                        className="text-sm"
-                      >
-                        <option value="">Toutes les régions</option>
-                        {uniqueRegions.map(region => (
-                          <option key={region} value={region}>{region}</option>
-                        ))}
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                        Genre
-                      </label>
-                      <Select
-                        value={filters.sexe}
-                        onChange={(e) => setFilters({ ...filters, sexe: e.target.value })}
-                        className="text-sm"
-                      >
-                        <option value="">Tous</option>
-                        <option value="M">Masculin</option>
-                        <option value="F">Féminin</option>
-                        <option value="Autre">Autre</option>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                        Type d'artisan
-                      </label>
-                      <Select
-                        value={filters.type_artisan}
-                        onChange={(e) => setFilters({ ...filters, type_artisan: e.target.value })}
-                        className="text-sm"
-                      >
-                        <option value="">Tous les types</option>
-                        <option value="exploitant">Exploitant</option>
-                        <option value="collecteur">Collecteur</option>
-                        <option value="intermediaire">Intermédiaire</option>
-                        <option value="fournisseur">Fournisseur</option>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                        Pays
-                      </label>
-                      <Select
-                        value={filters.pays}
-                        onChange={(e) => setFilters({ ...filters, pays: e.target.value })}
-                        className="text-sm"
-                      >
-                        <option value="">Tous les pays</option>
-                        {uniquePays.map(pays => (
-                          <option key={pays} value={pays}>{pays}</option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                  {hasActiveFilters && (
-                    <div className="mt-3 flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearFilters}
-                        className="text-xs"
-                      >
-                        <X className="h-3.5 w-3.5 mr-1" />
-                        Effacer les filtres
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="p-4">
+                <Input
+                  placeholder={`Rechercher un ${activeTab}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  icon={Search}
+                  className="text-sm"
+                />
+              </div>
             </div>
-          </Card>
-        )}
 
-        {/* Liste des artisans */}
-        {!showForm && (
-          <>
             {loading ? (
               <Card className="shadow-sm">
                 <div className="p-12">
@@ -357,257 +354,180 @@ export default function ArtisanMinierListe() {
             ) : filteredArtisans.length === 0 ? (
               <Card className="shadow-sm">
                 <div className="text-center py-12 px-6">
-                  <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
-                    <User className="h-12 w-12 text-gray-400" />
+                  <div className={cn(
+                    'inline-flex p-4 rounded-full mb-4',
+                    TYPE_COLORS[activeTab].bg
+                  )}>
+                    <User className={cn('h-12 w-12', TYPE_COLORS[activeTab].text)} />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    {searchQuery || hasActiveFilters ? 'Aucun artisan trouvé' : 'Aucun artisan enregistré'}
+                    {searchQuery ? 'Aucun artisan trouvé' : `Aucun ${activeTab} enregistré`}
                   </h3>
                   <p className="text-sm text-gray-600 mb-5">
-                    {searchQuery || hasActiveFilters
-                      ? 'Essayez de modifier vos critères de recherche ou de filtrage'
-                      : 'Commencez par enregistrer votre premier artisan minier'
+                    {searchQuery
+                      ? 'Essayez de modifier votre recherche'
+                      : `Commencez par enregistrer votre premier ${activeTab}`
                     }
                   </p>
-                  {!searchQuery && !hasActiveFilters && (
+                  {!searchQuery && (
                     <Button
                       variant="primary"
                       onClick={() => {
                         setSelectedArtisan(null);
                         setShowForm(true);
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-sm"
+                      className={cn(
+                        'text-sm',
+                        `bg-gradient-to-r ${TYPE_COLORS[activeTab].gradient} hover:opacity-90`
+                      )}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Enregistrer le premier artisan
+                      Enregistrer le premier {activeTab}
                     </Button>
                   )}
                 </div>
               </Card>
-            ) : viewMode === 'table' ? (
-              <Card className="shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-emerald-600 to-emerald-700">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Nom/Raison Sociale
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          N° Carte
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Région
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Contact
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          Or Vendu (g)
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
-                          CA (FCFA)
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredArtisans.map((artisan, idx) => (
-                        <tr
-                          key={artisan.id}
-                          onClick={() => handleEdit(artisan)}
-                          className={cn(
-                            'cursor-pointer transition-colors hover:bg-emerald-50',
-                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                          )}
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-emerald-100 rounded-lg">
-                                {artisan.type_personne === 'physique' ? (
-                                  <User className="h-4 w-4 text-emerald-600" />
-                                ) : (
-                                  <Building2 className="h-4 w-4 text-emerald-600" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                  {artisan.type_personne === 'physique'
-                                    ? `${artisan.nom} ${artisan.prenoms || ''}`
-                                    : artisan.raison_sociale
-                                  }
-                                </div>
-                                {artisan.sexe && artisan.type_personne === 'physique' && (
-                                  <div className="text-xs text-gray-500">
-                                    {artisan.sexe === 'M' ? 'Masculin' : artisan.sexe === 'F' ? 'Féminin' : 'Autre'}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <CreditCard className="h-3.5 w-3.5 text-gray-400" />
-                              <span className="font-mono text-gray-700">
-                                {artisan.numero_carte || 'En attente'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={cn(
-                              'px-2.5 py-1 rounded-full text-xs font-semibold capitalize',
-                              artisan.type_artisan === 'exploitant' && 'bg-blue-100 text-blue-700',
-                              artisan.type_artisan === 'collecteur' && 'bg-purple-100 text-purple-700',
-                              artisan.type_artisan === 'intermediaire' && 'bg-orange-100 text-orange-700',
-                              artisan.type_artisan === 'fournisseur' && 'bg-teal-100 text-teal-700'
-                            )}>
-                              {artisan.type_artisan}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-gray-700">
-                            {artisan.region || '-'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="space-y-0.5">
-                              {artisan.telephone && (
-                                <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                                  <Phone className="h-3 w-3 text-gray-400" />
-                                  {artisan.telephone}
-                                </div>
-                              )}
-                              {artisan.email && (
-                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                  <Mail className="h-3 w-3 text-gray-400" />
-                                  {artisan.email.substring(0, 20)}...
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1.5">
-                              <Coins className="h-3.5 w-3.5 text-yellow-500" />
-                              <span className="text-xs font-semibold text-gray-900">
-                                {artisan.quantite_or_vendu_grammes?.toFixed(2) || '0.00'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1.5">
-                              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                              <span className="text-xs font-semibold text-gray-900">
-                                {artisan.chiffre_affaires_fcfa?.toLocaleString('fr-FR') || '0'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <ChevronRight className="h-5 w-5 text-gray-400 inline-block" />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredArtisans.map((artisan) => (
-                  <Card
-                    key={artisan.id}
-                    onClick={() => handleEdit(artisan)}
-                    className="shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-200 hover:border-emerald-300"
-                  >
-                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
-                            {artisan.type_personne === 'physique' ? (
-                              <User className="h-5 w-5 text-white" />
-                            ) : (
-                              <Building2 className="h-5 w-5 text-white" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredArtisans.map((artisan) => {
+                  const timeUntilExpiry = calculateTimeUntilExpiration(artisan.carte?.date_expiration);
+                  const colors = TYPE_COLORS[artisan.type_artisan];
+
+                  return (
+                    <Card
+                      key={artisan.id}
+                      onClick={() => handleCardClick(artisan)}
+                      className={cn(
+                        'shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden',
+                        `border-2 ${colors.border} hover:scale-[1.02]`
+                      )}
+                    >
+                      <div className={cn(
+                        'bg-gradient-to-r p-4',
+                        colors.gradient
+                      )}>
+                        <div className="flex items-start justify-between text-white">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                                {artisan.type_personne === 'physique' ? (
+                                  <User className="h-4 w-4" />
+                                ) : (
+                                  <Building2 className="h-4 w-4" />
+                                )}
+                              </div>
+                              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white/90 text-gray-800 capitalize">
+                                {artisan.type_artisan}
+                              </span>
+                            </div>
+                            <h3 className="text-sm font-bold leading-tight">
+                              {artisan.type_personne === 'physique'
+                                ? `${artisan.nom || ''} ${artisan.prenoms || ''}`.trim()
+                                : artisan.raison_sociale || 'N/A'
+                              }
+                            </h3>
+                          </div>
+                          {artisan.photo_url && (
+                            <div className="ml-3 flex-shrink-0">
+                              <img
+                                src={artisan.photo_url}
+                                alt="Photo"
+                                className="w-16 h-20 object-cover rounded-lg border-2 border-white shadow-lg"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={cn('p-4 space-y-3', colors.bg)}>
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 text-gray-700">
+                            <CreditCard className="h-3.5 w-3.5 text-gray-500" />
+                            <span className="font-mono font-semibold">
+                              {artisan.numero_carte || 'En attente'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex items-start gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-gray-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <div className="text-gray-600 font-medium">Créé le</div>
+                              <div className="text-gray-900 font-semibold">
+                                {artisan.created_at
+                                  ? new Date(artisan.created_at).toLocaleDateString('fr-FR')
+                                  : 'N/A'
+                                }
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-gray-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <div className="text-gray-600 font-medium">Expire dans</div>
+                              <div className={cn(
+                                'font-semibold text-xs',
+                                timeUntilExpiry.expired ? 'text-red-600' : 'text-emerald-600'
+                              )}>
+                                {timeUntilExpiry.text}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {(artisan.telephone || artisan.email) && (
+                          <div className="space-y-1 pt-2 border-t border-gray-200">
+                            {artisan.telephone && (
+                              <div className="flex items-center gap-2 text-xs text-gray-700">
+                                <Phone className="h-3 w-3 text-gray-500" />
+                                <span>{artisan.telephone}</span>
+                              </div>
+                            )}
+                            {artisan.email && (
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <Mail className="h-3 w-3 text-gray-400" />
+                                <span className="truncate">{artisan.email}</span>
+                              </div>
                             )}
                           </div>
-                          <span className={cn(
-                            'px-2.5 py-1 rounded-full text-xs font-semibold capitalize',
-                            'bg-white/90 text-emerald-700'
-                          )}>
-                            {artisan.type_artisan}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900 mb-1">
-                          {artisan.type_personne === 'physique'
-                            ? `${artisan.nom} ${artisan.prenoms || ''}`
-                            : artisan.raison_sociale
-                          }
-                        </h3>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                          <CreditCard className="h-3 w-3" />
-                          <span className="font-mono">
-                            {artisan.numero_carte || 'En attente'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs">
-                        {artisan.region && (
-                          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-medium">
-                            {artisan.region}
-                          </span>
-                        )}
-                        {artisan.sexe && artisan.type_personne === 'physique' && (
-                          <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded font-medium">
-                            {artisan.sexe === 'M' ? 'M' : artisan.sexe === 'F' ? 'F' : 'A'}
-                          </span>
                         )}
                       </div>
 
-                      <div className="space-y-1.5 border-t pt-3">
-                        {artisan.telephone && (
-                          <div className="flex items-center gap-2 text-xs text-gray-700">
-                            <Phone className="h-3 w-3 text-gray-400" />
-                            <span>{artisan.telephone}</span>
+                      <div className="bg-gradient-to-br from-gray-50 to-white px-4 py-3 border-t border-gray-200">
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-white rounded-lg p-2 shadow-sm border border-yellow-200">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Coins className="h-3 w-3 text-yellow-600" />
+                            </div>
+                            <div className="text-[10px] text-gray-600 font-medium mb-0.5">Or Vendu</div>
+                            <div className="text-xs font-bold text-yellow-700">
+                              {(artisan.quantite_or_vendu_grammes || 0).toFixed(1)} g
+                            </div>
                           </div>
-                        )}
-                        {artisan.email && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Mail className="h-3 w-3 text-gray-400" />
-                            <span className="truncate">{artisan.email}</span>
+                          <div className="bg-white rounded-lg p-2 shadow-sm border border-emerald-200">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <TrendingUp className="h-3 w-3 text-emerald-600" />
+                            </div>
+                            <div className="text-[10px] text-gray-600 font-medium mb-0.5">CA</div>
+                            <div className="text-xs font-bold text-emerald-700">
+                              {((artisan.chiffre_affaires_fcfa || 0) / 1000000).toFixed(1)}M
+                            </div>
                           </div>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-                        <div className="bg-yellow-50 p-2 rounded-lg">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <Coins className="h-3 w-3 text-yellow-600" />
-                            <span className="text-xs text-yellow-700 font-medium">Or Vendu</span>
-                          </div>
-                          <div className="text-xs font-bold text-yellow-900">
-                            {artisan.quantite_or_vendu_grammes?.toFixed(2) || '0.00'} g
-                          </div>
-                        </div>
-                        <div className="bg-emerald-50 p-2 rounded-lg">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <TrendingUp className="h-3 w-3 text-emerald-600" />
-                            <span className="text-xs text-emerald-700 font-medium">CA</span>
-                          </div>
-                          <div className="text-xs font-bold text-emerald-900">
-                            {((artisan.chiffre_affaires_fcfa || 0) / 1000).toFixed(0)}K
+                          <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-200">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Receipt className="h-3 w-3 text-blue-600" />
+                            </div>
+                            <div className="text-[10px] text-gray-600 font-medium mb-0.5">Taxes</div>
+                            <div className="text-xs font-bold text-blue-700">
+                              {((artisan.total_taxes_fcfa || 0) / 1000).toFixed(0)}K
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </>

@@ -10,10 +10,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Gold Shipper - Mansa Resources',
-        short_name: 'Gold Shipper',
-        description: 'Gold and silver shipment tracking platform for Mansa Resources',
-        theme_color: '#b8860b',
+        name: 'SONASP - Gestion de la Collecte et de la Vente des Substances Précieuses',
+        short_name: 'SONASP',
+        description: 'Système National de Collecte et du Suivi de la Traçabilité de l\'Or - Burkina Faso',
+        theme_color: '#10b981',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
@@ -26,6 +26,12 @@ export default defineConfig({
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+          },
+          {
+            src: '/sonasp_logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           },
         ],
       },

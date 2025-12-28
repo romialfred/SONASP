@@ -308,63 +308,103 @@ export const carteProfessionnelleGeneratorService = {
     return pdf.output('blob');
   },
 
+  dataURLtoBlob(dataURL: string): Blob {
+    const parts = dataURL.split(',');
+    const mime = parts[0].match(/:(.*?);/)?.[1] || 'application/octet-stream';
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  },
+
   async generateAndUploadCartePDF(
     artisan: ArtisanMinier,
     carte: CarteProfessionnelle,
     supabase: any
   ): Promise<{ pdfUrl: string; rectoUrl: string; versoUrl: string }> {
-    const pdfBlob = await this.generateCartePDF(artisan, carte);
-    const rectoData = await this.generateCarteRecto(artisan, carte);
-    const versoData = await this.generateCarteVerso(artisan, carte);
+    try {
+      console.log('Début de la génération des cartes pour upload...');
 
-    const fileName = `carte_${carte.numero_carte.replace(/\//g, '_')}_${Date.now()}`;
+      const pdfBlob = await this.generateCartePDF(artisan, carte);
+      console.log('PDF généré, taille:', pdfBlob.size);
 
-    const rectoBlob = await fetch(rectoData).then(r => r.blob());
-    const versoBlob = await fetch(versoData).then(r => r.blob());
+      const rectoData = await this.generateCarteRecto(artisan, carte);
+      const versoData = await this.generateCarteVerso(artisan, carte);
+      console.log('Recto et Verso générés');
 
-    const { data: pdfData, error: pdfError } = await supabase.storage
-      .from('cartes-professionnelles')
-      .upload(`${fileName}.pdf`, pdfBlob, {
-        contentType: 'application/pdf',
-        cacheControl: '3600',
-        upsert: true
-      });
+      const fileName = `carte_${carte.numero_carte.replace(/\//g, '_')}_${Date.now()}`;
 
-    if (pdfError) throw pdfError;
+      const rectoBlob = this.dataURLtoBlob(rectoData);
+      const versoBlob = this.dataURLtoBlob(versoData);
+      console.log('Blobs créés - Recto:', rectoBlob.size, 'Verso:', versoBlob.size);
 
-    const { data: rectoUpload, error: rectoError } = await supabase.storage
-      .from('cartes-professionnelles')
-      .upload(`${fileName}_recto.png`, rectoBlob, {
-        contentType: 'image/png',
-        cacheControl: '3600',
-        upsert: true
-      });
+      console.log('Upload du PDF...');
+      const { data: pdfData, error: pdfError } = await supabase.storage
+        .from('cartes-professionnelles')
+        .upload(`${fileName}.pdf`, pdfBlob, {
+          contentType: 'application/pdf',
+          cacheControl: '3600',
+          upsert: true
+        });
 
-    if (rectoError) throw rectoError;
+      if (pdfError) {
+        console.error('Erreur upload PDF:', pdfError);
+        throw pdfError;
+      }
+      console.log('PDF uploadé avec succès');
 
-    const { data: versoUpload, error: versoError } = await supabase.storage
-      .from('cartes-professionnelles')
-      .upload(`${fileName}_verso.png`, versoBlob, {
-        contentType: 'image/png',
-        cacheControl: '3600',
-        upsert: true
-      });
+      console.log('Upload du Recto...');
+      const { data: rectoUpload, error: rectoError } = await supabase.storage
+        .from('cartes-professionnelles')
+        .upload(`${fileName}_recto.png`, rectoBlob, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: true
+        });
 
-    if (versoError) throw versoError;
+      if (rectoError) {
+        console.error('Erreur upload Recto:', rectoError);
+        throw rectoError;
+      }
+      console.log('Recto uploadé avec succès');
 
-    const { data: { publicUrl: pdfUrl } } = supabase.storage
-      .from('cartes-professionnelles')
-      .getPublicUrl(pdfData.path);
+      console.log('Upload du Verso...');
+      const { data: versoUpload, error: versoError } = await supabase.storage
+        .from('cartes-professionnelles')
+        .upload(`${fileName}_verso.png`, versoBlob, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: true
+        });
 
-    const { data: { publicUrl: rectoUrl } } = supabase.storage
-      .from('cartes-professionnelles')
-      .getPublicUrl(rectoUpload.path);
+      if (versoError) {
+        console.error('Erreur upload Verso:', versoError);
+        throw versoError;
+      }
+      console.log('Verso uploadé avec succès');
 
-    const { data: { publicUrl: versoUrl } } = supabase.storage
-      .from('cartes-professionnelles')
-      .getPublicUrl(versoUpload.path);
+      const { data: { publicUrl: pdfUrl } } = supabase.storage
+        .from('cartes-professionnelles')
+        .getPublicUrl(pdfData.path);
 
-    return { pdfUrl, rectoUrl, versoUrl };
+      const { data: { publicUrl: rectoUrl } } = supabase.storage
+        .from('cartes-professionnelles')
+        .getPublicUrl(rectoUpload.path);
+
+      const { data: { publicUrl: versoUrl } } = supabase.storage
+        .from('cartes-professionnelles')
+        .getPublicUrl(versoUpload.path);
+
+      console.log('URLs publiques générées:', { pdfUrl, rectoUrl, versoUrl });
+
+      return { pdfUrl, rectoUrl, versoUrl };
+    } catch (error) {
+      console.error('Erreur lors de la génération et upload de la carte:', error);
+      throw error;
+    }
   },
 
   async generatePreviewDataUrl(

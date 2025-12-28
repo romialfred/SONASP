@@ -209,24 +209,41 @@ export default function ArtisanMinierDetails() {
         };
       }
 
-      const { supabase } = await import('@/lib/supabase');
-      const { pdfUrl, rectoUrl, versoUrl } = await carteProfessionnelleGeneratorService.generateAndUploadCartePDF(
-        artisanData,
-        carteData,
-        supabase
-      );
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { pdfUrl, rectoUrl, versoUrl } = await carteProfessionnelleGeneratorService.generateAndUploadCartePDF(
+          artisanData,
+          carteData,
+          supabase
+        );
 
-      console.log('PDF généré et sauvegardé avec succès:', { pdfUrl, rectoUrl, versoUrl });
+        console.log('PDF généré et sauvegardé avec succès:', { pdfUrl, rectoUrl, versoUrl });
 
-      setCarteRectoPreview(rectoUrl);
-      setCarteVersoPreview(versoUrl);
+        setCarteRectoPreview(rectoUrl);
+        setCarteVersoPreview(versoUrl);
 
-      if (carteData.id) {
-        await carteProfessionnelleService.updateCartePdfUrl(carteData.id, pdfUrl, rectoUrl, versoUrl);
-        console.log('URLs de carte sauvegardées dans la base de données');
+        if (carteData.id) {
+          await carteProfessionnelleService.updateCartePdfUrl(carteData.id, pdfUrl, rectoUrl, versoUrl);
+          console.log('URLs de carte sauvegardées dans la base de données');
+        }
+
+        return { pdfUrl, rectoUrl, versoUrl };
+      } catch (uploadError: any) {
+        console.warn('Impossible d\'uploader la carte vers le stockage:', uploadError);
+
+        if (uploadError?.message?.includes('Bucket not found') || uploadError?.statusCode === 404) {
+          console.warn('Le bucket cartes-professionnelles n\'existe pas encore. Affichage des images locales.');
+        }
+
+        const rectoDataUrl = await carteProfessionnelleGeneratorService.generateCarteRecto(artisanData, carteData);
+        const versoDataUrl = await carteProfessionnelleGeneratorService.generateCarteVerso(artisanData, carteData);
+
+        setCarteRectoPreview(rectoDataUrl);
+        setCarteVersoPreview(versoDataUrl);
+
+        console.log('Cartes affichées en mode local (data URLs)');
+        return { pdfUrl: '', rectoUrl: rectoDataUrl, versoUrl: versoDataUrl };
       }
-
-      return { pdfUrl, rectoUrl, versoUrl };
     } catch (error) {
       console.error('Erreur lors de la génération de la carte:', error);
       showError('Impossible de générer la carte professionnelle');

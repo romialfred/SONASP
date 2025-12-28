@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Globe,
+  Banknote,
 } from 'lucide-react';
 import {
   fetchLiveGoldPrice,
@@ -19,16 +20,39 @@ import {
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
 import { recordIntradayPrice } from '@/services/goldPriceAggregationService';
+import { supabase } from '@/lib/supabase';
+
+const USD_TO_XOF_DEFAULT = 600;
 
 export function LiveGoldPricePanel() {
   const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [usdToXofRate, setUsdToXofRate] = useState(USD_TO_XOF_DEFAULT);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState<string | null>(null);
   const [marketCountdown, setMarketCountdown] = useState(getTimeUntilMarketChange());
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  const fetchExchangeRate = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('exchange_rates')
+        .select('rate')
+        .eq('from_currency', 'USD')
+        .eq('to_currency', 'XOF')
+        .order('rate_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setUsdToXofRate(data.rate);
+      }
+    } catch (error) {
+      console.error('Error fetching USD/XOF rate:', error);
+    }
+  };
 
   const fetchGoldData = async (isManual = false) => {
     if (isManual) {
@@ -47,7 +71,7 @@ export function LiveGoldPricePanel() {
 
         // Record price for end-of-day aggregation
         recordIntradayPrice(priceData.price);
-      } else {
+      } else{
         setError('Unable to fetch live gold price');
       }
     } catch (error) {
@@ -61,10 +85,15 @@ export function LiveGoldPricePanel() {
 
   useEffect(() => {
     fetchGoldData();
+    fetchExchangeRate();
 
     const interval = setInterval(() => {
       fetchGoldData();
     }, 60000);
+
+    const rateInterval = setInterval(() => {
+      fetchExchangeRate();
+    }, 300000);
 
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 60));
@@ -83,6 +112,7 @@ export function LiveGoldPricePanel() {
 
     return () => {
       clearInterval(interval);
+      clearInterval(rateInterval);
       clearInterval(countdownInterval);
       clearInterval(marketInterval);
       clearInterval(dateInterval);
@@ -243,6 +273,58 @@ export function LiveGoldPricePanel() {
           </div>
         </Card>
       </div>
+
+      {/* Price in CFA */}
+      <Card className="bg-gradient-to-br from-emerald-50 to-green-100 border-2 border-emerald-300 mb-6">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Banknote className="w-6 h-6 text-emerald-600" />
+              <h3 className="text-lg font-bold text-emerald-900">Prix de l'Or en FCFA</h3>
+            </div>
+            <div className="bg-emerald-200 px-3 py-1 rounded-full">
+              <span className="text-xs font-medium text-emerald-800">
+                1 USD = {usdToXofRate.toFixed(2)} FCFA
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg p-4 border-2 border-emerald-300">
+              <p className="text-sm font-medium text-gray-600 mb-2">Prix par Once (oz)</p>
+              <p className="text-2xl font-bold text-emerald-700">
+                {(goldPrice.price * usdToXofRate).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA
+              </p>
+              <p className="text-xs text-gray-500 mt-1">1 troy oz = 31.1035g</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-4 border-2 border-emerald-300">
+              <p className="text-sm font-medium text-gray-600 mb-2">Prix par Gramme (g)</p>
+              <p className="text-2xl font-bold text-emerald-700">
+                {((goldPrice.price * usdToXofRate) / 31.1035).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Or pur 24 carats</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-4 border-2 border-emerald-300">
+              <p className="text-sm font-medium text-gray-600 mb-2">Prix par Kilogramme (kg)</p>
+              <p className="text-2xl font-bold text-emerald-700">
+                {((goldPrice.price * usdToXofRate) * 1000 / 31.1035).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA
+              </p>
+              <p className="text-xs text-gray-500 mt-1">1 kg = 1000 grammes</p>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-emerald-200 flex items-center justify-between">
+            <p className="text-xs text-emerald-700">
+              <strong>Note :</strong> Prix indicatif basé sur le cours international de l'or et le taux de change USD/FCFA
+            </p>
+            <div className="text-xs text-emerald-600">
+              Mis à jour: {lastUpdate.toLocaleTimeString('fr-FR')}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Market Info Bar with Date and Status */}
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6 border border-gray-200">

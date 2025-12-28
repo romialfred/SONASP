@@ -190,7 +190,6 @@ const useMenuGroups = (): MenuGroup[] => {
     const groups: MenuGroup[] = [];
 
     const parentModules = modules.filter(m =>
-      !m.parent_id &&
       (m.est_actif !== false) &&
       (m.est_visible_menu !== false) &&
       m.code !== 'dashboard'
@@ -199,13 +198,12 @@ const useMenuGroups = (): MenuGroup[] => {
     console.log('[AccordionSidebar] Modules parents trouvés:', parentModules.length, parentModules.map(m => m.code));
 
     for (const parent of parentModules) {
-      const children = modules.filter(m =>
-        m.parent_id === parent.id &&
-        (m.est_actif !== false) &&
-        (m.est_visible_menu !== false)
+      const children = (parent.submodules || []).filter(child =>
+        (child.est_actif !== false) &&
+        (child.est_visible_menu !== false)
       );
 
-      console.log(`[AccordionSidebar] Module parent "${parent.code}" a ${children.length} enfants`);
+      console.log(`[AccordionSidebar] Module parent "${parent.code}" a ${children.length} enfants (submodules: ${parent.submodules?.length || 0})`);
 
       if (children.length > 0) {
         groups.push({

@@ -97,8 +97,24 @@ export default function ArtisanMinierDetails() {
 
       const carteData = await carteProfessionnelleService.getByArtisanId(id!);
       if (carteData && carteData.length > 0) {
-        setCarte(carteData[0]);
-        await generateCartePreview(data, carteData[0]);
+        const currentCarte = carteData[0];
+        setCarte(currentCarte);
+
+        console.log('Carte chargée:', currentCarte);
+
+        if (currentCarte.carte_recto_url) {
+          console.log('Utilisation du recto depuis la BD:', currentCarte.carte_recto_url?.substring(0, 50));
+          setCarteRectoPreview(currentCarte.carte_recto_url);
+        }
+        if (currentCarte.carte_verso_url) {
+          console.log('Utilisation du verso depuis la BD:', currentCarte.carte_verso_url?.substring(0, 50));
+          setCarteVersoPreview(currentCarte.carte_verso_url);
+        }
+
+        if (!currentCarte.carte_recto_url || !currentCarte.carte_verso_url) {
+          console.log('Génération des images de carte manquantes...');
+          await generateCartePreview(data, currentCarte);
+        }
       }
     } catch (error) {
       console.error('Error loading artisan:', error);
@@ -167,12 +183,47 @@ export default function ArtisanMinierDetails() {
 
   const generateCartePreview = async (artisanData: any, carteData: any) => {
     try {
+      console.log('Génération de la carte pour:', artisanData, carteData);
+
+      if (!carteData.date_delivrance || !carteData.date_expiration) {
+        console.warn('Dates manquantes sur la carte, création de dates par défaut');
+        const today = new Date();
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+        carteData = {
+          ...carteData,
+          date_delivrance: carteData.date_delivrance || carteData.created_at || today.toISOString(),
+          date_expiration: carteData.date_expiration || nextYear.toISOString()
+        };
+      }
+
+      if (!carteData.qr_code_data) {
+        carteData = {
+          ...carteData,
+          qr_code_data: JSON.stringify({
+            numero_carte: carteData.numero_carte,
+            artisan_id: carteData.artisan_id,
+            type: artisanData.type_artisan
+          })
+        };
+      }
+
       const recto = await carteProfessionnelleGeneratorService.generateCarteRecto(artisanData, carteData);
       const verso = await carteProfessionnelleGeneratorService.generateCarteVerso(artisanData, carteData);
+
+      console.log('Carte générée avec succès - Recto:', recto?.substring(0, 50), 'Verso:', verso?.substring(0, 50));
+
       setCarteRectoPreview(recto);
       setCarteVersoPreview(verso);
+
+      if (carteData.id && recto && verso) {
+        await carteProfessionnelleService.updateCartePdfUrl(carteData.id, '', recto, verso);
+        console.log('URLs de carte sauvegardées dans la base de données');
+      }
     } catch (error) {
-      console.error('Error generating carte preview:', error);
+      console.error('Erreur lors de la génération de la carte:', error);
+      showError('Impossible de générer la carte professionnelle');
     }
   };
 
@@ -387,27 +438,83 @@ export default function ArtisanMinierDetails() {
                 )}
               </div>
               {carte ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {carteRectoPreview && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Recto</h4>
-                      <img
-                        src={carteRectoPreview}
-                        alt="Recto"
-                        className="w-full rounded-lg shadow-lg"
-                      />
+                      {carteRectoPreview ? (
+                        <img
+                          src={carteRectoPreview}
+                          alt="Recto"
+                          className="w-full rounded-lg shadow-lg border border-gray-200"
+                          onError={(e) => {
+                            console.error('Erreur de chargement du recto:', carteRectoPreview);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-64 bg-gray-100 rounded-lg shadow-lg border border-gray-200 flex items-center justify-center">
+                          <div className="text-center">
+                            <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-500">Génération en cours...</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {carteVersoPreview && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Verso</h4>
-                      <img
-                        src={carteVersoPreview}
-                        alt="Verso"
-                        className="w-full rounded-lg shadow-lg"
-                      />
+                      {carteVersoPreview ? (
+                        <img
+                          src={carteVersoPreview}
+                          alt="Verso"
+                          className="w-full rounded-lg shadow-lg border border-gray-200"
+                          onError={(e) => {
+                            console.error('Erreur de chargement du verso:', carteVersoPreview);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-64 bg-gray-100 rounded-lg shadow-lg border border-gray-200 flex items-center justify-center">
+                          <div className="text-center">
+                            <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-500">Génération en cours...</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-blue-900 mb-2">Informations de la Carte</h4>
+                        <div className="grid grid-cols-2 gap-3 text-xs text-blue-700">
+                          <div>
+                            <span className="font-medium">Numéro:</span>
+                            <p className="font-semibold mt-0.5">{carte.numero_carte}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Statut:</span>
+                            <p className="mt-0.5">
+                              <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
+                                {carte.statut || 'Active'}
+                              </span>
+                            </p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Date d'émission:</span>
+                            <p className="font-semibold mt-0.5">
+                              {carte.date_delivrance ? new Date(carte.date_delivrance).toLocaleDateString('fr-FR') : (carte.created_at ? new Date(carte.created_at).toLocaleDateString('fr-FR') : '-')}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Date d'expiration:</span>
+                            <p className="font-semibold mt-0.5">
+                              {carte.date_expiration ? new Date(carte.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">

@@ -428,7 +428,7 @@ export default function ArtisanMinierListe() {
                 {filteredArtisans.map((artisan) => {
                   const timeUntilExpiry = calculateTimeUntilExpiration(
                     artisan.carte?.date_expiration,
-                    artisan.carte?.date_creation || artisan.created_at
+                    artisan.carte?.created_at || artisan.created_at
                   );
                   const colors = TYPE_COLORS[artisan.type_artisan];
 

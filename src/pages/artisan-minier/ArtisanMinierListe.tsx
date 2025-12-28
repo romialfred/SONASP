@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
-  UserPlus,
   Search,
   User,
   Building2,
@@ -16,9 +15,10 @@ import {
   Coins,
   TrendingUp,
   Receipt,
-  AlertCircle,
-  CheckCircle,
-  XCircle
+  Package,
+  Users,
+  Pickaxe,
+  Handshake
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -57,32 +57,36 @@ interface ArtisanWithStats {
 
 const TYPE_COLORS = {
   collecteur: {
-    gradient: 'from-purple-600 to-purple-700',
-    bg: 'bg-purple-50',
-    text: 'text-purple-700',
-    border: 'border-purple-300',
-    badge: 'bg-purple-100 text-purple-800'
+    primary: '#475569',
+    light: '#94a3b8',
+    bg: '#f8fafc',
+    border: '#cbd5e1',
+    headerBg: '#1e293b',
+    headerText: '#ffffff'
   },
   fournisseur: {
-    gradient: 'from-teal-600 to-teal-700',
-    bg: 'bg-teal-50',
-    text: 'text-teal-700',
-    border: 'border-teal-300',
-    badge: 'bg-teal-100 text-teal-800'
+    primary: '#0d9488',
+    light: '#5eead4',
+    bg: '#f0fdfa',
+    border: '#99f6e4',
+    headerBg: '#0f766e',
+    headerText: '#ffffff'
   },
   exploitant: {
-    gradient: 'from-blue-600 to-blue-700',
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    border: 'border-blue-300',
-    badge: 'bg-blue-100 text-blue-800'
+    primary: '#1e40af',
+    light: '#93c5fd',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    headerBg: '#1e3a8a',
+    headerText: '#ffffff'
   },
   intermediaire: {
-    gradient: 'from-orange-600 to-orange-700',
-    bg: 'bg-orange-50',
-    text: 'text-orange-700',
-    border: 'border-orange-300',
-    badge: 'bg-orange-100 text-orange-800'
+    primary: '#d97706',
+    light: '#fcd34d',
+    bg: '#fffbeb',
+    border: '#fde68a',
+    headerBg: '#b45309',
+    headerText: '#ffffff'
   }
 };
 
@@ -91,6 +95,13 @@ const TYPE_LABELS = {
   fournisseur: 'Fournisseurs',
   exploitant: 'Exploitants',
   intermediaire: 'Intermédiaires'
+};
+
+const TYPE_ICONS = {
+  collecteur: Users,
+  fournisseur: Package,
+  exploitant: Pickaxe,
+  intermediaire: Handshake
 };
 
 function calculateTimeUntilExpiration(expirationDate?: string) {
@@ -299,38 +310,51 @@ export default function ArtisanMinierListe() {
           <>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="border-b border-gray-200">
-                <div className="flex overflow-x-auto">
-                  {(['collecteur', 'fournisseur', 'exploitant', 'intermediaire'] as TypeArtisan[]).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setActiveTab(type)}
-                      className={cn(
-                        'flex-1 min-w-[140px] px-6 py-4 text-sm font-semibold transition-all relative',
-                        'hover:bg-gray-50 focus:outline-none',
-                        activeTab === type
-                          ? `${TYPE_COLORS[type].text} bg-gradient-to-b ${TYPE_COLORS[type].gradient.replace('from-', 'from-').replace('to-', 'to-')} bg-opacity-5`
-                          : 'text-gray-600'
-                      )}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <span>{TYPE_LABELS[type]}</span>
-                        <span className={cn(
-                          'px-2.5 py-0.5 rounded-full text-xs font-bold',
+                <div className="flex overflow-x-auto bg-gray-50">
+                  {(['collecteur', 'fournisseur', 'exploitant', 'intermediaire'] as TypeArtisan[]).map((type) => {
+                    const IconComponent = TYPE_ICONS[type];
+                    const colors = TYPE_COLORS[type];
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => setActiveTab(type)}
+                        className={cn(
+                          'flex-1 min-w-[160px] px-6 py-4 text-sm font-medium transition-all relative',
+                          'hover:bg-white focus:outline-none',
                           activeTab === type
-                            ? TYPE_COLORS[type].badge
-                            : 'bg-gray-200 text-gray-700'
-                        )}>
-                          {countsByType[type]}
-                        </span>
-                      </div>
-                      {activeTab === type && (
-                        <div className={cn(
-                          'absolute bottom-0 left-0 right-0 h-1',
-                          `bg-gradient-to-r ${TYPE_COLORS[type].gradient}`
-                        )} />
-                      )}
-                    </button>
-                  ))}
+                            ? 'text-gray-900 bg-white'
+                            : 'text-gray-600'
+                        )}
+                      >
+                        <div className="flex items-center justify-center gap-3">
+                          <IconComponent
+                            className="w-5 h-5"
+                            style={{
+                              color: activeTab === type ? colors.primary : '#9ca3af'
+                            }}
+                          />
+                          <span className={activeTab === type ? 'font-semibold' : ''}>
+                            {TYPE_LABELS[type]}
+                          </span>
+                          <span
+                            className="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                            style={{
+                              backgroundColor: activeTab === type ? colors.primary : '#e5e7eb',
+                              color: activeTab === type ? '#ffffff' : '#6b7280'
+                            }}
+                          >
+                            {countsByType[type]}
+                          </span>
+                        </div>
+                        {activeTab === type && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-0.5"
+                            style={{ backgroundColor: colors.primary }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -354,11 +378,14 @@ export default function ArtisanMinierListe() {
             ) : filteredArtisans.length === 0 ? (
               <Card className="shadow-sm">
                 <div className="text-center py-12 px-6">
-                  <div className={cn(
-                    'inline-flex p-4 rounded-full mb-4',
-                    TYPE_COLORS[activeTab].bg
-                  )}>
-                    <User className={cn('h-12 w-12', TYPE_COLORS[activeTab].text)} />
+                  <div
+                    className="inline-flex p-4 rounded-full mb-4"
+                    style={{ backgroundColor: TYPE_COLORS[activeTab].bg }}
+                  >
+                    <User
+                      className="h-12 w-12"
+                      style={{ color: TYPE_COLORS[activeTab].primary }}
+                    />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
                     {searchQuery ? 'Aucun artisan trouvé' : `Aucun ${activeTab} enregistré`}
@@ -376,10 +403,8 @@ export default function ArtisanMinierListe() {
                         setSelectedArtisan(null);
                         setShowForm(true);
                       }}
-                      className={cn(
-                        'text-sm',
-                        `bg-gradient-to-r ${TYPE_COLORS[activeTab].gradient} hover:opacity-90`
-                      )}
+                      className="text-sm hover:opacity-90"
+                      style={{ backgroundColor: TYPE_COLORS[activeTab].primary }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Enregistrer le premier {activeTab}
@@ -397,26 +422,33 @@ export default function ArtisanMinierListe() {
                     <Card
                       key={artisan.id}
                       onClick={() => handleCardClick(artisan)}
-                      className={cn(
-                        'shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden',
-                        `border-2 ${colors.border} hover:scale-[1.02]`
-                      )}
+                      className="shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 hover:scale-[1.02]"
+                      style={{ borderColor: colors.border }}
                     >
-                      <div className={cn(
-                        'bg-gradient-to-r p-4',
-                        colors.gradient
-                      )}>
-                        <div className="flex items-start justify-between text-white">
+                      <div
+                        className="p-4"
+                        style={{ backgroundColor: colors.headerBg }}
+                      >
+                        <div className="flex items-start justify-between" style={{ color: colors.headerText }}>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                              <div
+                                className="p-1.5 rounded-lg"
+                                style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                              >
                                 {artisan.type_personne === 'physique' ? (
                                   <User className="h-4 w-4" />
                                 ) : (
                                   <Building2 className="h-4 w-4" />
                                 )}
                               </div>
-                              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white/90 text-gray-800 capitalize">
+                              <span
+                                className="px-2.5 py-1 rounded-full text-xs font-bold capitalize"
+                                style={{
+                                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                  color: colors.headerBg
+                                }}
+                              >
                                 {artisan.type_artisan}
                               </span>
                             </div>
@@ -439,7 +471,10 @@ export default function ArtisanMinierListe() {
                         </div>
                       </div>
 
-                      <div className={cn('p-4 space-y-3', colors.bg)}>
+                      <div
+                        className="p-4 space-y-3"
+                        style={{ backgroundColor: colors.bg }}
+                      >
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1.5 text-gray-700">
                             <CreditCard className="h-3.5 w-3.5 text-gray-500" />
@@ -496,12 +531,12 @@ export default function ArtisanMinierListe() {
 
                       <div className="bg-gradient-to-br from-gray-50 to-white px-4 py-3 border-t border-gray-200">
                         <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="bg-white rounded-lg p-2 shadow-sm border border-yellow-200">
+                          <div className="bg-white rounded-lg p-2 shadow-sm border border-amber-200">
                             <div className="flex items-center justify-center gap-1 mb-1">
-                              <Coins className="h-3 w-3 text-yellow-600" />
+                              <Coins className="h-3 w-3 text-amber-600" />
                             </div>
                             <div className="text-[10px] text-gray-600 font-medium mb-0.5">Or Vendu</div>
-                            <div className="text-xs font-bold text-yellow-700">
+                            <div className="text-xs font-bold text-amber-700">
                               {(artisan.quantite_or_vendu_grammes || 0).toFixed(1)} g
                             </div>
                           </div>

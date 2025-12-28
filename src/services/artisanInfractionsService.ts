@@ -36,7 +36,7 @@ export interface CreateInfractionData {
 class ArtisanInfractionsService {
   async getByArtisanId(artisanId: string): Promise<ArtisanInfraction[]> {
     const { data, error } = await supabase
-      .from('artisan_infractions')
+      .from('snp_artisan_infractions')
       .select('*')
       .eq('artisan_id', artisanId)
       .order('date_infraction', { ascending: false });
@@ -47,7 +47,7 @@ class ArtisanInfractionsService {
 
   async getById(id: string): Promise<ArtisanInfraction | null> {
     const { data, error } = await supabase
-      .from('artisan_infractions')
+      .from('snp_artisan_infractions')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -60,7 +60,7 @@ class ArtisanInfractionsService {
     const { data: userData } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('artisan_infractions')
+      .from('snp_artisan_infractions')
       .insert({
         ...infraction,
         created_by: userData?.user?.id,
@@ -75,7 +75,7 @@ class ArtisanInfractionsService {
 
   async update(id: string, updates: Partial<CreateInfractionData>): Promise<ArtisanInfraction> {
     const { data, error } = await supabase
-      .from('artisan_infractions')
+      .from('snp_artisan_infractions')
       .update(updates)
       .eq('id', id)
       .select()
@@ -87,7 +87,7 @@ class ArtisanInfractionsService {
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('artisan_infractions')
+      .from('snp_artisan_infractions')
       .delete()
       .eq('id', id);
 
@@ -100,13 +100,13 @@ class ArtisanInfractionsService {
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('infraction-documents')
+      .from('snp-infraction-documents')
       .upload(filePath, file);
 
     if (uploadError) throw uploadError;
 
     const { data: urlData } = supabase.storage
-      .from('infraction-documents')
+      .from('snp-infraction-documents')
       .getPublicUrl(filePath);
 
     return urlData.publicUrl;

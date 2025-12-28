@@ -14,18 +14,44 @@ import {
   Download,
   RefreshCw,
   TrendingUp,
-  Coins
+  Coins,
+  AlertTriangle,
+  Plus,
+  Edit2,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
-import { Tabs } from '@/components/ui/Tabs';
+import { Input } from '@/components/ui/Input';
 import { artisanMinierService } from '@/services/artisanMinierService';
 import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
 import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
+import { artisanGoldSalesService, ArtisanGoldSale } from '@/services/artisanGoldSalesService';
+import { artisanInfractionsService, ArtisanInfraction } from '@/services/artisanInfractionsService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+
+const STATUT_LABELS: Record<string, { label: string; color: string }> = {
+  en_attente: { label: 'En Attente', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  validee: { label: 'Validée', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  payee: { label: 'Payée', color: 'bg-green-100 text-green-800 border-green-200' },
+  annulee: { label: 'Annulée', color: 'bg-red-100 text-red-800 border-red-200' },
+};
+
+const TRAITEMENT_LABELS: Record<string, { label: string; color: string }> = {
+  en_cours: { label: 'En Cours', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  cloture: { label: 'Clôturé', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+};
+
+const CONCLUSION_LABELS: Record<string, { label: string; color: string }> = {
+  reconnu: { label: 'Reconnu', color: 'bg-red-100 text-red-800 border-red-200' },
+  soupçonne: { label: 'Soupçonné', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  complice: { label: 'Complice', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  innocente: { label: 'Innocenté', color: 'bg-green-100 text-green-800 border-green-200' },
+};
 
 export default function ArtisanMinierDetails() {
   const { id } = useParams<{ id: string }>();
@@ -37,13 +63,31 @@ export default function ArtisanMinierDetails() {
   const [carteVersoPreview, setCarteVersoPreview] = useState<string | null>(null);
   const [generatingCarte, setGeneratingCarte] = useState(false);
   const [activeTab, setActiveTab] = useState('informations');
+  const [transactions, setTransactions] = useState<ArtisanGoldSale[]>([]);
+  const [infractions, setInfractions] = useState<ArtisanInfraction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<ArtisanGoldSale[]>([]);
+  const [filteredInfractions, setFilteredInfractions] = useState<ArtisanInfraction[]>([]);
+  const [transactionSearch, setTransactionSearch] = useState('');
+  const [transactionDateRange, setTransactionDateRange] = useState({ start: '', end: '' });
+  const [infractionSearch, setInfractionSearch] = useState('');
+  const [showInfractionModal, setShowInfractionModal] = useState(false);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   useEffect(() => {
     if (id) {
       loadArtisan();
+      loadTransactions();
+      loadInfractions();
     }
   }, [id]);
+
+  useEffect(() => {
+    filterTransactions();
+  }, [transactionSearch, transactionDateRange, transactions]);
+
+  useEffect(() => {
+    filterInfractions();
+  }, [infractionSearch, infractions]);
 
   const loadArtisan = async () => {
     try {
@@ -51,7 +95,6 @@ export default function ArtisanMinierDetails() {
       const data = await artisanMinierService.getById(id!);
       setArtisan(data);
 
-      // Charger la carte si elle existe
       const carteData = await carteProfessionnelleService.getByArtisanId(id!);
       if (carteData && carteData.length > 0) {
         setCarte(carteData[0]);
@@ -65,6 +108,63 @@ export default function ArtisanMinierDetails() {
     }
   };
 
+  const loadTransactions = async () => {
+    try {
+      const data = await artisanGoldSalesService.getAll();
+      const artisanTransactions = data.filter(t => t.artisan_id === id);
+      setTransactions(artisanTransactions);
+      setFilteredTransactions(artisanTransactions);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    }
+  };
+
+  const loadInfractions = async () => {
+    try {
+      const data = await artisanInfractionsService.getByArtisanId(id!);
+      setInfractions(data);
+      setFilteredInfractions(data);
+    } catch (error) {
+      console.error('Error loading infractions:', error);
+    }
+  };
+
+  const filterTransactions = () => {
+    let filtered = [...transactions];
+
+    if (transactionSearch) {
+      filtered = filtered.filter(
+        (t) =>
+          t.numero_recu?.toLowerCase().includes(transactionSearch.toLowerCase()) ||
+          t.type_or?.toLowerCase().includes(transactionSearch.toLowerCase())
+      );
+    }
+
+    if (transactionDateRange.start) {
+      filtered = filtered.filter((t) => t.date_vente >= transactionDateRange.start);
+    }
+
+    if (transactionDateRange.end) {
+      filtered = filtered.filter((t) => t.date_vente <= transactionDateRange.end);
+    }
+
+    setFilteredTransactions(filtered);
+  };
+
+  const filterInfractions = () => {
+    let filtered = [...infractions];
+
+    if (infractionSearch) {
+      filtered = filtered.filter(
+        (i) =>
+          i.type_infraction?.toLowerCase().includes(infractionSearch.toLowerCase()) ||
+          i.description?.toLowerCase().includes(infractionSearch.toLowerCase())
+      );
+    }
+
+    setFilteredInfractions(filtered);
+  };
+
   const generateCartePreview = async (artisanData: any, carteData: any) => {
     try {
       const recto = await carteProfessionnelleGeneratorService.generateCarteRecto(artisanData, carteData);
@@ -76,74 +176,29 @@ export default function ArtisanMinierDetails() {
     }
   };
 
-  const handleGenerateCarte = async () => {
-    if (!artisan) return;
-
-    try {
-      setGeneratingCarte(true);
-
-      // Créer ou mettre à jour la carte
-      let carteData = carte;
-
-      if (!carteData) {
-        // Générer un nouveau numéro de carte
-        const numeroSequence = await artisanMinierService.getNextCarteSequence(artisan.pays);
-        const annee = new Date().getFullYear();
-        const codePays = artisan.pays === 'Burkina Faso' ? 'BF' : 'ML';
-        const numeroFormate = numeroSequence.toString().padStart(4, '0');
-        const numeroCarte = `SONASP/AM/${annee}/${codePays}/${numeroFormate}`;
-
-        const newCarteData = {
-          artisan_id: artisan.id,
-          numero_carte: numeroCarte,
-          date_delivrance: new Date().toISOString().split('T')[0],
-          date_expiration: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          statut: 'actif',
-          numero_securite: Math.random().toString().substring(2, 12),
-          qr_code_data: JSON.stringify({
-            numero_carte: numeroCarte,
-            nom: artisan.nom,
-            prenoms: artisan.prenoms,
-            type_artisan: artisan.type_artisan
-          })
-        };
-
-        carteData = await carteProfessionnelleService.create(newCarteData);
-
-        // Mettre à jour l'artisan avec le numéro de carte
-        await artisanMinierService.update(artisan.id, {
-          numero_carte: numeroCarte
-        });
-      }
-
-      // Générer le PDF
-      const pdfBlob = await carteProfessionnelleGeneratorService.generateCartePDF(artisan, carteData);
-
-      // Télécharger le PDF
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `carte_${carteData.numero_carte.replace(/\//g, '_')}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-
-      setCarte(carteData);
-      await generateCartePreview(artisan, carteData);
-
-      showSuccess('Carte professionnelle générée avec succès !');
-    } catch (error: any) {
-      console.error('Error generating carte:', error);
-      showError(error.message || 'Erreur lors de la génération de la carte');
-    } finally {
-      setGeneratingCarte(false);
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
-  const tabs = [
-    { id: 'informations', label: 'Informations', icon: User },
-    { id: 'carte', label: 'Carte Professionnelle', icon: CreditCard },
-    { id: 'transactions', label: 'Transactions', icon: TrendingUp }
-  ];
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const getTotalTransactions = () => {
+    return {
+      total: filteredTransactions.length,
+      montant: filteredTransactions.reduce((sum, t) => sum + t.montant_total_fcfa, 0),
+      quantite: filteredTransactions.reduce((sum, t) => sum + t.quantite_grammes, 0),
+    };
+  };
 
   if (loading) {
     return (
@@ -158,307 +213,508 @@ export default function ArtisanMinierDetails() {
   if (!artisan) {
     return (
       <MainLayout>
-        <Card className="p-8 text-center">
-          <p className="text-gray-600">Artisan non trouvé</p>
-          <Button onClick={() => navigate('/artisans-miniers')} className="mt-4">
-            Retour à la liste
-          </Button>
+        <Card className="p-8">
+          <div className="text-center">
+            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Artisan introuvable</h3>
+            <Button onClick={() => navigate('/artisan-minier/liste')}>Retour à la liste</Button>
+          </div>
         </Card>
       </MainLayout>
     );
   }
 
+  const stats = getTotalTransactions();
+
   return (
     <MainLayout>
       <CustomAlert {...alertState} onClose={closeAlert} />
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/artisans-miniers')}
-              className="text-xs"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Retour
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => navigate('/artisan-minier/liste')}>
+              <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {artisan.type_personne === 'physique'
-                  ? `${artisan.nom} ${artisan.prenoms || ''}`
-                  : artisan.raison_sociale
-                }
+              <h1 className="text-3xl font-bold text-gray-900">
+                {artisan.prenom} {artisan.nom}
               </h1>
-              <p className="text-sm text-gray-600 mt-0.5">
-                {artisan.numero_carte || 'Carte non générée'}
+              <p className="text-gray-600 mt-1">
+                {carte?.numero_carte || 'Aucune carte professionnelle'}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleGenerateCarte}
-              disabled={generatingCarte}
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-            >
-              {generatingCarte ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  Génération...
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  {carte ? 'Regénérer la carte' : 'Générer la carte'}
-                </>
-              )}
-            </Button>
-          </div>
+          <Button onClick={() => navigate(`/artisan-minier/${id}/edit`)}>
+            <Edit2 className="w-5 h-5 mr-2" />
+            Modifier
+          </Button>
         </div>
 
-        {/* Tabs */}
-        <Card>
-          <div className="border-b border-gray-200">
-            <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-          </div>
-
-          <div className="p-6">
-            {/* Tab: Informations */}
-            {activeTab === 'informations' && (
-              <div className="space-y-6">
-                {/* Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="bg-yellow-50 border-yellow-200">
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-yellow-100 rounded-lg">
-                          <Coins className="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-yellow-700 font-medium">Or Vendu</p>
-                          <p className="text-lg font-bold text-yellow-900">
-                            {artisan.quantite_or_vendu_grammes?.toFixed(2) || '0.00'} g
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="bg-emerald-50 border-emerald-200">
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-emerald-100 rounded-lg">
-                          <TrendingUp className="h-6 w-6 text-emerald-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-emerald-700 font-medium">Chiffre d'Affaires</p>
-                          <p className="text-lg font-bold text-emerald-900">
-                            {artisan.chiffre_affaires_fcfa?.toLocaleString('fr-FR') || '0'} FCFA
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="bg-blue-50 border-blue-200">
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                          <FileText className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-blue-700 font-medium">Transactions</p>
-                          <p className="text-lg font-bold text-blue-900">
-                            {artisan.nombre_transactions || 0}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900">Informations Générales</h3>
-
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <User className="h-4 w-4 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-gray-500">Type de personne</p>
-                          <p className="text-sm font-medium text-gray-900 capitalize">{artisan.type_personne}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <Building2 className="h-4 w-4 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-gray-500">Type d'artisan</p>
-                          <p className="text-sm font-medium text-gray-900 capitalize">{artisan.type_artisan}</p>
-                        </div>
-                      </div>
-
-                      {artisan.type_personne === 'physique' && (
-                        <>
-                          {artisan.date_naissance && (
-                            <div className="flex items-start gap-3">
-                              <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
-                              <div>
-                                <p className="text-xs text-gray-500">Date de naissance</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {new Date(artisan.date_naissance).toLocaleDateString('fr-FR')}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                          {artisan.sexe && (
-                            <div className="flex items-start gap-3">
-                              <User className="h-4 w-4 text-gray-400 mt-0.5" />
-                              <div>
-                                <p className="text-xs text-gray-500">Sexe</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {artisan.sexe === 'M' ? 'Masculin' : 'Féminin'}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900">Contacts & Localisation</h3>
-
-                    <div className="space-y-3">
-                      {artisan.telephone && (
-                        <div className="flex items-start gap-3">
-                          <Phone className="h-4 w-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Téléphone</p>
-                            <p className="text-sm font-medium text-gray-900">{artisan.telephone}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {artisan.email && (
-                        <div className="flex items-start gap-3">
-                          <Mail className="h-4 w-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Email</p>
-                            <p className="text-sm font-medium text-gray-900">{artisan.email}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {(artisan.region || artisan.commune) && (
-                        <div className="flex items-start gap-3">
-                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-500">Localisation</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {[artisan.commune, artisan.region, artisan.pays].filter(Boolean).join(', ')}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab: Carte */}
-            {activeTab === 'carte' && (
-              <div className="space-y-6">
-                {carte && carteRectoPreview && carteVersoPreview ? (
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-4">
-                        Aperçu de la carte professionnelle
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3 text-center">Recto</h4>
-                        <div className="border border-gray-200 rounded-lg overflow-hidden shadow-lg">
-                          <img src={carteRectoPreview} alt="Carte Recto" className="w-full" />
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3 text-center">Verso</h4>
-                        <div className="border border-gray-200 rounded-lg overflow-hidden shadow-lg">
-                          <img src={carteVersoPreview} alt="Carte Verso" className="w-full" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="h-5 w-5 text-blue-600" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-900">Numéro de carte</p>
-                          <p className="text-xs text-blue-700">{carte.numero_carte}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-blue-900">Statut</p>
-                          <p className="text-xs text-blue-700 capitalize">{carte.statut}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
-                      <CreditCard className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      Carte non générée
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Cliquez sur le bouton "Générer la carte" pour créer la carte professionnelle de cet artisan
-                    </p>
-                    <Button
-                      onClick={handleGenerateCarte}
-                      disabled={generatingCarte}
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      {generatingCarte ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                          Génération...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4 mr-2" />
-                          Générer la carte
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tab: Transactions */}
-            {activeTab === 'transactions' && (
-              <div className="text-center py-12">
-                <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
-                  <TrendingUp className="h-12 w-12 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  Aucune transaction
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Les transactions d'achat et de vente s'afficheront ici
-                </p>
-              </div>
-            )}
+        {/* Tabs Navigation */}
+        <Card className="p-0 overflow-hidden">
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('informations')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'informations'
+                  ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <User className="w-5 h-5 inline mr-2" />
+              Informations
+            </button>
+            <button
+              onClick={() => setActiveTab('carte')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'carte'
+                  ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <CreditCard className="w-5 h-5 inline mr-2" />
+              Carte Professionnelle
+            </button>
+            <button
+              onClick={() => setActiveTab('transactions')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'transactions'
+                  ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Coins className="w-5 h-5 inline mr-2" />
+              Transactions ({transactions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('infractions')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'infractions'
+                  ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <AlertTriangle className="w-5 h-5 inline mr-2" />
+              Infractions ({infractions.length})
+            </button>
           </div>
         </Card>
+
+        {/* Tab Content */}
+        {activeTab === 'informations' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <User className="w-4 h-4 inline mr-2" />
+                    Nom Complet
+                  </label>
+                  <p className="text-base font-medium text-gray-900">
+                    {artisan.prenom} {artisan.nom}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Date de Naissance
+                  </label>
+                  <p className="text-base font-medium text-gray-900">
+                    {artisan.date_naissance ? formatDate(artisan.date_naissance) : '-'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <Phone className="w-4 h-4 inline mr-2" />
+                    Téléphone
+                  </label>
+                  <p className="text-base font-medium text-gray-900">{artisan.telephone || '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <Mail className="w-4 h-4 inline mr-2" />
+                    Email
+                  </label>
+                  <p className="text-base font-medium text-gray-900">{artisan.email || '-'}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Localisation</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <MapPin className="w-4 h-4 inline mr-2" />
+                    Pays
+                  </label>
+                  <p className="text-base font-medium text-gray-900">{artisan.pays}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Région</label>
+                  <p className="text-base font-medium text-gray-900">{artisan.region || '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Province</label>
+                  <p className="text-base font-medium text-gray-900">{artisan.province || '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Commune</label>
+                  <p className="text-base font-medium text-gray-900">{artisan.commune || '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Village</label>
+                  <p className="text-base font-medium text-gray-900">{artisan.village || '-'}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'carte' && (
+          <Card className="p-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Carte Professionnelle</h3>
+                {carte && (
+                  <Button size="sm" variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Télécharger
+                  </Button>
+                )}
+              </div>
+              {carte ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {carteRectoPreview && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Recto</h4>
+                      <img
+                        src={carteRectoPreview}
+                        alt="Recto"
+                        className="w-full rounded-lg shadow-lg"
+                      />
+                    </div>
+                  )}
+                  {carteVersoPreview && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Verso</h4>
+                      <img
+                        src={carteVersoPreview}
+                        alt="Verso"
+                        className="w-full rounded-lg shadow-lg"
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">Aucune carte professionnelle générée</p>
+                  <Button>
+                    <Plus className="w-5 h-5 mr-2" />
+                    Générer la Carte
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'transactions' && (
+          <div className="space-y-6">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">Total Transactions</p>
+                    <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-blue-600" />
+                </div>
+              </Card>
+              <Card className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-700">Montant Total</p>
+                    <p className="text-2xl font-bold text-emerald-900">
+                      {formatCurrency(stats.montant)}
+                    </p>
+                  </div>
+                  <Coins className="w-8 h-8 text-emerald-600" />
+                </div>
+              </Card>
+              <Card className="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-700">Quantité Totale</p>
+                    <p className="text-2xl font-bold text-yellow-900">
+                      {stats.quantite.toFixed(2)} g
+                    </p>
+                  </div>
+                  <Coins className="w-8 h-8 text-yellow-600" />
+                </div>
+              </Card>
+            </div>
+
+            {/* Filters */}
+            <Card className="p-4">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Input
+                      placeholder="Rechercher par numéro de reçu ou type..."
+                      value={transactionSearch}
+                      onChange={(e) => setTransactionSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={transactionDateRange.start}
+                    onChange={(e) =>
+                      setTransactionDateRange({ ...transactionDateRange, start: e.target.value })
+                    }
+                    placeholder="Date début"
+                  />
+                  <Input
+                    type="date"
+                    value={transactionDateRange.end}
+                    onChange={(e) =>
+                      setTransactionDateRange({ ...transactionDateRange, end: e.target.value })
+                    }
+                    placeholder="Date fin"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Transactions Table */}
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-emerald-600 to-emerald-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Numéro Reçu
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Type d'Or
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                        Quantité (g)
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                        Montant (FCFA)
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                          Aucune transaction trouvée
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTransactions.map((transaction) => (
+                        <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDate(transaction.date_vente)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {transaction.numero_recu || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {transaction.type_or}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            {transaction.quantite_grammes.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                            {formatCurrency(transaction.montant_total_fcfa)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span
+                              className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${
+                                STATUT_LABELS[transaction.statut]?.color ||
+                                'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {STATUT_LABELS[transaction.statut]?.label || transaction.statut}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/artisan-minier/ventes-or/${transaction.id}`)
+                              }
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'infractions' && (
+          <div className="space-y-6">
+            {/* Header with Add Button */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-4">
+                <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                  <p className="text-sm font-medium text-orange-700">En Cours</p>
+                  <p className="text-2xl font-bold text-orange-900">
+                    {infractions.filter((i) => i.statut_traitement === 'en_cours').length}
+                  </p>
+                </Card>
+                <Card className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+                  <p className="text-sm font-medium text-gray-700">Clôturées</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {infractions.filter((i) => i.statut_traitement === 'cloture').length}
+                  </p>
+                </Card>
+              </div>
+              <Button
+                onClick={() =>
+                  navigate(`/artisan-minier/${id}/infractions/nouvelle`)
+                }
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Nouvelle Infraction
+              </Button>
+            </div>
+
+            {/* Search */}
+            <Card className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Rechercher une infraction..."
+                  value={infractionSearch}
+                  onChange={(e) => setInfractionSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </Card>
+
+            {/* Infractions Table */}
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-red-600 to-red-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Type d'Infraction
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                        Lieu
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                        Traitement
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                        Conclusion
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-white uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredInfractions.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p>Aucune infraction enregistrée</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInfractions.map((infraction) => (
+                        <tr key={infraction.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDate(infraction.date_infraction)}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            {infraction.type_infraction}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                            {infraction.description}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {infraction.lieu || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span
+                              className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${
+                                TRAITEMENT_LABELS[infraction.statut_traitement]?.color
+                              }`}
+                            >
+                              {TRAITEMENT_LABELS[infraction.statut_traitement]?.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            {infraction.conclusion ? (
+                              <span
+                                className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${
+                                  CONCLUSION_LABELS[infraction.conclusion]?.color
+                                }`}
+                              >
+                                {CONCLUSION_LABELS[infraction.conclusion]?.label}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/artisan-minier/${id}/infractions/${infraction.id}`)
+                              }
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

@@ -102,6 +102,8 @@ import CarteExpirations from './pages/artisan-minier/CarteExpirations';
 import VentesOr from './pages/artisan-minier/VentesOr';
 import VenteOrForm from './pages/artisan-minier/VenteOrForm';
 import VenteOrDetails from './pages/artisan-minier/VenteOrDetails';
+import InfractionForm from './pages/artisan-minier/InfractionForm';
+import InfractionDetails from './pages/artisan-minier/InfractionDetails';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -310,6 +312,30 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <VenteOrForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/:artisanId/infractions/nouvelle"
+              element={
+                <ProtectedRoute>
+                  <InfractionForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/:artisanId/infractions/:infractionId"
+              element={
+                <ProtectedRoute>
+                  <InfractionDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/:artisanId/infractions/:infractionId/modifier"
+              element={
+                <ProtectedRoute>
+                  <InfractionForm />
                 </ProtectedRoute>
               }
             />

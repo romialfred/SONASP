@@ -486,7 +486,7 @@ CREATE OR REPLACE VIEW v_artisan_paiements_resume AS
 SELECT
   a.id AS artisan_id,
   a.nom,
-  a.prenom,
+  a.prenoms,
   a.numero_carte,
   COUNT(DISTINCT v.id) AS nombre_ventes,
   COUNT(DISTINCT p.id) AS nombre_paiements,
@@ -500,7 +500,7 @@ LEFT JOIN snp_artisan_ventes_or v ON v.artisan_id = a.id
 LEFT JOIN snp_artisan_factures_definitives f ON f.vente_or_id = v.id
 LEFT JOIN snp_artisan_paiements p ON p.vente_or_id = v.id
 WHERE a.statut = 'actif'
-GROUP BY a.id, a.nom, a.prenom, a.numero_carte;
+GROUP BY a.id, a.nom, a.prenoms, a.numero_carte;
 
 CREATE OR REPLACE VIEW v_taxes_a_reverser AS
 SELECT
@@ -521,7 +521,7 @@ SELECT
   v.reference_vente,
   v.date_vente,
   a.id AS artisan_id,
-  a.nom || ' ' || a.prenom AS artisan_nom_complet,
+  a.nom || ' ' || a.prenoms AS artisan_nom_complet,
   a.numero_carte,
   a.telephone,
   f.id AS facture_id,

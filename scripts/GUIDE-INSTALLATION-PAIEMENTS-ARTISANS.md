@@ -178,7 +178,7 @@ ORDER BY table_name;
 
 ```sql
 -- Récupérer un artisan existant
-SELECT id, nom, prenom FROM snp_artisans_miniers WHERE statut = 'actif' LIMIT 1;
+SELECT id, nom, prenoms FROM snp_artisans_miniers WHERE statut = 'actif' LIMIT 1;
 
 -- Créer une vente (remplacez ARTISAN_ID par un ID réel)
 INSERT INTO snp_artisan_ventes_or (

@@ -209,21 +209,28 @@ export default function ArtisanMinierDetails() {
         };
       }
 
-      const recto = await carteProfessionnelleGeneratorService.generateCarteRecto(artisanData, carteData);
-      const verso = await carteProfessionnelleGeneratorService.generateCarteVerso(artisanData, carteData);
+      const { supabase } = await import('@/lib/supabase');
+      const { pdfUrl, rectoUrl, versoUrl } = await carteProfessionnelleGeneratorService.generateAndUploadCartePDF(
+        artisanData,
+        carteData,
+        supabase
+      );
 
-      console.log('Carte générée avec succès - Recto:', recto?.substring(0, 50), 'Verso:', verso?.substring(0, 50));
+      console.log('PDF généré et sauvegardé avec succès:', { pdfUrl, rectoUrl, versoUrl });
 
-      setCarteRectoPreview(recto);
-      setCarteVersoPreview(verso);
+      setCarteRectoPreview(rectoUrl);
+      setCarteVersoPreview(versoUrl);
 
-      if (carteData.id && recto && verso) {
-        await carteProfessionnelleService.updateCartePdfUrl(carteData.id, '', recto, verso);
+      if (carteData.id) {
+        await carteProfessionnelleService.updateCartePdfUrl(carteData.id, pdfUrl, rectoUrl, versoUrl);
         console.log('URLs de carte sauvegardées dans la base de données');
       }
+
+      return { pdfUrl, rectoUrl, versoUrl };
     } catch (error) {
       console.error('Erreur lors de la génération de la carte:', error);
       showError('Impossible de générer la carte professionnelle');
+      throw error;
     }
   };
 
@@ -430,11 +437,30 @@ export default function ArtisanMinierDetails() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Carte Professionnelle</h3>
-                {carte && (
-                  <Button size="sm" variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Télécharger
-                  </Button>
+                {carte && carte.carte_pdf_url && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(carte.carte_pdf_url, '_blank')}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Voir PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = carte.carte_pdf_url;
+                        link.download = `carte_${carte.numero_carte.replace(/\//g, '_')}.pdf`;
+                        link.click();
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Télécharger PDF
+                    </Button>
+                  </div>
                 )}
               </div>
               {carte ? (

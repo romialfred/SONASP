@@ -275,7 +275,8 @@ export const carteProfessionnelleGeneratorService = {
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      compress: false
     });
 
     const rectoData = await this.generateCarteRecto(artisan, carte);
@@ -284,16 +285,16 @@ export const carteProfessionnelleGeneratorService = {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const carteDisplayWidth = CARTE_WIDTH * 2;
-    const carteDisplayHeight = CARTE_HEIGHT * 2;
+    const carteDisplayWidth = CARTE_WIDTH * 2.5;
+    const carteDisplayHeight = CARTE_HEIGHT * 2.5;
 
     const xRecto = (pageWidth / 2 - carteDisplayWidth) / 2;
     const y = (pageHeight - carteDisplayHeight) / 2;
 
-    pdf.addImage(rectoData, 'PNG', xRecto, y, carteDisplayWidth, carteDisplayHeight);
+    pdf.addImage(rectoData, 'PNG', xRecto, y, carteDisplayWidth, carteDisplayHeight, undefined, 'FAST');
 
     const xVerso = pageWidth / 2 + (pageWidth / 2 - carteDisplayWidth) / 2;
-    pdf.addImage(versoData, 'PNG', xVerso, y, carteDisplayWidth, carteDisplayHeight);
+    pdf.addImage(versoData, 'PNG', xVerso, y, carteDisplayWidth, carteDisplayHeight, undefined, 'FAST');
 
     pdf.setFontSize(10);
     pdf.setTextColor(100, 100, 100);
@@ -305,6 +306,65 @@ export const carteProfessionnelleGeneratorService = {
     pdf.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
 
     return pdf.output('blob');
+  },
+
+  async generateAndUploadCartePDF(
+    artisan: ArtisanMinier,
+    carte: CarteProfessionnelle,
+    supabase: any
+  ): Promise<{ pdfUrl: string; rectoUrl: string; versoUrl: string }> {
+    const pdfBlob = await this.generateCartePDF(artisan, carte);
+    const rectoData = await this.generateCarteRecto(artisan, carte);
+    const versoData = await this.generateCarteVerso(artisan, carte);
+
+    const fileName = `carte_${carte.numero_carte.replace(/\//g, '_')}_${Date.now()}`;
+
+    const rectoBlob = await fetch(rectoData).then(r => r.blob());
+    const versoBlob = await fetch(versoData).then(r => r.blob());
+
+    const { data: pdfData, error: pdfError } = await supabase.storage
+      .from('cartes-professionnelles')
+      .upload(`${fileName}.pdf`, pdfBlob, {
+        contentType: 'application/pdf',
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (pdfError) throw pdfError;
+
+    const { data: rectoUpload, error: rectoError } = await supabase.storage
+      .from('cartes-professionnelles')
+      .upload(`${fileName}_recto.png`, rectoBlob, {
+        contentType: 'image/png',
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (rectoError) throw rectoError;
+
+    const { data: versoUpload, error: versoError } = await supabase.storage
+      .from('cartes-professionnelles')
+      .upload(`${fileName}_verso.png`, versoBlob, {
+        contentType: 'image/png',
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (versoError) throw versoError;
+
+    const { data: { publicUrl: pdfUrl } } = supabase.storage
+      .from('cartes-professionnelles')
+      .getPublicUrl(pdfData.path);
+
+    const { data: { publicUrl: rectoUrl } } = supabase.storage
+      .from('cartes-professionnelles')
+      .getPublicUrl(rectoUpload.path);
+
+    const { data: { publicUrl: versoUrl } } = supabase.storage
+      .from('cartes-professionnelles')
+      .getPublicUrl(versoUpload.path);
+
+    return { pdfUrl, rectoUrl, versoUrl };
   },
 
   async generatePreviewDataUrl(

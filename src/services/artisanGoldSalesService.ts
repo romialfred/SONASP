@@ -107,18 +107,6 @@ export const artisanGoldSalesService = {
         );
       }
 
-      const { data: carte, error: carteError } = await supabase
-        .from('snp_cartes_professionnelles')
-        .select('*')
-        .eq('artisan_id', sale.artisan_id)
-        .in('statut', ['validee', 'en_exploitation'])
-        .gte('date_expiration', new Date().toISOString().split('T')[0])
-        .maybeSingle();
-
-      if (carteError || !carte) {
-        throw new Error('Vente impossible: Aucune carte professionnelle valide');
-      }
-
       const { data: numeroRecu, error: numeroError } = await supabase
         .rpc('generate_numero_recu_vente_or');
 

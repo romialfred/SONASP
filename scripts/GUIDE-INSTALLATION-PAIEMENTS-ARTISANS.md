@@ -1,66 +1,39 @@
 # Guide d'Installation du Module de Paiements des Artisans Miniers
 
-## Important - Ordre d'Exécution
+## Situation Actuelle
 
-Pour éviter les erreurs, les scripts SQL doivent être exécutés dans l'ordre suivant :
+La table `snp_artisan_ventes_or` existe déjà dans votre base de données. Vous devez maintenant créer les tables de paiements.
 
-1. **Script 1** : Prérequis (création table ventes d'or)
-2. **Script 2** : Système de paiements
+## Installation - 1 Seul Script à Exécuter
 
-## Étape 1 : Vérifier les Tables Existantes
+### Étape 1 : Vérifier la Table Existante
 
-Avant de commencer, vérifiez quelles tables existent déjà dans votre base de données :
+Vérifiez que la table des ventes existe :
 
 ```sql
--- Vérifier si les tables artisans existent
 SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
-AND (table_name LIKE '%artisan%' OR table_name LIKE '%vente%')
-ORDER BY table_name;
+AND table_name = 'snp_artisan_ventes_or';
+
+-- Devrait retourner : snp_artisan_ventes_or
 ```
 
-## Étape 2 : Exécuter le Script des Prérequis
+### Étape 2 : Exécuter le Script des Paiements
 
-### Via l'Interface Supabase (Recommandé)
-
-1. Connectez-vous à votre projet Supabase : https://app.supabase.com
+1. Connectez-vous à **Supabase SQL Editor** : https://app.supabase.com
 2. Sélectionnez votre projet
-3. Dans le menu latéral, cliquez sur **"SQL Editor"**
+3. Cliquez sur **"SQL Editor"** dans le menu latéral
 4. Cliquez sur **"New query"**
-5. Ouvrez le fichier : `scripts/20251228_002_PREREQUIS_SYSTEME_PAIEMENTS.sql`
+5. Ouvrez le fichier : `scripts/20251228_003_SYSTEME_PAIEMENTS_ARTISANS.sql`
 6. **Copiez TOUT le contenu** du fichier
 7. Collez-le dans l'éditeur SQL de Supabase
 8. Cliquez sur **"Run"** (ou appuyez sur Ctrl+Enter)
-9. Attendez que le script se termine (vous devriez voir "Success" en vert)
+9. Attendez que le script se termine (vous devriez voir "Success")
 
-### Vérification
+### Étape 3 : Vérifier l'Installation
 
-Après l'exécution, vérifiez que la table a été créée :
-
-```sql
--- Vérifier la table artisan_ventes_or
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'artisan_ventes_or'
-ORDER BY ordinal_position;
-
--- Devrait afficher environ 20 colonnes
-```
-
-## Étape 3 : Exécuter le Script du Système de Paiements
-
-1. Restez dans l'éditeur SQL de Supabase
-2. Créez une **nouvelle query** (bouton "New query")
-3. Ouvrez le fichier : `scripts/20251228_003_SYSTEME_PAIEMENTS_ARTISANS.sql`
-4. **Copiez TOUT le contenu** du fichier
-5. Collez-le dans l'éditeur SQL
-6. Cliquez sur **"Run"**
-7. Attendez la fin de l'exécution
-
-### Vérification
-
-Vérifiez que toutes les tables ont été créées :
+Exécutez cette requête pour vérifier que toutes les tables ont été créées :
 
 ```sql
 -- Vérifier les tables de paiements
@@ -68,44 +41,65 @@ SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
 AND table_name IN (
-  'artisan_ventes_or',
-  'artisan_factures_definitives',
-  'artisan_paiements',
-  'artisan_taxes_retenues'
+  'snp_artisan_ventes_or',
+  'snp_artisan_factures_definitives',
+  'snp_artisan_paiements',
+  'snp_artisan_taxes_retenues'
 )
 ORDER BY table_name;
 
--- Devrait afficher les 4 tables
+-- Devrait afficher 4 tables :
+-- - snp_artisan_factures_definitives
+-- - snp_artisan_paiements
+-- - snp_artisan_taxes_retenues
+-- - snp_artisan_ventes_or
 ```
 
-## Étape 4 : Vérifier les Fonctions SQL
+### Étape 4 : Vérifier les Colonnes Ajoutées
 
-Vérifiez que les fonctions ont été créées correctement :
+Vérifiez que les nouvelles colonnes ont été ajoutées à la table des ventes :
+
+```sql
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'snp_artisan_ventes_or'
+AND column_name IN ('statut_paiement', 'facture_definitive_id', 'reference_vente', 'statut_validation')
+ORDER BY column_name;
+
+-- Devrait afficher 4 colonnes
+```
+
+### Étape 5 : Vérifier les Fonctions SQL
 
 ```sql
 -- Lister les fonctions créées
-SELECT routine_name, routine_type
+SELECT routine_name
 FROM information_schema.routines
 WHERE routine_schema = 'public'
-AND routine_name LIKE '%facture%' OR routine_name LIKE '%paiement%'
+AND (
+  routine_name LIKE '%facture%' OR
+  routine_name LIKE '%paiement%' OR
+  routine_name LIKE '%taxe%'
+)
 ORDER BY routine_name;
 
 -- Devrait afficher :
+-- - calculer_taxes_vente
 -- - generer_numero_facture
 -- - generer_reference_paiement
--- - calculer_taxes_vente
+-- + les fonctions trigger
 ```
 
-## Étape 5 : Tester les Fonctions
+### Étape 6 : Tester les Fonctions
 
-### Tester la génération de numéro de facture
+#### Test 1 : Génération de numéro de facture
 
 ```sql
 SELECT generer_numero_facture();
--- Devrait retourner quelque chose comme: FACT-2024-12-0001
+-- Devrait retourner : FACT-2024-12-0001
 ```
 
-### Tester le calcul des taxes
+#### Test 2 : Calcul des taxes
 
 ```sql
 SELECT *
@@ -115,14 +109,14 @@ FROM calculer_taxes_vente(
   1.5       -- Taux retenue: 1.5%
 );
 
--- Devrait retourner:
--- montant_tva: 180000
--- montant_retenue_source: 15000
--- montant_total_taxes: 195000
--- montant_net: 805000
+-- Résultat attendu :
+-- montant_tva: 180000.00
+-- montant_retenue_source: 15000.00
+-- montant_total_taxes: 195000.00
+-- montant_net: 805000.00
 ```
 
-## Étape 6 : Vérifier les Vues SQL
+### Étape 7 : Vérifier les Vues
 
 ```sql
 -- Vérifier les vues créées
@@ -132,104 +126,175 @@ WHERE table_schema = 'public'
 AND table_name LIKE '%artisan%'
 ORDER BY table_name;
 
--- Devrait afficher :
+-- Devrait inclure :
 -- - v_artisan_paiements_resume
 -- - v_taxes_a_reverser
 -- - v_paiements_en_attente
--- - v_artisan_ventes_or_stats
 ```
 
-## Étape 7 : Tester avec des Données
+## Dépannage
 
-### Créer une vente de test (optionnel)
+### Erreur : "relation snp_artisan_ventes_or does not exist"
+
+**Cause :** La table des ventes n'existe pas.
+
+**Solution :**
+1. Vérifiez que vous êtes connecté à la bonne base de données
+2. Exécutez d'abord la migration des artisans miniers :
+   - `scripts/20251227_001_create_artisans_miniers_system.sql`
+
+### Erreur : "foreign key constraint"
+
+**Cause :** La table `snp_artisans_miniers` n'existe pas.
+
+**Solution :**
+1. Vérifiez que la table des artisans existe :
+   ```sql
+   SELECT table_name
+   FROM information_schema.tables
+   WHERE table_name = 'snp_artisans_miniers';
+   ```
+2. Si elle n'existe pas, exécutez d'abord la migration des artisans
+
+### Erreur : "function already exists"
+
+**Cause :** Les fonctions existent déjà (normal).
+
+**Solution :**
+- C'est normal, le script utilise `CREATE OR REPLACE` qui remplace les fonctions existantes
+- Ignorez cet avertissement si le script se termine avec succès
+
+### Erreur : "constraint already exists"
+
+**Cause :** Les contraintes existent déjà (normal si vous réexécutez le script).
+
+**Solution :**
+- C'est normal, PostgreSQL ignore les contraintes qui existent déjà
+- Le script utilise `IF NOT EXISTS` pour éviter les doublons
+
+## Test Complet du Système
+
+### 1. Créer une Vente de Test
 
 ```sql
--- 1. Récupérer un artisan existant
-SELECT id, nom, prenom FROM artisans_miniers LIMIT 1;
+-- Récupérer un artisan existant
+SELECT id, nom, prenom FROM snp_artisans_miniers WHERE statut = 'actif' LIMIT 1;
 
--- 2. Créer une vente de test (remplacez l'UUID par un vrai artisan_id)
-INSERT INTO artisan_ventes_or (
+-- Créer une vente (remplacez ARTISAN_ID par un ID réel)
+INSERT INTO snp_artisan_ventes_or (
   artisan_id,
   date_vente,
   quantite_grammes,
   type_or,
   purete_karat,
   prix_kg_fcfa,
-  statut
+  statut,
+  statut_validation
 ) VALUES (
-  'REMPLACER-PAR-ARTISAN-ID',  -- ID d'un artisan existant
+  'ARTISAN_ID_ICI',  -- Remplacer par un ID réel
   CURRENT_DATE,
-  50.5,                         -- 50.5 grammes
+  50.5,              -- 50.5 grammes
   'poudre',
-  22.00,                        -- 22 karats
-  35000000,                     -- 35,000,000 FCFA/kg
+  22.00,             -- 22 karats
+  35000000,          -- 35,000,000 FCFA/kg
+  'validee',
   'validee'
-) RETURNING *;
+) RETURNING id, montant_total_fcfa;
 
--- Les montants devraient être calculés automatiquement
+-- Noter l'ID et le montant retournés
 ```
 
-### Créer une facture de test
+### 2. Créer une Facture
 
 ```sql
--- 1. Récupérer une vente validée
-SELECT id, reference_vente, montant_total_fcfa
-FROM artisan_ventes_or
-WHERE statut = 'validee'
-LIMIT 1;
-
--- 2. Appeler la fonction pour calculer les taxes
-SELECT * FROM calculer_taxes_vente(
-  (SELECT montant_total_fcfa FROM artisan_ventes_or WHERE statut = 'validee' LIMIT 1),
+-- Créer une facture pour la vente (remplacez les IDs)
+INSERT INTO snp_artisan_factures_definitives (
+  numero_facture,
+  vente_or_id,
+  artisan_id,
+  montant_brut,
+  montant_taxe_tva,
+  montant_taxe_retenue_source,
+  montant_total_taxes,
+  montant_net_a_payer,
+  taux_tva,
+  taux_retenue_source,
+  statut
+)
+SELECT
+  generer_numero_facture(),
+  v.id,
+  v.artisan_id,
+  v.montant_total_fcfa,
+  (v.montant_total_fcfa * 18.0 / 100),
+  (v.montant_total_fcfa * 1.5 / 100),
+  (v.montant_total_fcfa * 19.5 / 100),
+  (v.montant_total_fcfa - (v.montant_total_fcfa * 19.5 / 100)),
   18.0,
-  1.5
-);
+  1.5,
+  'emise'
+FROM snp_artisan_ventes_or v
+WHERE v.id = 'VENTE_ID_ICI'  -- Remplacer par l'ID de la vente
+RETURNING *;
 ```
 
-## Dépannage
+### 3. Vérifier les Ventes en Attente de Paiement
 
-### Erreur : "relation artisan_ventes_or does not exist"
+```sql
+SELECT * FROM v_paiements_en_attente;
+```
 
-**Solution :** Le script prérequis n'a pas été exécuté ou a échoué.
-- Retournez à l'Étape 2
-- Vérifiez les messages d'erreur dans l'éditeur SQL
-- Assurez-vous que la table `artisans_miniers` existe
+### 4. Créer un Paiement
 
-### Erreur : "foreign key constraint"
+```sql
+-- Créer un paiement (remplacez les IDs)
+INSERT INTO snp_artisan_paiements (
+  reference_paiement,
+  facture_id,
+  vente_or_id,
+  artisan_id,
+  type_paiement,
+  montant_paye,
+  montant_taxes_retenues,
+  statut
+)
+SELECT
+  generer_reference_paiement(),
+  f.id,
+  f.vente_or_id,
+  f.artisan_id,
+  'virement_bancaire',
+  f.montant_net_a_payer,
+  f.montant_total_taxes,
+  'complete'
+FROM snp_artisan_factures_definitives f
+WHERE f.id = 'FACTURE_ID_ICI'  -- Remplacer par l'ID de la facture
+RETURNING *;
+```
 
-**Solution :** La table `artisans_miniers` n'existe pas.
-- Exécutez d'abord la migration des artisans miniers
-- Fichier : `scripts/20251227_001_create_artisans_miniers_system.sql`
+### 5. Vérifier les Taxes Retenues
 
-### Erreur : "function does not exist"
+```sql
+SELECT * FROM v_taxes_a_reverser;
+```
 
-**Solution :** Le script de paiements n'a pas créé les fonctions.
-- Vérifiez les messages d'erreur dans l'éditeur SQL
-- Réexécutez le script 20251228_003
+### 6. Vérifier le Résumé des Paiements
 
-### Erreur : "duplicate key value"
-
-**Solution :** Des données existent déjà avec les mêmes IDs.
-- Normal si vous avez déjà des données de test
-- Le script utilise `ON CONFLICT DO NOTHING` pour éviter les doublons
+```sql
+SELECT * FROM v_artisan_paiements_resume;
+```
 
 ## Vérification Finale
 
-Exécutez cette requête pour vérifier que tout est en place :
+Exécutez cette requête pour un résumé complet :
 
 ```sql
--- Compte des objets créés
 SELECT
   'Tables' AS type,
   COUNT(*) AS nombre
 FROM information_schema.tables
 WHERE table_schema = 'public'
-AND table_name IN (
-  'artisan_ventes_or',
-  'artisan_factures_definitives',
-  'artisan_paiements',
-  'artisan_taxes_retenues'
-)
+AND table_name LIKE 'snp_artisan_%'
 
 UNION ALL
 
@@ -253,30 +318,29 @@ FROM information_schema.views
 WHERE table_schema = 'public'
 AND table_name LIKE '%artisan%';
 
--- Résultat attendu :
--- Tables: 4
+-- Résultat attendu minimum :
+-- Tables: 7+ (artisans, ventes, factures, paiements, taxes, infractions, cartes)
 -- Fonctions: 5+
 -- Vues: 4+
 ```
 
-## Prochaines Étapes
+## Utilisation dans l'Application
 
 Une fois l'installation terminée :
 
-1. **Accédez au module dans l'application :**
+1. **Accédez au module :**
    - Menu : Or Artisanal → Paiements des Ventes
 
-2. **Créez une première vente :**
-   - Menu : Or Artisanal → Ventes d'Or → Nouvelle Vente
-   - Validez la vente pour générer une facture automatiquement
+2. **Flux de Travail :**
+   - Créer une vente d'or → Valider
+   - Le système génère automatiquement une facture
+   - Enregistrer le paiement
+   - Les taxes sont automatiquement calculées et enregistrées
 
-3. **Effectuez un paiement :**
-   - La vente validée apparaîtra dans "Paiements en attente"
-   - Cliquez sur "Payer" pour enregistrer un paiement
-
-4. **Consultez les statistiques :**
+3. **Tableaux de Bord :**
    - Dashboard des paiements
-   - Taxes retenues
+   - Liste des factures
+   - Taxes à reverser
    - Historique complet
 
 ## Support
@@ -284,12 +348,23 @@ Une fois l'installation terminée :
 Si vous rencontrez des problèmes :
 
 1. Vérifiez les logs dans l'éditeur SQL de Supabase
-2. Consultez la documentation : `scripts/README-MODULE-PAIEMENTS-ARTISANS.md`
-3. Vérifiez que toutes les dépendances sont installées
-4. Assurez-vous d'être connecté avec un compte administrateur
+2. Consultez la documentation détaillée : `scripts/README-MODULE-PAIEMENTS-ARTISANS.md`
+3. Vérifiez que vous êtes connecté avec un compte administrateur
+4. Assurez-vous que toutes les tables requises existent
+
+## Colonnes Ajoutées à snp_artisan_ventes_or
+
+Le script ajoute automatiquement ces colonnes à la table des ventes :
+
+- `statut_paiement` : Statut du paiement (non_paye, facture_emise, en_paiement, paye)
+- `facture_definitive_id` : Référence à la facture générée
+- `reference_vente` : Référence unique de la vente
+- `statut_validation` : Statut de validation (en_attente, validee, rejetee)
+
+Ces colonnes sont nécessaires pour le flux complet de facturation et paiement.
 
 ---
 
 **Date de création :** 28 décembre 2024
-**Version :** 1.0.0
+**Version :** 2.0.0 (Corrigée pour noms de tables avec préfixe snp_)
 **Auteur :** SONASP Development Team

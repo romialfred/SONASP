@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Clock, CheckCircle, FileText, AlertCircle, Filter, Download } from 'lucide-react';
+import { DollarSign, Clock, CheckCircle, FileText, AlertCircle, Filter, Download, Plus } from 'lucide-react';
 import artisanPaiementsService, { type VenteEnAttentePaiement } from '@/services/artisanPaiementsService';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Loading } from '@/components/ui/Loading';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 const PaiementsVentesDashboard = () => {
   const navigate = useNavigate();
@@ -96,15 +97,18 @@ const PaiementsVentesDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loading size="lg" />
-        <p className="mt-4 text-gray-600">Chargement des paiements en attente...</p>
-      </div>
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loading size="lg" />
+          <p className="mt-4 text-gray-600">Chargement des paiements en attente...</p>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout>
+      <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -341,7 +345,8 @@ const PaiementsVentesDashboard = () => {
           </div>
         )}
       </Card>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

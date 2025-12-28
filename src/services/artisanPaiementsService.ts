@@ -148,7 +148,7 @@ const artisanPaiementsService = {
       const numeroFacture = await this.genererNumeroFacture();
 
       const { data, error } = await supabase
-        .from('artisan_factures_definitives')
+        .from('snp_artisan_factures_definitives')
         .insert({
           ...facture,
           numero_facture: numeroFacture
@@ -159,7 +159,7 @@ const artisanPaiementsService = {
       if (error) throw error;
 
       await supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .update({
           statut_paiement: 'facture_emise',
           facture_definitive_id: data.id
@@ -176,7 +176,7 @@ const artisanPaiementsService = {
   async getFactureByVenteId(venteId: string): Promise<FactureDefinitive | null> {
     try {
       const { data, error } = await supabase
-        .from('artisan_factures_definitives')
+        .from('snp_artisan_factures_definitives')
         .select('*')
         .eq('vente_or_id', venteId)
         .maybeSingle();
@@ -209,7 +209,7 @@ const artisanPaiementsService = {
       const referencePaiement = await this.genererReferencePaiement();
 
       const { data, error } = await supabase
-        .from('artisan_paiements')
+        .from('snp_artisan_paiements')
         .insert({
           ...paiement,
           reference_paiement: referencePaiement
@@ -241,7 +241,7 @@ const artisanPaiementsService = {
       }
 
       const { error } = await supabase
-        .from('artisan_paiements')
+        .from('snp_artisan_paiements')
         .update(updateData)
         .eq('id', paiementId);
 
@@ -255,7 +255,7 @@ const artisanPaiementsService = {
   async getPaiementsByFactureId(factureId: string): Promise<PaiementArtisan[]> {
     try {
       const { data, error } = await supabase
-        .from('artisan_paiements')
+        .from('snp_artisan_paiements')
         .select('*')
         .eq('facture_id', factureId)
         .order('date_paiement', { ascending: false });
@@ -271,15 +271,15 @@ const artisanPaiementsService = {
   async getPaiementsByArtisanId(artisanId: string): Promise<PaiementArtisan[]> {
     try {
       const { data, error } = await supabase
-        .from('artisan_paiements')
+        .from('snp_artisan_paiements')
         .select(`
           *,
-          facture:artisan_factures_definitives(*),
-          vente:artisan_ventes_or(*),
-          artisan:artisans_miniers(nom, prenom, numero_carte)
+          facture:snp_artisan_factures_definitives(*),
+          vente:snp_artisan_ventes_or(*),
+          artisan:snp_artisans_miniers(nom, prenoms, numero_carte)
         `)
         .eq('artisan_id', artisanId)
-        .order('date_paiement', { ascending: false });
+        .order('date_paiement', { ascending: false});
 
       if (error) throw error;
       return data || [];
@@ -297,12 +297,12 @@ const artisanPaiementsService = {
   }): Promise<PaiementArtisan[]> {
     try {
       let query = supabase
-        .from('artisan_paiements')
+        .from('snp_artisan_paiements')
         .select(`
           *,
-          facture:artisan_factures_definitives(*),
-          vente:artisan_ventes_or(reference_vente, date_vente),
-          artisan:artisans_miniers(nom, prenom, numero_carte, telephone)
+          facture:snp_artisan_factures_definitives(*),
+          vente:snp_artisan_ventes_or(reference_vente, date_vente),
+          artisan:snp_artisans_miniers(nom, prenoms, numero_carte, telephone)
         `);
 
       if (filters?.statut) {
@@ -338,7 +338,7 @@ const artisanPaiementsService = {
   }): Promise<TaxeRetenue[]> {
     try {
       let query = supabase
-        .from('artisan_taxes_retenues')
+        .from('snp_artisan_taxes_retenues')
         .select('*');
 
       if (filters?.statut_reversement) {
@@ -380,8 +380,8 @@ const artisanPaiementsService = {
         }
       }
 
-      const { error } = await supabase
-        .from('artisan_taxes_retenues')
+      const { error} = await supabase
+        .from('snp_artisan_taxes_retenues')
         .update(updateData)
         .eq('id', taxeId);
 

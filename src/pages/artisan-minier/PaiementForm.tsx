@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 
 const PaiementForm = () => {
@@ -246,33 +247,38 @@ const PaiementForm = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loading size="lg" />
-        <p className="mt-4 text-gray-600">Chargement des informations de paiement...</p>
-      </div>
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loading size="lg" />
+          <p className="mt-4 text-gray-600">Chargement des informations de paiement...</p>
+        </div>
+      </MainLayout>
     );
   }
 
   if (!vente || !facture) {
     return (
-      <div className="p-6">
-        <Card className="p-6 text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Données non trouvées</h2>
-          <p className="text-gray-600 mb-4">
-            Impossible de charger les informations de la vente ou de la facture
-          </p>
-          <Button onClick={() => navigate('/artisan-minier/paiements')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour à la liste
-          </Button>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="p-6">
+          <Card className="p-6 text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Données non trouvées</h2>
+            <p className="text-gray-600 mb-4">
+              Impossible de charger les informations de la vente ou de la facture
+            </p>
+            <Button onClick={() => navigate('/artisan-minier/paiements')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour à la liste
+            </Button>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <MainLayout>
+      <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="secondary" onClick={() => navigate('/artisan-minier/paiements')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -450,7 +456,8 @@ const PaiementForm = () => {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

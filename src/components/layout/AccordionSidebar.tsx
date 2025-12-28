@@ -265,6 +265,7 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIcon: Shield,
       items: [
         { label: t('nav.users'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
+        { label: t('nav.modules'), path: '/admin/modules', icon: Grid, iconColor: 'text-blue-600' },
         { label: t('nav.settings'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
         { label: t('nav.goldSalesSettings'), path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-600' },
         { label: t('nav.statusManager'), path: '/admin/status-manager', icon: Layers, iconColor: 'text-teal-600' },

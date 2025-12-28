@@ -145,6 +145,18 @@ export const artisanGoldSalesService = {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      const { data: existingVente, error: fetchError } = await supabase
+        .from('snp_artisan_ventes_or')
+        .select('statut')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (existingVente && ['validee', 'payee'].includes(existingVente.statut)) {
+        throw new Error('Impossible de modifier une vente validée ou payée');
+      }
+
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')
         .update({

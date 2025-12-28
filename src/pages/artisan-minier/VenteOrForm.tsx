@@ -136,6 +136,12 @@ export default function VenteOrForm() {
       setLoading(true);
       const vente = await artisanGoldSalesService.getById(venteId);
       if (vente) {
+        if (['validee', 'payee'].includes(vente.statut)) {
+          showError('Impossible de modifier une vente validée ou payée');
+          setTimeout(() => navigate(`/artisan-minier/ventes-or/${venteId}`), 1500);
+          return;
+        }
+
         setFormData({
           artisan_id: vente.artisan_id,
           date_vente: vente.date_vente.split('T')[0],

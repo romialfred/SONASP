@@ -6,13 +6,9 @@ import {
   DollarSign,
   FileText,
   AlertCircle,
-  Landmark,
-  Smartphone,
-  Banknote,
-  CreditCard,
-  Waves,
   Info,
-  HelpCircle
+  HelpCircle,
+  Download
 } from 'lucide-react';
 import artisanPaiementsService, { type FactureDefinitive, type PaiementArtisan } from '@/services/artisanPaiementsService';
 import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
@@ -24,69 +20,65 @@ import { Select } from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  BankTransferLogo,
+  OrangeMoneyLogo,
+  MoovMoneyLogo,
+  WaveLogo,
+  MobileMoneyLogo,
+  CashLogo,
+  ChequeLogo
+} from '@/components/payment/PaymentMethodLogos';
+import { telechargerFacturePaiementArtisan } from '@/services/factureArtisanPdfService';
 
-// Définition des moyens de paiement avec icônes
+// Définition des moyens de paiement avec logos
 const MOYENS_PAIEMENT = [
   {
     id: 'virement_bancaire',
     label: 'Virement Bancaire',
-    icon: Landmark,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    LogoComponent: BankTransferLogo,
     borderColor: 'border-blue-200',
     description: 'Transfert électronique entre comptes bancaires'
   },
   {
     id: 'orange_money',
     label: 'Orange Money',
-    icon: Smartphone,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
+    LogoComponent: OrangeMoneyLogo,
     borderColor: 'border-orange-200',
     description: 'Paiement mobile Orange Money'
   },
   {
     id: 'moov_money',
     label: 'Moov Money',
-    icon: Smartphone,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    LogoComponent: MoovMoneyLogo,
     borderColor: 'border-blue-200',
     description: 'Paiement mobile Moov Money'
   },
   {
     id: 'wave',
     label: 'Wave',
-    icon: Waves,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-50',
+    LogoComponent: WaveLogo,
     borderColor: 'border-pink-200',
     description: 'Paiement mobile Wave'
   },
   {
     id: 'mobile_money',
     label: 'Mobile Money',
-    icon: Smartphone,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
+    LogoComponent: MobileMoneyLogo,
     borderColor: 'border-purple-200',
     description: 'Autre service de paiement mobile'
   },
   {
     id: 'cash',
     label: 'Espèces',
-    icon: Banknote,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    LogoComponent: CashLogo,
     borderColor: 'border-green-200',
     description: 'Paiement en espèces'
   },
   {
     id: 'cheque',
     label: 'Chèque',
-    icon: CreditCard,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-50',
+    LogoComponent: ChequeLogo,
     borderColor: 'border-slate-200',
     description: 'Paiement par chèque bancaire'
   }
@@ -628,6 +620,43 @@ const PaiementForm = () => {
     }
   };
 
+  const handleTelechargerFacture = async () => {
+    if (!facture || !vente || !artisan) {
+      alert('Données manquantes pour générer la facture');
+      return;
+    }
+
+    try {
+      const paiementData: PaiementArtisan = {
+        ...formData,
+        details_paiement: detailsPaiement,
+        date_paiement: new Date().toISOString(),
+        traite_par: user?.id
+      } as PaiementArtisan;
+
+      telechargerFacturePaiementArtisan({
+        facture,
+        paiement: paiementData,
+        artisan: {
+          nom: artisan.nom,
+          prenom: artisan.prenom,
+          adresse: artisan.adresse_physique,
+          telephone: artisan.telephone,
+          numero_carte: artisan.numero_carte
+        },
+        venteOr: {
+          poids_grammes: vente.poids_grammes,
+          poids_onces: vente.poids_onces,
+          prix_unitaire_fcfa: vente.prix_unitaire_fcfa,
+          purete_pourcentage: vente.purete_pourcentage || 96
+        }
+      });
+    } catch (error) {
+      console.error('Erreur génération facture:', error);
+      alert('Erreur lors de la génération de la facture');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -648,7 +677,12 @@ const PaiementForm = () => {
 
       await artisanPaiementsService.creerPaiement(paiementData);
 
-      alert('Paiement enregistré avec succès');
+      alert('Paiement enregistré avec succès. Vous pouvez maintenant télécharger la facture.');
+
+      if (window.confirm('Voulez-vous télécharger la facture PDF maintenant ?')) {
+        handleTelechargerFacture();
+      }
+
       navigate('/artisan-minier/paiements');
     } catch (error) {
       console.error('Erreur enregistrement paiement:', error);
@@ -718,7 +752,7 @@ const PaiementForm = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {MOYENS_PAIEMENT.map((moyen) => {
-                    const Icon = moyen.icon;
+                    const LogoComponent = moyen.LogoComponent;
                     const isSelected = formData.type_paiement === moyen.id;
 
                     return (
@@ -727,15 +761,17 @@ const PaiementForm = () => {
                         type="button"
                         onClick={() => handleTypePaiementChange(moyen.id)}
                         className={`
-                          flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all
+                          flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all
                           ${isSelected
-                            ? `${moyen.borderColor} ${moyen.bgColor} shadow-md`
-                            : 'border-gray-200 bg-white hover:border-gray-300'
+                            ? `${moyen.borderColor} bg-white shadow-lg ring-2 ring-offset-2 ${moyen.borderColor.replace('border', 'ring')}`
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                           }
                         `}
                       >
-                        <Icon className={`w-8 h-8 mb-2 ${isSelected ? moyen.color : 'text-gray-400'}`} />
-                        <span className={`text-sm font-medium text-center ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>
+                        <div className={`w-16 h-16 mb-2 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-70'}`}>
+                          <LogoComponent className="w-full h-full" />
+                        </div>
+                        <span className={`text-xs font-medium text-center ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>
                           {moyen.label}
                         </span>
                       </button>
@@ -851,10 +887,21 @@ const PaiementForm = () => {
 
             {/* Détails de la facture */}
             <Card className="p-6">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Détails de la Facture
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  Détails de la Facture
+                </h3>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleTelechargerFacture}
+                  className="text-xs py-1 px-2"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  PDF
+                </Button>
+              </div>
               <div className="space-y-3 text-sm">
                 <div>
                   <span className="text-gray-600">Numéro:</span>

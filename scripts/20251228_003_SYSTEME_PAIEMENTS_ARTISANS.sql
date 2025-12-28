@@ -499,7 +499,7 @@ FROM snp_artisans_miniers a
 LEFT JOIN snp_artisan_ventes_or v ON v.artisan_id = a.id
 LEFT JOIN snp_artisan_factures_definitives f ON f.vente_or_id = v.id
 LEFT JOIN snp_artisan_paiements p ON p.vente_or_id = v.id
-WHERE a.statut = 'actif'
+WHERE a.actif = true
 GROUP BY a.id, a.nom, a.prenoms, a.numero_carte;
 
 CREATE OR REPLACE VIEW v_taxes_a_reverser AS

@@ -4,9 +4,23 @@
 
 La table `snp_artisan_ventes_or` existe déjà dans votre base de données. Vous devez maintenant créer les tables de paiements.
 
-## Installation - 1 Seul Script à Exécuter
+## Installation - Scripts à Exécuter dans l'Ordre
 
-### Étape 1 : Vérifier la Table Existante
+### Étape 1 : Exécuter le Script de Désactivation (PRÉREQUIS)
+
+**IMPORTANT :** Ce script doit être exécuté EN PREMIER car il ajoute la colonne `actif` nécessaire.
+
+1. Connectez-vous à **Supabase SQL Editor** : https://app.supabase.com
+2. Sélectionnez votre projet
+3. Cliquez sur **"SQL Editor"** dans le menu latéral
+4. Cliquez sur **"New query"**
+5. Ouvrez le fichier : `scripts/20251228_002_SYSTEME_DESACTIVATION_ARTISANS.sql`
+6. **Copiez TOUT le contenu** du fichier
+7. Collez-le dans l'éditeur SQL de Supabase
+8. Cliquez sur **"Run"** (ou appuyez sur Ctrl+Enter)
+9. Attendez que le script se termine (vous devriez voir "Success")
+
+### Étape 2 : Vérifier la Table Existante
 
 Vérifiez que la table des ventes existe :
 
@@ -19,19 +33,16 @@ AND table_name = 'snp_artisan_ventes_or';
 -- Devrait retourner : snp_artisan_ventes_or
 ```
 
-### Étape 2 : Exécuter le Script des Paiements
+### Étape 3 : Exécuter le Script des Paiements
 
-1. Connectez-vous à **Supabase SQL Editor** : https://app.supabase.com
-2. Sélectionnez votre projet
-3. Cliquez sur **"SQL Editor"** dans le menu latéral
-4. Cliquez sur **"New query"**
-5. Ouvrez le fichier : `scripts/20251228_003_SYSTEME_PAIEMENTS_ARTISANS.sql`
-6. **Copiez TOUT le contenu** du fichier
-7. Collez-le dans l'éditeur SQL de Supabase
-8. Cliquez sur **"Run"** (ou appuyez sur Ctrl+Enter)
-9. Attendez que le script se termine (vous devriez voir "Success")
+1. Ouvrez une nouvelle requête dans **Supabase SQL Editor**
+2. Ouvrez le fichier : `scripts/20251228_003_SYSTEME_PAIEMENTS_ARTISANS.sql`
+3. **Copiez TOUT le contenu** du fichier
+4. Collez-le dans l'éditeur SQL de Supabase
+5. Cliquez sur **"Run"** (ou appuyez sur Ctrl+Enter)
+6. Attendez que le script se termine (vous devriez voir "Success")
 
-### Étape 3 : Vérifier l'Installation
+### Étape 4 : Vérifier l'Installation
 
 Exécutez cette requête pour vérifier que toutes les tables ont été créées :
 
@@ -55,7 +66,21 @@ ORDER BY table_name;
 -- - snp_artisan_ventes_or
 ```
 
-### Étape 4 : Vérifier les Colonnes Ajoutées
+### Étape 5 : Vérifier les Colonnes de Désactivation
+
+Vérifiez que la colonne `actif` a été ajoutée à la table des artisans :
+
+```sql
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'snp_artisans_miniers'
+AND column_name IN ('actif', 'desactive_le', 'desactive_par', 'motif_desactivation')
+ORDER BY column_name;
+
+-- Devrait afficher 4 colonnes
+```
+
+### Étape 6 : Vérifier les Colonnes de Paiement
 
 Vérifiez que les nouvelles colonnes ont été ajoutées à la table des ventes :
 
@@ -69,7 +94,7 @@ ORDER BY column_name;
 -- Devrait afficher 4 colonnes
 ```
 
-### Étape 5 : Vérifier les Fonctions SQL
+### Étape 7 : Vérifier les Fonctions SQL
 
 ```sql
 -- Lister les fonctions créées
@@ -90,7 +115,7 @@ ORDER BY routine_name;
 -- + les fonctions trigger
 ```
 
-### Étape 6 : Tester les Fonctions
+### Étape 8 : Tester les Fonctions
 
 #### Test 1 : Génération de numéro de facture
 
@@ -116,7 +141,7 @@ FROM calculer_taxes_vente(
 -- montant_net: 805000.00
 ```
 
-### Étape 7 : Vérifier les Vues
+### Étape 9 : Vérifier les Vues
 
 ```sql
 -- Vérifier les vues créées

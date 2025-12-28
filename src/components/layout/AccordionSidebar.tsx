@@ -43,8 +43,15 @@ import {
   Plus,
   FileCheck,
   LineChart,
+  Send,
+  Network,
+  PackageCheck,
+  CalendarDays,
+  Calculator,
+  List,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { modulesService, Module as DBModule } from '@/services/modulesService';
 
 interface MenuItem {
   label: string;
@@ -103,6 +110,12 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Menu,
   ChevronDown,
   ChevronRight,
+  Send,
+  Network,
+  PackageCheck,
+  CalendarDays,
+  Calculator,
+  List,
 };
 
 const getIcon = (iconName?: string): React.ComponentType<{ className?: string }> => {
@@ -146,134 +159,62 @@ const getIconColor = (code: string): string => {
 };
 
 const useMenuGroups = (): MenuGroup[] => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
+  const [modules, setModules] = useState<DBModule[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  return useMemo(() => [
-    {
-      id: 'artisan-minier',
-      label: t('nav.artisanMinier'),
-      groupIconColor: 'text-emerald-700',
-      groupIcon: Users,
-      items: [
-        { label: t('nav.artisanDashboard'), path: '/artisan-minier', icon: LayoutDashboard, iconColor: 'text-emerald-700' },
-        { label: t('nav.listeArtisans'), path: '/artisan-minier/liste', icon: Users, iconColor: 'text-blue-600' },
-        { label: t('nav.suiviCartes'), path: '/artisan-minier/cartes/suivi', icon: TrendingUp, iconColor: 'text-purple-600' },
-        { label: t('nav.validationCartes'), path: '/artisan-minier/cartes/validation', icon: CheckCircle, iconColor: 'text-indigo-600' },
-        { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
-        { label: 'Ventes d\'Or', path: '/artisan-minier/ventes-or', icon: Coins, iconColor: 'text-yellow-600' },
-      ],
-    },
-    {
-      id: 'production',
-      label: t('nav.productionManagement'),
-      groupIconColor: 'text-emerald-600',
-      groupIcon: Factory,
-      items: [
-        { label: t('nav.dailyProduction'), path: '/production/daily', icon: Activity, iconColor: 'text-emerald-600' },
-        { label: t('nav.productionInSafe'), path: '/production/in-safe', icon: Lock, iconColor: 'text-yellow-600' },
-        { label: t('nav.exportLicenses'), path: '/production/licenses', icon: Award, iconColor: 'text-purple-600' },
-        { label: t('nav.budgetForecasts'), path: '/performance/budgets', icon: TrendingUp, iconColor: 'text-blue-600' },
-      ],
-    },
-    {
-      id: 'shipping',
-      label: t('nav.shippingManagement'),
-      groupIconColor: 'text-blue-600',
-      groupIcon: Truck,
-      items: [
-        { label: t('nav.shippingPreparation'), path: '/shipping/preparation', icon: Ship, iconColor: 'text-blue-600' },
-        { label: t('nav.invoiceConsignment'), path: '/freight', icon: Truck, iconColor: 'text-cyan-600' },
-      ],
-    },
-    {
-      id: 'refining',
-      label: t('nav.refining'),
-      groupIconColor: 'text-teal-600',
-      groupIcon: FlaskConical,
-      items: [
-        { label: t('nav.refiningProcess'), path: '/refining', icon: FlaskConical, iconColor: 'text-teal-600' },
-      ],
-    },
-    {
-      id: 'refinery-inventory',
-      label: t('nav.inventoryMonitoring'),
-      groupIconColor: 'text-emerald-600',
-      groupIcon: Warehouse,
-      items: [
-        { label: t('nav.goldInventory'), path: '/inventory', icon: Coins, iconColor: 'text-yellow-600' },
-        { label: t('nav.silverInventory'), path: '/inventory/silver', icon: Sparkles, iconColor: 'text-slate-500' },
-      ],
-    },
-    {
-      id: 'documents',
-      label: t('nav.documentManagement'),
-      groupIconColor: 'text-violet-600',
-      groupIcon: FileText,
-      items: [
-        { label: t('nav.assayCertificates'), path: '/documents/assay-certificates', icon: ScanText, iconColor: 'text-violet-600' },
-      ],
-    },
-    {
-      id: 'marketplace',
-      label: t('nav.marketplace'),
-      groupIconColor: 'text-orange-600',
-      groupIcon: Store,
-      items: [
-        { label: t('nav.tradeSpace'), path: '/sales/trade-space', icon: Store, iconColor: 'text-emerald-600' },
-        { label: t('nav.goldPrices'), path: '/gold-prices', icon: TrendingUp, iconColor: 'text-orange-600' },
-        { label: t('nav.fxRates'), path: '/fx-rates', icon: DollarSign, iconColor: 'text-emerald-600' },
-      ],
-    },
-    {
-      id: 'sales',
-      label: t('nav.sales'),
-      groupIconColor: 'text-pink-600',
-      groupIcon: ShoppingCart,
-      items: [
-        { label: t('nav.preSales'), path: '/presales', icon: PackagePlus, iconColor: 'text-purple-600' },
-        { label: t('nav.sales'), path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
-        { label: t('nav.payments'), path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
-      ],
-    },
-    {
-      id: 'stakeholders',
-      label: t('nav.stakeholders'),
-      groupIconColor: 'text-teal-600',
-      groupIcon: Handshake,
-      items: [
-        { label: t('nav.miningCompanies'), path: '/stakeholders/mining-companies', icon: Factory, iconColor: 'text-emerald-700' },
-        { label: t('nav.freightCompanies'), path: '/stakeholders/freight-companies', icon: Truck, iconColor: 'text-blue-700' },
-        { label: t('nav.refineryPlants'), path: '/stakeholders/refinery-plants', icon: FlaskConical, iconColor: 'text-purple-700' },
-        { label: t('nav.depositors'), path: '/stakeholders/depositors', icon: Shield, iconColor: 'text-emerald-700' },
-        { label: t('nav.customers'), path: '/customers', icon: Users, iconColor: 'text-teal-700' },
-      ],
-    },
-    {
-      id: 'insights',
-      label: t('nav.insights'),
-      groupIconColor: 'text-blue-600',
-      groupIcon: BarChart3,
-      items: [
-        { label: t('nav.analytics'), path: '/analytics', icon: BarChart3, iconColor: 'text-blue-600' },
-        { label: t('nav.reports'), path: '/reports', icon: FileText, iconColor: 'text-indigo-600' },
-      ],
-    },
-    {
-      id: 'administration',
-      label: t('nav.administration'),
-      groupIconColor: 'text-red-600',
-      groupIcon: Shield,
-      items: [
-        { label: t('nav.users'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
-        { label: t('nav.modules'), path: '/admin/modules', icon: Grid, iconColor: 'text-blue-600' },
-        { label: t('nav.settings'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
-        { label: t('nav.goldSalesSettings'), path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-600' },
-        { label: t('nav.statusManager'), path: '/admin/status-manager', icon: Layers, iconColor: 'text-teal-600' },
-        { label: t('nav.workflow'), path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
-        { label: t('nav.audit'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
-      ],
-    },
-  ], [t, i18n.language]);
+  useEffect(() => {
+    const loadModules = async () => {
+      try {
+        const hierarchy = await modulesService.getHierarchy();
+        setModules(hierarchy);
+      } catch (error) {
+        console.error('Error loading modules:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadModules();
+  }, []);
+
+  return useMemo(() => {
+    if (loading) return [];
+
+    const groups: MenuGroup[] = [];
+
+    const parentModules = modules.filter(m =>
+      !m.parent_id &&
+      m.est_actif &&
+      m.est_visible_menu &&
+      m.code !== 'dashboard'
+    );
+
+    for (const parent of parentModules) {
+      const children = modules.filter(m =>
+        m.parent_id === parent.id &&
+        m.est_actif &&
+        m.est_visible_menu
+      );
+
+      if (children.length > 0) {
+        groups.push({
+          id: parent.code,
+          label: parent.nom,
+          groupIconColor: getIconColor(parent.code),
+          groupIcon: getIcon(parent.icone),
+          items: children.map(child => ({
+            label: child.nom,
+            path: child.route || '#',
+            icon: getIcon(child.icone),
+            iconColor: getIconColor(child.code),
+          })),
+        });
+      }
+    }
+
+    return groups;
+  }, [modules, loading, i18n.language]);
 };
 
 const STORAGE_KEY = 'sidebar:lastGroup';
@@ -287,6 +228,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   const location = useLocation();
   const { t } = useTranslation();
   const menuGroups = useMenuGroups();
+  const [showDashboard, setShowDashboard] = useState(true);
   const [collapsed, setCollapsed] = useState(() => {
     const stored = localStorage.getItem(COLLAPSED_KEY);
     return stored === 'true';
@@ -295,6 +237,20 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
     // Start with no groups expanded
     return new Set();
   });
+
+  useEffect(() => {
+    const checkDashboardModule = async () => {
+      try {
+        const dashboardModule = await modulesService.getByCode('dashboard');
+        setShowDashboard(dashboardModule?.est_actif && dashboardModule?.est_visible_menu || false);
+      } catch (error) {
+        console.error('Error checking dashboard module:', error);
+        setShowDashboard(true);
+      }
+    };
+
+    checkDashboardModule();
+  }, []);
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -429,31 +385,33 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
         {/* Dashboard - Direct Link (Not in Group) */}
-        <Link
-          to="/dashboard"
-          className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
-            isDashboardActive
-              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30'
-              : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:shadow-sm'
-          )}
-        >
-          {isDashboardActive && (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent animate-pulse"></div>
-          )}
-          <div className={cn(
-            'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
-            isDashboardActive ? 'bg-white/20' : 'bg-blue-50 group-hover:bg-blue-100'
-          )}>
-            <LayoutDashboard className={cn('w-4 h-4', isDashboardActive ? 'text-white' : 'text-blue-600')} />
-          </div>
-          {!collapsed && (
-            <span className="text-sm font-medium relative z-10 whitespace-nowrap overflow-hidden text-ellipsis">
-              {t('nav.dashboard')}
-            </span>
-          )}
-        </Link>
+        {showDashboard && (
+          <Link
+            to="/dashboard"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden',
+              'focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
+              isDashboardActive
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30'
+                : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:shadow-sm'
+            )}
+          >
+            {isDashboardActive && (
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent animate-pulse"></div>
+            )}
+            <div className={cn(
+              'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
+              isDashboardActive ? 'bg-white/20' : 'bg-blue-50 group-hover:bg-blue-100'
+            )}>
+              <LayoutDashboard className={cn('w-4 h-4', isDashboardActive ? 'text-white' : 'text-blue-600')} />
+            </div>
+            {!collapsed && (
+              <span className="text-sm font-medium relative z-10 whitespace-nowrap overflow-hidden text-ellipsis">
+                {t('nav.dashboard')}
+              </span>
+            )}
+          </Link>
+        )}
 
         {/* Menu Groups */}
         {menuGroups.map((group) => {

@@ -28,16 +28,26 @@ Le script `CREATE-ARTISAN-INFRACTIONS-TABLE.sql` ne respectait pas les conventio
 
 ## Convention SNP_ Obligatoire
 
-**RÈGLE #1:** TOUTES les tables du système Gold Shipper doivent avoir le préfixe **snp_**
+**RÈGLE #1:** TOUTES les **NOUVELLES** tables du système Gold Shipper doivent avoir le préfixe **snp_**
 
 **SNP = SONASP** (Société Nationale d'Achat et de Stabilisation des Produits)
+
+### ⚠️ IMPORTANT: Tables Existantes vs Nouvelles Tables
+
+- **Tables EXISTANTES:** Garder le nom actuel (avec ou sans préfixe snp_)
+  - Ne PAS renommer les tables déjà en production
+  - Exemples: `mining_companies`, `user_profiles`, etc.
+
+- **Tables NOUVELLES:** Préfixe `snp_` OBLIGATOIRE
+  - Toute nouvelle table créée doit commencer par `snp_`
+  - Exemple: `snp_artisan_infractions` (nouvelle table)
 
 ### Pourquoi cette convention ?
 
 1. **Namespace isolation:** Évite les conflits avec d'autres systèmes
-2. **Identification claire:** Tous les objets du système sont facilement identifiables
-3. **Migration facile:** Permet de distinguer nos tables des tables système
-4. **Conformité:** Standard imposé par la checklist qualité SQL
+2. **Identification claire:** Les nouvelles tables sont facilement identifiables
+3. **Migration progressive:** Permet d'ajouter des fonctionnalités sans casser l'existant
+4. **Conformité:** Standard imposé par la checklist qualité SQL pour les nouveaux développements
 
 ## Corrections Appliquées
 
@@ -219,7 +229,9 @@ Pour tous les futurs scripts SQL, toujours consulter:
 
 > **TOUS les scripts SQL doivent passer par la checklist qualité**
 >
-> **TOUTES les tables doivent avoir le préfixe snp_**
+> **NOUVELLES tables uniquement: préfixe snp_ obligatoire**
+>
+> **Tables EXISTANTES: NE PAS renommer, garder tel quel**
 >
 > **TOUJOURS vérifier DATABASE-SCHEMA.md avant d'écrire du SQL**
 

@@ -87,12 +87,38 @@ const PaiementsVentesDashboard = () => {
     return libelles[statut as keyof typeof libelles] || statut;
   };
 
-  const handleProcederPaiement = (vente: VenteEnAttentePaiement) => {
-    navigate(`/artisan-minier/paiements/${vente.vente_id}/nouveau`);
+  const handleProcederPaiement = async (vente: VenteEnAttentePaiement) => {
+    if (!vente.facture_id) {
+      try {
+        const taxes = await artisanPaiementsService.calculerTaxes(vente.montant_net_a_payer || 0);
+
+        const nouvelleFacture = await artisanPaiementsService.creerFactureDefinitive({
+          vente_or_id: vente.vente_id,
+          artisan_id: vente.artisan_id,
+          montant_brut: vente.montant_net_a_payer || 0,
+          montant_taxe_tva: taxes.montant_tva,
+          montant_taxe_retenue_source: taxes.montant_retenue_source,
+          montant_autres_taxes: 0,
+          montant_total_taxes: taxes.montant_total_taxes,
+          montant_net_a_payer: taxes.montant_net,
+          taux_tva: 18.0,
+          taux_retenue_source: 1.5,
+          date_emission: new Date().toISOString(),
+          statut: 'emise'
+        });
+
+        navigate(`/artisan-minier/paiements/${vente.vente_id}/nouveau`);
+        chargerDonnees();
+      } catch (error) {
+        console.error('Erreur création facture:', error);
+      }
+    } else {
+      navigate(`/artisan-minier/paiements/${vente.vente_id}/nouveau`);
+    }
   };
 
   const handleVoirDetails = (vente: VenteEnAttentePaiement) => {
-    navigate(`/artisan-minier/ventes/${vente.vente_id}`);
+    navigate(`/artisan-minier/ventes-or/${vente.vente_id}`);
   };
 
   if (loading) {
@@ -353,30 +379,14 @@ const PaiementsVentesDashboard = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-2">
-                        {vente.facture_id ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleProcederPaiement(vente)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-                          >
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            Enregistrer Paiement
-                          </Button>
-                        ) : (
-                          <div className="relative group">
-                            <Button
-                              size="sm"
-                              disabled
-                              className="opacity-50"
-                            >
-                              <DollarSign className="w-4 h-4 mr-1" />
-                              Payer
-                            </Button>
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                              Facture non disponible
-                            </div>
-                          </div>
-                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => handleProcederPaiement(vente)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          {vente.facture_id ? 'Enregistrer Paiement' : 'Créer Facture & Payer'}
+                        </Button>
                         <Button
                           size="sm"
                           variant="secondary"

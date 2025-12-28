@@ -167,9 +167,10 @@ const useMenuGroups = (): MenuGroup[] => {
     const loadModules = async () => {
       try {
         const hierarchy = await modulesService.getHierarchy();
+        console.log('[AccordionSidebar] Modules chargés:', hierarchy);
         setModules(hierarchy);
       } catch (error) {
-        console.error('Error loading modules:', error);
+        console.error('[AccordionSidebar] Error loading modules:', error);
       } finally {
         setLoading(false);
       }
@@ -179,23 +180,32 @@ const useMenuGroups = (): MenuGroup[] => {
   }, []);
 
   return useMemo(() => {
-    if (loading) return [];
+    if (loading) {
+      console.log('[AccordionSidebar] Chargement en cours...');
+      return [];
+    }
+
+    console.log('[AccordionSidebar] Construction du menu avec', modules.length, 'modules');
 
     const groups: MenuGroup[] = [];
 
     const parentModules = modules.filter(m =>
       !m.parent_id &&
-      m.est_actif &&
-      m.est_visible_menu &&
+      (m.est_actif !== false) &&
+      (m.est_visible_menu !== false) &&
       m.code !== 'dashboard'
     );
+
+    console.log('[AccordionSidebar] Modules parents trouvés:', parentModules.length, parentModules.map(m => m.code));
 
     for (const parent of parentModules) {
       const children = modules.filter(m =>
         m.parent_id === parent.id &&
-        m.est_actif &&
-        m.est_visible_menu
+        (m.est_actif !== false) &&
+        (m.est_visible_menu !== false)
       );
+
+      console.log(`[AccordionSidebar] Module parent "${parent.code}" a ${children.length} enfants`);
 
       if (children.length > 0) {
         groups.push({
@@ -210,9 +220,24 @@ const useMenuGroups = (): MenuGroup[] => {
             iconColor: getIconColor(child.code),
           })),
         });
+      } else if (parent.route) {
+        console.log(`[AccordionSidebar] Module parent "${parent.code}" a une route mais pas d'enfants`);
+        groups.push({
+          id: parent.code,
+          label: parent.nom,
+          groupIconColor: getIconColor(parent.code),
+          groupIcon: getIcon(parent.icone),
+          items: [{
+            label: parent.nom,
+            path: parent.route,
+            icon: getIcon(parent.icone),
+            iconColor: getIconColor(parent.code),
+          }],
+        });
       }
     }
 
+    console.log('[AccordionSidebar] Groupes finaux créés:', groups.length);
     return groups;
   }, [modules, loading, i18n.language]);
 };
@@ -242,7 +267,11 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
     const checkDashboardModule = async () => {
       try {
         const dashboardModule = await modulesService.getByCode('dashboard');
-        setShowDashboard(dashboardModule?.est_actif && dashboardModule?.est_visible_menu || false);
+        if (dashboardModule) {
+          setShowDashboard(dashboardModule.est_actif !== false && dashboardModule.est_visible_menu !== false);
+        } else {
+          setShowDashboard(true);
+        }
       } catch (error) {
         console.error('Error checking dashboard module:', error);
         setShowDashboard(true);

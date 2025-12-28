@@ -107,6 +107,7 @@ import InfractionForm from './pages/artisan-minier/InfractionForm';
 import InfractionDetails from './pages/artisan-minier/InfractionDetails';
 import PaiementsVentesDashboard from './pages/artisan-minier/PaiementsVentesDashboard';
 import PaiementForm from './pages/artisan-minier/PaiementForm';
+import PaiementsHistorique from './pages/artisan-minier/PaiementsHistorique';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -339,6 +340,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PaiementForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/paiements/historique"
+              element={
+                <ProtectedRoute>
+                  <PaiementsHistorique />
                 </ProtectedRoute>
               }
             />

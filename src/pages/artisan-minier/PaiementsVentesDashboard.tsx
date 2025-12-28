@@ -127,6 +127,25 @@ const PaiementsVentesDashboard = () => {
         </Button>
       </div>
 
+      {ventes.length === 0 && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-start gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-900 mb-1">
+                Comment utiliser ce module ?
+              </h3>
+              <p className="text-sm text-blue-800">
+                Ce module affiche toutes les ventes d'or validées qui sont en attente de paiement.
+                Pour chaque vente avec une facture, vous pouvez cliquer sur <strong>"Enregistrer Paiement"</strong> pour procéder au paiement de l'artisan.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
@@ -219,13 +238,43 @@ const PaiementsVentesDashboard = () => {
 
         {filteredVentes.length === 0 ? (
           <div className="text-center py-12">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Aucune vente en attente de paiement</p>
-            <p className="text-gray-500 mt-2">
+            <div className="bg-gray-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+              {searchTerm || statutFilter !== 'tous' ? (
+                <Filter className="w-12 h-12 text-gray-400" />
+              ) : (
+                <CheckCircle className="w-12 h-12 text-green-400" />
+              )}
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               {searchTerm || statutFilter !== 'tous'
-                ? 'Essayez de modifier vos filtres'
-                : 'Toutes les ventes ont été payées'}
+                ? 'Aucun résultat trouvé'
+                : 'Aucune vente en attente'}
+            </h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {searchTerm || statutFilter !== 'tous'
+                ? 'Aucune vente ne correspond à vos critères de recherche. Essayez de modifier vos filtres.'
+                : 'Toutes les ventes d\'or ont été payées ou aucune vente n\'a été enregistrée. Les nouvelles ventes apparaîtront ici automatiquement.'}
             </p>
+            <div className="flex gap-3 justify-center">
+              {(searchTerm || statutFilter !== 'tous') && (
+                <Button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatutFilter('tous');
+                  }}
+                  variant="secondary"
+                >
+                  Réinitialiser les filtres
+                </Button>
+              )}
+              <Button
+                onClick={() => navigate('/artisan-minier/ventes-or')}
+                variant="secondary"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Voir toutes les ventes
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -304,18 +353,35 @@ const PaiementsVentesDashboard = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleProcederPaiement(vente)}
-                          disabled={!vente.facture_id}
-                        >
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          Payer
-                        </Button>
+                        {vente.facture_id ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleProcederPaiement(vente)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                          >
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            Enregistrer Paiement
+                          </Button>
+                        ) : (
+                          <div className="relative group">
+                            <Button
+                              size="sm"
+                              disabled
+                              className="opacity-50"
+                            >
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              Payer
+                            </Button>
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                              Facture non disponible
+                            </div>
+                          </div>
+                        )}
                         <Button
                           size="sm"
                           variant="secondary"
                           onClick={() => handleVoirDetails(vente)}
+                          title="Voir les détails de la vente"
                         >
                           <FileText className="w-4 h-4" />
                         </Button>

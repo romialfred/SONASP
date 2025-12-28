@@ -337,6 +337,67 @@ export const carteProfessionnelleGeneratorService = {
       qr_code_data: carte.qr_code_data || JSON.stringify({ numero_carte: tempArtisan.numero_carte })
     };
 
-    return await this.generateCarteRecto(tempArtisan, tempCarte);
+    return await this.generatePreviewRectoVerso(tempArtisan, tempCarte);
+  },
+
+  async generatePreviewRectoVerso(
+    artisan: ArtisanMinier,
+    carte: CarteProfessionnelle
+  ): Promise<string> {
+    const rectoData = await this.generateCarteRecto(artisan, carte);
+    const versoData = await this.generateCarteVerso(artisan, carte);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Unable to get canvas context');
+
+    const cardWidthPx = 800;
+    const cardHeightPx = 500;
+    const gap = 40;
+
+    canvas.width = cardWidthPx * 2 + gap;
+    canvas.height = cardHeightPx + 100;
+
+    ctx.fillStyle = '#f9fafb';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const rectoImg = new Image();
+    const versoImg = new Image();
+
+    return new Promise((resolve, reject) => {
+      let loadedImages = 0;
+
+      const checkBothLoaded = () => {
+        loadedImages++;
+        if (loadedImages === 2) {
+          ctx.drawImage(rectoImg, 0, 50, cardWidthPx, cardHeightPx);
+          ctx.drawImage(versoImg, cardWidthPx + gap, 50, cardWidthPx, cardHeightPx);
+
+          ctx.fillStyle = '#374151';
+          ctx.font = 'bold 24px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('RECTO', cardWidthPx / 2, 35);
+          ctx.fillText('VERSO', cardWidthPx + gap + cardWidthPx / 2, 35);
+
+          ctx.fillStyle = '#6b7280';
+          ctx.font = '16px Inter, sans-serif';
+          ctx.fillText(
+            `Carte N°: ${carte.numero_carte}`,
+            canvas.width / 2,
+            cardHeightPx + 80
+          );
+
+          resolve(canvas.toDataURL('image/png'));
+        }
+      };
+
+      rectoImg.onload = checkBothLoaded;
+      versoImg.onload = checkBothLoaded;
+      rectoImg.onerror = () => reject(new Error('Failed to load recto image'));
+      versoImg.onerror = () => reject(new Error('Failed to load verso image'));
+
+      rectoImg.src = rectoData;
+      versoImg.src = versoData;
+    });
   }
 };

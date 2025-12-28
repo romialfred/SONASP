@@ -192,12 +192,68 @@ const artisanPaiementsService = {
   async getVentesEnAttentePaiement(): Promise<VenteEnAttentePaiement[]> {
     try {
       const { data, error } = await supabase
-        .from('v_paiements_en_attente')
-        .select('*')
-        .order('date_facture', { ascending: true });
+        .from('snp_artisan_ventes_or')
+        .select(`
+          id,
+          numero_recu,
+          date_vente,
+          artisan_id,
+          montant_total_fcfa,
+          statut,
+          facture_definitive_id,
+          artisan:snp_artisans_miniers!inner(
+            nom,
+            prenoms,
+            raison_sociale,
+            numero_carte,
+            telephone
+          )
+        `)
+        .eq('statut', 'validee')
+        .order('date_vente', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+
+      const ventesWithFactures = await Promise.all(
+        (data || []).map(async (vente: any) => {
+          let facture = null;
+          if (vente.facture_definitive_id) {
+            const { data: factureData } = await supabase
+              .from('snp_artisan_factures_definitives')
+              .select('id, numero_facture, montant_net_a_payer, date_emission, statut')
+              .eq('id', vente.facture_definitive_id)
+              .maybeSingle();
+
+            facture = factureData;
+          }
+
+          const artisan = vente.artisan;
+          const nomComplet = artisan.raison_sociale || `${artisan.nom || ''} ${artisan.prenoms || ''}`.trim();
+
+          const dateVente = new Date(vente.date_vente);
+          const today = new Date();
+          const diffTime = Math.abs(today.getTime() - dateVente.getTime());
+          const joursAttente = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          return {
+            vente_id: vente.id,
+            reference_vente: vente.numero_recu || `VENTE-${vente.id.slice(0, 8)}`,
+            date_vente: vente.date_vente,
+            artisan_id: vente.artisan_id,
+            artisan_nom_complet: nomComplet,
+            numero_carte: artisan.numero_carte,
+            telephone: artisan.telephone || '',
+            facture_id: facture?.id || vente.facture_definitive_id,
+            numero_facture: facture?.numero_facture || null,
+            montant_net_a_payer: facture?.montant_net_a_payer || vente.montant_total_fcfa,
+            date_facture: facture?.date_emission || null,
+            statut_paiement: facture ? (facture.statut === 'payee' ? 'paye' : 'facture_emise') : 'non_paye',
+            jours_attente: joursAttente
+          };
+        })
+      );
+
+      return ventesWithFactures;
     } catch (error) {
       console.error('Erreur récupération ventes en attente:', error);
       throw error;

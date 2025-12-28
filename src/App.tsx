@@ -105,6 +105,8 @@ import VenteOrForm from './pages/artisan-minier/VenteOrForm';
 import VenteOrDetails from './pages/artisan-minier/VenteOrDetails';
 import InfractionForm from './pages/artisan-minier/InfractionForm';
 import InfractionDetails from './pages/artisan-minier/InfractionDetails';
+import PaiementsVentesDashboard from './pages/artisan-minier/PaiementsVentesDashboard';
+import PaiementForm from './pages/artisan-minier/PaiementForm';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -321,6 +323,22 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <VenteOrForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/paiements"
+              element={
+                <ProtectedRoute>
+                  <PaiementsVentesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/paiements/:venteId/nouveau"
+              element={
+                <ProtectedRoute>
+                  <PaiementForm />
                 </ProtectedRoute>
               }
             />

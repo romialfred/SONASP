@@ -161,6 +161,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.validationCartes'), path: '/artisan-minier/cartes/validation', icon: CheckCircle, iconColor: 'text-indigo-600' },
         { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
         { label: 'Ventes d\'Or', path: '/artisan-minier/ventes-or', icon: Coins, iconColor: 'text-yellow-600' },
+        { label: 'Paiements des Ventes', path: '/artisan-minier/paiements', icon: DollarSign, iconColor: 'text-green-600' },
       ],
     },
     {

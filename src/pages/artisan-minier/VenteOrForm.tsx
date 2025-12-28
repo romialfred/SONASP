@@ -9,6 +9,10 @@ import {
   FileText,
   Scale,
   Sparkles,
+  User,
+  TrendingUp,
+  Package,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -16,7 +20,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Loading } from '@/components/ui/Loading';
 import { LiveGoldPricePanel } from '@/components/prices/LiveGoldPricePanel';
-import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
+import { artisanGoldSalesService, type ArtisanStatistics } from '@/services/artisanGoldSalesService';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 
@@ -68,11 +73,19 @@ export default function VenteOrForm() {
   const isEditMode = Boolean(id);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingArtisans, setLoadingArtisans] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(false);
   const [formData, setFormData] = useState<VenteOrFormData>(INITIAL_FORM_DATA);
+  const [artisans, setArtisans] = useState<ArtisanMinier[]>([]);
+  const [artisanStats, setArtisanStats] = useState<ArtisanStatistics | null>(null);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   const quantiteOunces = formData.quantite_grammes / 31.1035;
   const quantiteKg = formData.quantite_grammes / 1000;
+
+  useEffect(() => {
+    loadArtisans();
+  }, []);
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -83,6 +96,40 @@ export default function VenteOrForm() {
   useEffect(() => {
     calculateTotal();
   }, [formData.quantite_grammes, formData.prix_unitaire_fcfa]);
+
+  useEffect(() => {
+    if (formData.artisan_id) {
+      loadArtisanStatistics(formData.artisan_id);
+    } else {
+      setArtisanStats(null);
+    }
+  }, [formData.artisan_id]);
+
+  const loadArtisans = async () => {
+    try {
+      setLoadingArtisans(true);
+      const data = await artisanMinierService.getAll();
+      const activeArtisans = data.filter((a: ArtisanMinier) => a.actif !== false);
+      setArtisans(activeArtisans);
+    } catch (error) {
+      console.error('Error loading artisans:', error);
+      showError('Impossible de charger la liste des artisans');
+    } finally {
+      setLoadingArtisans(false);
+    }
+  };
+
+  const loadArtisanStatistics = async (artisanId: string) => {
+    try {
+      setLoadingStats(true);
+      const stats = await artisanGoldSalesService.getArtisanStatistics(artisanId);
+      setArtisanStats(stats);
+    } catch (error) {
+      console.error('Error loading artisan statistics:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const loadVente = async (venteId: string) => {
     try {
@@ -96,7 +143,7 @@ export default function VenteOrForm() {
           quantite_grammes: vente.quantite_grammes,
           purete_karat: vente.purete_karat,
           purete_pourcentage: (vente.purete_karat / 24) * 100,
-          prix_unitaire_fcfa: vente.prix_unitaire_fcfa,
+          prix_unitaire_fcfa: vente.prix_kg_fcfa,
           montant_total_fcfa: vente.montant_total_fcfa,
           numero_recu: vente.numero_recu || '',
           observations: vente.observations || '',
@@ -165,9 +212,27 @@ export default function VenteOrForm() {
 
     try {
       setSaving(true);
+      const taxes = artisanGoldSalesService.calculateTaxes(
+        formData.quantite_grammes,
+        formData.prix_unitaire_fcfa * 1000
+      );
+
       const dataToSave = {
-        ...formData,
+        artisan_id: formData.artisan_id,
+        date_vente: formData.date_vente,
+        type_or: formData.type_or,
+        quantite_grammes: formData.quantite_grammes,
         purete_karat: Math.round(formData.purete_karat),
+        prix_kg_fcfa: formData.prix_unitaire_fcfa * 1000,
+        montant_brut_fcfa: taxes.montant_brut_fcfa,
+        tva_taux: 18,
+        tva_montant_fcfa: taxes.tva_montant_fcfa,
+        taxe_dev_comm_taux: 1,
+        taxe_dev_comm_montant_fcfa: taxes.taxe_dev_comm_montant_fcfa,
+        montant_total_fcfa: taxes.montant_total_fcfa,
+        numero_recu: formData.numero_recu,
+        observations: formData.observations,
+        statut: formData.statut,
       };
 
       if (isEditMode && id) {
@@ -185,7 +250,14 @@ export default function VenteOrForm() {
     }
   };
 
-  if (loading) {
+  const getArtisanDisplayName = (artisan: ArtisanMinier) => {
+    if (artisan.raison_sociale) {
+      return `${artisan.raison_sociale} (${artisan.numero_carte})`;
+    }
+    return `${artisan.nom || ''} ${artisan.prenoms || ''} (${artisan.numero_carte})`.trim();
+  };
+
+  if (loading || loadingArtisans) {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-96">
@@ -222,6 +294,92 @@ export default function VenteOrForm() {
             <form onSubmit={handleSubmit}>
               <Card className="p-6">
                 <div className="space-y-6">
+                  <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <User className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-semibold text-blue-900">Sélection de l'Artisan</h3>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Artisan Minier *
+                      </label>
+                      <select
+                        value={formData.artisan_id}
+                        onChange={(e) =>
+                          setFormData({ ...formData, artisan_id: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        disabled={isEditMode}
+                      >
+                        <option value="">-- Sélectionner un artisan --</option>
+                        {artisans.map((artisan) => (
+                          <option key={artisan.id} value={artisan.id}>
+                            {getArtisanDisplayName(artisan)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {loadingStats && (
+                    <div className="flex justify-center py-4">
+                      <Loading />
+                    </div>
+                  )}
+
+                  {artisanStats && !loadingStats && (
+                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-300">
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="w-5 h-5 text-indigo-600" />
+                          <h3 className="font-semibold text-indigo-900">
+                            Résumé de l'Artisan: {artisanStats.nom_complet}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                            <div className="text-xs text-gray-600 mb-1">Chiffre d'Affaires</div>
+                            <div className="text-lg font-bold text-indigo-700">
+                              {artisanStats.chiffre_affaires_total.toLocaleString('fr-FR')} FCFA
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                            <div className="text-xs text-gray-600 mb-1">Dernière Vente</div>
+                            <div className="text-sm font-semibold text-gray-800">
+                              {artisanStats.date_derniere_vente
+                                ? new Date(artisanStats.date_derniere_vente).toLocaleDateString('fr-FR')
+                                : 'Aucune'}
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                            <div className="text-xs text-gray-600 mb-1">Quantité ce Mois</div>
+                            <div className="text-lg font-bold text-emerald-700">
+                              {artisanStats.quantite_ce_mois_grammes.toFixed(2)} g
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ({artisanStats.nombre_ventes_ce_mois} vente{artisanStats.nombre_ventes_ce_mois > 1 ? 's' : ''})
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                            <div className="text-xs text-gray-600 mb-1">Quantité Totale</div>
+                            <div className="text-lg font-bold text-purple-700">
+                              {artisanStats.quantite_totale_grammes.toFixed(2)} g
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ({artisanStats.nombre_ventes_total} vente{artisanStats.nombre_ventes_total > 1 ? 's' : ''})
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -23,6 +23,18 @@ export interface ArtisanGoldSale {
   updated_by?: string;
 }
 
+export interface ArtisanStatistics {
+  artisan_id: string;
+  nom_complet: string;
+  chiffre_affaires_total: number;
+  date_derniere_vente: string | null;
+  nombre_ventes_total: number;
+  quantite_totale_grammes: number;
+  quantite_ce_mois_grammes: number;
+  nombre_ventes_ce_mois: number;
+  montant_ce_mois: number;
+}
+
 export const artisanGoldSalesService = {
   async getAll(): Promise<ArtisanGoldSale[]> {
     try {
@@ -197,5 +209,74 @@ export const artisanGoldSalesService = {
       taxe_dev_comm_montant_fcfa: taxe_dev_comm_montant,
       montant_total_fcfa: montant_total
     };
+  },
+
+  async getArtisanStatistics(artisanId: string): Promise<ArtisanStatistics | null> {
+    try {
+      const { data: artisan, error: artisanError } = await supabase
+        .from('snp_artisans_miniers')
+        .select('id, nom, prenoms, raison_sociale')
+        .eq('id', artisanId)
+        .maybeSingle();
+
+      if (artisanError || !artisan) {
+        throw new Error('Artisan non trouvé');
+      }
+
+      const nom_complet = artisan.raison_sociale || `${artisan.nom || ''} ${artisan.prenoms || ''}`.trim();
+
+      const { data: ventes, error: ventesError } = await supabase
+        .from('snp_artisan_ventes_or')
+        .select('date_vente, quantite_grammes, montant_total_fcfa')
+        .eq('artisan_id', artisanId)
+        .neq('statut', 'annulee')
+        .order('date_vente', { ascending: false });
+
+      if (ventesError) {
+        throw ventesError;
+      }
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let chiffre_affaires_total = 0;
+      let quantite_totale_grammes = 0;
+      let quantite_ce_mois_grammes = 0;
+      let nombre_ventes_ce_mois = 0;
+      let montant_ce_mois = 0;
+      let date_derniere_vente: string | null = null;
+
+      if (ventes && ventes.length > 0) {
+        date_derniere_vente = ventes[0].date_vente;
+
+        ventes.forEach((vente) => {
+          chiffre_affaires_total += vente.montant_total_fcfa || 0;
+          quantite_totale_grammes += vente.quantite_grammes || 0;
+
+          const venteDate = new Date(vente.date_vente);
+          if (venteDate.getMonth() === currentMonth && venteDate.getFullYear() === currentYear) {
+            quantite_ce_mois_grammes += vente.quantite_grammes || 0;
+            nombre_ventes_ce_mois += 1;
+            montant_ce_mois += vente.montant_total_fcfa || 0;
+          }
+        });
+      }
+
+      return {
+        artisan_id: artisanId,
+        nom_complet,
+        chiffre_affaires_total,
+        date_derniere_vente,
+        nombre_ventes_total: ventes?.length || 0,
+        quantite_totale_grammes,
+        quantite_ce_mois_grammes,
+        nombre_ventes_ce_mois,
+        montant_ce_mois,
+      };
+    } catch (error: any) {
+      console.error('Error fetching artisan statistics:', error);
+      return null;
+    }
   }
 };

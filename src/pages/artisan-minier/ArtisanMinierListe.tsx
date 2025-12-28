@@ -104,11 +104,22 @@ const TYPE_ICONS = {
   intermediaire: Handshake
 };
 
-function calculateTimeUntilExpiration(expirationDate?: string) {
-  if (!expirationDate) return { expired: true, years: 0, months: 0, days: 0, text: 'Non définie' };
+function calculateTimeUntilExpiration(expirationDate?: string, createdDate?: string) {
+  let expiry: Date;
+
+  if (!expirationDate && !createdDate) {
+    return { expired: true, years: 0, months: 0, days: 0, text: 'Non définie' };
+  }
+
+  if (!expirationDate && createdDate) {
+    const created = new Date(createdDate);
+    expiry = new Date(created);
+    expiry.setFullYear(expiry.getFullYear() + 1);
+  } else {
+    expiry = new Date(expirationDate!);
+  }
 
   const now = new Date();
-  const expiry = new Date(expirationDate);
   const diffMs = expiry.getTime() - now.getTime();
 
   if (diffMs <= 0) {
@@ -415,7 +426,10 @@ export default function ArtisanMinierListe() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredArtisans.map((artisan) => {
-                  const timeUntilExpiry = calculateTimeUntilExpiration(artisan.carte?.date_expiration);
+                  const timeUntilExpiry = calculateTimeUntilExpiration(
+                    artisan.carte?.date_expiration,
+                    artisan.carte?.date_creation || artisan.created_at
+                  );
                   const colors = TYPE_COLORS[artisan.type_artisan];
 
                   return (
@@ -426,11 +440,11 @@ export default function ArtisanMinierListe() {
                       style={{ borderColor: colors.border }}
                     >
                       <div
-                        className="p-4"
+                        className="p-4 min-h-[112px] flex items-center"
                         style={{ backgroundColor: colors.headerBg }}
                       >
-                        <div className="flex items-start justify-between" style={{ color: colors.headerText }}>
-                          <div className="flex-1">
+                        <div className="flex items-start justify-between w-full text-white">
+                          <div className="flex-1 pr-3">
                             <div className="flex items-center gap-2 mb-2">
                               <div
                                 className="p-1.5 rounded-lg"
@@ -452,22 +466,20 @@ export default function ArtisanMinierListe() {
                                 {artisan.type_artisan}
                               </span>
                             </div>
-                            <h3 className="text-sm font-bold leading-tight">
+                            <h3 className="text-sm font-bold leading-tight text-white">
                               {artisan.type_personne === 'physique'
                                 ? `${artisan.nom || ''} ${artisan.prenoms || ''}`.trim()
                                 : artisan.raison_sociale || 'N/A'
                               }
                             </h3>
                           </div>
-                          {artisan.photo_url && (
-                            <div className="ml-3 flex-shrink-0">
-                              <img
-                                src={artisan.photo_url}
-                                alt="Photo"
-                                className="w-16 h-20 object-cover rounded-lg border-2 border-white shadow-lg"
-                              />
-                            </div>
-                          )}
+                          <div className="flex-shrink-0">
+                            <img
+                              src={artisan.photo_url || '/sonasp_logo.png'}
+                              alt={artisan.photo_url ? 'Photo' : 'Logo SONASP'}
+                              className="w-16 h-20 object-cover rounded-lg border-2 border-white shadow-lg bg-white"
+                            />
+                          </div>
                         </div>
                       </div>
 

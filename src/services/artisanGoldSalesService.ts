@@ -75,7 +75,38 @@ export const artisanGoldSalesService = {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Générer le numéro de reçu
+      if (!sale.artisan_id) {
+        throw new Error('Artisan requis pour créer une vente');
+      }
+
+      const { data: artisan, error: artisanError } = await supabase
+        .from('snp_artisans_miniers')
+        .select('actif, motif_desactivation')
+        .eq('id', sale.artisan_id)
+        .single();
+
+      if (artisanError) {
+        throw new Error('Artisan non trouvé');
+      }
+
+      if (!artisan.actif) {
+        throw new Error(
+          `Vente impossible: Artisan désactivé${artisan.motif_desactivation ? ' - ' + artisan.motif_desactivation : ''}`
+        );
+      }
+
+      const { data: carte, error: carteError } = await supabase
+        .from('snp_cartes_professionnelles')
+        .select('*')
+        .eq('artisan_id', sale.artisan_id)
+        .in('statut', ['validee', 'en_exploitation'])
+        .gte('date_expiration', new Date().toISOString().split('T')[0])
+        .maybeSingle();
+
+      if (carteError || !carte) {
+        throw new Error('Vente impossible: Aucune carte professionnelle valide');
+      }
+
       const { data: numeroRecu, error: numeroError } = await supabase
         .rpc('generate_numero_recu_vente_or');
 

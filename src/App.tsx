@@ -96,6 +96,7 @@ import FreightShipmentsRefining from './pages/refining/FreightShipmentsRefining'
 import ArtisanMinierDashboard from './pages/artisan-minier/ArtisanMinierDashboard';
 import ArtisanMinierListe from './pages/artisan-minier/ArtisanMinierListe';
 import ArtisanMinierDetails from './pages/artisan-minier/ArtisanMinierDetails';
+import ArtisanMinierEdit from './pages/artisan-minier/ArtisanMinierEdit';
 import CarteSuivi from './pages/artisan-minier/CarteSuivi';
 import CarteValidation from './pages/artisan-minier/CarteValidation';
 import CarteExpirations from './pages/artisan-minier/CarteExpirations';
@@ -264,6 +265,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <ArtisanMinierDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <ArtisanMinierEdit />
                 </ProtectedRoute>
               }
             />

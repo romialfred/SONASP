@@ -37,6 +37,11 @@ export interface ArtisanMinier {
 
   observations?: string;
 
+  actif?: boolean;
+  desactive_le?: string;
+  desactive_par?: string;
+  motif_desactivation?: string;
+
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -353,5 +358,108 @@ export const artisanMinierService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async desactiver(artisanId: string, motif: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('snp_artisans_miniers')
+      .update({
+        actif: false,
+        desactive_le: new Date().toISOString(),
+        desactive_par: user?.id,
+        motif_desactivation: motif
+      })
+      .eq('id', artisanId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await this.addActivity({
+      artisan_id: artisanId,
+      type_activite: 'desactivation',
+      description: `Artisan désactivé: ${motif}`
+    });
+
+    return data;
+  },
+
+  async reactiver(artisanId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: artisan } = await supabase
+      .from('snp_artisans_miniers')
+      .select('*')
+      .eq('id', artisanId)
+      .single();
+
+    if (!artisan) throw new Error('Artisan non trouvé');
+
+    const { data: carteValide } = await supabase
+      .from('snp_cartes_professionnelles')
+      .select('*')
+      .eq('artisan_id', artisanId)
+      .in('statut', ['validee', 'en_exploitation'])
+      .gte('date_expiration', new Date().toISOString().split('T')[0])
+      .single();
+
+    if (!carteValide) {
+      throw new Error('Impossible de réactiver: aucune carte professionnelle valide');
+    }
+
+    const { data, error } = await supabase
+      .from('snp_artisans_miniers')
+      .update({
+        actif: true,
+        desactive_le: null,
+        desactive_par: null,
+        motif_desactivation: null,
+        updated_by: user?.id
+      })
+      .eq('id', artisanId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await this.addActivity({
+      artisan_id: artisanId,
+      type_activite: 'reactivation',
+      description: 'Artisan réactivé'
+    });
+
+    return data;
+  },
+
+  async validateActifPourVente(artisanId: string) {
+    const { data: artisan, error } = await supabase
+      .from('snp_artisans_miniers')
+      .select('actif, motif_desactivation')
+      .eq('id', artisanId)
+      .single();
+
+    if (error) throw error;
+    if (!artisan) throw new Error('Artisan non trouvé');
+    if (!artisan.actif) {
+      throw new Error(
+        `Artisan désactivé: ${artisan.motif_desactivation || 'Raison non spécifiée'}. Ventes et paiements bloqués.`
+      );
+    }
+
+    const { data: carte } = await supabase
+      .from('snp_cartes_professionnelles')
+      .select('*')
+      .eq('artisan_id', artisanId)
+      .in('statut', ['validee', 'en_exploitation'])
+      .gte('date_expiration', new Date().toISOString().split('T')[0])
+      .single();
+
+    if (!carte) {
+      throw new Error('Aucune carte professionnelle valide. Ventes bloquées.');
+    }
+
+    return true;
   }
 };

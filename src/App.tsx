@@ -108,6 +108,10 @@ import InfractionDetails from './pages/artisan-minier/InfractionDetails';
 import PaiementsVentesDashboard from './pages/artisan-minier/PaiementsVentesDashboard';
 import PaiementForm from './pages/artisan-minier/PaiementForm';
 import PaiementsHistorique from './pages/artisan-minier/PaiementsHistorique';
+import CentreRapportsAnalyse from './pages/artisan-minier/CentreRapportsAnalyse';
+import RapportChiffreAffaires from './pages/artisan-minier/RapportChiffreAffaires';
+import RapportQuantites from './pages/artisan-minier/RapportQuantites';
+import RapportTaxesRoyalties from './pages/artisan-minier/RapportTaxesRoyalties';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
@@ -364,6 +368,38 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <InfractionDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/rapports"
+              element={
+                <ProtectedRoute>
+                  <CentreRapportsAnalyse />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/rapports/chiffre-affaires"
+              element={
+                <ProtectedRoute>
+                  <RapportChiffreAffaires />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/rapports/quantites"
+              element={
+                <ProtectedRoute>
+                  <RapportQuantites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-minier/rapports/taxes"
+              element={
+                <ProtectedRoute>
+                  <RapportTaxesRoyalties />
                 </ProtectedRoute>
               }
             />

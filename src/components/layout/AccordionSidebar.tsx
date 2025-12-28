@@ -162,6 +162,7 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
         { label: 'Ventes d\'Or', path: '/artisan-minier/ventes-or', icon: Coins, iconColor: 'text-yellow-600' },
         { label: 'Paiements des Ventes', path: '/artisan-minier/paiements', icon: DollarSign, iconColor: 'text-green-600' },
+        { label: 'Centre de Rapports & Analyse', path: '/artisan-minier/rapports', icon: BarChart3, iconColor: 'text-blue-600' },
       ],
     },
     {

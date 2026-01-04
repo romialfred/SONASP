@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
+import * as QRCode from 'qrcode';
 import { ArtisanMinier } from './artisanMinierService';
 import { CarteProfessionnelle } from './carteProfessionnelleService';
 

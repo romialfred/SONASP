@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   User,
-  Building2,
   Phone,
   Mail,
   MapPin,
@@ -12,14 +11,12 @@ import {
   FileText,
   Eye,
   Download,
-  RefreshCw,
   TrendingUp,
   Coins,
   AlertTriangle,
   Plus,
   Edit2,
   Search,
-  Filter,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -61,7 +58,6 @@ export default function ArtisanMinierDetails() {
   const [carte, setCarte] = useState<any>(null);
   const [carteRectoPreview, setCarteRectoPreview] = useState<string | null>(null);
   const [carteVersoPreview, setCarteVersoPreview] = useState<string | null>(null);
-  const [generatingCarte, setGeneratingCarte] = useState(false);
   const [activeTab, setActiveTab] = useState('informations');
   const [transactions, setTransactions] = useState<ArtisanGoldSale[]>([]);
   const [infractions, setInfractions] = useState<ArtisanInfraction[]>([]);
@@ -70,8 +66,7 @@ export default function ArtisanMinierDetails() {
   const [transactionSearch, setTransactionSearch] = useState('');
   const [transactionDateRange, setTransactionDateRange] = useState({ start: '', end: '' });
   const [infractionSearch, setInfractionSearch] = useState('');
-  const [showInfractionModal, setShowInfractionModal] = useState(false);
-  const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
+  const { alertState, showError, closeAlert } = useCustomAlert();
 
   useEffect(() => {
     if (id) {
@@ -490,7 +485,7 @@ export default function ArtisanMinierDetails() {
                           src={carteRectoPreview}
                           alt="Recto"
                           className="w-full rounded-lg shadow-lg border border-gray-200"
-                          onError={(e) => {
+                          onError={() => {
                             console.error('Erreur de chargement du recto:', carteRectoPreview);
                           }}
                         />
@@ -510,7 +505,7 @@ export default function ArtisanMinierDetails() {
                           src={carteVersoPreview}
                           alt="Verso"
                           className="w-full rounded-lg shadow-lg border border-gray-200"
-                          onError={(e) => {
+                          onError={() => {
                             console.error('Erreur de chargement du verso:', carteVersoPreview);
                           }}
                         />

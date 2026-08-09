@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, Package, DollarSign, Users, Calendar, Info, ChevronDown, ChevronUp, TrendingUp, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calculator, Package, DollarSign, Users, Info, ChevronDown, ChevronUp, TrendingUp, AlertCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -392,13 +392,13 @@ export default function PreSaleCreate() {
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <span className="text-sm text-gray-600">Freight Cost</span>
                         <span className="font-medium text-red-600">
-                          -{formatCurrency(calculations.freight_cost)}
+                          -{formatCurrency(formData.freight_cost || 0)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <span className="text-sm text-gray-600">Other Costs</span>
                         <span className="font-medium text-red-600">
-                          -{formatCurrency(calculations.other_costs)}
+                          -{formatCurrency(formData.other_costs || 0)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">

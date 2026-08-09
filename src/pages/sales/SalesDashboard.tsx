@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Plus, ArrowRight, XCircle, Package, Award, Users, Building2, Factory, Truck, Calendar } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Users, Building2, Factory, Truck, Calendar } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { formatCurrency, formatWeight } from '@/utils/salesUtils';
+import { formatCurrency } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {

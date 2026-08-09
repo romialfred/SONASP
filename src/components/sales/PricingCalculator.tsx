@@ -28,7 +28,7 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
   const [loading, setLoading] = useState(false);
   const [selectedMechanism, setSelectedMechanism] = useState<string | null>(null);
 
-  const GRAMS_PER_OZ = 31.1035;
+  const GRAMS_PER_OZ = 31.1034768;
 
   useEffect(() => {
     if (availableStockOz > 0) {

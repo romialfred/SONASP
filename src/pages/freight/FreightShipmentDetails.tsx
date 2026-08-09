@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, MapPin, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane, Loader2 } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -128,7 +128,7 @@ export default function FreightShipmentDetails() {
           auContent: prod.pure_gold_grams,
           agContent: prod.silver_content_grams || 0,
           auContentTroyOz: prod.pure_gold_oz,
-          agContentTroyOz: (prod.silver_content_grams || 0) / 31.1035,
+          agContentTroyOz: (prod.silver_content_grams || 0) / 31.1034768,
           valueUSD: prod.pure_gold_oz * shipment.gold_price_usd_per_oz
         })),
         signatures: (shipment.signatories || [])

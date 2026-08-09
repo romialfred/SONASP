@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { extractTextFromPDF, extractAssayData, type ExtractedAssayData } from './pdfParsingService';
+import { extractTextFromPDF, extractAssayData } from './pdfParsingService';
 
 export interface AssayCertificate {
   id: string;

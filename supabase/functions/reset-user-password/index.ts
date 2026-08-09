@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*', // audit V11
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
@@ -90,13 +90,15 @@ Deno.serve(async (req: Request) => {
 
     console.log('[reset-password] Resetting password for:', userData.email);
 
-    // Generate random temporary password
+    // SÉCURITÉ (audit V12) : générateur cryptographiquement sûr (CSPRNG), pas Math.random.
     const generateRandomPassword = () => {
-      const length = 12;
+      const length = 16;
       const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+      const bytes = new Uint32Array(length);
+      crypto.getRandomValues(bytes);
       let pwd = '';
       for (let i = 0; i < length; i++) {
-        pwd += charset.charAt(Math.floor(Math.random() * charset.length));
+        pwd += charset.charAt(bytes[i] % charset.length);
       }
       return pwd;
     };
@@ -215,14 +217,13 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error: any) {
+    // SÉCURITÉ (audit V15) : détail loggué côté serveur, jamais exposé au client.
     console.error('[reset-password] Error resetting password:', error);
-    console.error('[reset-password] Error stack:', error.stack);
 
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message || 'An unexpected error occurred',
-        details: error.stack || '',
       }),
       {
         status: 400,

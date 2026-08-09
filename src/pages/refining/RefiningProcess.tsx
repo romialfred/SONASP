@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useNotification } from '@/contexts/NotificationContext';
 import { formatWeightGrams, formatWeightOunces } from '@/utils/numberUtils';
@@ -45,7 +44,6 @@ interface FreightShipment {
 
 export function RefiningProcess() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { showSuccess, showError } = useNotification();
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState<FreightShipment[]>([]);
@@ -152,13 +150,13 @@ export function RefiningProcess() {
 
       // Filtre par date
       if (filters.dateFrom) {
-        const shipmentDate = new Date(shipment.shipment_date);
+        const shipmentDate = new Date(shipment.created_at);
         const fromDate = new Date(filters.dateFrom);
         if (shipmentDate < fromDate) return false;
       }
 
       if (filters.dateTo) {
-        const shipmentDate = new Date(shipment.shipment_date);
+        const shipmentDate = new Date(shipment.created_at);
         const toDate = new Date(filters.dateTo);
         toDate.setHours(23, 59, 59, 999);
         if (shipmentDate > toDate) return false;
@@ -185,7 +183,6 @@ export function RefiningProcess() {
   const inStockCount = filteredShipments.filter(s => s.status === 'in_stock').length;
 
   const totalGoldOz = filteredShipments.reduce((sum, s) => sum + (s.total_pure_gold_oz || 0), 0);
-  const totalValue = filteredShipments.reduce((sum, s) => sum + (s.total_value_usd || 0), 0);
 
   const getStatusBadge = (status: FreightShipmentStatus) => {
     const statusConfig = {
@@ -256,17 +253,17 @@ export function RefiningProcess() {
 
   const handleExport = (selectedColumns: string[]) => {
     setVisibleColumns(selectedColumns);
-    exportToExcel(filteredShipments, selectedColumns, 'processus_raffinage');
+    exportToExcel(filteredShipments as any,selectedColumns, 'processus_raffinage');
     showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
   };
 
   const handleQuickExportExcel = () => {
-    exportToExcel(filteredShipments, visibleColumns, 'processus_raffinage');
+    exportToExcel(filteredShipments as any,visibleColumns, 'processus_raffinage');
     showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
   };
 
   const handleQuickExportCSV = () => {
-    exportToCSV(filteredShipments, visibleColumns, 'processus_raffinage');
+    exportToCSV(filteredShipments as any,visibleColumns, 'processus_raffinage');
     showSuccess('Export réussi', 'Le fichier CSV a été téléchargé avec succès');
   };
 

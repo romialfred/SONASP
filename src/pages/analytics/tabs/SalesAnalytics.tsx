@@ -4,7 +4,7 @@ import { KPICard } from '@/components/analytics/KPICard';
 import { AreaChartWidget } from '@/components/charts/AreaChartWidget';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
-import { DollarSign, TrendingUp, Target, Users, Clock, AlertTriangle } from 'lucide-react';
+import { DollarSign, TrendingUp, Target, Clock, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/utils/salesUtils';
 
 export function SalesAnalytics() {

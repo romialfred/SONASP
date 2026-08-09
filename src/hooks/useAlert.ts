@@ -51,6 +51,27 @@ export function useAlert() {
       );
     },
 
+    // Dispatch générique par type (compat) : showAlert(message, 'error' | 'success' | ...)
+    showAlert: (
+      message: string,
+      type: 'success' | 'error' | 'info' | 'warning' = 'info',
+      title?: string
+    ) => {
+      switch (type) {
+        case 'success':
+          dialog.showSuccess(title || t('common.success', 'Success'), message);
+          break;
+        case 'error':
+          dialog.showError(title || t('common.error', 'Error'), message);
+          break;
+        case 'warning':
+          dialog.showWarning(title || t('common.warning', 'Warning'), message);
+          break;
+        default:
+          dialog.showInfo(title || t('common.information', 'Information'), message);
+      }
+    },
+
     // Custom dialog with full control
     custom: dialog.showDialog,
 

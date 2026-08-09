@@ -7,7 +7,7 @@ import {
   TrendingUp, Download, Calendar, DollarSign,
   BarChart3, ArrowUpRight, ArrowDownRight, AlertCircle
 } from 'lucide-react';
-import { Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
+import { Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
 import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';

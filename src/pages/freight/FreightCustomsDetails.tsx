@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, FileText, Upload, Download, Eye, Trash2,
-  Calendar, Package, Truck, MapPin, User, Phone, Mail,
+  ArrowLeft, FileText, Upload, Eye, Trash2,
   FileCheck, AlertCircle, ChevronRight
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
 import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
@@ -19,16 +18,11 @@ import {
   Lightbulb,
   Building2,
   MapPin,
-  Package,
   ArrowRight,
-  Sparkles,
-  CircleDollarSign,
 } from 'lucide-react';
 import {
-  calculatePricingComparison,
   getQuantityRecommendation,
   getApprovedRefineries,
-  createGoldSale,
   type PricingMechanism,
   type QuantityRecommendation,
 } from '@/services/goldTradeSpaceService';
@@ -58,12 +52,12 @@ interface MiningCompanyWithStock extends MiningCompany {
 export function GoldTradeSpace() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { showSuccess, showError } = useAlert();
+  const alert = useAlert();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
   const [miningCompaniesWithStock, setMiningCompaniesWithStock] = useState<MiningCompanyWithStock[]>([]);
-  const [totalStock, setTotalStock] = useState(0);
+  const [, setTotalStock] = useState(0);
 
   const [selectedMiningCompany, setSelectedMiningCompany] = useState('');
   const [availableStock, setAvailableStock] = useState(0);
@@ -74,13 +68,11 @@ export function GoldTradeSpace() {
 
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedRefinery, setSelectedRefinery] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('');
   const [mansaResourcesId, setMansaResourcesId] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
-  const [processingOrder, setProcessingOrder] = useState(false);
 
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [, setIsPanelCollapsed] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -131,7 +123,7 @@ export function GoldTradeSpace() {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      showError('Failed to load marketplace data');
+      alert.error('Failed to load marketplace data');
     } finally {
       setLoading(false);
     }
@@ -221,7 +213,7 @@ export function GoldTradeSpace() {
 
   const handleCreateSale = () => {
     if (!selectedMechanism || !comparisonData) {
-      showError('Please complete the simulation first');
+      alert.error('Please complete the simulation first');
       return;
     }
 
@@ -355,7 +347,7 @@ export function GoldTradeSpace() {
                                 <span className="text-base text-gray-500 ml-1">{t('tradeSpace.oz')}</span>
                               </p>
                               <p className="text-xs text-gray-600">
-                                {(company.availableStock * 31.1035).toFixed(2)} {t('tradeSpace.grams')}
+                                {(company.availableStock * 31.1034768).toFixed(2)} {t('tradeSpace.grams')}
                               </p>
                             </div>
                           </>
@@ -427,7 +419,7 @@ export function GoldTradeSpace() {
                         {availableStock.toFixed(3)} {t('tradeSpace.oz')}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {(availableStock * 31.1035).toFixed(2)} g
+                        {(availableStock * 31.1034768).toFixed(2)} g
                       </p>
                     </div>
                     {availableStock > 0 && (

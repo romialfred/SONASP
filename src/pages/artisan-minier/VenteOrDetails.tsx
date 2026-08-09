@@ -250,7 +250,7 @@ export default function VenteOrDetails() {
                             {vente.quantite_grammes.toFixed(2)} grammes
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {(vente.quantite_grammes / 31.1035).toFixed(3)} oz
+                            {(vente.quantite_grammes / 31.1034768).toFixed(3)} oz
                           </p>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">

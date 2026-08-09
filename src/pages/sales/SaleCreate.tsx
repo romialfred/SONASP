@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Package, AlertCircle, CheckCircle, Building2, User, FileText, Lock } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Package, Building2, User, FileText, Lock } from 'lucide-react';
 import type { PricingMechanism } from '@/services/goldTradeSpaceService';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -23,11 +22,6 @@ import {
   type AuthorizedCustomer
 } from '@/services/goldSalesSettingsService';
 import { getInventoryBySeller } from '@/services/inventoryService';
-import {
-  generateSaleInvoicePDF,
-  downloadInvoicePDF,
-  type InvoiceData
-} from '@/services/saleInvoiceService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
 import { createSaleInventoryTransactions } from '@/services/inventoryTransactionService';
@@ -40,7 +34,6 @@ interface MiningCompany {
 }
 
 export function SaleCreate() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -75,8 +68,6 @@ export function SaleCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [availableInventory, setAvailableInventory] = useState({ availableOz: 0, availableGrams: 0 });
   const [loadingInventory, setLoadingInventory] = useState(false);
-  const [invoicePdfBlob, setInvoicePdfBlob] = useState<Blob | null>(null);
-  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
 
@@ -249,71 +240,6 @@ export function SaleCreate() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const generateInvoicePreview = async () => {
-    if (!calculations || !selectedMiningCompany || !selectedCustomer) return;
-
-    try {
-      setGeneratingPdf(true);
-
-      // Fetch full customer details
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', formData.customerId)
-        .single();
-
-      const invoiceData: InvoiceData = {
-        invoiceNumber: `DRAFT-${Date.now()}`,
-        invoiceDate: new Date().toISOString().split('T')[0],
-
-        // Seller Information
-        sellerName: selectedMiningCompany.name,
-        sellerAddress: selectedMiningCompany.abbreviation,
-        sellerCity: '',
-        sellerCountry: selectedMiningCompany.country,
-        sellerEmail: '',
-        sellerPhone: '',
-
-        // Customer Information
-        customerName: selectedCustomer.customer_name,
-        customerAddress: customerData?.address || '',
-        customerCity: '',
-        customerCountry: customerData?.country || '',
-        customerEmail: customerData?.email || '',
-        customerPhone: customerData?.phone || '',
-
-        // Sale Details
-        quantityOz: typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz),
-        quantityGrams: (typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1035,
-        pricePerOz: parseFloat(formData.londonAMRate),
-        currency: 'USD',
-
-        // Pricing Details
-        grossProceeds: calculations.grossProceeds,
-        freightCost: calculations.freight,
-        otherCosts: calculations.otherCosts,
-        netProceeds: calculations.netProceeds,
-        royaltiesPercentage: 3,
-        royaltiesAmount: calculations.royalties,
-        finalAmount: calculations.finalAmount,
-
-        // Additional Info
-        mechanismType: formData.mechanismType,
-        mechanismDisplayName: formData.mechanismDisplayName,
-        paymentTerms: mechanismData ? `Payment terms: ${mechanismData.settlementDays} days` : undefined,
-        notes: 'This is a draft invoice. Final invoice will be generated after sale approval.'
-      };
-
-      const pdfBlob = await generateSaleInvoicePDF(invoiceData);
-      setInvoicePdfBlob(pdfBlob);
-    } catch (error) {
-      console.error('Error generating invoice preview:', error);
-      alert.error('Failed to generate invoice preview');
-    } finally {
-      setGeneratingPdf(false);
-    }
-  };
-
   const updateInvoicePreviewData = async () => {
     if (!calculations || !selectedMiningCompany || !selectedCustomer) return;
 
@@ -332,10 +258,10 @@ export function SaleCreate() {
       .single();
 
     const quantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
-    const quantityGrams = quantityOz * 31.1035;
+    const quantityGrams = quantityOz * 31.1034768;
     const quantityKg = quantityGrams / 1000;
     const pricePerOz = parseFloat(formData.londonAMRate);
-    const pricePerKg = pricePerOz * (1000 / 31.1035); // Convert $/oz to $/kg
+    const pricePerKg = pricePerOz * (1000 / 31.1034768); // Convert $/oz to $/kg
 
     // Calculate amount in words
     const finalAmountInWords = formatNumberInWords(calculations.finalAmount);
@@ -415,17 +341,6 @@ export function SaleCreate() {
     }, 100);
   };
 
-  const handleDownloadInvoice = () => {
-    if (!invoicePdfBlob) return;
-    downloadInvoicePDF(invoicePdfBlob, `DRAFT-${Date.now()}`);
-  };
-
-  const handlePreviewInvoice = () => {
-    if (!invoicePdfBlob) return;
-    const url = URL.createObjectURL(invoicePdfBlob);
-    window.open(url, '_blank');
-  };
-
   const handleSubmit = async () => {
     if (!validateForm() || !showCalculations) return;
 
@@ -448,7 +363,7 @@ export function SaleCreate() {
       }
 
       const totalAvailableGrams = (availableStock || []).reduce((sum, item) => sum + (item.quantity_grams || 0), 0);
-      const totalAvailableOz = totalAvailableGrams / 31.1035;
+      const totalAvailableOz = totalAvailableGrams / 31.1034768;
 
       // Get already sold quantity for this mining company
       const { data: existingSales, error: salesError } = await supabase
@@ -468,7 +383,7 @@ export function SaleCreate() {
       // Validate: requested quantity must not exceed remaining available stock
       if (requestedQuantityOz > remainingAvailableOz) {
         const deficitOz = requestedQuantityOz - remainingAvailableOz;
-        const deficitGrams = deficitOz * 31.1035;
+        const deficitGrams = deficitOz * 31.1034768;
 
         alert.error(
           `Stock insuffisant! Vous essayez de vendre ${requestedQuantityOz.toFixed(2)} oz ` +
@@ -656,7 +571,7 @@ export function SaleCreate() {
                     {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1035).toFixed(2)} g
+                    {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1034768).toFixed(2)} g
                   </p>
                 </div>
                 <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
@@ -953,7 +868,7 @@ export function SaleCreate() {
                   <span className="font-semibold text-gray-900">
                     {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)).toFixed(3)} oz
                     <span className="text-sm text-gray-500 ml-2">
-                      ({((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1035).toFixed(2)} g)
+                      ({((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1034768).toFixed(2)} g)
                     </span>
                   </span>
                 </div>

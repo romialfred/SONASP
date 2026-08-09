@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { TrafficLightIndicator } from '@/components/analytics/TrafficLightIndicator';
 import { KPICard } from '@/components/analytics/KPICard';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
-import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { PieChartWidget } from '@/components/charts/PieChartWidget';
 import { Users, DollarSign, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/utils/salesUtils';

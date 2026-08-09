@@ -8,22 +8,19 @@ import {
   CheckCircle,
   ChevronLeft,
   Lock,
-  Unlock,
   Target,
-  Activity,
   BarChart3,
   Info,
   Clock,
   Building2,
   PieChart
 } from 'lucide-react';
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import * as XLSX from 'xlsx';
 import { supabase } from '../../lib/supabase';
 import { MainLayout } from '../../components/layout/MainLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Loading } from '../../components/ui/Loading';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
 import { filterOperationalMiningCompanies } from '../../utils/miningCompanyFilters';
 import { formatNumberWithSpaces, formatPercentage } from '../../utils/numberUtils';
@@ -237,7 +234,7 @@ function ProductionBrowserTab({
                 label={{ value: 'Onces (oz)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#64748b' } }}
               />
               <Tooltip
-                formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
+                formatter={(value) => `${formatNumberWithSpaces(Number(value), 2)} oz`}
                 contentStyle={{ fontSize: '12px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
               />
               <Legend
@@ -271,7 +268,6 @@ export function BudgetManagementPage() {
   const [activeTab, setActiveTab] = useState<'matrix' | 'browser'>('matrix');
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
-  const [groupTotals, setGroupTotals] = useState({ budget: 0, forecast: 0 });
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -704,18 +700,6 @@ export function BudgetManagementPage() {
     if (hasData) return 'completed';
     if (canRevise) return 'active';
     return 'upcoming';
-  };
-
-  const exportToExcel = (data: any[], filename: string) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Production Data');
-
-    // Auto-size columns
-    const maxWidth = data.reduce((w, r) => Math.max(w, ...Object.keys(r).map(k => String(r[k]).length)), 10);
-    ws['!cols'] = Object.keys(data[0] || {}).map(() => ({ wch: maxWidth + 2 }));
-
-    XLSX.writeFile(wb, filename);
   };
 
   return (
@@ -1247,17 +1231,17 @@ export function BudgetManagementPage() {
                       innerRadius={60}
                       outerRadius={90}
                       labelLine={false}
-                      label={(entry) => `${entry.percentage}%`}
+                      label={(entry) => `${((entry.percent ?? 0) * 100).toFixed(0)}%`}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {getQuarterlyDistributionData().map((entry, index) => {
+                      {getQuarterlyDistributionData().map((_entry, index) => {
                         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
                         return <Cell key={`cell-${index}`} fill={colors[index]} />;
                       })}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
+                      formatter={(value) => `${formatNumberWithSpaces(Number(value), 2)} oz`}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Legend
@@ -1296,11 +1280,11 @@ export function BudgetManagementPage() {
                       width={35}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`, 'Budget']}
+                      formatter={(value) => `${formatNumberWithSpaces(Number(value), 2)} oz`}
                       contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                     />
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
-                      {getMonthlyBudgetData().map((entry, index) => {
+                      {getMonthlyBudgetData().map((_entry, index) => {
                         const colors = [
                           '#3b82f6', '#10b981', '#f59e0b', // Q1
                           '#06b6d4', '#14b8a6', '#84cc16', // Q2
@@ -1340,18 +1324,18 @@ export function BudgetManagementPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={true}
-                        label={(entry) => `${entry.percentage}%`}
+                        label={(entry) => `${((entry.percent ?? 0) * 100).toFixed(0)}%`}
                         outerRadius={90}
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {getQuarterMonthsData().map((entry, index) => {
+                        {getQuarterMonthsData().map((_entry, index) => {
                           const colors = ['#64748b', '#14b8a6', '#f59e0b'];
                           return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
+                        formatter={(value) => `${formatNumberWithSpaces(Number(value), 2)} oz`}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend
@@ -1384,18 +1368,18 @@ export function BudgetManagementPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={true}
-                        label={(entry) => `${entry.percentage}%`}
+                        label={(entry) => `${((entry.percent ?? 0) * 100).toFixed(0)}%`}
                         outerRadius={90}
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {getQuarterlyDistributionData().map((entry, index) => {
+                        {getQuarterlyDistributionData().map((_entry, index) => {
                           const colors = ['#64748b', '#14b8a6', '#f59e0b', '#0891b2'];
                           return <Cell key={`cell-${index}`} fill={colors[index]} />;
                         })}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [`${formatNumberWithSpaces(value, 2)} oz`]}
+                        formatter={(value) => `${formatNumberWithSpaces(Number(value), 2)} oz`}
                         contentStyle={{ fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                       />
                       <Legend

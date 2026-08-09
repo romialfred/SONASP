@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Calendar, Building, Package, FileText, History, Users, Ship, Check, ClipboardList, FlaskConical, Receipt, Truck, Paperclip, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Package, FileText, History, Users, Ship, Check, ClipboardList, FlaskConical, Receipt, Truck, Paperclip } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -608,7 +608,7 @@ export function ShippingPreparationDetailsEnhanced() {
                                     {formatWeight(item.net_weight_grams)}
                                   </td>
                                   <td className="px-4 py-3 text-right text-gray-900">
-                                    {formatWeight(item.net_weight_grams / 31.1035)}
+                                    {formatWeight(item.net_weight_grams / 31.1034768)}
                                   </td>
                                   <td className="px-4 py-3 text-right text-gray-900">
                                     {formatWeight(item.gross_weight_grams)}

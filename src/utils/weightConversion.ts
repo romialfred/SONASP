@@ -1,13 +1,19 @@
 /**
  * Weight Conversion Utilities
  * Default unit: Troy Ounces (oz)
- * 1 troy oz = 31.1034768 grams
- * 1 regular oz = 28.3495 grams
+ * 1 troy oz = 31.1034768 grams (constante canonique importée)
+ *
+ * IMPORTANT : la valeur de conversion troy provient d'une SOURCE UNIQUE
+ * (`src/constants/goldConstants.ts`). Ne pas la redéfinir ici.
+ * L'once « avoirdupois » (28,3495 g) NE DOIT PAS être utilisée pour l'or —
+ * conservée uniquement pour compatibilité d'anciens écrans non aurifères.
  */
+import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 
-export const GRAMS_PER_TROY_OZ = 31.1034768;
+export const GRAMS_PER_TROY_OZ = TROY_OZ_GRAMS;
+/** @deprecated Ne pas utiliser pour l'or. Once avoirdupois (non troy). */
 export const GRAMS_PER_OZ = 28.3495;
-export const GRAMS_PER_OZ_TROY = GRAMS_PER_TROY_OZ; // Alias for clarity
+export const GRAMS_PER_OZ_TROY = TROY_OZ_GRAMS; // Alias for clarity
 
 export type WeightUnit = 'g' | 'oz' | 'ozt';
 

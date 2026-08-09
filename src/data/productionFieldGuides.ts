@@ -37,7 +37,7 @@ export const dailyProductionFieldGuides = {
   },
   estimated_oz: {
     title: 'Estimated Oz',
-    description: 'Auto: Pure Gold ÷ 31.1035',
+    description: 'Auto: Pure Gold ÷ 31.1034768',
     example: '333.57 oz',
     readOnly: true
   },

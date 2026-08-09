@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Package, AlertCircle, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Package, AlertCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MainLayout } from '@/components/layout/MainLayout';

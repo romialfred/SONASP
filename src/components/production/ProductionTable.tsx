@@ -1,6 +1,5 @@
 import { Edit, Trash2, Calendar, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
 import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatusBadge } from './ProductionStatusBadge';
 import { ProductionStatus } from '@/constants/productionStatuses';

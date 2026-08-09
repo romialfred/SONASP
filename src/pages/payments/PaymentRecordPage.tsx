@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
-import { ArrowLeft, DollarSign, TrendingUp, TrendingDown, AlertCircle, Building2 } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingUp, TrendingDown, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';

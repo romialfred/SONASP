@@ -8,7 +8,6 @@ import {
   Package,
   TrendingUp,
   AlertTriangle,
-  FileText,
   User,
   Calendar,
   DollarSign,
@@ -24,19 +23,15 @@ import {
   getPreSaleById,
   approvePreSale,
   rejectPreSale,
-  customerApprovePreSale,
-  customerRejectPreSale,
   getPreSaleInventoryMatch,
   type PreSaleSummary,
 } from '@/services/preSalesService';
 import { formatStatusFr } from '@/utils/statusFormatter';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function PreSaleDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const alert = useAlert();
-  const { user } = useAuth();
 
   const [preSale, setPreSale] = useState<PreSaleSummary | null>(null);
   const [inventoryMatch, setInventoryMatch] = useState<any>(null);
@@ -133,20 +128,6 @@ export default function PreSaleDetails() {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending_management_approval: 'yellow',
-      management_approved: 'blue',
-      management_rejected: 'red',
-      customer_approved: 'green',
-      customer_rejected: 'red',
-      inventory_arrived: 'indigo',
-      converted_to_sale: 'green',
-      completed: 'gray',
-    };
-    return colors[status] || 'gray';
-  };
-
   const formatStatus = (status: string) => {
     return status
       .split('_')
@@ -203,7 +184,6 @@ export default function PreSaleDetails() {
           <StatusBadge
             status={preSale.status}
             label={formatStatus(preSale.status)}
-            color={getStatusColor(preSale.status)}
           />
           {canApprove && (
             <div className="flex gap-2">

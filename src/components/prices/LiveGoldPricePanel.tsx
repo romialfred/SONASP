@@ -8,14 +8,12 @@ import {
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
-  Globe,
   Banknote,
 } from 'lucide-react';
 import {
   fetchLiveGoldPrice,
   formatGoldPrice,
   clearPriceCache,
-  getMarketStatus,
   getTimeUntilMarketChange,
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
@@ -32,8 +30,8 @@ export function LiveGoldPricePanel() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState<string | null>(null);
-  const [marketCountdown, setMarketCountdown] = useState(getTimeUntilMarketChange());
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [, setMarketCountdown] = useState(getTimeUntilMarketChange());
+  const [, setCurrentDate] = useState<Date>(new Date());
 
   const fetchExchangeRate = async () => {
     try {
@@ -119,7 +117,6 @@ export function LiveGoldPricePanel() {
     };
   }, []);
 
-  const marketStatus = getMarketStatus();
 
   if (loading || !goldPrice) {
     return (
@@ -145,8 +142,6 @@ export function LiveGoldPricePanel() {
   const low24h = goldPrice.low24h || goldPrice.price * 0.992;
 
   // Calculate London AM and COMEX prices (slight variations for realism)
-  const londonPrice = goldPrice.price * 0.998;
-  const comexPrice = goldPrice.price * 1.001;
 
   return (
     <div className="space-y-3">
@@ -285,7 +280,7 @@ export function LiveGoldPricePanel() {
             <div className="bg-white rounded-lg p-2 border border-emerald-200">
               <p className="text-xs text-gray-600 mb-0.5">Par Gramme (g)</p>
               <p className="text-lg font-bold text-emerald-700">
-                {((goldPrice.price * usdToXofRate) / 31.1035).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                {((goldPrice.price * usdToXofRate) / 31.1034768).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
                 <span className="text-xs font-normal text-gray-500 ml-1">FCFA</span>
               </p>
             </div>
@@ -293,7 +288,7 @@ export function LiveGoldPricePanel() {
             <div className="bg-white rounded-lg p-2 border border-emerald-200">
               <p className="text-xs text-gray-600 mb-0.5">Par Kilogramme (kg)</p>
               <p className="text-lg font-bold text-emerald-700">
-                {((goldPrice.price * usdToXofRate) * 1000 / 31.1035).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                {((goldPrice.price * usdToXofRate) * 1000 / 31.1034768).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
                 <span className="text-xs font-normal text-gray-500 ml-1">FCFA</span>
               </p>
             </div>

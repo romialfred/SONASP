@@ -1,32 +1,62 @@
-import { SelectHTMLAttributes, forwardRef } from 'react';
+import { SelectHTMLAttributes, ReactNode, forwardRef, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  error?: boolean;
+  /** `true` pour l'état erreur, ou une chaîne = message d'erreur affiché sous le champ. */
+  error?: boolean | string;
   success?: boolean;
+  /** Libellé optionnel affiché au-dessus du champ (associé via htmlFor pour l'accessibilité). */
+  label?: string;
+  /** Message d'aide ou d'erreur affiché sous le champ. */
+  helperText?: string;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, error, success, children, ...props }, ref) => {
+  ({ className, error, success, label, helperText, id, children, ...props }, ref) => {
+    const generatedId = useId();
+    const selectId = id ?? generatedId;
+
+    const hasError = Boolean(error);
+    const errorMessage = typeof error === 'string' ? error : undefined;
+    const shownHelper = errorMessage ?? helperText;
+
     const baseStyles = 'flex w-full appearance-none rounded-lg border px-3 py-2 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-white';
 
-    const stateStyles = error
+    const stateStyles = hasError
       ? 'border-red-500 focus:ring-red-500'
       : success
       ? 'border-accent-500 focus:ring-accent-500'
       : 'border-gray-300 focus:ring-primary-500';
 
-    return (
+    const fieldEl = (
       <div className="relative">
         <select
+          id={selectId}
           ref={ref}
+          aria-invalid={hasError || undefined}
           className={cn(baseStyles, stateStyles, className)}
           {...props}
         >
           {children}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+      </div>
+    );
+
+    if (!label && !shownHelper) return fieldEl;
+
+    return (
+      <div className="space-y-1">
+        {label && (
+          <label htmlFor={selectId} className="block text-sm font-medium text-gray-700">
+            {label}
+          </label>
+        )}
+        {fieldEl}
+        {shownHelper && (
+          <p className={cn('text-xs', hasError ? 'text-red-600' : 'text-gray-500')}>{shownHelper}</p>
+        )}
       </div>
     );
   }

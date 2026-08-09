@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, Download, ChevronLeft, ChevronRight, Mail, Send } from 'lucide-react';
+import { Package, Save, Plus, Trash2, User, Truck, Building2, X, ArrowLeft, FileText, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -9,7 +9,7 @@ import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { BusinessErrorDialog } from '@/components/ui/BusinessErrorDialog';
 import { supabase } from '@/lib/supabase';
-import { shippingPreparationService, ShippingPreparation, ShippingSignatory, ShippingProductionItem } from '@/services/shippingPreparationService';
+import { shippingPreparationService, ShippingPreparation } from '@/services/shippingPreparationService';
 import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
 import { depositorService, Depositor } from '@/services/depositorService';
 import html2canvas from 'html2canvas';
@@ -21,6 +21,9 @@ interface DailyProduction {
   production_date: string;
   bullion_grams: number;
   estimated_fineness_pct: number;
+  estimated_gold_pct?: number;
+  estimated_silver_pct?: number;
+  silver_content_grams?: number;
   pure_gold_grams: number;
   estimated_oz: number;
   bar_reference: string | null;
@@ -113,15 +116,6 @@ export default function ShippingPreparationNew() {
   const [newDocumentTitle, setNewDocumentTitle] = useState('');
   const [newDocumentFile, setNewDocumentFile] = useState<File | null>(null);
 
-  const commonPositions = [
-    'Gold Room Operator',
-    'SMK Finance',
-    'DNGM Representative',
-    'Customs Representative',
-    'Brinks Representative',
-    'Freight Forwarder',
-    'Quality Control Manager',
-  ];
 
   useEffect(() => {
     loadInitialData();
@@ -676,7 +670,7 @@ export default function ShippingPreparationNew() {
       // Calculate total weights
       const totalNetWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
       const totalGrossWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
-      const totalNetWeightOz = totalNetWeightGrams / 31.1035;
+      const totalNetWeightOz = totalNetWeightGrams / 31.1034768;
       const totalBoxes = selectedProductions.length; // Nombre de productions = nombre de boxes
 
       const prepData = {

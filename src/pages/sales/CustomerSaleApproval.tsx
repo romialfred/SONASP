@@ -10,12 +10,9 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  Package,
-  TrendingUp,
   AlertCircle,
   FileText,
   Clock,
-  Building2,
   Mail
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';

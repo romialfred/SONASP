@@ -28,7 +28,7 @@ export async function createSaleInventoryTransactions(
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const quantityGrams = quantityOz * 31.1035;
+    const quantityGrams = quantityOz * 31.1034768;
 
     const transactions: InventoryTransaction[] = [
       {

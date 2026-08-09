@@ -11,8 +11,6 @@ import {
   Settings,
   ChevronRight,
   Home,
-  FileText,
-  GitBranch,
   HelpCircle,
   X,
 } from 'lucide-react';
@@ -24,8 +22,6 @@ import {
   searchHelpContent,
   getArticleById,
   getRelatedArticles,
-  type HelpCategory,
-  type HelpArticle,
 } from '@/data/helpContent';
 import ReactMarkdown from 'react-markdown';
 

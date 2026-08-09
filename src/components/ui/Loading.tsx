@@ -4,9 +4,11 @@ import { cn } from '@/utils/cn';
 export interface LoadingProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  /** Message optionnel affiché sous l'indicateur. */
+  message?: string;
 }
 
-export function Loading({ size = 'md', className }: LoadingProps) {
+export function Loading({ size = 'md', className, message }: LoadingProps) {
   const sizeStyles = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
@@ -14,8 +16,9 @@ export function Loading({ size = 'md', className }: LoadingProps) {
   };
 
   return (
-    <div className={cn('flex items-center justify-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-2', className)}>
       <Loader2 className={cn('animate-spin text-primary-500', sizeStyles[size])} />
+      {message && <p className="text-sm text-gray-500">{message}</p>}
     </div>
   );
 }

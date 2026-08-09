@@ -58,7 +58,7 @@ export function DailyProductionForm({ production, onCancel, onSuccess }: DailyPr
     : '0.00';
 
   const estimatedOz = pureGoldGrams !== '0.00'
-    ? (parseFloat(pureGoldGrams) / 31.1035).toFixed(4)
+    ? (parseFloat(pureGoldGrams) / 31.1034768).toFixed(4)
     : '0.0000';
 
   const silverContentGrams = formData.bullion_grams && formData.estimated_silver_pct
@@ -66,7 +66,7 @@ export function DailyProductionForm({ production, onCancel, onSuccess }: DailyPr
     : '0.00';
 
   const silverContentOz = silverContentGrams !== '0.00'
-    ? (parseFloat(silverContentGrams) / 31.1035).toFixed(4)
+    ? (parseFloat(silverContentGrams) / 31.1034768).toFixed(4)
     : '0.0000';
 
   const handleGenerateBarReference = async () => {
@@ -354,7 +354,7 @@ export function DailyProductionForm({ production, onCancel, onSuccess }: DailyPr
           </div>
 
           <p className="text-xs text-blue-600 mt-2">
-            Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1035
+            Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1034768
           </p>
         </div>
 

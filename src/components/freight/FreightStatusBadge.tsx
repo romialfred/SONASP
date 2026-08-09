@@ -8,7 +8,7 @@ interface FreightStatusBadgeProps {
 }
 
 export function FreightStatusBadge({ status, size = 'md', showIcon = true }: FreightStatusBadgeProps) {
-  const getStatusConfig = (status: FreightCustomsStatus) => {
+  const getStatusConfig = (status: FreightCustomsStatus | string) => {
     switch (status) {
       case 'customs_pending':
         return {

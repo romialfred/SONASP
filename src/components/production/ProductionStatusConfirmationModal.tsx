@@ -197,7 +197,7 @@ export function ProductionStatusConfirmationModal({
                     {production.bullion_grams.toFixed(2)} g
                   </p>
                   <p className="text-[9px] text-gray-500">
-                    {(production.bullion_grams / 31.1035).toFixed(4)} oz
+                    {(production.bullion_grams / 31.1034768).toFixed(4)} oz
                   </p>
                 </div>
               </div>
@@ -240,7 +240,7 @@ export function ProductionStatusConfirmationModal({
                       {((production.bullion_grams * production.estimated_silver_pct) / 100).toFixed(2)} g
                     </p>
                     <p className="text-[9px] text-slate-600">
-                      {(((production.bullion_grams * production.estimated_silver_pct) / 100) / 31.1035).toFixed(4)} oz
+                      {(((production.bullion_grams * production.estimated_silver_pct) / 100) / 31.1034768).toFixed(4)} oz
                     </p>
                   </div>
                 </div>

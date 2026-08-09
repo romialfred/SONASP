@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Package, ArrowLeft, Save, Building2, Truck, Calendar, FileText, AlertCircle
+  Package, ArrowLeft, Save, Building2, Truck, FileText, AlertCircle
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';

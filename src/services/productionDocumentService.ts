@@ -86,18 +86,18 @@ class ProductionDocumentService {
     }
   }
 
-  async downloadDocument(document: ProductionDocument): Promise<void> {
+  async downloadDocument(doc: Pick<ProductionDocument, 'file_path' | 'file_name'>): Promise<void> {
     try {
       const { data, error } = await supabase.storage
         .from(this.BUCKET_NAME)
-        .download(document.file_path);
+        .download(doc.file_path);
 
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = document.file_name;
+      link.download = doc.file_name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

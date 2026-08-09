@@ -80,7 +80,7 @@ export function CustomerForm() {
       if (error) throw error;
 
       if (data) {
-        const { data: banksData, error: banksError } = await supabase
+        const { data: banksData } = await supabase
           .from('customer_banks')
           .select('*')
           .eq('customer_id', id)
@@ -123,42 +123,6 @@ export function CustomerForm() {
     }
   };
 
-  // Old mock data moved here for reference only
-  useEffect(() => {
-    if (false) {
-      const mockCustomers = [
-        {
-          id: '4',
-          name: 'Asian Gold Trading',
-          email: 'trading@asiangold.com',
-          phone: '+65 6789 1234',
-          country: 'Singapore',
-          address: 'Marina Bay Financial Centre',
-          contactPerson: 'Li Wei',
-          taxId: 'GST-456789123',
-          paymentTerms: 'Net 60 days',
-          creditLimit: '600000',
-          status: 'inactive' as const,
-        },
-      ];
-
-      const customer = mockCustomers.find((c) => c.id === id);
-      if (customer) {
-        setFormData({
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone,
-          country: customer.country,
-          address: customer.address,
-          contactPerson: customer.contactPerson,
-          taxId: customer.taxId,
-          paymentTerms: customer.paymentTerms,
-          creditLimit: customer.creditLimit,
-          status: customer.status,
-        });
-      }
-    }
-  }, [id, isEditMode]);
 
   const handleChange = (field: keyof CustomerFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

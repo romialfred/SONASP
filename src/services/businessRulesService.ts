@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 
 export interface BusinessRule {
   id: string;
@@ -152,5 +153,5 @@ export function clearBusinessRulesCache(): void {
  */
 export async function getGramsToOuncesRate(): Promise<number> {
   const value = await getBusinessRuleValue('grams_to_ounces');
-  return value ?? 31.1035; // Default fallback
+  return value ?? TROY_OZ_GRAMS; // Repli sur la constante canonique (audit F1)
 }

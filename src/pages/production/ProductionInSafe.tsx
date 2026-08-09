@@ -22,7 +22,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Download, TrendingUp, TrendingDown, Minus, Shield, Calendar, CalendarDays, CalendarCheck } from 'lucide-react';
-import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
+import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';

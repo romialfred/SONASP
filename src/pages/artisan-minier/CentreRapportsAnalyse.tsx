@@ -9,7 +9,6 @@ import {
   DollarSign,
   Scale,
   FileText,
-  Download,
   BarChart3,
   PieChart,
   Calendar,

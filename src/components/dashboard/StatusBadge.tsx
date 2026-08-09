@@ -20,7 +20,8 @@ export type StatusType =
   | 'alert';
 
 export interface StatusBadgeProps {
-  status?: StatusType;
+  /** Accepte tout statut (mappé en interne via Record<string, …>). */
+  status?: StatusType | string;
   label: string;
   variant?: 'success' | 'error' | 'warning' | 'info' | 'neutral';
   size?: 'sm' | 'md' | 'lg';

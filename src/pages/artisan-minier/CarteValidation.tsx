@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { CheckCircle, Clock, XCircle, AlertTriangle, CheckCircle2, User, CreditCard, Calendar, Check, X } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, CheckCircle2, User, CreditCard, Calendar, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
@@ -9,11 +8,9 @@ import { carteProfessionnelleService } from '@/services/carteProfessionnelleServ
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function CarteValidation() {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [cartesEnCours, setCartesEnCours] = useState<any[]>([]);
-  const [selectedCarte, setSelectedCarte] = useState<any>(null);
   const { showAlert } = useCustomAlert();
 
   useEffect(() => {
@@ -31,7 +28,7 @@ export default function CarteValidation() {
       setCartesEnCours(enCoursCartes || []);
     } catch (error) {
       console.error('Error loading data:', error);
-      showAlert('error', 'Erreur lors du chargement des données');
+      showAlert('Erreur lors du chargement des données', 'error');
     } finally {
       setLoading(false);
     }
@@ -40,11 +37,11 @@ export default function CarteValidation() {
   const handleValider = async (carteId: string) => {
     try {
       await carteProfessionnelleService.valider(carteId);
-      showAlert('success', 'Carte validée avec succès');
+      showAlert('Carte validée avec succès', 'success');
       await loadData();
     } catch (error) {
       console.error('Error validating carte:', error);
-      showAlert('error', 'Erreur lors de la validation');
+      showAlert('Erreur lors de la validation', 'error');
     }
   };
 

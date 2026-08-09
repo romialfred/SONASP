@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   User,
-  Building2,
   Phone,
   Mail,
   MapPin,
@@ -11,8 +9,6 @@ import {
   Save,
   X,
   Eye,
-  Calendar,
-  Briefcase,
   Upload,
   Check,
   AlertCircle
@@ -22,18 +18,16 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { TextArea } from '@/components/ui/TextArea';
-import { Tabs } from '@/components/ui/Tabs';
 import { PhoneInput } from '@/components/ui/PhoneInput';
-import { artisanMinierService } from '@/services/artisanMinierService';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
+import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import {
   SAHEL_COUNTRIES,
   getRegionsByCountry,
-  getCitiesByRegion,
-  getPhonePrefix,
-  formatPhoneNumber
+  getCitiesByRegion
 } from '@/data/burkinaFasoData';
 
 interface ArtisanMinierFormWithTabsProps {
@@ -47,7 +41,6 @@ export function ArtisanMinierFormWithTabs({
   onCancel,
   onSuccess
 }: ArtisanMinierFormWithTabsProps) {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('informations');
   const [saving, setSaving] = useState(false);
   const [cartePreview, setCartePreview] = useState<string | null>(null);
@@ -86,8 +79,8 @@ export function ArtisanMinierFormWithTabs({
 
   const [pieceIdentiteFile, setPieceIdentiteFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [uploadingPiece, setUploadingPiece] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [, setUploadingPiece] = useState(false);
+  const [, setUploadingPhoto] = useState(false);
   const [ageError, setAgeError] = useState<string>('');
 
   // Charger les régions quand le pays change
@@ -257,7 +250,7 @@ export function ArtisanMinierFormWithTabs({
         qr_code_data: JSON.stringify({ numero_carte: artisan?.numero_carte || 'PREVIEW' })
       };
 
-      const preview = await carteProfessionnelleGeneratorService.generatePreviewDataUrl(artisanData, carteData);
+      const preview = await carteProfessionnelleGeneratorService.generatePreviewDataUrl(artisanData as Partial<ArtisanMinier>, carteData as Partial<CarteProfessionnelle>);
       setCartePreview(preview);
       setActiveTab('carte');
     } catch (error: any) {
@@ -288,9 +281,9 @@ export function ArtisanMinierFormWithTabs({
       let savedArtisan;
 
       if (artisan) {
-        savedArtisan = await artisanMinierService.update(artisan.id, formData);
+        savedArtisan = await artisanMinierService.update(artisan.id, formData as Partial<ArtisanMinier>);
       } else {
-        savedArtisan = await artisanMinierService.create(formData);
+        savedArtisan = await artisanMinierService.create(formData as Partial<ArtisanMinier>);
       }
 
       if (photoFile && savedArtisan?.id) {
@@ -646,7 +639,7 @@ export function ArtisanMinierFormWithTabs({
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="email@exemple.com"
-                    icon={Mail}
+                    icon={<Mail className="w-4 h-4" />}
                   />
                 </div>
 
@@ -658,7 +651,7 @@ export function ArtisanMinierFormWithTabs({
                     value={formData.adresse}
                     onChange={(e) => handleInputChange('adresse', e.target.value)}
                     placeholder="Quartier, rue, numéro..."
-                    icon={MapPin}
+                    icon={<MapPin className="w-4 h-4" />}
                   />
                 </div>
               </div>

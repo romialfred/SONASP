@@ -5,9 +5,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
-import { MetricCard } from '@/components/dashboard/MetricCard';
 import { supabase } from '@/lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   getCurrentInventoryStatus,
   getMonthlyInventorySummary,
@@ -259,7 +258,7 @@ export function InventoryManagement() {
     {
       title: 'Total Stock',
       value: `${metrics.totalStock.toFixed(2)} oz`,
-      valueInGrams: metrics.totalStock * 31.1035,
+      valueInGrams: metrics.totalStock * 31.1034768,
       subtitle: 'All refined gold',
       changeType: 'neutral' as const,
       icon: Package,
@@ -270,7 +269,7 @@ export function InventoryManagement() {
     {
       title: 'Available for Sale',
       value: `${metrics.availableStock.toFixed(2)} oz`,
-      valueInGrams: metrics.availableStock * 31.1035,
+      valueInGrams: metrics.availableStock * 31.1034768,
       subtitle: stockStatus.label,
       changeType: stockLevel < 100 ? ('negative' as const) : ('positive' as const),
       icon: TrendingUp,
@@ -281,7 +280,7 @@ export function InventoryManagement() {
     {
       title: 'Allocated to Sales',
       value: `${metrics.allocatedStock.toFixed(2)} oz`,
-      valueInGrams: metrics.allocatedStock * 31.1035,
+      valueInGrams: metrics.allocatedStock * 31.1034768,
       subtitle: 'Reserved quantities',
       changeType: 'neutral' as const,
       icon: AlertCircle,
@@ -292,7 +291,7 @@ export function InventoryManagement() {
     {
       title: 'Total Sold',
       value: `${metrics.soldStock.toFixed(2)} oz`,
-      valueInGrams: metrics.soldStock * 31.1035,
+      valueInGrams: metrics.soldStock * 31.1034768,
       subtitle: 'Completed sales',
       changeType: 'positive' as const,
       icon: TrendingUp,

@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { Select } from '@/components/ui/Select';
-import { ArrowLeft, Download, FileText, MapPin, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Download, MapPin, User, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { artisanAnalyticsService } from '@/services/artisanAnalyticsService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

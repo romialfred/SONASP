@@ -1,4 +1,4 @@
-import { FileText, Eye, Calendar, Scale, CheckCircle, XCircle, Building2 } from 'lucide-react';
+import { FileText, Eye, Calendar, Scale, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface AssayCertificateCardProps {

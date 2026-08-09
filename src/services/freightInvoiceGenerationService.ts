@@ -362,7 +362,7 @@ export const freightInvoiceGenerationService = {
 
     // Conversion rates
     currentY += 10;
-    doc.text('Conversion: 1 troy oz = 31.1035 g', 15, currentY);
+    doc.text('Conversion: 1 troy oz = 31.1034768 g', 15, currentY);
     currentY += 5;
     doc.text('Unit: 1 kg = 32.1507 troy oz', 35, currentY);
 

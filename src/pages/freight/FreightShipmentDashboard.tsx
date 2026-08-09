@@ -204,7 +204,7 @@ export default function FreightShipmentDashboard() {
                 <p className="text-xs text-amber-700 uppercase tracking-wide font-medium">Or Pur Total</p>
                 <p className="text-3xl font-bold text-amber-900 mt-1">{stats.totalOz.toFixed(3)} oz</p>
                 <p className="text-xs text-amber-600 mt-1">
-                  {(stats.totalOz * 31.1035).toFixed(2)} g
+                  {(stats.totalOz * 31.1034768).toFixed(2)} g
                 </p>
               </div>
               <TrendingUp className="w-10 h-10 text-amber-600" />

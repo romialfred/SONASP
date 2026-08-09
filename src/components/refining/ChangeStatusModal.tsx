@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/TextArea';
@@ -14,7 +13,7 @@ interface ChangeStatusModalProps {
   loading?: boolean;
 }
 
-const STATUS_TRANSITIONS: Record<FreightShipmentStatus, { next: FreightShipmentStatus[]; labels: Record<FreightShipmentStatus, string> }> = {
+const STATUS_TRANSITIONS: Record<FreightShipmentStatus, { next: FreightShipmentStatus[]; labels: Partial<Record<FreightShipmentStatus, string>> }> = {
   pending: { next: [], labels: {} },
   approved: { next: [], labels: {} },
   shipped_to_refinery: { next: [], labels: {} },

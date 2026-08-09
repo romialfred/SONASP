@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DollarSign, TrendingUp, Users, AlertCircle, Package, Globe } from 'lucide-react';
+import { DollarSign, Users, AlertCircle, Package } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ActivityFeed, ActivityItem } from '@/components/dashboard/ActivityFeed';

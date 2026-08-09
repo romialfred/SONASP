@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/Card';
 import { TrendingUp, TrendingDown, Minus, RefreshCw, Coins } from 'lucide-react';
 import {
   fetchLiveGoldPrice,

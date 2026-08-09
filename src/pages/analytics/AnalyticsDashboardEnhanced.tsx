@@ -4,7 +4,6 @@ import {
   BarChart3,
   TrendingUp,
   DollarSign,
-  Package,
   Users,
   Activity,
   PieChart,

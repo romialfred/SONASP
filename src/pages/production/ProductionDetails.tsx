@@ -8,7 +8,7 @@ import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { Tabs } from '@/components/ui/Tabs';
 import { dailyProductionService, DailyProduction } from '@/services/dailyProductionService';
-import { productionStatusService, StatusHistoryEntry } from '@/services/productionStatusService';
+import { StatusHistoryEntry } from '@/services/productionStatusService';
 import { productionDocumentService } from '@/services/productionDocumentService';
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
 import { ProductionStatusWorkflow } from '@/components/production/ProductionStatusWorkflow';
@@ -440,7 +440,7 @@ export function ProductionDetails() {
                         {production.bullion_grams.toFixed(2)} g
                       </p>
                       <p className="text-xs text-gray-500">
-                        {(production.bullion_grams / 31.1035).toFixed(4)} oz
+                        {(production.bullion_grams / 31.1034768).toFixed(4)} oz
                       </p>
                     </div>
                   </div>
@@ -494,7 +494,7 @@ export function ProductionDetails() {
                       <div>
                         <p className="text-xs text-slate-700">Onces</p>
                         <p className="text-sm font-bold text-slate-900">
-                          {(((production.bullion_grams * production.estimated_silver_pct) / 100) / 31.1035).toFixed(4)} oz
+                          {(((production.bullion_grams * production.estimated_silver_pct) / 100) / 31.1034768).toFixed(4)} oz
                         </p>
                       </div>
                     </div>

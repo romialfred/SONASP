@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/lib/supabase';
+import { GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
 
 interface InvoiceData {
   invoiceNumber: string;
@@ -410,8 +411,10 @@ export async function generateAndUploadInvoice(
       total: item.line_total,
     }));
 
-    const royaltyRate = 3;
-    const royaltyAmount = (sale.final_proceeds || 0) * (royaltyRate / 100);
+    // Assiette unique (audit F3) : royalties sur net_proceeds. On privilégie le
+    // montant déjà calculé et stocké à la création de la vente (source de vérité).
+    const royaltyRate = GOLD_ROYALTY_RATE * 100; // % pour affichage
+    const royaltyAmount = sale.royalty_amount ?? ((sale.net_proceeds || 0) * GOLD_ROYALTY_RATE);
 
     const invoiceData: InvoiceData = {
       invoiceNumber,

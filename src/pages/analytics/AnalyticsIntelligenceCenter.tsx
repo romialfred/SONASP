@@ -24,9 +24,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import {
-  LineChart,
   Line,
-  BarChart,
   Bar,
   PieChart as RechartsPieChart,
   Pie,
@@ -41,7 +39,7 @@ import {
   Area,
 } from 'recharts';
 import { AdvancedAnalyticsService } from '@/services/advancedAnalyticsService';
-import { formatCurrency, formatWeight } from '@/utils/salesUtils';
+import { formatCurrency } from '@/utils/salesUtils';
 
 /**
  * Analytics Intelligence Center - Professional BI Dashboard
@@ -64,7 +62,7 @@ const CHART_COLORS = {
 };
 
 export function AnalyticsIntelligenceCenter() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   // State management
   const [loading, setLoading] = useState(true);
@@ -345,15 +343,17 @@ export function AnalyticsIntelligenceCenter() {
 
         {/* Tabs for detailed analytics */}
         <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
+          activeTab={activeTab}
+          onChange={setActiveTab}
           tabs={[
-            { value: 'overview', label: t('pages.analytics.overview'), icon: <BarChart3 className="w-4 h-4" /> },
-            { value: 'production', label: t('pages.analytics.production'), icon: <Package className="w-4 h-4" /> },
-            { value: 'financial', label: t('pages.analytics.financial'), icon: <DollarSign className="w-4 h-4" /> },
-            { value: 'budget', label: t('pages.analytics.budgetVsActual'), icon: <TrendingUp className="w-4 h-4" /> },
+            { id: 'overview', label: t('pages.analytics.overview'), icon: BarChart3 },
+            { id: 'production', label: t('pages.analytics.production'), icon: Package },
+            { id: 'financial', label: t('pages.analytics.financial'), icon: DollarSign },
+            { id: 'budget', label: t('pages.analytics.budgetVsActual'), icon: TrendingUp },
           ]}
         >
+          {() => (
+            <>
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6 mt-6">
@@ -376,9 +376,9 @@ export function AnalyticsIntelligenceCenter() {
                           cx="50%"
                           cy="50%"
                           outerRadius={100}
-                          label={(entry) => `${entry.companyName}: ${entry.percentage.toFixed(1)}%`}
+                          label={(entry: any) => `${entry.companyName}: ${entry.percentage.toFixed(1)}%`}
                         >
-                          {productionByCompany.map((entry, index) => (
+                          {productionByCompany.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={CHART_COLORS.primary[index % CHART_COLORS.primary.length]} />
                           ))}
                         </Pie>
@@ -406,7 +406,7 @@ export function AnalyticsIntelligenceCenter() {
                           cx="50%"
                           cy="50%"
                           outerRadius={100}
-                          label={(entry) => `${entry.category}: ${formatCurrency(entry.amount)}`}
+                          label={(entry: any) => `${entry.category}: ${formatCurrency(entry.amount)}`}
                         >
                           <Cell fill={CHART_COLORS.info} />
                           <Cell fill={CHART_COLORS.warning} />
@@ -586,7 +586,7 @@ export function AnalyticsIntelligenceCenter() {
                       <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} />
                       <YAxis yAxisId="left" tick={{ fontSize: 12 }} label={{ value: 'Revenue ($)', angle: -90, position: 'insideLeft' }} />
                       <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} label={{ value: 'Quantity (oz)', angle: 90, position: 'insideRight' }} />
-                      <Tooltip formatter={(value: any, name: string) => name.includes('Revenue') ? formatCurrency(value) : `${value.toFixed(2)} oz`} />
+                      <Tooltip formatter={(value: any, name: any) => String(name).includes('Revenue') ? formatCurrency(value) : `${value.toFixed(2)} oz`} />
                       <Legend />
                       <Bar yAxisId="left" dataKey="revenue" fill="#10b981" name="Revenue" />
                       <Line yAxisId="right" type="monotone" dataKey="quantityOz" stroke="#3b82f6" strokeWidth={3} name="Quantity Sold (oz)" />
@@ -743,6 +743,8 @@ export function AnalyticsIntelligenceCenter() {
                 </CardContent>
               </Card>
             </div>
+          )}
+            </>
           )}
         </Tabs>
       </div>

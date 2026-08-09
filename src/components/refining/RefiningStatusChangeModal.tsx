@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Flame, Archive, ArrowRight, AlertCircle, FileText, X } from 'lucide-react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/TextArea';
 import { FreightShipmentStatus } from '@/services/freightShipmentService';

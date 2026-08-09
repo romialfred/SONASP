@@ -124,7 +124,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-emerald-700">Total Autorisé</p>
                   <p className="text-lg font-semibold text-emerald-900">{(totalAuthorized / 1000).toFixed(1)} kg</p>
-                  <p className="text-xs text-emerald-600">({(totalAuthorized / 31.1035).toFixed(2)} oz)</p>
+                  <p className="text-xs text-emerald-600">({(totalAuthorized / 31.1034768).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -137,7 +137,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-amber-700">Utilisé</p>
                   <p className="text-lg font-semibold text-amber-900">{(totalUsed / 1000).toFixed(1)} kg</p>
-                  <p className="text-xs text-amber-600">({(totalUsed / 31.1035).toFixed(2)} oz)</p>
+                  <p className="text-xs text-amber-600">({(totalUsed / 31.1034768).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -150,7 +150,7 @@ export function ExportLicensesPage() {
                 <div>
                   <p className="text-xs font-medium text-green-700">Disponible</p>
                   <p className="text-lg font-semibold text-green-900">{(totalRemaining / 1000).toFixed(1)} kg</p>
-                  <p className="text-xs text-green-600">({(totalRemaining / 31.1035).toFixed(2)} oz)</p>
+                  <p className="text-xs text-green-600">({(totalRemaining / 31.1034768).toFixed(2)} oz)</p>
                 </div>
               </div>
             </Card>
@@ -252,8 +252,8 @@ export function ExportLicensesPage() {
             {filteredLicenses.map((license, index) => {
               const percentage = (license.used_quantity_grams / license.authorized_quantity_grams) * 100;
               const isExpiring = new Date(license.end_date).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
-              const authorizedOz = (license.authorized_quantity_grams / 31.1035).toFixed(2);
-              const remainingOz = (license.remaining_quantity_grams / 31.1035).toFixed(2);
+              const authorizedOz = (license.authorized_quantity_grams / 31.1034768).toFixed(2);
+              const remainingOz = (license.remaining_quantity_grams / 31.1034768).toFixed(2);
 
               // Couleurs de fond alternées subtiles
               const bgColorClass = index % 2 === 0

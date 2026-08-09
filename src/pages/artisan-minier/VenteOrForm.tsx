@@ -11,8 +11,6 @@ import {
   Sparkles,
   User,
   TrendingUp,
-  Package,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -80,7 +78,7 @@ export default function VenteOrForm() {
   const [artisanStats, setArtisanStats] = useState<ArtisanStatistics | null>(null);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
-  const quantiteOunces = formData.quantite_grammes / 31.1035;
+  const quantiteOunces = formData.quantite_grammes / 31.1034768;
   const quantiteKg = formData.quantite_grammes / 1000;
 
   useEffect(() => {

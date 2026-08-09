@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Lock, CheckCircle, XCircle, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 

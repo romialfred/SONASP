@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -10,6 +11,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   { ignores: ['dist'] },
+  // Hygiène globale : interdit les imports inutilisés sur tout le code source (audit F7/F10).
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { 'unused-imports': unusedImports },
+    languageOptions: { parser: tseslint.parser },
+    rules: { 'unused-imports/no-unused-imports': 'error' },
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: [

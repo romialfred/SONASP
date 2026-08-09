@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, XCircle, DollarSign, Send, FileCheck, AlertCircle } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, DollarSign, Send, FileCheck } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 
 interface WorkflowStep {

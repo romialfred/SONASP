@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 import { ArtisanMinier } from './artisanMinierService';
 import { CarteProfessionnelle } from './carteProfessionnelleService';
 
@@ -6,37 +7,17 @@ const CARTE_WIDTH = 85.6;
 const CARTE_HEIGHT = 53.98;
 
 export const carteProfessionnelleGeneratorService = {
+  /**
+   * Génère un VRAI QR code scannable encodant `data` (audit C-01/Q1).
+   * Auparavant : bruit aléatoire non scannable. Désormais via la lib `qrcode`.
+   */
   async generateQRCode(data: string): Promise<string> {
-    const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 200;
-    const ctx = canvas.getContext('2d');
-
-    if (ctx) {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, 200, 200);
-
-      ctx.fillStyle = '#000000';
-      const moduleSize = 10;
-      const modules = 20;
-      for (let i = 0; i < modules; i++) {
-        for (let j = 0; j < modules; j++) {
-          if (Math.random() > 0.5) {
-            ctx.fillRect(i * moduleSize, j * moduleSize, moduleSize, moduleSize);
-          }
-        }
-      }
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(70, 70, 60, 60);
-      ctx.fillStyle = '#10B981';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('QR', 100, 95);
-      ctx.fillText('CODE', 100, 115);
-    }
-
-    return canvas.toDataURL('image/png');
+    return QRCode.toDataURL(data, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 200,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    });
   },
 
   async generateCarteRecto(
@@ -139,7 +120,7 @@ export const carteProfessionnelleGeneratorService = {
     pdf.text('SITE:', leftMargin, yPos);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...valueColor);
-    pdf.text(artisan.site_exploitation || artisan.region || 'N/A', leftMargin + 25, yPos);
+    pdf.text(artisan.region || 'N/A', leftMargin + 25, yPos);
 
     yPos += 5;
     pdf.setTextColor(...labelColor);
@@ -180,7 +161,7 @@ export const carteProfessionnelleGeneratorService = {
   },
 
   async generateCarteVerso(
-    artisan: ArtisanMinier,
+    _artisan: ArtisanMinier,
     carte: CarteProfessionnelle
   ): Promise<string> {
     const pdf = new jsPDF({
@@ -434,9 +415,8 @@ export const carteProfessionnelleGeneratorService = {
       nom: artisan.nom || 'NOM',
       prenoms: artisan.prenoms || 'PRÉNOMS',
       telephone: artisan.telephone || '',
-      adresse_complete: artisan.adresse_complete || '',
+      adresse: artisan.adresse || '',
       photo_url: artisan.photo_url,
-      site_exploitation: artisan.site_exploitation,
       region: artisan.region,
       raison_sociale: artisan.raison_sociale
     };

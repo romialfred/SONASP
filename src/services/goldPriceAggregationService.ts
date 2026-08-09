@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { fetchLiveGoldPrice, type LiveGoldPrice } from './liveGoldPriceService';
+import { fetchLiveGoldPrice } from './liveGoldPriceService';
 
 export interface DailyGoldPriceSnapshot {
   price_date: string;

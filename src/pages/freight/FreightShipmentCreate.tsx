@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Package, AlertCircle, CheckCircle, Check, Plane, Clock, MapPin, Building2, Info, TrendingUp, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, Package, AlertCircle, CheckCircle, Check, Plane, MapPin, Building2, Info, TrendingUp, DollarSign } from 'lucide-react';
 import { ProductionDetailsPopup } from '@/components/freight/ProductionDetailsPopup';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -15,8 +15,6 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { supabase } from '@/lib/supabase';
 import {
   AFRICAN_COUNTRIES,
-  AFRICAN_CITIES,
-  AFRICAN_AIRPORTS,
   getCitiesByCountry,
   getAirportsByCountry,
   getTimezoneByCountry,
@@ -30,16 +28,6 @@ interface Signatory {
   display_order: number;
 }
 
-interface ProductionDetail {
-  id: string;
-  bar_reference: string;
-  production_date: string;
-  bullion_grams: number;
-  pure_gold_grams: number;
-  estimated_oz: number;
-  estimated_fineness_pct: number;
-  silver_content_grams: number | null;
-}
 
 export default function FreightShipmentCreate() {
   const navigate = useNavigate();
@@ -72,12 +60,12 @@ export default function FreightShipmentCreate() {
   const [goldPriceUsdPerOz, setGoldPriceUsdPerOz] = useState('');
   const [exchangeRate, setExchangeRate] = useState('');
   const [currencyPair, setCurrencyPair] = useState('USD/XOF');
-  const [localCurrency, setLocalCurrency] = useState('XOF');
+  const [localCurrency] = useState('XOF');
   const [notes, setNotes] = useState('');
 
   // Box Information
-  const [numberOfBoxes, setNumberOfBoxes] = useState(1);
-  const [boxType, setBoxType] = useState('Plastic Box');
+  const [numberOfBoxes] = useState(1);
+  const [boxType] = useState('Plastic Box');
 
   const [signatories, setSignatories] = useState<Signatory[]>([]);
   const [transportCompanies, setTransportCompanies] = useState<any[]>([]);

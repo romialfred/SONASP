@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Filter, Calendar, DollarSign, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Calendar, DollarSign, CheckCircle, Clock, XCircle } from 'lucide-react';
 import artisanPaiementsService, { type PaiementArtisan } from '@/services/artisanPaiementsService';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';

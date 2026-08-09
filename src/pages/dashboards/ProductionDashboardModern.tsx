@@ -7,16 +7,11 @@ import {
   TrendingUp,
   Package,
   Factory,
-  ChevronDown,
   Sparkles,
   BarChart3,
-  Calendar,
-  Filter
+  Calendar
 } from 'lucide-react';
 import {
-  BarChart,
-  Bar,
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -26,11 +21,9 @@ import {
   ResponsiveContainer,
   Area,
   AreaChart,
-  ComposedChart,
-  Cell
+  ComposedChart
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
-import { dailyProductionService } from '@/services/dailyProductionService';
 
 interface MiningCompany {
   id: string;
@@ -312,7 +305,7 @@ export function ProductionDashboardModern() {
               </div>
               <p className="text-sm opacity-90 mb-1">Production Annuelle</p>
               <div className="text-3xl font-bold">{currentYearProduction.toFixed(2)} oz</div>
-              <p className="text-xs opacity-75 mt-2">{(currentYearProduction * 31.1035).toFixed(2)}g</p>
+              <p className="text-xs opacity-75 mt-2">{(currentYearProduction * 31.1034768).toFixed(2)}g</p>
             </div>
           </div>
 
@@ -325,7 +318,7 @@ export function ProductionDashboardModern() {
               </div>
               <p className="text-sm opacity-90 mb-1">Mois Précédent</p>
               <div className="text-3xl font-bold">{lastMonthProduction.toFixed(2)} oz</div>
-              <p className="text-xs opacity-75 mt-2">{(lastMonthProduction * 31.1035).toFixed(2)}g</p>
+              <p className="text-xs opacity-75 mt-2">{(lastMonthProduction * 31.1034768).toFixed(2)}g</p>
             </div>
           </div>
 
@@ -465,7 +458,7 @@ export function ProductionDashboardModern() {
                           />
                         </div>
                         <div className="text-xs text-gray-500 text-right">
-                          {data.weight_oz.toFixed(2)} oz • {(data.weight_oz * 31.1035).toFixed(2)}g
+                          {data.weight_oz.toFixed(2)} oz • {(data.weight_oz * 31.1034768).toFixed(2)}g
                         </div>
                       </div>
                     );

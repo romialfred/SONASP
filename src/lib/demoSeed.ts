@@ -153,7 +153,7 @@ const generateBatches = (): Batch[] => {
     // Add received weight for appropriate statuses
     if (['airport_received', 'refinery_received', 'refined', 'sold'].includes(status)) {
       batch.received_weight_g = receivedWeight;
-      batch.received_weight_oz = receivedWeight / 31.1035;
+      batch.received_weight_oz = receivedWeight / 31.1034768;
     }
 
     // Add refining data for refined/sold batches
@@ -262,7 +262,7 @@ const generateSales = (): Sale[] => {
     const basePrice = 2650 + ((new Date(saleDate).getTime() - new Date('2025-01-01').getTime()) / (1000 * 60 * 60 * 24)) * 0.5;
     const price = basePrice + (Math.random() * 40 - 20); // +/- $20
 
-    const fineWeightOz = batch.refined_weight_g ? batch.refined_weight_g / 31.1035 : 0;
+    const fineWeightOz = batch.refined_weight_g ? batch.refined_weight_g / 31.1034768 : 0;
     const amountUsd = fineWeightOz * price;
 
     sales.push({

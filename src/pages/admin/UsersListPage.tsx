@@ -7,8 +7,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  UserPlus, Search, Filter, Shield, Mail, Phone, Building2,
-  Edit, Lock, Unlock, MoreVertical, CheckCircle, XCircle, Eye
+  UserPlus, Search, Filter, Shield, Phone, Building2,
+  Edit, Lock, Unlock, CheckCircle, XCircle, Eye
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';

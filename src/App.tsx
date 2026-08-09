@@ -23,11 +23,7 @@ import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
 import { ProductionDashboardModern } from './pages/dashboards/ProductionDashboardModern';
 import { GlobalDashboardEnhanced } from './pages/dashboards/GlobalDashboardEnhanced';
 import { AssayCertificatesModern } from './pages/documents/AssayCertificatesModern';
-import { ReceivingDashboard } from './pages/receiving/ReceivingDashboard';
-import { ReceivingConfirm } from './pages/receiving/ReceivingConfirm';
-import { RefiningDashboard } from './pages/refining/RefiningDashboard';
 import { RefiningProcess } from './pages/refining/RefiningProcess';
-import { RefineryReceivingConfirm } from './pages/refining/RefineryReceivingConfirm';
 import { SalesDashboard } from './pages/sales/SalesDashboard';
 import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
@@ -548,27 +544,11 @@ function AppRoutes() {
             />
 
             <Route
-              path="/receiving"
-              element={
-                <ProtectedRoute allowedRoles={['airport', 'refinery', 'management']}>
-                  <ReceivingDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/receiving/:id/confirm"
-              element={
-                <ProtectedRoute allowedRoles={['airport', 'refinery', 'management']}>
-                  <ReceivingConfirm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/shipping"
               element={
                 <ProtectedRoute allowedRoles={['factory', 'management']}>
                   <ProfileGuard>
-                    <ReceivingDashboard />
+                    <ShippingDashboard />
                   </ProfileGuard>
                 </ProtectedRoute>
               }
@@ -587,14 +567,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['refinery', 'management']}>
                   <FreightShipmentsRefining />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/refining/:id/receive"
-              element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <RefineryReceivingConfirm />
                 </ProtectedRoute>
               }
             />

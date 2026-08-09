@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
 import { logAuditAction } from '@/lib/auditLog';
 
 export interface CreatePreSaleData {
@@ -61,7 +62,8 @@ export interface CustomerAccountBalance {
   last_transaction_date?: string;
 }
 
-export const ROYALTY_RATE = 0.03;
+// Source de vérité unique — cf. src/constants/goldConstants.ts (audit F4/Q3).
+export const ROYALTY_RATE = GOLD_ROYALTY_RATE;
 
 /**
  * Calculate pre-sale amounts (same as regular sales)

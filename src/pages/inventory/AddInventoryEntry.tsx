@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Calculator, Info, Package, Calendar, MapPin, Weight, Beaker, Award, TrendingUp, FileText, Upload, AlertTriangle, CheckCircle, DollarSign, TrendingDown } from 'lucide-react';
+import { ArrowLeft, Save, Calculator, Info, Package, Calendar, MapPin, Weight, Beaker, Award, TrendingUp, FileText, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -400,9 +400,9 @@ export function AddInventoryEntry() {
     // Calculate financial loss based on gold price (assuming $2000/oz)
     const goldPriceUSD = 2000;
     const finalFineOz = weightAfter && fineness && metalRetained ?
-      (weightAfter * (fineness / 100) * (metalRetained / 100)) / 28.3495 : 0;
+      (weightAfter * (fineness / 100) * (metalRetained / 100)) / 31.1034768 : 0;
     const potentialOz = weightAfter && factoryFineness && metalRetained ?
-      (weightAfter * (factoryFineness / 100) * (metalRetained / 100)) / 28.3495 : 0;
+      (weightAfter * (factoryFineness / 100) * (metalRetained / 100)) / 31.1034768 : 0;
     const financialLoss = (potentialOz - finalFineOz) * goldPriceUSD;
 
     if (!weightAfter || !fineness || !metalRetained) {
@@ -424,11 +424,11 @@ export function AddInventoryEntry() {
     }
 
     const finalFineGrams = weightAfter * (fineness / 100) * (metalRetained / 100);
-    const finalFineOzCalc = finalFineGrams / 28.3495;
+    const finalFineOzCalc = finalFineGrams / 31.1034768;
     const yieldPercentage = weightBefore > 0 ? (weightAfter / weightBefore) * 100 : 0;
 
     const varianceGrams = shipmentQuantity - finalFineGrams;
-    const varianceOz = varianceGrams / 28.3495;
+    const varianceOz = varianceGrams / 31.1034768;
     const variancePercentage = shipmentQuantity > 0 ? (varianceGrams / shipmentQuantity) * 100 : 0;
 
     setCalculated({

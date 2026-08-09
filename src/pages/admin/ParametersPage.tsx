@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
-import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, TrendingDown, AlertTriangle, DollarSign } from 'lucide-react';
+import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, AlertTriangle, DollarSign } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface UserProfile {

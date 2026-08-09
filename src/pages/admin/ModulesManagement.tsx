@@ -8,11 +8,7 @@ import {
   PowerOff,
   Edit,
   Save,
-  X,
-  Plus,
-  ArrowUp,
-  ArrowDown,
-  Trash2
+  X
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -20,7 +16,6 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
-import { Toggle } from '@/components/ui/Toggle';
 import { modulesService, Module } from '@/services/modulesService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';

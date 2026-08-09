@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { X, FileText, Download } from 'lucide-react';
+import { X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Tabs } from '@/components/ui/Tabs';
 import { freightCustomsService, FreightCustomsOperation } from '@/services/freightCustomsService';
 import {
   freightInvoiceGenerationService,
@@ -90,7 +89,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
           auContent: prod.pure_gold_grams || 0,
           agContent: prod.silver_content_grams || 0,
           auContentTroyOz: prod.estimated_oz || 0,
-          agContentTroyOz: (prod.silver_content_grams || 0) / 31.1035,
+          agContentTroyOz: (prod.silver_content_grams || 0) / 31.1034768,
           valueUSD
         };
       });

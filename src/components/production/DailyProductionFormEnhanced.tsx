@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, X, RefreshCw, Calendar, CalendarRange, CalendarClock, FileText, Upload } from 'lucide-react';
+import { Save, X, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
@@ -45,16 +45,15 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(false);
-  const [generatingBarRef, setGeneratingBarRef] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [wtdSummary, setWtdSummary] = useState<ProductionSummary | null>(null);
-  const [mtdSummary, setMtdSummary] = useState<ProductionSummary | null>(null);
-  const [ytdSummary, setYtdSummary] = useState<ProductionSummary | null>(null);
+  const [, setWtdSummary] = useState<ProductionSummary | null>(null);
+  const [, setMtdSummary] = useState<ProductionSummary | null>(null);
+  const [, setYtdSummary] = useState<ProductionSummary | null>(null);
   const [activeField, setActiveField] = useState<string | null>(null);
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [documents, setDocuments] = useState<ProductionDocument[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
-  const { alertState, confirmState, showSuccess, showError, showConfirm, closeAlert, closeConfirm } = useCustomAlert();
+  const { alertState, confirmState, showSuccess, showError, closeAlert, closeConfirm } = useCustomAlert();
 
   useEffect(() => {
     loadMiningCompanies();
@@ -129,8 +128,8 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   };
 
   // Conversion helpers
-  const gramsToOz = (grams: number) => grams / 31.1035;
-  const ozToGrams = (oz: number) => oz * 31.1035;
+  const gramsToOz = (grams: number) => grams / 31.1034768;
+  const ozToGrams = (oz: number) => oz * 31.1034768;
 
   // Calcul du bullion en fonction de l'unité
   const bullionInGrams = weightUnit === 'grams'
@@ -156,11 +155,11 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   // ARRONDI AU SUPÉRIEUR avec 2 décimales pour les onces
   const silverContentOz = silverContentGrams !== '0.00'
-    ? roundUpToFixed(parseFloat(silverContentGrams) / 31.1035, 2)
+    ? roundUpToFixed(parseFloat(silverContentGrams) / 31.1034768, 2)
     : '0.00';
 
   const estimatedOz = pureGoldGrams !== '0.00'
-    ? roundUpToFixed(parseFloat(pureGoldGrams) / 31.1035, 2)
+    ? roundUpToFixed(parseFloat(pureGoldGrams) / 31.1034768, 2)
     : '0.00';
 
   // Fonction pour obtenir le préfixe de la société
@@ -188,7 +187,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     return 'HUM' + companyName.substring(0, 3).toUpperCase();
   };
 
-  const generateBarReference = async (companyId: string, productionDate: string) => {
+  const generateBarReference = async (companyId: string, _productionDate: string) => {
     try {
       const company = miningCompanies.find(c => c.id === companyId);
       if (!company) return '';
@@ -219,27 +218,6 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     } catch (error) {
       console.error('Error generating bar reference:', error);
       return '';
-    }
-  };
-
-  const handleGenerateBarReference = async () => {
-    if (!formData.mining_company_id) {
-      showError('Veuillez sélectionner une société minière');
-      return;
-    }
-
-    try {
-      setGeneratingBarRef(true);
-      const barRef = await generateBarReference(
-        formData.mining_company_id,
-        formData.production_date
-      );
-      setFormData(prev => ({ ...prev, bar_reference: barRef }));
-    } catch (error) {
-      console.error('Error generating bar reference:', error);
-      showError('Erreur lors de la génération de la référence');
-    } finally {
-      setGeneratingBarRef(false);
     }
   };
 
@@ -293,35 +271,6 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     const userSiteId = user?.site_ids?.[0] || 'guinea';
 
     // Trouver le nom de la société
-    const companyName = miningCompanies.find(c => c.id === formData.mining_company_id)?.name || 'N/A';
-
-    // Créer le message de confirmation récapitulatif
-    const confirmationMessage = `
-📋 RÉCAPITULATIF DE LA PRODUCTION
-
-📅 Date: ${new Date(formData.production_date).toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })}
-
-🏢 Société: ${companyName}
-📦 Bar Reference: ${formData.bar_reference || 'Auto-généré'}
-
-⚖️ POIDS ET FINESSE:
-   • Bullion: ${roundUpToFixed(bullionGramsToSave, 2)} g (${roundUpToFixed(bullionInOz, 2)} oz)
-   • Finesse or: ${formData.estimated_gold_pct}%
-   • Finesse argent: ${formData.estimated_silver_pct || 0}%
-
-💎 CALCULS AUTOMATIQUES:
-   • Or pur: ${pureGoldGrams} g
-   • Onces estimées: ${estimatedOz} oz
-
-${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
-
-⚠️ Voulez-vous confirmer l'enregistrement de cette production ?
-    `.trim();
 
     try {
       setLoading(true);
@@ -659,7 +608,7 @@ ${formData.notes ? `📝 Notes: ${formData.notes}` : ''}
               )}
 
               <p className="text-xs text-blue-600 mt-3">
-                Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1035
+                Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1034768
               </p>
             </div>
 

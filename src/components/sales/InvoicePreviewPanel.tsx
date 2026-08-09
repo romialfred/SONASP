@@ -65,7 +65,7 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
   if (!isVisible || !data) return null;
 
   // Format conversion values
-  const troyOzToGrams = 31.1035;
+  const troyOzToGrams = 31.1034768;
   const gramsToKg = 1000;
 
   return (

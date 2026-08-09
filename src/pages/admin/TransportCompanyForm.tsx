@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
-import { Alert } from '@/components/ui/Alert';
 import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';

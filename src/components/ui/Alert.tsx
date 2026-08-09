@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, XCircle, type LucideIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface AlertProps {
@@ -8,9 +8,11 @@ export interface AlertProps {
   title?: string;
   children: ReactNode;
   className?: string;
+  /** Icône optionnelle en surcharge de l'icône par défaut de la variante. */
+  icon?: LucideIcon;
 }
 
-export function Alert({ variant = 'info', type, title, children, className }: AlertProps) {
+export function Alert({ variant = 'info', type, title, children, className, icon: IconOverride }: AlertProps) {
   const actualVariant = type || variant;
 
   const variants = {
@@ -36,7 +38,7 @@ export function Alert({ variant = 'info', type, title, children, className }: Al
 
   return (
     <div className={cn('flex items-start gap-3 p-4 rounded-lg border', container, className)}>
-      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+      <div className="flex-shrink-0 mt-0.5">{IconOverride ? <IconOverride className="h-5 w-5" /> : icon}</div>
       <div className="flex-1">
         {title && <div className="font-semibold mb-1">{title}</div>}
         <div className="text-sm">{children}</div>

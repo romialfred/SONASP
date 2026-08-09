@@ -59,7 +59,7 @@ export async function createRefiningRecord(data: RefiningData) {
         fineness_percentage: data.fineness_percentage,
         metal_retained_percentage: data.metal_retained_percentage,
         final_fine_grams: finalFine,
-        final_fine_oz: finalFine / 31.1035,
+        final_fine_oz: finalFine / 31.1034768,
         processed_by: data.processed_by,
         processed_at: new Date().toISOString(),
         notes: data.notes,

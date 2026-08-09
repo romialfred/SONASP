@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, DollarSign, Package, User, Calendar, TrendingUp } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Package, User, Calendar, TrendingUp } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
@@ -228,7 +228,7 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
                   {saleDetails.quantity_oz?.toFixed(3)} oz
                 </p>
                 <p className="text-xs text-gray-500">
-                  ({(saleDetails.quantity_oz * 31.1035).toFixed(2)} g)
+                  ({(saleDetails.quantity_oz * 31.1034768).toFixed(2)} g)
                 </p>
               </div>
 

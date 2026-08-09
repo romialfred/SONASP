@@ -333,11 +333,11 @@ class AnnualBudgetService {
         const month = date.getMonth() + 1;
 
         // Calculate fine gold in ounces
-        // Formula: (bullion_grams * fineness_pct / 100) / 31.1035
+        // Formula: (bullion_grams * fineness_pct / 100) / 31.1034768
         const bullionGrams = Number(record.bullion_grams) || 0;
         const fineness = Number(record.estimated_gold_pct || record.estimated_fineness_pct) || 0;
         const fineGoldGrams = (bullionGrams * fineness) / 100;
-        const fineGoldOz = fineGoldGrams / 31.1035;
+        const fineGoldOz = fineGoldGrams / 31.1034768;
 
         console.log(`  📅 ${record.production_date}: ${bullionGrams}g × ${fineness}% = ${fineGoldOz.toFixed(2)} oz (month ${month})`);
 

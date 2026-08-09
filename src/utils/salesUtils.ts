@@ -1,3 +1,5 @@
+import { TROY_OZ_GRAMS, GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
+
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -7,9 +9,9 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
   }).format(amount);
 }
 
-export function formatWeight(grams: number, unit?: 'g' | 'oz'): string {
+export function formatWeight(grams: number, _unit?: 'g' | 'oz'): string {
   // Always display in oz with grams equivalent (new platform standard)
-  const ounces = grams / 31.1035;
+  const ounces = grams / TROY_OZ_GRAMS;
   return `${ounces.toFixed(3)} oz (${grams.toFixed(2)} g)`;
 }
 
@@ -52,16 +54,16 @@ export function calculateNetProceeds(
   return grossProceeds - freight - otherCosts;
 }
 
-export function calculateRoyalties(netProceeds: number, royaltyRate: number = 0.03): number {
+export function calculateRoyalties(netProceeds: number, royaltyRate: number = GOLD_ROYALTY_RATE): number {
   return netProceeds * royaltyRate;
 }
 
 export function convertGramsToOunces(grams: number): number {
-  return grams / 31.1035;
+  return grams / TROY_OZ_GRAMS;
 }
 
 export function convertOuncesToGrams(ounces: number): number {
-  return ounces * 31.1035;
+  return ounces * TROY_OZ_GRAMS;
 }
 
 export function formatNumber(value: number, decimals: number = 2): string {
@@ -85,7 +87,7 @@ export function calculateSaleProceeds(
   pricePerOz: number,
   freight: number = 0,
   otherCosts: number = 0,
-  royaltyRate: number = 0.03
+  royaltyRate: number = GOLD_ROYALTY_RATE
 ): SaleProceedsCalculation {
   const grossProceeds = calculateGrossProceeds(weight, pricePerOz);
   const netProceeds = calculateNetProceeds(grossProceeds, freight, otherCosts);

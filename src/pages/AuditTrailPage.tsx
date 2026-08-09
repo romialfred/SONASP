@@ -6,7 +6,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
-import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter, Calendar } from 'lucide-react';
+import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatStatusFr } from '@/utils/statusFormatter';
 

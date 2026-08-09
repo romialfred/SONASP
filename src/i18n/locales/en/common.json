@@ -1,4 +1,28 @@
 {
+  "login": {
+    "subtitle": "Access your secure space",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "or": "or",
+    "needHelp": "Need help?",
+    "contactAdmin": "Contact the system administrator",
+    "brandTitle": "National System for the Collection and Traceability of Precious Substances",
+    "brandSubtitle": "A secure platform for the management, traceability and transparency of precious substances.",
+    "benefit1Title": "Enhanced security",
+    "benefit1Desc": "Your data is protected with the best security standards.",
+    "benefit2Title": "Full traceability",
+    "benefit2Desc": "Track every stage of the precious substances lifecycle.",
+    "benefit3Title": "Reliable data",
+    "benefit3Desc": "Accurate information for informed decisions.",
+    "officialPlatform": "Official SONASP platform",
+    "officialTagline": "Confidentiality • Integrity • Transparency",
+    "copyright": "© {{year}} SONASP. All rights reserved.",
+    "compliance": "Secure system compliant with international standards.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

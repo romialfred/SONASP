@@ -5,10 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import {
-  UserPlus, ArrowLeft, Save, X, Shield, CheckCircle2,
-  Mail, Phone, Building2, Key, Eye, Edit, Trash2, Check
+import { ArrowLeft, Save, X, Shield, CheckCircle2,
+  Mail, Phone, Key, Eye, Edit, Trash2, Check
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -19,9 +17,88 @@ import { ToggleImproved } from '@/components/ui/ToggleImproved';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { createUserDirect } from '@/services/userManagementService';
+import { createUser } from '@/services/userManagementService';
 import { modulesService, type Module } from '@/services/modulesService';
 import type { UserRole } from '@/types/auth';
+
+interface ModulePermission {
+  module_id: string;
+  module_name: string;
+  display_name: string;
+  can_view: boolean;
+  can_create: boolean;
+  can_edit: boolean;
+  can_delete: boolean;
+  can_approve: boolean;
+}
+
+/** Charge les permissions persistées d'un utilisateur (table user_permissions). */
+async function loadUserPermissions(userId: string): Promise<Record<string, ModulePermission>> {
+  const { data, error } = await supabase
+    .from('user_permissions')
+    .select('module_id, can_view, can_create, can_edit, can_delete, can_approve')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('[permissions] load failed:', error);
+    return {};
+  }
+
+  const result: Record<string, ModulePermission> = {};
+  (data || []).forEach((row: any) => {
+    result[row.module_id] = {
+      module_id: row.module_id,
+      module_name: '',
+      display_name: '',
+      can_view: !!row.can_view,
+      can_create: !!row.can_create,
+      can_edit: !!row.can_edit,
+      can_delete: !!row.can_delete,
+      can_approve: !!row.can_approve,
+    };
+  });
+  return result;
+}
+
+/** Persiste les permissions d'un utilisateur (remplace l'existant). */
+async function saveUserPermissions(
+  userId: string,
+  permissions: Record<string, ModulePermission>,
+  grantedBy?: string
+): Promise<{ success: boolean; error?: string }> {
+  const rows = Object.values(permissions)
+    .filter((p) => p.can_view || p.can_create || p.can_edit || p.can_delete || p.can_approve)
+    .map((p) => ({
+      user_id: userId,
+      module_id: p.module_id,
+      can_view: p.can_view,
+      can_create: p.can_create,
+      can_edit: p.can_edit,
+      can_delete: p.can_delete,
+      can_approve: p.can_approve,
+      // Colonnes historiques maintenues cohérentes.
+      can_read: p.can_view,
+      can_write: p.can_edit,
+      granted_by: grantedBy ?? null,
+    }));
+
+  // Remplace proprement l'existant (robuste sans contrainte d'unicité).
+  const { error: delError } = await supabase.from('user_permissions').delete().eq('user_id', userId);
+  if (delError) {
+    console.error('[permissions] clear failed:', delError);
+    return { success: false, error: delError.message };
+  }
+
+  if (rows.length > 0) {
+    const { error: insError } = await supabase.from('user_permissions').insert(rows);
+    if (insError) {
+      console.error('[permissions] save failed:', insError);
+      return { success: false, error: insError.message };
+    }
+  }
+
+  return { success: true };
+}
 
 interface UserFormData {
   fullName: string;
@@ -42,7 +119,6 @@ const ROLES: Array<{ value: UserRole; label: string; description: string }> = [
 ];
 
 export function UserManagementModern() {
-  const { t } = useTranslation();
   const { addToast } = useToast();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -93,8 +169,8 @@ export function UserManagementModern() {
       loadedModules.forEach(module => {
         initialPerms[module.id] = {
           module_id: module.id,
-          module_name: module.name,
-          display_name: module.display_name,
+          module_name: module.code,
+          display_name: module.nom,
           can_view: false,
           can_create: false,
           can_edit: false,
@@ -233,8 +309,8 @@ export function UserManagementModern() {
 
       // Créer ou mettre à jour l'utilisateur
       if (!isEditMode) {
-        // Mode création
-        const result = await createUserDirect({
+        // Mode création — via edge function sécurisée (audit V6), plus de signUp client.
+        const result = await createUser({
           email: formData.email,
           password: formData.password,
           full_name: formData.fullName,
@@ -660,7 +736,7 @@ export function UserManagementModern() {
                     {(() => {
                       // Grouper les modules par catégorie
                       const modulesByCategory = modules.reduce((acc, module) => {
-                        const category = module.category || 'other';
+                        const category = module.parent_nom || 'other';
                         if (!acc[category]) {
                           acc[category] = [];
                         }
@@ -742,7 +818,7 @@ export function UserManagementModern() {
                                       <td className="px-6 py-4">
                                         <div>
                                           <p className="font-semibold text-gray-900">
-                                            {module.display_name}
+                                            {module.nom}
                                           </p>
                                           <p className="text-xs text-gray-500 mt-1">{module.description}</p>
                                         </div>

@@ -173,6 +173,10 @@ const PaiementForm = () => {
       setLoading(true);
 
       const venteData = await artisanGoldSalesService.getById(venteId!);
+      if (!venteData) {
+        console.error('[PaiementForm] Vente introuvable:', venteId);
+        return;
+      }
       setVente(venteData);
 
       const artisanData = await artisanMinierService.getById(venteData.artisan_id);

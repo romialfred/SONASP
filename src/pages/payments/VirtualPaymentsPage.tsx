@@ -4,24 +4,17 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
-import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
-import { FileUpload } from '@/components/ui/FileUpload';
 import {
   DollarSign,
   Clock,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  TrendingUp,
   Calendar,
-  Building2,
   CreditCard,
-  FileText,
-  Download
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';

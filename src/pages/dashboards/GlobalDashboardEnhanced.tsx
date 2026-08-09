@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
 import {
-  Package,
   TrendingUp,
   Users,
   DollarSign,
-  AlertCircle,
   Truck,
   Activity,
   Target,
   Crown,
-  TrendingDown,
   Factory,
   Building2
 } from 'lucide-react';
@@ -18,9 +16,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
-import { formatStatusFr } from '@/utils/statusFormatter';
 import { LineChartWidget } from '@/components/charts/LineChartWidget';
-import { PieChartWidget } from '@/components/charts/PieChartWidget';
 
 interface DashboardStats {
   ytdRevenue: number;
@@ -151,7 +147,7 @@ export function GlobalDashboardEnhanced() {
       let ytdRoyalties = 0;
       let previousMonthRoyalties = 0;
 
-      const ROYALTY_RATE = 0.03;
+      const ROYALTY_RATE = GOLD_ROYALTY_RATE;
 
       // Ensure salesData is an array
       const salesArray = Array.isArray(salesData) ? salesData : [];
@@ -159,7 +155,8 @@ export function GlobalDashboardEnhanced() {
       salesArray.forEach((sale: any) => {
         const saleDate = new Date(sale.sale_date || sale.created_at);
         const amount = sale.total_amount || 0;
-        const royalty = amount * ROYALTY_RATE;
+        // Assiette unique (audit F3) : royalties stockées, sinon net_proceeds × taux.
+        const royalty = sale.royalty_amount ?? ((sale.net_proceeds ?? amount) * ROYALTY_RATE);
 
         if (saleDate >= ytdStart) {
           ytdRevenue += amount;
@@ -352,7 +349,7 @@ export function GlobalDashboardEnhanced() {
         const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
         // Use seller_type to determine company label (seller_id would need lookup)
         const companyName = sale.seller_type === 'mining_company' ? 'Mining Co.' : 'Other';
-        const royalty = (sale.total_amount || 0) * ROYALTY_RATE;
+        const royalty = sale.royalty_amount ?? ((sale.net_proceeds ?? sale.total_amount ?? 0) * ROYALTY_RATE);
 
         if (royaltiesByCompanyMonth[monthKey]) {
           if (!royaltiesByCompanyMonth[monthKey][companyName]) {

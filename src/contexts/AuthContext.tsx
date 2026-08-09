@@ -32,7 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
     const metadata = authUser.user_metadata || {};
     const now = new Date().toISOString();
-    const resolvedRole = (metadata.role as UserRole | undefined) || 'management';
+    // SÉCURITÉ (audit V4) : repli sur le rôle le MOINS privilégié, jamais 'management'.
+    // Un profil non résolu ne doit jamais déverrouiller les fonctions d'administration.
+    const resolvedRole = (metadata.role as UserRole | undefined) || 'customer';
     const rawSiteIds = Array.isArray(metadata.site_ids)
       ? (metadata.site_ids as string[])
       : metadata.site_id
@@ -190,7 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: userId,
             email: email,
             full_name: email.split('@')[0],
-            role: 'management',
+            // SÉCURITÉ (audit V4) : rôle minimal par défaut, jamais 'management'.
+            role: 'customer',
             is_active: true,
           }])
           .select()
@@ -393,7 +396,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let backgroundProfileFetch: Promise<void> | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -447,7 +449,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Fetch real profile in the background
           console.log('[Auth] Fetching full profile in background...');
-          backgroundProfileFetch = (async () => {
+          void (async () => {
             try {
               const profile = await fetchUserProfile(session.user.id);
 

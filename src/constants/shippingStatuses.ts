@@ -1,4 +1,4 @@
-import { Clock, Package, Check, Building2, TrendingUp, DollarSign, XCircle, Plane, CheckCircle } from 'lucide-react';
+import { Clock, Plane, CheckCircle } from 'lucide-react';
 
 /**
  * ENUM shipping_preparation_status défini dans la base de données

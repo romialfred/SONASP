@@ -245,54 +245,6 @@ export function validateVariance(config: VarianceConfig): ValidationResult {
 }
 
 /**
- * Validate batch status transition
- */
-export function validateStatusTransition(
-  currentStatus: string,
-  newStatus: string
-): ValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  // Define valid transitions (simplified - full validation is in database)
-  const validTransitions: Record<string, string[]> = {
-    [BATCH_STATUSES.PENDING_FACTORY_APPROVAL]: [BATCH_STATUSES.APPROVED_FOR_TRANSPORT, BATCH_STATUSES.CANCELLED],
-    [BATCH_STATUSES.APPROVED_FOR_TRANSPORT]: [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT, BATCH_STATUSES.CANCELLED],
-    [BATCH_STATUSES.WAITING_AIRPORT_RECEIPT]: [BATCH_STATUSES.RECEIVED_AT_AIRPORT, BATCH_STATUSES.CANCELLED],
-    [BATCH_STATUSES.RECEIVED_AT_AIRPORT]: [BATCH_STATUSES.VALIDATED_FOR_REFINERY],
-    [BATCH_STATUSES.VALIDATED_FOR_REFINERY]: [BATCH_STATUSES.WAITING_REFINERY_RECEIPT],
-    [BATCH_STATUSES.WAITING_REFINERY_RECEIPT]: [BATCH_STATUSES.RECEIVED_AT_REFINERY, BATCH_STATUSES.CANCELLED],
-    [BATCH_STATUSES.RECEIVED_AT_REFINERY]: [BATCH_STATUSES.VALIDATED_FOR_PROCESSING],
-    [BATCH_STATUSES.VALIDATED_FOR_PROCESSING]: [BATCH_STATUSES.PROCESSING],
-    [BATCH_STATUSES.PROCESSING]: [BATCH_STATUSES.IN_INVENTORY],
-    [BATCH_STATUSES.IN_INVENTORY]: [BATCH_STATUSES.READY_FOR_SALE],
-    [BATCH_STATUSES.READY_FOR_SALE]: [BATCH_STATUSES.ALLOCATED_TO_SALE, BATCH_STATUSES.IN_INVENTORY],
-    [BATCH_STATUSES.ALLOCATED_TO_SALE]: [BATCH_STATUSES.SOLD, BATCH_STATUSES.READY_FOR_SALE],
-  };
-
-  const allowed = validTransitions[currentStatus] || [];
-
-  if (!allowed.includes(newStatus)) {
-    errors.push(
-      `Cannot change status from "${currentStatus}" to "${newStatus}". This transition is not allowed.`
-    );
-  }
-
-  // Special warning for processing to in_inventory (should use form)
-  if (currentStatus === BATCH_STATUSES.PROCESSING && newStatus === BATCH_STATUSES.IN_INVENTORY) {
-    warnings.push(
-      'Status change to "in_inventory" should be done through the Add Inventory Entry form to ensure data integrity.'
-    );
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-    warnings
-  };
-}
-
-/**
  * Validate inventory entry data
  */
 export interface InventoryEntryData {

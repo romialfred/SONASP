@@ -4,7 +4,6 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { dailyProductionService, ProductionForecast } from '@/services/dailyProductionService';
 import { forecastFieldGuides } from '@/data/productionFieldGuides';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';

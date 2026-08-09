@@ -3,8 +3,8 @@
  * Modal pour créer/éditer un statut de workflow
  */
 
-import React, { useState, useEffect } from 'react';
-import { X, Flag, CheckCircle, Circle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Flag, CheckCircle, Circle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';

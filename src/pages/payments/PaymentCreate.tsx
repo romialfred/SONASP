@@ -43,11 +43,6 @@ interface CompanyBank {
   country: string;
 }
 
-interface FxRate {
-  source: string;
-  rate: number;
-  updated_at: string;
-}
 
 interface FxAnalysis {
   customerRate: number;

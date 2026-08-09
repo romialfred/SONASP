@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
+import { GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
 import { sendSaleApprovedNotification } from './notificationService';
 import { logAuditAction } from '@/lib/auditLog';
 import { SALES_STATUSES, INITIAL_SALE_STATUS } from '@/constants/salesStatuses';
-import { validateSalesStatusTransition, validateSaleCreation } from './validationService';
-import type { SaleCreationData as ValidationSaleData } from './validationService';
+import { validateSalesStatusTransition } from './validationService';
 
 export interface CreateSaleData {
   customer_id: string;
@@ -44,7 +44,8 @@ export interface Sale {
   updated_at: string;
 }
 
-export const ROYALTY_RATE = 0.03;
+// Source de vérité unique — cf. src/constants/goldConstants.ts (audit F4/Q3).
+export const ROYALTY_RATE = GOLD_ROYALTY_RATE;
 
 // ============================================================================
 // MULTI-VENDOR BUSINESS RULES - PHASE 1.2

@@ -7,7 +7,6 @@ import PasswordInput from '@/components/ui/PasswordInput';
 import {
   CheckCircle,
   Lock,
-  Key,
   Shield,
   AlertCircle,
   Eye,

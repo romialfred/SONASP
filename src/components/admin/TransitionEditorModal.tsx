@@ -8,7 +8,6 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { WorkflowStatus, WorkflowTransition } from '../../services/workflowManagerService';
 
 interface Props {

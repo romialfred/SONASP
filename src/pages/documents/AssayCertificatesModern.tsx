@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   FileText, Eye, CheckCircle, XCircle, X, Search, MapPin, Calendar, Scale,
-  Building2, Ship, Package, Upload, Plus, Download, Filter, Loader
+  Building2, Ship, Package, Upload, Plus, Download, Loader
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';

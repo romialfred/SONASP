@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Package, FileText, Calendar, DollarSign,
-  User, Clock, Download, Eye, CheckCircle, History, CreditCard,
+  User, Clock, Download, Eye, CheckCircle,
   Building2, MapPin, Phone, Mail, TrendingUp, AlertCircle, Award, Truck, Shield
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';

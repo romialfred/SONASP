@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import {
-  TrendingUp,
-  TrendingDown,
   RefreshCw,
   Clock,
   ArrowUpRight,

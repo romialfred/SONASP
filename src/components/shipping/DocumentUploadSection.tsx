@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, FileText, X, Download, Eye, Trash2, Plus } from 'lucide-react';
+import { Upload, FileText, Download, Eye, Trash2, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Card } from '../ui/Card';

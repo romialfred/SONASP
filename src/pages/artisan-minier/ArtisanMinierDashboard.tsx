@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  UserPlus,
-  CreditCard,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -11,7 +8,6 @@ import {
   TrendingUp,
   Calendar,
   Search,
-  Filter,
   MapPin,
   Activity,
   BarChart3,
@@ -54,11 +50,10 @@ const COLORS = {
 };
 
 export default function ArtisanMinierDashboard() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
-  const [artisans, setArtisans] = useState<any[]>([]);
+  const [, setArtisans] = useState<any[]>([]);
   const [cartesExpirant, setCartesExpirant] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -145,7 +140,7 @@ export default function ArtisanMinierDashboard() {
 
     // Tendance mensuelle (simulation - à adapter)
     const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const trendData = months.map((month, index) => ({
+    const trendData = months.map((month) => ({
       month,
       nouveaux: Math.floor(Math.random() * 20) + 5,
       actifs: Math.floor(Math.random() * 50) + 20
@@ -156,7 +151,7 @@ export default function ArtisanMinierDashboard() {
   const searchArtisans = async () => {
     if (!searchQuery.trim()) return;
     try {
-      const results = await artisanMinierService.searchArtisans(searchQuery);
+      await artisanMinierService.searchArtisans(searchQuery);
       navigate('/artisan-minier/liste');
     } catch (error) {
       console.error('Error searching:', error);
@@ -207,7 +202,7 @@ export default function ArtisanMinierDashboard() {
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') searchArtisans();
                 }}
-                icon={Search}
+                icon={<Search className="w-4 h-4" />}
               />
             </div>
             <Button variant="secondary" onClick={searchArtisans}>
@@ -319,7 +314,7 @@ export default function ArtisanMinierDashboard() {
                       suspendues: 'Suspendues',
                       expirees: 'Expirées'
                     };
-                    return `${statusLabels[name] || name}: ${value} (${(percent * 100).toFixed(1)}%)`;
+                    return `${statusLabels[name ?? ''] || name}: ${value} (${((percent ?? 0) * 100).toFixed(1)}%)`;
                   }}
                   outerRadius={120}
                   innerRadius={70}
@@ -403,7 +398,7 @@ export default function ArtisanMinierDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
@@ -437,7 +432,7 @@ export default function ArtisanMinierDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name === 'M' ? 'Masculin' : name === 'F' ? 'Féminin' : name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name === 'M' ? 'Masculin' : name === 'F' ? 'Féminin' : name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"

@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DollarSign, Search, Download, CheckCircle, Clock, AlertCircle,
-  FileText, Plus, RefreshCw, Zap, Calendar, CreditCard,
-  Building2, TrendingUp
+  FileText, Plus, RefreshCw, Zap, Calendar, CreditCard
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';

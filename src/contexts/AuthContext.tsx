@@ -16,6 +16,10 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const isMissingUserProfileError = (
+  error: { code?: string } | null | undefined
+): boolean => error?.code === 'PGRST116';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -112,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Missing profile - try to create it
-          if (profileError.code === 'PGRST116' || !profile) {
+          if (isMissingUserProfileError(profileError)) {
             console.warn('[Profile] Not found, attempting to create minimal profile');
             return await createMinimalProfile(userId);
           }
@@ -204,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (insertError) {
         console.error('[Profile] Failed to create profile:', insertError);
-        return null;
+        throw insertError;
       }
 
       console.log('[Profile] Minimal profile created successfully');
@@ -226,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error('[Profile] Failed to create minimal profile:', error);
-      return null;
+      throw error;
     }
   };
 

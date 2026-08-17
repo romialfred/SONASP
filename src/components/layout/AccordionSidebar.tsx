@@ -43,6 +43,8 @@ import {
   Plus,
   FileCheck,
   LineChart,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -292,40 +294,40 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
     const stored = localStorage.getItem(COLLAPSED_KEY);
     return stored === 'true';
   });
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
-    // Start with no groups expanded
-    return new Set();
-  });
+  const [openGroup, setOpenGroup] = useState<string | null>(() =>
+    localStorage.getItem(STORAGE_KEY)
+  );
+  const routeGroupId = useMemo(() => {
+    const currentPath = location.pathname;
+    return menuGroups.find((group) =>
+      group.items.some((item) =>
+        currentPath === item.path || currentPath.startsWith(item.path + '/')
+      )
+    )?.id ?? null;
+  }, [location.pathname, menuGroups]);
 
   useEffect(() => {
-    const currentPath = location.pathname;
-    for (const group of menuGroups) {
-      const isInGroup = group.items.some(item =>
-        currentPath === item.path || currentPath.startsWith(item.path + '/')
-      );
-      if (isInGroup) {
-        setOpenGroups(prev => {
-          const newSet = new Set(prev);
-          newSet.add(group.id);
-          localStorage.setItem(STORAGE_KEY, group.id);
-          return newSet;
-        });
-        break;
-      }
+    if (routeGroupId) {
+      setOpenGroup(routeGroupId);
+      localStorage.setItem(STORAGE_KEY, routeGroupId);
     }
-  }, [location.pathname]);
+  }, [location.pathname, routeGroupId]);
 
   const toggleGroup = (groupId: string) => {
-    setOpenGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupId)) {
-        newSet.delete(groupId);
-      } else {
-        newSet.clear();
-        newSet.add(groupId);
-        localStorage.setItem(STORAGE_KEY, groupId);
-      }
-      return newSet;
+    if (collapsed) {
+      setCollapsed(false);
+      localStorage.setItem(COLLAPSED_KEY, 'false');
+      onToggle?.(false);
+      setOpenGroup(groupId);
+      localStorage.setItem(STORAGE_KEY, groupId);
+      return;
+    }
+
+    setOpenGroup((current) => {
+      const next = current === groupId ? null : groupId;
+      if (next) localStorage.setItem(STORAGE_KEY, next);
+      else localStorage.removeItem(STORAGE_KEY);
+      return next;
     });
   };
 
@@ -373,146 +375,74 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
   return (
     <aside
       className={cn(
-        'bg-gradient-to-b from-emerald-50/60 via-transparent to-emerald-50/40 h-screen border-r border-emerald-200/30 flex flex-col shadow-xl transition-all duration-300 flex-shrink-0 backdrop-blur-sm',
-        collapsed ? 'w-[70px]' : 'w-[280px]'
+        'h-screen flex flex-col flex-shrink-0 overflow-hidden border-r border-[#28524a] bg-[#123b35] text-white shadow-[8px_0_28px_rgba(15,49,44,0.12)] transition-[width] duration-200',
+        collapsed ? 'w-[72px]' : 'w-[244px]'
       )}
+      aria-label="Navigation principale"
     >
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-emerald-200/40 bg-gradient-to-r from-emerald-50/50 to-transparent backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
-            <div className="flex items-center gap-3 w-full">
-              <div className="flex-shrink-0">
-                <img
-                  src="/logo_transparent_sonasp copy.png"
-                  alt="SONASP Logo"
-                  className="h-12 w-12 object-contain"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold leading-[1.3] text-gray-900">
-                  <span className="text-red-600 text-[15px]">S</span>ociété{' '}
-                  <span className="text-red-600 text-[15px]">N</span>ationale
-                  <br />
-                  des <span className="text-red-600 text-[15px]">S</span>ubstances{' '}
-                  <span className="text-red-600 text-[15px]">N</span>aturelles
-                </div>
-              </div>
-            </div>
-          )}
-          {collapsed && (
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl blur-md opacity-40"></div>
-              <img
-                src="/logo_transparent_sonasp copy.png"
-                alt="SONASP Logo"
-                className="w-10 h-10 object-contain mx-auto relative rounded-xl"
-              />
-            </div>
-          )}
-        </div>
+      <div className="flex h-[76px] flex-shrink-0 items-center border-b border-white/10 px-4">
+        <img
+          src="/sonasp_logo.png"
+          alt="SONASP"
+          className={cn('object-contain', collapsed ? 'h-10 w-10 object-left' : 'h-[48px] w-[142px]')}
+        />
       </div>
 
-      {/* Toggle Button with "My Applications" */}
-      <div className="px-3 py-3 border-b border-emerald-200/40 bg-gradient-to-r from-emerald-50/30 to-transparent">
-        <button
-          onClick={toggleCollapse}
-          className="w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent rounded-xl transition-all duration-300 group"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {!collapsed && (
-            <span className="text-sm font-medium tracking-wide">My Applications</span>
-          )}
-          <Menu className="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors" />
-        </button>
+      <div className="flex h-[58px] flex-shrink-0 items-center justify-between px-5">
+        {!collapsed && <span className="text-[11px] font-semibold tracking-[0.12em] text-emerald-100/70">MES APPLICATIONS</span>}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
-        {/* Dashboard - Direct Link (Not in Group) */}
+      <nav className="custom-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-gutter:stable]">
         <Link
           to="/dashboard"
           className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2',
+            'relative flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
             isDashboardActive
-              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30'
-              : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/80 hover:to-transparent hover:shadow-sm'
+              ? 'bg-[#08705f] text-white shadow-[0_8px_20px_rgba(2,25,22,0.22)] before:absolute before:inset-y-2 before:right-0 before:w-1 before:rounded-l-full before:bg-amber-400'
+              : 'text-emerald-50/85 hover:bg-white/[0.07] hover:text-white'
           )}
+          aria-current={isDashboardActive ? 'page' : undefined}
+          title={collapsed ? t('nav.dashboard') : undefined}
         >
-          {isDashboardActive && (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent animate-pulse"></div>
-          )}
-          <div className={cn(
-            'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
-            isDashboardActive ? 'bg-white/20' : 'bg-blue-50 group-hover:bg-blue-100'
-          )}>
-            <LayoutDashboard className={cn('w-4 h-4', isDashboardActive ? 'text-white' : 'text-blue-600')} />
-          </div>
+          <LayoutDashboard className={cn('h-5 w-5 flex-shrink-0', isDashboardActive ? 'text-white' : 'text-emerald-300')} aria-hidden="true" />
           {!collapsed && (
-            <span className="text-sm font-medium relative z-10 whitespace-nowrap overflow-hidden text-ellipsis">
-              {t('nav.dashboard')}
-            </span>
+            <span className="min-w-0 truncate">{t('nav.dashboard')}</span>
           )}
         </Link>
 
-        {/* Menu Groups */}
         {menuGroups.map((group) => {
           const groupItems = Array.isArray(group.items) ? group.items : [];
-          const isOpen = openGroups.has(group.id);
+          const isOpen = openGroup === group.id;
           const hasActiveItem = groupItems.some(item => isActive(item.path));
 
           return (
-            <div key={group.id} className="space-y-1">
-              {/* Group Header */}
+            <div key={group.id}>
               <button
-                onClick={() => !collapsed && toggleGroup(group.id)}
+                type="button"
+                onClick={() => toggleGroup(group.id)}
                 className={cn(
-                  'group w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 relative overflow-hidden',
-                  'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2',
+                  'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
                   isOpen || hasActiveItem
-                    ? 'bg-gradient-to-r from-slate-100/80 to-transparent shadow-sm'
-                    : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-100/60 hover:to-transparent'
+                    ? 'bg-white/10 font-semibold text-white'
+                    : 'text-emerald-50/85 hover:bg-white/[0.07] hover:text-white'
                 )}
+                aria-expanded={isOpen}
+                aria-controls={`sidebar-group-${group.id}`}
+                title={collapsed ? group.label : undefined}
               >
-                <div className="flex items-center gap-3 relative z-10 min-w-0 flex-1">
-                  {group.groupIcon && (
-                    <div className={cn(
-                      'p-1.5 rounded-lg transition-all duration-300 flex-shrink-0',
-                      isOpen || hasActiveItem ? 'bg-white shadow-sm' : 'bg-slate-50 group-hover:bg-white'
-                    )}>
-                      <group.groupIcon className={cn('w-4 h-4', group.groupIconColor)} />
-                    </div>
-                  )}
-                  {!collapsed && (
-                    <span className={cn(
-                      'text-sm transition-all duration-300 whitespace-nowrap overflow-hidden text-ellipsis',
-                      isOpen || hasActiveItem ? 'font-medium text-slate-900' : 'font-normal text-slate-700'
-                    )}>
-                      {group.label}
-                    </span>
-                  )}
-                </div>
+                {group.groupIcon && <group.groupIcon className="h-5 w-5 flex-shrink-0 text-emerald-300" aria-hidden="true" />}
                 {!collapsed && (
-                  <div className={cn(
-                    'p-1 rounded-lg transition-all duration-300 flex-shrink-0',
-                    isOpen ? 'bg-slate-200/50' : 'group-hover:bg-slate-200/30'
-                  )}>
-                    {isOpen ? (
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
-                    ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                    )}
-                  </div>
+                  <>
+                    <span className="min-w-0 flex-1 truncate">{group.label}</span>
+                    {isOpen ? <ChevronDown className="h-4 w-4 flex-shrink-0" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 flex-shrink-0" aria-hidden="true" />}
+                  </>
                 )}
               </button>
 
-              {/* Group Items */}
               {isOpen && !collapsed && (
-                <div className="ml-3 pl-4 space-y-1 border-l-2 border-slate-200/60 relative">
-                  {/* Gradient line on hover */}
-                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
+                <div id={`sidebar-group-${group.id}`} className="relative ml-[22px] border-l border-emerald-200/20 py-1 pl-3">
                   {groupItems.map((item) => {
                     const active = isActive(item.path);
                     return (
@@ -520,28 +450,16 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                         key={item.path}
                         to={item.path}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden',
-                          'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2',
+                          'flex min-h-10 items-center gap-3 rounded-lg px-3 text-[13px] transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
                           active
-                            ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/50 text-emerald-900 shadow-sm border border-emerald-200/50'
-                            : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-transparent hover:translate-x-1'
+                            ? 'bg-emerald-200/[0.15] font-semibold text-white'
+                            : 'text-emerald-50/65 hover:bg-white/[0.07] hover:text-white'
                         )}
+                        aria-current={active ? 'page' : undefined}
                       >
-                        {active && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-r-full"></div>
-                        )}
-                        <div className={cn(
-                          'p-1 rounded-md transition-all duration-300 relative z-10 flex-shrink-0',
-                          active ? 'bg-emerald-100/80' : 'bg-slate-50 group-hover:bg-slate-100'
-                        )}>
-                          <item.icon className={cn('w-3.5 h-3.5', active ? 'text-emerald-600' : item.iconColor)} />
-                        </div>
-                        <span className={cn(
-                          'text-sm transition-all duration-300 relative z-10 whitespace-nowrap overflow-hidden text-ellipsis',
-                          active ? 'font-medium' : 'font-normal'
-                        )}>
-                          {item.label}
-                        </span>
+                        <item.icon className={cn('h-4 w-4 flex-shrink-0', active ? 'text-amber-300' : 'text-emerald-300/80')} aria-hidden="true" />
+                        <span className="min-w-0 truncate">{item.label}</span>
                       </Link>
                     );
                   })}
@@ -552,13 +470,18 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-200/60 bg-white/30">
-        {!collapsed && (
-          <p className="text-xs text-slate-500 text-center font-medium">
-            © 2025 Mansa Resources
-          </p>
-        )}
+      <div className="flex-shrink-0 border-t border-white/10 p-3">
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-emerald-100/70 transition-colors hover:bg-white/[0.07] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset"
+          aria-label={collapsed ? 'Déployer le menu' : 'Réduire le menu'}
+          title={collapsed ? 'Déployer le menu' : undefined}
+        >
+          {collapsed ? <PanelLeftOpen className="h-5 w-5 flex-shrink-0" aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5 flex-shrink-0" aria-hidden="true" />}
+          {!collapsed && <span>Réduire le menu</span>}
+        </button>
+        {!collapsed && <p className="mt-2 text-center text-[11px] text-emerald-100/45">© 2026 SONASP</p>}
       </div>
     </aside>
   );

@@ -81,7 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn('[Auth] Falling back to authentication metadata for user profile');
       return {
         profile: buildFallbackProfile(authUser),
-        error: 'Unable to load full user profile. Using account defaults instead.',
+        // A usable fallback is a degraded data source, not an actionable user error.
+        error: null,
       };
     }
 
@@ -466,19 +467,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }));
               } else if (mounted && !profile) {
                 console.warn('[Auth] Background profile fetch failed, keeping fallback');
-                setState(prev => ({
-                  ...prev,
-                  profileError: 'Unable to load full profile. Using account defaults.',
-                }));
               }
             } catch (error) {
               console.error('[Auth] Background profile fetch error:', error);
-              if (mounted) {
-                setState(prev => ({
-                  ...prev,
-                  profileError: 'Unable to load full profile. Retrying in the background.',
-                }));
-              }
             }
           })();
         } else {
@@ -584,10 +575,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   profileError: null,
                 }));
               } else if (mounted) {
-                setState(prev => ({
-                  ...prev,
-                  profileError: 'Unable to load full profile. Using account defaults.',
-                }));
+                console.warn('[Auth] Background profile fetch failed, keeping fallback');
               }
             } catch (error) {
               console.error('[Auth] Background profile fetch error:', error);

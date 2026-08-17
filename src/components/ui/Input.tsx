@@ -1,12 +1,25 @@
-import { InputHTMLAttributes, ReactNode, forwardRef, useId } from 'react';
+import { ElementType, InputHTMLAttributes, ReactNode, createElement, forwardRef, isValidElement, useId } from 'react';
 import { cn } from '@/utils/cn';
+
+type InputIcon = ReactNode | ElementType;
+
+const isIconComponent = (icon: InputIcon): icon is ElementType => {
+  if (typeof icon === 'function') return true;
+  if (typeof icon !== 'object' || icon === null || isValidElement(icon) || !('$$typeof' in icon)) return false;
+
+  return [
+    Symbol.for('react.forward_ref'),
+    Symbol.for('react.memo'),
+    Symbol.for('react.lazy'),
+  ].includes(icon.$$typeof as symbol);
+};
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** `true` pour l'état erreur, ou une chaîne = message d'erreur affiché sous le champ. */
   error?: boolean | string;
   success?: boolean;
-  /** Icône optionnelle affichée à gauche du champ. */
-  icon?: ReactNode;
+  /** Icône optionnelle affichée à gauche du champ (composant ou élément React). */
+  icon?: InputIcon;
   /** Libellé optionnel affiché au-dessus du champ (associé via htmlFor pour l'accessibilité). */
   label?: string;
   /** Message d'aide ou d'erreur affiché sous le champ. */
@@ -21,6 +34,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const hasError = Boolean(error);
     const errorMessage = typeof error === 'string' ? error : undefined;
     const shownHelper = errorMessage ?? helperText;
+    const renderedIcon = icon && isIconComponent(icon)
+      ? createElement(icon, { 'aria-hidden': true })
+      : icon;
 
     const baseStyles = 'flex w-full rounded-lg border px-3 py-2 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
@@ -43,7 +59,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const fieldEl = icon ? (
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-          {icon}
+          {renderedIcon}
         </span>
         {inputEl}
       </div>

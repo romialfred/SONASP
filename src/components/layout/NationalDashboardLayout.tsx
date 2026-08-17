@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,13 +15,16 @@ import {
   FlaskConical,
   Grid2X2,
   Languages,
+  Layers,
   LayoutDashboard,
   LogOut,
   Menu,
+  MapPinned,
   PackageCheck,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  SlidersHorizontal,
   TrendingUp,
   Truck,
   UserRound,
@@ -41,6 +44,7 @@ type NavigationItem = {
 };
 
 type NavigationGroup = NavigationItem & {
+  id: string;
   children?: NavigationItem[];
 };
 
@@ -52,22 +56,51 @@ const artisanItems: NavigationItem[] = [
   { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },
   { label: "Ventes d'Or", path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#d79a00' },
   { label: 'Paiements des Ventes', path: '/artisan-minier/paiements', icon: CircleDollarSign, color: '#16a363' },
-  { label: 'Centre de Rapports & Analyses', path: '/artisan-minier/rapports', icon: BarChart3, color: '#2f6fec' },
+  { label: 'Rapports & Analyses', path: '/artisan-minier/rapports', icon: BarChart3, color: '#2f6fec' },
 ];
 
 const navigationGroups: NavigationGroup[] = [
   {
+    id: 'artisan-minier',
     label: 'Artisans Miniers',
     path: '/artisan-minier',
     icon: Users,
     color: '#10976b',
     children: artisanItems,
   },
-  { label: 'Gestion de la Collecte', path: '/production/daily', icon: Building2, color: '#10976b' },
-  { label: 'Gestion des Expéditions', path: '/shipping/preparation', icon: Truck, color: '#2f6fec' },
-  { label: 'Raffinage', path: '/refining', icon: FlaskConical, color: '#10976b' },
-  { label: 'Suivi des Stocks', path: '/inventory', icon: PackageCheck, color: '#10976b' },
-  { label: 'Gestion des Documents', path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
+  {
+    id: 'artisanal-sites',
+    label: 'Gestion des sites artisanaux',
+    path: '/artisan-sites',
+    icon: MapPinned,
+    color: '#21c995',
+    children: [
+      { label: "Vue d'ensemble", path: '/artisan-sites', icon: Grid2X2, color: '#21c995' },
+      { label: 'Ajouter un site', path: '/artisan-sites/nouveau', icon: MapPinned, color: '#2f6fec' },
+      { label: 'Production des sites', path: '/artisan-sites/production', icon: Building2, color: '#d79a00' },
+    ],
+  },
+  { id: 'production', label: "Collecte de l'Or", path: '/production/daily', icon: Building2, color: '#10976b' },
+  { id: 'shipping', label: 'Expéditions', path: '/shipping/preparation', icon: Truck, color: '#2f6fec' },
+  { id: 'refining', label: 'Raffinage', path: '/refining', icon: FlaskConical, color: '#10976b' },
+  { id: 'inventory', label: 'Suivi des Stocks', path: '/inventory', icon: PackageCheck, color: '#10976b' },
+  { id: 'documents', label: 'Documents', path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
+  { id: 'market', label: 'Marché', path: '/sales/trade-space', icon: CircleDollarSign, color: '#f59e0b' },
+  { id: 'sales', label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
+  { id: 'stakeholders', label: 'Parties prenantes', path: '/stakeholders/mining-companies', icon: Users, color: '#14b8a6' },
+  { id: 'analytics', label: 'Analyses', path: '/analytics', icon: TrendingUp, color: '#3b82f6' },
+  {
+    id: 'settings',
+    label: 'Paramétrage',
+    path: '/admin/gold-sales-settings',
+    icon: SlidersHorizontal,
+    color: '#f59e0b',
+    children: [
+      { label: 'Paramètres des ventes', path: '/admin/gold-sales-settings', icon: CircleDollarSign, color: '#d79a00' },
+      { label: 'Paramètres des statuts', path: '/admin/status-manager', icon: Layers, color: '#14b8a6' },
+    ],
+  },
+  { id: 'administration', label: 'Administration', path: '/users', icon: Settings, color: '#f97316' },
 ];
 
 interface NationalDashboardLayoutProps {
@@ -76,6 +109,7 @@ interface NationalDashboardLayoutProps {
 
 function getRoleLabel(role?: string) {
   const labels: Record<string, string> = {
+    owner: 'Owner',
     admin: 'Administrateur',
     management: 'Direction',
     factory: 'Site de production',
@@ -96,10 +130,23 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     localStorage.getItem('sidebar:collapsed') === 'true'
   );
-  const [artisanOpen, setArtisanOpen] = useState(true);
+  const routeGroupId = useMemo(
+    () =>
+      navigationGroups.find((group) =>
+        group.children?.some(
+          (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+        )
+      )?.id || null,
+    [location.pathname]
+  );
+  const [openGroup, setOpenGroup] = useState<string | null>(() => routeGroupId);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  useEffect(() => {
+    if (routeGroupId) setOpenGroup(routeGroupId);
+  }, [routeGroupId]);
 
   const displayName = useMemo(() => {
     const name = user?.full_name?.trim();
@@ -123,10 +170,14 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
     if (location.pathname === path) return true;
     if (path === '/dashboard' || !location.pathname.startsWith(`${path}/`)) return false;
 
-    const moreSpecificPathExists = artisanItems.some(
+    const navigationPaths = navigationGroups.flatMap((group) => [
+      group.path,
+      ...(group.children?.map((item) => item.path) || []),
+    ]);
+    const moreSpecificPathExists = navigationPaths.some(
       (item) =>
-        item.path !== path &&
-        (location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))
+        item !== path &&
+        (location.pathname === item || location.pathname.startsWith(`${item}/`))
     );
     return !moreSpecificPathExists;
   };
@@ -161,10 +212,11 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
 
         {navigationGroups.map((group) => {
           const Icon = group.icon;
-          const isArtisan = Boolean(group.children);
-          const groupActive = isActive(group.path);
+          const hasChildren = Boolean(group.children?.length);
+          const groupActive = isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
+          const isOpen = openGroup === group.id;
 
-          if (isArtisan) {
+          if (hasChildren) {
             return (
               <div className="national-sidebar__group" key={group.label}>
                 <button
@@ -174,18 +226,18 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
                     if (sidebarCollapsed) {
                       setSidebarCollapsed(false);
                       localStorage.setItem('sidebar:collapsed', 'false');
-                      setArtisanOpen(true);
+                      setOpenGroup(group.id);
                       return;
                     }
-                    setArtisanOpen((open) => !open);
+                    setOpenGroup((current) => current === group.id ? null : group.id);
                   }}
-                  aria-expanded={artisanOpen}
+                  aria-expanded={isOpen}
                 >
                   <Icon style={{ color: group.color }} aria-hidden="true" />
-                  <span>{group.label}</span>
-                  {artisanOpen ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
+                  <span className={cn(group.id === 'artisanal-sites' && 'text-[9px] font-semibold tracking-[-0.01em]')} title={group.label}>{group.label}</span>
+                  {isOpen ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
                 </button>
-                {artisanOpen && (
+                {isOpen && (
                   <div className="national-sidebar__subnav">
                     {group.children?.map((item) => {
                       const ItemIcon = item.icon;

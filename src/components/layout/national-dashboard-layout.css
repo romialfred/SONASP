@@ -100,7 +100,7 @@
   padding: 0 12px;
   gap: 12px;
   color: rgb(236 253 245 / 85%);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   border-radius: 12px;
   transition: background-color 150ms ease, color 150ms ease;
@@ -118,6 +118,14 @@
 .national-sidebar__dashboard-link svg {
   width: 20px;
   height: 20px;
+}
+
+.national-sidebar__dashboard-link span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .national-sidebar__dashboard-link.is-active {
@@ -145,9 +153,10 @@
   color: rgb(236 253 245 / 85%);
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
+  white-space: nowrap;
   border-radius: 12px;
   transition: background-color 150ms ease, color 150ms ease;
 }
@@ -176,6 +185,14 @@
   color: rgb(209 250 229 / 75%);
 }
 
+.national-sidebar__group-trigger > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .national-sidebar__group-link {
   margin-top: 8px;
 }
@@ -201,7 +218,7 @@
   padding: 0 9px;
   gap: 12px;
   color: rgb(236 253 245 / 65%);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   border-radius: 8px;
 }
@@ -218,6 +235,8 @@
 }
 
 .national-sidebar__subnav a span {
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

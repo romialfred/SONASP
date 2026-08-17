@@ -18,10 +18,14 @@ export const PERMISSIONS = {
   REPORTS_GENERATE: 'generate',
   SETTINGS_VIEW: 'view',
   SETTINGS_MANAGE: 'manage',
+  SYSTEM_SETTINGS_MANAGE: 'system_settings_manage',
   AUDIT_VIEW: 'view',
 } as const;
 
+const FULL_ACCESS_PERMISSIONS = [...new Set(Object.values(PERMISSIONS))];
+
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  owner: FULL_ACCESS_PERMISSIONS,
   factory: [
     PERMISSIONS.LICENSES_VIEW,
     PERMISSIONS.LICENSES_REQUEST,
@@ -38,26 +42,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.SALES_VIEW,
     PERMISSIONS.REPORTS_VIEW,
   ],
-  management: [
-    PERMISSIONS.SALES_VIEW,
-    PERMISSIONS.SALES_CREATE,
-    PERMISSIONS.SALES_APPROVE,
-    PERMISSIONS.CUSTOMERS_VIEW,
-    PERMISSIONS.CUSTOMERS_CREATE,
-    PERMISSIONS.CUSTOMERS_EDIT,
-    PERMISSIONS.CUSTOMERS_MANAGE,
-    PERMISSIONS.LICENSES_VIEW,
-    PERMISSIONS.LICENSES_CREATE,
-    PERMISSIONS.LICENSES_REQUEST,
-    PERMISSIONS.LICENSES_APPROVE,
-    PERMISSIONS.USERS_VIEW,
-    PERMISSIONS.USERS_MANAGE,
-    PERMISSIONS.REPORTS_VIEW,
-    PERMISSIONS.REPORTS_GENERATE,
-    PERMISSIONS.SETTINGS_VIEW,
-    PERMISSIONS.SETTINGS_MANAGE,
-    PERMISSIONS.AUDIT_VIEW,
-  ],
+  management: FULL_ACCESS_PERMISSIONS,
+  admin: FULL_ACCESS_PERMISSIONS,
 };
 
 export function hasPermission(user: UserProfile | null, permission: string): boolean {
@@ -82,13 +68,13 @@ export function hasAllPermissions(user: UserProfile | null, permissions: string[
 }
 
 export function isManagement(user: UserProfile | null): boolean {
-  return user?.role === 'management' && user.is_active;
+  return Boolean(user?.is_active && (user.role === 'owner' || user.role === 'management'));
 }
 
 export function canAccessSite(user: UserProfile | null, siteId: string): boolean {
   if (!user || !user.is_active) return false;
 
-  if (user.role === 'management') return true;
+  if (user.role === 'owner' || user.role === 'management') return true;
 
   return user.site_ids.includes(siteId);
 }
@@ -104,6 +90,8 @@ export function getDefaultRoute(role: UserRole): string {
     case 'customer':
       return '/dashboard/customer';
     case 'management':
+    case 'owner':
+    case 'admin':
       return '/dashboard';
     default:
       return '/dashboard';

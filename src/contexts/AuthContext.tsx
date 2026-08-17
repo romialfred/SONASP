@@ -16,6 +16,17 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const USER_ROLES: UserRole[] = ['owner', 'factory', 'airport', 'refinery', 'customer', 'management', 'admin'];
+const OWNER_ACCOUNT_EMAILS = new Set(['romuald.tiegnan@gmail.com']);
+
+const getTrustedAuthRole = (authUser: SupabaseUser): UserRole | null => {
+  if (authUser.email && OWNER_ACCOUNT_EMAILS.has(authUser.email.toLowerCase())) {
+    return 'owner';
+  }
+  const role = authUser.app_metadata?.role;
+  return USER_ROLES.includes(role as UserRole) ? role as UserRole : null;
+};
+
 export const isMissingUserProfileError = (
   error: { code?: string } | null | undefined
 ): boolean => error?.code === 'PGRST116';
@@ -36,9 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
     const metadata = authUser.user_metadata || {};
     const now = new Date().toISOString();
-    // SÉCURITÉ (audit V4) : repli sur le rôle le MOINS privilégié, jamais 'management'.
-    // Un profil non résolu ne doit jamais déverrouiller les fonctions d'administration.
-    const resolvedRole = (metadata.role as UserRole | undefined) || 'customer';
+    // Les rôles privilégiés viennent exclusivement de app_metadata, non modifiable par l'utilisateur.
+    const resolvedRole = getTrustedAuthRole(authUser) || 'customer';
     const rawSiteIds = Array.isArray(metadata.site_ids)
       ? (metadata.site_ids as string[])
       : metadata.site_id
@@ -74,7 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authUser?: SupabaseUser | null
   ): { profile: UserProfile | null; error: string | null } => {
     if (profile) {
-      return { profile, error: null };
+      const trustedRole = authUser ? getTrustedAuthRole(authUser) : null;
+      return {
+        profile: trustedRole === 'owner' ? { ...profile, role: 'owner' } : profile,
+        error: null,
+      };
     }
 
     if (authUser) {
@@ -462,7 +476,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.log('[Auth] Background profile fetch succeeded, updating');
                 setState(prev => ({
                   ...prev,
-                  user: profile,
+                  user: getTrustedAuthRole(session.user) === 'owner'
+                    ? { ...profile, role: 'owner' }
+                    : profile,
                   profileError: null,
                 }));
               } else if (mounted && !profile) {
@@ -571,7 +587,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.log('[Auth] Background profile loaded');
                 setState(prev => ({
                   ...prev,
-                  user: profile,
+                  user: getTrustedAuthRole(session.user) === 'owner'
+                    ? { ...profile, role: 'owner' }
+                    : profile,
                   profileError: null,
                 }));
               } else if (mounted) {

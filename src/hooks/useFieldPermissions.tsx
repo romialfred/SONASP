@@ -25,11 +25,11 @@ interface UseFieldPermissionsReturn {
 }
 
 export function useFieldPermissions(): UseFieldPermissionsReturn {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [permissions, setPermissions] = useState<Record<string, ModulePermissions>>({});
   const [loading, setLoading] = useState(true);
 
-  const isManagement = profile?.role === 'management';
+  const isManagement = user?.role === 'management' || user?.role === 'owner';
 
   useEffect(() => {
     if (!user?.id) {
@@ -38,7 +38,7 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
     }
 
     loadPermissions();
-  }, [user?.id]);
+  }, [user?.id, isManagement]);
 
   const loadPermissions = async () => {
     if (!user?.id) return;

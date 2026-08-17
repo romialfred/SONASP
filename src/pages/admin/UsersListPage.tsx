@@ -34,6 +34,8 @@ interface User {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
+  owner: 'Owner',
+  admin: 'Administrator',
   management: 'Management',
   factory: 'Factory',
   airport: 'Airport',
@@ -42,6 +44,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
+  owner: 'bg-amber-100 text-amber-900 border-amber-300',
+  admin: 'bg-red-100 text-red-800 border-red-300',
   management: 'bg-purple-100 text-purple-800 border-purple-300',
   factory: 'bg-green-100 text-green-800 border-green-300',
   airport: 'bg-blue-100 text-blue-800 border-blue-300',

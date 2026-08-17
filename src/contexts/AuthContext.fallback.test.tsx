@@ -46,6 +46,7 @@ function AuthStateProbe() {
       data-initialized={String(initialized)}
       data-profile-error={profileError ?? ''}
       data-user-id={user?.id ?? ''}
+      data-user-role={user?.role ?? ''}
     />
   );
 }
@@ -103,5 +104,33 @@ describe('AuthProvider profile fallback', () => {
       'Authentication failed to initialize. Please refresh or sign in again.'
     );
     expect(state).toHaveAttribute('data-user-id', '');
+  });
+
+  it('utilise le rôle Owner depuis les métadonnées Auth protégées', async () => {
+    authMocks.getSession.mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: 'owner-123',
+            email: 'romuald.tiegnan@gmail.com',
+            user_metadata: { role: 'customer' },
+            app_metadata: {},
+            created_at: '2026-08-17T00:00:00.000Z',
+            updated_at: '2026-08-17T00:00:00.000Z',
+            last_sign_in_at: '2026-08-17T00:00:00.000Z',
+          },
+        },
+      },
+      error: null,
+    });
+
+    render(
+      <AuthProvider>
+        <AuthStateProbe />
+      </AuthProvider>
+    );
+
+    const state = await screen.findByTestId('auth-state');
+    await waitFor(() => expect(state).toHaveAttribute('data-user-role', 'owner'));
   });
 });

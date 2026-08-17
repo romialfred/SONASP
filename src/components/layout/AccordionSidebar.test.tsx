@@ -40,6 +40,7 @@ describe('AccordionSidebar', () => {
     const artisans = screen.getByRole('button', { name: 'nav.artisanMinier' });
     const production = screen.getByRole('button', { name: 'nav.productionManagement' });
 
+    expect(production.querySelector('span')).toHaveClass('truncate');
     expect(artisans).toHaveAttribute('aria-expanded', 'true');
     await user.click(production);
 
@@ -57,5 +58,20 @@ describe('AccordionSidebar', () => {
     expect(screen.getByRole('complementary', { name: 'Navigation principale' })).toHaveClass('w-[72px]');
     expect(screen.queryByText('MES APPLICATIONS')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Déployer le menu' })).toBeInTheDocument();
+  });
+
+  it('regroupe les sites artisanaux et les paramètres métier', async () => {
+    const user = userEvent.setup();
+    renderSidebar('/artisan-sites');
+
+    expect(screen.getByRole('button', { name: 'nav.artisanalSites' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'nav.artisanalSitesOverview' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'nav.addArtisanalSite' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'nav.artisanalSiteProduction' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'nav.configuration' }));
+
+    expect(screen.getByRole('link', { name: 'nav.goldSalesSettings' })).toHaveAttribute('href', '/admin/gold-sales-settings');
+    expect(screen.getByRole('link', { name: 'nav.statusSettings' })).toHaveAttribute('href', '/admin/status-manager');
   });
 });

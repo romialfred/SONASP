@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Package,
   Truck,
   FlaskConical,
   Users,
@@ -17,13 +16,11 @@ import {
   GitBranch,
   ChevronDown,
   ChevronRight,
-  Menu,
   CreditCard,
   Warehouse,
   PackagePlus,
   Sparkles,
   Coins,
-  Building2,
   Factory,
   Handshake,
   Store,
@@ -32,17 +29,13 @@ import {
   Lock,
   Award,
   Layers,
-  UserPlus,
   CheckCircle,
   AlertTriangle,
-  Pickaxe,
-  Flame,
   Ship,
   Grid,
-  Calendar,
   Plus,
-  FileCheck,
-  LineChart,
+  MapPinned,
+  SlidersHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -63,90 +56,6 @@ interface MenuGroup {
   groupIcon?: React.ComponentType<{ className?: string }>;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard,
-  Package,
-  Truck,
-  FlaskConical,
-  Users,
-  ShoppingCart,
-  TrendingUp,
-  DollarSign,
-  BarChart3,
-  FileText,
-  Settings,
-  Shield,
-  GitBranch,
-  CreditCard,
-  Warehouse,
-  PackagePlus,
-  Sparkles,
-  Coins,
-  Building2,
-  Factory,
-  Handshake,
-  Store,
-  Activity,
-  ScanText,
-  Lock,
-  Award,
-  Layers,
-  UserPlus,
-  CheckCircle,
-  AlertTriangle,
-  Pickaxe,
-  Flame,
-  Ship,
-  Grid,
-  Calendar,
-  Plus,
-  FileCheck,
-  LineChart,
-  Menu,
-  ChevronDown,
-  ChevronRight,
-};
-
-const getIcon = (iconName?: string): React.ComponentType<{ className?: string }> => {
-  if (!iconName) return Package;
-  return iconMap[iconName] || Package;
-};
-
-const getIconColor = (code: string): string => {
-  const colorMap: Record<string, string> = {
-    'artisan-minier': 'text-emerald-700',
-    'artisan-dashboard': 'text-emerald-700',
-    'artisan-liste': 'text-blue-600',
-    'artisan-cartes-suivi': 'text-purple-600',
-    'artisan-cartes-validation': 'text-indigo-600',
-    'artisan-cartes-expiration': 'text-orange-600',
-    'production': 'text-emerald-600',
-    'production-daily': 'text-emerald-600',
-    'production-safe': 'text-yellow-600',
-    'production-licenses': 'text-purple-600',
-    'production-budget': 'text-blue-600',
-    'shipping': 'text-blue-600',
-    'shipping-dashboard': 'text-blue-600',
-    'shipping-new': 'text-emerald-600',
-    'shipping-documents': 'text-violet-600',
-    'refining': 'text-teal-600',
-    'sales': 'text-pink-600',
-    'sales-dashboard': 'text-pink-600',
-    'sales-new': 'text-purple-600',
-    'sales-trade': 'text-emerald-600',
-    'customers': 'text-teal-700',
-    'payments': 'text-green-600',
-    'analytics': 'text-blue-600',
-    'administration': 'text-red-600',
-    'admin-users': 'text-slate-600',
-    'admin-roles': 'text-orange-600',
-    'admin-modules': 'text-yellow-600',
-    'admin-settings': 'text-orange-600',
-    'admin-audit': 'text-red-600',
-  };
-  return colorMap[code] || 'text-slate-600';
-};
-
 const useMenuGroups = (): MenuGroup[] => {
   const { t, i18n } = useTranslation();
 
@@ -164,7 +73,18 @@ const useMenuGroups = (): MenuGroup[] => {
         { label: t('nav.expirations'), path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, iconColor: 'text-orange-600' },
         { label: 'Ventes d\'Or', path: '/artisan-minier/ventes-or', icon: Coins, iconColor: 'text-yellow-600' },
         { label: 'Paiements des Ventes', path: '/artisan-minier/paiements', icon: DollarSign, iconColor: 'text-green-600' },
-        { label: 'Centre de Rapports & Analyse', path: '/artisan-minier/rapports', icon: BarChart3, iconColor: 'text-blue-600' },
+        { label: 'Rapports & Analyses', path: '/artisan-minier/rapports', icon: BarChart3, iconColor: 'text-blue-600' },
+      ],
+    },
+    {
+      id: 'artisanal-sites',
+      label: t('nav.artisanalSites'),
+      groupIconColor: 'text-emerald-600',
+      groupIcon: MapPinned,
+      items: [
+        { label: t('nav.artisanalSitesOverview'), path: '/artisan-sites', icon: Grid, iconColor: 'text-emerald-600' },
+        { label: t('nav.addArtisanalSite'), path: '/artisan-sites/nouveau', icon: Plus, iconColor: 'text-blue-600' },
+        { label: t('nav.artisanalSiteProduction'), path: '/artisan-sites/production', icon: Factory, iconColor: 'text-amber-600' },
       ],
     },
     {
@@ -263,6 +183,16 @@ const useMenuGroups = (): MenuGroup[] => {
       ],
     },
     {
+      id: 'settings',
+      label: t('nav.configuration'),
+      groupIconColor: 'text-amber-500',
+      groupIcon: SlidersHorizontal,
+      items: [
+        { label: t('nav.goldSalesSettings'), path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-500' },
+        { label: t('nav.statusSettings'), path: '/admin/status-manager', icon: Layers, iconColor: 'text-teal-500' },
+      ],
+    },
+    {
       id: 'administration',
       label: t('nav.administration'),
       groupIconColor: 'text-red-600',
@@ -270,8 +200,6 @@ const useMenuGroups = (): MenuGroup[] => {
       items: [
         { label: t('nav.users'), path: '/users', icon: Users, iconColor: 'text-slate-600' },
         { label: t('nav.settings'), path: '/parameters', icon: Settings, iconColor: 'text-orange-600' },
-        { label: t('nav.goldSalesSettings'), path: '/admin/gold-sales-settings', icon: Coins, iconColor: 'text-yellow-600' },
-        { label: t('nav.statusManager'), path: '/admin/status-manager', icon: Layers, iconColor: 'text-teal-600' },
         { label: t('nav.workflow'), path: '/admin/workflow', icon: GitBranch, iconColor: 'text-sky-600' },
         { label: t('nav.audit'), path: '/audit', icon: Shield, iconColor: 'text-red-600' },
       ],
@@ -396,7 +324,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
         <Link
           to="/dashboard"
           className={cn(
-            'relative flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors',
+            'relative flex h-12 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
             isDashboardActive
               ? 'bg-[#08705f] text-white shadow-[0_8px_20px_rgba(2,25,22,0.22)] before:absolute before:inset-y-2 before:right-0 before:w-1 before:rounded-l-full before:bg-amber-400'
@@ -422,7 +350,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 type="button"
                 onClick={() => toggleGroup(group.id)}
                 className={cn(
-                  'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-colors',
+                  'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
                   isOpen || hasActiveItem
                     ? 'bg-white/10 font-semibold text-white'
@@ -435,7 +363,12 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 {group.groupIcon && <group.groupIcon className="h-5 w-5 flex-shrink-0 text-emerald-300" aria-hidden="true" />}
                 {!collapsed && (
                   <>
-                    <span className="min-w-0 flex-1 truncate">{group.label}</span>
+                    <span
+                      className={cn('min-w-0 flex-1 truncate', group.id === 'artisanal-sites' && 'text-[9px] font-semibold tracking-[-0.01em]')}
+                      title={group.label}
+                    >
+                      {group.label}
+                    </span>
                     {isOpen ? <ChevronDown className="h-4 w-4 flex-shrink-0" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 flex-shrink-0" aria-hidden="true" />}
                   </>
                 )}
@@ -450,7 +383,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                         key={item.path}
                         to={item.path}
                         className={cn(
-                          'flex min-h-10 items-center gap-3 rounded-lg px-3 text-[13px] transition-colors',
+                          'flex min-h-10 items-center gap-3 rounded-lg px-3 text-xs transition-colors',
                           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
                           active
                             ? 'bg-emerald-200/[0.15] font-semibold text-white'

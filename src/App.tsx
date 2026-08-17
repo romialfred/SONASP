@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
@@ -108,9 +108,13 @@ import CentreRapportsAnalyse from './pages/artisan-minier/CentreRapportsAnalyse'
 import RapportChiffreAffaires from './pages/artisan-minier/RapportChiffreAffaires';
 import RapportQuantites from './pages/artisan-minier/RapportQuantites';
 import RapportTaxesRoyalties from './pages/artisan-minier/RapportTaxesRoyalties';
+import ArtisanalSiteProduction from './pages/artisanal-sites/ArtisanalSiteProduction';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
+
+const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
+const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -758,6 +762,40 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
                   <ReportsDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Artisanal Sites Routes */}
+            <Route
+              path="/artisan-sites"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ArtisanalSitesOverview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-sites/nouveau"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ArtisanalSiteForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-sites/:siteId/modifier"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ArtisanalSiteForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/artisan-sites/production"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ArtisanalSiteProduction />
                 </ProtectedRoute>
               }
             />

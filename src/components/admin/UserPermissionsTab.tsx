@@ -269,6 +269,7 @@ const MODULES: Module[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
+  owner: MODULES.flatMap(module => module.permissions.map(permission => permission.id)),
   management: [
     'dashboard_view', 'dashboard_manage',
     'production_view', 'production_create', 'production_update', 'production_delete', 'production_approve',
@@ -344,6 +345,8 @@ export default function UserPermissionsTab({ userId, userRole }: UserPermissions
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
+      owner: 'Owner',
+      admin: 'Administrateur',
       management: 'Management',
       factory: 'Usine',
       airport: 'Aéroport',

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import {
-  TrendingUp, Download, Calendar, DollarSign,
+  TrendingUp, Calendar, DollarSign,
   BarChart3, ArrowUpRight, ArrowDownRight, AlertCircle
 } from 'lucide-react';
 import { Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
@@ -176,39 +175,6 @@ export function GoldPricesPage() {
     setMonthlySalesVsMarket(filteredMonthlyData);
   };
 
-  const exportToCSV = () => {
-    let csvContent = '';
-    let filename = '';
-
-    if (viewMode === 'daily') {
-      filename = `gold-prices-daily-${selectedYear}-${String(selectedMonth).padStart(2, '0')}.csv`;
-      csvContent = 'Date,London AM,London PM,Spot Price,Average,High,Low\n';
-      dailyPrices.forEach(price => {
-        csvContent += `${price.price_date},${price.london_am_rate},${price.london_pm_rate},${price.spot_price},${price.average_price},${price.high_price},${price.low_price}\n`;
-      });
-    } else if (viewMode === 'monthly') {
-      filename = `gold-prices-monthly-${selectedYear}.csv`;
-      csvContent = 'Year,Month,Average,High,Low,Opening,Closing,Days\n';
-      monthlyAggregates.forEach(agg => {
-        csvContent += `${agg.year},${monthNames[agg.month - 1]},${agg.average_price},${agg.high_price},${agg.low_price},${agg.opening_price},${agg.closing_price},${agg.total_days}\n`;
-      });
-    } else {
-      filename = `sales-vs-market-${selectedYear}-${String(selectedMonth).padStart(2, '0')}.csv`;
-      csvContent = 'Sale Number,Date,Customer,Quantity,Sale Price,Market Price,Variance $,Variance %\n';
-      salesAnalysis.forEach(sale => {
-        csvContent += `${sale.sale_number},${sale.sale_date},${sale.customer_name},${sale.quantity_oz},${sale.sale_price_per_oz},${sale.market_price_per_oz},${sale.variance_usd},${sale.variance_percent}\n`;
-      });
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   const latestPrice = dailyPrices.length > 0 ? dailyPrices[dailyPrices.length - 1] : null;
   const previousPrice = dailyPrices.length > 1 ? dailyPrices[dailyPrices.length - 2] : null;
   const priceChange = latestPrice && previousPrice ? latestPrice.london_am_rate - previousPrice.london_am_rate : 0;
@@ -250,14 +216,6 @@ export function GoldPricesPage() {
             <p className="text-gray-600 mt-1">Track daily prices, monthly aggregates, and compare with sales</p>
           </div>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={exportToCSV}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
           </div>
         </div>
 

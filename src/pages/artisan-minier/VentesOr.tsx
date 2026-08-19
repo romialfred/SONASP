@@ -8,10 +8,13 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  RotateCcw,
   Scale,
+  SlidersHorizontal,
   Trash2,
   TrendingUp,
   Wallet,
+  X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
@@ -37,7 +40,7 @@ type SortKey = 'date' | 'montant' | 'quantite';
 
 const STATUT_LABELS: Record<Statut, string> = {
   en_attente: 'En attente',
-  validee: 'Validée',
+  validee: 'Approuvée',
   payee: 'Payée',
   annulee: 'Annulée',
 };
@@ -81,6 +84,19 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { search: '', statut: 'all', typeOr: 'all', from: '', to: '' };
 
+/**
+ * Nombre de critères posés dans le volet.
+ * Le statut n'y figure pas : il reste sur la page, sous forme d'onglets.
+ */
+export function compterFiltresActifs(filters: Filters, sort: SortKey): number {
+  return (
+    (filters.search.trim() ? 1 : 0) +
+    (filters.typeOr === 'all' ? 0 : 1) +
+    (filters.from || filters.to ? 1 : 0) +
+    (sort === 'date' ? 0 : 1)
+  );
+}
+
 /** Filtrage combinable : chaque critère se cumule aux autres. */
 export function filterSales(sales: ArtisanGoldSale[], filters: Filters): ArtisanGoldSale[] {
   const query = filters.search.trim().toLocaleLowerCase('fr');
@@ -114,6 +130,17 @@ export default function VentesOr() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [sort, setSort] = useState<SortKey>('date');
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const filtresActifs = compterFiltresActifs(filters, sort);
+
+  useEffect(() => {
+    if (!filtresOuverts) return;
+    const surTouche = (evenement: KeyboardEvent) => {
+      if (evenement.key === 'Escape') setFiltresOuverts(false);
+    };
+    document.addEventListener('keydown', surTouche);
+    return () => document.removeEventListener('keydown', surTouche);
+  }, [filtresOuverts]);
 
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
   const confirmation = useConfirmationDialog();
@@ -262,6 +289,14 @@ export default function VentesOr() {
           ]}
           actions={
             <>
+              <button
+                type="button"
+                className={`sn-btn${filtresActifs > 0 ? ' is-filtered' : ''}`}
+                onClick={() => setFiltresOuverts(true)}
+              >
+                <SlidersHorizontal aria-hidden="true" /> Filtres
+                {filtresActifs > 0 && <em>{filtresActifs}</em>}
+              </button>
               <button type="button" className="sn-btn" onClick={() => void loadSales()}>
                 <RefreshCw aria-hidden="true" /> Actualiser
               </button>
@@ -301,58 +336,91 @@ export default function VentesOr() {
               />
             </div>
 
-            <section className="sn-card ventes-or__filters" aria-label="Filtres du registre">
-              <div className="ventes-or__filters-row">
-                <SearchInput
-                  value={filters.search}
-                  onChange={(search) => setFilters((current) => ({ ...current, search }))}
-                  placeholder="Rechercher par numéro de reçu ou observation"
-                />
-                <label className="ventes-or__field">
-                  <span>Type d’or</span>
-                  <SelectControl
-                    value={filters.typeOr}
-                    onChange={(value) => setFilters((current) => ({ ...current, typeOr: value as TypeOr | 'all' }))}
-                    ariaLabel="Filtrer par type d’or"
-                  >
-                    <option value="all">Tous les types</option>
-                    {(Object.keys(TYPE_OR_LABELS) as TypeOr[]).map((type) => (
-                      <option key={type} value={type}>{TYPE_OR_LABELS[type]}</option>
-                    ))}
-                  </SelectControl>
-                </label>
-                <label className="ventes-or__field">
-                  <span>Trier par</span>
-                  <SelectControl value={sort} onChange={(value) => setSort(value as SortKey)} ariaLabel="Trier les ventes">
-                    <option value="date">Date (récentes)</option>
-                    <option value="montant">Montant décroissant</option>
-                    <option value="quantite">Quantité décroissante</option>
-                  </SelectControl>
-                </label>
-                <label className="ventes-or__field ventes-or__dates">
-                  <span>Période</span>
-                  <div>
-                    <Calendar aria-hidden="true" />
-                    <input
-                      type="date"
-                      value={filters.from}
-                      aria-label="Vendu à partir du"
-                      onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))}
-                    />
-                    <i aria-hidden="true">–</i>
-                    <input
-                      type="date"
-                      value={filters.to}
-                      aria-label="Vendu jusqu’au"
-                      onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))}
-                    />
-                  </div>
-                </label>
-                <button type="button" className="sn-btn sn-btn--ghost" onClick={() => setFilters(EMPTY_FILTERS)}>
-                  Réinitialiser
-                </button>
-              </div>
+            {/* Les filtres tenaient une bande pleine largeur entre les indicateurs et
+                le registre : ils s'ouvrent desormais sur le cote. Seuls les statuts,
+                qui servent de navigation rapide, restent sur la page. */}
+            {filtresOuverts && (
+              <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Filtres du registre">
+                {/* Fond non focalisable : un second « Fermer les filtres » dans l'ordre
+                    de tabulation dupliquerait le nom accessible du bouton d'en-tete. */}
+                <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFiltresOuverts(false)} />
+                <div className="sn-drawer__panel">
+                  <header>
+                    <h3>
+                      <SlidersHorizontal aria-hidden="true" /> Filtres
+                    </h3>
+                    <button type="button" aria-label="Fermer les filtres" onClick={() => setFiltresOuverts(false)}>
+                      <X aria-hidden="true" />
+                    </button>
+                  </header>
 
+                  <div className="sn-drawer__body">
+                    <SearchInput
+                      value={filters.search}
+                      onChange={(search) => setFilters((current) => ({ ...current, search }))}
+                      placeholder="Numéro de reçu ou observation"
+                      ariaLabel="Rechercher une vente"
+                    />
+                    <label className="ventes-or__field">
+                      <span>Type d’or</span>
+                      <SelectControl
+                        value={filters.typeOr}
+                        onChange={(value) => setFilters((current) => ({ ...current, typeOr: value as TypeOr | 'all' }))}
+                        ariaLabel="Filtrer par type d’or"
+                      >
+                        <option value="all">Tous les types</option>
+                        {(Object.keys(TYPE_OR_LABELS) as TypeOr[]).map((type) => (
+                          <option key={type} value={type}>{TYPE_OR_LABELS[type]}</option>
+                        ))}
+                      </SelectControl>
+                    </label>
+                    <label className="ventes-or__field">
+                      <span>Trier par</span>
+                      <SelectControl value={sort} onChange={(value) => setSort(value as SortKey)} ariaLabel="Trier les ventes">
+                        <option value="date">Date (récentes)</option>
+                        <option value="montant">Montant décroissant</option>
+                        <option value="quantite">Quantité décroissante</option>
+                      </SelectControl>
+                    </label>
+                    <label className="ventes-or__field ventes-or__dates">
+                      <span>Période</span>
+                      <div>
+                        <Calendar aria-hidden="true" />
+                        <input
+                          type="date"
+                          value={filters.from}
+                          aria-label="Vendu à partir du"
+                          onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))}
+                        />
+                        <i aria-hidden="true">–</i>
+                        <input
+                          type="date"
+                          value={filters.to}
+                          aria-label="Vendu jusqu’au"
+                          onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))}
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  <footer>
+                    <button
+                      type="button"
+                      className="sn-btn"
+                      onClick={() => setFilters(EMPTY_FILTERS)}
+                      disabled={filtresActifs === 0}
+                    >
+                      <RotateCcw aria-hidden="true" /> Réinitialiser
+                    </button>
+                    <button type="button" className="sn-btn sn-btn--primary" onClick={() => setFiltresOuverts(false)}>
+                      Appliquer
+                    </button>
+                  </footer>
+                </div>
+              </div>
+            )}
+
+            <section className="sn-card ventes-or__filters" aria-label="Statut des ventes">
               <div className="sn-chips ventes-or__statuts" role="group" aria-label="Statut de la vente">
                 <button
                   type="button"

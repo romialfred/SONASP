@@ -193,10 +193,6 @@ export function PaymentDetailsPage() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export PDF
-          </Button>
         </div>
 
         {/* Main Content Grid */}

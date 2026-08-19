@@ -29,10 +29,8 @@ interface FieldGuidePanelProps {
 }
 
 export function FieldGuidePanel({
-  title = 'Production Guide',
+  title = 'Guide de saisie',
   guides = [],
-  sections = [],
-  currentField,
   activeField,
   fields
 }: FieldGuidePanelProps) {
@@ -44,75 +42,52 @@ export function FieldGuidePanel({
       }))
     : guides;
 
-  // Get the active guide based on activeField
-  const activeGuide = activeField
-    ? guidesArray.find(g => g.field === activeField)
-    : null;
-
   return (
     <div className="sticky top-4">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-t-lg p-2">
-        <div className="flex items-center gap-1.5">
-          <Info className="w-4 h-4" />
-          <h2 className="text-sm">{title}</h2>
-        </div>
+      {/* En-tete neutre : le vert plein donnait au guide plus de poids qu'au
+          formulaire qu'il accompagne. */}
+      <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-gray-200 bg-slate-50 px-3 py-2 text-slate-700">
+        <Info className="h-3.5 w-3.5" />
+        <h2 className="text-xs font-semibold uppercase tracking-wide">{title}</h2>
       </div>
 
       {/* Content */}
-      <div className="bg-white border border-gray-200 rounded-b-lg p-4 shadow-sm">
-        {/* Show all guides with active field highlighted */}
-        <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="rounded-b-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
           {guidesArray.length > 0 ? (
             guidesArray.map((guide, index) => {
               const isActive = activeField === guide.field;
-              const colors = [
-                { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-900', activeBg: 'bg-blue-100' },
-                { bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-900', activeBg: 'bg-emerald-100' },
-                { bg: 'bg-orange-50', border: 'border-orange-500', text: 'text-orange-900', activeBg: 'bg-orange-100' },
-                { bg: 'bg-purple-50', border: 'border-purple-500', text: 'text-purple-900', activeBg: 'bg-purple-100' },
-                { bg: 'bg-teal-50', border: 'border-teal-500', text: 'text-teal-900', activeBg: 'bg-teal-100' },
-                { bg: 'bg-rose-50', border: 'border-rose-500', text: 'text-rose-900', activeBg: 'bg-rose-100' },
-              ];
-
-              const color = colors[index % colors.length];
+              const heading = guide.title || guide.label || guide.field;
 
               return (
                 <div
                   key={guide.field || index}
-                  className={`
-                    ${isActive ? color.activeBg : color.bg}
-                    border-l-4 ${color.border}
-                    rounded-r-lg
-                    p-3
-                    transition-all duration-300 ease-in-out
-                    ${isActive ? 'scale-105 shadow-lg ring-2 ring-offset-2 ring-' + color.border.replace('border-', '') : 'scale-100'}
-                  `}
+                  className={`rounded-md border-l-2 py-1.5 pl-3 pr-2 transition-colors ${
+                    isActive
+                      ? 'border-amber-500 bg-amber-50/60'
+                      : 'border-gray-200 bg-white hover:bg-slate-50'
+                  }`}
                 >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <h4 className={`font-semibold ${isActive ? 'text-sm' : 'text-xs'} ${color.text} transition-all duration-300`}>
-                      {guide.title}
-                    </h4>
-                    <div className="flex gap-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    {heading && (
+                      <h4 className="text-[12px] font-semibold text-slate-800">{heading}</h4>
+                    )}
+                    <div className="flex flex-shrink-0 gap-1.5">
                       {guide.required && (
-                        <span className="text-xs text-red-600 font-medium">* Requis</span>
+                        <span className="text-[11px] font-medium text-red-600">* Requis</span>
                       )}
                       {guide.readOnly && (
-                        <span className="text-xs text-gray-500 font-medium bg-gray-200 px-1.5 py-0.5 rounded">
+                        <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[11px] font-medium text-gray-500">
                           Lecture seule
                         </span>
                       )}
                     </div>
                   </div>
-                  <p className={`${isActive ? 'text-xs' : 'text-xs'} text-gray-600 leading-tight transition-all duration-300`}>
-                    {guide.description}
-                  </p>
-                  {isActive && guide.example && (
-                    <div className="mt-1 pt-1 border-t border-gray-200">
-                      <p className="text-xs text-gray-500">
-                        <span className="font-medium">Ex:</span> {guide.example}
-                      </p>
-                    </div>
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{guide.description}</p>
+                  {guide.example && (
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      <span className="font-medium">Ex :</span> {guide.example}
+                    </p>
                   )}
                 </div>
               );
@@ -127,30 +102,4 @@ export function FieldGuidePanel({
       </div>
     </div>
   );
-}
-
-function groupGuidesBySection(guides: FieldGuideItem[]): FieldGuideSection[] {
-  const sectionMap: { [key: string]: FieldGuideItem[] } = {};
-
-  guides.forEach(guide => {
-    const section = guide.section || 'Informations';
-    if (!sectionMap[section]) {
-      sectionMap[section] = [];
-    }
-    sectionMap[section].push(guide);
-  });
-
-  const sectionColors: { [key: string]: string } = {
-    'Company Information': 'bg-blue-50',
-    'Contact Information': 'bg-green-50',
-    'Bank Information': 'bg-purple-50',
-    'Additional Information': 'bg-amber-50',
-    'Informations': 'bg-gray-50'
-  };
-
-  return Object.entries(sectionMap).map(([title, fields]) => ({
-    title,
-    color: sectionColors[title] || 'bg-gray-50',
-    fields
-  }));
 }

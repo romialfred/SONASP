@@ -144,3 +144,63 @@
   .artisan-form__row.is-naissance,
   .artisan-form__row.is-territoire { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Moyens de paiement ---------- */
+
+.artisan-form__moyens {
+  display: grid;
+  margin: 0 0 12px;
+  padding: 0;
+  gap: 10px;
+  list-style: none;
+}
+
+.artisan-form__moyens > li {
+  padding: 12px 14px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface-alt);
+  border-radius: var(--sn-radius);
+}
+
+.artisan-form__moyens > li > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.artisan-form__moyen-principal {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--sn-ink-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.artisan-form__moyen-principal input { accent-color: var(--sn-gold); }
+
+.artisan-form__moyens > li > header button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  color: var(--sn-muted);
+  cursor: pointer;
+}
+
+.artisan-form__moyens > li > header button:hover { color: var(--sn-danger); background: var(--sn-danger-soft); }
+.artisan-form__moyens > li > header button svg { width: 15px; height: 15px; }
+
+.artisan-form__moyen-champs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.artisan-form__ajout-moyen { width: 100%; justify-content: center; }

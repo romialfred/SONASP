@@ -10,8 +10,13 @@ import { supabase } from '@/lib/supabase';
 interface MiningCompany {
   id: string;
   name: string;
+  abbreviation?: string | null;
   code: string;
+  company_type?: string | null;
   country: string;
+  region?: string | null;
+  province?: string | null;
+  localite?: string | null;
   city: string;
   contact_person_name: string;
   contact_person_email: string;
@@ -49,6 +54,7 @@ export function MiningCompaniesPage() {
 
   const filteredCompanies = companies.filter(company =>
     company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (company.abbreviation || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -131,6 +137,9 @@ export function MiningCompaniesPage() {
                             <Factory className="w-4 h-4 text-amber-700" />
                             <div>
                               <div className="text-sm font-medium text-gray-900">{company.name}</div>
+                              {company.abbreviation && (
+                                <div className="text-xs text-emerald-700">Nom usuel : {company.abbreviation}</div>
+                              )}
                               {company.website && (
                                 <a
                                   href={company.website}

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { ArrowRight, Download, Flag, Info, Play, Workflow, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, Flag, Info, Play, Workflow, ZoomIn, ZoomOut } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { construireGraphe, type NoeudWorkflow } from './workflowGraph';
@@ -32,17 +32,6 @@ export default function GoldShippingWorkflow() {
   );
 
   /** Le bouton « Export » n'avait aucun gestionnaire : il ne produisait rien. */
-  const exporter = () => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const contenu = new XMLSerializer().serializeToString(svg);
-    const url = URL.createObjectURL(new Blob([contenu], { type: 'image/svg+xml;charset=utf-8' }));
-    const lien = document.createElement('a');
-    lien.href = url;
-    lien.download = 'circuit-tracabilite-sonasp.svg';
-    lien.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <NationalDashboardLayout>
@@ -71,9 +60,6 @@ export default function GoldShippingWorkflow() {
                 disabled={zoom >= ZOOM_MAX}
               >
                 <ZoomIn aria-hidden="true" />
-              </button>
-              <button type="button" className="sn-btn sn-btn--primary" onClick={exporter}>
-                <Download aria-hidden="true" /> Exporter le diagramme
               </button>
             </>
           }

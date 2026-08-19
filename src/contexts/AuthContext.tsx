@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: resolvedRole,
       site_ids: rawSiteIds,
       is_active: metadata.is_active !== undefined ? Boolean(metadata.is_active) : true,
+      is_sales_approver:
+        metadata.is_sales_approver !== undefined ? Boolean(metadata.is_sales_approver) : false,
       two_factor_enabled:
         metadata.two_factor_enabled !== undefined ? Boolean(metadata.two_factor_enabled) : false,
       language: (metadata.language as string | undefined) || null,
@@ -168,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: profile.role,
           site_ids: siteIds,
           is_active: profile.is_active,
+          is_sales_approver: profile.is_sales_approver ?? false,
           two_factor_enabled: profile.two_factor_enabled,
           language: profile.language,
           email_notifications: profile.email_notifications,
@@ -235,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: created.role,
         site_ids: [],
         is_active: created.is_active,
+        is_sales_approver: false,
         two_factor_enabled: false,
         language: null,
         email_notifications: true,

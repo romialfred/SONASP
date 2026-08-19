@@ -42,6 +42,10 @@ export interface PaiementArtisan {
   traite_par?: string;
   valide_par?: string;
   notes?: string;
+  /** Coordonnee de reglement employee, prise sur la fiche de l'artisan. */
+  moyen_paiement_id?: string;
+  /** Facture presentee au reglement ; specimen tant que la certification DGI n'est pas raccordee. */
+  numero_facture?: string;
   created_at?: string;
   updated_at?: string;
 }

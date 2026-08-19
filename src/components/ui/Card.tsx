@@ -24,7 +24,9 @@ export function CardHeader({ className, ...props }: CardProps) {
 export function CardTitle({ className, ...props }: CardProps) {
   return (
     <h3
-      className={cn('font-heading text-2xl font-semibold leading-none tracking-tight', className)}
+      // 24 px pour un titre de section a l'interieur d'une carte ecrasait le
+      // contenu : le titre pesait plus lourd que les champs qu'il annonce.
+      className={cn('font-heading text-base font-semibold leading-tight tracking-tight', className)}
       {...props}
     />
   );

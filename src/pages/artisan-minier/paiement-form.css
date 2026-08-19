@@ -119,3 +119,57 @@
   .paiement-form__layout { grid-template-columns: minmax(0, 1fr); }
   .paiement-form__aside { position: static; }
 }
+
+/* ---------- Moyens de paiement enregistrés ---------- */
+
+.paiement-form__methods label { position: relative; }
+
+.paiement-form__principal {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  padding: 2px 7px;
+  border: 1px solid #f0dcab;
+  background: var(--sn-gold-soft);
+  border-radius: var(--sn-radius-pill);
+  color: var(--sn-gold-dark);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Coordonnées reportées de la fiche : lecture seule. */
+.paiement-form__coordonnees {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px 18px;
+}
+
+.paiement-form__coordonnees > div {
+  padding: 9px 11px;
+  border: 1px solid var(--sn-line-soft);
+  background: var(--sn-surface-alt);
+  border-radius: var(--sn-radius);
+}
+
+.paiement-form__coordonnees dt {
+  color: var(--sn-faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paiement-form__coordonnees dd {
+  margin: 4px 0 0;
+  color: var(--sn-navy);
+  font-size: 12.5px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.paiement-form__modifier-moyen { margin-top: 12px; }
+.paiement-form__facture-lien { width: 100%; justify-content: center; margin-bottom: 10px; }

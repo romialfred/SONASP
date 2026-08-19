@@ -20,6 +20,15 @@ export interface GoldInventoryEntry {
   notes?: string;
   processing_location?: string;
   certificate_number?: string;
+  /**
+   * Champs desormais enregistres.
+   * La teneur en argent et la raffinerie etaient saisies au formulaire puis
+   * abandonnees ; la societe miniere n'etait jamais posee, ce qui interdisait
+   * toute ventilation du stock par mine.
+   */
+  silver_percentage?: number;
+  refinery_id?: string;
+  mining_company_id?: string;
 }
 
 export interface InventoryTransaction {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Flame, CheckCircle2, TrendingUp, AlertCircle, Archive, ArrowRight, Download, FileSpreadsheet, Columns } from 'lucide-react';
+import { Package, Flame, CheckCircle2, TrendingUp, AlertCircle, Archive, ArrowRight, FileSpreadsheet, Columns } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -257,11 +257,6 @@ export function RefiningProcess() {
     showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
   };
 
-  const handleQuickExportExcel = () => {
-    exportToExcel(filteredShipments as any,visibleColumns, 'processus_raffinage');
-    showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
-  };
-
   const handleQuickExportCSV = () => {
     exportToCSV(filteredShipments as any,visibleColumns, 'processus_raffinage');
     showSuccess('Export réussi', 'Le fichier CSV a été téléchargé avec succès');
@@ -298,16 +293,6 @@ export function RefiningProcess() {
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 CSV
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleQuickExportExcel}
-                disabled={filteredShipments.length === 0}
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Excel
               </Button>
               <Button
                 onClick={() => setIsColumnSelectorOpen(true)}

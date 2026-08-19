@@ -1,3 +1,4 @@
+import { PALETTE_PRODUCTION } from './chartPalette';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/Card';
 import { PieChartIcon } from 'lucide-react';
@@ -20,16 +21,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
     return company?.name || 'Unknown';
   };
 
-  const COLORS = [
-    '#3b82f6', // blue
-    '#10b981', // emerald
-    '#f59e0b', // amber
-    '#8b5cf6', // violet
-    '#ec4899', // pink
-    '#14b8a6', // teal
-    '#f97316', // orange
-    '#6366f1', // indigo
-  ];
+  const COLORS = PALETTE_PRODUCTION;
 
   // Aggregate data by company
   const companyData = productions.reduce((acc, p) => {

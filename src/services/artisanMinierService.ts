@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { genererNumeroCarte } from './carteNumberService';
 
 export interface ArtisanMinier {
   id: string;
@@ -131,11 +132,17 @@ export const artisanMinierService = {
   async create(artisan: Partial<ArtisanMinier>) {
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Le numero est frappe cote application, au format BF-AM-AAAA-XZTM-NNNN.
+    // Le declencheur de base ne s'applique que si le numero est absent : le fournir
+    // ici garantit le format meme sur une base ou la migration n'est pas encore passee.
+    const numeroCarte = artisan.numero_carte || (await genererNumeroCarte());
+
     const { data, error } = await supabase
       .from('snp_artisans_miniers')
       .insert([
         {
           ...artisan,
+          numero_carte: numeroCarte,
           created_by: user?.id,
           updated_by: user?.id
         }

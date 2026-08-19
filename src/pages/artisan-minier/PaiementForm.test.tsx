@@ -7,6 +7,7 @@ import type { ArtisanMinier } from '@/services/artisanMinierService';
 import type { FactureDefinitive, PaiementArtisan } from '@/services/artisanPaiementsService';
 
 const mocks = vi.hoisted(() => ({
+  listerMoyens: vi.fn(),
   navigate: vi.fn(),
   params: { venteId: 'v1' as string | undefined },
   getVente: vi.fn(),
@@ -60,6 +61,16 @@ vi.mock('@/components/ui/ConfirmationDialog', () => ({
 vi.mock('@/services/artisanGoldSalesService', () => ({
   artisanGoldSalesService: { getById: mocks.getVente },
 }));
+
+vi.mock('@/services/artisanMoyenPaiementService', async () => {
+  const reel = await vi.importActual<typeof import('@/services/artisanMoyenPaiementService')>(
+    '@/services/artisanMoyenPaiementService'
+  );
+  return {
+    ...reel,
+    artisanMoyenPaiementService: { listerParArtisan: mocks.listerMoyens },
+  };
+});
 
 vi.mock('@/services/artisanMinierService', () => ({
   artisanMinierService: { getById: mocks.getArtisan },
@@ -157,6 +168,27 @@ describe('PaiementForm', () => {
     mocks.getArtisan.mockResolvedValue(artisan);
     mocks.getFacture.mockResolvedValue(facture);
     mocks.creerPaiement.mockResolvedValue({ id: 'p1' });
+    mocks.listerMoyens.mockResolvedValue([
+      {
+        id: 'm1',
+        artisan_id: 'a1',
+        type: 'orange_money',
+        titulaire: 'KABORE Awa',
+        numero_telephone: '+22670000001',
+        est_principal: true,
+        actif: true,
+      },
+      {
+        id: 'm2',
+        artisan_id: 'a1',
+        type: 'virement_bancaire',
+        titulaire: 'KABORE Awa',
+        banque: 'Coris Bank',
+        numero_compte: 'BF1234567890',
+        est_principal: false,
+        actif: true,
+      },
+    ]);
     mocks.openConfirm.mockResolvedValue(false);
   });
 
@@ -168,55 +200,70 @@ describe('PaiementForm', () => {
     expect(screen.getByText('FA-2026-001')).toBeInTheDocument();
     expect(screen.getByText('Net à payer')).toBeInTheDocument();
     expect(screen.getByText('38 318 000 FCFA')).toBeInTheDocument();
-    expect(screen.getByText('KABORE Awa')).toBeInTheDocument();
+    // Le nom figure aussi sur les moyens de paiement : on cible le bénéficiaire.
+    expect(screen.getAllByText('KABORE Awa').length).toBeGreaterThan(0);
   });
 
-  it('adapte les champs au moyen de paiement choisi', async () => {
+  it('ne propose que les moyens enregistrés sur la fiche, sans champ de saisie', async () => {
     render(<PaiementForm />);
-    await waitFor(() => expect(screen.getByText('Moyen de paiement')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Moyen de paiement de l’artisan')).toBeInTheDocument());
 
-    expect(screen.getByLabelText(/Numéro de compte/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('radio', { name: /Espèces/ }));
-
+    // Les coordonnées étaient frappées ici, à chaque règlement.
     expect(screen.queryByLabelText(/Numéro de compte/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/Reçu par/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Lieu du paiement/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Reçu par/)).not.toBeInTheDocument();
+
+    expect(screen.getByRole('radio', { name: /Orange Money/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Virement bancaire/ })).toBeInTheDocument();
   });
 
-  it('bloque l’enregistrement tant qu’un champ obligatoire manque', async () => {
+  it('présélectionne le moyen principal et affiche ses coordonnées en lecture', async () => {
     render(<PaiementForm />);
-    await waitFor(() => expect(screen.getByText('Moyen de paiement')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Moyen de paiement de l’artisan')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('radio', { name: /Espèces/ }));
+    expect(screen.getByText('+22670000001')).toBeInTheDocument();
+    expect(screen.getAllByText('KABORE Awa').length).toBeGreaterThan(0);
 
-    const submit = screen.getByRole('button', { name: /Enregistrer le paiement/ });
-    expect(submit).toBeDisabled();
-    expect(screen.getByText(/À compléter : Reçu par, Lieu du paiement/)).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText(/Reçu par/), { target: { value: 'KABORE Awa' } });
-    fireEvent.change(screen.getByLabelText(/Lieu du paiement/), { target: { value: 'Agence centrale' } });
-
-    expect(submit).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: /Virement bancaire/ }));
+    expect(screen.getByText('Coris Bank')).toBeInTheDocument();
+    expect(screen.getByText('BF1234567890')).toBeInTheDocument();
   });
 
-  it('enregistre le paiement puis propose la facture', async () => {
+  it('renvoie à la fiche quand l’artisan n’a aucun moyen enregistré', async () => {
+    mocks.listerMoyens.mockResolvedValue([]);
     render(<PaiementForm />);
-    await waitFor(() => expect(screen.getByText('Moyen de paiement')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('radio', { name: /Espèces/ }));
-    fireEvent.change(screen.getByLabelText(/Reçu par/), { target: { value: 'KABORE Awa' } });
-    fireEvent.change(screen.getByLabelText(/Lieu du paiement/), { target: { value: 'Agence centrale' } });
+    await waitFor(() => expect(screen.getByText('Aucun moyen de paiement enregistré')).toBeInTheDocument());
+    // Le règlement ne peut pas être enregistré sans coordonnée.
+    expect(screen.getByRole('button', { name: /Enregistrer le paiement/ })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Ouvrir la fiche de l’artisan/ }));
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/a1/modifier');
+  });
+
+  it('enregistre le paiement avec le moyen retenu puis propose la facture', async () => {
+    render(<PaiementForm />);
+    await waitFor(() => expect(screen.getByText('Moyen de paiement de l’artisan')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('radio', { name: /Virement bancaire/ }));
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer le paiement/ }));
 
     await waitFor(() => expect(mocks.creerPaiement).toHaveBeenCalled());
     expect(mocks.creerPaiement.mock.calls[0][0]).toMatchObject({
       facture_id: 'f1',
-      type_paiement: 'cash',
+      type_paiement: 'virement_bancaire',
+      moyen_paiement_id: 'm2',
       montant_paye: 38_318_000,
     });
     await waitFor(() => expect(mocks.openConfirm).toHaveBeenCalled());
     expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/paiements');
+  });
+
+  it('renvoie à la facture spécimen depuis le dossier de règlement', async () => {
+    render(<PaiementForm />);
+    await waitFor(() => expect(screen.getByText('Moyen de paiement de l’artisan')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Voir la facture \(spécimen\)/ }));
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/ventes-or/v1/facture');
   });
 
   it('explique l’absence de facture au lieu d’un écran vide', async () => {

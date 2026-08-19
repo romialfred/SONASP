@@ -20,6 +20,7 @@ const baseUser: UserProfile = {
   role: 'management',
   site_ids: [],
   is_active: true,
+  is_sales_approver: false,
   two_factor_enabled: false,
   language: null,
   email_notifications: true,

@@ -71,6 +71,16 @@ export function isManagement(user: UserProfile | null): boolean {
   return Boolean(user?.is_active && (user.role === 'owner' || user.role === 'management'));
 }
 
+/**
+ * Habilité à approuver les ventes (or artisanal & international) avant facturation/paiement.
+ * La direction dispose d'office du droit ; les autres utilisateurs doivent porter le drapeau
+ * « Approbateur » accordé depuis la page Approbateurs.
+ */
+export function isSalesApprover(user: UserProfile | null): boolean {
+  if (!user || !user.is_active) return false;
+  return user.is_sales_approver === true || isManagement(user);
+}
+
 export function canAccessSite(user: UserProfile | null, siteId: string): boolean {
   if (!user || !user.is_active) return false;
 

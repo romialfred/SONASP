@@ -9,10 +9,12 @@ import {
   Loader2,
   MapPin,
   Save,
+  Plus,
   Truck,
   Upload,
   UserRound,
   Users,
+  Wallet,
   X,
 } from 'lucide-react';
 import { Badge, ChoiceCards, Field, Note, Section, Segmented } from '@/components/ui/sn';
@@ -20,6 +22,17 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import {
+  LIBELLES_MOYEN,
+  MOYEN_VIDE,
+  TYPES_BANCAIRE,
+  TYPES_MOBILE,
+  appliquerPrincipalUnique,
+  artisanMoyenPaiementService,
+  validerMoyen,
+  type MoyenPaiement,
+  type TypeMoyenPaiement,
+} from '@/services/artisanMoyenPaiementService';
 import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { getCitiesByRegion, getRegionsByCountry, SAHEL_COUNTRIES } from '@/data/burkinaFasoData';
@@ -170,6 +183,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   const [values, setValues] = useState<ArtisanFormValues>(() => valuesFromArtisan(artisan));
+  const [moyens, setMoyens] = useState<MoyenPaiement[]>([]);
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>(artisan?.photo_url || '');
@@ -281,11 +295,49 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
   const completion = completionRate(values);
   const age = values.date_naissance ? calculateAge(values.date_naissance) : null;
 
+  /**
+   * Le premier moyen ajoute devient le principal : sans marque, l'ecran de
+   * paiement n'aurait rien a preselectionner.
+   */
+  const ajouterMoyen = () =>
+    setMoyens((courants) => {
+      const nouveau = { ...MOYEN_VIDE(artisan?.id || ''), est_principal: courants.length === 0 };
+      return [...courants, nouveau];
+    });
+
+  const modifierMoyen = <C extends keyof MoyenPaiement>(index: number, champ: C, valeur: MoyenPaiement[C]) =>
+    setMoyens((courants) =>
+      courants.map((moyen, rang) => (rang === index ? { ...moyen, [champ]: valeur } : moyen))
+    );
+
+  const retirerMoyen = (index: number) =>
+    setMoyens((courants) => {
+      const restants = courants.filter((_, rang) => rang !== index);
+      // Retirer le principal laisserait la liste sans defaut.
+      return restants.length > 0 && !restants.some((moyen) => moyen.est_principal)
+        ? appliquerPrincipalUnique(restants, 0)
+        : restants;
+    });
+
+  const erreurMoyens = moyens.map(validerMoyen).find(Boolean) || null;
+
+  useEffect(() => {
+    if (!artisan?.id) return;
+    let monte = true;
+    artisanMoyenPaiementService
+      .listerParArtisan(artisan.id)
+      .then((liste) => monte && setMoyens(liste))
+      .catch(() => monte && setMoyens([]));
+    return () => {
+      monte = false;
+    };
+  }, [artisan?.id]);
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (saving) return; // garde-fou contre la double soumission
 
-    const message = validateArtisan(values);
+    const message = validateArtisan(values) || erreurMoyens;
     if (message) {
       showError(message);
       return;
@@ -301,6 +353,15 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
 
       const artisanId = enregistre?.id || artisan?.id;
       const echecs: string[] = [];
+
+      if (artisanId) {
+        try {
+          await artisanMoyenPaiementService.remplacerPourArtisan(artisanId, moyens);
+        } catch {
+          // Un artisan sans coordonnee ne pourra pas etre regle : l'echec est dit.
+          echecs.push('les moyens de paiement');
+        }
+      }
 
       if (artisanId && photoFile) {
         try {
@@ -608,6 +669,123 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                   Document déjà versé au dossier
                 </a>
               </p>
+            )}
+          </Section>
+
+          <Section
+            id="moyens-paiement"
+            icon={Wallet}
+            title="Moyens de paiement"
+            description="Coordonnées de règlement de l’artisan, saisies ici et non au moment de payer."
+          >
+            {/* Les coordonnées étaient frappées à chaque règlement, sur l'écran de
+                paiement : ressaisie du numéro à chaque fois, et aucune garantie que le
+                compte crédité appartienne à l'artisan. */}
+            {moyens.length === 0 ? (
+              <Note tone="warning" icon={AlertCircle}>
+                Aucun moyen de paiement enregistré. Sans coordonnée, cet artisan ne pourra
+                pas être réglé : ajoutez-en au moins un.
+              </Note>
+            ) : (
+              <ul className="artisan-form__moyens">
+                {moyens.map((moyen, index) => {
+                  const estMobile = TYPES_MOBILE.includes(moyen.type);
+                  const estBancaire = TYPES_BANCAIRE.includes(moyen.type);
+
+                  return (
+                    <li key={moyen.id || `nouveau-${index}`}>
+                      <header>
+                        <label className="artisan-form__moyen-principal">
+                          <input
+                            type="radio"
+                            name="moyen-principal"
+                            checked={Boolean(moyen.est_principal)}
+                            onChange={() => setMoyens((courants) => appliquerPrincipalUnique(courants, index))}
+                          />
+                          <span>Principal</span>
+                        </label>
+                        <button
+                          type="button"
+                          aria-label={`Retirer le moyen ${index + 1}`}
+                          onClick={() => retirerMoyen(index)}
+                        >
+                          <X aria-hidden="true" />
+                        </button>
+                      </header>
+
+                      <div className="artisan-form__moyen-champs">
+                        <Field label="Type" required>
+                          <select
+                            value={moyen.type}
+                            onChange={(event) =>
+                              modifierMoyen(index, 'type', event.target.value as TypeMoyenPaiement)
+                            }
+                          >
+                            {(Object.keys(LIBELLES_MOYEN) as TypeMoyenPaiement[]).map((type) => (
+                              <option key={type} value={type}>
+                                {LIBELLES_MOYEN[type]}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+
+                        <Field label="Titulaire du compte" required hint="Nom porté sur le compte">
+                          <input
+                            value={moyen.titulaire}
+                            onChange={(event) => modifierMoyen(index, 'titulaire', event.target.value)}
+                            placeholder="Nom tel qu’enregistré auprès de l’opérateur"
+                          />
+                        </Field>
+
+                        {estMobile && (
+                          <Field label="Numéro de téléphone" required>
+                            <input
+                              value={moyen.numero_telephone || ''}
+                              onChange={(event) => modifierMoyen(index, 'numero_telephone', event.target.value)}
+                              placeholder="+226 __ __ __ __"
+                            />
+                          </Field>
+                        )}
+
+                        {estBancaire && (
+                          <>
+                            <Field label="Banque" required>
+                              <input
+                                value={moyen.banque || ''}
+                                onChange={(event) => modifierMoyen(index, 'banque', event.target.value)}
+                                placeholder="Établissement teneur du compte"
+                              />
+                            </Field>
+                            <Field label="Numéro de compte" required>
+                              <input
+                                value={moyen.numero_compte || ''}
+                                onChange={(event) => modifierMoyen(index, 'numero_compte', event.target.value)}
+                                placeholder="RIB ou IBAN"
+                              />
+                            </Field>
+                            <Field label="Code SWIFT" hint="Pour un virement international">
+                              <input
+                                value={moyen.code_swift || ''}
+                                onChange={(event) => modifierMoyen(index, 'code_swift', event.target.value)}
+                              />
+                            </Field>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <button type="button" className="sn-btn artisan-form__ajout-moyen" onClick={ajouterMoyen}>
+              <Plus aria-hidden="true" /> Ajouter un moyen de paiement
+            </button>
+
+            {erreurMoyens && (
+              <Note tone="danger" icon={AlertCircle}>
+                {erreurMoyens}
+              </Note>
             )}
           </Section>
 

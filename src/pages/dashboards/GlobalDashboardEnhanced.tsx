@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle, AlertTriangle, ArrowDown, ArrowUp, Bell, Boxes, CalendarDays, ChevronDown,
   ChevronRight, Coins, Download, FileCheck2, Filter, Percent, RefreshCw,
-  SlidersHorizontal, Workflow, X,
+  SlidersHorizontal, Users, Workflow, X,
 } from 'lucide-react';
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
@@ -182,6 +182,7 @@ export function GlobalDashboardEnhanced() {
               ? <p className="is-muted">Aucune vente sur la période</p>
               : <p className="is-positive">Taux constaté {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(data.royaltyRate)} %</p>}
           </article>
+          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><Users aria-hidden="true" /></span><div><h3>Artisans miniers</h3><strong>{new Intl.NumberFormat('fr-FR').format(data.artisansTotal)}</strong></div><p className={data.artisansActifs < data.artisansTotal ? 'is-gold' : 'is-muted'}>{new Intl.NumberFormat('fr-FR').format(data.artisansActifs)} actifs</p></article>
           <article className="national-metric-card national-metric-card--blue"><span className="national-metric-card__icon"><Coins aria-hidden="true" /></span><div><h3>Transactions</h3><strong>{new Intl.NumberFormat('fr-FR').format(data.transactionsCount)}</strong></div><p className={data.pendingCount > 0 ? 'is-danger' : 'is-muted'}>{data.pendingCount} à valider</p></article>
         </section>
 

@@ -45,6 +45,9 @@ export interface NationalDashboardData {
   /** Taux de redevance effectivement constaté sur les ventes, `null` si aucune vente. */
   royaltyRate: number | null;
   expiringCards: number;
+  /** Artisans miniers enregistres et part encore active. */
+  artisansTotal: number;
+  artisansActifs: number;
   /** Sources qui n'ont pas répondu ; l'écran l'annonce au lieu d'inventer des chiffres. */
   unavailable: string[];
 }
@@ -96,6 +99,8 @@ export const EMPTY_DASHBOARD: NationalDashboardData = {
   stockShare: null,
   royaltyRate: null,
   expiringCards: 0,
+  artisansTotal: 0,
+  artisansActifs: 0,
   unavailable: [],
 };
 
@@ -222,7 +227,8 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
   debutGraphique.setMonth(debutGraphique.getMonth() - 11, 1);
   const precedente = previousWindow(debut, fin);
 
-  const [ventes, productions, stock, ventesPrecedentes, productionsPrecedentes, cartes] = await Promise.allSettled([
+  const [ventes, productions, stock, ventesPrecedentes, productionsPrecedentes, cartes, artisans] =
+    await Promise.allSettled([
     supabase.from('sales').select(SALE_COLUMNS).gte('sale_date', debut).lte('sale_date', fin).order('sale_date', { ascending: false }),
     supabase
       .from('daily_production')
@@ -238,6 +244,7 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
       .gte('production_date', precedente.debut)
       .lte('production_date', precedente.fin),
     carteProfessionnelleService.getCartesExpirant(30),
+    supabase.from('snp_artisans_miniers').select('actif'),
   ]);
 
   const lire = <T,>(resultat: PromiseSettledResult<{ data: unknown; error: unknown } | unknown>): T[] | null => {
@@ -256,11 +263,13 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
   const lignesVentesPrecedentes = lire<RawSale>(ventesPrecedentes);
   const lignesProductionPrecedente = lire<RawProduction>(productionsPrecedentes);
   const lignesCartes = lire<unknown>(cartes);
+  const lignesArtisans = lire<{ actif?: boolean | null }>(artisans);
 
   const unavailable: string[] = [];
   if (lignesVentes === null) unavailable.push('les ventes');
   if (lignesProduction === null) unavailable.push('la production');
   if (lignesStock === null) unavailable.push('le stock');
+  if (lignesArtisans === null) unavailable.push('les artisans miniers');
 
   const ventesRetenues = lignesVentes || [];
   const productionsRetenues = lignesProduction || [];
@@ -311,6 +320,9 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
     stockShare: collectedGold > 0 ? (availableStock / collectedGold) * 100 : null,
     royaltyRate: salesValue > 0 ? (royalties / salesValue) * 100 : null,
     expiringCards: lignesCartes?.length || 0,
+    artisansTotal: lignesArtisans?.length || 0,
+    // `actif` absent vaut actif : la colonne a ete ajoutee apres les premiers enregistrements.
+    artisansActifs: (lignesArtisans || []).filter((artisan) => artisan.actif !== false).length,
     unavailable,
   };
 }

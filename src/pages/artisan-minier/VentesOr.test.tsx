@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import VentesOr, { filterSales, sortSales } from './VentesOr';
+import VentesOr, { compterFiltresActifs, filterSales, sortSales } from './VentesOr';
 import type { ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 
 const mocks = vi.hoisted(() => ({
@@ -163,5 +163,75 @@ describe('VentesOr', () => {
 
     await waitFor(() => expect(screen.getByText('Aucune vente enregistrée')).toBeInTheDocument());
     expect(screen.getAllByRole('button', { name: /Nouvelle vente/ }).length).toBeGreaterThan(1);
+  });
+
+  it('ouvre les filtres dans un volet latéral', async () => {
+    render(<VentesOr />);
+    await waitFor(() => expect(screen.getByText('REC-001')).toBeInTheDocument());
+
+    // Les filtres tenaient une bande pleine largeur entre indicateurs et registre.
+    expect(screen.queryByLabelText('Filtrer par type d’or')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres du registre' });
+    expect(within(volet).getByLabelText('Filtrer par type d’or')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Appliquer' }));
+    expect(screen.queryByRole('dialog', { name: 'Filtres du registre' })).not.toBeInTheDocument();
+  });
+
+  it('ferme le volet au clic hors du panneau', async () => {
+    render(<VentesOr />);
+    await waitFor(() => expect(screen.getByText('REC-001')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres du registre' });
+    fireEvent.click(volet.querySelector('.sn-drawer__backdrop') as HTMLElement);
+
+    expect(screen.queryByRole('dialog', { name: 'Filtres du registre' })).not.toBeInTheDocument();
+  });
+
+  it('annonce le nombre de critères posés', async () => {
+    render(<VentesOr />);
+    await waitFor(() => expect(screen.getByText('REC-001')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    expect(screen.getByRole('button', { name: /Réinitialiser/ })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Filtrer par type d’or'), { target: { value: 'lingot' } });
+    expect(screen.getByRole('button', { name: /Filtres/ })).toHaveTextContent('1');
+
+    fireEvent.click(screen.getByRole('button', { name: /Réinitialiser/ }));
+    expect(screen.getByLabelText('Filtrer par type d’or')).toHaveValue('all');
+  });
+
+  it('garde les statuts sur la page, hors du volet', async () => {
+    render(<VentesOr />);
+    await waitFor(() => expect(screen.getByText('REC-001')).toBeInTheDocument());
+
+    // Les statuts servent de navigation rapide : ils ne sont pas dans le volet.
+    const bande = screen.getByRole('group', { name: 'Statut de la vente' });
+    expect(within(bande).getByRole('button', { name: /Toutes/ })).toBeInTheDocument();
+  });
+});
+
+describe('compterFiltresActifs', () => {
+  const vide = { search: '', statut: 'all' as const, typeOr: 'all' as const, from: '', to: '' };
+
+  it('ne compte rien sur les valeurs par défaut', () => {
+    expect(compterFiltresActifs(vide, 'date')).toBe(0);
+  });
+
+  it('compte chaque critère posé', () => {
+    expect(compterFiltresActifs({ ...vide, search: 'REC' }, 'date')).toBe(1);
+    expect(compterFiltresActifs({ ...vide, typeOr: 'lingot' }, 'date')).toBe(1);
+    expect(compterFiltresActifs({ ...vide, from: '2026-01-01' }, 'date')).toBe(1);
+    expect(compterFiltresActifs(vide, 'montant')).toBe(1);
+    // Une période compte pour un seul critère, bornes basse et haute confondues.
+    expect(compterFiltresActifs({ ...vide, from: '2026-01-01', to: '2026-03-01' }, 'montant')).toBe(2);
+  });
+
+  it('ignore le statut, qui reste sur la page', () => {
+    expect(compterFiltresActifs({ ...vide, statut: 'payee' }, 'date')).toBe(0);
   });
 });

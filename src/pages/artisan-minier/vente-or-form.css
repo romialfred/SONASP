@@ -29,18 +29,27 @@
 .vente-form__row { display: grid; gap: 14px 16px; }
 .vente-form__row.is-vendeur { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); }
 .vente-form__row.is-or { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.vente-form__row.is-prix { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Quatre colonnes depuis l'ajout de l'ecart au cours. */
+.vente-form__row.is-prix { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .vente-form__statut { margin-top: 16px; max-width: 320px; }
 .vente-form__types { margin: 0 0 18px; padding: 0; border: 0; }
 .vente-form__types legend { margin-bottom: 9px; padding: 0; }
 
-.vente-form__karats { display: flex; gap: 6px; flex-wrap: wrap; }
+/* Les cinq titres tiennent sur une ligne quelle que soit la largeur : ils se
+   partagent la colonne au lieu de passer a la ligne. */
+.vente-form__karats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
 
 .vente-form__karats button {
-  min-width: 52px;
-  height: var(--sn-control-h);
-  padding: 0 10px;
+  display: grid;
+  min-width: 0;
+  padding: 6px 5px 5px;
+  gap: 4px;
+  justify-items: center;
   border: 1px solid var(--sn-field-line);
   color: var(--sn-ink-soft);
   background: var(--sn-surface);
@@ -52,8 +61,44 @@
   transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
 }
 
+.vente-form__karats b { font-size: 12px; font-weight: 700; }
+
+/* Jauge de purete : 24 K vaut 100 %. */
+.vente-form__karats i {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 3px;
+  background: var(--sn-line-soft);
+  border-radius: 3px;
+}
+
+.vente-form__karats i span {
+  display: block;
+  height: 100%;
+  background: var(--sn-gold);
+  border-radius: inherit;
+}
+
+.vente-form__karats em {
+  color: var(--sn-faint);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .vente-form__karats button:hover { border-color: #a8d7c4; background: #f6fbf9; }
-.vente-form__karats button.is-active { border-color: var(--sn-green); color: #fff; background: var(--sn-green); }
+
+.vente-form__karats button.is-active {
+  border-color: var(--sn-green);
+  color: #fff;
+  background: var(--sn-green);
+}
+
+.vente-form__karats button.is-active i { background: rgb(255 255 255 / 28%); }
+.vente-form__karats button.is-active i span { background: #ffffff; }
+.vente-form__karats button.is-active em { color: rgb(255 255 255 / 82%); }
 
 /* ---------- Volet contextuel ---------- */
 
@@ -133,3 +178,96 @@
   .vente-form__row.is-or,
   .vente-form__row.is-prix { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* --- Numero de vente, attribue a l'enregistrement --- */
+
+.vente-form__numero output {
+  color: var(--sn-navy);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vente-form__numero svg { color: var(--sn-faint); }
+
+/* --- Types d'or : les cinq formes sur une seule ligne ---
+   La colonne du formulaire fait 820 px face au volet de droite : cinq cartes
+   horizontales n'y tiennent pas. Elles passent donc en format vertical, ce qui
+   ramene chacune a ~155 px. Le point de rupture porte sur la largeur de fenetre,
+   seule mesure disponible en CSS ici : au-dessous de 1080 px le volet passe sous
+   le formulaire et la ligne se reforme d'elle-meme. */
+
+.vente-form__types-grille {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.vente-form__types-grille label {
+  display: grid;
+  min-width: 0;
+  padding: 12px 9px 11px;
+  gap: 8px;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+}
+
+.vente-form__types-grille .sn-choices__icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+}
+
+.vente-form__types-grille .sn-choices__icon svg { width: 16px; height: 16px; }
+
+.vente-form__types-grille label > span:last-child { min-width: 0; }
+
+.vente-form__types-grille strong {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.2;
+}
+
+.vente-form__types-grille small {
+  display: block;
+  margin-top: 3px;
+  min-height: 26px;
+  color: var(--sn-faint);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* L'icone porte la couleur de l'or plutot qu'un gris : c'est la nature du metal
+   qui est en jeu, pas un etat. */
+.vente-form__types-grille .sn-choices__icon {
+  color: var(--sn-gold);
+  background: var(--sn-gold-soft);
+}
+
+.vente-form__types-grille label.is-checked .sn-choices__icon {
+  color: var(--sn-gold-dark);
+  background: #f7e6bd;
+}
+
+/* Sous 560 px, le descriptif cede la place pour que les cinq cartes tiennent
+   malgre tout sur une seule ligne. */
+@media (max-width: 560px) {
+  .vente-form__types-grille small { display: none; }
+  .vente-form__types-grille label { padding: 10px 6px; }
+}
+
+/* --- Ecart au cours du marche --- */
+
+.vente-form__ecart output {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Prime et decote se distinguent, le reste du bloc reste en encre. */
+.vente-form__ecart.is-prime { border-color: #bde5d4; background: var(--sn-success-soft); }
+.vente-form__ecart.is-prime,
+.vente-form__ecart.is-prime svg { color: var(--sn-success); }
+
+.vente-form__ecart.is-decote { border-color: var(--sn-danger-line); background: var(--sn-danger-soft); }
+.vente-form__ecart.is-decote,
+.vente-form__ecart.is-decote svg { color: var(--sn-danger); }

@@ -5,6 +5,8 @@ interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: (reset: () => void, error?: Error) => ReactNode;
   onReset?: () => void;
+  /** Change de valeur a chaque navigation ; efface l'erreur sans remonter les enfants. */
+  resetKey?: string;
 }
 
 interface ErrorBoundaryState {
@@ -23,6 +25,20 @@ class BaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[ErrorBoundary] Unhandled error captured:', error, errorInfo);
+  }
+
+  /**
+   * Efface l'erreur quand la cle de reinitialisation change.
+   *
+   * L'appelant posait cette cle sur `key`, ce qui **remontait tout le sous-arbre**
+   * a chaque navigation : mise en page, barre laterale et filtres repartaient de
+   * zero. La cle est desormais une simple propriete : seul l'etat d'erreur est
+   * remis a plat, les enfants restent montes.
+   */
+  componentDidUpdate(precedentes: ErrorBoundaryProps) {
+    if (this.state.hasError && precedentes.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: undefined });
+    }
   }
 
   private reset = () => {
@@ -66,10 +82,20 @@ export function AppErrorBoundary({ children }: { children: ReactNode }) {
   return <BaseErrorBoundary>{children}</BaseErrorBoundary>;
 }
 
-export function RouteErrorBoundary({ children, onReset }: { children: ReactNode; onReset?: () => void }) {
+export function RouteErrorBoundary({
+  children,
+  onReset,
+  resetKey,
+}: {
+  children: ReactNode;
+  onReset?: () => void;
+  /** Change de valeur a chaque navigation ; efface l'erreur sans remonter les enfants. */
+  resetKey?: string;
+}) {
   return (
     <BaseErrorBoundary
       onReset={onReset}
+      resetKey={resetKey}
       fallback={(reset) => (
         <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
           <div className="max-w-md w-full bg-white border border-gray-200 rounded-lg shadow-sm p-6 text-center">

@@ -5,6 +5,47 @@ Statuts : ✅ livré+testé · 🔄 en cours · ⏳ à faire · ⚠️ nécessit
 
 ---
 
+## Itération — 2026-08-19 — Approbateurs & workflow d'approbation des ventes
+
+### Demande
+Nettoyer la barre latérale (doublons *Transporteurs* / *Raffineries* présents sous
+*Parties prenantes* et *Administration*), renommer « Déposants » en « Approbateurs », et
+formaliser le workflow : **une vente artisanale doit être approuvée par un approbateur ;
+la facture n'est générée et le paiement émis qu'après cette approbation.**
+
+### Décision de modélisation
+Approche **rôle / permission** retenue avec l'utilisateur (plutôt que réutiliser l'entité
+`depositors`, qui reste un référentiel distinct et vivant). Un approbateur est un
+utilisateur portant le drapeau `user_profiles.is_sales_approver`. La direction
+(Propriétaire / Direction) approuve **d'office**.
+
+### Livré ✅
+- Migration additive `20260819_006_add_sales_approver_flag` : colonne
+  `user_profiles.is_sales_approver boolean NOT NULL DEFAULT false`. **Appliquée** sur
+  `SONASP_OPS` (`yyverzuhkdonjjuficor`).
+- `UserProfile.is_sales_approver` ajouté au type et aux **trois** constructeurs de profil
+  d'`AuthContext` (fetch `select('*')`, profil minimal, profil de repli).
+- `permissions.ts` : helper `isSalesApprover(user)` = drapeau **ou** direction, compte actif.
+- `salesApproverService` : `list()` des utilisateurs + `setApprover(id, valeur)`.
+- Page **Approbateurs** (`/stakeholders/approvers`, route protégée management/admin) :
+  liste, recherche, synthèse, accorde/retire le droit ; la direction est affichée
+  « D'office » et verrouillée. La barre latérale y pointe désormais.
+- `VenteOrDetails` : l'action « Approuver la vente » n'est offerte qu'aux approbateurs ;
+  les autres voient un badge « En attente d'approbation ». La porte facture/paiement
+  (statut `validee`) reste inchangée en aval.
+- Barre latérale : doublons *Transporteurs* / *Raffineries* retirés d'Administration.
+  Terminologie « Valider » → « Approuver », statut « Validée » → « Approuvée ».
+
+### Portes
+- `npx vitest run` : **525/525 verts** (61 fichiers). Mock `useAuth` ajouté au test
+  `VenteOrDetails` (approbateur) pour conserver l'action à l'écran.
+- `npm run build` : vert.
+- `npx tsc --noEmit -p tsconfig.app.json` : **141** — baseline inchangé, **0 erreur
+  ajoutée** (drapeau propagé à tous les littéraux `UserProfile` typés, dont les tests
+  `permissions` et `ProfileGuard`).
+
+---
+
 ## Itération 1 — 2026-08-08
 
 ### Constat de départ (baseline)
@@ -691,3 +732,674 @@ aucun droit.
 - `npx vitest run` : **357/357 verts** (49 fichiers), deux exécutions consécutives
 - `npm run typecheck` : **153** (156 avant)
 - 3 anomalies fonctionnelles corrigées (A79 à A81)
+
+---
+
+## Barre latérale : quatre sections, et une barre qui ne saute plus
+
+### Le défaut qui se voyait le plus
+Dérouler « Marché d'or artisanal » puis cliquer sur une de ses entrées repliait le groupe
+et en ouvrait un autre : la barre bougeait sous le curseur. La cause n'était pas une
+animation mais la recherche du groupe correspondant à la route. Elle retenait le
+**premier** groupe dont un enfant satisfaisait `startsWith` — et `/artisan-minier/paiements`
+commence par `/artisan-minier`, l'enfant « Vue d'ensemble » du groupe « Artisans miniers »,
+déclaré plus haut. Le groupe est désormais choisi sur la correspondance la **plus longue**,
+seule règle qui distingue un préfixe d'une route.
+
+### Un tableau de bord qui n'était pas celui annoncé
+Le premier « Tableau de bord » de la barre menait au tableau de bord des artisans miniers,
+pas à la vue nationale. Il pointe maintenant vers `/dashboard`, et reste le seul intitulé
+« Tableau de bord » : dans les groupes, ces entrées deviennent « Vue d'ensemble ». Le
+renommage a mis au jour un doublon — deux entrées vers `/artisan-minier` — supprimé.
+
+Le tableau de bord national, lui, ne recensait pas les artisans miniers. Il remonte
+désormais l'effectif total et l'effectif actif, avec la règle appliquée à toutes ses
+sources : une source indisponible est nommée à l'écran, jamais estimée.
+
+### Lisibilité
+Trois règles CSS coupaient les intitulés aux points de suspension ; ils passent à la ligne
+et les hauteurs fixes deviennent des hauteurs minimales. L'indentation des sous-menus
+passe de 35 px à 20 px cumulés.
+
+## Analyse par assistance IA
+
+Nouvelle page à `/analytics/assistant` : historique de conversations, fil de discussion,
+composeur avec envoi à la touche Entrée, quatre amorces adossées aux données réellement
+suivies. Le moteur d'analyse n'est pas raccordé — et la page le dit, par un bandeau, une
+pastille d'état et une réponse explicite. Elle ne fabrique aucun chiffre : c'est la seule
+manière honnête de livrer une coquille avant son service.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **405/405 verts** (52 fichiers)
+- `npm run typecheck` : **152** (153 avant)
+- 6 anomalies corrigées (A86 à A91)
+
+---
+
+## Une seule ligne par intitulé de la barre latérale
+
+Contrainte permanente désormais : aucun libellé de la barre ne passe sur deux lignes.
+Elle entre en tension avec celle posée juste avant — aucun libellé tronqué — et la seule
+façon de tenir les deux est de mesurer.
+
+Relevé dans le navigateur, sur la barre réelle : le texte d'un groupe dépliable disposait
+de 124 px, « Rapports institutionnels » en demande 147. Quatre intitulés dépassaient.
+
+Deux leviers, appliqués ensemble :
+
+- **Le chevron des entrées sans sous-menu est retiré.** Il promettait un repli qui
+  n'existait pas — « Analyses des ventes » ou « Assistant IA » sont de simples liens — et
+  il consommait 29 px que l'intitulé récupère.
+- **La barre passe de 244 à 268 px**, largeur minimale qui laisse au moins 10 px de marge
+  aux trois gabarits : groupe dépliable (148 px de texte), lien sans chevron (177 px),
+  entrée de sous-menu (169 px).
+
+`white-space: normal` redevient `nowrap`, avec ellipse en dernier recours : mieux vaut une
+coupure visible qu'une mise en page cassée si un libellé futur débordait.
+
+### Le garde-fou
+jsdom ne calcule pas de mise en page : un test ne peut pas constater un retour à la ligne.
+`sidebarNavigation.test.ts` reconstitue donc la largeur du texte à partir des avances de la
+police Inter, relevées dans le navigateur. Contrôlée face à `measureText`, l'estimation
+s'écarte au plus de 1,3 px — la marge de 10 px l'absorbe. Tout intitulé ajouté qui ne
+tiendrait pas sur une ligne fait échouer la porte de validation.
+
+### Renommages
+Section « Rapports et analyses » : « Analyses des ventes », « Rapports de production »,
+« Assistant IA », « Rapports institutionnels », « Performance nationale ». Sous
+« Marché d'or artisanal », « Vue d'ensemble des ventes » devient « Vue d'ensemble » — le
+groupe porte déjà le contexte, et c'était le libellé le plus long de tous les sous-menus.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **413/413 verts** (53 fichiers)
+- `npm run typecheck` : **152** (inchangé)
+- 2 anomalies corrigées (A92, A93)
+
+---
+
+## Habillage SafeX de la barre latérale
+
+Reprise du modèle fourni en référence, sans toucher à la structure ni aux routes.
+
+- **`+` / `−` à la place des chevrons.** Le signe décrit l'action offerte, pas l'état
+  courant : plus quand le groupe est replié, moins quand il est déplié.
+- **Pastilles d'icône** : carré arrondi de 30 px, bordure et fond teintés de la couleur du
+  module via `color-mix` sur `currentColor` — une seule règle couvre les trente entrées,
+  la couleur restant posée là où elle est définie, dans le modèle de navigation.
+- **Intitulés de section** : tiret ambre, titre ambre espacé, filet occupant la place
+  restante. Le filet est un pseudo-élément et ne prend jamais sur la largeur du texte.
+- **Rail des sous-menus** porté à 2 px et éclairci ; état courant en panneau plein plutôt
+  qu'en voile ; lignes à 42 px.
+
+### Le piège de la pastille
+La pastille est un `span`, et les règles d'intitulé visaient `> span` : elle a hérité du
+`flex: 1` destiné au texte et lui a pris la moitié de la largeur — neuf intitulés se sont
+mis à être tronqués d'un coup. Les sélecteurs sont désormais restreints par
+`:not(.national-sidebar__icon)`, aux quatre endroits concernés, repli mobile compris.
+
+La contrainte d'une seule ligne a été revérifiée sur les 51 intitulés réels après
+habillage : rien de tronqué, rien sur deux lignes. Les budgets du garde-fou passent à
+145 px (groupe dépliable) et 171 px (entrée sans sous-menu), la pastille coûtant 10 px de
+plus que l'ancienne icône nue.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **414/414 verts** (53 fichiers)
+- `npm run typecheck` : **152** (inchangé)
+- 1 anomalie corrigée (A94)
+
+---
+
+## Pourquoi la barre latérale bougeait encore
+
+La correspondance la plus longue avait réglé un symptôme, pas la cause. Deux mécanismes
+restaient.
+
+### La barre est reconstruite à chaque navigation
+Chaque page rend sa propre instance de `NationalDashboardLayout`. Naviguer démonte
+l'ancienne et en monte une neuve : le défilement de la barre repartait en haut et le
+groupe ouvert se recalculait. Cliquer sur « Stock d'or », en bas de la liste, ramenait donc
+la barre au sommet — c'est ce que l'on voyait bouger.
+
+Hisser la mise en page hors des routes serait la correction de fond, mais elle touche
+chaque écran de l'application. Le relais retenu conserve l'état visuel — offset de
+défilement et groupes dépliés — hors du composant, dans un objet de module. Le défilement
+est restauré dans le rappel de référence du `<nav>`, donc pendant la phase de commit,
+avant la peinture : aucun saut n'est visible.
+
+### L'ouverture exclusive déplaçait ce que l'on venait de cliquer
+Déplier un groupe repliait le précédent. Si celui-ci se trouvait plus haut, tout ce qui
+suivait remontait de plusieurs lignes — le groupe cliqué glissait sous le curseur.
+
+J'ai d'abord compensé au défilement, en ancrant la ligne cliquée. Mesuré en vraie mise en
+page, le procédé ne tient pas jusqu'au bout : arrivé en haut de liste il n'y a plus de
+marge à reprendre, et 72 px de dérive subsistaient. Les groupes sont donc devenus
+**indépendants** : déplier n'ajoute qu'un sous-menu, toujours sous la ligne cliquée, et ne
+modifie jamais rien au-dessus. Contrôle en vraie mise en page : déplacement nul pour la
+ligne cliquée comme pour toutes celles au-dessus, défilement inchangé.
+
+Le prix est une barre qui peut s'allonger si l'on déplie beaucoup de groupes. C'est le
+seul moyen de garantir que rien ne bouge, et c'est ce qui était demandé.
+
+### Écart sous le titre de groupe
+Le sous-menu était collé à son titre : l'élément sélectionné semblait déborder du groupe.
+6 px l'en séparent désormais.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **416/416 verts** (53 fichiers)
+- `npm run typecheck` : **152** (inchangé)
+- 3 anomalies corrigées (A95 à A97)
+
+---
+
+## Refonte visuelle du module Production
+
+Trois écrans repris sur le modèle du module « sites miniers » : cartes blanches, filet
+gris, et une palette réduite au vert et à l'or de la charte. La couleur cesse d'être
+décorative pour ne plus signaler qu'un état.
+
+### Un socle plutôt que trois feuilles de style
+Deux ajouts au design system, faits une fois pour toutes :
+
+- `StatGrid` reçoit une variante **sobre** — tuiles ramenées de 101 px à 75 px, teintes
+  limitées au vert, à l'or et à un neutre. Les hauteurs de ligne y sont explicites : sans
+  elles c'est le contenu qui commande et la tuile reste haute quel que soit le `min-height`.
+- Le **volet latéral** de filtres, écrit pour le tableau de bord des artisans, est promu en
+  `sn-drawer`. Un second écran en avait besoin ; un volet par page aurait divergé dès la
+  première retouche.
+
+### Licences d'exportation
+Réécriture complète : la page empilait dix-huit dégradés Tailwind, un badge clignotant et
+des fonds alternés bleu/vert sans signification. Les fiches sont désormais sobres, les
+chiffres en encre, et la couleur réservée à l'état et au dépassement de seuil.
+
+Deux défauts fonctionnels au passage. **L'échec de chargement n'était consigné qu'au
+journal** : l'écran restait vide sans un mot. Et le taux d'utilisation divisait par le
+volume autorisé sans le vérifier — une licence à zéro affichait `NaN %` ; elle affiche
+« — ».
+
+### Production journalière
+Les filtres occupaient un bandeau pleine largeur au milieu de la page. Ils passent dans le
+volet latéral, avec compteur de critères actifs, remise à zéro et fermeture au clic
+extérieur ou à Échap. La page ne garde qu'un rappel des critères retenus.
+
+Les camemberts et histogrammes tiraient chacun leur propre arc-en-ciel de douze teintes
+Tailwind — rose, violet, cyan, lime — et **différentes d'un graphique à l'autre pour une
+même compagnie**. Une rampe unique de huit teintes vert / or / ardoise les remplace.
+
+Les libellés des graphiques étaient en anglais (« Estimated Oz », « Peak Day »), ceux du
+formulaire de déclaration aussi (« Bullion », « Gold Assay »). Traduits. Le nettoyage a
+révélé `DailyProductionForm`, doublon mort qu'aucun écran n'importait : supprimé.
+
+### Gestion budgétaire
+Le volet de droite occupait 420 px fixes sur toute la hauteur de l'écran pendant que la
+matrice était bridée à `max-w-6xl` : la colonne secondaire prenait plus de place que le
+tableau qu'elle commente. Les deux colonnes se partagent désormais la largeur — 834 px
+contre 300 px à 1180 px de large — et la synthèse repasse sous la matrice en dessous de ce
+seuil. En-tête, notifications et libellés passent à la charte.
+
+L'intérieur de la matrice budgétaire, lui, n'est pas réécrit : il fonctionne, ne dispose
+d'aucun test, et le reprendre ligne à ligne aurait été un risque sans contrepartie. C'est
+la coquille et la mise en page qui changent.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **430/430 verts** (54 fichiers)
+- `npm run typecheck` : **152** (inchangé)
+- 7 anomalies corrigées (A98 à A104)
+
+---
+
+## Barre latérale : puces, ouverture exclusive, pastilles réduites
+
+- Les sous-menus perdent leur icône de module au profit d'une **puce claire**. À ce
+  niveau, dix icônes de dix couleurs se lisaient comme dix alertes.
+- Les pastilles des titres de groupe passent de 30 px à 26 px, l'icône de 16 à 14.
+- L'indentation des sous-menus gagne 1 px.
+- **Un seul groupe déplié à la fois**, comme demandé. C'est l'inverse de la décision
+  précédente, prise pour supprimer un mouvement parasite : replier un groupe situé plus
+  haut fait remonter la ligne que l'on vient de cliquer. L'ancrage du déclencheur est donc
+  réintroduit — sa position est relevée avant la bascule et le défilement corrigé d'autant,
+  avant peinture. La compensation est complète tant qu'il reste du défilement à reprendre ;
+  collée en haut de liste, elle ne peut plus rien. C'est la limite de l'ouverture exclusive
+  elle-même, pas du correctif.
+
+Les budgets de largeur du garde-fou passent à 149 px (groupe) et 175 px (lien), la
+pastille rétrécie ayant rendu 4 px à l'intitulé. Contrôle en vraie mise en page : aucun
+intitulé tronqué, aucun sur deux lignes.
+
+## Page des paiements
+
+Réécriture complète. L'écran était **intégralement en anglais** — titre, sous-titre,
+tuiles, filtres, messages — avec des montants formatés en `en-US` et un symbole `$` forcé
+quelle que soit la devise enregistrée. Les tuiles portaient quatre dégradés vifs, l'en-tête
+du tableau un dégradé bleu.
+
+Deux défauts de fond au passage :
+
+- **Le total additionnait des devises différentes.** Les cumuls ne sont désormais calculés
+  que si toutes les lignes partagent la même devise ; sinon l'écran affiche « — » et le
+  dit.
+- **L'échec de chargement ne laissait qu'un `toast` fugace** : il s'affiche maintenant sur
+  la page, et la liste annonce qu'elle est vide.
+
+16 tests, la page n'en avait aucun.
+
+## Boutons d'export
+
+Retirés de **treize écrans** qui ne sont pas des pages de rapport : clients, stocks, cours
+de l'or, détail de paiement, journal d'audit, raffinage, or en coffre, déposants, tableau
+de bord et liste des artisans, historique des paiements, circuit de traçabilité, production
+journalière, paiements.
+
+Trois d'entre eux n'avaient **aucun gestionnaire** — stocks, détail de paiement, journal
+d'audit : des boutons décoratifs, que le mandat proscrit de toute façon.
+
+Le code devenu mort part avec : neuf fonctions d'export, leurs imports et un état de
+composant. Le typage y gagne deux erreurs (152 → 150).
+
+Conservés, parce qu'il s'agit de pages de rapport : les trois rapports artisans, le tableau
+de bord national, le centre d'analyses, le tableau de bord des rapports. Conservés aussi,
+parce qu'il ne s'agit pas d'exports mais du téléchargement d'une pièce jointe : facture
+PDF, justificatif de paiement, certificat d'essai, documents d'artisan, d'infraction et
+d'expédition.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **444/444 verts** (55 fichiers)
+- `npm run typecheck` : **150** (152 avant)
+- 5 anomalies corrigées (A105 à A109)
+
+---
+
+## Ventes d'or artisanal
+
+### Les actions d'en-tête restaient collées au sous-titre
+La règle `.sn-page__head > div:first-child { flex: 1 }` ne s'appliquait jamais : le premier
+enfant est le `span` de l'icône, pas le bloc titre. Les boutons se plaçaient donc à la suite
+du sous-titre, laissant un vide sur toute la droite. Le sélecteur devient
+`> div:not(.sn-page__actions)` — les actions collent au bord droit, sur **toutes** les pages
+refondues, pas seulement celle-ci.
+
+### Filtres en volet latéral
+Recherche, type d'or, tri et période passent dans le volet `sn-drawer`, avec compteur de
+critères, remise à zéro et fermeture au clic extérieur ou à Échap. Les statuts restent sur
+la page : ils servent de navigation rapide, pas de filtrage fin.
+
+### Numérotation des reçus
+Le numéro venait d'une fonction Postgres `generate_numero_recu_vente_or` **absente du
+dépôt** — impossible à relire, à tester ou à faire évoluer — et produisait
+`VENTE/OR/2025/12/0002`, avec des barres obliques peu commodes en URL, en nom de fichier et
+dans un export CSV. Pire, l'échec de la fonction n'était qu'un `console.warn` : la vente
+s'enregistrait alors **sans numéro de reçu**.
+
+La numérotation est reprise par l'application, comme celle des cartes professionnelles :
+`venteRecuNumberService.ts` (12 tests), format `VE-OR-AAAAMM-NNNNN`, compteur propre au
+mois, erreur de lecture bloquante — attribuer un numéro sans connaître ceux déjà pris
+produirait un doublon sur une pièce comptable. La migration `20260819_002` redéfinit la
+fonction distante au même format, pour les insertions faites hors application, et convertit
+les numéros déjà attribués. Elle est idempotente et sa requête de retour arrière figure en
+tête de fichier.
+
+**Réserve sur le format.** L'exemple donné était `VE-OR-2025612-00034`, dont le troisième
+segment compte sept chiffres. Année et mois n'en font que six (`202512`) et le chiffre
+supplémentaire ne correspond à rien de connu — ni jour, ni trimestre. J'ai retenu
+`AAAAMM` ; si le septième chiffre porte une information, elle reste à nommer.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **463/463 verts** (56 fichiers)
+- `npm run typecheck` : **150** (inchangé)
+- 4 anomalies corrigées (A110 à A113)
+
+---
+
+## Formulaire de vente d'or
+
+### Le panneau de cours affichait des chiffres inventés
+En cherchant à sobriser la colonne de droite, j'ai trouvé pire que des couleurs vives.
+Quand la source ne fournit ni ouverture, ni haut, ni bas sur 24 h, le panneau les
+**fabriquait** — ouverture à `cours × 0,995`, haut à `× 1,008`, bas à `× 0,992` — et les
+présentait comme des données de marché. Sur l'écran même où un acheteur fixe son prix au
+gramme. Le taux USD/XOF subissait le même sort : 600 en dur, affiché comme le taux du
+référentiel.
+
+Le panneau est réécrit. Il n'affiche que ce que la source donne : la variation devient
+« Variation non communiquée par la source », et sans taux au référentiel les conversions
+en FCFA ne s'affichent pas du tout, avec la raison à l'écran. Au passage, le bandeau orange
+plein, les quatre tuiles bordées de vert et de rouge et le bloc vert cèdent la place à une
+carte unique.
+
+### Numéro de vente
+Le champ « N° de reçu » disparaît du formulaire. Le numéro est attribué à l'enregistrement,
+au format `VE-OR-AAAA-NNNNN` — le compteur devient annuel, conformément au format demandé —
+et suit la vente jusqu'au paiement. Un numéro frappé à la main ouvrait la porte aux
+doublons sur une pièce comptable.
+
+Le retrait a fait apparaître un défaut : le formulaire transmettait `numero_recu` dans son
+payload, et `update` propage tout ce qu'on lui donne. Modifier une vente avec le champ vide
+**effaçait son numéro**. Le champ ne fait plus partie du payload.
+
+### Types d'or sur une ligne
+Les cinq formes passent en cartes verticales, cinq de front. Une première tentative a
+échoué : le point de rupture portait sur la largeur de fenêtre alors que la colonne du
+formulaire ne fait que 820 px face au volet de droite. Mesuré après correction : une seule
+ligne, cartes de 157 px, hauteurs égales, aucun intitulé ni descriptif tronqué.
+
+### Ce qui n'est pas fait
+**La facture officielle.** Elle doit être conforme aux normes du Burkina Faso, porter un
+sticker et un QR code, et c'est elle qui sera présentée au paiement. Les éléments de
+validation doivent être fournis : construire une facture à l'aveugle produirait une pièce
+d'apparence officielle sans valeur, ce qui est pire que pas de facture du tout. C'est
+inscrit comme prochaine action.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **465/465 verts** (56 fichiers)
+- `npm run typecheck` : **150** (inchangé)
+- 4 anomalies corrigées (A114 à A117)
+
+---
+
+## Formulaire de vente : numéro visible, titres jaugés
+
+- **Le numéro est attribué à l'ouverture** et affiché tel quel, à la place de la mention
+  « Attribué à l'enregistrement ». Il est ensuite repris à la création : sans cela le
+  service en aurait attribué un second, et la pièce aurait porté un numéro différent de
+  celui annoncé à l'écran. La modification, elle, ne transmet toujours pas le champ —
+  `update` propage tout ce qu'on lui donne.
+- **Le pavé d'explication fiscale disparaît.** Le détail TVA et taxe communale figure déjà,
+  chiffré, dans le récapitulatif de droite : la phrase le répétait sans rien ajouter.
+- **Les icônes de type d'or passent à l'or de la charte** au lieu d'un gris d'état : c'est
+  la nature du métal qui est en jeu.
+- **Types et titres tiennent chacun sur une ligne**, en cinq colonnes qui se partagent la
+  largeur plutôt que de passer à la ligne. Mesuré : cartes de 157 px, boutons de 48 px, une
+  seule ligne dans les deux cas.
+- **Chaque titre porte sa jauge de pureté**, 24 K valant 100 % — 18 K en marque 75, 22 K
+  en marque 92. Les boutons reçoivent un intitulé explicite (« 22 carats, 91,67 % de
+  pureté ») : leur contenu visible ne suffisait plus à les nommer.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **465/465 verts** (56 fichiers)
+- `npm run typecheck` : **150** (inchangé)
+- 2 anomalies corrigées (A118, A119)
+
+---
+
+## Prix au gramme adossé au cours du marché
+
+Le prix au gramme se saisissait à l'aveugle, alors que le cours du jour s'affichait à
+30 cm de là, dans la colonne de droite. Il est désormais **prérempli au cours du marché**,
+reste modifiable, et l'écart à ce cours s'affiche à côté : prime en vert, décote en rouge,
+en pourcentage.
+
+Deux règles tiennent ce comportement :
+
+- **Aucun repli.** Sans cours, ou sans taux USD/XOF au référentiel, le champ reste vide et
+  l'écran dit pourquoi. Une valeur de complaisance sur cet écran deviendrait le prix payé à
+  l'artisan.
+- **Le préremplissage n'écrase jamais une saisie.** Il n'a lieu qu'une fois, et toute
+  frappe le désarme.
+
+### Une source, pas deux
+Le panneau de cours et le formulaire auraient interrogé chacun de leur côté : deux
+sondages sur le même écran, et deux valeurs susceptibles de diverger. Le hook `useCoursOr`
+devient la source unique — cours, taux de change, dérivation du prix au gramme — et le
+panneau y est raccordé.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **473/473 verts** (57 fichiers)
+- `npm run typecheck` : **150** (inchangé)
+- 2 anomalies corrigées (A120, A121)
+
+---
+
+## Refonte du suivi des stocks
+
+L'écran s'appelait « Gold Inventory Management », tenait sur `MainLayout`, et ne montrait
+qu'un seul chiffre utile : l'or en coffre, décliné en quatre tuiles vives qui donnaient le
+même poids visuel à des postes de nature différente.
+
+### Une vue nationale, puis le détail
+`inventoryOverviewData.ts` agrège six sources en `Promise.allSettled` : stock raffiné,
+sociétés minières, expéditions en cours, préparations à l'aéroport, ventes et règlements.
+Une source qui ne répond pas est nommée à l'écran ; son poste reste à zéro.
+
+L'écran ouvre sur le **socle national** — or en coffre plus or engagé hors coffre — puis
+détaille : disponible, alloué, **en transit**, **à l'aéroport**, chacun avec sa part du
+national. Le stock par société minière suit, et le volet de droite porte le **vendu non
+réglé**, les acheminements en cours et l'or immobilisé à l'aéroport.
+
+Une seule famille chromatique : l'or de la charte sur navy pour le socle, l'encre pour le
+reste. La couleur ne signale plus qu'un écart.
+
+### Trois champs qui n'arrivaient jamais en base
+Le formulaire collectait la **teneur en argent** et la **raffinerie**, puis les laissait de
+côté au moment d'enregistrer. Et la **société minière** n'était jamais posée sur la ligne
+de stock : la ventilation par mine devait être reconstituée par une chaîne de jointures
+`gold_inventory` → `freight_shipments` → `freight_shipment_productions` →
+`daily_production`, qui se rompait dès qu'un maillon manquait.
+
+Les trois sont désormais enregistrés, la société étant reprise de l'expédition sélectionnée.
+Le schéma de `gold_inventory` ne figurant pas au dépôt, la migration `20260819_003` ajoute
+les colonnes en `IF NOT EXISTS` et rattache les entrées existantes à leur société par leur
+expédition. **Elle doit être appliquée** : sans elle, l'insertion porterait des colonnes
+inconnues et échouerait.
+
+### Formulaire
+Réécrit en quatre sections — origine, pesées, titre et restitution, justificatifs — avec un
+volet de contrôle qui donne l'or fin intégré, l'écart à l'expédition et le rappel du lot.
+Les grandeurs dérivées renvoient « — » plutôt qu'un zéro : un rendement de 0 % sur une
+pesée vide se lirait comme une perte totale. La validation est explicite et bloquante, y
+compris sur le cas physique « masse après fonte supérieure à la masse avant ».
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **494/494 verts** (59 fichiers)
+- `npm run typecheck` : **146** (150 avant)
+- 5 anomalies corrigées (A122 à A126)
+
+---
+
+## Facture de vente — spécimen
+
+Construite à partir de la note n°2025-0885/MEF/SG/DGI du 29 décembre 2025 et de la facture
+de référence fournie. Accessible depuis la fiche de vente, imprimable, non fonctionnelle.
+
+### La ligne que je ne franchis pas
+Les éléments de certification — code SECeF, NIM MCF, ISF, compteurs, date, QR — sont
+délivrés par le Module de Contrôle de Facturation, appareil acquis auprès de la Chambre de
+Commerce et d'Industrie, après homologation de la plateforme comme système de facturation
+d'entreprise. Aucun n'est fabriqué ici : les champs **annoncent leur propre absence**
+(`SPECIMEN-NON-CERTIFIE`, « MCF non raccordé », « ISF non attribué », « Non certifiée »).
+
+Le QR code est réel et se scanne, mais il n'imite aucune charge utile de certification : il
+retourne « SPECIMEN - FACTURE NON CERTIFIEE / Aucune valeur fiscale ni comptable », suivi
+des références de la pièce. Un test vérifie qu'il ne contient ni code SECeF ni NIM.
+
+Trois marques indépendantes portent le caractère non certifié : bandeau rouge en tête,
+filigrane en diagonale, bloc de certification en rouge. Aucune ne disparaît à l'impression —
+la règle `print-color-adjust: exact` y veille.
+
+### Les défauts de la facture de référence, corrigés
+- **Les totaux ne se réconciliaient pas.** TOTAL TTC 78 994 face à un NET À PAYER de
+  82 294, sans qu'aucune ligne n'explique les 3 300 d'écart. Ici, chaque composante est une
+  ligne nommée, et un test vérifie l'égalité `HT + TVA + autres taxes − acompte = net`.
+- **« TOTAL TVA 18% »** agrégeait du 10 % et du 18 %. Le total ne porte plus de taux ; le
+  détail par groupe de taxation est dans son tableau.
+- **Le bloc client était vide.** Il est rempli depuis l'artisan : identité, localité,
+  téléphone, numéro de carte professionnelle.
+
+### Montant en lettres
+Écrit à la main, avec les accords du français : « quatre-vingts » mais « quatre-vingt-un »,
+« deux cents » mais « deux cent trois », « soixante et onze ». Un cas m'a échappé au premier
+jet et le test l'a rattrapé : **« cent » reste invariable devant « mille »** — cinq cent
+mille, mais deux cents millions.
+
+### Ce qui n'est pas fait, et pourquoi
+Le verrou « pas de paiement sans facture certifiée » n'est pas posé : l'adosser à un
+spécimen bloquerait les paiements réels sans rien garantir. Il se posera avec la vraie
+certification.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **510/510 verts** (60 fichiers)
+- `npm run typecheck` : **146** (inchangé)
+- 1 anomalie corrigée (A127)
+
+---
+
+## Formulaire société minière : titres, guide, indications
+
+- **Les titres de section venaient du socle.** `CardTitle` était en `text-2xl`, soit 24 px
+  pour annoncer des champs saisis en 14 px : le titre pesait plus lourd que le contenu.
+  Ramené à 16 px, ce qui corrige d'un coup les trente-quatre écrans qui l'emploient. Le
+  titre de page passe de 30 à 20 px, son icône de 32 à 20 px.
+- **Le volet vert est retiré.** Il occupait un tiers de la largeur pour redire, en plus
+  long, ce que chaque champ porte déjà sous lui — « Nom officiel : nom complet de la
+  société tel qu'enregistré légalement » face à un champ libellé « Nom officiel ». Les
+  indications reviennent au pied des champs, en une ligne : « Raison sociale enregistrée »,
+  « Majuscules, sans espaces ». Le formulaire occupe la largeur.
+- **Le composant `FieldGuidePanel` reste**, employé par deux autres écrans, mais son
+  en-tête vert plein devient neutre, sa typographie se resserre et l'élément actif passe à
+  l'ambre de la charte. Son titre par défaut, « Production Guide », passe en français.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **510/510 verts** (60 fichiers)
+- `npm run typecheck` : **141** (146 avant)
+- 2 anomalies corrigées (A128, A129)
+
+---
+
+## Moyens de paiement des artisans
+
+### Le circuit, tel qu'il est désormais posé
+L'artisan vend son or à la SONASP — achat direct, valorisé sur la quantité, le titre et le
+cours du jour. La déclaration produit un numéro de vente `VE-OR-AAAA-NNNNN`, dont dérive le
+numéro de facture `FA-AAAA-NNNNN`. Le dossier de règlement renvoie à cette facture ;
+tant que la certification DGI n'est pas raccordée, c'est le spécimen qui s'ouvre, et
+l'écran le dit.
+
+### Les coordonnées ne se saisissent plus au moment de payer
+Elles étaient frappées sur l'écran de paiement, à chaque règlement : ressaisie du numéro
+mobile ou du RIB à chaque fois, avec le risque de frappe que cela comporte sur un virement,
+et **rien ne garantissait que le compte crédité appartienne à l'artisan**.
+
+Elles sont désormais rattachées à sa fiche — table `snp_artisan_moyens_paiement`, migration
+`20260819_004` — saisies une fois, avec un titulaire obligatoire et un moyen principal
+unique garanti par un index. La fiche accepte plusieurs canaux : Orange Money, Moov Money,
+Wave, autre service mobile, virement, chèque, espèces.
+
+L'écran de paiement ne fait plus que choisir. Chaque moyen s'affiche avec son logo, le nom
+du titulaire et la coordonnée masquée aux quatre derniers caractères, comme sur un relevé.
+Le moyen principal est présélectionné. Les coordonnées complètes s'affichent en lecture
+seule, avec un renvoi vers la fiche pour les corriger.
+
+**Sans coordonnée enregistrée, le règlement est refusé** : l'écran affiche pourquoi et
+renvoie à la fiche de l'artisan, au lieu de laisser saisir un compte à la volée.
+
+Le règlement porte désormais le moyen employé (`moyen_paiement_id`) et le numéro de facture
+présenté : un contrôle a posteriori peut remonter du paiement au compte crédité et à la
+pièce qui le justifie.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **525/525 verts** (61 fichiers)
+- `npm run typecheck` : **141** (inchangé)
+- 3 anomalies corrigées (A130 à A132)
+
+---
+
+## Application des migrations en base
+
+Cinq migrations appliquées sur `SONASP_OPS` (projet `yyverzuhkdonjjuficor`, confirmé
+contre l'URL du `.env`), après relevé de l'état réel du schéma.
+
+| Migration | Effet | Données touchées |
+|---|---|---|
+| `20260819_004` | Table `snp_artisan_moyens_paiement`, RLS, index d'unicité du moyen principal ; colonnes `moyen_paiement_id` et `numero_facture` sur les paiements | aucune |
+| `20260819_003` | Colonnes `silver_percentage` et `refinery_id` sur `gold_inventory`, index sur la société | aucune (les 2 lignes étaient déjà rattachées) |
+| `20260819_005` | **Correctif** de `get_sonasp_id()` et `set_sonasp_as_buyer()` | aucune |
+| `20260819_002` | Format `VE-OR-AAAA-NNNNN` | 2 numéros de vente réécrits |
+| `20260819_001` | Format `BF-AM-AAAA-XZTM-NNNN` des cartes | aucune (additive) |
+
+`mining_company_id` existait déjà sur `gold_inventory` : la réserve émise en la livrant
+n'était fondée que pour les deux autres colonnes.
+
+### Le défaut mis au jour par la migration
+La renumérotation des reçus a été **rejetée** :
+`22P02 invalid input value for enum company_type_enum: "sonasp"`.
+
+L'erreur ne venait pas de la migration mais du déclencheur `trigger_set_sonasp_buyer`.
+`set_sonasp_as_buyer()` et `get_sonasp_id()` comparent `company_type = 'sonasp'` — une
+valeur qui n'existe pas dans l'énumération, laquelle ne connaît que `production_mine`,
+`institution` et `parent_company`. Postgres convertit le littéral vers le type de la
+colonne, échoue, et lève l'exception.
+
+Le déclencheur s'exécutant BEFORE INSERT OR UPDATE, **aucune vente d'or artisanale ne
+pouvait être créée ni modifiée**. Les deux ventes présentes en base sont antérieures à
+l'état actuel du schéma.
+
+SONASP figure au référentiel avec `code = 'SONASP'` et `company_type = 'institution'` :
+c'est le code qui l'identifie. Les deux fonctions le lisent désormais, sans ajout de
+valeur d'énumération ni modification de l'écran de création d'une société.
+
+### Contrôles après application
+- Numéros de vente : `VE-OR-2025-00001`, `VE-OR-2025-00002` ; prochain attribué
+  `VE-OR-2026-00001`.
+- `snp_encoder_instant_carte(now())` répond, `get_sonasp_id()` renvoie l'identifiant
+  attendu.
+- Trois colonnes de stock, deux colonnes de paiement, table des moyens et ses trois index
+  en place.
+- Avis de sécurité Supabase : **aucun de niveau erreur**, aucun visant la nouvelle table.
+  Les 360 avertissements — dont 184 `function_search_path_mutable` — sont préexistants.
+
+---
+
+## Rafraîchissements permanents et pages blanches
+
+Quatre causes distinctes, cumulées.
+
+### 1. Le service worker rechargeait la page tout seul
+`vite-plugin-pwa` était en `registerType: 'autoUpdate'` : dès qu'un nouveau service worker
+était détecté, la page **se rechargeait d'elle-même**, sans rien annoncer — en pleine
+saisie le cas échéant. C'est la « plateforme qui se met à jour en permanence ». Passé en
+`prompt` : la mise à jour s'installe, mais aucun rechargement n'est déclenché.
+
+### 2. Une clé qui remontait tout l'arbre
+`<RouteErrorBoundary key={location.pathname}>` : poser la route sur `key` **remonte tout le
+sous-arbre** à chaque navigation, y compris quand seul un paramètre change. La clé devient
+une propriété `resetKey` : la limite d'erreur efface son état sur changement de route, sans
+détruire ses enfants.
+
+### 3. L'habillage vivait à l'intérieur de chaque page
+Chaque page rendait son propre `NationalDashboardLayout`. La mise en page se trouvant à
+l'intérieur de l'élément de route, changer de page la détruisait pour la reconstruire :
+barre latérale, en-tête et filtres repartaient de zéro à chaque navigation.
+
+`NationalDashboardChrome` monte l'habillage une seule fois, comme route parente ; les 53
+routes concernées y sont regroupées. **Aucune page n'a été réécrite** : un contexte rend
+`NationalDashboardLayout` transparent quand un habillage est déjà monté plus haut, si bien
+que les pages continuent de l'appeler sans effet. Les 68 autres routes, encore sur
+`MainLayout` ou publiques, restent hors du regroupement — elles porteraient sinon deux
+habillages.
+
+Contrôle : les 121 chemins de route sont identiques avant et après regroupement, aucun
+perdu, aucun ajouté.
+
+### 4. Le repli de suspense effaçait l'écran entier
+`<Suspense fallback={<RouteFallback />}>` enveloppait `<Routes>`, donc l'habillage. Le
+chargement d'un module différé remplaçait **toute la page** par le repli : d'où l'écran
+blanc. Le repli vit désormais dans `main`, à l'intérieur de l'habillage.
+
+### Métriques
+- `npm run build` : **vert**
+- `npx vitest run` : **529/529 verts** (62 fichiers)
+- `npm run typecheck` : **141** (inchangé)
+- 4 anomalies corrigées (A134 à A137)

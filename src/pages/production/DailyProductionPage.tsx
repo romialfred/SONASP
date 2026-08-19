@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Coins, Download, Factory, Loader2, Plus, Scale, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, Coins, Factory, Loader2, Plus, RotateCcw, Scale, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { CustomAlert } from '@/components/ui/CustomAlert';
@@ -34,6 +34,14 @@ export const nombre = (valeur: number, decimales = 2) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).format(
     valeur || 0
   );
+
+/** Date courte en français, pour le rappel de période. */
+export const formatDate = (valeur: string) => {
+  const date = new Date(`${valeur}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 /** Cumuls affichés en tête de page. */
 export function cumulsProduction(productions: DailyProduction[]) {
@@ -109,6 +117,7 @@ export function DailyProductionPage() {
   const [compagnieFiltre, setCompagnieFiltre] = useState('all');
   const [formOuvert, setFormOuvert] = useState(false);
   const [selection, setSelection] = useState<DailyProduction | null>(null);
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
 
   const chargerCompagnies = useCallback(async () => {
     const { data, error } = await supabase
@@ -146,6 +155,15 @@ export function DailyProductionPage() {
     void chargerProductions();
   }, [chargerProductions]);
 
+  useEffect(() => {
+    if (!filtresOuverts) return;
+    const surTouche = (evenement: KeyboardEvent) => {
+      if (evenement.key === 'Escape') setFiltresOuverts(false);
+    };
+    document.addEventListener('keydown', surTouche);
+    return () => document.removeEventListener('keydown', surTouche);
+  }, [filtresOuverts]);
+
   const visibles = useMemo(
     () =>
       compagnieFiltre === 'all'
@@ -153,6 +171,16 @@ export function DailyProductionPage() {
         : productions.filter((production) => production.mining_company_id === compagnieFiltre),
     [productions, compagnieFiltre]
   );
+
+  const parDefaut = periodeParDefaut();
+  const filtresActifs =
+    (compagnieFiltre === 'all' ? 0 : 1) +
+    (periode.debut === parDefaut.debut && periode.fin === parDefaut.fin ? 0 : 1);
+
+  const reinitialiser = () => {
+    setPeriode(periodeParDefaut());
+    setCompagnieFiltre('all');
+  };
 
   const cumuls = useMemo(() => cumulsProduction(visibles), [visibles]);
   const titre = useMemo(() => titreMoyen(visibles), [visibles]);
@@ -177,22 +205,6 @@ export function DailyProductionPage() {
     }
   };
 
-  const exporter = () => {
-    if (visibles.length === 0) {
-      showError('Aucune déclaration à exporter sur cette période.');
-      return;
-    }
-    const csv = lignesExport(visibles, compagnies)
-      .map((ligne) => ligne.map((cellule) => `"${String(cellule).replace(/"/g, '""')}"`).join(';'))
-      .join('\n');
-    const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
-    const lien = document.createElement('a');
-    lien.href = url;
-    lien.download = `production-${periode.debut}-${periode.fin}.csv`;
-    lien.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <NationalDashboardLayout>
       <div className="sn-page production-page">
@@ -211,16 +223,16 @@ export function DailyProductionPage() {
           actions={
             <>
               {/* Le bouton menait vers `/production/budget`, route qui n'existe pas. */}
-              <button type="button" className="sn-btn" onClick={() => navigate('/performance/budgets')}>
-                <TrendingUp aria-hidden="true" /> Budgets et prévisions
-              </button>
               <button
                 type="button"
-                className="sn-btn"
-                onClick={exporter}
-                disabled={visibles.length === 0}
+                className={`sn-btn${filtresActifs > 0 ? ' is-filtered' : ''}`}
+                onClick={() => setFiltresOuverts(true)}
               >
-                <Download aria-hidden="true" /> Exporter en CSV
+                <SlidersHorizontal aria-hidden="true" /> Filtres
+                {filtresActifs > 0 && <em>{filtresActifs}</em>}
+              </button>
+              <button type="button" className="sn-btn" onClick={() => navigate('/performance/budgets')}>
+                <TrendingUp aria-hidden="true" /> Budgets et prévisions
               </button>
               {formOuvert ? (
                 <button
@@ -259,7 +271,6 @@ export function DailyProductionPage() {
           <Section
             id="saisie"
             icon={Plus}
-            tone="emerald"
             title={selection ? 'Modifier la déclaration' : 'Nouvelle déclaration'}
             description="Doré pesé, titre estimé et référence de barre."
           >
@@ -280,45 +291,88 @@ export function DailyProductionPage() {
           </Section>
         )}
 
-        <section className="sn-card production-page__filtres" aria-label="Filtres des déclarations">
-          <label className="sn-field">
-            <span className="sn-field__label">Du</span>
-            <input
-              type="date"
-              value={periode.debut}
-              max={periode.fin}
-              onChange={(event) => setPeriode((current) => ({ ...current, debut: event.target.value }))}
-            />
-          </label>
-          <label className="sn-field">
-            <span className="sn-field__label">Au</span>
-            <input
-              type="date"
-              value={periode.fin}
-              min={periode.debut}
-              onChange={(event) => setPeriode((current) => ({ ...current, fin: event.target.value }))}
-            />
-          </label>
-          <label className="sn-field production-page__filtre-large">
-            <span className="sn-field__label">Compagnie</span>
-            <select value={compagnieFiltre} onChange={(event) => setCompagnieFiltre(event.target.value)}>
-              <option value="all">Toutes les compagnies</option>
-              {compagnies.map((compagnie) => (
-                <option key={compagnie.id} value={compagnie.id}>
-                  {compagnie.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        {/* Rappel de la sélection : le volet est fermé, les critères restent lisibles. */}
+        <p className="production-page__resume">
+          <span>
+            Période du <strong>{formatDate(periode.debut)}</strong> au <strong>{formatDate(periode.fin)}</strong>
+          </span>
+          <span>
+            {compagnieFiltre === 'all'
+              ? 'Toutes les compagnies'
+              : compagnies.find((compagnie) => compagnie.id === compagnieFiltre)?.name || 'Compagnie inconnue'}
+          </span>
           {periodeInvalide && (
             <span className="production-page__erreur">La date de début est postérieure à la date de fin.</span>
           )}
-        </section>
+        </p>
+
+        {filtresOuverts && (
+          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Filtres des déclarations">
+            {/* Fond non focalisable : un second « Fermer les filtres » dans l'ordre de
+                tabulation dupliquerait le nom accessible du bouton d'en-tête. */}
+            <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFiltresOuverts(false)} />
+            <div className="sn-drawer__panel">
+              <header>
+                <h3>
+                  <SlidersHorizontal aria-hidden="true" /> Filtres
+                </h3>
+                <button type="button" aria-label="Fermer les filtres" onClick={() => setFiltresOuverts(false)}>
+                  <X aria-hidden="true" />
+                </button>
+              </header>
+
+              <div className="sn-drawer__body">
+                <label className="sn-field">
+                  <span className="sn-field__label">Du</span>
+                  <input
+                    type="date"
+                    value={periode.debut}
+                    max={periode.fin}
+                    onChange={(event) => setPeriode((current) => ({ ...current, debut: event.target.value }))}
+                  />
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Au</span>
+                  <input
+                    type="date"
+                    value={periode.fin}
+                    min={periode.debut}
+                    onChange={(event) => setPeriode((current) => ({ ...current, fin: event.target.value }))}
+                  />
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Compagnie minière</span>
+                  <select value={compagnieFiltre} onChange={(event) => setCompagnieFiltre(event.target.value)}>
+                    <option value="all">Toutes les compagnies</option>
+                    {compagnies.map((compagnie) => (
+                      <option key={compagnie.id} value={compagnie.id}>
+                        {compagnie.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {periodeInvalide && (
+                  <p className="production-page__erreur">La date de début est postérieure à la date de fin.</p>
+                )}
+              </div>
+
+              <footer>
+                <button type="button" className="sn-btn" onClick={reinitialiser} disabled={filtresActifs === 0}>
+                  <RotateCcw aria-hidden="true" /> Réinitialiser
+                </button>
+                <button type="button" className="sn-btn sn-btn--primary" onClick={() => setFiltresOuverts(false)}>
+                  Appliquer
+                </button>
+              </footer>
+            </div>
+          </div>
+        )}
 
         <StatGrid
+          sober
           ariaLabel="Cumuls de la période"
           items={[
-            { label: 'Déclarations', value: cumuls.declarations, icon: Factory, tone: 'blue' },
+            { label: 'Déclarations', value: cumuls.declarations, icon: Factory, tone: 'neutral' },
             { label: 'Doré déclaré', value: `${nombre(cumuls.dore)} g`, icon: Scale, tone: 'gold' },
             {
               label: 'Or fin',
@@ -332,7 +386,7 @@ export function DailyProductionPage() {
               value: titre === null ? '—' : `${nombre(titre)} %`,
               hint: titre === null ? 'Aucun doré pesé' : 'Pondéré par la masse de doré',
               icon: Scale,
-              tone: 'violet',
+              tone: 'neutral',
             },
           ]}
         />
@@ -340,7 +394,6 @@ export function DailyProductionPage() {
         <Section
           id="evolution"
           icon={TrendingUp}
-          tone="blue"
           title="Évolution de la production"
           description="Masse déclarée sur la période retenue."
         >
@@ -359,7 +412,6 @@ export function DailyProductionPage() {
         <Section
           id="declarations"
           icon={Factory}
-          tone="emerald"
           title={`Déclarations (${visibles.length})`}
           description="Chaque ligne correspond à une journée de production déclarée."
         >

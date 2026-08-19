@@ -109,4 +109,55 @@ describe('ArtisanMinierDashboard', () => {
 
     expect(screen.getByRole('columnheader', { name: 'Sites actifs' })).toBeInTheDocument();
   });
+
+  it('n’affiche plus de zone de recherche', async () => {
+    render(<ArtisanMinierDashboard />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Filtres/ })).toBeInTheDocument());
+
+    expect(screen.queryByPlaceholderText(/Rechercher/)).not.toBeInTheDocument();
+  });
+
+  it('ouvre les filtres dans un volet et le referme à l’application', async () => {
+    render(<ArtisanMinierDashboard />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Filtres/ })).toBeInTheDocument());
+
+    // Les filtres occupaient une bande pleine largeur au-dessus des indicateurs.
+    expect(screen.queryByRole('dialog', { name: 'Filtres des artisans' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres des artisans' });
+    expect(within(volet).getByLabelText('Région')).toBeInTheDocument();
+
+    fireEvent.click(within(volet).getByRole('button', { name: 'Appliquer' }));
+    expect(screen.queryByRole('dialog', { name: 'Filtres des artisans' })).not.toBeInTheDocument();
+  });
+
+  it('referme le volet au clic hors du panneau, par le bouton et par Échap', async () => {
+    render(<ArtisanMinierDashboard />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Filtres/ })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    fireEvent.click(document.querySelector('.artisans-drawer__backdrop') as HTMLElement);
+    expect(screen.queryByRole('dialog', { name: 'Filtres des artisans' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fermer les filtres' }));
+    expect(screen.queryByRole('dialog', { name: 'Filtres des artisans' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Filtres des artisans' })).not.toBeInTheDocument();
+  });
+
+  it('compte les filtres appliqués sur le bouton', async () => {
+    render(<ArtisanMinierDashboard />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Filtres/ })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres des artisans' });
+    fireEvent.change(within(volet).getByLabelText('Type d’artisan'), { target: { value: 'collecteur' } });
+    fireEvent.click(within(volet).getByRole('button', { name: 'Appliquer' }));
+
+    expect(screen.getByRole('button', { name: /Filtres/ })).toHaveTextContent('1');
+  });
 });

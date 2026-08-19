@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  FileText,
   Banknote,
   BadgeCheck,
+  Clock,
   Coins,
   CreditCard,
   Loader2,
@@ -30,6 +32,8 @@ import {
 import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { useAuth } from '@/contexts/AuthContext';
+import { isSalesApprover } from '@/lib/permissions';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
@@ -39,7 +43,7 @@ type Statut = ArtisanGoldSale['statut'];
 
 const STATUT_LABELS: Record<Statut, string> = {
   en_attente: 'En attente',
-  validee: 'Validée',
+  validee: 'Approuvée',
   payee: 'Payée',
   annulee: 'Annulée',
 };
@@ -105,6 +109,8 @@ export default function VenteOrDetails() {
   const [updating, setUpdating] = useState(false);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
   const confirmation = useConfirmationDialog();
+  const { user } = useAuth();
+  const canApprove = isSalesApprover(user);
 
   const charger = async (venteId: string) => {
     setLoading(true);
@@ -234,6 +240,16 @@ export default function VenteOrDetails() {
               <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/ventes-or')}>
                 <ArrowLeft aria-hidden="true" /> Registre
               </button>
+              {/* La facture est un specimen : la certification DGI n'est pas raccordee.
+                  L'intitule le dit des le bouton, pour qu'on ne la prenne pas pour une
+                  piece opposable. */}
+              <button
+                type="button"
+                className="sn-btn"
+                onClick={() => navigate(`/artisan-minier/ventes-or/${vente.id}/facture`)}
+              >
+                <FileText aria-hidden="true" /> Facture (spécimen)
+              </button>
               {actions?.modifier && (
                 <button
                   type="button"
@@ -243,16 +259,21 @@ export default function VenteOrDetails() {
                   <Pencil aria-hidden="true" /> Modifier
                 </button>
               )}
-              {actions?.valider && (
+              {actions?.valider && canApprove && (
                 <button
                   type="button"
                   className="sn-btn sn-btn--primary"
                   disabled={updating}
-                  onClick={() => void changerStatut('validee', 'Valider')}
+                  onClick={() => void changerStatut('validee', 'Approuver')}
                 >
                   {updating ? <Loader2 className="sn-spin" aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />}
-                  Valider la vente
+                  Approuver la vente
                 </button>
+              )}
+              {actions?.valider && !canApprove && (
+                <Badge tone="warning" icon={Clock}>
+                  En attente d’approbation
+                </Badge>
               )}
               {actions?.payer && (
                 <button

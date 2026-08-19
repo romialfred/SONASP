@@ -1,0 +1,152 @@
+/**
+ * Cours de l'or : bloc sobre, sans degrade.
+ *
+ * Le panneau empilait un bandeau orange plein, quatre tuiles bordees de vert et
+ * de rouge, puis un bloc vert : la colonne pesait plus lourd que le formulaire
+ * qu'elle accompagne.
+ */
+
+.cours-or {
+  display: grid;
+  padding: 14px 16px;
+  gap: 10px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+}
+
+.cours-or--attente { color: var(--sn-muted); font-size: 12px; }
+.cours-or--attente p { margin: 0; }
+
+.cours-or__tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cours-or__tete h3 {
+  margin: 0;
+  color: var(--sn-navy);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cours-or__tete button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: 8px;
+  color: var(--sn-muted);
+  cursor: pointer;
+}
+
+.cours-or__tete button:hover { color: var(--sn-navy); background: var(--sn-surface-alt); }
+.cours-or__tete button:disabled { opacity: 0.5; cursor: not-allowed; }
+.cours-or__tete button svg { width: 14px; height: 14px; }
+
+.cours-or__valeur {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  gap: 7px;
+}
+
+.cours-or__valeur strong {
+  color: var(--sn-navy);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cours-or__valeur span { color: var(--sn-faint); font-size: 11px; font-weight: 600; }
+
+.cours-or__variation {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cours-or__variation svg { width: 14px; height: 14px; }
+
+/* Seule la variation porte une couleur : c'est la seule information directionnelle. */
+.cours-or__variation.is-hausse { color: var(--sn-success); }
+.cours-or__variation.is-baisse { color: var(--sn-danger); }
+.cours-or__variation.is-inconnue { color: var(--sn-faint); font-weight: 500; }
+
+.cours-or__conversions {
+  display: grid;
+  margin: 0;
+  padding-top: 10px;
+  gap: 7px;
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.cours-or__conversions > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cours-or__conversions dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sn-muted);
+  font-size: 11.5px;
+}
+
+.cours-or__conversions dt svg { width: 13px; height: 13px; color: var(--sn-faint); }
+
+.cours-or__conversions dd {
+  margin: 0;
+  color: var(--sn-navy);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cours-or__source {
+  display: grid;
+  gap: 4px;
+  padding-top: 9px;
+  border-top: 1px solid var(--sn-line-soft);
+  color: var(--sn-faint);
+  font-size: 10.5px;
+}
+
+.cours-or__source .is-avertissement {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--sn-warning);
+  line-height: 1.45;
+}
+
+.cours-or__source svg { width: 12px; height: 12px; flex: 0 0 auto; margin-top: 1px; }
+
+.cours-or__indispo {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  padding: 9px 11px;
+  gap: 7px;
+  border: 1px solid var(--sn-danger-line);
+  background: var(--sn-danger-soft);
+  border-radius: var(--sn-radius);
+  color: var(--sn-danger);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.cours-or__indispo svg { width: 14px; height: 14px; flex: 0 0 auto; margin-top: 1px; }

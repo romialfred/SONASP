@@ -404,6 +404,43 @@ provinces cliquable renseignant région + province + coordonnées. Photos (3 max
   affichés « — » avec la note qui l'explique. Les 7 erreurs de typage résiduelles du
   module ont disparu (179 → 172). ✅
 
+### Barre latérale — réorganisation en quatre sections ✅
+
+Modèle de navigation extrait dans `sidebarNavigation.ts` et organisé en quatre
+sections : mines semi-mécanisées, mines industrielles, paramètres et configuration,
+rapports et analyses. Palette de la barre passée du vert à une gamme ardoise sobre.
+
+**Cinq défauts corrigés** :
+
+- **A86 — la barre sautait sous le curseur.** Le groupe correspondant à la route était
+  choisi par le premier `find()` satisfaisant `startsWith` : `/artisan-minier/paiements`
+  correspondait à « Artisans miniers » via son enfant `/artisan-minier`, de sorte que
+  cliquer dans « Marché d'or artisanal » repliait ce groupe pour en ouvrir un autre.
+  Le groupe est désormais choisi sur la correspondance **la plus longue**.
+- **A87 — le premier « Tableau de bord » pointait vers le tableau de bord des artisans**
+  et non vers la vue nationale. Il pointe vers `/dashboard` et reste le seul intitulé
+  « Tableau de bord » de la barre ; toutes les autres entrées ainsi nommées dans les
+  groupes sont renommées « Vue d'ensemble ».
+- **A88 — deux entrées vers la même route.** L'entrée de section pointait vers
+  `/artisan-minier`, déjà desservie par « Artisans miniers › Vue d'ensemble ». Supprimée.
+- **A89 — intitulés tronqués.** Trois règles coupaient les libellés aux points de
+  suspension ; ils passent à la ligne, les hauteurs fixes devenant des hauteurs minimales.
+- **A90 — indentation des sous-menus** ramenée de 35 px à 20 px cumulés.
+
+### Analyse par assistance IA — `/analytics/assistant` ✅
+
+Nouvelle page (`AiAssistantPage.tsx`, 15 tests) : historique de conversations, fil de
+discussion, composeur avec envoi à la touche Entrée et quatre amorces adossées aux
+données réellement suivies (collecte par région, cartes expirées, taxes, rapport
+institutionnel). **Le moteur d'analyse n'est pas raccordé** : la page l'annonce par un
+bandeau, une pastille d'état et une réponse explicite, plutôt que de fabriquer des
+chiffres. L'entrée de menu ajoutée pointe vers une route déclarée, pas vers un cul-de-sac.
+
+**A91 — le tableau de bord national ne recensait pas les artisans**, pourtant au cœur du
+dispositif. `loadNationalDashboard` remonte désormais l'effectif total et l'effectif
+actif, avec la même règle que les autres sources : indisponibilité signalée, jamais
+estimée.
+
 ---
 
 ## 6. Anomalies trouvées et corrigées
@@ -495,6 +532,61 @@ provinces cliquable renseignant région + province + coordonnées. Photos (3 max
 | A83 | Bouton « Budget » vers `/production/budget` inexistante | Production | Route `/performance/budgets` |
 | A84 | Export CSV livrant des UUID au lieu des raisons sociales | Production | Jointure sur le référentiel, testée |
 | A85 | Période de consultation écrasée après chaque enregistrement | Production | Période conservée |
+| A86 | Barre latérale sautant au clic (groupe choisi sur le premier `startsWith`) | Navigation | Correspondance la plus longue |
+| A87 | Premier « Tableau de bord » pointant vers le tableau de bord des artisans | Navigation | Vue nationale `/dashboard` |
+| A88 | Deux entrées de menu vers `/artisan-minier` | Navigation | Doublon supprimé |
+| A89 | Intitulés de la barre tronqués aux points de suspension | Navigation | Retour à la ligne, hauteurs minimales |
+| A90 | Sous-menus indentés de 35 px | Navigation | Ramenés à 20 px |
+| A91 | Tableau de bord national sans recensement des artisans | Analyses | Effectifs total et actif |
+| A92 | Quatre intitulés de la barre repliés sur deux lignes | Navigation | Une ligne, barre à 268 px |
+| A93 | Chevron sur des entrées sans sous-menu | Navigation | Chevron retiré, place rendue à l'intitulé |
+| A94 | Le sélecteur d'intitulé attrapait la pastille d'icône | Navigation | Sélecteur restreint, largeur rendue au texte |
+| A95 | Barre reconstruite à chaque navigation : défilement remis en haut | Navigation | État visuel conservé hors du composant |
+| A96 | Ouverture exclusive : replier un groupe déplaçait celui qu'on venait de cliquer | Navigation | Groupes indépendants |
+| A97 | Sous-menu sélectionné collé au titre du groupe | Navigation | 6 px d'écart |
+| A98 | Licences : échec de chargement consigné au seul journal | Production | Erreur affichée |
+| A99 | Licences : taux d'utilisation divisant par zéro | Production | « — » sans volume autorisé |
+| A100 | Licences et budgets encore sur `MainLayout` | Production | `NationalDashboardLayout` |
+| A101 | Graphiques de production : deux arcs-en-ciel Tailwind divergents | Production | Rampe unique de la charte |
+| A102 | Libellés anglais dans les graphiques et le formulaire de déclaration | Production | Traduits |
+| A103 | `DailyProductionForm` mort, non importé, libellés anglais | Production | Supprimé |
+| A104 | Budgets : volet de droite à 420 px fixes face à une matrice bridée | Production | Colonnes proportionnées |
+| A105 | Page des paiements intégralement en anglais, montants en `en-US` | Paiements | Réécrite en français |
+| A106 | Total des paiements additionnant des devises différentes | Paiements | « — » si la devise n'est pas unique |
+| A107 | Paiements : échec de chargement en simple `toast` sans trace à l'écran | Paiements | Erreur affichée |
+| A108 | Boutons « Export » sans gestionnaire (stocks, détail paiement, audit) | Transverse | Supprimés |
+| A109 | Boutons d'export sur des écrans qui ne sont pas des rapports | Transverse | Supprimés sur 13 écrans |
+| A110 | Actions d'en-tête collées au sous-titre (`div:first-child` ne matchait jamais) | Socle | Titre extensible, actions à droite |
+| A111 | Numéros de reçu avec barres obliques, générés par une fonction distante absente du dépôt | Ventes d'or | `VE-OR-AAAAMM-NNNNN`, service applicatif + migration |
+| A112 | Échec de numérotation avalé par un `console.warn` | Ventes d'or | Erreur bloquante |
+| A113 | Filtres en bande pleine largeur entre indicateurs et registre | Ventes d'or | Volet latéral |
+| A114 | Panneau de cours inventant ouverture, haut et bas 24 h (× 0,995 / × 1,008 / × 0,992) | Cours de l'or | « — » et source nommée |
+| A115 | Taux USD/XOF de repli à 600 présenté comme le taux du référentiel | Cours de l'or | Conversions masquées sans taux |
+| A116 | Numéro de reçu saisissable à la main | Vente d'or | Attribué à l'enregistrement |
+| A117 | `update` propageant un numéro vide, effaçant celui d'une vente enregistrée | Vente d'or | Champ retiré du payload |
+| A118 | Numéro de vente annoncé seulement après coup | Vente d'or | Attribué et affiché à l'ouverture, repris à l'enregistrement |
+| A119 | Titres en carats sans indication de pureté | Vente d'or | Jauge, 24 K = 100 % |
+| A120 | Prix au gramme saisi à l'aveugle, sans référence de marché | Vente d'or | Prérempli au cours, écart affiché |
+| A121 | Cours de l'or sondé deux fois sur le même écran, valeurs susceptibles de diverger | Cours de l'or | Hook `useCoursOr` partagé |
+| A122 | Suivi des stocks intégralement en anglais, sur `MainLayout` | Stocks | Réécrit à la charte |
+| A123 | Ni transit, ni aéroport, ni vendu non réglé dans le suivi des stocks | Stocks | Vue nationale complète |
+| A124 | Teneur en argent et raffinerie saisies puis abandonnées à l'enregistrement | Stocks | Persistées |
+| A125 | Société minière jamais posée sur le stock, ventilation par mine impossible | Stocks | Colonne alimentée depuis l'expédition |
+| A126 | Rendement et écarts calculés sur des dénominateurs nuls | Stocks | « — » quand la référence manque |
+| A127 | Filigrane tourné débordant de 137 px, facture en défilement horizontal | Facture | `contain: strict` et rotation en pseudo-élément |
+| A128 | `CardTitle` à 24 px : le titre de section pesait plus que ses champs | Socle | Ramené à 16 px |
+| A129 | Guide de saisie en volet vert, occupant un tiers de l'écran pour redire les libellés | Sociétés minières | Retiré, indications au pied des champs |
+| A130 | Coordonnées de règlement ressaisies à chaque paiement, sans garantie d'appartenance | Paiements artisans | Rattachées à la fiche, choisies au paiement |
+| A131 | Aucun rattachement entre le règlement et le moyen employé | Paiements artisans | `moyen_paiement_id` sur le paiement |
+| A132 | Dossier de règlement sans accès à la facture de la vente | Paiements artisans | Lien vers le spécimen |
+| A133 | `set_sonasp_as_buyer()` comparant `company_type = 'sonasp'`, valeur absente de l'énumération : **aucune vente d'or ne pouvait être créée ni modifiée** | Ventes d'or | SONASP identifiée par son code |
+| A134 | `key={location.pathname}` remontant tout le sous-arbre à chaque navigation | Socle | Clé passée en propriété |
+| A135 | Habillage rendu par chaque page : barre latérale et en-tête reconstruits à chaque navigation | Socle | Route parente, montée une fois |
+| A136 | Repli de suspense hors de l'habillage : écran blanc à chaque chargement de page | Socle | Repli dans la zone de contenu |
+| A137 | Service worker en `autoUpdate` : rechargement spontané de la page | Socle | `prompt`, sans rechargement automatique |
+| A138 | Doublons dans la barre latérale : « Transporteurs » et « Raffineries » présents sous *Parties prenantes* **et** *Administration* | Navigation | Entrées retirées d'Administration |
+| A139 | Entrée « Déposants » pointant une entité distincte, alors que le métier attend des « Approbateurs » habilités à valider les ventes | Navigation | Renommée « Approbateurs », pointée sur `/stakeholders/approvers` |
+| A140 | Action « Approuver la vente » ouverte à tout utilisateur : la porte facture/paiement n'était pas gardée par un rôle | Ventes d'or | Restreinte à `is_sales_approver` + direction ; page Approbateurs pour accorder/retirer le droit |
 
 ---
 
@@ -503,8 +595,8 @@ provinces cliquable renseignant région + province + coordonnées. Photos (3 max
 | Gate | État |
 |---|---|
 | `npm run build` | vert |
-| `npx vitest run` | **368/368 verts** (50 fichiers) |
-| `npm run typecheck` | 179 erreurs préexistantes (829 à l'origine, −78 %) |
+| `npx vitest run` | **529/529 verts** (62 fichiers) |
+| `npm run typecheck` | 141 erreurs préexistantes (829 à l'origine, −83 %) |
 
 Timeout vitest relevé à 20 s : deux tests différents échouaient d'une exécution à
 l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régression.
@@ -517,11 +609,20 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
   `snp_artisans_miniers`. Migration à prévoir.
 - Les contours provinciaux sont un découpage de proximité, pas un référentiel cadastral.
 - Les migrations `20260817_*` et `20260817_003` ne sont pas appliquées en base.
+- Les migrations `20260819_001` à `20260819_006` **sont appliquées** sur `SONASP_OPS`
+  (projet `yyverzuhkdonjjuficor`), vérifiées après coup.
+- La migration `20260819_006_add_sales_approver_flag` (colonne `user_profiles.is_sales_approver`)
+  **est appliquée** sur `SONASP_OPS` ; additive et non destructive.
 
 ---
 
 ## 9. Prochaine action exacte
 
-**Poursuivre le lot 7 — Production (1/7 traité).** Restent : `ProductionDetails` (643),
+**Obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
+charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564
+§2 du CGI ; en parallèle, engager l'acquisition du MCF auprès de la CCI-BF et le dossier
+d'homologation. Le spécimen de facture est en place et sert la démonstration.
+Ensuite, **raccorder le moteur d'analyse de `/analytics/assistant`**, puis poursuivre le
+**lot 7 — Production (1/7 traité).** Restent : `ProductionDetails` (643),
 `ProductionInSafe` (657), `ExportLicensesPage` (369), `ExportLicenseForm` (836),
 `ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).

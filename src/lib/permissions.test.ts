@@ -10,6 +10,7 @@ const owner: UserProfile = {
   role: 'owner',
   site_ids: [],
   is_active: true,
+  is_sales_approver: false,
   two_factor_enabled: false,
   language: 'fr',
   email_notifications: true,

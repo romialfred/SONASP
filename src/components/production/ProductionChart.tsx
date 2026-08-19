@@ -1,3 +1,4 @@
+import { PALETTE_PRODUCTION } from './chartPalette';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, Calendar } from 'lucide-react';
@@ -113,7 +114,7 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
               />
               <YAxis
                 tick={{ fill: '#6b7280', fontSize: 12 }}
-                label={{ value: 'Ounces (oz)', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
+                label={{ value: 'Onces troy', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
               />
               <Tooltip
                 contentStyle={{
@@ -125,27 +126,27 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
                 labelStyle={{ color: '#111827', fontWeight: 600 }}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = {
-                    oz: 'Estimated Oz',
-                    pureGold: 'Pure Gold (g)',
-                    bullion: 'Bullion (g)'
+                    oz: 'Onces troy',
+                    pureGold: 'Or fin (g)',
+                    bullion: 'Doré (g)'
                   };
-                  return [value.toFixed(4), labels[name] || name];
+                  return [new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 4 }).format(value), labels[name] || name];
                 }}
               />
               <Legend
                 wrapperStyle={{ paddingTop: '20px' }}
                 formatter={(value) => {
                   const labels: Record<string, string> = {
-                    oz: 'Estimated Oz',
-                    pureGold: 'Pure Gold (g)',
-                    bullion: 'Bullion (g)'
+                    oz: 'Onces troy',
+                    pureGold: 'Or fin (g)',
+                    bullion: 'Doré (g)'
                   };
                   return labels[value] || value;
                 }}
               />
               <Bar
                 dataKey="oz"
-                fill="#3b82f6"
+                fill={PALETTE_PRODUCTION[0]}
                 radius={[8, 8, 0, 0]}
                 name="oz"
               />
@@ -154,16 +155,16 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
 
           <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">Total Production</p>
-              <p className="text-lg font-bold text-blue-600">{totalOz.toFixed(2)} oz</p>
+              <p className="text-xs text-gray-600 mb-1">Production totale</p>
+              <p className="text-lg font-bold text-slate-800">{totalOz.toFixed(2)} oz</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">Daily Average</p>
+              <p className="text-xs text-gray-600 mb-1">Moyenne journalière</p>
               <p className="text-lg font-bold text-emerald-600">{avgDaily.toFixed(2)} oz</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">Peak Day</p>
-              <p className="text-lg font-bold text-purple-600">{maxOz.toFixed(2)} oz</p>
+              <p className="text-xs text-gray-600 mb-1">Meilleure journée</p>
+              <p className="text-lg font-bold text-slate-800">{maxOz.toFixed(2)} oz</p>
             </div>
           </div>
         </>

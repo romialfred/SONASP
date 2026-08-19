@@ -10,7 +10,6 @@ import {
   Search,
   Edit,
   Trash2,
-  Download,
   UserCheck,
   Shield,
   Loader,
@@ -108,17 +107,6 @@ export function DepositorsPage() {
     }
   };
 
-  const handleExport = () => {
-    const csv = depositorService.exportToCSV(filteredDepositors);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `depositors_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   const filteredDepositors = depositors.filter((depositor) => {
     const matchesSearch =
       depositor.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -162,10 +150,6 @@ export function DepositorsPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={handleExport} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
             <Button onClick={() => navigate('/stakeholders/depositors/new')} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Depositor

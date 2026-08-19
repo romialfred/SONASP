@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import '@/styles/design-system.css';
 
 export type Tone = 'emerald' | 'blue' | 'amber' | 'violet' | 'slate';
-export type StatTone = 'green' | 'gold' | 'blue' | 'violet' | 'red';
+export type StatTone = 'green' | 'gold' | 'blue' | 'violet' | 'red' | 'neutral';
 export type BadgeTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 /* ------------------------------------------------------------------ Page */
@@ -267,9 +267,15 @@ export interface StatItem {
   tone?: StatTone;
 }
 
-export function StatGrid({ items, ariaLabel }: { items: StatItem[]; ariaLabel: string }) {
+/**
+ * Rangee d'indicateurs.
+ * `sober` reduit la hauteur des tuiles et s'en tient aux teintes de la charte :
+ * une rangee de cinq couleurs differentes se lit comme un avertissement general
+ * plutot que comme une synthese.
+ */
+export function StatGrid({ items, ariaLabel, sober }: { items: StatItem[]; ariaLabel: string; sober?: boolean }) {
   return (
-    <section className="sn-stats" aria-label={ariaLabel}>
+    <section className={`sn-stats${sober ? ' sn-stats--sober' : ''}`} aria-label={ariaLabel}>
       {items.map(({ label, value, hint, icon: Icon, tone = 'green' }) => (
         <article key={label} className={`sn-stat sn-stat--${tone}`}>
           <span className="sn-stat__icon">

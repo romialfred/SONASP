@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArtisanMinier } from '@/services/artisanMinierService';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
-import ArtisanMinierListe from './ArtisanMinierListe';
+import ArtisanMinierListe, { TAILLE_PAGE, initiales } from './ArtisanMinierListe';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -42,6 +42,9 @@ const cards = [
   { id: 'c1', artisan_id: 'a1', numero_carte: 'SONASP/AM/2025/000063', statut: 'validee', date_delivrance: '2025-12-28', date_expiration: '2099-04-28' },
 ] as CarteProfessionnelle[];
 
+/** Le panneau de filtres est replie a l'ouverture : les tests qui s'en servent l'ouvrent. */
+const deplierFiltres = () => fireEvent.click(screen.getByRole('button', { name: /Filtrer les artisans/ }));
+
 describe('ArtisanMinierListe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,17 +57,40 @@ describe('ArtisanMinierListe', () => {
 
     expect(screen.getByRole('heading', { name: 'Artisans miniers' })).toBeInTheDocument();
     expect(screen.getByText('Filtrer les artisans')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Rechercher par nom, numéro de carte/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Appliquer les filtres/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Nouvel artisan/ })).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.getByText('3 artisans enregistrés')).toBeInTheDocument());
+    expect(screen.getByText(/3 résultats/)).toBeInTheDocument();
+
+    // Le panneau est replie a l'ouverture : il occupait un tiers de l'ecran en permanence.
+    expect(screen.queryByPlaceholderText(/Rechercher par nom/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Filtrer les artisans/ })).toHaveAttribute('aria-expanded', 'false');
+
+    deplierFiltres();
+
+    expect(screen.getByPlaceholderText(/Rechercher par nom, numéro de carte/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Appliquer$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Réinitialiser/ })).toBeInTheDocument();
 
     ['Type d’artisan', 'Région', 'Province', 'Date d’ouverture'].forEach((label) =>
       expect(screen.getByText(label)).toBeInTheDocument()
     );
 
+    // Le type se choisit desormais dans une liste deroulante, non plus par pastilles.
+    expect(within(screen.getByLabelText('Type d’artisan')).getByRole('option', { name: /Collecteurs/ })).toHaveTextContent('(2)');
+  });
+
+  it('replie et deplie le panneau de filtres', async () => {
+    render(<ArtisanMinierListe />);
     await waitFor(() => expect(screen.getByText('3 artisans enregistrés')).toBeInTheDocument());
-    expect(screen.getByText(/3 résultats/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Collecteurs/ })).toHaveTextContent('(2)');
+
+    const bascule = screen.getByRole('button', { name: /Filtrer les artisans/ });
+    deplierFiltres();
+    expect(bascule).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(bascule);
+    expect(bascule).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByPlaceholderText(/Rechercher par nom/)).not.toBeInTheDocument();
   });
 
   it('compose la carte artisan avec sa province déduite de la commune', async () => {
@@ -85,7 +111,8 @@ describe('ArtisanMinierListe', () => {
     const { container } = render(<ArtisanMinierListe />);
     await waitFor(() => expect(container.querySelectorAll('.artisan-card')).toHaveLength(3));
 
-    fireEvent.click(screen.getByRole('button', { name: /Exploitants/ }));
+    deplierFiltres();
+    fireEvent.change(screen.getByLabelText('Type d’artisan'), { target: { value: 'exploitant' } });
 
     expect(container.querySelectorAll('.artisan-card')).toHaveLength(1);
     expect(screen.getByText(/1 résultat/)).toBeInTheDocument();
@@ -99,8 +126,9 @@ describe('ArtisanMinierListe', () => {
     const { container } = render(<ArtisanMinierListe />);
     await waitFor(() => expect(container.querySelectorAll('.artisan-card')).toHaveLength(3));
 
+    deplierFiltres();
     fireEvent.change(screen.getByPlaceholderText(/Rechercher par nom/), { target: { value: 'KONE' } });
-    fireEvent.click(screen.getByRole('button', { name: /Appliquer les filtres/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appliquer$/ }));
 
     expect(container.querySelectorAll('.artisan-card')).toHaveLength(1);
 
@@ -109,5 +137,56 @@ describe('ArtisanMinierListe', () => {
     expect(container.querySelectorAll('.artisan-card')).toHaveLength(0);
     expect(screen.getByRole('columnheader', { name: 'N° de carte' })).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /KONE Mamadou/ })).toHaveTextContent('409,3M FCFA');
+  });
+
+  it('retire les colonnes région et téléphone du tableau', async () => {
+    const { container } = render(<ArtisanMinierListe />);
+    await waitFor(() => expect(container.querySelectorAll('.artisan-card')).toHaveLength(3));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Affichage en tableau' }));
+
+    // La région doublonnait la province, le téléphone relève de la fiche.
+    expect(screen.queryByRole('columnheader', { name: 'Région' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Téléphone' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Province' })).toBeInTheDocument();
+  });
+
+  it('compose les initiales affichées devant le nom', () => {
+    expect(initiales('KABORE Awa')).toBe('KA');
+    expect(initiales('BURKINA GOLD SARL')).toBe('BG');
+    expect(initiales('')).toBe('?');
+  });
+
+  it('pagine le tableau par trente lignes', async () => {
+    const nombreux = Array.from({ length: TAILLE_PAGE + 5 }, (_, index) => ({
+      id: `p${index}`,
+      numero_carte: `BF-AM-2026-E397-${String(index + 1).padStart(4, '0')}`,
+      type_personne: 'physique',
+      type_artisan: 'collecteur',
+      nom: 'ARTISAN',
+      prenoms: `N${index}`,
+      telephone: '+226 70 00 00 00',
+      region: 'Centre',
+      commune: 'Ouagadougou',
+      created_at: `2025-12-${String((index % 28) + 1).padStart(2, '0')}T09:00:00Z`,
+      quantite_or_vendu_grammes: 0,
+      chiffre_affaires_fcfa: 0,
+      total_taxes_fcfa: 0,
+    }));
+    mocks.getAll.mockResolvedValue(nombreux);
+
+    const { container } = render(<ArtisanMinierListe />);
+    await waitFor(() => expect(container.querySelectorAll('.artisan-card')).toHaveLength(TAILLE_PAGE + 5));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Affichage en tableau' }));
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(TAILLE_PAGE);
+    expect(screen.getByText('Page 1 / 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/ }));
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
+    expect(screen.getByText('Page 2 / 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Suivant/ })).toBeDisabled();
   });
 });

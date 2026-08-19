@@ -18,7 +18,10 @@ import {
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import * as XLSX from 'xlsx';
 import { supabase } from '../../lib/supabase';
-import { MainLayout } from '../../components/layout/MainLayout';
+import { PALETTE_PRODUCTION } from '@/components/production/chartPalette';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { PageHeader } from '@/components/ui/sn';
+import './budget-management.css';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
@@ -126,7 +129,7 @@ function ProductionBrowserTab({
     <div className="space-y-6">
       {/* Header with Export Button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg  text-slate-800">Production Browser - Vue Annuelle</h3>
+        <h3 className="text-lg  text-slate-800">Production réalisée — vue annuelle</h3>
         <Button onClick={exportData} variant="primary" size="sm">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -147,7 +150,7 @@ function ProductionBrowserTab({
                 Budget (oz)
               </th>
               <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-emerald-600">
-                Actual (oz)
+                Réalisé (oz)
               </th>
               <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-amber-600">
                 Forecast (oz)
@@ -217,7 +220,7 @@ function ProductionBrowserTab({
       <div className="space-y-3">
         <h3 className="text-sm  text-slate-700 uppercase tracking-wider flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-slate-600" />
-          Comparaison Mensuelle: Budget, Actual, Forecast
+          Comparaison mensuelle : budget, réalisé, prévision
         </h3>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <ResponsiveContainer width="100%" height={400}>
@@ -241,7 +244,7 @@ function ProductionBrowserTab({
                 wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 600 }}
               />
               <Bar dataKey="Budget" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Actual" fill="#10b981" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Actual" fill={PALETTE_PRODUCTION[0]} name="Réalisé" radius={[6, 6, 0, 0]} />
               <Bar dataKey="Forecast" fill="#f59e0b" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -703,11 +706,13 @@ export function BudgetManagementPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto pb-8">
-          <div className="max-w-6xl mx-auto p-6 pr-3 space-y-6">
+    <NationalDashboardLayout>
+      {/* Le volet de droite occupait 420 px fixes sur toute la hauteur de l'ecran,
+          pendant que la matrice etait bridee a `max-w-6xl` : la colonne secondaire
+          prenait plus de place que le tableau qu'elle commente. Elle partage
+          desormais la largeur, et cede la ligne sous 1180 px. */}
+      <div className="sn-page budget-page">
+        <div className="budget-page__principal">
 
           {loading ? (
             /* Loading State - Only Content Area */
@@ -720,63 +725,49 @@ export function BudgetManagementPage() {
             </div>
           ) : (
             <>
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/production/daily')}
-                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Retour
-              </Button>
-              <div>
-                <h1 className="text-2xl  bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  Gestion Budgétaire
-                </h1>
-                <p className="text-sm text-slate-600 mt-0.5">
-                  {mode === 'budget'
-                    ? 'Configuration du budget annuel de production'
-                    : `Révision trimestrielle - T${selectedQuarter}`
-                  }
-                </p>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <Button
-              onClick={mode === 'budget' ? handleSaveBudgets : handleSaveForecasts}
-              disabled={saving || !hasPendingChanges()}
-              className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
-              {hasPendingChanges() && (
-                <span className="bg-white text-slate-800 px-2 py-0.5 rounded-full text-xs ">
-                  {Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}
-                </span>
-              )}
-            </Button>
-          </div>
+          <PageHeader
+            icon={Target}
+            title="Gestion budgétaire"
+            subtitle={
+              mode === 'budget'
+                ? 'Configuration du budget annuel de production, en onces d’or.'
+                : `Révision trimestrielle — T${selectedQuarter}.`
+            }
+            breadcrumb={[{ label: 'Production' }, { label: 'Gestion budgétaire' }]}
+            actions={
+              <>
+                <button type="button" className="sn-btn" onClick={() => navigate('/production/daily')}>
+                  <ChevronLeft aria-hidden="true" /> Retour
+                </button>
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={mode === 'budget' ? handleSaveBudgets : handleSaveForecasts}
+                  disabled={saving || !hasPendingChanges()}
+                >
+                  <Save aria-hidden="true" />
+                  {saving ? 'Enregistrement…' : 'Enregistrer'}
+                  {hasPendingChanges() && (
+                    <em>{Object.keys(mode === 'budget' ? pendingBudgets : pendingForecasts).length}</em>
+                  )}
+                </button>
+              </>
+            }
+          />
 
           {/* Notifications */}
           {successMessage && (
-            <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-300 rounded-lg p-3 flex items-center gap-3 shadow-sm">
-              <div className="bg-emerald-500 rounded-full p-1">
-                <CheckCircle className="w-4 h-4 text-white flex-shrink-0" />
-              </div>
-              <p className="text-sm text-emerald-900 font-medium">{successMessage}</p>
-            </div>
+            <p className="sn-note" role="status">
+              <CheckCircle aria-hidden="true" />
+              <span>{successMessage}</span>
+            </p>
           )}
 
           {errorMessage && (
-            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-300 rounded-lg p-3 flex items-center gap-3 shadow-sm">
-              <div className="bg-red-500 rounded-full p-1">
-                <AlertCircle className="w-4 h-4 text-white flex-shrink-0" />
-              </div>
-              <p className="text-sm text-red-900 font-medium">{errorMessage}</p>
-            </div>
+            <p className="sn-note sn-note--danger" role="alert">
+              <AlertCircle aria-hidden="true" />
+              <span>{errorMessage}</span>
+            </p>
           )}
 
           {/* Controls */}
@@ -912,7 +903,7 @@ export function BudgetManagementPage() {
                   ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
-                {mode === 'budget' ? 'Budget Matrix' : 'Forecast Matrix'}
+                {mode === 'budget' ? 'Matrice budgétaire' : 'Matrice de prévisions'}
               </button>
               <button
                 onClick={() => !refreshing && setActiveTab('browser')}
@@ -926,7 +917,7 @@ export function BudgetManagementPage() {
                   ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
-                Production Browser
+                Production réalisée
               </button>
             </div>
 
@@ -938,7 +929,7 @@ export function BudgetManagementPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span className="text-sm font-medium">Actualisation...</span>
+                    <span className="text-sm font-medium">Actualisation…</span>
                   </div>
                 </div>
               )}
@@ -969,12 +960,11 @@ export function BudgetManagementPage() {
             </>
           )}
         </div>
-      </div>
 
-      {/* Right Sidebar - Conditional on loading and tab */}
+      {/* Colonne de synthese */}
       {!loading && (
-      <div className="w-[420px] bg-gradient-to-b from-slate-50 to-white border-l border-slate-200/60 overflow-y-auto sticky top-0 h-screen">
-        <div className="p-5 space-y-4">
+      <aside className="budget-page__synthese" aria-label="Synthèse budgétaire">
+        <div className="budget-page__synthese-corps">
 
         {activeTab === 'browser' ? (
           /* Production Browser Performance Sidebar */
@@ -991,18 +981,18 @@ export function BudgetManagementPage() {
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">Budget:</span>
+                <span className="text-xs text-slate-300">Budget :</span>
                 <span className="text-sm ">{formatNumberWithSpaces(calculateYearTotal(), 2)} oz</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">Actual:</span>
+                <span className="text-xs text-slate-300">Réalisé :</span>
                 <span className="text-sm  text-blue-300">
                   {formatNumberWithSpaces(Object.values(monthlyActuals).reduce((sum, val) => sum + (val || 0), 0), 2)} oz
                 </span>
               </div>
               <div className="h-px bg-white/20"></div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">Variation:</span>
+                <span className="text-xs text-slate-300">Variation :</span>
                 <div className="flex items-center gap-2">
                   {(() => {
                     const yearBudget = calculateYearTotal();
@@ -1090,7 +1080,7 @@ export function BudgetManagementPage() {
                       <span className=" text-slate-800">{formatNumberWithSpaces(quarterBudget, 2)} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Actual:</span>
+                      <span className="text-slate-600">Réalisé :</span>
                       <span className=" text-blue-600">{formatNumberWithSpaces(quarterActual, 2)} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
@@ -1464,14 +1454,14 @@ export function BudgetManagementPage() {
           {/* Last Update */}
           <div className="flex items-center gap-2 text-xs text-slate-500 pt-2 px-1">
             <Clock className="w-3.5 h-3.5" />
-            <span className="font-medium">Mise à jour: {new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="font-medium">Mise à jour : {new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
           </>
         )}
         </div>
-      </div>
+      </aside>
       )}
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

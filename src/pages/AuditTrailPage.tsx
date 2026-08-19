@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
-import { Search, Download, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter } from 'lucide-react';
+import { Search, Shield, User, Package, ShoppingCart, Settings as SettingsIcon, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatStatusFr } from '@/utils/statusFormatter';
 
@@ -108,10 +107,6 @@ export function AuditTrailPage() {
             <h1 className="text-3xl font-bold text-gray-900">{t('audit.title')}</h1>
             <p className="text-gray-600 mt-1">{t('audit.description')}</p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            {t('audit.exportLogs')}
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

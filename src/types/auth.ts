@@ -10,6 +10,8 @@ export interface UserProfile {
   role: UserRole;
   site_ids: string[];
   is_active: boolean;
+  /** Habilité à approuver les ventes (or artisanal & international) avant facturation/paiement. */
+  is_sales_approver: boolean;
   two_factor_enabled: boolean;
   language: string | null;
   email_notifications: boolean;

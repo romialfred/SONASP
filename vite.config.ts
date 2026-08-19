@@ -7,7 +7,11 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // `autoUpdate` rechargeait la page des qu'un nouveau service worker etait
+      // detecte : sur un deploiement frequent, l'application se rafraichissait
+      // seule, en pleine saisie, sans que rien ne l'annonce. `prompt` installe la
+      // mise a jour sans jamais recharger de lui-meme.
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'SONASP - Gestion de la Collecte et de la Vente des Substances Précieuses',

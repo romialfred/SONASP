@@ -190,14 +190,50 @@ describe('DailyProductionPage', () => {
     expect(indicateurs.getByText('92,67 %')).toBeInTheDocument();
   });
 
-  it('filtre les déclarations sur la compagnie', async () => {
+  it('filtre les déclarations sur la compagnie depuis le volet latéral', async () => {
     render(<DailyProductionPage />);
     await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
 
-    fireEvent.change(screen.getByLabelText('Compagnie'), { target: { value: 'c2' } });
+    // Les filtres encombraient la page : ils s'ouvrent désormais sur le côté.
+    expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+
+    fireEvent.change(screen.getByLabelText('Compagnie minière'), { target: { value: 'c2' } });
 
     expect(screen.queryByText('BAR-001')).not.toBeInTheDocument();
     expect(screen.getByText('BAR-002')).toBeInTheDocument();
+
+    // Appliquer referme le volet et laisse le filtre en place.
+    fireEvent.click(screen.getByRole('button', { name: 'Appliquer' }));
+    expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
+    expect(screen.getByText('BAR-002')).toBeInTheDocument();
+  });
+
+  it('annonce le nombre de critères actifs et sait les remettre à zéro', async () => {
+    render(<DailyProductionPage />);
+    await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
+
+    const ouvrir = screen.getByRole('button', { name: /Filtres/ });
+    fireEvent.click(ouvrir);
+    expect(screen.getByRole('button', { name: /Réinitialiser/ })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Compagnie minière'), { target: { value: 'c2' } });
+    expect(screen.getByRole('button', { name: /Filtres/ })).toHaveTextContent('1');
+
+    fireEvent.click(screen.getByRole('button', { name: /Réinitialiser/ }));
+    expect(screen.getByLabelText('Compagnie minière')).toHaveValue('all');
+    expect(screen.getByText('BAR-001')).toBeInTheDocument();
+  });
+
+  it('ferme le volet au clic hors du panneau', async () => {
+    render(<DailyProductionPage />);
+    await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres des déclarations' });
+    fireEvent.click(volet.querySelector('.sn-drawer__backdrop') as HTMLElement);
+
+    expect(screen.queryByRole('dialog', { name: 'Filtres des déclarations' })).not.toBeInTheDocument();
   });
 
   it('supprime réellement après confirmation', async () => {
@@ -238,6 +274,7 @@ describe('DailyProductionPage', () => {
     render(<DailyProductionPage />);
     await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
 
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
     fireEvent.change(screen.getByLabelText('Du'), { target: { value: '2026-07-01' } });
     await waitFor(() =>
       expect(mocks.listProduction).toHaveBeenCalledWith({ startDate: '2026-07-01', endDate: periodeParDefaut().fin })

@@ -76,7 +76,10 @@
   gap: 14px;
 }
 
-.sn-page__head > div:first-child { flex: 1; min-width: 0; }
+/* Le bloc titre occupe la place restante, ce qui repousse les actions contre le
+   bord droit. `div:first-child` ne correspondait jamais : le premier enfant est
+   le `span` de l'icone, si bien que les boutons restaient colles au sous-titre. */
+.sn-page__head > div:not(.sn-page__actions) { flex: 1; min-width: 0; }
 
 .sn-page__icon {
   display: grid;
@@ -422,6 +425,30 @@
 .sn-stat--blue .sn-stat__icon { color: var(--sn-info); background: var(--sn-info-soft); }
 .sn-stat--violet .sn-stat__icon { color: var(--sn-violet); background: var(--sn-violet-soft); }
 .sn-stat--red .sn-stat__icon { color: var(--sn-danger); background: var(--sn-danger-soft); }
+.sn-stat--neutral .sn-stat__icon { color: var(--sn-ink-soft); background: var(--sn-surface-alt); }
+
+/* Variante sobre : tuiles plus basses, teintes reduites au vert et a l'or de la
+   charte. Les ecrans refondus l'emploient pour cesser d'aligner cinq couleurs
+   differentes sur une meme rangee d'indicateurs. */
+.sn-stats--sober .sn-stat {
+  min-height: 72px;
+  padding: 11px 13px;
+  gap: 11px;
+}
+
+.sn-stats--sober .sn-stat__icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border-radius: 10px;
+}
+
+.sn-stats--sober .sn-stat__icon svg { width: 17px; height: 17px; }
+/* Hauteurs explicites : sans elles, c'est le contenu qui commande et la tuile
+   reste haute quel que soit le `min-height`. */
+.sn-stats--sober .sn-stat h3 { font-size: 11px; line-height: 1.2; }
+.sn-stats--sober .sn-stat strong { margin-top: 3px; font-size: 18px; line-height: 1.2; }
+.sn-stats--sober .sn-stat small { margin-top: 1px; font-size: 10.5px; line-height: 1.2; }
 
 /* ============================ Tableaux ============================ */
 
@@ -645,3 +672,114 @@
 .sn-input.sn-input--select { padding-right: 34px; appearance: none; cursor: pointer; }
 .sn-input.sn-input--textarea { height: auto; min-height: 96px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
 .sn-input.sn-input--with-icon { padding-left: 38px; }
+
+/* ============================ Volet lateral ============================ */
+
+/**
+ * Panneau de filtres glissant depuis la droite, par-dessus la page.
+ * Introduit sur le tableau de bord des artisans, promu ici des qu'un second ecran
+ * en a eu besoin : un volet par page aurait diverge des la premiere retouche.
+ */
+.sn-drawer { position: fixed; inset: 0; z-index: 70; }
+
+.sn-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(12 24 38 / 34%);
+  cursor: pointer;
+  animation: sn-drawer-fade 160ms ease;
+}
+
+.sn-drawer__panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  width: min(360px, 92vw);
+  flex-direction: column;
+  background: var(--sn-surface);
+  box-shadow: -18px 0 44px rgb(12 24 38 / 20%);
+  animation: sn-drawer-slide 180ms ease;
+}
+
+.sn-drawer__panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--sn-line);
+}
+
+.sn-drawer__panel > header h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  gap: 9px;
+  color: var(--sn-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sn-drawer__panel > header h3 svg { width: 17px; height: 17px; color: var(--sn-muted); }
+
+.sn-drawer__panel > header button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  place-items: center;
+  color: var(--sn-muted);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sn-drawer__panel > header button:hover { color: var(--sn-navy); background: var(--sn-surface-alt); }
+.sn-drawer__panel > header button svg { width: 17px; height: 17px; }
+
+.sn-drawer__body {
+  display: grid;
+  padding: 18px;
+  gap: 14px;
+  flex: 1;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.sn-drawer__body .sn-field { margin: 0; }
+
+.sn-drawer__panel > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  gap: 10px;
+  border-top: 1px solid var(--sn-line);
+}
+
+@keyframes sn-drawer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sn-drawer-slide {
+  from { transform: translateX(18px); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Bouton de filtres portant le nombre de criteres actifs. */
+.sn-btn em {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: var(--sn-radius-pill);
+  color: var(--sn-surface);
+  background: var(--sn-navy);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.sn-btn.is-filtered { border-color: var(--sn-navy); color: var(--sn-navy); }

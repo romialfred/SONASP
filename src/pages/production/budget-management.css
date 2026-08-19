@@ -1,0 +1,54 @@
+/**
+ * Gestion budgetaire : deux colonnes proportionnees.
+ *
+ * Le volet de synthese occupait 420 px fixes et toute la hauteur de l'ecran,
+ * pendant que la matrice etait bridee a `max-w-6xl` : la colonne secondaire
+ * prenait plus de place que le tableau qu'elle commente.
+ */
+
+.budget-page {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+}
+
+.budget-page__principal {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  align-content: start;
+}
+
+.budget-page__synthese {
+  position: sticky;
+  top: 12px;
+  min-width: 0;
+  max-height: calc(100vh - 130px);
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+  overflow-y: auto;
+}
+
+.budget-page__synthese-corps {
+  display: grid;
+  padding: 14px;
+  gap: 12px;
+}
+
+/* La synthese revient sous la matrice plutot que de l'ecraser. */
+@media (max-width: 1180px) {
+  .budget-page { grid-template-columns: minmax(0, 1fr); }
+
+  .budget-page__synthese {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* Le compteur de modifications en attente, sur le bouton d'enregistrement. */
+.budget-page .sn-btn em {
+  font-style: normal;
+}

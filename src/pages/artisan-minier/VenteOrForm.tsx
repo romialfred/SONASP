@@ -5,6 +5,9 @@ import {
   Banknote,
   Boxes,
   Calculator,
+  Hash,
+  TrendingDown,
+  TrendingUp,
   Coins,
   Gem,
   Loader2,
@@ -14,11 +17,12 @@ import {
   StickyNote,
   UserRound,
 } from 'lucide-react';
+import { genererNumeroRecu } from '@/services/venteRecuNumberService';
+import { ecartAuCours, useCoursOr } from '@/hooks/useCoursOr';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
   Badge,
   Field,
-  Note,
   PageHeader,
   Section,
   Segmented,
@@ -100,6 +104,9 @@ export default function VenteOrForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
+  const { prixGrammeFcfa, chargement: coursEnCours, erreur: coursErreur } = useCoursOr();
+  /** Le pre-remplissage n'ecrase jamais une saisie : il n'a lieu qu'une fois. */
+  const [prixInitialise, setPrixInitialise] = useState(false);
 
   const [form, setForm] = useState<VenteOrFormData>(INITIAL_FORM_DATA);
   const [artisans, setArtisans] = useState<ArtisanMinier[]>([]);
@@ -159,6 +166,40 @@ export default function VenteOrForm() {
     };
   }, [id, isEditMode]);
 
+  /**
+   * Prix au gramme aligne sur le cours du marche des qu'il est connu.
+   *
+   * Aucun repli : sans cours ou sans taux de change au referentiel, le champ
+   * reste vide et l'ecran le dit. Une valeur de complaisance sur cet ecran
+   * deviendrait le prix paye a l'artisan.
+   */
+  useEffect(() => {
+    if (isEditMode || prixInitialise || prixGrammeFcfa === null) return;
+    setPrixInitialise(true);
+    setForm((courant) =>
+      courant.prix_unitaire_fcfa > 0
+        ? courant
+        : { ...courant, prix_unitaire_fcfa: Math.round(prixGrammeFcfa) }
+    );
+  }, [isEditMode, prixInitialise, prixGrammeFcfa]);
+
+  /**
+   * Numero attribue des l'ouverture, pour que le declarant le voie avant
+   * d'enregistrer. Il est retransmis a la creation : sans cela, le service en
+   * attribuerait un second et l'ecran aurait annonce un numero different de
+   * celui inscrit sur la piece.
+   */
+  useEffect(() => {
+    if (isEditMode) return;
+    let monte = true;
+    genererNumeroRecu()
+      .then((numero) => monte && setForm((courant) => ({ ...courant, numero_recu: numero })))
+      .catch(() => monte && setForm((courant) => ({ ...courant, numero_recu: '' })));
+    return () => {
+      monte = false;
+    };
+  }, [isEditMode]);
+
   useEffect(() => {
     if (!form.artisan_id) {
       setArtisanStats(null);
@@ -198,6 +239,7 @@ export default function VenteOrForm() {
     [form.prix_unitaire_fcfa, form.quantite_grammes]
   );
 
+  const ecart = ecartAuCours(form.prix_unitaire_fcfa, prixGrammeFcfa);
   const quantiteOnces = form.quantite_grammes / TROY_OZ_GRAMS;
   const orFin = (form.quantite_grammes * form.purete_pourcentage) / 100;
 
@@ -253,16 +295,17 @@ export default function VenteOrForm() {
         taxe_dev_comm_taux: TAXE_DEV_COMM_TAUX,
         taxe_dev_comm_montant_fcfa: taxes.taxe_dev_comm_montant_fcfa,
         montant_total_fcfa: taxes.montant_total_fcfa,
-        numero_recu: form.numero_recu,
         observations: form.observations,
         statut: form.statut,
       };
 
       if (isEditMode && id) {
+        // `update` propage tout ce qu'on lui donne : le numero reste hors du
+        // payload, sinon une chaine vide effacerait celui de la vente.
         await artisanGoldSalesService.update(id, payload);
         showSuccess('Vente mise à jour avec succès');
       } else {
-        await artisanGoldSalesService.create(payload);
+        await artisanGoldSalesService.create({ ...payload, numero_recu: form.numero_recu || undefined });
         showSuccess('Vente enregistrée avec succès');
       }
       setTimeout(() => navigate('/artisan-minier/ventes-or'), 1200);
@@ -306,7 +349,7 @@ export default function VenteOrForm() {
                 icon={UserRound}
                 tone="emerald"
                 title="Vendeur et déclaration"
-                description="Artisan à l’origine de la collecte et références du reçu."
+                description="Artisan à l’origine de la collecte et référence de la vente."
               >
                 <div className="vente-form__row is-vendeur">
                   <Field label="Artisan vendeur" required>
@@ -332,13 +375,18 @@ export default function VenteOrForm() {
                       required
                     />
                   </Field>
-                  <Field label="N° de reçu">
-                    <input
-                      value={form.numero_recu}
-                      onChange={(event) => setValue('numero_recu', event.target.value)}
-                      placeholder="REC-2026-000…"
-                    />
-                  </Field>
+                  <div className="sn-field">
+                    <span className="sn-field__label">N° de vente</span>
+                    {/* Le numero n'est plus saisi : il est attribue a l'enregistrement,
+                        au format VE-OR-AAAA-NNNNN, et suit la vente jusqu'au paiement
+                        en passant par la facture. Un numero frappe a la main ouvrait
+                        la porte aux doublons sur une piece comptable. */}
+                    <div className="sn-readonly vente-form__numero">
+                      <Hash aria-hidden="true" />
+                      <output>{form.numero_recu || '…'}</output>
+                    </div>
+                    <small>Référence de la vente, reprise sur la facture et au paiement.</small>
+                  </div>
                 </div>
 
                 <div className="vente-form__statut">
@@ -356,13 +404,12 @@ export default function VenteOrForm() {
               <Section
                 id="or"
                 icon={Scale}
-                tone="amber"
                 title="Nature et titre de l’or"
                 description="Forme collectée, quantité pesée et titre du métal."
               >
                 <fieldset className="vente-form__types">
                   <legend className="sn-field__label">Type d’or <i aria-hidden="true">*</i></legend>
-                  <div className="sn-choices">
+                  <div className="sn-choices vente-form__types-grille">
                     {TYPE_OR_OPTIONS.map((option) => {
                       const Icon = option.icon;
                       return (
@@ -410,14 +457,21 @@ export default function VenteOrForm() {
                   <div className="sn-field">
                     <span className="sn-field__label">Titre courant</span>
                     <div className="vente-form__karats" role="group" aria-label="Titre en carats">
+                      {/* Chaque titre porte sa jauge de purete, 24 K valant 100 %. */}
                       {KARAT_PRESETS.map((karat) => (
                         <button
                           key={karat}
                           type="button"
                           className={Math.round(form.purete_karat) === karat ? 'is-active' : ''}
                           onClick={() => handleKarat(karat)}
+                          aria-pressed={Math.round(form.purete_karat) === karat}
+                          aria-label={`${karat} carats, ${decimal.format(karatToPercentage(karat))} % de pureté`}
                         >
-                          {karat} K
+                          <b>{karat} K</b>
+                          <i aria-hidden="true">
+                            <span style={{ width: `${karatToPercentage(karat)}%` }} />
+                          </i>
+                          <em>{Math.round(karatToPercentage(karat))} %</em>
                         </button>
                       ))}
                     </div>
@@ -429,21 +483,51 @@ export default function VenteOrForm() {
               <Section
                 id="valorisation"
                 icon={Banknote}
-                tone="blue"
                 title="Valorisation"
                 description="Prix négocié et détail fiscal appliqué à la déclaration."
               >
                 <div className="vente-form__row is-prix">
-                  <Field label="Prix au gramme (FCFA)" required>
+                  <Field
+                    label="Prix au gramme (FCFA)"
+                    required
+                    hint={
+                      prixGrammeFcfa === null
+                        ? coursEnCours
+                          ? 'Cours du marché en cours de chargement…'
+                          : coursErreur || 'Cours du marché indisponible : saisissez le prix négocié.'
+                        : `Cours du marché : ${integer.format(Math.round(prixGrammeFcfa))} FCFA/g`
+                    }
+                  >
                     <input
                       type="number"
                       min="0"
                       step="1"
                       value={form.prix_unitaire_fcfa || ''}
-                      onChange={(event) => setValue('prix_unitaire_fcfa', Number(event.target.value))}
+                      onChange={(event) => {
+                        setPrixInitialise(true);
+                        setValue('prix_unitaire_fcfa', Number(event.target.value));
+                      }}
                       required
                     />
                   </Field>
+
+                  <div className="sn-field">
+                    <span className="sn-field__label">Écart au cours</span>
+                    {/* Sans cours connu, il n'y a pas d'ecart a annoncer. */}
+                    <div className={`sn-readonly vente-form__ecart${ecart === null ? '' : ecart >= 0 ? ' is-prime' : ' is-decote'}`}>
+                      {ecart === null ? (
+                        <output>—</output>
+                      ) : (
+                        <>
+                          {ecart >= 0 ? <TrendingUp aria-hidden="true" /> : <TrendingDown aria-hidden="true" />}
+                          <output>
+                            {ecart >= 0 ? '+' : ''}
+                            {decimal.format(ecart)} %
+                          </output>
+                        </>
+                      )}
+                    </div>
+                  </div>
                   <div className="sn-field">
                     <span className="sn-field__label">Équivalent au kilogramme</span>
                     <div className="sn-readonly">
@@ -459,17 +543,11 @@ export default function VenteOrForm() {
                     </div>
                   </div>
                 </div>
-
-                <Note tone="info" icon={Calculator}>
-                  Le montant enregistré comprend la TVA ({TVA_TAUX} %) et la taxe de développement
-                  communal ({TAXE_DEV_COMM_TAUX} %). Le détail est récapitulé à droite.
-                </Note>
               </Section>
 
               <Section
                 id="observations"
                 icon={StickyNote}
-                tone="slate"
                 title="Observations"
                 description="Contexte de la collecte, remarques de contrôle."
               >

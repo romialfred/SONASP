@@ -28,6 +28,12 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
 
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'u1', is_active: true, is_sales_approver: true, role: 'management' },
+  }),
+}));
+
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({
     alertState: { isOpen: false, message: '', type: 'info' },
@@ -133,12 +139,12 @@ describe('VenteOrDetails', () => {
 
   it('valide la vente après confirmation puis recharge', async () => {
     render(<VenteOrDetails />);
-    await waitFor(() => expect(screen.getByRole('button', { name: /Valider la vente/ })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Approuver la vente/ })).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Valider la vente/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Approuver la vente/ }));
 
     await waitFor(() => expect(mocks.updateStatus).toHaveBeenCalledWith('v1', 'validee'));
-    expect(mocks.showSuccess).toHaveBeenCalledWith('Vente validée');
+    expect(mocks.showSuccess).toHaveBeenCalledWith('Vente approuvée');
     await waitFor(() => expect(mocks.getById).toHaveBeenCalledTimes(2));
   });
 
@@ -147,7 +153,7 @@ describe('VenteOrDetails', () => {
     render(<VenteOrDetails />);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'REC-001' })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Valider la vente/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Approuver la vente/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Modifier/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Annuler la vente/ })).not.toBeInTheDocument();
   });

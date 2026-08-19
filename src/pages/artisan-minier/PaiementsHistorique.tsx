@@ -7,9 +7,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock3,
-  Download,
   FileText,
-  Loader2,
   RefreshCw,
   Wallet,
 } from 'lucide-react';
@@ -131,9 +129,8 @@ export default function PaiementsHistorique() {
   const navigate = useNavigate();
   const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
-  const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
+  const { alertState, showError, closeAlert } = useCustomAlert();
 
   const chargerHistorique = async () => {
     setLoading(true);
@@ -178,54 +175,6 @@ export default function PaiementsHistorique() {
     [paiements]
   );
 
-  /**
-   * Export CSV réel des lignes filtrées.
-   * L'ancienne implémentation se contentait d'un `console.log` : le bouton était inactif.
-   */
-  const exporterHistorique = () => {
-    if (results.length === 0) {
-      showError('Aucun paiement à exporter avec les filtres actuels');
-      return;
-    }
-
-    setExporting(true);
-    try {
-      const headers = [
-        'Référence',
-        'Date',
-        'Artisan',
-        'N° de carte',
-        'Type de paiement',
-        'Montant payé (FCFA)',
-        'Taxes retenues (FCFA)',
-        'Statut',
-      ];
-      const rows = results.map((paiement) => [
-        paiement.reference_paiement || '',
-        formatDate(paiement.date_paiement),
-        holderName(paiement),
-        paiement.artisan?.numero_carte || '',
-        TYPE_LABELS[paiement.type_paiement] || paiement.type_paiement,
-        String(Math.round(paiement.montant_paye || 0)),
-        String(Math.round(paiement.montant_taxes_retenues || 0)),
-        STATUT_LABELS[paiement.statut] || paiement.statut,
-      ]);
-
-      const csv = [headers, ...rows]
-        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
-        .join('\n');
-
-      const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `paiements-artisans-${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-      showSuccess(`${results.length} paiement(s) exporté(s)`);
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const columns: Column<PaiementRow & { id?: string }>[] = [
     {
@@ -306,15 +255,6 @@ export default function PaiementsHistorique() {
               </button>
               <button type="button" className="sn-btn" onClick={() => void chargerHistorique()}>
                 <RefreshCw aria-hidden="true" /> Actualiser
-              </button>
-              <button
-                type="button"
-                className="sn-btn sn-btn--primary"
-                onClick={exporterHistorique}
-                disabled={exporting || loading}
-              >
-                {exporting ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
-                Exporter ({integer.format(results.length)})
               </button>
             </>
           }

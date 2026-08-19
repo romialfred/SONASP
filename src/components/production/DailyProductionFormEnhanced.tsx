@@ -466,7 +466,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Bullion with Unit Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bullion *
+                  Doré pesé *
                 </label>
                 <div className="flex gap-2">
                   <select
@@ -506,7 +506,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Gold Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gold Assay % <span className="text-xs italic text-gray-500 font-normal">(estimated fineness)</span> *
+                  Titre or % <span className="text-xs italic text-gray-500 font-normal">(estimé)</span> *
                 </label>
                 <Input
                   type="number"
@@ -525,7 +525,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Silver Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Silver Assay % <span className="text-xs italic text-gray-500 font-normal">(estimated)</span>
+                  Titre argent % <span className="text-xs italic text-gray-500 font-normal">(estimé)</span>
                 </label>
                 <Input
                   type="number"
@@ -540,7 +540,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                 />
                 {totalPct > 100 && (
                   <p className="mt-1 text-xs text-red-600">
-                    ⚠ La somme Gold + Silver dépasse 100% ({roundUpToFixed(totalPct, 2)}%)
+                    ⚠ La somme or + argent dépasse 100 % ({roundUpToFixed(totalPct, 2)}%)
                   </p>
                 )}
               </div>
@@ -555,7 +555,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-blue-700 mb-1">
-                    Pure Gold (g)
+                    Or fin (g)
                   </label>
                   <div className="text-xl font-bold text-blue-900">
                     {pureGoldGrams}
@@ -564,7 +564,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
                 <div>
                   <label className="block text-xs font-medium text-blue-700 mb-1">
-                    Gold Oz
+                    Or fin (oz)
                   </label>
                   <div className="text-xl font-bold text-blue-900">
                     {estimatedOz}
@@ -573,7 +573,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Ag Content (g)
+                    Argent (g)
                   </label>
                   <div className="text-xl font-bold text-gray-700">
                     {silverContentGrams}
@@ -582,7 +582,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Silver Oz
+                    Argent (oz)
                   </label>
                   <div className="text-xl font-bold text-gray-700">
                     {silverContentOz}
@@ -608,7 +608,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               )}
 
               <p className="text-xs text-blue-600 mt-3">
-                Pure Gold = Bullion × Gold% ÷ 100 | Ag Content = Bullion × Silver% ÷ 100 | Oz = Grams ÷ 31.1034768
+                Or fin = doré × titre or ÷ 100  ·  Argent = doré × titre argent ÷ 100  ·  Onces = grammes ÷ 31,1034768
               </p>
             </div>
 

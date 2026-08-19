@@ -8,9 +8,20 @@ import { supabase } from '@/lib/supabase';
 export interface MiningCompany {
   id: string;
   name: string;
+  /** Nom usuel court (affiché dans les onglets/listes). */
+  abbreviation?: string | null;
   code: string;
   country: string;
   is_active: boolean;
+  company_type?: string | null;
+  region?: string | null;
+  province?: string | null;
+  localite?: string | null;
+}
+
+/** Libellé d'affichage d'une société minière : nom usuel si présent, sinon nom officiel. */
+export function miningCompanyLabel(company: { abbreviation?: string | null; name: string }): string {
+  return company.abbreviation?.trim() || company.name;
 }
 
 export interface Customer {
@@ -43,7 +54,7 @@ export interface TransportCompany {
 export async function getActiveMiningCompanies(): Promise<MiningCompany[]> {
   const { data, error } = await supabase
     .from('mining_companies')
-    .select('id, name, code, country, is_active')
+    .select('id, name, abbreviation, code, country, is_active, company_type, region, province, localite')
     .eq('is_active', true)
     .order('name');
 

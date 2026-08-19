@@ -9,8 +9,8 @@
 }
 
 .national-shell__desktop-sidebar {
-  width: 244px;
-  flex: 0 0 244px;
+  width: 268px;
+  flex: 0 0 268px;
   transition: width 180ms ease, flex-basis 180ms ease;
 }
 
@@ -22,13 +22,13 @@
 .national-sidebar {
   display: flex;
   flex-direction: column;
-  width: 244px;
+  width: 268px;
   height: 100vh;
   overflow: hidden;
-  border-right: 1px solid #28524a;
-  color: #ecfdf5;
-  background: #123b35;
-  box-shadow: 8px 0 28px rgb(15 49 44 / 12%);
+  border-right: 1px solid #2b3a4d;
+  color: #e9eef4;
+  background: #1b2a3a;
+  box-shadow: 8px 0 28px rgb(12 24 38 / 14%);
   transition: width 180ms ease;
 }
 
@@ -111,7 +111,7 @@
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgb(167 243 208 / 40%) transparent;
+  scrollbar-color: rgb(200 216 234 / 38%) transparent;
 }
 
 .national-sidebar__dashboard-link,
@@ -124,10 +124,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 38px;
-  padding: 0 12px;
-  gap: 12px;
-  color: rgb(236 253 245 / 85%);
+  min-height: 42px;
+  padding: 6px 11px;
+  gap: 10px;
+  color: rgb(236 253 245 / 92%);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.1;
@@ -144,22 +144,47 @@
   background: transparent;
 }
 
-.national-sidebar__dashboard-link svg {
-  width: 20px;
-  height: 20px;
+/* Pastille d'icone : carre arrondi teinte de la couleur de l'entree, reprise du
+   modele SafeX. `currentColor` porte la couleur posee en ligne sur le conteneur,
+   ce qui evite d'ecrire une regle par module. */
+.national-sidebar__icon {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(200 216 234 / 22%);
+  border-color: color-mix(in srgb, currentColor 42%, transparent);
+  background: rgb(200 216 234 / 8%);
+  background: color-mix(in srgb, currentColor 13%, transparent);
+  border-radius: 9px;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
-.national-sidebar__dashboard-link span {
+.national-sidebar__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.national-sidebar__dashboard-link:hover .national-sidebar__icon,
+.national-sidebar__group-trigger:hover .national-sidebar__icon,
+.national-sidebar__group-trigger.is-current .national-sidebar__icon,
+.national-sidebar__dashboard-link.is-active .national-sidebar__icon {
+  border-color: color-mix(in srgb, currentColor 68%, transparent);
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.national-sidebar__dashboard-link > span:not(.national-sidebar__icon) {
   min-width: 0;
   flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .national-sidebar__dashboard-link.is-active {
   color: #ffffff;
-  background: #08705f;
+  background: #2c4560;
   box-shadow: 0 8px 20px rgb(2 25 22 / 22%);
 }
 
@@ -175,18 +200,17 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 38px;
-  padding: 0 12px;
-  gap: 12px;
+  min-height: 42px;
+  padding: 6px 11px;
+  gap: 10px;
   border: 0;
   color: rgb(236 253 245 / 85%);
   background: transparent;
   font: inherit;
   font-size: 13px;
   font-weight: 500;
-  line-height: 1.1;
+  line-height: 1.25;
   text-align: left;
-  white-space: nowrap;
   border-radius: 12px;
   transition: background-color 150ms ease, color 150ms ease;
 }
@@ -199,83 +223,100 @@
 
 .national-sidebar__group-trigger.is-current {
   color: #ffffff;
-  background: rgb(255 255 255 / 10%);
+  background: #2c4560;
 }
 
-.national-sidebar__group-trigger > svg:first-child {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-}
-
+/* Signe de depliage : plus quand le groupe est replie, moins quand il est ouvert. */
 .national-sidebar__group-trigger > svg:last-child {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   margin-left: auto;
-  color: rgb(209 250 229 / 75%);
+  color: rgb(209 250 229 / 55%);
+  transition: color 150ms ease;
 }
 
-.national-sidebar__group-trigger > span {
+.national-sidebar__group-trigger:hover > svg:last-child,
+.national-sidebar__group-trigger.is-current > svg:last-child {
+  color: rgb(255 255 255 / 90%);
+}
+
+.national-sidebar__group-trigger > span:not(.national-sidebar__icon) {
   min-width: 0;
   flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .national-sidebar__group-link {
   margin-top: 4px;
 }
 
+/* Le sous-menu respire sous son titre : colle a lui, l'element selectionne
+   semblait deborder du groupe. */
 .national-sidebar__subnav {
   position: relative;
-  margin: 1px 0 4px 22px;
-  padding: 1px 0 1px 13px;
+  margin: 4px 0 6px 12px;
+  padding: 2px 0 2px 9px;
 }
 
 .national-sidebar__subnav::before {
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 1px;
+  inset: 2px auto 2px 0;
+  width: 2px;
   content: '';
-  background: rgb(167 243 208 / 20%);
+  border-radius: 2px;
+  background: rgb(232 241 250 / 55%);
 }
 
 .national-sidebar__subnav a {
   display: flex;
   align-items: center;
   min-height: 34px;
-  padding: 0 9px;
-  gap: 12px;
+  padding: 6px 9px;
+  gap: 10px;
   color: rgb(236 253 245 / 65%);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.1;
+  line-height: 1.25;
   border-radius: 8px;
 }
 
 .national-sidebar__subnav a.is-current {
   color: #ffffff;
-  background: rgb(167 243 208 / 15%);
+  background: rgb(200 216 234 / 16%);
 }
 
-.national-sidebar__subnav a svg {
-  width: 16px;
-  height: 16px;
+/* Puce claire plutot qu'une icone de module : a ce niveau, dix icones de dix
+   couleurs se lisaient comme dix alertes. */
+.national-sidebar__puce {
+  width: 5px;
+  height: 5px;
   flex: 0 0 auto;
+  margin: 0 5px;
+  border-radius: 50%;
+  background: rgb(236 253 245 / 45%);
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.national-sidebar__subnav a:hover .national-sidebar__puce { background: rgb(255 255 255 / 80%); }
+
+.national-sidebar__subnav a.is-current .national-sidebar__puce {
+  background: #ffffff;
+  transform: scale(1.25);
 }
 
 .national-sidebar__subnav a span {
   min-width: 0;
   flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 
-.national-sidebar.is-collapsed .national-sidebar__dashboard-link span,
-.national-sidebar.is-collapsed .national-sidebar__group-trigger span,
+.national-sidebar.is-collapsed .national-sidebar__dashboard-link > span:not(.national-sidebar__icon),
+.national-sidebar.is-collapsed .national-sidebar__group-trigger > span:not(.national-sidebar__icon),
 .national-sidebar.is-collapsed .national-sidebar__group-trigger > svg:last-child,
 .national-sidebar.is-collapsed .national-sidebar__subnav,
 .national-sidebar.is-collapsed .national-sidebar__section-title span {
@@ -572,13 +613,13 @@
   .national-shell__mobile-sidebar .national-sidebar {
     position: relative;
     z-index: 2;
-    width: 244px;
+    width: 268px;
     box-shadow: 18px 0 50px rgb(15 23 42 / 20%);
   }
 
   .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__section-title span,
-  .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__dashboard-link span,
-  .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__group-trigger span,
+  .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__dashboard-link > span:not(.national-sidebar__icon),
+  .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__group-trigger > span:not(.national-sidebar__icon),
   .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__group-trigger > svg:last-child,
   .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__footer span,
   .national-shell__mobile-sidebar .national-sidebar.is-collapsed .national-sidebar__footer small {
@@ -709,4 +750,58 @@
 @media (max-width: 767px) {
   .national-shell__footer { justify-content: center; padding: 0 14px; }
   .national-shell__footer-motto { display: none; }
+}
+
+/* --- Sections de navigation --- */
+
+.national-sidebar__section { margin-top: 4px; }
+.national-sidebar__section:first-child { margin-top: 0; }
+
+/* Intitule de section facon SafeX : un tiret ambre, le titre, puis un filet qui
+   occupe la place restante. Le filet est un pseudo-element : il ne prend jamais
+   sur la largeur du texte, qui doit rester lisible en entier. */
+.national-sidebar__section-heading {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 6px;
+  padding: 0 11px;
+  gap: 8px;
+  color: #e2a100;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.national-sidebar__section-heading::before {
+  width: 14px;
+  height: 2px;
+  flex: 0 0 auto;
+  content: '';
+  border-radius: 2px;
+  background: #e2a100;
+}
+
+.national-sidebar__section-heading::after {
+  height: 1px;
+  min-width: 0;
+  flex: 1;
+  content: '';
+  background: rgb(200 216 234 / 16%);
+}
+
+.national-sidebar__section:first-child .national-sidebar__section-heading { margin-top: 4px; }
+
+/* Repliee, la barre ne montre que les icones : les intitules de section
+   deviendraient des traits illisibles. */
+.national-sidebar.is-collapsed .national-sidebar__section-heading {
+  height: 1px;
+  margin: 10px 0;
+  padding: 0;
+  overflow: hidden;
+  border-top: 1px solid rgb(200 216 234 / 16%);
+  color: transparent;
 }

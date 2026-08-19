@@ -20,8 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Download, TrendingUp, TrendingDown, Minus, Shield, Calendar, CalendarDays, CalendarCheck } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Shield, Calendar, CalendarDays, CalendarCheck } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';
 import { ProductionStatus } from '@/constants/productionStatuses';
 import { supabase } from '@/lib/supabase';
@@ -214,57 +213,6 @@ export function ProductionInSafe() {
     return <Minus className="w-4 h-4 text-gray-400" />;
   };
 
-  const exportToCSV = () => {
-    if (productions.length === 0) {
-      alert(t('production.noDataToExport'));
-      return;
-    }
-
-    const headers = [
-      'Date de Production',
-      'Société',
-      'Bullion (g)',
-      'Finesse Estimée (%)',
-      'Or Pur (g)',
-      'Oz Estimées',
-      'Bar Reference',
-      'Statut'
-    ];
-
-    const rows = productions.map(p => [
-      new Date(p.production_date).toLocaleDateString('fr-FR'),
-      getCompanyName(p.mining_company_id),
-      p.bullion_grams.toFixed(2),
-      p.estimated_fineness_pct.toFixed(1),
-      p.pure_gold_grams.toFixed(2),
-      p.estimated_oz.toFixed(4),
-      p.bar_reference || '',
-      p.status || 'N/A'
-    ]);
-
-    rows.push([
-      'TOTAL',
-      '',
-      summary.total_bullion_grams.toFixed(2),
-      '',
-      summary.total_pure_gold_grams.toFixed(2),
-      summary.total_estimated_oz.toFixed(4),
-      '',
-      ''
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `production_in_safe_${dateRange.startDate}_to_${dateRange.endDate}.csv`;
-    link.click();
-  };
-
   const getCompanyName = (companyId: string | null) => {
     if (!companyId) return 'N/A';
     const company = miningCompanies.find(c => c.id === companyId);
@@ -410,14 +358,6 @@ export function ProductionInSafe() {
               </div>
             </div>
           </div>
-          <Button
-            onClick={exportToCSV}
-            variant="outline"
-            className="border-slate-300 hover:bg-slate-50 text-slate-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {t('production.exportCsv')}
-          </Button>
         </div>
 
         {/* Filters */}

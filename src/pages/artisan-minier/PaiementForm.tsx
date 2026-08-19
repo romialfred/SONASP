@@ -41,6 +41,13 @@ import artisanPaiementsService, {
 } from '@/services/artisanPaiementsService';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import {
+  LIBELLES_MOYEN,
+  artisanMoyenPaiementService,
+  coordonneeMasquee,
+  moyenParDefaut,
+  type MoyenPaiement,
+} from '@/services/artisanMoyenPaiementService';
 import { telechargerFacturePaiementArtisan } from '@/services/factureArtisanPdfService';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 import './paiement-form.css';
@@ -235,8 +242,8 @@ export default function PaiementForm() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [typePaiement, setTypePaiement] = useState<TypePaiement>('virement_bancaire');
-  const [details, setDetails] = useState<Record<string, string>>({ type_compte: 'courant', devise: 'FCFA' });
+  const [moyens, setMoyens] = useState<MoyenPaiement[]>([]);
+  const [moyenId, setMoyenId] = useState<string>('');
   const [notes, setNotes] = useState('');
 
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
@@ -263,6 +270,17 @@ export default function PaiementForm() {
           setArtisan(await artisanMinierService.getById(venteData.artisan_id));
         } catch {
           setArtisan(null);
+        }
+
+        // Les coordonnees viennent de la fiche de l'artisan : l'ecran de paiement
+        // les choisit, il ne les saisit plus.
+        try {
+          const liste = await artisanMoyenPaiementService.listerParArtisan(venteData.artisan_id);
+          if (!mounted) return;
+          setMoyens(liste);
+          setMoyenId(moyenParDefaut(liste)?.id || '');
+        } catch {
+          if (mounted) setMoyens([]);
         }
 
         let factureData = await artisanPaiementsService.getFactureByVenteId(venteId);
@@ -305,18 +323,30 @@ export default function PaiementForm() {
     };
   }, [user?.id, venteId]);
 
+  const moyenRetenu = useMemo(
+    () => moyens.find((moyen) => moyen.id === moyenId) || null,
+    [moyens, moyenId]
+  );
+
+  const typePaiement = (moyenRetenu?.type || 'virement_bancaire') as TypePaiement;
+
   const methode = useMemo(
     () => MOYENS_PAIEMENT.find((item) => item.id === typePaiement) || MOYENS_PAIEMENT[0],
     [typePaiement]
   );
-  const champs = useMemo(() => fieldsForMethod(typePaiement), [typePaiement]);
-  const manquants = useMemo(() => missingRequiredFields(typePaiement, details), [details, typePaiement]);
 
-  const changerMethode = (method: TypePaiement) => {
-    setTypePaiement(method);
-    // Les détails d'un moyen ne valent pas pour un autre : on repart d'un état propre.
-    setDetails(method === 'virement_bancaire' ? { type_compte: 'courant', devise: 'FCFA' } : {});
-  };
+  /** Coordonnees reportees telles quelles depuis la fiche, sans ressaisie. */
+  const details = useMemo<Record<string, string>>(() => {
+    if (!moyenRetenu) return {} as Record<string, string>;
+    return {
+      moyen_paiement_id: moyenRetenu.id || '',
+      titulaire: moyenRetenu.titulaire,
+      numero_telephone: moyenRetenu.numero_telephone || '',
+      banque: moyenRetenu.banque || '',
+      numero_compte: moyenRetenu.numero_compte || '',
+      code_swift: moyenRetenu.code_swift || '',
+    };
+  }, [moyenRetenu]);
 
   const paiementCourant = (): PaiementArtisan =>
     ({
@@ -327,6 +357,8 @@ export default function PaiementForm() {
       montant_paye: facture?.montant_net_a_payer || 0,
       montant_taxes_retenues: facture?.montant_total_taxes || 0,
       details_paiement: details,
+      moyen_paiement_id: moyenRetenu?.id,
+      numero_facture: facture?.numero_facture,
       statut: 'en_attente',
       date_paiement: new Date().toISOString(),
       traite_par: user?.id,
@@ -353,8 +385,8 @@ export default function PaiementForm() {
       showError('Aucune facture définitive n’est rattachée à cette vente.');
       return;
     }
-    if (manquants.length > 0) {
-      showError(`Champs obligatoires manquants : ${manquants.join(', ')}.`);
+    if (!moyenRetenu) {
+      showError('Sélectionnez le moyen de paiement enregistré sur la fiche de l’artisan.');
       return;
     }
 
@@ -453,75 +485,101 @@ export default function PaiementForm() {
             <Section
               id="moyen"
               icon={Banknote}
-              tone="emerald"
-              title="Moyen de paiement"
-              description="Le formulaire s’adapte au canal retenu : seuls les champs utiles sont demandés."
+              title="Moyen de paiement de l’artisan"
+              description="Coordonnées enregistrées sur sa fiche. Aucune saisie au moment de payer."
             >
-              <div className="paiement-form__methods" role="radiogroup" aria-label="Moyen de paiement">
-                {MOYENS_PAIEMENT.map((item) => {
-                  const Logo = item.Logo;
-                  return (
-                    <label key={item.id} className={typePaiement === item.id ? 'is-checked' : ''}>
-                      <input
-                        type="radio"
-                        name="moyen-paiement"
-                        value={item.id}
-                        checked={typePaiement === item.id}
-                        onChange={() => changerMethode(item.id)}
-                      />
-                      <span className="paiement-form__method-logo"><Logo /></span>
-                      <span>
-                        <strong>{item.label}</strong>
-                        <small>{item.description}</small>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </Section>
-
-            <Section
-              id="coordonnees"
-              icon={Landmark}
-              tone="blue"
-              title={`Coordonnées — ${methode.label}`}
-              description="Informations nécessaires à l’exécution du règlement."
-            >
-              {champs.length === 0 ? (
-                <p className="sn-empty">Aucune information complémentaire requise.</p>
-              ) : (
-                <div className="paiement-form__grid">
-                  {champs.map((champ) => (
-                    <Field
-                      key={champ.key}
-                      label={champ.label}
-                      required={champ.required}
-                      hint={champ.hint}
-                      wide={champ.wide}
+              {/* Les coordonnees etaient frappees ici, a chaque reglement : ressaisie du
+                  numero a chaque fois, et rien ne garantissait que le compte credite
+                  appartienne a l'artisan. */}
+              {moyens.length === 0 ? (
+                <EmptyState
+                  title="Aucun moyen de paiement enregistré"
+                  description="Cet artisan n’a pas de coordonnée de règlement sur sa fiche. Ajoutez-en une avant de payer : elle ne se saisit pas depuis cet écran."
+                  action={
+                    <button
+                      type="button"
+                      className="sn-btn sn-btn--primary"
+                      onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/modifier`)}
                     >
-                      {champ.type === 'select' ? (
-                        <select
-                          value={details[champ.key] || champ.options?.[0]?.value || ''}
-                          onChange={(event) => setDetails((current) => ({ ...current, [champ.key]: event.target.value }))}
-                        >
-                          {champ.options?.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      ) : (
+                      <UserRound aria-hidden="true" /> Ouvrir la fiche de l’artisan
+                    </button>
+                  }
+                />
+              ) : (
+                <div className="paiement-form__methods" role="radiogroup" aria-label="Moyen de paiement">
+                  {moyens.map((moyen) => {
+                    const reference = MOYENS_PAIEMENT.find((item) => item.id === moyen.type);
+                    const Logo = reference?.Logo;
+                    return (
+                      <label key={moyen.id} className={moyenId === moyen.id ? 'is-checked' : ''}>
                         <input
-                          type={champ.type === 'date' ? 'date' : 'text'}
-                          value={details[champ.key] || ''}
-                          placeholder={champ.placeholder}
-                          onChange={(event) => setDetails((current) => ({ ...current, [champ.key]: event.target.value }))}
-                          required={champ.required}
+                          type="radio"
+                          name="moyen-paiement"
+                          value={moyen.id}
+                          checked={moyenId === moyen.id}
+                          onChange={() => setMoyenId(moyen.id || '')}
                         />
-                      )}
-                    </Field>
-                  ))}
+                        <span className="paiement-form__method-logo">{Logo ? <Logo /> : null}</span>
+                        <span>
+                          <strong>{LIBELLES_MOYEN[moyen.type]}</strong>
+                          <small>
+                            {moyen.titulaire} · {coordonneeMasquee(moyen)}
+                          </small>
+                        </span>
+                        {moyen.est_principal && <em className="paiement-form__principal">Principal</em>}
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </Section>
+
+            {moyenRetenu && (
+              <Section
+                id="coordonnees"
+                icon={Landmark}
+                title={`Coordonnées — ${methode.label}`}
+                description="Reprises de la fiche de l’artisan ; elles ne se modifient qu’à cet endroit."
+              >
+                <dl className="paiement-form__coordonnees">
+                  <div>
+                    <dt>Titulaire</dt>
+                    <dd>{moyenRetenu.titulaire}</dd>
+                  </div>
+                  {moyenRetenu.numero_telephone && (
+                    <div>
+                      <dt>Numéro</dt>
+                      <dd>{moyenRetenu.numero_telephone}</dd>
+                    </div>
+                  )}
+                  {moyenRetenu.banque && (
+                    <div>
+                      <dt>Banque</dt>
+                      <dd>{moyenRetenu.banque}</dd>
+                    </div>
+                  )}
+                  {moyenRetenu.numero_compte && (
+                    <div>
+                      <dt>Compte</dt>
+                      <dd>{moyenRetenu.numero_compte}</dd>
+                    </div>
+                  )}
+                  {moyenRetenu.code_swift && (
+                    <div>
+                      <dt>SWIFT</dt>
+                      <dd>{moyenRetenu.code_swift}</dd>
+                    </div>
+                  )}
+                </dl>
+                <button
+                  type="button"
+                  className="sn-btn paiement-form__modifier-moyen"
+                  onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/modifier`)}
+                >
+                  <UserRound aria-hidden="true" /> Corriger sur la fiche de l’artisan
+                </button>
+              </Section>
+            )}
 
             <Section
               id="notes"
@@ -543,7 +601,7 @@ export default function PaiementForm() {
               <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
                 Annuler
               </button>
-              <button type="submit" className="sn-btn sn-btn--primary" disabled={submitting || manquants.length > 0}>
+              <button type="submit" className="sn-btn sn-btn--primary" disabled={submitting || !moyenRetenu}>
                 {submitting ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                 {submitting ? 'Enregistrement…' : 'Enregistrer le paiement'}
               </button>
@@ -559,6 +617,15 @@ export default function PaiementForm() {
                 </div>
                 <Badge tone="info">{facture.statut}</Badge>
               </div>
+              {/* La facture certifiee DGI n'est pas encore emise : le dossier renvoie
+                  au specimen, et le dit. */}
+              <button
+                type="button"
+                className="sn-btn paiement-form__facture-lien"
+                onClick={() => navigate(`/artisan-minier/ventes-or/${venteId}/facture`)}
+              >
+                <FileText aria-hidden="true" /> Voir la facture (spécimen)
+              </button>
               <dl className="paiement-form__recap">
                 <div>
                   <dt>Montant brut</dt>
@@ -577,9 +644,9 @@ export default function PaiementForm() {
                   <dd>{formatFcfa(facture.montant_net_a_payer)}</dd>
                 </div>
               </dl>
-              {manquants.length > 0 && (
+              {!moyenRetenu && (
                 <p className="paiement-form__blocker">
-                  À compléter : {manquants.join(', ')}.
+                  Aucun moyen de paiement sélectionné : le règlement ne peut pas être enregistré.
                 </p>
               )}
             </section>

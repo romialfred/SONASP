@@ -111,41 +111,642 @@ import ArtisanalSiteProduction from './pages/artisanal-sites/ArtisanalSiteProduc
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
+import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
 
+const AiAssistantPage = lazy(() => import('./pages/analytics/AiAssistantPage'));
+const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
+const ApprobateursPage = lazy(() => import('./pages/stakeholders/ApprobateursPage'));
 
 function AppRoutes() {
   const location = useLocation();
 
+  // `key={location.pathname}` remontait tout le sous-arbre a chaque navigation :
+  // mise en page, barre laterale et filtres repartaient de zero. La cle passe en
+  // propriete — seul l'etat d'erreur est efface, les enfants restent montes.
   return (
-    <RouteErrorBoundary key={location.pathname}>
+    <RouteErrorBoundary resetKey={location.pathname}>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/activate-account"
-              element={
-                <PublicRoute>
-                  <ActivateAccount />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/auth/callback"
-              element={<AuthCallback />}
-            />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
 
-            {/* Main dashboard */}
+          <Route
+            path="/activate-account"
+            element={
+              <PublicRoute>
+                <ActivateAccount />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/auth/callback"
+            element={<AuthCallback />}
+          />
+
+          <Route
+            path="/gold-prices"
+            element={
+              <ProtectedRoute>
+                <GoldPricesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fx-rates"
+            element={
+              <ProtectedRoute>
+                <FxRatesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/management"
+            element={
+              <ProtectedRoute allowedRoles={['management']}>
+                <ManagementDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/factory"
+            element={
+              <ProtectedRoute allowedRoles={['factory']}>
+                <FactoryDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/airport"
+            element={
+              <ProtectedRoute allowedRoles={['airport']}>
+                <AirportDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/refinery"
+            element={
+              <ProtectedRoute allowedRoles={['refinery']}>
+                <RefineryDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/customer"
+            element={
+              <ProtectedRoute allowedRoles={['customer']}>
+                <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpCenter />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation"
+            element={
+              <ProtectedRoute>
+                <ShippingDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation/new"
+            element={
+              <ProtectedRoute>
+                <ShippingPreparationNew />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation/edit/:id"
+            element={
+              <ProtectedRoute>
+                <ShippingPreparationNew />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation/:id"
+            element={
+              <ProtectedRoute>
+                <ShippingPreparationDetailsEnhanced />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation/:id/details"
+            element={
+              <ProtectedRoute>
+                <ShippingPreparationDetailsEnhanced />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping/preparation/:id/edit"
+            element={
+              <ProtectedRoute>
+                <ShippingPreparationEdit />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight"
+            element={
+              <ProtectedRoute>
+                <FreightShipmentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight/shipments/create"
+            element={
+              <ProtectedRoute>
+                <FreightShipmentCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight/shipments/:id"
+            element={
+              <ProtectedRoute>
+                <FreightShipmentDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight-customs"
+            element={
+              <ProtectedRoute>
+                <FreightCustomsDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight-customs/create"
+            element={
+              <ProtectedRoute>
+                <FreightCustomsCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/freight-customs/:id"
+            element={
+              <ProtectedRoute>
+                <FreightCustomsDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/documents/assay-certificates"
+            element={
+              <ProtectedRoute>
+                <AssayCertificatesModern />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inventory/silver"
+            element={
+              <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <SilverInventoryManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/shipping"
+            element={
+              <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProfileGuard>
+                  <ShippingDashboard />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/refining"
+            element={
+              <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <RefiningProcess />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/refining/freight-shipments"
+            element={
+              <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <FreightShipmentsRefining />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/refining/:id/process"
+            element={
+              <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <RefiningProcess />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/presales"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                <PreSalesDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/presales/new"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                <PreSaleCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/presales/:id"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                <PreSaleDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sales"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                <SalesDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sales/new"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                <SaleCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sales/trade-space"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                <GoldTradeSpace />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/sales/approve/:saleId/:token"
+            element={
+              <CustomerSaleApproval />
+            }
+          />
+
+          <Route
+            path="/sales/:id"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
+                <SaleDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                <ProfileGuard>
+                  <CustomerListing />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers/new"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_CREATE}>
+                <ProfileGuard>
+                  <CustomerForm />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers/:id/edit"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_EDIT}>
+                <ProfileGuard>
+                  <CustomerForm />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers/:id"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                <ProfileGuard>
+                  <CustomerProfile />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers/:id/payments"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
+                <ProfileGuard>
+                  <PaymentProcessing />
+                </ProfileGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payments/create"
+            element={
+              <ProtectedRoute>
+                <PaymentCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payments/virtual"
+            element={
+              <ProtectedRoute>
+                <VirtualPaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payments/record"
+            element={
+              <ProtectedRoute>
+                <PaymentRecordPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payments/:id"
+            element={
+              <ProtectedRoute>
+                <PaymentDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsIntelligenceCenter />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/analytics/legacy"
+            element={
+              <ProtectedRoute>
+                <AnalyticsDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
+                <ReportsDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/production/:id"
+            element={
+              <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProductionDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/production/in-safe"
+            element={
+              <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProductionInSafe />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/production/licenses/new"
+            element={
+              <ProtectedRoute allowedRoles={['management']}>
+                <ExportLicenseForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/production/licenses/edit/:id"
+            element={
+              <ProtectedRoute allowedRoles={['management']}>
+                <ExportLicenseForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/production/licenses/:id"
+            element={
+              <ProtectedRoute allowedRoles={['management']}>
+                <ExportLicenseDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/performance/forecasts"
+            element={
+              <ProtectedRoute allowedRoles={['management']}>
+                <ForecastManagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/mining-companies"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <MiningCompaniesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/mining-companies/new"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <MiningCompanyForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/mining-companies/:id"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <MiningCompanyDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/mining-companies/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <MiningCompanyForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/freight-companies"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <FreightCompaniesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/refinery-plants"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <RefineryPlantsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/approvers"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ApprobateursPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/depositors"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <DepositorsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/depositors/new"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <DepositorFormPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stakeholders/depositors/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <DepositorFormPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/settings" element={<Navigate to="/parameters" replace />} />
+
+          <Route
+            path="/audit"
+            element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
+                <AuditTrailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Espace applicatif : l'habillage — barre laterale, en-tete, pied — est
+              monte par cette route parente et survit aux navigations. Le repli de
+              suspense vit dans sa zone de contenu, si bien qu'un chargement de page
+              n'efface plus l'ecran entier. */}
+          <Route element={<NationalDashboardChrome />}>
             <Route
               path="/dashboard"
               element={
@@ -154,23 +755,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/gold-prices"
-              element={
-                <ProtectedRoute>
-                  <GoldPricesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/fx-rates"
-              element={
-                <ProtectedRoute>
-                  <FxRatesPage />
-                </ProtectedRoute>
-              }
-            />
-            {/* Modern dashboards */}
+
             <Route
               path="/dashboard/production-modern"
               element={
@@ -180,68 +765,6 @@ function AppRoutes() {
               }
             />
 
-            {/* Role-specific dashboards */}
-            <Route
-              path="/dashboard/management"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ManagementDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/factory"
-              element={
-                <ProtectedRoute allowedRoles={['factory']}>
-                  <FactoryDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/airport"
-              element={
-                <ProtectedRoute allowedRoles={['airport']}>
-                  <AirportDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/refinery"
-              element={
-                <ProtectedRoute allowedRoles={['refinery']}>
-                  <RefineryDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/customer"
-              element={
-                <ProtectedRoute allowedRoles={['customer']}>
-                  <CustomerDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Help Center - Accessible to all authenticated users */}
-            <Route
-              path="/help"
-              element={
-                <ProtectedRoute>
-                  <HelpCenter />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Artisan Minier Routes */}
             <Route
               path="/artisan-minier"
               element={
@@ -250,6 +773,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/liste"
               element={
@@ -258,6 +782,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/cartes/suivi"
               element={
@@ -266,6 +791,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/:id"
               element={
@@ -274,6 +800,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/:id/edit"
               element={
@@ -282,6 +809,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/cartes/validation"
               element={
@@ -290,6 +818,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/cartes/expirations"
               element={
@@ -298,6 +827,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/ventes-or"
               element={
@@ -306,6 +836,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/ventes-or/nouvelle"
               element={
@@ -314,6 +845,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/ventes-or/:id"
               element={
@@ -322,6 +854,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/ventes-or/:id/modifier"
               element={
@@ -330,6 +863,16 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/artisan-minier/ventes-or/:id/facture"
+              element={
+                <ProtectedRoute>
+                  <FactureVente />
+                </ProtectedRoute>
+              }
+            />
+
             <Route
               path="/artisan-minier/paiements"
               element={
@@ -338,6 +881,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/paiements/:venteId/nouveau"
               element={
@@ -346,6 +890,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/paiements/historique"
               element={
@@ -354,6 +899,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/:artisanId/infractions/nouvelle"
               element={
@@ -362,6 +908,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/:artisanId/infractions/:infractionId"
               element={
@@ -370,6 +917,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/rapports"
               element={
@@ -378,6 +926,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/rapports/chiffre-affaires"
               element={
@@ -386,6 +935,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/rapports/quantites"
               element={
@@ -394,6 +944,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/rapports/taxes"
               element={
@@ -402,121 +953,12 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-minier/:artisanId/infractions/:infractionId/modifier"
               element={
                 <ProtectedRoute>
                   <InfractionForm />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/shipping/preparation"
-              element={
-                <ProtectedRoute>
-                  <ShippingDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping/preparation/new"
-              element={
-                <ProtectedRoute>
-                  <ShippingPreparationNew />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping/preparation/edit/:id"
-              element={
-                <ProtectedRoute>
-                  <ShippingPreparationNew />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping/preparation/:id"
-              element={
-                <ProtectedRoute>
-                  <ShippingPreparationDetailsEnhanced />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping/preparation/:id/details"
-              element={
-                <ProtectedRoute>
-                  <ShippingPreparationDetailsEnhanced />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/shipping/preparation/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <ShippingPreparationEdit />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Invoice & Consignment Routes - NEW SYSTEM */}
-            <Route
-              path="/freight"
-              element={
-                <ProtectedRoute>
-                  <FreightShipmentDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/freight/shipments/create"
-              element={
-                <ProtectedRoute>
-                  <FreightShipmentCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/freight/shipments/:id"
-              element={
-                <ProtectedRoute>
-                  <FreightShipmentDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Invoice & Consignment Routes - OLD SYSTEM (kept for compatibility) */}
-            <Route
-              path="/freight-customs"
-              element={
-                <ProtectedRoute>
-                  <FreightCustomsDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/freight-customs/create"
-              element={
-                <ProtectedRoute>
-                  <FreightCustomsCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/freight-customs/:id"
-              element={
-                <ProtectedRoute>
-                  <FreightCustomsDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/documents/assay-certificates"
-              element={
-                <ProtectedRoute>
-                  <AssayCertificatesModern />
                 </ProtectedRoute>
               }
             />
@@ -529,172 +971,12 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/inventory/add"
               element={
                 <ProtectedRoute allowedRoles={['refinery', 'management']}>
                   <AddInventoryEntry />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/silver"
-              element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <SilverInventoryManagement />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/shipping"
-              element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
-                  <ProfileGuard>
-                    <ShippingDashboard />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/refining"
-              element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <RefiningProcess />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/refining/freight-shipments"
-              element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <FreightShipmentsRefining />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/refining/:id/process"
-              element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
-                  <RefiningProcess />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Pre-Sales Routes */}
-            <Route
-              path="/presales"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <PreSalesDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/presales/new"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
-                  <PreSaleCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/presales/:id"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <PreSaleDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Sales Routes */}
-            <Route
-              path="/sales"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <SalesDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sales/new"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
-                  <SaleCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sales/trade-space"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
-                  <GoldTradeSpace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sales/approve/:saleId/:token"
-              element={
-                <CustomerSaleApproval />
-              }
-            />
-            <Route
-              path="/sales/:id"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <SaleDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/customers"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <ProfileGuard>
-                    <CustomerListing />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers/new"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_CREATE}>
-                  <ProfileGuard>
-                    <CustomerForm />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers/:id/edit"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_EDIT}>
-                  <ProfileGuard>
-                    <CustomerForm />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers/:id"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <ProfileGuard>
-                    <CustomerProfile />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers/:id/payments"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <ProfileGuard>
-                    <PaymentProcessing />
-                  </ProfileGuard>
                 </ProtectedRoute>
               }
             />
@@ -707,65 +989,16 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path="/payments/create"
+              path="/analytics/assistant"
               element={
                 <ProtectedRoute>
-                  <PaymentCreate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments/virtual"
-              element={
-                <ProtectedRoute>
-                  <VirtualPaymentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments/record"
-              element={
-                <ProtectedRoute>
-                  <PaymentRecordPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments/:id"
-              element={
-                <ProtectedRoute>
-                  <PaymentDetailsPage />
+                  <AiAssistantPage />
                 </ProtectedRoute>
               }
             />
 
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <AnalyticsIntelligenceCenter />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics/legacy"
-              element={
-                <ProtectedRoute>
-                  <AnalyticsDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
-                  <ReportsDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Artisanal Sites Routes */}
             <Route
               path="/artisan-sites"
               element={
@@ -774,6 +1007,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-sites/nouveau"
               element={
@@ -782,6 +1016,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-sites/:siteId/modifier"
               element={
@@ -790,6 +1025,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/artisan-sites/production"
               element={
@@ -799,7 +1035,6 @@ function AppRoutes() {
               }
             />
 
-            {/* Production Routes */}
             <Route
               path="/production/daily"
               element={
@@ -808,24 +1043,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/production/:id"
-              element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
-                  <ProductionDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/production/in-safe"
-              element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
-                  <ProductionInSafe />
-                </ProtectedRoute>
-              }
-            />
 
-            {/* Export Licenses Routes */}
             <Route
               path="/production/licenses"
               element={
@@ -834,123 +1052,12 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/production/licenses/new"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ExportLicenseForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/production/licenses/edit/:id"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ExportLicenseForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/production/licenses/:id"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ExportLicenseDetails />
-                </ProtectedRoute>
-              }
-            />
 
-            {/* Performance Management Routes */}
-            <Route
-              path="/performance/forecasts"
-              element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ForecastManagementPage />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/performance/budgets"
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <BudgetManagementPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/mining-companies"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <MiningCompaniesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/stakeholders/mining-companies/new"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <MiningCompanyForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/stakeholders/mining-companies/:id"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <MiningCompanyDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/stakeholders/mining-companies/:id/edit"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <MiningCompanyForm />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/freight-companies"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <FreightCompaniesPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/refinery-plants"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <RefineryPlantsPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/depositors"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <DepositorsPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/depositors/new"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <DepositorFormPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stakeholders/depositors/:id/edit"
-              element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <DepositorFormPage />
                 </ProtectedRoute>
               }
             />
@@ -963,6 +1070,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/users/new"
               element={
@@ -971,6 +1079,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/users/edit"
               element={
@@ -979,6 +1088,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/users/:userId"
               element={
@@ -987,6 +1097,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/users"
               element={
@@ -995,6 +1106,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/users/:userId/permissions"
               element={
@@ -1003,6 +1115,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/status-manager"
               element={
@@ -1011,6 +1124,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/parameters"
               element={
@@ -1019,18 +1133,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            {/* `/settings` proposait un ecran de configuration qui n'enregistrait rien :
-                son bouton « Save Changes » se contentait d'un `console.log`. Le
-                parametrage reel vit sur `/parameters`. */}
-            <Route path="/settings" element={<Navigate to="/parameters" replace />} />
-            <Route
-              path="/audit"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
-                  <AuditTrailPage />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/approvals"
               element={
@@ -1120,6 +1223,8 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+
+          </Route>
         </Routes>
       </Suspense>
     </RouteErrorBoundary>

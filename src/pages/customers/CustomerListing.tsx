@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, Download, TrendingUp, DollarSign } from 'lucide-react';
+import { Users, Plus, TrendingUp, DollarSign } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -250,10 +250,6 @@ export function CustomerListing() {
 
   const countries = Array.from(new Set(customers.map((c) => c.country)));
 
-  const handleExport = () => {
-    console.log('Exporting customer data...');
-  };
-
   if (loading) {
     return (
       <MainLayout>
@@ -275,14 +271,6 @@ export function CustomerListing() {
             <p className="text-gray-600 mt-1">Customer Relationship Management</p>
           </div>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
             <Button
               onClick={() => navigate('/customers/new')}
               className="flex items-center gap-2"

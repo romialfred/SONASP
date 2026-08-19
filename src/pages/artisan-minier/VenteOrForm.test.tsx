@@ -5,6 +5,7 @@ import VenteOrForm, { artisanDisplayName, karatToPercentage, percentageToKarat }
 import type { ArtisanMinier } from '@/services/artisanMinierService';
 
 const mocks = vi.hoisted(() => ({
+  prixGramme: 85_821 as number | null,
   navigate: vi.fn(),
   params: { id: undefined as string | undefined },
   getAllArtisans: vi.fn(),
@@ -22,11 +23,31 @@ vi.mock('react-router-dom', () => ({
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
+vi.mock('@/services/venteRecuNumberService', () => ({
+  genererNumeroRecu: () => Promise.resolve('VE-OR-2026-00007'),
+}));
+
 vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/prices/LiveGoldPricePanel', () => ({ LiveGoldPricePanel: () => null }));
+
+vi.mock('@/hooks/useCoursOr', async () => {
+  const reel = await vi.importActual<typeof import('@/hooks/useCoursOr')>('@/hooks/useCoursOr');
+  return {
+    ...reel,
+    useCoursOr: () => ({
+      cours: null,
+      tauxUsdXof: 600,
+      prixGrammeFcfa: mocks.prixGramme,
+      derniereMaj: null,
+      chargement: false,
+      erreur: mocks.prixGramme === null ? 'Cours indisponible auprès de la source.' : null,
+      actualiser: vi.fn(),
+    }),
+  };
+});
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
 
 vi.mock('@/hooks/useCustomAlert', () => ({
@@ -103,6 +124,69 @@ describe('VenteOrForm', () => {
     mocks.create.mockResolvedValue({ id: 'new' });
   });
 
+  it('attribue et affiche le numéro de vente sans le laisser saisir', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+
+    // Un numéro frappé à la main ouvrait la porte aux doublons sur une pièce comptable.
+    expect(screen.queryByLabelText('N° de reçu')).not.toBeInTheDocument();
+    expect(screen.getByText('N° de vente')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('VE-OR-2026-00007')).toBeInTheDocument());
+  });
+
+  it('enregistre la vente sous le numéro annoncé à l’écran', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText('VE-OR-2026-00007')).toBeInTheDocument());
+
+    fillSale();
+    fireEvent.click(screen.getByRole('button', { name: /Enregistrer la vente/ }));
+    await waitFor(() => expect(mocks.create).toHaveBeenCalled());
+
+    // Sans cette reprise, le service en aurait attribué un second et la pièce
+    // aurait porté un numéro différent de celui affiché.
+    expect(mocks.create.mock.calls[0][0].numero_recu).toBe('VE-OR-2026-00007');
+  });
+
+  it('aligne le prix au gramme sur le cours du marché', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(85_821));
+
+    expect(screen.getByText('Cours du marché : 85 821 FCFA/g')).toBeInTheDocument();
+    // Au cours du marché, l'écart est nul.
+    expect(screen.getByText('+0,00 %')).toBeInTheDocument();
+  });
+
+  it('laisse modifier le prix et annonce l’écart au cours', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(85_821));
+
+    fireEvent.change(screen.getByLabelText(/Prix au gramme/), { target: { value: '94403' } });
+    expect(screen.getByText('+10,00 %')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Prix au gramme/), { target: { value: '77239' } });
+    expect(screen.getByText('-10,00 %')).toBeInTheDocument();
+  });
+
+  it('n’écrase pas une saisie quand le cours arrive', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(85_821));
+
+    fireEvent.change(screen.getByLabelText(/Prix au gramme/), { target: { value: '90000' } });
+    await waitFor(() => expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(90_000));
+  });
+
+  it('laisse le champ vide quand le cours est indisponible', async () => {
+    mocks.prixGramme = null;
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+
+    // Une valeur de complaisance sur cet écran deviendrait le prix payé à l'artisan.
+    expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(null);
+    expect(screen.getByText('Cours indisponible auprès de la source.')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+    mocks.prixGramme = 85_821;
+  });
+
   it('organise le formulaire en sections métier', async () => {
     render(<VenteOrForm />);
     await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
@@ -155,7 +239,7 @@ describe('VenteOrForm', () => {
     render(<VenteOrForm />);
     await waitFor(() => expect(screen.getByText('Nature et titre de l’or')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: '24 K' }));
+    fireEvent.click(screen.getByRole('button', { name: /^24 carats/ }));
     expect(screen.getByLabelText(/Pureté/)).toHaveValue(100);
 
     fireEvent.change(screen.getByLabelText(/Pureté/), { target: { value: '75' } });

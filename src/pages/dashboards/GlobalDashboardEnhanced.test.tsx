@@ -76,6 +76,8 @@ const donnees: NationalDashboardData = {
   stockShare: 31,
   royaltyRate: 3,
   expiringCards: 4,
+  artisansTotal: 1_482,
+  artisansActifs: 1_265,
 };
 
 describe('calculs du tableau de bord national', () => {
@@ -146,6 +148,9 @@ describe('GlobalDashboardEnhanced', () => {
     expect(indicateurs.getByText('−3,2 %')).toBeInTheDocument();
     // Le taux de redevance affiché est celui constaté, non un « 3 % » annoncé en dur.
     expect(indicateurs.getByText('Taux constaté 3 %')).toBeInTheDocument();
+    // Le tableau de bord national doit couvrir aussi le recensement des artisans.
+    expect(indicateurs.getByText(/1[  ]?482/)).toBeInTheDocument();
+    expect(indicateurs.getByText(/1[  ]?265 actifs/)).toBeInTheDocument();
   });
 
   it('interroge la période effectivement retenue', async () => {

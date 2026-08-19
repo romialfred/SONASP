@@ -11,6 +11,8 @@ import {
 import type { ArtisanMinier } from '@/services/artisanMinierService';
 
 const mocks = vi.hoisted(() => ({
+  listerMoyens: vi.fn(),
+  remplacerMoyens: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   uploadDocument: vi.fn(),
@@ -39,6 +41,19 @@ vi.mock('@/services/artisanMinierService', () => ({
     uploadDocument: mocks.uploadDocument,
   },
 }));
+
+vi.mock('@/services/artisanMoyenPaiementService', async () => {
+  const reel = await vi.importActual<typeof import('@/services/artisanMoyenPaiementService')>(
+    '@/services/artisanMoyenPaiementService'
+  );
+  return {
+    ...reel,
+    artisanMoyenPaiementService: {
+      listerParArtisan: mocks.listerMoyens,
+      remplacerPourArtisan: mocks.remplacerMoyens,
+    },
+  };
+});
 
 vi.mock('@/services/carteProfessionnelleGeneratorService', () => ({
   carteProfessionnelleGeneratorService: { generatePreviewDataUrl: mocks.preview },
@@ -128,6 +143,8 @@ describe('ArtisanMinierForm', () => {
     mocks.update.mockResolvedValue({ id: 'a9' });
     mocks.uploadDocument.mockResolvedValue('https://stockage/photo.jpg');
     mocks.preview.mockResolvedValue('data:image/png;base64,AAA');
+    mocks.listerMoyens.mockResolvedValue([]);
+    mocks.remplacerMoyens.mockResolvedValue(undefined);
   });
 
   const remplirFiche = () => {

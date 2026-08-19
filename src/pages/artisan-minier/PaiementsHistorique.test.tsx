@@ -104,34 +104,6 @@ describe('PaiementsHistorique', () => {
     expect(screen.queryByText('PAY-001')).not.toBeInTheDocument();
   });
 
-  it('exporte réellement les lignes filtrées en CSV', async () => {
-    const createObjectURL = vi.fn(() => 'blob:csv');
-    const revokeObjectURL = vi.fn();
-    Object.assign(URL, { createObjectURL, revokeObjectURL });
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-
-    render(<PaiementsHistorique />);
-    await waitFor(() => expect(screen.getByText('PAY-001')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole('button', { name: /Exporter \(3\)/ }));
-
-    await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
-    expect(click).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalled();
-    expect(mocks.showSuccess).toHaveBeenCalledWith('3 paiement(s) exporté(s)');
-    click.mockRestore();
-  });
-
-  it('refuse l’export quand le filtre ne laisse aucune ligne', async () => {
-    mocks.getAllPaiements.mockResolvedValue([]);
-    render(<PaiementsHistorique />);
-
-    await waitFor(() => expect(screen.getByText('Aucun paiement enregistré')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole('button', { name: /Exporter \(0\)/ }));
-    expect(mocks.showError).toHaveBeenCalledWith('Aucun paiement à exporter avec les filtres actuels');
-  });
-
   it('signale un historique indisponible', async () => {
     mocks.getAllPaiements.mockRejectedValue(new Error('hors ligne'));
     render(<PaiementsHistorique />);

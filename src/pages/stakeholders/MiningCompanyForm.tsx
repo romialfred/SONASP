@@ -7,113 +7,27 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
-import { FieldGuidePanel, FieldGuideItem } from '@/components/ui/FieldGuidePanel';
-import { Factory, ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { Factory, ArrowLeft, Save, Plus, Trash2, FileText, Download, Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
+import { BURKINA_REGIONS } from '@/data/burkinaRegions';
+import { BURKINA_PROVINCES } from '@/data/burkinaProvinces';
+import {
+  miningCompanyDocumentService,
+  MINING_COMPANY_DOC_TYPES,
+  type MiningCompanyDocument,
+} from '@/services/miningCompanyDocumentService';
+import { MiningCompanyFormGuide } from '@/components/stakeholders/MiningCompanyFormGuide';
 
-const COUNTRIES = ['Guinea', 'Mali', 'Côte d\'Ivoire', 'Liberia', 'Senegal', 'Ghana', 'France', 'UAE', 'South Africa', 'Burkina Faso'];
-const CURRENCIES = ['USD', 'EUR', 'GNF', 'XOF', 'AED', 'ZAR', 'GHS'];
+const COUNTRIES = ['Burkina Faso', 'Guinea', 'Mali', "Côte d'Ivoire", 'Liberia', 'Senegal', 'Ghana', 'France', 'UAE', 'South Africa'];
+const CURRENCIES = ['XOF', 'USD', 'EUR', 'GNF', 'AED', 'ZAR', 'GHS'];
 
-const fieldGuides: FieldGuideItem[] = [
-  {
-    field: 'name',
-    label: 'Company Name / Nom de la Société',
-    description: 'Nom officiel complet de la société minière tel qu\'enregistré légalement',
-    example: 'Essakane Mine Site SA',
-    required: true,
-    section: 'Company Information'
-  },
-  {
-    field: 'code',
-    label: 'Company Code / Code Société',
-    description: 'Code d\'identification unique pour la société (utilisé dans les rapports et transactions)',
-    example: 'ESSAKANE_BF',
-    required: true,
-    rules: ['Doit être unique', 'Pas d\'espaces', 'Utiliser majuscules'],
-    section: 'Company Information'
-  },
-  {
-    field: 'country',
-    label: 'Country / Pays',
-    description: 'Pays où la société est enregistrée et opère',
-    example: 'Guinea, Mali, Burkina Faso',
-    required: true,
-    section: 'Company Information'
-  },
-  {
-    field: 'address',
-    label: 'Address / Adresse',
-    description: 'Adresse physique complète du siège social ou du site minier',
-    example: 'Zone industrielle de Kaloum, Rue KA-028',
-    section: 'Company Information'
-  },
-  {
-    field: 'city',
-    label: 'City / Ville',
-    description: 'Ville où se trouve le siège social ou le site principal',
-    example: 'Conakry, Bamako, Ouagadougou',
-    section: 'Company Information'
-  },
-  {
-    field: 'postal_code',
-    label: 'Postal Code / Code Postal',
-    description: 'Code postal ou boîte postale de la société',
-    example: 'BP 1234',
-    section: 'Company Information'
-  },
-  {
-    field: 'contact_person_name',
-    label: 'Contact Person / Personne de Contact',
-    description: 'Nom complet de la personne responsable principale (directeur, responsable des opérations)',
-    example: 'Mamadou Diallo',
-    required: true,
-    section: 'Contact Information'
-  },
-  {
-    field: 'contact_person_email',
-    label: 'Contact Email / Email de Contact',
-    description: 'Adresse email professionnelle de la personne de contact',
-    example: 'm.diallo@essakane.com',
-    required: true,
-    section: 'Contact Information'
-  },
-  {
-    field: 'contact_person_phone',
-    label: 'Contact Phone / Téléphone',
-    description: 'Numéro de téléphone direct de la personne de contact (avec indicatif pays)',
-    example: '+224 622 123 456',
-    section: 'Contact Information'
-  },
-  {
-    field: 'website',
-    label: 'Website / Site Web',
-    description: 'Site web officiel de la société (optionnel)',
-    example: 'https://www.miningcompany.com',
-    section: 'Contact Information'
-  },
-  {
-    field: 'default_currency',
-    label: 'Default Currency / Devise par Défaut',
-    description: 'Devise préférée pour les transactions commerciales avec cette société',
-    example: 'USD (Dollar américain), EUR (Euro), GNF (Franc guinéen)',
-    section: 'Additional Information'
-  },
-  {
-    field: 'tax_id',
-    label: 'Tax ID / Numéro Fiscal',
-    description: 'Numéro d\'identification fiscale attribué par les autorités locales',
-    example: 'NIF-123456789',
-    section: 'Additional Information'
-  },
-  {
-    field: 'registration_number',
-    label: 'Registration Number / Numéro d\'Enregistrement',
-    description: 'Numéro d\'enregistrement commercial de la société',
-    example: 'RCCM-GN-2023-A-12345',
-    section: 'Additional Information'
-  },
+const COMPANY_TYPES = [
+  { value: 'production_mine', label: 'Mine de production' },
+  { value: 'parent_company', label: 'Société mère / Groupe' },
+  { value: 'institution', label: 'Institution' },
 ];
+
 
 interface BankAccount {
   id?: string;
@@ -126,51 +40,86 @@ interface BankAccount {
   is_primary: boolean;
 }
 
+interface CompanyForm {
+  name: string;
+  abbreviation: string;
+  code: string;
+  company_type: string;
+  registration_number: string;
+  tax_id: string;
+  country: string;
+  region: string;
+  province: string;
+  localite: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  contact_person_name: string;
+  contact_person_email: string;
+  contact_person_phone: string;
+  website: string;
+  default_currency: string;
+  notes: string;
+}
+
+const EMPTY_FORM: CompanyForm = {
+  name: '', abbreviation: '', code: '', company_type: 'production_mine',
+  registration_number: '', tax_id: '',
+  country: 'Burkina Faso', region: '', province: '', localite: '', address: '', city: '', postal_code: '',
+  contact_person_name: '', contact_person_email: '', contact_person_phone: '', website: '',
+  default_currency: 'XOF', notes: '',
+};
+
 export function MiningCompanyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
-  const { showError, showSuccess } = useNotification();
+  const { showError } = useNotification();
 
-  // Removed currentField state - Field Guide now shows all fields
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    country: 'Guinea',
-    address: '',
-    city: '',
-    postal_code: '',
-    contact_person_name: '',
-    contact_person_email: '',
-    contact_person_phone: '',
-    website: '',
-    default_currency: 'USD',
-    tax_id: '',
-    registration_number: '',
-    notes: '',
-  });
-
+  const [formData, setFormData] = useState<CompanyForm>(EMPTY_FORM);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [documents, setDocuments] = useState<MiningCompanyDocument[]>([]);
+  const [pendingDocs, setPendingDocs] = useState<{ file: File; docType: string }[]>([]);
+  const [docType, setDocType] = useState<string>('rccm');
+
+  const isBurkina = formData.country === 'Burkina Faso';
+  const provincesForRegion = BURKINA_PROVINCES.filter((p) => p.region === formData.region);
 
   useEffect(() => {
     if (isEdit) {
       loadCompany();
+      loadBankAccounts();
+      loadDocuments();
     }
   }, [id]);
 
   const loadCompany = async () => {
     try {
-      const { data, error } = await supabase
-        .from('mining_companies')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      const { data, error } = await supabase.from('mining_companies').select('*').eq('id', id).single();
       if (error) throw error;
       if (data) {
-        setFormData(data);
-        loadBankAccounts();
+        setFormData({
+          name: data.name ?? '',
+          abbreviation: data.abbreviation ?? '',
+          code: data.code ?? '',
+          company_type: data.company_type ?? 'production_mine',
+          registration_number: data.registration_number ?? '',
+          tax_id: data.tax_id ?? '',
+          country: data.country ?? 'Burkina Faso',
+          region: data.region ?? '',
+          province: data.province ?? '',
+          localite: data.localite ?? '',
+          address: data.address ?? '',
+          city: data.city ?? '',
+          postal_code: data.postal_code ?? '',
+          contact_person_name: data.contact_person_name ?? '',
+          contact_person_email: data.contact_person_email ?? '',
+          contact_person_phone: data.contact_person_phone ?? '',
+          website: data.website ?? '',
+          default_currency: data.default_currency ?? 'XOF',
+          notes: data.notes ?? '',
+        });
       }
     } catch (error) {
       console.error('Error loading company:', error);
@@ -184,7 +133,6 @@ export function MiningCompanyForm() {
         .select('*')
         .eq('stakeholder_type', 'mining_company')
         .eq('stakeholder_id', id);
-
       if (error) throw error;
       setBankAccounts(data || []);
     } catch (error) {
@@ -192,78 +140,108 @@ export function MiningCompanyForm() {
     }
   };
 
-  const addBankAccount = () => {
+  const loadDocuments = async () => {
+    try {
+      setDocuments(await miningCompanyDocumentService.list(id as string));
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    }
+  };
+
+  const set = <K extends keyof CompanyForm>(key: K, value: CompanyForm[K]) =>
+    setFormData((prev) => ({ ...prev, [key]: value }));
+
+  const addBankAccount = () =>
     setBankAccounts([...bankAccounts, {
-      account_name: '',
-      bank_name: '',
-      bank_country: 'Guinea',
-      account_number: '',
-      account_currency: 'USD',
-      swift_code: '',
-      is_primary: bankAccounts.length === 0,
+      account_name: '', bank_name: '', bank_country: formData.country, account_number: '',
+      account_currency: formData.default_currency, swift_code: '', is_primary: bankAccounts.length === 0,
     }]);
-  };
-
-  const removeBankAccount = (index: number) => {
-    setBankAccounts(bankAccounts.filter((_, i) => i !== index));
-  };
-
+  const removeBankAccount = (index: number) => setBankAccounts(bankAccounts.filter((_, i) => i !== index));
   const updateBankAccount = (index: number, field: string, value: any) => {
     const updated = [...bankAccounts];
     updated[index] = { ...updated[index], [field]: value };
     setBankAccounts(updated);
   };
 
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isEdit) {
+      miningCompanyDocumentService
+        .upload(id as string, file, docType)
+        .then(loadDocuments)
+        .catch((err) => showError('Document', err.message || 'Échec du téléversement du document.'));
+    } else {
+      setPendingDocs((prev) => [...prev, { file, docType }]);
+    }
+    e.target.value = '';
+  };
+
+  const openDocument = async (doc: MiningCompanyDocument) => {
+    const url = await miningCompanyDocumentService.getSignedUrl(doc.file_path);
+    if (url) window.open(url, '_blank');
+  };
+
+  const deleteDocument = async (doc: MiningCompanyDocument) => {
+    try {
+      await miningCompanyDocumentService.remove(doc);
+      loadDocuments();
+    } catch (err: any) {
+      showError('Document', err.message || 'Échec de la suppression.');
+    }
+  };
+
+  const docTypeLabel = (value: string | null) =>
+    MINING_COMPANY_DOC_TYPES.find((t) => t.value === value)?.label ?? 'Document';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const { data: userData } = await supabase.auth.getUser();
+      const payload = {
+        ...formData,
+        // La localisation détaillée n'a de sens que pour le Burkina Faso.
+        region: isBurkina ? formData.region || null : formData.region || null,
+        province: isBurkina ? formData.province || null : formData.province || null,
+      };
+
+      let companyId = id as string | undefined;
 
       if (isEdit) {
-        const { error } = await supabase
-          .from('mining_companies')
-          .update(formData)
-          .eq('id', id);
-
+        const { error } = await supabase.from('mining_companies').update(payload).eq('id', id);
         if (error) throw error;
-
-        // Update bank accounts
-        await supabase
-          .from('stakeholder_bank_accounts')
-          .delete()
-          .eq('stakeholder_type', 'mining_company')
-          .eq('stakeholder_id', id);
-
-        for (const account of bankAccounts) {
-          if (account.bank_name && account.account_number) {
-            await supabase.from('stakeholder_bank_accounts').insert({
-              stakeholder_type: 'mining_company',
-              stakeholder_id: id,
-              ...account,
-              created_by: userData.user?.id,
-            });
-          }
-        }
       } else {
         const { data: newCompany, error } = await supabase
           .from('mining_companies')
-          .insert({ ...formData, created_by: userData.user?.id })
+          .insert({ ...payload, created_by: userData.user?.id })
           .select()
           .single();
-
         if (error) throw error;
+        companyId = newCompany.id;
+      }
 
-        // Insert bank accounts
-        for (const account of bankAccounts) {
-          if (account.bank_name && account.account_number) {
-            await supabase.from('stakeholder_bank_accounts').insert({
-              stakeholder_type: 'mining_company',
-              stakeholder_id: newCompany.id,
-              ...account,
-              created_by: userData.user?.id,
-            });
+      // Comptes bancaires (remplacement complet)
+      if (isEdit) {
+        await supabase.from('stakeholder_bank_accounts').delete()
+          .eq('stakeholder_type', 'mining_company').eq('stakeholder_id', id);
+      }
+      for (const account of bankAccounts) {
+        if (account.bank_name && account.account_number) {
+          await supabase.from('stakeholder_bank_accounts').insert({
+            stakeholder_type: 'mining_company', stakeholder_id: companyId, ...account,
+            created_by: userData.user?.id,
+          });
+        }
+      }
+
+      // Documents en attente (mode création)
+      if (companyId && pendingDocs.length > 0) {
+        for (const pending of pendingDocs) {
+          try {
+            await miningCompanyDocumentService.upload(companyId, pending.file, pending.docType);
+          } catch (err) {
+            console.error('Document upload failed:', err);
           }
         }
       }
@@ -271,7 +249,7 @@ export function MiningCompanyForm() {
       navigateWithAutoRefresh(navigate, '/stakeholders/mining-companies');
     } catch (error: any) {
       console.error('Error saving company:', error);
-      showError('Error Saving Company', error.message || 'An unexpected error occurred while saving the mining company.');
+      showError('Enregistrement', error.message || 'Une erreur est survenue lors de l\'enregistrement.');
     } finally {
       setLoading(false);
     }
@@ -282,124 +260,216 @@ export function MiningCompanyForm() {
       <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate('/stakeholders/mining-companies')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft className="h-4 w-4 mr-2" /> Retour
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Factory className="h-8 w-8 text-amber-700" />
-            {isEdit ? 'Edit Mining Company' : 'Add Mining Company'}
+          <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2.5">
+            <Factory className="h-5 w-5 text-emerald-700" />
+            {isEdit ? 'Modifier la société minière' : 'Nouvelle société minière'}
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* 1. Informations générales */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Company Information</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Informations générales</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Company Name" required>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
+                    <FormField label="Nom officiel" required hint="Raison sociale enregistrée">
+                      <Input value={formData.name} onChange={(e) => set('name', e.target.value)} required
+                        placeholder="Ex. Société des Mines de Poura SA" />
                     </FormField>
-
-                    <FormField label="Company Code" required>
-                      <Input
-                        value={formData.code}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                        required
-                      />
+                    <FormField label="Nom usuel" hint="Nom court, affiché dans les listes">
+                      <Input value={formData.abbreviation} onChange={(e) => set('abbreviation', e.target.value)}
+                        placeholder="Ex. Poura" />
                     </FormField>
                   </div>
-
-                  <FormField label="Country" required>
-                    <Select
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    >
-                      {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </Select>
-                  </FormField>
-
-                  <FormField label="Address">
-                    <Input
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    />
-                  </FormField>
-
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField label="City">
-                      <Input
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      />
+                    <FormField label="Code société" required hint="Majuscules, sans espaces">
+                      <Input value={formData.code} onChange={(e) => set('code', e.target.value.toUpperCase())} required
+                        placeholder="POURA_BF" />
                     </FormField>
-
-                    <FormField label="Postal Code">
-                      <Input
-                        value={formData.postal_code}
-                        onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                      />
+                    <FormField label="Type" required hint="Nature de l’entité">
+                      <Select value={formData.company_type} onChange={(e) => set('company_type', e.target.value)}>
+                        {COMPANY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </Select>
                     </FormField>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* 2. Identification légale */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Identification légale</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField label="Contact Person Name" required>
-                    <Input
-                      value={formData.contact_person_name}
-                      onChange={(e) => setFormData({ ...formData, contact_person_name: e.target.value })}
-                      required
-                    />
-                  </FormField>
-
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Contact Email" required>
-                      <Input
-                        type="email"
-                        value={formData.contact_person_email}
-                        onChange={(e) => setFormData({ ...formData, contact_person_email: e.target.value })}
-                        required
-                      />
+                    <FormField label="RCCM" hint="Registre du Commerce et du Crédit Mobilier">
+                      <Input value={formData.registration_number}
+                        onChange={(e) => set('registration_number', e.target.value)} placeholder="BF-OUA-2023-B-1234" />
                     </FormField>
-
-                    <FormField label="Contact Phone">
-                      <Input
-                        value={formData.contact_person_phone}
-                        onChange={(e) => setFormData({ ...formData, contact_person_phone: e.target.value })}
-                      />
+                    <FormField label="IFU" hint="Identifiant Financier Unique (DGI)">
+                      <Input value={formData.tax_id} onChange={(e) => set('tax_id', e.target.value)}
+                        placeholder="00012345A" />
                     </FormField>
                   </div>
-
-                  <FormField label="Website">
-                    <Input
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      placeholder="https://"
-                    />
-                  </FormField>
                 </CardContent>
               </Card>
 
+              {/* 3. Localisation */}
+              <Card>
+                <CardHeader><CardTitle>Localisation</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Pays" required>
+                      <Select value={formData.country}
+                        onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value, region: '', province: '' }))}>
+                        {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </Select>
+                    </FormField>
+                    <FormField label="Région">
+                      {isBurkina ? (
+                        <Select value={formData.region}
+                          onChange={(e) => setFormData((p) => ({ ...p, region: e.target.value, province: '' }))}>
+                          <option value="">— Sélectionner —</option>
+                          {BURKINA_REGIONS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                        </Select>
+                      ) : (
+                        <Input value={formData.region} onChange={(e) => set('region', e.target.value)} />
+                      )}
+                    </FormField>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Province">
+                      {isBurkina ? (
+                        <Select value={formData.province} onChange={(e) => set('province', e.target.value)}
+                          disabled={!formData.region}>
+                          <option value="">{formData.region ? '— Sélectionner —' : "Choisir d'abord une région"}</option>
+                          {provincesForRegion.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
+                        </Select>
+                      ) : (
+                        <Input value={formData.province} onChange={(e) => set('province', e.target.value)} />
+                      )}
+                    </FormField>
+                    <FormField label="Localité / Commune">
+                      <Input value={formData.localite} onChange={(e) => set('localite', e.target.value)}
+                        placeholder="Village, commune ou site" />
+                    </FormField>
+                  </div>
+                  <FormField label="Adresse">
+                    <Input value={formData.address} onChange={(e) => set('address', e.target.value)} />
+                  </FormField>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Ville">
+                      <Input value={formData.city} onChange={(e) => set('city', e.target.value)} />
+                    </FormField>
+                    <FormField label="Boîte postale / Code postal">
+                      <Input value={formData.postal_code} onChange={(e) => set('postal_code', e.target.value)}
+                        placeholder="01 BP 1234" />
+                    </FormField>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 4. Contact */}
+              <Card>
+                <CardHeader><CardTitle>Contact</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField label="Personne de contact" required>
+                    <Input value={formData.contact_person_name}
+                      onChange={(e) => set('contact_person_name', e.target.value)} required />
+                  </FormField>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Email" required>
+                      <Input type="email" value={formData.contact_person_email}
+                        onChange={(e) => set('contact_person_email', e.target.value)} required />
+                    </FormField>
+                    <FormField label="Téléphone">
+                      <Input value={formData.contact_person_phone}
+                        onChange={(e) => set('contact_person_phone', e.target.value)} placeholder="+226 70 00 00 00" />
+                    </FormField>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Site web">
+                      <Input type="url" value={formData.website} onChange={(e) => set('website', e.target.value)}
+                        placeholder="https://" />
+                    </FormField>
+                    <FormField label="Devise par défaut">
+                      <Select value={formData.default_currency} onChange={(e) => set('default_currency', e.target.value)}>
+                        {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </Select>
+                    </FormField>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 5. Documents */}
+              <Card>
+                <CardHeader><CardTitle>Documents</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap items-end gap-3">
+                    <FormField label="Type de document">
+                      <Select value={docType} onChange={(e) => setDocType(e.target.value)}>
+                        {MINING_COMPANY_DOC_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </Select>
+                    </FormField>
+                    <label className="inline-flex h-[42px] cursor-pointer items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+                      <Upload className="h-4 w-4" /> Joindre un fichier
+                      <input type="file" className="hidden" onChange={onPickFile}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                    </label>
+                  </div>
+
+                  {/* Documents déjà enregistrés (édition) */}
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <FileText className="h-4 w-4 text-emerald-600" />
+                        <span className="font-medium text-slate-700">{docTypeLabel(doc.doc_type)}</span>
+                        <span className="text-slate-400">·</span>
+                        <span className="text-slate-500">{doc.file_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="sm" onClick={() => openDocument(doc)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => deleteDocument(doc)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Documents en attente (création) */}
+                  {pendingDocs.map((pending, index) => (
+                    <div key={index} className="flex items-center justify-between rounded-lg border border-dashed border-emerald-300 bg-emerald-50/40 px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <FileText className="h-4 w-4 text-emerald-600" />
+                        <span className="font-medium text-slate-700">{docTypeLabel(pending.docType)}</span>
+                        <span className="text-slate-400">·</span>
+                        <span className="text-slate-500">{pending.file.name}</span>
+                        <span className="text-xs text-emerald-600">(à téléverser)</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="sm"
+                        onClick={() => setPendingDocs((p) => p.filter((_, i) => i !== index))}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  {documents.length === 0 && pendingDocs.length === 0 && (
+                    <p className="py-3 text-center text-sm text-slate-400">Aucun document joint pour le moment</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 6. Comptes bancaires */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Bank Accounts</CardTitle>
+                    <CardTitle>Comptes bancaires</CardTitle>
                     <Button type="button" variant="outline" size="sm" onClick={addBankAccount}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Account
+                      <Plus className="w-4 h-4 mr-2" /> Ajouter un compte
                     </Button>
                   </div>
                 </CardHeader>
@@ -407,131 +477,60 @@ export function MiningCompanyForm() {
                   {bankAccounts.map((account, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Account {index + 1}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeBankAccount(index)}
-                        >
+                        <span className="text-sm font-medium text-gray-700">Compte {index + 1}</span>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeBankAccount(index)}>
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       </div>
-
                       <div className="grid grid-cols-2 gap-3">
-                        <FormField label="Account Name">
-                          <Input
-                            value={account.account_name}
-                            onChange={(e) => updateBankAccount(index, 'account_name', e.target.value)}
-                            placeholder="Account holder name"
-                          />
+                        <FormField label="Intitulé du compte">
+                          <Input value={account.account_name} onChange={(e) => updateBankAccount(index, 'account_name', e.target.value)} />
                         </FormField>
-
-                        <FormField label="Bank Name">
-                          <Input
-                            value={account.bank_name}
-                            onChange={(e) => updateBankAccount(index, 'bank_name', e.target.value)}
-                            placeholder="Bank name"
-                          />
+                        <FormField label="Banque">
+                          <Input value={account.bank_name} onChange={(e) => updateBankAccount(index, 'bank_name', e.target.value)} />
                         </FormField>
-
-                        <FormField label="Bank Country">
-                          <Select
-                            value={account.bank_country}
-                            onChange={(e) => updateBankAccount(index, 'bank_country', e.target.value)}
-                          >
-                            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        <FormField label="Pays de la banque">
+                          <Select value={account.bank_country} onChange={(e) => updateBankAccount(index, 'bank_country', e.target.value)}>
+                            {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                           </Select>
                         </FormField>
-
-                        <FormField label="Account Number">
-                          <Input
-                            value={account.account_number}
-                            onChange={(e) => updateBankAccount(index, 'account_number', e.target.value)}
-                            placeholder="Account number"
-                          />
+                        <FormField label="Numéro de compte / IBAN">
+                          <Input value={account.account_number} onChange={(e) => updateBankAccount(index, 'account_number', e.target.value)} />
                         </FormField>
-
-                        <FormField label="Currency">
-                          <Select
-                            value={account.account_currency}
-                            onChange={(e) => updateBankAccount(index, 'account_currency', e.target.value)}
-                          >
-                            {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        <FormField label="Devise">
+                          <Select value={account.account_currency} onChange={(e) => updateBankAccount(index, 'account_currency', e.target.value)}>
+                            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                           </Select>
                         </FormField>
-
-                        <FormField label="SWIFT Code">
-                          <Input
-                            value={account.swift_code}
-                            onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)}
-                            placeholder="SWIFT/BIC code"
-                          />
+                        <FormField label="Code SWIFT/BIC">
+                          <Input value={account.swift_code} onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)} />
                         </FormField>
                       </div>
-
                       <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={account.is_primary}
+                        <input type="checkbox" checked={account.is_primary}
                           onChange={(e) => updateBankAccount(index, 'is_primary', e.target.checked)}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm text-gray-700">Primary Account</span>
+                          className="rounded border-gray-300 accent-emerald-600" />
+                        <span className="text-sm text-gray-700">Compte principal</span>
                       </label>
                     </div>
                   ))}
-
                   {bankAccounts.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No bank accounts added yet</p>
-                      <Button type="button" variant="outline" onClick={addBankAccount} className="mt-2">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add First Account
-                      </Button>
+                    <div className="text-center py-6 text-gray-500">
+                      <p>Aucun compte bancaire ajouté</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
+              {/* 7. Notes */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Additional Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField label="Default Currency">
-                      <Select
-                        value={formData.default_currency}
-                        onChange={(e) => setFormData({ ...formData, default_currency: e.target.value })}
-                      >
-                        {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </Select>
-                    </FormField>
-
-                    <FormField label="Tax ID">
-                      <Input
-                        value={formData.tax_id}
-                        onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                      />
-                    </FormField>
-
-                    <FormField label="Registration Number">
-                      <Input
-                        value={formData.registration_number}
-                        onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
-                      />
-                    </FormField>
-                  </div>
-
-                  <FormField label="Notes">
+                <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
+                <CardContent>
+                  <FormField label="Notes internes">
                     <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      rows={4}
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Additional notes..."
-                    />
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      rows={4} value={formData.notes} onChange={(e) => set('notes', e.target.value)}
+                      placeholder="Observations, remarques…" />
                   </FormField>
                 </CardContent>
               </Card>
@@ -539,25 +538,16 @@ export function MiningCompanyForm() {
               <div className="flex gap-3">
                 <Button type="submit" disabled={loading}>
                   <Save className="w-4 h-4 mr-2" />
-                  {loading ? 'Saving...' : isEdit ? 'Update Company' : 'Create Company'}
+                  {loading ? 'Enregistrement…' : isEdit ? 'Mettre à jour' : 'Créer la société'}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/stakeholders/mining-companies')}
-                >
-                  Cancel
+                <Button type="button" variant="outline" onClick={() => navigate('/stakeholders/mining-companies')}>
+                  Annuler
                 </Button>
               </div>
             </form>
           </div>
-
           <div className="lg:col-span-1">
-            <FieldGuidePanel
-              title="Field Guide"
-              guides={fieldGuides}
-              currentField={undefined}
-            />
+            <MiningCompanyFormGuide />
           </div>
         </div>
       </div>

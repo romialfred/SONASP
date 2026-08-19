@@ -2,18 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
-  ChevronDown,
   ChevronRight,
   Clock3,
   CreditCard,
-  Download,
   Map as MapIcon,
   MapPin,
   Mountain,
   Plus,
   RotateCcw,
-  Search,
+  SlidersHorizontal,
   Users,
+  X,
 } from 'lucide-react';
 import {
   CartesianGrid,
@@ -74,13 +73,26 @@ export default function ArtisanMinierDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState('');
   const [region, setRegion] = useState('all');
   const [province, setProvince] = useState('all');
   const [siteId, setSiteId] = useState('all');
   const [type, setType] = useState('all');
   const [status, setStatus] = useState('all');
   const [territoryTab, setTerritoryTab] = useState<TerritoryTab>('map');
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+
+  /** Nombre de filtres reellement appliques, affiche sur le bouton. */
+  const filtresActifs = [region, province, siteId, type, status].filter((valeur) => valeur !== 'all').length;
+
+  // Le volet se ferme aussi a la touche Echap, comme toute surcouche modale.
+  useEffect(() => {
+    if (!filtresOuverts) return undefined;
+    const surTouche = (evenement: KeyboardEvent) => {
+      if (evenement.key === 'Escape') setFiltresOuverts(false);
+    };
+    window.addEventListener('keydown', surTouche);
+    return () => window.removeEventListener('keydown', surTouche);
+  }, [filtresOuverts]);
 
   useEffect(() => {
     let mounted = true;
@@ -134,7 +146,6 @@ export default function ArtisanMinierDashboard() {
   );
 
   const filteredArtisans = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('fr');
     const localities = new Set(filteredSites.map((site) => site.locality.toLocaleLowerCase('fr')));
 
     return artisans.filter((artisan) => {
@@ -147,17 +158,9 @@ export default function ArtisanMinierDashboard() {
       const matchesSite =
         (province === 'all' && siteId === 'all') ||
         localities.has((artisan.commune || '').toLocaleLowerCase('fr'));
-      const matchesSearch =
-        !query ||
-        [artisan.nom, artisan.prenoms, artisan.raison_sociale, artisan.numero_carte, artisan.commune, artisan.region]
-          .filter(Boolean)
-          .join(' ')
-          .toLocaleLowerCase('fr')
-          .includes(query);
-
-      return matchesRegion && matchesType && matchesStatus && matchesSite && matchesSearch;
+      return matchesRegion && matchesType && matchesStatus && matchesSite;
     });
-  }, [artisans, cardsByArtisan, filteredSites, province, region, search, siteId, status, type]);
+  }, [artisans, cardsByArtisan, filteredSites, province, region, siteId, status, type]);
 
   const filteredCards = useMemo(() => {
     const ids = new Set(filteredArtisans.map((artisan) => artisan.id));
@@ -224,33 +227,11 @@ export default function ArtisanMinierDashboard() {
   const maxRegionArtisans = Math.max(1, ...regionStats.map((stat) => stat.artisans));
 
   const resetFilters = () => {
-    setSearch('');
     setRegion('all');
     setProvince('all');
     setSiteId('all');
     setType('all');
     setStatus('all');
-  };
-
-  const exportArtisans = () => {
-    const rows = [
-      ['Numéro de carte', 'Nom', 'Type', 'Région', 'Commune', 'Statut carte'],
-      ...filteredArtisans.map((artisan) => [
-        artisan.numero_carte || '',
-        [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') || artisan.raison_sociale || '',
-        artisan.type_artisan || '',
-        artisan.region || '',
-        artisan.commune || '',
-        cardsByArtisan.get(artisan.id)?.statut || 'sans_carte',
-      ]),
-    ];
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
-    const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `artisans-miniers-${YEAR}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -262,82 +243,106 @@ export default function ArtisanMinierDashboard() {
             <p>Vue territoriale des artisans, régions et sites miniers</p>
           </div>
           <div className="artisans-dashboard__actions">
+            <button
+              type="button"
+              className={`artisans-button${filtresActifs > 0 ? ' is-filtered' : ''}`}
+              onClick={() => setFiltresOuverts(true)}
+              aria-expanded={filtresOuverts}
+            >
+              <SlidersHorizontal aria-hidden="true" /> Filtres
+              {filtresActifs > 0 && <em>{filtresActifs}</em>}
+            </button>
             <button type="button" className="artisans-button artisans-button--gold" onClick={() => navigate('/artisan-minier/liste')}>
               <Plus aria-hidden="true" /> Nouvel artisan
-            </button>
-            <button type="button" className="artisans-button" onClick={exportArtisans}>
-              <Download aria-hidden="true" /> Exporter
             </button>
           </div>
         </header>
 
-        <section className="artisans-filters" aria-label="Filtres des artisans">
-          <label className="artisans-filter artisans-filter--search">
-            <Search aria-hidden="true" />
-            <input
-              type="search"
-              value={search}
-              placeholder="Rechercher un artisan ou un site"
-              onChange={(event) => setSearch(event.target.value)}
-              aria-label="Rechercher un artisan ou un site"
+        {/* Les filtres passent dans un volet lateral : la bande occupait toute la
+            largeur en tete de page et poussait les indicateurs vers le bas. */}
+        {filtresOuverts && (
+          <div className="artisans-drawer" role="presentation">
+            {/* Surface de fermeture au clic hors panneau. Non focusable : le bouton
+                de l'en-tete et la touche Echap portent l'affordance accessible. */}
+            <div
+              className="artisans-drawer__backdrop"
+              aria-hidden="true"
+              onClick={() => setFiltresOuverts(false)}
             />
-          </label>
+            <aside
+              className="artisans-drawer__panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Filtres des artisans"
+            >
+              <header>
+                <h3>
+                  <SlidersHorizontal aria-hidden="true" /> Filtres
+                </h3>
+                <button type="button" aria-label="Fermer les filtres" onClick={() => setFiltresOuverts(false)}>
+                  <X aria-hidden="true" />
+                </button>
+              </header>
 
-          <label className="artisans-filter">
-            <span>Région</span>
-            <select value={region} onChange={(event) => setRegion(event.target.value)}>
-              <option value="all">Toutes</option>
-              {regionOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <ChevronDown aria-hidden="true" />
-          </label>
+              <div className="artisans-drawer__body">
+                <label className="artisans-drawer__field">
+                  <span>Région</span>
+                  <select value={region} onChange={(event) => setRegion(event.target.value)}>
+                    <option value="all">Toutes</option>
+                    {regionOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </label>
 
-          <label className="artisans-filter">
-            <span>Province</span>
-            <select value={province} onChange={(event) => setProvince(event.target.value)}>
-              <option value="all">Toutes</option>
-              {provinceOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <ChevronDown aria-hidden="true" />
-          </label>
+                <label className="artisans-drawer__field">
+                  <span>Province</span>
+                  <select value={province} onChange={(event) => setProvince(event.target.value)}>
+                    <option value="all">Toutes</option>
+                    {provinceOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </label>
 
-          <label className="artisans-filter">
-            <span>Site minier</span>
-            <select value={siteId} onChange={(event) => setSiteId(event.target.value)}>
-              <option value="all">Tous</option>
-              {siteOptions.map((item) => <option key={item.id} value={item.id}>{item.locality}</option>)}
-            </select>
-            <ChevronDown aria-hidden="true" />
-          </label>
+                <label className="artisans-drawer__field">
+                  <span>Site minier</span>
+                  <select value={siteId} onChange={(event) => setSiteId(event.target.value)}>
+                    <option value="all">Tous</option>
+                    {siteOptions.map((item) => <option key={item.id} value={item.id}>{item.locality}</option>)}
+                  </select>
+                </label>
 
-          <label className="artisans-filter">
-            <span>Type d’artisan</span>
-            <select value={type} onChange={(event) => setType(event.target.value)}>
-              <option value="all">Tous</option>
-              <option value="exploitant">Exploitant</option>
-              <option value="collecteur">Collecteur</option>
-              <option value="fournisseur">Fournisseur</option>
-              <option value="intermediaire">Intermédiaire</option>
-            </select>
-            <ChevronDown aria-hidden="true" />
-          </label>
+                <label className="artisans-drawer__field">
+                  <span>Type d’artisan</span>
+                  <select value={type} onChange={(event) => setType(event.target.value)}>
+                    <option value="all">Tous</option>
+                    <option value="exploitant">Exploitant</option>
+                    <option value="collecteur">Collecteur</option>
+                    <option value="fournisseur">Fournisseur</option>
+                    <option value="intermediaire">Intermédiaire</option>
+                  </select>
+                </label>
 
-          <label className="artisans-filter">
-            <span>Statut</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="all">Tous</option>
-              <option value="valide">Carte valide</option>
-              <option value="en_cours">En attente</option>
-              <option value="expiree">Expirée</option>
-              <option value="suspendue">Suspendue</option>
-            </select>
-            <ChevronDown aria-hidden="true" />
-          </label>
+                <label className="artisans-drawer__field">
+                  <span>Statut de la carte</span>
+                  <select value={status} onChange={(event) => setStatus(event.target.value)}>
+                    <option value="all">Tous</option>
+                    <option value="valide">Carte valide</option>
+                    <option value="en_cours">En attente</option>
+                    <option value="expiree">Expirée</option>
+                    <option value="suspendue">Suspendue</option>
+                  </select>
+                </label>
+              </div>
 
-          <button type="button" className="artisans-filters__reset" onClick={resetFilters}>
-            <RotateCcw aria-hidden="true" /> Réinitialiser
-          </button>
-        </section>
+              <footer>
+                <button type="button" className="artisans-drawer__reset" onClick={resetFilters} disabled={filtresActifs === 0}>
+                  <RotateCcw aria-hidden="true" /> Réinitialiser
+                </button>
+                <button type="button" className="artisans-button artisans-button--gold" onClick={() => setFiltresOuverts(false)}>
+                  Appliquer
+                </button>
+              </footer>
+            </aside>
+          </div>
+        )}
 
         {error && <div className="artisans-dashboard__error" role="alert">{error}</div>}
 

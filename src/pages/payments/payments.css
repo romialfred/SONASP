@@ -1,0 +1,35 @@
+/* Paiements : filtres en ligne et tableau de la charte. */
+
+.paiements__filtres {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paiements__filtres .sn-search { min-width: 240px; flex: 1 1 260px; max-width: 380px; }
+
+.paiements__chargement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 26px 0;
+  gap: 9px;
+  color: var(--sn-muted);
+  font-size: 12.5px;
+}
+
+.paiements__chargement svg { width: 16px; height: 16px; }
+
+.paiements__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paiements__date svg { width: 13px; height: 13px; color: var(--sn-faint); }
+
+/* Seul le retard porte une couleur : le reste du tableau reste en encre. */
+.paiements__retard { color: var(--sn-danger); font-weight: 600; }

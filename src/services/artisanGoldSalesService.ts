@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { genererNumeroRecu } from './venteRecuNumberService';
 
 export interface ArtisanGoldSale {
   id: string;
@@ -107,12 +108,17 @@ export const artisanGoldSalesService = {
         );
       }
 
-      const { data: numeroRecu, error: numeroError } = await supabase
-        .rpc('generate_numero_recu_vente_or');
-
-      if (numeroError) {
-        console.warn('Could not generate receipt number:', numeroError);
-      }
+      // La numerotation est desormais tenue par l'application, comme celle des
+      // cartes professionnelles : l'ancienne fonction distante produisait
+      // `VENTE/OR/2025/12/0002`, avec des barres obliques peu commodes en URL,
+      // en nom de fichier et dans un export. Une erreur n'est plus avalee :
+      // attribuer un numero sans connaitre ceux deja pris ferait un doublon sur
+      // une piece comptable.
+      //
+      // Le formulaire attribue le numero a l'ouverture pour l'afficher au
+      // declarant ; il est repris tel quel, faute de quoi la piece porterait un
+      // numero different de celui annonce a l'ecran.
+      const numeroRecu = sale.numero_recu || (await genererNumeroRecu());
 
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')

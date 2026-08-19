@@ -1,0 +1,357 @@
+/**
+ * Facture de vente — spécimen.
+ *
+ * La pièce porte trois marques distinctes du caractère non certifié : un
+ * bandeau en tête, un filigrane en diagonale et le bloc de certification qui
+ * annonce lui-même qu'il n'est pas raccordé. Aucune ne disparaît à l'impression.
+ */
+
+.facture-page__chargement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 40px 0;
+  gap: 9px;
+  color: var(--sn-muted);
+  font-size: 12.5px;
+}
+
+.facture-page__chargement svg { width: 16px; height: 16px; }
+
+.facture {
+  position: relative;
+  overflow: hidden;
+  max-width: 900px;
+  margin: 12px auto 0;
+  padding: 0 0 20px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+  color: var(--sn-ink);
+  font-size: 12px;
+}
+
+/* Le filigrane tourne dans son propre calque : sans `contain`, sa boite tournee
+   deborde de 137 px et la facture se met a defiler horizontalement. */
+.facture__filigrane {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  contain: strict;
+  color: rgb(220 60 48 / 7%);
+  font-size: 130px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.facture__filigrane::before {
+  content: 'SPÉCIMEN';
+  transform: rotate(-24deg);
+}
+
+.facture > *:not(.facture__filigrane) { position: relative; z-index: 1; }
+
+.facture__bandeau {
+  margin: 0;
+  padding: 9px 20px;
+  background: var(--sn-danger);
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+}
+
+/* ---------- Tête ---------- */
+
+.facture__tete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  gap: 24px;
+  border-bottom: 1px solid var(--sn-line);
+}
+
+.facture__emetteur { display: flex; gap: 14px; }
+.facture__emetteur img { width: 78px; height: auto; object-fit: contain; }
+.facture__emetteur > div { display: grid; gap: 2px; }
+.facture__emetteur strong { color: var(--sn-navy); font-size: 13.5px; font-weight: 700; }
+.facture__emetteur span { color: var(--sn-muted); font-size: 10.5px; line-height: 1.5; }
+
+.facture__identite { min-width: 240px; text-align: right; }
+
+.facture__identite h2 {
+  margin: 0 0 8px;
+  padding: 7px 12px;
+  border: 1px solid #f0dcab;
+  background: var(--sn-gold-soft);
+  border-radius: var(--sn-radius);
+  color: var(--sn-gold-dark);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.facture__identite dl { display: grid; margin: 0; gap: 4px; }
+
+.facture__identite dl > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.facture__identite dt { color: var(--sn-muted); font-size: 10.5px; }
+.facture__identite dd { margin: 0; color: var(--sn-ink); font-size: 11.5px; font-weight: 600; }
+
+/* ---------- Client ---------- */
+
+.facture__client { padding: 14px 24px; border-bottom: 1px solid var(--sn-line-soft); }
+
+.facture__client h3 {
+  margin: 0 0 5px;
+  color: var(--sn-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.facture__client p { margin: 0; color: var(--sn-muted); font-size: 11.5px; line-height: 1.55; }
+.facture__client-nom { color: var(--sn-navy) !important; font-size: 13px !important; font-weight: 700; }
+.facture__objet { margin-top: 7px !important; }
+.facture__objet span { color: var(--sn-ink); font-weight: 600; }
+
+/* ---------- Lignes ---------- */
+
+.facture__lignes { width: 100%; border-collapse: collapse; }
+
+.facture__lignes th {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--sn-line);
+  background: var(--sn-surface-alt);
+  color: var(--sn-ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.facture__lignes td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sn-line-soft);
+  font-size: 11.5px;
+}
+
+.facture__lignes .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+.facture__lignes .is-centre { text-align: center; }
+
+/* ---------- Bas de facture ---------- */
+
+.facture__bas {
+  display: grid;
+  padding: 16px 24px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+.facture__colonne { display: grid; min-width: 0; gap: 10px; }
+
+.facture__recap { width: 100%; border-collapse: collapse; }
+
+.facture__recap th {
+  padding: 6px 9px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface-alt);
+  color: var(--sn-ink-soft);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.facture__recap td { padding: 6px 9px; border: 1px solid var(--sn-line-soft); font-size: 11px; }
+.facture__recap .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.facture__reglement { margin: 0; color: var(--sn-muted); font-size: 11px; }
+.facture__reglement span { color: var(--sn-ink); font-weight: 600; }
+
+.facture__totaux {
+  display: grid;
+  margin: 0;
+  padding: 12px 14px;
+  gap: 7px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface-alt);
+  border-radius: var(--sn-radius);
+}
+
+.facture__totaux > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.facture__totaux dt { color: var(--sn-muted); font-size: 11px; }
+
+.facture__totaux dd {
+  margin: 0;
+  color: var(--sn-ink);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.facture__totaux .is-sous-total {
+  padding-top: 7px;
+  border-top: 1px solid var(--sn-line);
+}
+
+.facture__totaux .is-sous-total dt,
+.facture__totaux .is-sous-total dd { color: var(--sn-navy); font-weight: 700; }
+
+.facture__totaux .is-net {
+  margin-top: 3px;
+  padding: 9px 11px;
+  border-radius: var(--sn-radius-sm);
+  background: var(--sn-navy);
+}
+
+.facture__totaux .is-net dt { color: rgb(255 255 255 / 72%); font-size: 11.5px; font-weight: 600; }
+.facture__totaux .is-net dd { color: var(--sn-gold); font-size: 15px; font-weight: 700; }
+
+.facture__lettres {
+  margin: 0 24px;
+  padding: 11px 14px;
+  border: 1px dashed var(--sn-line);
+  border-radius: var(--sn-radius);
+  color: var(--sn-ink-soft);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.facture__lettres strong { color: var(--sn-navy); text-transform: uppercase; }
+
+/* ---------- Certification ---------- */
+
+.facture__certification {
+  display: grid;
+  margin: 16px 24px 0;
+  padding: 14px 16px;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 18px;
+  border: 1px solid var(--sn-danger-line);
+  background: var(--sn-danger-soft);
+  border-radius: var(--sn-radius);
+}
+
+.facture__certification h3 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 9px;
+  gap: 7px;
+  color: var(--sn-danger);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.facture__certification h3 svg { width: 15px; height: 15px; }
+
+.facture__certification dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+.facture__certification dl > div { display: flex; justify-content: space-between; gap: 10px; }
+.facture__certification dt { color: var(--sn-muted); font-size: 10.5px; }
+
+.facture__certification dd {
+  margin: 0;
+  color: var(--sn-danger);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.facture__certification > div > p {
+  margin: 10px 0 0;
+  color: var(--sn-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.facture__qr {
+  display: grid;
+  margin: 0;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+}
+
+.facture__qr img {
+  width: 118px;
+  height: 118px;
+  border: 1px solid var(--sn-danger-line);
+  background: #ffffff;
+  border-radius: var(--sn-radius-sm);
+}
+
+.facture__qr figcaption { color: var(--sn-muted); font-size: 9px; line-height: 1.4; }
+
+.facture__pied {
+  margin: 14px 24px 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--sn-line-soft);
+  color: var(--sn-faint);
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+
+/* ---------- Impression ---------- */
+
+@media print {
+  /* Seule la facture est imprimée : ni barre latérale, ni en-tête applicatif. */
+  .national-shell__desktop-sidebar,
+  .national-header,
+  .national-sidebar,
+  .sn-page__head,
+  .sn-breadcrumb,
+  .sn-note,
+  .facture-page__chargement { display: none !important; }
+
+  .facture {
+    max-width: none;
+    margin: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* Les marques de spécimen sont imprimées, sans exception. */
+  .facture__bandeau,
+  .facture__certification {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .facture__filigrane { color: rgb(220 60 48 / 12%); }
+}
+
+@media (max-width: 860px) {
+  .facture__tete,
+  .facture__bas,
+  .facture__certification { grid-template-columns: minmax(0, 1fr); flex-direction: column; }
+  .facture__identite { min-width: 0; text-align: left; }
+  .facture__identite dl > div { justify-content: flex-start; }
+}

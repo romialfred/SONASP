@@ -111,20 +111,6 @@ describe('GoldShippingWorkflow', () => {
     ).toBeInTheDocument();
   });
 
-  it('propose un export réellement branché', () => {
-    const creerUrl = vi.fn(() => 'blob:diagramme');
-    const revoquer = vi.fn();
-    Object.defineProperty(URL, 'createObjectURL', { value: creerUrl, configurable: true });
-    Object.defineProperty(URL, 'revokeObjectURL', { value: revoquer, configurable: true });
-
-    render(<GoldShippingWorkflow />);
-    fireEvent.click(screen.getByRole('button', { name: /Exporter le diagramme/ }));
-
-    // Le bouton « Export » n'avait aucun gestionnaire.
-    expect(creerUrl).toHaveBeenCalled();
-    expect(revoquer).toHaveBeenCalledWith('blob:diagramme');
-  });
-
   it('borne le zoom', () => {
     render(<GoldShippingWorkflow />);
 

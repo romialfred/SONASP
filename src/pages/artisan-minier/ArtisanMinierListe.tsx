@@ -4,9 +4,10 @@ import {
   ArrowLeft,
   Calendar,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Coins,
-  Download,
   FileText,
   Filter,
   Handshake,
@@ -47,6 +48,9 @@ interface ArtisanRow extends ArtisanMinier {
   chiffre_affaires_fcfa?: number;
   total_taxes_fcfa?: number;
 }
+
+/** Lignes affichees par page dans la vue tableau. */
+export const TAILLE_PAGE = 30;
 
 const TYPE_LABELS: Record<TypeArtisan, string> = {
   collecteur: 'Collecteurs',
@@ -95,6 +99,15 @@ const EMPTY_FILTERS: Filters = { search: '', type: 'all', region: '', province: 
 
 const integer = new Intl.NumberFormat('fr-FR');
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/** Initiales affichees en pastille devant le nom, dans le tableau. */
+export const initiales = (nom: string): string =>
+  nom
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((mot) => mot[0]?.toUpperCase() || '')
+    .join('') || '?';
 
 const displayName = (artisan: ArtisanMinier) =>
   artisan.type_personne === 'morale'
@@ -147,6 +160,8 @@ export default function ArtisanMinierListe() {
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
   const [sort, setSort] = useState<SortKey>('recent');
   const [view, setView] = useState<ViewMode>('grid');
+  const [page, setPage] = useState(1);
+  const [filtresDeplies, setFiltresDeplies] = useState(false);
 
   const loadArtisans = async () => {
     setLoading(true);
@@ -223,6 +238,18 @@ export default function ArtisanMinierListe() {
     });
   }, [applied, artisans, sort]);
 
+  const pagesTotal = Math.max(1, Math.ceil(results.length / TAILLE_PAGE));
+  const pageCourante = Math.min(page, pagesTotal);
+  const pageResults = useMemo(
+    () => results.slice((pageCourante - 1) * TAILLE_PAGE, pageCourante * TAILLE_PAGE),
+    [results, pageCourante]
+  );
+
+  // Un changement de filtre ou de tri ramene a la premiere page.
+  useEffect(() => {
+    setPage(1);
+  }, [applied, sort]);
+
   const activeChips = useMemo(() => {
     const chips: Array<{ key: keyof Filters; label: string }> = [];
     if (applied.search) chips.push({ key: 'search', label: `Recherche : ${applied.search}` });
@@ -248,30 +275,6 @@ export default function ArtisanMinierListe() {
   const selectType = (type: TypeArtisan | 'all') => {
     setDraft((current) => ({ ...current, type }));
     setApplied((current) => ({ ...current, type }));
-  };
-
-  const exportToCSV = () => {
-    const headers = ['Type', 'Nom', 'N° carte', 'Téléphone', 'Email', 'Région', 'Province', 'Or vendu (g)', 'CA (FCFA)', 'Taxes (FCFA)'];
-    const rows = results.map((artisan) => [
-      artisan.type_artisan || '',
-      displayName(artisan),
-      artisan.numero_carte || '',
-      artisan.telephone || '',
-      artisan.email || '',
-      artisan.region || '',
-      artisan.province || '',
-      String(artisan.quantite_or_vendu_grammes || 0),
-      String(artisan.chiffre_affaires_fcfa || 0),
-      String(artisan.total_taxes_fcfa || 0),
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
-      .join('\n');
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
-    link.download = `artisans-miniers-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
   };
 
   if (showForm) {
@@ -321,9 +324,6 @@ export default function ArtisanMinierListe() {
             <p>{integer.format(artisans.length)} artisans enregistrés</p>
           </div>
           <div className="artisan-list__actions">
-            <button type="button" className="artisan-list__button" onClick={exportToCSV} disabled={results.length === 0}>
-              <Download aria-hidden="true" /> Exporter
-            </button>
             <button type="button" className="artisan-list__button is-primary" onClick={() => setShowForm(true)}>
               <Plus aria-hidden="true" /> Nouvel artisan
             </button>
@@ -331,10 +331,21 @@ export default function ArtisanMinierListe() {
         </header>
 
         <section className="artisan-filters" aria-label="Filtres">
-          <div className="artisan-filters__head">
+          {/* La section occupait un tiers de l'ecran en permanence : elle est
+              desormais repliee a l'ouverture et se deplie au besoin. */}
+          <button
+            type="button"
+            className="artisan-filters__toggle"
+            aria-expanded={filtresDeplies}
+            onClick={() => setFiltresDeplies((ouvert) => !ouvert)}
+          >
+            <Filter aria-hidden="true" />
             <h3>Filtrer les artisans</h3>
-          </div>
+            {activeChips.length > 0 && <em>{activeChips.length}</em>}
+            <ChevronDown aria-hidden="true" className={filtresDeplies ? 'is-open' : ''} />
+          </button>
 
+          {filtresDeplies && (
           <div className="artisan-filters__search-row">
             <label className="artisan-filters__search">
               <Search aria-hidden="true" />
@@ -347,33 +358,30 @@ export default function ArtisanMinierListe() {
                 aria-label="Rechercher un artisan"
               />
             </label>
-            <button type="button" className="artisan-list__button" onClick={resetFilters}>
-              <RotateCcw aria-hidden="true" /> Réinitialiser
-            </button>
-            <button type="button" className="artisan-list__button is-primary" onClick={() => setApplied(draft)}>
-              <Filter aria-hidden="true" /> Appliquer les filtres
-            </button>
           </div>
+          )}
 
+          {filtresDeplies && (
           <div className="artisan-filters__grid">
-            <div className="artisan-filters__field is-types">
+            {/* Le type se choisissait par une rangee de pastilles qui occupait deux
+                lignes ; une liste deroulante suffit et aligne ce filtre sur les autres. */}
+            <label className="artisan-filters__field">
               <span>Type d’artisan</span>
-              <div className="artisan-filters__chips" role="group" aria-label="Type d’artisan">
-                <button type="button" className={applied.type === 'all' ? 'is-active' : ''} onClick={() => selectType('all')}>
-                  Tous <b>({integer.format(artisans.length)})</b>
-                </button>
-                {TYPE_ORDER.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={applied.type === type ? 'is-active' : ''}
-                    onClick={() => selectType(type)}
-                  >
-                    {TYPE_LABELS[type]} <b>({integer.format(countsByType[type] || 0)})</b>
-                  </button>
-                ))}
+              <div className="artisan-filters__select is-compact">
+                <select
+                  value={applied.type}
+                  onChange={(event) => selectType(event.target.value as TypeArtisan | 'all')}
+                >
+                  <option value="all">Tous les types ({integer.format(artisans.length)})</option>
+                  {TYPE_ORDER.map((type) => (
+                    <option key={type} value={type}>
+                      {TYPE_LABELS[type]} ({integer.format(countsByType[type] || 0)})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown aria-hidden="true" />
               </div>
-            </div>
+            </label>
 
             <label className="artisan-filters__field">
               <span>Région</span>
@@ -406,7 +414,7 @@ export default function ArtisanMinierListe() {
               </div>
             </label>
 
-            <div className="artisan-filters__field">
+            <div className="artisan-filters__field is-dates">
               <span>Date d’ouverture</span>
               <div className="artisan-filters__dates">
                 <label>
@@ -429,7 +437,17 @@ export default function ArtisanMinierListe() {
                 </label>
               </div>
             </div>
+
+            <div className="artisan-filters__actions">
+              <button type="button" className="artisan-list__button" onClick={resetFilters}>
+                <RotateCcw aria-hidden="true" /> Réinitialiser
+              </button>
+              <button type="button" className="artisan-list__button is-primary" onClick={() => setApplied(draft)}>
+                <Filter aria-hidden="true" /> Appliquer
+              </button>
+            </div>
           </div>
+          )}
 
           {activeChips.length > 0 && (
             <div className="artisan-filters__active">
@@ -557,38 +575,78 @@ export default function ArtisanMinierListe() {
         {!loading && results.length > 0 && view === 'list' && (
           <div className="artisan-list__table-wrap">
             <table className="artisan-list__table">
+              <caption className="sr-only">Artisans miniers enregistrés</caption>
               <thead>
                 <tr>
-                  <th>Artisan</th>
-                  <th>Type</th>
-                  <th>N° de carte</th>
-                  <th>Région</th>
-                  <th>Province</th>
-                  <th>Téléphone</th>
-                  <th>Or vendu</th>
-                  <th>Chiffre d’affaires</th>
-                  <th>Expire dans</th>
+                  <th scope="col">Artisan</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">N° de carte</th>
+                  <th scope="col">Province</th>
+                  <th scope="col" className="is-num">Or vendu</th>
+                  <th scope="col" className="is-num">Chiffre d’affaires</th>
+                  <th scope="col">Carte</th>
                 </tr>
               </thead>
               <tbody>
-                {results.map((artisan) => {
+                {/* Région et téléphone quittent le tableau : l'un doublonne la province,
+                    l'autre relève de la fiche de l'artisan. */}
+                {pageResults.map((artisan) => {
                   const expiration = timeUntilExpiration(artisan.carte?.date_expiration, artisan.created_at);
+                  const type = (artisan.type_artisan || 'collecteur') as TypeArtisan;
                   return (
                     <tr key={artisan.id} onClick={() => navigate(`/artisan-minier/${artisan.id}`)}>
-                      <td><strong>{displayName(artisan)}</strong></td>
-                      <td>{TYPE_SINGULAR[(artisan.type_artisan || 'collecteur') as TypeArtisan]}</td>
-                      <td>{artisan.numero_carte || '—'}</td>
-                      <td>{artisan.region || '—'}</td>
+                      <td>
+                        <span className="artisan-list__cell-name">
+                          <i aria-hidden="true">{initiales(displayName(artisan))}</i>
+                          <strong>{displayName(artisan)}</strong>
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`artisan-list__type is-${type}`}>{TYPE_SINGULAR[type]}</span>
+                      </td>
+                      <td><code className="artisan-list__card">{artisan.numero_carte || '—'}</code></td>
                       <td>{artisan.province || '—'}</td>
-                      <td>{artisan.telephone || '—'}</td>
-                      <td>{decimal.format(artisan.quantite_or_vendu_grammes || 0)} g</td>
-                      <td>{formatMillions(artisan.chiffre_affaires_fcfa || 0)}</td>
-                      <td className={expiration.expired ? 'is-expired' : ''}>{expiration.text}</td>
+                      <td className="is-num">{decimal.format(artisan.quantite_or_vendu_grammes || 0)} g</td>
+                      <td className="is-num">{formatMillions(artisan.chiffre_affaires_fcfa || 0)}</td>
+                      <td>
+                        <span className={`artisan-list__expiry${expiration.expired ? ' is-expired' : ''}`}>
+                          {expiration.text}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+
+            {pagesTotal > 1 && (
+              <nav className="artisan-list__pagination" aria-label="Pagination des artisans">
+                <span>
+                  {integer.format((pageCourante - 1) * TAILLE_PAGE + 1)}–
+                  {integer.format(Math.min(pageCourante * TAILLE_PAGE, results.length))} sur{' '}
+                  {integer.format(results.length)}
+                </span>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setPage((courante) => Math.max(1, courante - 1))}
+                    disabled={pageCourante === 1}
+                  >
+                    <ChevronLeft aria-hidden="true" /> Précédent
+                  </button>
+                  <b>
+                    Page {pageCourante} / {pagesTotal}
+                  </b>
+                  <button
+                    type="button"
+                    onClick={() => setPage((courante) => Math.min(pagesTotal, courante + 1))}
+                    disabled={pageCourante === pagesTotal}
+                  >
+                    Suivant <ChevronRight aria-hidden="true" />
+                  </button>
+                </div>
+              </nav>
+            )}
           </div>
         )}
       </div>

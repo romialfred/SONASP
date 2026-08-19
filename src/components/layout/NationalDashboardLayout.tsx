@@ -1,224 +1,75 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ReactNode,
+  Suspense,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  AlertTriangle,
-  BarChart3,
   Bell,
-  Building2,
-  CheckCircle2,
   ChevronDown,
-  ChevronRight,
-  CircleDollarSign,
-  FileText,
-  FlaskConical,
-  Grid2X2,
   Languages,
-  Layers,
   LayoutDashboard,
   LogOut,
   Menu,
-  MapPinned,
-  PackageCheck,
+  Minus,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
   Settings,
-  SlidersHorizontal,
-  TrendingUp,
-  Truck,
   UserRound,
-  Users,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 import { cn } from '@/utils/cn';
+import { RouteFallback } from '@/components/common/RouteFallback';
+import { ALL_GROUPS, NAVIGATION_SECTIONS } from './sidebarNavigation';
 import './national-dashboard-layout.css';
 
-type NavigationItem = {
-  label: string;
-  path: string;
-  icon: LucideIcon;
-  color: string;
-};
-
-type NavigationGroup = NavigationItem & {
-  id: string;
-  children?: NavigationItem[];
-};
-
-const artisanItems: NavigationItem[] = [
-  { label: 'Tableau de Bord', path: '/artisan-minier', icon: Grid2X2, color: '#10976b' },
-  { label: 'Liste des Artisans', path: '/artisan-minier/liste', icon: Users, color: '#2f6fec' },
-  { label: 'Suivi des Cartes', path: '/artisan-minier/cartes/suivi', icon: TrendingUp, color: '#8b5cf6' },
-  { label: 'Validation Cartes', path: '/artisan-minier/cartes/validation', icon: CheckCircle2, color: '#635bff' },
-  { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },
-  { label: "Ventes d'Or", path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#d79a00' },
-  { label: 'Paiements des Ventes', path: '/artisan-minier/paiements', icon: CircleDollarSign, color: '#16a363' },
-  { label: 'Rapports & Analyses', path: '/artisan-minier/rapports', icon: BarChart3, color: '#2f6fec' },
-];
-
-const navigationGroups: NavigationGroup[] = [
-  {
-    id: 'artisan-minier',
-    label: 'Artisans Miniers',
-    path: '/artisan-minier',
-    icon: Users,
-    color: '#10976b',
-    children: artisanItems,
-  },
-  {
-    id: 'artisanal-sites',
-    label: 'Sites Artisanaux',
-    path: '/artisan-sites',
-    icon: MapPinned,
-    color: '#21c995',
-    children: [
-      { label: "Vue d'ensemble", path: '/artisan-sites', icon: Grid2X2, color: '#21c995' },
-      { label: 'Production des sites', path: '/artisan-sites/production', icon: Building2, color: '#d79a00' },
-    ],
-  },
-  {
-    id: 'production',
-    label: "Collecte de l'Or",
-    path: '/production/daily',
-    icon: Building2,
-    color: '#10976b',
-    children: [
-      { label: 'Production journalière', path: '/production/daily', icon: Building2, color: '#10976b' },
-      { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
-      { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
-      { label: 'Budgets', path: '/performance/budgets', icon: BarChart3, color: '#8b5cf6' },
-      { label: 'Prévisions', path: '/performance/forecasts', icon: TrendingUp, color: '#14b8a6' },
-    ],
-  },
-  {
-    id: 'shipping',
-    label: 'Expéditions',
-    path: '/shipping/preparation',
-    icon: Truck,
-    color: '#2f6fec',
-    children: [
-      { label: 'Préparations', path: '/shipping/preparation', icon: PackageCheck, color: '#2f6fec' },
-      { label: 'Nouvelle préparation', path: '/shipping/preparation/new', icon: Truck, color: '#10976b' },
-      { label: 'Expéditions de fret', path: '/freight', icon: Truck, color: '#d79a00' },
-      { label: 'Formalités douanières', path: '/freight-customs', icon: FileText, color: '#8b5cf6' },
-    ],
-  },
-  {
-    id: 'refining',
-    label: 'Raffinage',
-    path: '/refining',
-    icon: FlaskConical,
-    color: '#10976b',
-    children: [
-      { label: 'Suivi du raffinage', path: '/refining', icon: FlaskConical, color: '#10976b' },
-      { label: 'Lots réceptionnés', path: '/refining/freight-shipments', icon: PackageCheck, color: '#2f6fec' },
-    ],
-  },
-  {
-    id: 'inventory',
-    label: 'Suivi des Stocks',
-    path: '/inventory',
-    icon: PackageCheck,
-    color: '#10976b',
-    children: [
-      { label: "Stock d'or", path: '/inventory', icon: PackageCheck, color: '#d79a00' },
-      { label: "Stock d'argent", path: '/inventory/silver', icon: Layers, color: '#8b5cf6' },
-      { label: 'Nouvelle entrée', path: '/inventory/add', icon: Grid2X2, color: '#10976b' },
-    ],
-  },
-  {
-    id: 'documents',
-    label: 'Documents',
-    path: '/documents/assay-certificates',
-    icon: FileText,
-    color: '#8b5cf6',
-    children: [
-      { label: "Certificats d'essai", path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
-      { label: 'Rapports', path: '/reports', icon: BarChart3, color: '#2f6fec' },
-    ],
-  },
-  {
-    id: 'market',
-    label: 'Marché',
-    path: '/sales/trade-space',
-    icon: CircleDollarSign,
-    color: '#f59e0b',
-    children: [
-      { label: 'Espace de négoce', path: '/sales/trade-space', icon: CircleDollarSign, color: '#f59e0b' },
-      { label: "Cours de l'or", path: '/gold-prices', icon: TrendingUp, color: '#d79a00' },
-      { label: 'Taux de change', path: '/fx-rates', icon: TrendingUp, color: '#2f6fec' },
-    ],
-  },
-  {
-    id: 'sales',
-    label: 'Ventes',
-    path: '/sales',
-    icon: CircleDollarSign,
-    color: '#ec4899',
-    children: [
-      { label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
-      { label: 'Pré-ventes', path: '/presales', icon: Layers, color: '#8b5cf6' },
-      { label: 'Clients', path: '/customers', icon: Users, color: '#14b8a6' },
-      { label: 'Paiements', path: '/payments', icon: CircleDollarSign, color: '#16a363' },
-    ],
-  },
-  {
-    id: 'stakeholders',
-    label: 'Parties prenantes',
-    path: '/stakeholders/mining-companies',
-    icon: Users,
-    color: '#14b8a6',
-    children: [
-      { label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#10976b' },
-      { label: 'Déposants', path: '/stakeholders/depositors', icon: Users, color: '#2f6fec' },
-      { label: 'Transporteurs', path: '/stakeholders/freight-companies', icon: Truck, color: '#d79a00' },
-      { label: 'Raffineries', path: '/stakeholders/refinery-plants', icon: FlaskConical, color: '#8b5cf6' },
-    ],
-  },
-  {
-    id: 'analytics',
-    label: 'Analyses',
-    path: '/analytics',
-    icon: TrendingUp,
-    color: '#3b82f6',
-    children: [
-      { label: "Centre d'analyse", path: '/analytics', icon: TrendingUp, color: '#3b82f6' },
-      { label: 'Tableaux historiques', path: '/analytics/legacy', icon: BarChart3, color: '#8b5cf6' },
-      { label: 'Rapports', path: '/reports', icon: FileText, color: '#2f6fec' },
-    ],
-  },
-  {
-    id: 'settings',
-    label: 'Paramétrage',
-    path: '/admin/gold-sales-settings',
-    icon: SlidersHorizontal,
-    color: '#f59e0b',
-    children: [
-      { label: 'Paramètres des ventes', path: '/admin/gold-sales-settings', icon: CircleDollarSign, color: '#d79a00' },
-      { label: 'Paramètres des statuts', path: '/admin/status-manager', icon: Layers, color: '#14b8a6' },
-    ],
-  },
-  {
-    id: 'administration',
-    label: 'Administration',
-    path: '/users',
-    icon: Settings,
-    color: '#f97316',
-    children: [
-      { label: 'Utilisateurs', path: '/users', icon: Users, color: '#f97316' },
-      { label: 'Modules', path: '/admin/modules', icon: Layers, color: '#8b5cf6' },
-      { label: 'Workflow des ventes', path: '/admin/workflow', icon: SlidersHorizontal, color: '#2f6fec' },
-      { label: 'Raffineries', path: '/admin/refineries', icon: FlaskConical, color: '#10976b' },
-      { label: 'Transporteurs', path: '/admin/transport-companies', icon: Truck, color: '#d79a00' },
-    ],
-  },
-];
-
 interface NationalDashboardLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
+}
+
+/**
+ * Indique qu'un habillage — barre laterale, en-tete, pied — est deja monte plus
+ * haut dans l'arbre.
+ *
+ * Chaque page rendait son propre `NationalDashboardLayout`. Comme la mise en page
+ * se trouvait a l'interieur de l'element de route, changer de page detruisait
+ * l'habillage pour le reconstruire : barre laterale, en-tete et filtres repartaient
+ * de zero a chaque navigation, et l'ecran blanchissait le temps du chargement.
+ *
+ * `NationalDashboardChrome` monte l'habillage une fois, comme route parente. Les
+ * pages qui l'appellent encore deviennent alors de simples passe-plats : aucune
+ * n'a eu besoin d'etre reecrite.
+ */
+const ChromeContext = createContext(false);
+
+/**
+ * Etat visuel de la barre laterale, conserve hors du composant.
+ *
+ * Chaque page rend sa propre instance de `NationalDashboardLayout` : naviguer
+ * demonte l'ancienne et en monte une neuve. Sans ce relais, le defilement de la
+ * barre repartait en haut et le groupe ouvert se recalculait a chaque clic —
+ * c'est ce que l'on voyait bouger.
+ */
+const etatBarre: { defilement: number; groupeOuvert: string | null } = {
+  defilement: 0,
+  groupeOuvert: null,
+};
+
+/** Remet le relais a zero. Reserve aux tests : sans cela, ils dependraient de leur ordre. */
+export function reinitialiserEtatBarre() {
+  etatBarre.defilement = 0;
+  etatBarre.groupeOuvert = null;
 }
 
 function getRoleLabel(role?: string) {
@@ -236,6 +87,17 @@ function getRoleLabel(role?: string) {
 }
 
 export function NationalDashboardLayout({ children }: NationalDashboardLayoutProps) {
+  const habillageDejaMonte = useContext(ChromeContext);
+  if (habillageDejaMonte) return <>{children}</>;
+  return <NationalDashboardChrome>{children}</NationalDashboardChrome>;
+}
+
+/**
+ * Habillage de l'application, monte une seule fois.
+ * Sans enfant, il rend l'`Outlet` de la route courante : c'est la forme employee
+ * comme route parente dans `App.tsx`.
+ */
+export function NationalDashboardChrome({ children }: NationalDashboardLayoutProps) {
   const { i18n } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -244,16 +106,41 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     localStorage.getItem('sidebar:collapsed') === 'true'
   );
-  const routeGroupId = useMemo(
-    () =>
-      navigationGroups.find((group) =>
-        group.children?.some(
-          (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-        )
-      )?.id || null,
-    [location.pathname]
+  /**
+   * Groupe correspondant a la route, choisi sur la correspondance **la plus longue**.
+   *
+   * La recherche retenait le premier groupe venu : `/artisan-minier/paiements`
+   * correspondait a « Artisans miniers » via son enfant `/artisan-minier`, si bien que
+   * cliquer dans « Marche d'or artisanal » repliait ce groupe pour en ouvrir un autre —
+   * la barre laterale sautait sous le curseur.
+   */
+  const routeGroupId = useMemo<string | null>(() => {
+    let meilleurId: string | null = null;
+    let meilleureLongueur = -1;
+
+    ALL_GROUPS.forEach((group) => {
+      (group.children || []).forEach((item) => {
+        const correspond =
+          location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+        if (correspond && item.path.length > meilleureLongueur) {
+          meilleurId = group.id;
+          meilleureLongueur = item.path.length;
+        }
+      });
+    });
+
+    return meilleurId;
+  }, [location.pathname]);
+  /**
+   * Groupe deplie. Un seul a la fois : ouvrir le suivant referme le precedent.
+   *
+   * Replier un groupe situe plus haut fait remonter tout ce qui suit, y compris la
+   * ligne que l'on vient de cliquer. `basculerGroupe` releve donc la position du
+   * declencheur avant la bascule et corrige le defilement d'autant, avant peinture.
+   */
+  const [openGroup, setOpenGroup] = useState<string | null>(
+    () => etatBarre.groupeOuvert ?? routeGroupId
   );
-  const [openGroup, setOpenGroup] = useState<string | null>(() => routeGroupId);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -261,6 +148,61 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
   useEffect(() => {
     if (routeGroupId) setOpenGroup(routeGroupId);
   }, [routeGroupId]);
+
+  useEffect(() => {
+    etatBarre.groupeOuvert = openGroup;
+  }, [openGroup]);
+
+  const navRef = useRef<HTMLElement | null>(null);
+  /** Ligne a maintenir en place pendant le repli d'un groupe situe plus haut. */
+  const ancrage = useRef<{ element: HTMLElement; haut: number } | null>(null);
+
+  /**
+   * Restaure le defilement des le rattachement du noeud, donc avant la peinture :
+   * la barre reapparait la ou l'utilisateur l'avait laissee, sans saut visible.
+   * La copie mobile est ignoree pour ne pas ecraser la reference de la copie fixe.
+   */
+  const rattacherNavigation = useCallback((element: HTMLElement | null) => {
+    if (!element || element.closest('.national-shell__mobile-sidebar')) return;
+    navRef.current = element;
+    element.scrollTop = etatBarre.defilement;
+  }, []);
+
+  const memoriserDefilement = useCallback(() => {
+    if (navRef.current) etatBarre.defilement = navRef.current.scrollTop;
+  }, []);
+
+  /**
+   * Ramene le declencheur a sa position d'avant la bascule.
+   *
+   * Le repli d'un groupe situe plus haut raccourcit le contenu qui le precede : sans
+   * cette correction, la ligne cliquee remonte sous le curseur. La compensation est
+   * complete tant qu'il reste du defilement a reprendre ; collee en haut de liste,
+   * elle ne peut plus rien et le decalage se voit — c'est la limite de l'ouverture
+   * exclusive elle-meme.
+   */
+  useLayoutEffect(() => {
+    const ancre = ancrage.current;
+    ancrage.current = null;
+    const navigation = navRef.current;
+    if (!ancre || !navigation) return;
+
+    const ecart = ancre.element.getBoundingClientRect().top - ancre.haut;
+    if (ecart) navigation.scrollTop += ecart;
+    etatBarre.defilement = navigation.scrollTop;
+  }, [openGroup]);
+
+  const basculerGroupe = (groupId: string, declencheur: HTMLElement) => {
+    ancrage.current = { element: declencheur, haut: declencheur.getBoundingClientRect().top };
+
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+      localStorage.setItem('sidebar:collapsed', 'false');
+      setOpenGroup(groupId);
+      return;
+    }
+    setOpenGroup((courant) => (courant === groupId ? null : groupId));
+  };
 
   const displayName = useMemo(() => {
     const name = user?.full_name?.trim();
@@ -284,7 +226,7 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
     if (location.pathname === path) return true;
     if (path === '/dashboard' || !location.pathname.startsWith(`${path}/`)) return false;
 
-    const navigationPaths = navigationGroups.flatMap((group) => [
+    const navigationPaths = ALL_GROUPS.flatMap((group) => [
       group.path,
       ...(group.children?.map((item) => item.path) || []),
     ]);
@@ -311,7 +253,7 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
       </div>
 
       <div className="national-sidebar__section-title">
-        <span>MES APPLICATIONS</span>
+        <span>NAVIGATION</span>
         <button
           type="button"
           className="national-sidebar__collapse"
@@ -323,21 +265,29 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
         </button>
       </div>
 
-      <nav className="national-sidebar__navigation">
+      <nav className="national-sidebar__navigation" ref={rattacherNavigation} onScroll={memoriserDefilement}>
+        {/* Seul intitule « Tableau de bord » de la barre : la vue nationale consolidee.
+            Les vues propres a un module s'appellent « Vue d'ensemble ». */}
         <Link
           to="/dashboard"
           className={cn('national-sidebar__dashboard-link', isActive('/dashboard') && 'is-active')}
           onClick={() => setMobileOpen(false)}
         >
-          <LayoutDashboard aria-hidden="true" />
+          <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
+            <LayoutDashboard aria-hidden="true" />
+          </span>
           <span>Tableau de bord</span>
         </Link>
 
-        {navigationGroups.map((group) => {
-          const Icon = group.icon;
-          const hasChildren = Boolean(group.children?.length);
-          const groupActive = isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
-          const isOpen = openGroup === group.id;
+        {NAVIGATION_SECTIONS.map((section) => (
+          <section className="national-sidebar__section" key={section.id} aria-label={section.title}>
+            <h2 className="national-sidebar__section-heading">{section.title}</h2>
+
+            {section.groups.map((group) => {
+              const Icon = group.icon;
+              const hasChildren = Boolean(group.children?.length);
+              const groupActive = isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
+              const isOpen = openGroup === group.id;
 
           if (hasChildren) {
             return (
@@ -345,56 +295,57 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
                 <button
                   type="button"
                   className={cn('national-sidebar__group-trigger', groupActive && 'is-current')}
-                  onClick={() => {
-                    if (sidebarCollapsed) {
-                      setSidebarCollapsed(false);
-                      localStorage.setItem('sidebar:collapsed', 'false');
-                      setOpenGroup(group.id);
-                      return;
-                    }
-                    setOpenGroup((current) => current === group.id ? null : group.id);
-                  }}
+                  onClick={(evenement) => basculerGroupe(group.id, evenement.currentTarget)}
                   aria-expanded={isOpen}
                 >
-                  <Icon style={{ color: group.color }} aria-hidden="true" />
+                  <span className="national-sidebar__icon" style={{ color: group.color }}>
+                    <Icon aria-hidden="true" />
+                  </span>
                   <span title={group.label}>{group.label}</span>
-                  {isOpen ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
+                  {/* Plus quand le groupe est replie, moins quand il est deplie :
+                      le signe decrit l'action offerte, pas l'etat courant. */}
+                  {isOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
                 </button>
                 {isOpen && (
                   <div className="national-sidebar__subnav">
-                    {group.children?.map((item) => {
-                      const ItemIcon = item.icon;
-                      return (
-                        <Link
-                          to={item.path}
-                          key={item.path}
-                          className={cn(isActive(item.path) && 'is-current')}
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          <ItemIcon style={{ color: item.color }} aria-hidden="true" />
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
+                    {/* Une puce claire remplace l'icone de module : a ce niveau, dix
+                        icones de dix couleurs se lisaient comme dix alertes. */}
+                    {group.children?.map((item) => (
+                      <Link
+                        to={item.path}
+                        key={item.path}
+                        className={cn(isActive(item.path) && 'is-current')}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <i className="national-sidebar__puce" aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
             );
           }
 
-          return (
-            <Link
-              to={group.path}
-              className={cn('national-sidebar__group-trigger national-sidebar__group-link', groupActive && 'is-current')}
-              key={group.path}
-              onClick={() => setMobileOpen(false)}
-            >
-              <Icon style={{ color: group.color }} aria-hidden="true" />
-              <span>{group.label}</span>
-              <ChevronRight aria-hidden="true" />
-            </Link>
-          );
-        })}
+              return (
+                <Link
+                  to={group.path}
+                  className={cn('national-sidebar__group-trigger national-sidebar__group-link', groupActive && 'is-current')}
+                  key={group.id}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span className="national-sidebar__icon" style={{ color: group.color }}>
+                    <Icon aria-hidden="true" />
+                  </span>
+                  {/* Ni plus ni chevron : cette entree n'a pas de sous-menu a deplier, et le
+                      signe promettait un repli qui n'existait pas. La place gagnee revient
+                      a l'intitule, qui doit tenir sur une seule ligne. */}
+                  <span>{group.label}</span>
+                </Link>
+              );
+            })}
+          </section>
+        ))}
       </nav>
 
     </aside>
@@ -526,7 +477,13 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
           </button>
         </header>
 
-        <main className="national-shell__content">{children}</main>
+        {/* Le repli de suspense vit dans la zone de contenu : le chargement d'une
+            page ne doit pas effacer l'en-tete ni la barre laterale. */}
+        <main className="national-shell__content">
+          <ChromeContext.Provider value={true}>
+            <Suspense fallback={<RouteFallback />}>{children ?? <Outlet />}</Suspense>
+          </ChromeContext.Provider>
+        </main>
 
         <footer className="national-shell__footer">
           <span>© {new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses</span>

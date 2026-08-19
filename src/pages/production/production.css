@@ -10,18 +10,41 @@
   font-size: 13px;
 }
 
-.production-page__filtres {
+/* Les filtres sont passes dans un volet lateral : la page ne porte plus qu'un
+   rappel des criteres retenus. */
+.production-page__resume {
   display: flex;
-  align-items: flex-end;
-  margin-top: 12px;
-  padding: 12px 16px;
-  gap: 12px;
+  align-items: center;
+  margin: 12px 0 0;
+  gap: 8px 16px;
   flex-wrap: wrap;
+  color: var(--sn-muted);
+  font-size: 12px;
 }
 
-.production-page__filtres .sn-field { margin: 0; min-width: 150px; }
-.production-page__filtre-large { flex: 1 1 240px; }
-.production-page__erreur { align-self: center; color: var(--sn-danger); font-size: 12px; font-weight: 600; }
+.production-page__resume > span {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  gap: 5px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-pill);
+}
+
+.production-page__resume strong { color: var(--sn-navy); font-weight: 600; }
+
+.production-page__erreur {
+  margin: 0;
+  color: var(--sn-danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.production-page__resume .production-page__erreur {
+  border-color: var(--sn-danger-line);
+  background: var(--sn-danger-soft);
+}
 
 .production-page .sn-stats { margin-top: 12px; }
 .production-page .sn-section { margin-top: 12px; }

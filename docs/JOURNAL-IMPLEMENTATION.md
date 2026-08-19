@@ -1403,3 +1403,56 @@ blanc. Le repli vit désormais dans `main`, à l'intérieur de l'habillage.
 - `npx vitest run` : **529/529 verts** (62 fichiers)
 - `npm run typecheck` : **141** (inchangé)
 - 4 anomalies corrigées (A134 à A137)
+
+---
+
+## Audit de cohérence après deux sessions simultanées
+
+Deux sessions ont travaillé en parallèle sur le dépôt. L'audit porte sur ce qui en
+résulte.
+
+### Ce qui a bien fusionné
+- **Aucun marqueur de conflit**, aucun fichier `.orig`, `.rej` ou dupliqué.
+- Les travaux se recouvrant se sont composés proprement : `VenteOrDetails` porte à la
+  fois le bouton « Facture (spécimen) » et l'action « Approuver » restreinte aux
+  approbateurs ; la barre latérale porte l'entrée « Approbateurs » repointée, et le
+  garde-fou de largeur des intitulés continue de passer.
+- **122 chemins de route, aucun doublon, aucun cul-de-sac** : les 48 entrées de menu
+  résolvent toutes vers une route déclarée.
+- Aucune page orpheline : tout fichier de page est référencé.
+- Base de données conforme au code : table des moyens de paiement, trois colonnes de
+  stock, deux colonnes de paiement, cinq fonctions, et **aucune vente hors format**.
+
+### Ce que l'audit a rattrapé
+Le regroupement des routes sous l'habillage n'était **appliqué qu'à moitié**. La
+partition initiale ne retenait que les pages citant `NationalDashboardLayout` ; or
+`MainLayout` n'est plus qu'une enveloppe autour de ce même composant. Résultat : 54
+routes rendaient bien l'habillage tout en restant hors de la route parente, et le
+reconstruisaient donc à chaque navigation — le défaut corrigé au tour précédent
+persistait sur la moitié de l'application.
+
+Trois angles morts de détection expliquaient l'écart :
+- les **imports avec alias** (`AnalyticsDashboardEnhanced as AnalyticsDashboard`), la
+  route citant l'alias ;
+- les formes d'export non couvertes ;
+- les **coquilles indirectes** — les tableaux de bord par rôle passent par
+  `RoleDashboardShell`, qui monte l'habillage pour eux.
+
+Après reprise avec une détection qui résout chaque route jusqu'à son fichier et suit une
+indirection : **108 routes sur 122 sous l'habillage**, aucune ne le rendant en double.
+
+### Ce qui reste, et qui relève d'une décision
+Trois écrans protégés n'ont **aucune navigation** : `/help`,
+`/stakeholders/freight-companies` et `/stakeholders/refinery-plants`. Un utilisateur qui
+y arrive n'a ni barre latérale ni en-tête. Leur donner l'habillage changerait leur
+apparence : ce n'est pas une correction à faire sans arbitrage.
+
+Par ailleurs, l'entrée de menu « Déposants » ayant été renommée « Approbateurs » et
+repointée, les pages `/stakeholders/depositors` restent accessibles par URL mais ne
+figurent plus au menu. À confirmer : suppression, ou réintégration ailleurs.
+
+### Contrôles
+- `npm run build` : **vert**
+- `npx vitest run` : **529/529 verts** (62 fichiers)
+- `npm run typecheck` : **141**, inchangé
+- 122 chemins de route identiques avant et après regroupement

@@ -584,6 +584,7 @@ estimée.
 | A135 | Habillage rendu par chaque page : barre latérale et en-tête reconstruits à chaque navigation | Socle | Route parente, montée une fois |
 | A136 | Repli de suspense hors de l'habillage : écran blanc à chaque chargement de page | Socle | Repli dans la zone de contenu |
 | A137 | Service worker en `autoUpdate` : rechargement spontané de la page | Socle | `prompt`, sans rechargement automatique |
+| A138 | Regroupement sous l'habillage incomplet : 60 routes le reconstruisaient encore | Socle | 108 routes sur 122 sous la route parente |
 | A138 | Doublons dans la barre latérale : « Transporteurs » et « Raffineries » présents sous *Parties prenantes* **et** *Administration* | Navigation | Entrées retirées d'Administration |
 | A139 | Entrée « Déposants » pointant une entité distincte, alors que le métier attend des « Approbateurs » habilités à valider les ventes | Navigation | Renommée « Approbateurs », pointée sur `/stakeholders/approvers` |
 | A140 | Action « Approuver la vente » ouverte à tout utilisateur : la porte facture/paiement n'était pas gardée par un rôle | Ventes d'or | Restreinte à `is_sales_approver` + direction ; page Approbateurs pour accorder/retirer le droit |
@@ -595,7 +596,7 @@ estimée.
 | Gate | État |
 |---|---|
 | `npm run build` | vert |
-| `npx vitest run` | **529/529 verts** (62 fichiers) |
+| `npx vitest run` | **529/529 verts** (62 fichiers), audit d'intégrité passé |
 | `npm run typecheck` | 141 erreurs préexistantes (829 à l'origine, −83 %) |
 
 Timeout vitest relevé à 20 s : deux tests différents échouaient d'une exécution à

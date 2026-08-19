@@ -805,3 +805,26 @@
   border-top: 1px solid rgb(200 216 234 / 16%);
   color: transparent;
 }
+
+/* Acces au centre d'aide, dans l'en-tete. */
+.national-header__aide {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: 10px;
+  color: var(--sn-muted);
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.national-header__aide:hover {
+  border-color: #c3d0dc;
+  color: var(--sn-navy);
+  background: var(--sn-surface-alt);
+}
+
+.national-header__aide svg { width: 18px; height: 18px; }

@@ -1456,3 +1456,42 @@ figurent plus au menu. À confirmer : suppression, ou réintégration ailleurs.
 - `npx vitest run` : **529/529 verts** (62 fichiers)
 - `npm run typecheck` : **141**, inchangé
 - 122 chemins de route identiques avant et après regroupement
+
+---
+
+## Compte de présentation et pages sans navigation
+
+### Le rôle `owner` n'existait pas en base
+`romuald.tiegnan@gmail.com` était enregistré en `management`. Or `ProtectedRoute`
+n'accorde qu'à `owner` le contournement de toute restriction de rôle : quatre routes —
+les tableaux de bord usine, aéroport, raffinerie et client — lui restaient fermées.
+
+La cause était plus bas : `user_profiles_role_check` n'admettait que cinq rôles sur les
+sept que le code définit. **Aucun compte ne pouvait porter `owner` ni `admin`**, alors que
+dix routes se réservent à `['management', 'admin']`. Le contournement était une liste
+d'adresses codée en dur dans `AuthContext` (`OWNER_ACCOUNT_EMAILS`), qui forçait le rôle à
+l'exécution sans que la base en sache rien : le profil affichait « management » pendant
+que l'application traitait le compte en propriétaire.
+
+La contrainte est élargie aux sept rôles (migration `20260819_006`) et le compte passe en
+`owner`, en base comme en session. La liste codée en dur devient un filet, non plus le
+seul mécanisme.
+
+### Les trois pages sans navigation
+- `/stakeholders/freight-companies` et `/stakeholders/refinery-plants` sont des
+  **ré-exports** d'une ligne vers des pages d'administration qui, elles, portent
+  l'habillage. Mon audit ne suivait pas la ré-export : faux négatifs. Routes ramenées sous
+  la route parente.
+- `/help` est une page autonome, avec son propre en-tête et son retour au tableau de bord.
+  Son seul problème était d'être **inatteignable** : le lien vers elle ne vivait que dans
+  `Header.tsx`, composant qu'aucun écran n'importe. Un accès discret rejoint l'en-tête de
+  l'application ; la page garde son habillage propre.
+
+Restent hors habillage, à bon droit : `/`, `/login`, `/activate-account`, `/auth/callback`
+et `/settings`, cette dernière n'étant qu'une redirection vers `/parameters`.
+
+### Contrôles
+- `npm run build` : **vert**
+- `npx vitest run` : **529/529 verts** (62 fichiers)
+- `npm run typecheck` : **141**, inchangé
+- Plateforme démarrée en local sur le port 5180, aucune erreur de console

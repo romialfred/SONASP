@@ -14,6 +14,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
+  HelpCircle,
   ChevronDown,
   Languages,
   LayoutDashboard,
@@ -385,6 +386,18 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           </div>
 
           <div className="national-header__actions">
+            {/* Le centre d'aide n'etait relie qu'a `Header.tsx`, composant mort
+                qu'aucun ecran n'importe : la page etait inatteignable. */}
+            <button
+              type="button"
+              className="national-header__aide"
+              onClick={() => navigate('/help')}
+              aria-label="Centre d’aide"
+              title="Centre d’aide"
+            >
+              <HelpCircle aria-hidden="true" />
+            </button>
+
             <div className="national-header__popover">
               <button
                 type="button"

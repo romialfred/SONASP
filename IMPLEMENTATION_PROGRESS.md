@@ -585,6 +585,9 @@ estimée.
 | A136 | Repli de suspense hors de l'habillage : écran blanc à chaque chargement de page | Socle | Repli dans la zone de contenu |
 | A137 | Service worker en `autoUpdate` : rechargement spontané de la page | Socle | `prompt`, sans rechargement automatique |
 | A138 | Regroupement sous l'habillage incomplet : 60 routes le reconstruisaient encore | Socle | 108 routes sur 122 sous la route parente |
+| A139 | `user_profiles_role_check` refusant les rôles `owner` et `admin`, pourtant définis dans le code | Comptes | Contrainte élargie aux sept rôles |
+| A140 | Centre d'aide relié au seul `Header.tsx`, composant mort : page inatteignable | Socle | Accès depuis l'en-tête |
+| A141 | Deux ré-exports (`FreightCompaniesPage`, `RefineryPlantsPage`) hors habillage | Socle | Ramenés sous la route parente |
 | A138 | Doublons dans la barre latérale : « Transporteurs » et « Raffineries » présents sous *Parties prenantes* **et** *Administration* | Navigation | Entrées retirées d'Administration |
 | A139 | Entrée « Déposants » pointant une entité distincte, alors que le métier attend des « Approbateurs » habilités à valider les ventes | Navigation | Renommée « Approbateurs », pointée sur `/stakeholders/approvers` |
 | A140 | Action « Approuver la vente » ouverte à tout utilisateur : la porte facture/paiement n'était pas gardée par un rôle | Ventes d'or | Restreinte à `is_sales_approver` + direction ; page Approbateurs pour accorder/retirer le droit |

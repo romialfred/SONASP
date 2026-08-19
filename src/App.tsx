@@ -130,6 +130,12 @@ function AppRoutes() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Pages publiques, redirections et ecrans sans habillage propre. */}
+          {/* Pages publiques et ecrans sans habillage propre. */}
+          {/* Espace applicatif : l'habillage — barre laterale, en-tete, pied — est
+              monte par cette route parente et survit aux navigations. `MainLayout`
+              n'etant plus qu'une enveloppe de `NationalDashboardLayout`, les pages
+              qui l'emploient y ont leur place : a l'interieur, le composant devient
+              un passe-plat et l'habillage n'est monte qu'une fois. */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           <Route
@@ -164,32 +170,8 @@ function AppRoutes() {
             }
           />
 
-          <Route
-            path="/stakeholders/freight-companies"
-            element={
-              <ProtectedRoute allowedRoles={['management', 'admin']}>
-                <FreightCompaniesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/stakeholders/refinery-plants"
-            element={
-              <ProtectedRoute allowedRoles={['management', 'admin']}>
-                <RefineryPlantsPage />
-              </ProtectedRoute>
-            }
-          />
-
           <Route path="/settings" element={<Navigate to="/parameters" replace />} />
 
-          {/* Pages publiques et ecrans sans habillage propre. */}
-          {/* Espace applicatif : l'habillage — barre laterale, en-tete, pied — est
-              monte par cette route parente et survit aux navigations. `MainLayout`
-              n'etant plus qu'une enveloppe de `NationalDashboardLayout`, les pages
-              qui l'emploient y ont leur place : a l'interieur, le composant devient
-              un passe-plat et l'habillage n'est monte qu'une fois. */}
           <Route element={<NationalDashboardChrome />}>
             <Route
               path="/dashboard"
@@ -1223,6 +1205,24 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <AnalyticsDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/freight-companies"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <FreightCompaniesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/refinery-plants"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <RefineryPlantsPage />
                 </ProtectedRoute>
               }
             />

@@ -1,4 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
+
+/** Le poids en onces troy n'est pas stocke : il derive du poids en grammes. */
+const gramsToOunces = (grammes?: number | null) => (grammes || 0) / TROY_OZ_GRAMS;
 
 export interface ChiffreAffairesParRegion {
   region: string;
@@ -38,7 +42,7 @@ export interface ChiffreAffairesParPeriode {
   nombre_artisans_actifs: number;
 }
 
-export interface QuantiteParType {
+export type QuantiteParType = {
   type_or: string;
   nombre_ventes: number;
   quantite_totale_grammes: number;
@@ -46,7 +50,7 @@ export interface QuantiteParType {
   montant_total: number;
   prix_moyen_gramme: number;
   pourcentage_total: number;
-}
+};
 
 export interface RapportTaxesRoyalties {
   periode: string;
@@ -78,7 +82,7 @@ export class ArtisanAnalyticsService {
   async getIndicateursCles(dateDebut?: string, dateFin?: string): Promise<IndicateursCles> {
     try {
       let queryVentes = supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .select('*', { count: 'exact' });
 
       if (dateDebut) {
@@ -97,13 +101,13 @@ export class ArtisanAnalyticsService {
 
       const artisansActifs = new Set(ventesValidees.map(v => v.artisan_id)).size;
       const quantiteTotaleGrammes = ventesValidees.reduce((sum, v) => sum + (v.quantite_grammes || 0), 0);
-      const quantiteTotaleOnces = ventesValidees.reduce((sum, v) => sum + (v.quantite_onces || 0), 0);
+      const quantiteTotaleOnces = ventesValidees.reduce((sum, v) => sum + gramsToOunces(v.quantite_grammes), 0);
       const chiffreAffairesTotal = ventesValidees.reduce((sum, v) => sum + (v.montant_total_fcfa || 0), 0);
       const prixMoyenGramme = quantiteTotaleGrammes > 0 ? chiffreAffairesTotal / quantiteTotaleGrammes : 0;
       const montantEnAttente = ventesEnAttente.reduce((sum, v) => sum + (v.montant_total_fcfa || 0), 0);
 
       let queryFactures = supabase
-        .from('artisan_factures_definitives')
+        .from('snp_artisan_factures_definitives')
         .select('montant_total_taxes, montant_taxe_tva');
 
       if (dateDebut) {
@@ -118,7 +122,10 @@ export class ArtisanAnalyticsService {
       if (facturesError) throw facturesError;
 
       const taxesTotal = factures?.reduce((sum, f) => sum + (f.montant_total_taxes || 0), 0) || 0;
-      const royaltiesTotal = taxesTotal * 0.03;
+      const royaltiesTotal = ventesValidees.reduce(
+        (sum, v) => sum + (v.taxe_dev_comm_montant_fcfa || 0),
+        0
+      );
 
       return {
         total_ventes: count || 0,
@@ -141,10 +148,10 @@ export class ArtisanAnalyticsService {
   async getChiffreAffairesParRegion(dateDebut?: string, dateFin?: string): Promise<ChiffreAffairesParRegion[]> {
     try {
       let query = supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .select(`
           *,
-          artisan:artisans_miniers!inner(region)
+          artisan:snp_artisans_miniers!inner(region)
         `)
         .eq('statut', 'validee');
 
@@ -180,17 +187,17 @@ export class ArtisanAnalyticsService {
         const regionData = regionsMap.get(region);
         regionData.nombre_ventes++;
         regionData.quantite_totale_grammes += vente.quantite_grammes || 0;
-        regionData.quantite_totale_onces += vente.quantite_onces || 0;
+        regionData.quantite_totale_onces += gramsToOunces(vente.quantite_grammes);
         regionData.montant_total_brut += vente.montant_total_fcfa || 0;
         regionData.artisans.add(vente.artisan_id);
       });
 
       const queryFactures = supabase
-        .from('artisan_factures_definitives')
+        .from('snp_artisan_factures_definitives')
         .select(`
           *,
-          vente:artisan_ventes_or!inner(
-            artisan:artisans_miniers!inner(region)
+          vente:snp_artisan_ventes_or!inner(
+            artisan:snp_artisans_miniers!inner(region)
           )
         `)
         .eq('statut', 'emise');
@@ -220,10 +227,10 @@ export class ArtisanAnalyticsService {
   async getChiffreAffairesParArtisan(dateDebut?: string, dateFin?: string, region?: string): Promise<ChiffreAffairesParArtisan[]> {
     try {
       let query = supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .select(`
           *,
-          artisan:artisans_miniers!inner(numero_carte, nom, prenom, region)
+          artisan:snp_artisans_miniers!inner(numero_carte, nom, prenoms, raison_sociale, region)
         `)
         .eq('statut', 'validee');
 
@@ -250,7 +257,10 @@ export class ArtisanAnalyticsService {
           artisansMap.set(artisanId, {
             artisan_id: artisanId,
             numero_carte: vente.artisan?.numero_carte || 'N/A',
-            nom_complet: `${vente.artisan?.prenom || ''} ${vente.artisan?.nom || ''}`.trim(),
+            nom_complet:
+              vente.artisan?.raison_sociale ||
+              `${vente.artisan?.nom || ''} ${vente.artisan?.prenoms || ''}`.trim() ||
+              'Artisan sans nom',
             region: vente.artisan?.region || 'Non spécifiée',
             nombre_ventes: 0,
             quantite_totale_grammes: 0,
@@ -264,12 +274,12 @@ export class ArtisanAnalyticsService {
         const artisanData = artisansMap.get(artisanId);
         artisanData.nombre_ventes++;
         artisanData.quantite_totale_grammes += vente.quantite_grammes || 0;
-        artisanData.quantite_totale_onces += vente.quantite_onces || 0;
+        artisanData.quantite_totale_onces += gramsToOunces(vente.quantite_grammes);
         artisanData.montant_total_brut += vente.montant_total_fcfa || 0;
       });
 
       const queryFactures = supabase
-        .from('artisan_factures_definitives')
+        .from('snp_artisan_factures_definitives')
         .select('artisan_id, montant_total_taxes, montant_net_a_payer')
         .eq('statut', 'emise');
 
@@ -297,7 +307,7 @@ export class ArtisanAnalyticsService {
       const dateFin = `${annee}-12-31`;
 
       const { data, error } = await supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .select('*')
         .eq('statut', 'validee')
         .gte('date_vente', dateDebut)
@@ -330,7 +340,7 @@ export class ArtisanAnalyticsService {
         if (moisData) {
           moisData.nombre_ventes++;
           moisData.quantite_totale_grammes += vente.quantite_grammes || 0;
-          moisData.quantite_totale_onces += vente.quantite_onces || 0;
+          moisData.quantite_totale_onces += gramsToOunces(vente.quantite_grammes);
           moisData.montant_total_brut += vente.montant_total_fcfa || 0;
           moisData.artisans.add(vente.artisan_id);
         }
@@ -389,7 +399,7 @@ export class ArtisanAnalyticsService {
         const dateFin = `${annee}-12-31`;
 
         const { data, error } = await supabase
-          .from('artisan_ventes_or')
+          .from('snp_artisan_ventes_or')
           .select('*')
           .eq('statut', 'validee')
           .gte('date_vente', dateDebut)
@@ -404,7 +414,7 @@ export class ArtisanAnalyticsService {
           annee,
           nombre_ventes: data?.length || 0,
           quantite_totale_grammes: data?.reduce((sum, v) => sum + (v.quantite_grammes || 0), 0) || 0,
-          quantite_totale_onces: data?.reduce((sum, v) => sum + (v.quantite_onces || 0), 0) || 0,
+          quantite_totale_onces: data?.reduce((sum, v) => sum + gramsToOunces(v.quantite_grammes), 0) || 0,
           montant_total_brut: data?.reduce((sum, v) => sum + (v.montant_total_fcfa || 0), 0) || 0,
           montant_total_taxes: 0,
           montant_total_net: 0,
@@ -422,7 +432,7 @@ export class ArtisanAnalyticsService {
   async getQuantiteParType(dateDebut?: string, dateFin?: string): Promise<QuantiteParType[]> {
     try {
       let query = supabase
-        .from('artisan_ventes_or')
+        .from('snp_artisan_ventes_or')
         .select('*')
         .eq('statut', 'validee');
 
@@ -455,7 +465,7 @@ export class ArtisanAnalyticsService {
         const typeData = typesMap.get(type);
         typeData.nombre_ventes++;
         typeData.quantite_totale_grammes += vente.quantite_grammes || 0;
-        typeData.quantite_totale_onces += vente.quantite_onces || 0;
+        typeData.quantite_totale_onces += gramsToOunces(vente.quantite_grammes);
         typeData.montant_total += vente.montant_total_fcfa || 0;
       });
 
@@ -475,8 +485,8 @@ export class ArtisanAnalyticsService {
   async getRapportTaxesRoyalties(dateDebut?: string, dateFin?: string, groupBy: 'mois' | 'trimestre' | 'annee' = 'mois'): Promise<RapportTaxesRoyalties[]> {
     try {
       let query = supabase
-        .from('artisan_factures_definitives')
-        .select('*')
+        .from('snp_artisan_factures_definitives')
+        .select('*, vente:snp_artisan_ventes_or(taxe_dev_comm_montant_fcfa)')
         .eq('statut', 'emise');
 
       if (dateDebut) {
@@ -526,7 +536,7 @@ export class ArtisanAnalyticsService {
         periodeData.montant_total_retenue_source += facture.montant_taxe_retenue_source || 0;
         periodeData.montant_total_autres_taxes += facture.montant_autres_taxes || 0;
         periodeData.montant_total_taxes += facture.montant_total_taxes || 0;
-        periodeData.montant_total_royalties += (facture.montant_total_taxes || 0) * 0.03;
+        periodeData.montant_total_royalties += facture.vente?.taxe_dev_comm_montant_fcfa || 0;
         periodeData.nombre_factures++;
         periodeData.total_taux_tva += facture.taux_tva || 0;
         periodeData.total_taux_retenue += facture.taux_retenue_source || 0;

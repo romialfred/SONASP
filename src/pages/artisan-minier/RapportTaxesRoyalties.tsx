@@ -1,451 +1,393 @@
-import { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Loading } from '@/components/ui/Loading';
-import { Select } from '@/components/ui/Select';
-import { ArrowLeft, Download, Scale, FileText, TrendingUp } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { artisanAnalyticsService } from '@/services/artisanAnalyticsService';
+import { AlertCircle, ArrowLeft, Download, Landmark, Loader2, Percent, Receipt } from 'lucide-react';
 import {
-  BarChart,
+  Area,
+  AreaChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { artisanAnalyticsService, type RapportTaxesRoyalties as LigneTaxes } from '@/services/artisanAnalyticsService';
+import {
+  defaultPeriode,
+  formatMontant,
+  formatTaux,
+  tauxEffectif,
+  telechargerRapport,
+  validatePeriode,
+} from './rapportsShared';
+import './rapports.css';
 
-const RapportTaxesRoyalties = () => {
+export type Regroupement = 'mois' | 'trimestre' | 'annee';
+
+const REGROUPEMENTS: Array<{ value: Regroupement; label: string }> = [
+  { value: 'mois', label: 'Par mois' },
+  { value: 'trimestre', label: 'Par trimestre' },
+  { value: 'annee', label: 'Par année' },
+];
+
+export interface TotauxTaxes {
+  montant_total_ventes: number;
+  montant_total_tva: number;
+  montant_total_retenue_source: number;
+  montant_total_autres_taxes: number;
+  montant_total_taxes: number;
+  montant_total_royalties: number;
+  nombre_factures: number;
+}
+
+export const TOTAUX_TAXES_VIDES: TotauxTaxes = {
+  montant_total_ventes: 0,
+  montant_total_tva: 0,
+  montant_total_retenue_source: 0,
+  montant_total_autres_taxes: 0,
+  montant_total_taxes: 0,
+  montant_total_royalties: 0,
+  nombre_factures: 0,
+};
+
+/** Cumuls de toutes les périodes affichées. */
+export function totauxTaxes(lignes: LigneTaxes[]): TotauxTaxes {
+  return lignes.reduce<TotauxTaxes>(
+    (acc, ligne) => ({
+      montant_total_ventes: acc.montant_total_ventes + (ligne.montant_total_ventes || 0),
+      montant_total_tva: acc.montant_total_tva + (ligne.montant_total_tva || 0),
+      montant_total_retenue_source: acc.montant_total_retenue_source + (ligne.montant_total_retenue_source || 0),
+      montant_total_autres_taxes: acc.montant_total_autres_taxes + (ligne.montant_total_autres_taxes || 0),
+      montant_total_taxes: acc.montant_total_taxes + (ligne.montant_total_taxes || 0),
+      montant_total_royalties: acc.montant_total_royalties + (ligne.montant_total_royalties || 0),
+      nombre_factures: acc.nombre_factures + (ligne.nombre_factures || 0),
+    }),
+    { ...TOTAUX_TAXES_VIDES }
+  );
+}
+
+export default function RapportTaxesRoyalties() {
   const navigate = useNavigate();
+  const periodeInitiale = defaultPeriode();
+
+  const [debut, setDebut] = useState(periodeInitiale.debut);
+  const [fin, setFin] = useState(periodeInitiale.fin);
+  const [regroupement, setRegroupement] = useState<Regroupement>('mois');
   const [loading, setLoading] = useState(true);
-  const [donnees, setDonnees] = useState<any[]>([]);
-  const [groupBy, setGroupBy] = useState<'mois' | 'trimestre' | 'annee'>('mois');
-  const [dateDebut, setDateDebut] = useState<string>(
-    new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]
-  );
-  const [dateFin, setDateFin] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [lignes, setLignes] = useState<LigneTaxes[]>([]);
 
-  useEffect(() => {
-    chargerDonnees();
-  }, [dateDebut, dateFin, groupBy]);
+  const periodeError = validatePeriode(debut, fin);
 
-  const chargerDonnees = async () => {
+  const charger = useCallback(async () => {
+    if (validatePeriode(debut, fin)) return;
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      const taxes = await artisanAnalyticsService.getRapportTaxesRoyalties(dateDebut, dateFin, groupBy);
-      setDonnees(taxes);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
+      setLignes(await artisanAnalyticsService.getRapportTaxesRoyalties(debut, fin, regroupement));
+    } catch (reason) {
+      setErreur(reason instanceof Error ? reason.message : 'Impossible de charger ce rapport.');
     } finally {
       setLoading(false);
     }
+  }, [debut, fin, regroupement]);
+
+  useEffect(() => {
+    void charger();
+  }, [charger]);
+
+  const totaux = totauxTaxes(lignes);
+
+  const exporter = async () => {
+    const message = await telechargerRapport(
+      `Taxes_${regroupement}`,
+      `rapport-taxes-${regroupement}-${debut}-${fin}.xlsx`,
+      lignes
+    );
+    setErreur(message);
   };
-
-  const exporterRapport = async () => {
-    try {
-      const blob = await artisanAnalyticsService.exporterRapportExcel(
-        `Taxes_${groupBy}_${dateDebut}_${dateFin}`,
-        donnees
-      );
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `rapport_taxes_${groupBy}_${dateDebut}_${dateFin}.xlsx`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Erreur export:', error);
-    }
-  };
-
-  const formatMontant = (montant: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(montant);
-  };
-
-  const totaux = donnees.reduce(
-    (acc, item) => ({
-      montant_total_ventes: acc.montant_total_ventes + item.montant_total_ventes,
-      montant_total_tva: acc.montant_total_tva + item.montant_total_tva,
-      montant_total_retenue_source: acc.montant_total_retenue_source + item.montant_total_retenue_source,
-      montant_total_autres_taxes: acc.montant_total_autres_taxes + item.montant_total_autres_taxes,
-      montant_total_taxes: acc.montant_total_taxes + item.montant_total_taxes,
-      montant_total_royalties: acc.montant_total_royalties + item.montant_total_royalties,
-      nombre_factures: acc.nombre_factures + item.nombre_factures
-    }),
-    {
-      montant_total_ventes: 0,
-      montant_total_tva: 0,
-      montant_total_retenue_source: 0,
-      montant_total_autres_taxes: 0,
-      montant_total_taxes: 0,
-      montant_total_royalties: 0,
-      nombre_factures: 0
-    }
-  );
 
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="secondary" onClick={() => navigate('/artisan-minier/rapports')}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Rapport Taxes & Royalties</h1>
-              <p className="text-gray-600 mt-1">Analyse détaillée des taxes et royalties collectées</p>
-            </div>
-          </div>
-          <Button onClick={exporterRapport}>
-            <Download className="w-4 h-4 mr-2" />
-            Exporter Excel
-          </Button>
-        </div>
-
-        <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Période</label>
-              <Select
-                value={groupBy}
-                onChange={(e) => setGroupBy(e.target.value as any)}
-                className="w-full"
+    <NationalDashboardLayout>
+      <div className="sn-page rapports">
+        <PageHeader
+          icon={Landmark}
+          title="Rapport taxes et royalties"
+          subtitle="TVA, retenue à la source et taxe de développement communal issues des factures émises."
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: 'Rapports', to: '/artisan-minier/rapports' },
+            { label: 'Taxes et royalties' },
+          ]}
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/rapports')}>
+                <ArrowLeft aria-hidden="true" /> Centre de rapports
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => void exporter()}
+                disabled={loading || lignes.length === 0}
               >
-                <option value="mois">Mensuel</option>
-                <option value="trimestre">Trimestriel</option>
-                <option value="annee">Annuel</option>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date début</label>
-              <input
-                type="date"
-                value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date fin</label>
-              <input
-                type="date"
-                value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </Card>
+                <Download aria-hidden="true" /> Exporter en Excel
+              </button>
+            </>
+          }
+        />
+
+        <section className="sn-card rapports__filtres" aria-label="Paramètres du rapport">
+          <label className="sn-field">
+            <span className="sn-field__label">Du</span>
+            <input type="date" value={debut} max={fin} onChange={(event) => setDebut(event.target.value)} />
+          </label>
+          <label className="sn-field">
+            <span className="sn-field__label">Au</span>
+            <input type="date" value={fin} min={debut} onChange={(event) => setFin(event.target.value)} />
+          </label>
+          <label className="sn-field sn-field--large">
+            <span className="sn-field__label">Regroupement</span>
+            <select
+              value={regroupement}
+              onChange={(event) => setRegroupement(event.target.value as Regroupement)}
+            >
+              {REGROUPEMENTS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {periodeError && <span className="rapports__erreur">{periodeError}</span>}
+        </section>
+
+        {erreur && (
+          <Note tone="danger" icon={AlertCircle}>
+            {erreur}
+          </Note>
+        )}
+
+        <StatGrid
+          ariaLabel="Cumuls de la période"
+          items={[
+            { label: 'Factures émises', value: totaux.nombre_factures, icon: Receipt, tone: 'blue' },
+            {
+              label: 'TVA collectée',
+              value: `${formatMontant(totaux.montant_total_tva)} FCFA`,
+              icon: Landmark,
+              tone: 'red',
+            },
+            {
+              label: 'Retenue à la source',
+              value: `${formatMontant(totaux.montant_total_retenue_source)} FCFA`,
+              icon: Landmark,
+              tone: 'gold',
+            },
+            {
+              label: 'Taxe de développement communal',
+              value: `${formatMontant(totaux.montant_total_royalties)} FCFA`,
+              hint: 'Part reversée aux collectivités',
+              icon: Percent,
+              tone: 'violet',
+            },
+          ]}
+        />
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loading size="lg" />
+          <div className="rapports__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Calcul du rapport…
           </div>
+        ) : lignes.length === 0 ? (
+          <Section id="vide" icon={Landmark} tone="slate" title="Taxes et royalties">
+            <EmptyState
+              title="Aucune facture émise sur la période"
+              description="Les taxes ne sont consolidées qu’à partir des factures définitives."
+            />
+          </Section>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-600">CA Total</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">
-                      {formatMontant(totaux.montant_total_ventes)} FCFA
-                    </p>
-                    <p className="text-xs text-blue-700 mt-1">{totaux.nombre_factures} factures</p>
-                  </div>
-                  <FileText className="w-10 h-10 text-blue-500" />
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-red-600">TVA (18%)</p>
-                    <p className="text-2xl font-bold text-red-900 mt-1">
-                      {formatMontant(totaux.montant_total_tva)} FCFA
-                    </p>
-                    <p className="text-xs text-red-700 mt-1">
-                      {((totaux.montant_total_tva / totaux.montant_total_ventes) * 100).toFixed(2)}% du CA
-                    </p>
-                  </div>
-                  <Scale className="w-10 h-10 text-red-500" />
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-orange-600">Retenue Source (1.5%)</p>
-                    <p className="text-2xl font-bold text-orange-900 mt-1">
-                      {formatMontant(totaux.montant_total_retenue_source)} FCFA
-                    </p>
-                    <p className="text-xs text-orange-700 mt-1">
-                      {((totaux.montant_total_retenue_source / totaux.montant_total_ventes) * 100).toFixed(2)}% du CA
-                    </p>
-                  </div>
-                  <Scale className="w-10 h-10 text-orange-500" />
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-purple-600">Royalties (3%)</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">
-                      {formatMontant(totaux.montant_total_royalties)} FCFA
-                    </p>
-                    <p className="text-xs text-purple-700 mt-1">3% des taxes</p>
-                  </div>
-                  <TrendingUp className="w-10 h-10 text-purple-500" />
-                </div>
-              </Card>
-            </div>
-
-            <Card className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-emerald-600">Total Taxes Collectées</p>
-                  <p className="text-3xl font-bold text-emerald-900 mt-1">
-                    {formatMontant(totaux.montant_total_taxes)} FCFA
-                  </p>
-                  <p className="text-sm text-emerald-700 mt-2">
-                    Taux de taxation effectif: {' '}
-                    {((totaux.montant_total_taxes / totaux.montant_total_ventes) * 100).toFixed(2)}%
-                  </p>
-                </div>
-                <Scale className="w-16 h-16 text-emerald-500" />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Évolution des Taxes par Période</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={donnees}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="periode" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip formatter={(value: any) => formatMontant(value) + ' FCFA'} />
+            <Section
+              id="evolution"
+              icon={Landmark}
+              tone="blue"
+              title="Évolution des prélèvements"
+              description="TVA, retenue à la source et taxe communale par période."
+            >
+              <ResponsiveContainer width="100%" height={320}>
+                <AreaChart data={lignes} margin={{ top: 8, right: 8, left: 8, bottom: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e7edf2" />
+                  <XAxis dataKey="periode" angle={-35} textAnchor="end" height={72} tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(value: number) => formatMontant(value)} />
+                  <Tooltip formatter={(value) => `${formatMontant(Number(value))} FCFA`} />
                   <Legend />
                   <Area
                     type="monotone"
                     dataKey="montant_total_tva"
-                    stackId="1"
-                    stroke="#EF4444"
-                    fill="#EF4444"
+                    stackId="taxes"
+                    stroke="#ef4444"
+                    fill="#fca5a5"
                     name="TVA"
                   />
                   <Area
                     type="monotone"
                     dataKey="montant_total_retenue_source"
-                    stackId="1"
-                    stroke="#F59E0B"
-                    fill="#F59E0B"
-                    name="Retenue Source"
+                    stackId="taxes"
+                    stroke="#b8860b"
+                    fill="#fcd9a0"
+                    name="Retenue à la source"
                   />
                   <Area
                     type="monotone"
                     dataKey="montant_total_royalties"
-                    stackId="1"
-                    stroke="#8B5CF6"
-                    fill="#8B5CF6"
-                    name="Royalties"
+                    stackId="taxes"
+                    stroke="#8b5cf6"
+                    fill="#ddd0fb"
+                    name="Taxe communale"
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </Card>
+            </Section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Comparaison CA vs Taxes</h3>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={donnees}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="periode" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip formatter={(value: any) => formatMontant(value) + ' FCFA'} />
-                    <Legend />
-                    <Bar dataKey="montant_total_ventes" fill="#3B82F6" name="CA Total" />
-                    <Bar dataKey="montant_total_taxes" fill="#EF4444" name="Taxes Totales" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
+            <Section
+              id="assiette"
+              icon={Receipt}
+              tone="emerald"
+              title="Assiette et prélèvements"
+              description="Chiffre d’affaires facturé comparé au total des taxes."
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={lignes} margin={{ top: 8, right: 8, left: 8, bottom: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e7edf2" />
+                  <XAxis dataKey="periode" angle={-35} textAnchor="end" height={72} tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(value: number) => formatMontant(value)} />
+                  <Tooltip formatter={(value) => `${formatMontant(Number(value))} FCFA`} />
+                  <Legend />
+                  <Bar dataKey="montant_total_ventes" fill="#0f7a56" name="CA facturé" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="montant_total_taxes" fill="#ef4444" name="Total taxes" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Section>
 
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Nombre de Factures par Période</h3>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={donnees}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="periode" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="nombre_factures"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      name="Nombre de Factures"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Card>
-            </div>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Scale className="w-5 h-5 text-blue-600" />
-                Détail par Période
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
+            <Section
+              id="detail"
+              icon={Landmark}
+              tone="violet"
+              title="Détail par période"
+              description="Ligne à ligne, tel que porté par les factures définitives."
+            >
+              <div className="rapports__table-wrap">
+                <table className="rapports__table">
+                  <caption className="sr-only">Taxes et royalties par période</caption>
+                  <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Période</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Factures</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">CA Total</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">TVA</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Retenue</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Autres</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Total Taxes</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Royalties</th>
+                      <th scope="col">Période</th>
+                      <th scope="col" className="is-num">Factures</th>
+                      <th scope="col" className="is-num">CA facturé</th>
+                      <th scope="col" className="is-num">TVA</th>
+                      <th scope="col" className="is-num">Retenue source</th>
+                      <th scope="col" className="is-num">Autres taxes</th>
+                      <th scope="col" className="is-num">Total taxes</th>
+                      <th scope="col" className="is-num">Taxe communale</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {donnees.map((item, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.periode}</td>
-                        <td className="px-4 py-3 text-sm text-right text-gray-700">{item.nombre_factures}</td>
-                        <td className="px-4 py-3 text-sm text-right font-semibold text-blue-600">
-                          {formatMontant(item.montant_total_ventes)} FCFA
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right text-red-600">
-                          {formatMontant(item.montant_total_tva)} FCFA
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right text-orange-600">
-                          {formatMontant(item.montant_total_retenue_source)} FCFA
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right text-gray-700">
-                          {formatMontant(item.montant_total_autres_taxes)} FCFA
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                          {formatMontant(item.montant_total_taxes)} FCFA
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right font-semibold text-purple-600">
-                          {formatMontant(item.montant_total_royalties)} FCFA
-                        </td>
+                  <tbody>
+                    {lignes.map((ligne) => (
+                      <tr key={ligne.periode}>
+                        <td>{ligne.periode}</td>
+                        <td className="is-num">{ligne.nombre_factures}</td>
+                        <td className="is-num is-brut">{formatMontant(ligne.montant_total_ventes)}</td>
+                        <td className="is-num is-taxe">{formatMontant(ligne.montant_total_tva)}</td>
+                        <td className="is-num">{formatMontant(ligne.montant_total_retenue_source)}</td>
+                        <td className="is-num">{formatMontant(ligne.montant_total_autres_taxes)}</td>
+                        <td className="is-num is-brut">{formatMontant(ligne.montant_total_taxes)}</td>
+                        <td className="is-num">{formatMontant(ligne.montant_total_royalties)}</td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-100 font-semibold">
+                  <tfoot>
                     <tr>
-                      <td className="px-4 py-3 text-sm">TOTAL</td>
-                      <td className="px-4 py-3 text-sm text-right">{totaux.nombre_factures}</td>
-                      <td className="px-4 py-3 text-sm text-right text-blue-600">
-                        {formatMontant(totaux.montant_total_ventes)} FCFA
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-red-600">
-                        {formatMontant(totaux.montant_total_tva)} FCFA
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-orange-600">
-                        {formatMontant(totaux.montant_total_retenue_source)} FCFA
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        {formatMontant(totaux.montant_total_autres_taxes)} FCFA
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        {formatMontant(totaux.montant_total_taxes)} FCFA
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-purple-600">
-                        {formatMontant(totaux.montant_total_royalties)} FCFA
-                      </td>
+                      <td>Total</td>
+                      <td className="is-num">{totaux.nombre_factures}</td>
+                      <td className="is-num">{formatMontant(totaux.montant_total_ventes)}</td>
+                      <td className="is-num is-taxe">{formatMontant(totaux.montant_total_tva)}</td>
+                      <td className="is-num">{formatMontant(totaux.montant_total_retenue_source)}</td>
+                      <td className="is-num">{formatMontant(totaux.montant_total_autres_taxes)}</td>
+                      <td className="is-num">{formatMontant(totaux.montant_total_taxes)}</td>
+                      <td className="is-num">{formatMontant(totaux.montant_total_royalties)}</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
-            </Card>
+            </Section>
 
-            <Card className="p-6 bg-blue-50 border-blue-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Récapitulatif Global</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Section
+              id="recapitulatif"
+              icon={Percent}
+              tone="amber"
+              title="Récapitulatif de la période"
+              description="Montants consolidés et taux effectifs constatés."
+            >
+              <div className="rapports__recap">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Montants Totaux</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Chiffre d'affaires:</span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatMontant(totaux.montant_total_ventes)} FCFA
-                      </span>
+                  <h3>Montants</h3>
+                  <dl>
+                    <div>
+                      <dt>Chiffre d’affaires facturé</dt>
+                      <dd>{formatMontant(totaux.montant_total_ventes)} FCFA</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">TVA collectée:</span>
-                      <span className="text-sm font-semibold text-red-600">
-                        {formatMontant(totaux.montant_total_tva)} FCFA
-                      </span>
+                    <div>
+                      <dt>TVA collectée</dt>
+                      <dd className="is-taxe">{formatMontant(totaux.montant_total_tva)} FCFA</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Retenue à la source:</span>
-                      <span className="text-sm font-semibold text-orange-600">
-                        {formatMontant(totaux.montant_total_retenue_source)} FCFA
-                      </span>
+                    <div>
+                      <dt>Retenue à la source</dt>
+                      <dd className="is-taxe">{formatMontant(totaux.montant_total_retenue_source)} FCFA</dd>
                     </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-sm font-medium text-gray-700">Total taxes:</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {formatMontant(totaux.montant_total_taxes)} FCFA
-                      </span>
+                    <div className="is-total">
+                      <dt>Total des taxes</dt>
+                      <dd>{formatMontant(totaux.montant_total_taxes)} FCFA</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-700">Royalties (3%):</span>
-                      <span className="text-sm font-bold text-purple-600">
-                        {formatMontant(totaux.montant_total_royalties)} FCFA
-                      </span>
+                    <div>
+                      <dt>Taxe de développement communal</dt>
+                      <dd className="is-royalty">{formatMontant(totaux.montant_total_royalties)} FCFA</dd>
                     </div>
-                  </div>
+                  </dl>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Taux Moyens</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Taux TVA moyen:</span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {((totaux.montant_total_tva / totaux.montant_total_ventes) * 100).toFixed(2)}%
-                      </span>
+                  <h3>Taux effectifs</h3>
+                  {/* Sans facture sur la période, les ratios affichaient « NaN% ». */}
+                  <dl>
+                    <div>
+                      <dt>Taux de TVA constaté</dt>
+                      <dd>{formatTaux(tauxEffectif(totaux.montant_total_tva, totaux.montant_total_ventes))}</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Taux retenue moyen:</span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {((totaux.montant_total_retenue_source / totaux.montant_total_ventes) * 100).toFixed(2)}%
-                      </span>
+                    <div>
+                      <dt>Taux de retenue constaté</dt>
+                      <dd>
+                        {formatTaux(tauxEffectif(totaux.montant_total_retenue_source, totaux.montant_total_ventes))}
+                      </dd>
                     </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-sm font-medium text-gray-700">Taux taxation effectif:</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {((totaux.montant_total_taxes / totaux.montant_total_ventes) * 100).toFixed(2)}%
-                      </span>
+                    <div className="is-total">
+                      <dt>Taux de prélèvement global</dt>
+                      <dd>{formatTaux(tauxEffectif(totaux.montant_total_taxes, totaux.montant_total_ventes))}</dd>
                     </div>
-                  </div>
+                    <div>
+                      <dt>Part communale du CA</dt>
+                      <dd className="is-royalty">
+                        {formatTaux(tauxEffectif(totaux.montant_total_royalties, totaux.montant_total_ventes))}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
               </div>
-            </Card>
+            </Section>
           </>
         )}
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
-};
-
-export default RapportTaxesRoyalties;
+}

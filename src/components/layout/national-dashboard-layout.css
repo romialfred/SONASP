@@ -39,37 +39,65 @@
 .national-sidebar__brand {
   display: flex;
   align-items: center;
-  height: 76px;
-  flex: 0 0 76px;
-  padding: 0 16px;
-  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  justify-content: center;
+  height: 64px;
+  flex: 0 0 64px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e6ece9;
 }
 
 .national-sidebar__brand img {
-  width: 142px;
+  width: 100%;
+  max-width: 176px;
   height: 48px;
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
   flex: 0 0 auto;
 }
 
+.national-sidebar.is-collapsed .national-sidebar__brand {
+  padding: 8px 6px;
+}
+
 .national-sidebar.is-collapsed .national-sidebar__brand img {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  object-position: left center;
 }
 
 .national-sidebar__section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 58px;
-  flex: 0 0 58px;
-  padding: 0 20px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0 12px 0 20px;
   color: rgb(209 250 229 / 70%);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
 }
+
+/* Bascule de la barre laterale : en tete, au niveau du titre de section. */
+.national-sidebar__collapse {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  color: rgb(209 250 229 / 75%);
+  background: rgb(255 255 255 / 6%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.national-sidebar__collapse:hover { color: #fff; background: rgb(255 255 255 / 14%); }
+.national-sidebar__collapse svg { width: 16px; height: 16px; }
+.national-sidebar.is-collapsed .national-sidebar__section-title { justify-content: center; padding: 0; }
 
 .national-sidebar.is-collapsed .national-sidebar__section-title span {
   display: none;
@@ -78,7 +106,7 @@
 .national-sidebar__navigation {
   flex: 1;
   min-height: 0;
-  padding: 0 12px 16px;
+  padding: 0 12px 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -96,12 +124,13 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 48px;
+  height: 38px;
   padding: 0 12px;
   gap: 12px;
   color: rgb(236 253 245 / 85%);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.1;
   border-radius: 12px;
   transition: background-color 150ms ease, color 150ms ease;
 }
@@ -139,14 +168,14 @@
 }
 
 .national-sidebar__group {
-  margin-top: 4px;
+  margin-top: 1px;
 }
 
 .national-sidebar__group-trigger {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 44px;
+  min-height: 38px;
   padding: 0 12px;
   gap: 12px;
   border: 0;
@@ -155,6 +184,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.1;
   text-align: left;
   white-space: nowrap;
   border-radius: 12px;
@@ -194,12 +224,12 @@
 }
 
 .national-sidebar__group-link {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .national-sidebar__subnav {
   position: relative;
-  margin: 2px 0 6px 22px;
+  margin: 1px 0 4px 22px;
   padding: 1px 0 1px 13px;
 }
 
@@ -214,12 +244,13 @@
 .national-sidebar__subnav a {
   display: flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 34px;
   padding: 0 9px;
   gap: 12px;
   color: rgb(236 253 245 / 65%);
   font-size: 12px;
   font-weight: 500;
+  line-height: 1.1;
   border-radius: 8px;
 }
 
@@ -242,61 +273,17 @@
   white-space: nowrap;
 }
 
-.national-sidebar__footer {
-  display: flex;
-  min-height: 76px;
-  flex: 0 0 auto;
-  padding: 10px 12px 8px;
-  flex-direction: column;
-  border-top: 1px solid rgb(255 255 255 / 10%);
-}
-
-.national-sidebar__footer button {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-  gap: 12px;
-  border: 0;
-  color: rgb(209 250 229 / 70%);
-  background: transparent;
-  border-radius: 12px;
-  font: inherit;
-  font-size: 14px;
-  text-align: left;
-}
-
-.national-sidebar__footer button:hover {
-  color: #ffffff;
-  background: rgb(255 255 255 / 7%);
-}
-
-.national-sidebar__footer svg {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-}
-
-.national-sidebar__footer small {
-  margin-top: 2px;
-  color: rgb(209 250 229 / 45%);
-  font-size: 11px;
-  text-align: center;
-}
 
 .national-sidebar.is-collapsed .national-sidebar__dashboard-link span,
 .national-sidebar.is-collapsed .national-sidebar__group-trigger span,
 .national-sidebar.is-collapsed .national-sidebar__group-trigger > svg:last-child,
 .national-sidebar.is-collapsed .national-sidebar__subnav,
-.national-sidebar.is-collapsed .national-sidebar__footer span,
-.national-sidebar.is-collapsed .national-sidebar__footer small {
+.national-sidebar.is-collapsed .national-sidebar__section-title span {
   display: none;
 }
 
 .national-sidebar.is-collapsed .national-sidebar__dashboard-link,
-.national-sidebar.is-collapsed .national-sidebar__group-trigger,
-.national-sidebar.is-collapsed .national-sidebar__footer button {
+.national-sidebar.is-collapsed .national-sidebar__group-trigger {
   justify-content: center;
   padding-right: 0;
   padding-left: 0;
@@ -340,10 +327,10 @@
   margin: 0;
   overflow: hidden;
   color: #10243e;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.028em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -699,4 +686,27 @@
     height: 36px;
     flex-basis: 36px;
   }
+}
+
+/* Pied de page applicatif : occupe toute la largeur sous le contenu, ce qui libere
+   le bas de la barre laterale pour la navigation. */
+.national-shell__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0 25px 0 29px;
+  gap: 16px;
+  border-top: 1px solid #dfe6ed;
+  color: #7386a0;
+  background: rgb(255 255 255 / 96%);
+  font-size: 11px;
+}
+
+.national-shell__footer-motto { color: #93a3b8; letter-spacing: 0.02em; }
+
+@media (max-width: 767px) {
+  .national-shell__footer { justify-content: center; padding: 0 14px; }
+  .national-shell__footer-motto { display: none; }
 }

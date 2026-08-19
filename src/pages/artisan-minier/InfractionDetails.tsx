@@ -1,323 +1,371 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  FileText,
-  Edit2,
   AlertTriangle,
-  Eye,
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
   Download,
+  ExternalLink,
+  FileText,
+  Gavel,
+  HandHelping,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Paperclip,
+  PencilLine,
+  ScrollText,
+  ShieldQuestion,
+  UserRound,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Loading } from '@/components/ui/Loading';
-import { artisanInfractionsService, ArtisanInfraction } from '@/services/artisanInfractionsService';
-import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Note, PageHeader, Section, type BadgeTone } from '@/components/ui/sn';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
+import {
+  artisanInfractionsService,
+  type ArtisanInfraction,
+  type ConclusionInfraction,
+} from '@/services/artisanInfractionsService';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { artisanFullName } from '@/utils/artisanIdentity';
+import './infraction-details.css';
 
-const TRAITEMENT_LABELS: Record<string, { label: string; color: string }> = {
-  en_cours: { label: 'En Cours', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  cloture: { label: 'Clôturé', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+const CONCLUSIONS: Record<ConclusionInfraction, { label: string; tone: BadgeTone; icon: typeof Gavel; sens: string }> = {
+  reconnu: { label: 'Reconnu', tone: 'danger', icon: Gavel, sens: 'Les faits sont établis à l’encontre de l’artisan.' },
+  soupçonne: { label: 'Soupçonné', tone: 'warning', icon: ShieldQuestion, sens: 'Faisceau d’indices sans preuve suffisante.' },
+  complice: { label: 'Complice', tone: 'warning', icon: HandHelping, sens: 'Participation indirecte établie.' },
+  innocente: { label: 'Innocenté', tone: 'success', icon: CheckCircle2, sens: 'L’artisan est mis hors de cause.' },
 };
 
-const CONCLUSION_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  reconnu: { label: 'Reconnu Coupable', color: 'bg-red-100 text-red-800 border-red-200', icon: '❌' },
-  soupçonne: { label: 'Soupçonné', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: '⚠️' },
-  complice: { label: 'Complice', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: '🤝' },
-  innocente: { label: 'Innocenté', color: 'bg-green-100 text-green-800 border-green-200', icon: '✅' },
-};
+const EXTENSIONS_IMAGE = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+
+/** Nom lisible d'une pièce à partir de son URL de stockage. */
+export function pieceName(url: string): string {
+  const brut = url.split('?')[0].split('/').pop() || 'Pièce jointe';
+  try {
+    return decodeURIComponent(brut);
+  } catch {
+    return brut;
+  }
+}
+
+export function isImage(url: string): boolean {
+  const extension = url.split('?')[0].split('.').pop()?.toLowerCase() || '';
+  return EXTENSIONS_IMAGE.includes(extension);
+}
+
+/** Date au format français ; les dates absentes ou invalides ne doivent pas afficher « Invalid Date ». */
+export function formatDate(value?: string | null): string {
+  if (!value) return 'Non renseignée';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Non renseignée' : date.toLocaleDateString('fr-FR');
+}
+
+/** Durée d'instruction en jours, du constat à la clôture (ou à aujourd'hui si le dossier est ouvert). */
+export function dureeInstruction(infraction: ArtisanInfraction): number | null {
+  const debut = new Date(infraction.date_infraction).getTime();
+  const fin = infraction.date_cloture ? new Date(infraction.date_cloture).getTime() : Date.now();
+  if (Number.isNaN(debut) || Number.isNaN(fin)) return null;
+  return Math.max(0, Math.round((fin - debut) / 86_400_000));
+}
 
 export default function InfractionDetails() {
   const navigate = useNavigate();
   const { artisanId, infractionId } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [infraction, setInfraction] = useState<ArtisanInfraction | null>(null);
   const { alertState, showError, closeAlert } = useCustomAlert();
 
+  const [loading, setLoading] = useState(true);
+  const [infraction, setInfraction] = useState<ArtisanInfraction | null>(null);
+  const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
+
   useEffect(() => {
-    if (infractionId) {
-      loadInfraction();
-    }
-  }, [infractionId]);
+    let active = true;
 
-  const loadInfraction = async () => {
-    try {
+    const load = async () => {
       setLoading(true);
-      const data = await artisanInfractionsService.getById(infractionId!);
-      setInfraction(data);
-    } catch (error) {
-      showError('Impossible de charger les détails de l\'infraction');
-    } finally {
+      const [constat, dossier] = await Promise.allSettled([
+        infractionId ? artisanInfractionsService.getById(infractionId) : Promise.resolve(null),
+        artisanId ? artisanMinierService.getById(artisanId) : Promise.resolve(null),
+      ]);
+      if (!active) return;
+
+      if (constat.status === 'fulfilled' && constat.value) {
+        setInfraction(constat.value);
+      } else {
+        showError("Impossible de charger ce constat d'infraction");
+      }
+      // Le dossier artisan n'est qu'un contexte : son absence ne masque pas le constat.
+      if (dossier.status === 'fulfilled') setArtisan(dossier.value);
       setLoading(false);
-    }
-  };
+    };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
+    void load();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artisanId, infractionId]);
 
-  const getFileIcon = (url: string) => {
-    const ext = url.split('.').pop()?.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
-      return 'image';
-    }
-    return 'file';
-  };
+  const retour = artisanId ? `/artisan-minier/${artisanId}` : '/artisan-minier/liste';
+  const modifier = `/artisan-minier/${artisanId}/infractions/${infractionId}/modifier`;
+
+  const cloture = infraction?.statut_traitement === 'cloture';
+  const conclusion = infraction?.conclusion ? CONCLUSIONS[infraction.conclusion] : null;
+  const duree = useMemo(() => (infraction ? dureeInstruction(infraction) : null), [infraction]);
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loading />
+      <NationalDashboardLayout>
+        <div className="sn-page infraction-detail">
+          <div className="infraction-detail__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du constat…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   if (!infraction) {
     return (
-      <MainLayout>
-        <Card className="p-8">
-          <div className="text-center">
-            <AlertTriangle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Infraction introuvable
-            </h3>
-            <Button onClick={() => navigate(`/artisan-minier/${artisanId}`)}>
-              Retour au profil
-            </Button>
-          </div>
-        </Card>
-      </MainLayout>
+      <NationalDashboardLayout>
+        <div className="sn-page infraction-detail">
+          <CustomAlert {...alertState} onClose={closeAlert} />
+          <PageHeader
+            icon={AlertTriangle}
+            title="Constat introuvable"
+            subtitle="Ce constat a été supprimé ou la référence est erronée."
+            breadcrumb={[{ label: 'Artisans miniers', to: '/artisan-minier' }, { label: 'Constat' }]}
+          />
+          <EmptyState
+            title="Aucun constat à afficher"
+            description="Revenez au dossier de l’artisan pour consulter les constats existants."
+            action={
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate(retour)}>
+                <ArrowLeft aria-hidden="true" /> Retour au dossier
+              </button>
+            }
+          />
+        </div>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <CustomAlert {...alertState} onClose={closeAlert} />
+    <NationalDashboardLayout>
+      <div className="sn-page infraction-detail">
+        <CustomAlert {...alertState} onClose={closeAlert} />
 
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/artisan-minier/${artisanId}`)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Détails de l'Infraction
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {infraction.type_infraction}
-              </p>
+        <PageHeader
+          icon={AlertTriangle}
+          title={infraction.type_infraction}
+          subtitle={`Constaté le ${formatDate(infraction.date_infraction)}${
+            infraction.lieu ? ` à ${infraction.lieu}` : ''
+          } · Dossier de ${artisanFullName(artisan)}`}
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: artisanFullName(artisan), to: retour },
+            { label: 'Constat d’infraction' },
+          ]}
+          aside={
+            <div className="infraction-detail__badges">
+              <Badge tone={cloture ? 'neutral' : 'warning'}>
+                {cloture ? 'Dossier clôturé' : 'Instruction en cours'}
+              </Badge>
+              {conclusion && (
+                <Badge tone={conclusion.tone} icon={conclusion.icon}>
+                  {conclusion.label}
+                </Badge>
+              )}
             </div>
-          </div>
-          <Button
-            onClick={() =>
-              navigate(`/artisan-minier/${artisanId}/infractions/${infractionId}/modifier`)
-            }
-          >
-            <Edit2 className="w-5 h-5 mr-2" />
-            Modifier
-          </Button>
-        </div>
+          }
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => navigate(retour)}>
+                <ArrowLeft aria-hidden="true" /> Dossier de l’artisan
+              </button>
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate(modifier)}>
+                <PencilLine aria-hidden="true" /> {cloture ? 'Modifier le constat' : 'Instruire et clôturer'}
+              </button>
+            </>
+          }
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-red-600" />
-                Informations Générales
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="infraction-detail__layout">
+          <div className="infraction-detail__main">
+            <Section
+              id="constat"
+              icon={ScrollText}
+              tone="amber"
+              title="Constat"
+              description="Références de temps et de lieu du manquement relevé."
+            >
+              <dl className="infraction-detail__facts">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Date de l'Infraction
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {formatDate(infraction.date_infraction)}
-                  </p>
+                  <dt>
+                    <CalendarDays aria-hidden="true" /> Date du constat
+                  </dt>
+                  <dd>{formatDate(infraction.date_infraction)}</dd>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    Lieu
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {infraction.lieu || 'Non spécifié'}
-                  </p>
+                  <dt>
+                    <MapPin aria-hidden="true" /> Lieu
+                  </dt>
+                  <dd>{infraction.lieu || 'Non renseigné'}</dd>
                 </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    <AlertTriangle className="w-4 h-4 inline mr-2" />
-                    Type d'Infraction
-                  </label>
-                  <p className="text-base font-semibold text-red-700">
-                    {infraction.type_infraction}
-                  </p>
+                <div>
+                  <dt>
+                    <Gavel aria-hidden="true" /> Qualification
+                  </dt>
+                  <dd>{infraction.type_infraction}</dd>
                 </div>
-              </div>
-            </Card>
+                <div>
+                  <dt>
+                    <CalendarDays aria-hidden="true" /> {cloture ? 'Durée d’instruction' : 'Ouvert depuis'}
+                  </dt>
+                  <dd>{duree === null ? 'Non calculable' : `${duree} jour(s)`}</dd>
+                </div>
+              </dl>
+            </Section>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Description Détaillée
-              </h3>
-              <div className="prose prose-sm max-w-none">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {infraction.description}
-                </p>
-              </div>
-            </Card>
+            <Section
+              id="faits"
+              icon={FileText}
+              tone="violet"
+              title="Faits constatés"
+              description="Description circonstanciée établie par l’agent verbalisateur."
+            >
+              <p className="infraction-detail__texte">{infraction.description}</p>
+            </Section>
 
             {infraction.remarques && (
-              <Card className="p-6 bg-blue-50 border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Remarques Complémentaires
-                </h3>
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {infraction.remarques}
-                </p>
-              </Card>
+              <Section
+                id="observations"
+                icon={ScrollText}
+                tone="blue"
+                title="Observations de l’agent"
+                description="Suites proposées et mesures recommandées."
+              >
+                <p className="infraction-detail__texte">{infraction.remarques}</p>
+              </Section>
             )}
 
-            {/* Documents */}
-            {infraction.documents && infraction.documents.length > 0 && (
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Documents & Preuves ({infraction.documents.length})
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {infraction.documents.map((url, index) => (
-                    <div
-                      key={index}
-                      className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-                    >
-                      {getFileIcon(url) === 'image' ? (
-                        <img
-                          src={url}
-                          alt={`Document ${index + 1}`}
-                          className="w-full h-32 object-cover rounded mb-2"
-                        />
+            <Section
+              id="pieces"
+              icon={Paperclip}
+              tone="slate"
+              title="Pièces du dossier"
+              description="Photographies, procès-verbaux et justificatifs versés au constat."
+            >
+              {infraction.documents.length === 0 ? (
+                <p className="infraction-detail__vide">
+                  Aucune pièce n’a été versée. Ajoutez-en depuis la modification du constat.
+                </p>
+              ) : (
+                <ul className="infraction-detail__pieces">
+                  {infraction.documents.map((url) => (
+                    <li key={url}>
+                      {isImage(url) ? (
+                        <img src={url} alt={pieceName(url)} loading="lazy" />
                       ) : (
-                        <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center mb-2">
-                          <FileText className="w-12 h-12 text-gray-400" />
-                        </div>
+                        <span className="infraction-detail__piece-icon">
+                          <FileText aria-hidden="true" />
+                        </span>
                       )}
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => window.open(url, '_blank')}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `document-${index + 1}`;
-                            a.click();
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
+                      <p>
+                        {isImage(url) ? <ImageIcon aria-hidden="true" /> : <FileText aria-hidden="true" />}
+                        {pieceName(url)}
+                      </p>
+                      <div className="infraction-detail__piece-actions">
+                        <a className="sn-btn sn-btn--sm" href={url} target="_blank" rel="noreferrer">
+                          <ExternalLink aria-hidden="true" /> Ouvrir
+                        </a>
+                        <a className="sn-btn sn-btn--sm" href={url} download={pieceName(url)}>
+                          <Download aria-hidden="true" /> Télécharger
+                        </a>
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              </Card>
-            )}
+                </ul>
+              )}
+            </Section>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Statut du Traitement
-              </h3>
-              <div className="text-center">
-                <span
-                  className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full border ${
-                    TRAITEMENT_LABELS[infraction.statut_traitement]?.color
-                  }`}
-                >
-                  {TRAITEMENT_LABELS[infraction.statut_traitement]?.label}
-                </span>
-              </div>
-            </Card>
-
-            {infraction.conclusion && (
-              <Card className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Conclusion
-                </h3>
-                <div className="text-center">
-                  <div className="text-4xl mb-3">
-                    {CONCLUSION_LABELS[infraction.conclusion]?.icon}
-                  </div>
-                  <span
-                    className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full border ${
-                      CONCLUSION_LABELS[infraction.conclusion]?.color
-                    }`}
-                  >
-                    {CONCLUSION_LABELS[infraction.conclusion]?.label}
-                  </span>
+          <aside className="infraction-detail__aside" aria-label="Suivi du constat">
+            <section className="sn-card infraction-detail__suivi">
+              <h2>
+                <CheckCircle2 aria-hidden="true" /> Instruction
+              </h2>
+              <dl>
+                <div>
+                  <dt>État</dt>
+                  <dd>{cloture ? 'Dossier clôturé' : 'Instruction en cours'}</dd>
                 </div>
-              </Card>
-            )}
-
-            {infraction.date_cloture && (
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Date de Clôture
-                </h3>
-                <div className="text-center">
-                  <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-base font-medium text-gray-900">
-                    {formatDate(infraction.date_cloture)}
-                  </p>
+                <div>
+                  <dt>Conclusion</dt>
+                  <dd>{conclusion ? conclusion.label : 'Non prononcée'}</dd>
                 </div>
-              </Card>
-            )}
+                <div>
+                  <dt>Date de clôture</dt>
+                  <dd>{formatDate(infraction.date_cloture)}</dd>
+                </div>
+              </dl>
+              {conclusion ? (
+                <Note tone={conclusion.tone === 'success' ? 'success' : 'warning'} icon={conclusion.icon}>
+                  {conclusion.sens}
+                </Note>
+              ) : (
+                <Note tone="info" icon={AlertTriangle}>
+                  Le dossier reste ouvert tant qu’aucune conclusion n’a été prononcée.
+                </Note>
+              )}
+            </section>
 
-            <Card className="p-6 bg-gradient-to-br from-red-50 to-orange-50 border-red-200">
-              <h4 className="text-sm font-semibold text-red-900 mb-2">
-                ⚠️ Métadonnées
-              </h4>
-              <div className="space-y-2 text-xs text-red-700">
-                <p>
-                  <strong>Créé le:</strong>{' '}
-                  {formatDate(infraction.created_at)}
-                </p>
-                <p>
-                  <strong>Modifié le:</strong>{' '}
-                  {formatDate(infraction.updated_at)}
-                </p>
-              </div>
-            </Card>
-          </div>
+            <section className="sn-card infraction-detail__artisan">
+              <h2>
+                <UserRound aria-hidden="true" /> Artisan mis en cause
+              </h2>
+              {artisan ? (
+                <>
+                  <p className="infraction-detail__artisan-name">{artisanFullName(artisan)}</p>
+                  <dl>
+                    <div>
+                      <dt>Carte professionnelle</dt>
+                      <dd>{artisan.numero_carte || 'Non attribuée'}</dd>
+                    </div>
+                    <div>
+                      <dt>Localisation</dt>
+                      <dd>{[artisan.commune, artisan.region].filter(Boolean).join(' · ') || 'Non renseignée'}</dd>
+                    </div>
+                  </dl>
+                  <button type="button" className="sn-btn sn-btn--sm" onClick={() => navigate(retour)}>
+                    Ouvrir le dossier complet
+                  </button>
+                </>
+              ) : (
+                <p className="infraction-detail__vide">Dossier artisan indisponible.</p>
+              )}
+            </section>
+
+            <section className="sn-card infraction-detail__trace">
+              <h2>
+                <ScrollText aria-hidden="true" /> Traçabilité
+              </h2>
+              <dl>
+                <div>
+                  <dt>Enregistré le</dt>
+                  <dd>{formatDate(infraction.created_at)}</dd>
+                </div>
+                <div>
+                  <dt>Dernière modification</dt>
+                  <dd>{formatDate(infraction.updated_at)}</dd>
+                </div>
+              </dl>
+            </section>
+          </aside>
         </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

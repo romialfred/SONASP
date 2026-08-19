@@ -1,0 +1,88 @@
+/* Suivi des cartes : deux panneaux de lecture, sans style local hors composition. */
+
+.carte-suivi__grid {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.carte-suivi__feed,
+.carte-suivi__ranking {
+  display: grid;
+  margin: 0;
+  padding: 0 16px 16px;
+  gap: 2px;
+  list-style: none;
+}
+
+.carte-suivi__feed li {
+  display: grid;
+  align-items: center;
+  min-height: 52px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  border-bottom: 1px solid var(--sn-line-soft);
+}
+
+.carte-suivi__feed li:last-child,
+.carte-suivi__ranking li:last-child { border-bottom: 0; }
+
+.carte-suivi__feed-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: var(--sn-info);
+  background: var(--sn-info-soft);
+  border-radius: 9px;
+}
+
+.carte-suivi__feed-icon svg { width: 15px; height: 15px; }
+.carte-suivi__feed-body,
+.carte-suivi__ranking-body { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.carte-suivi__feed-body strong { overflow: hidden; font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.carte-suivi__feed-body small { overflow: hidden; color: var(--sn-faint); font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.carte-suivi__feed em { color: var(--sn-faint); font-size: 10.5px; font-style: normal; white-space: nowrap; }
+
+.carte-suivi__ranking li {
+  display: grid;
+  align-items: center;
+  min-height: 54px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 11px;
+  border-bottom: 1px solid var(--sn-line-soft);
+}
+
+.carte-suivi__rank {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--sn-green);
+  background: var(--sn-green-soft);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.carte-suivi__ranking-body strong { overflow: hidden; font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.carte-suivi__ranking-body small { color: var(--sn-faint); font-size: 10.5px; }
+.carte-suivi__ranking-value { display: flex; align-items: center; gap: 9px; }
+.carte-suivi__ranking-value b { font-size: 12.5px; font-weight: 700; }
+
+.carte-suivi__inline-link {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 1180px) {
+  .carte-suivi__grid { grid-template-columns: minmax(0, 1fr); }
+}

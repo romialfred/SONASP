@@ -453,3 +453,35 @@
   .national-origin-panel__content { height: auto; grid-template-columns: 1fr; }
   .national-origin-legend { width: 100%; padding: 0 10px 20px; }
 }
+
+/* --- Etats sans donnee : aucune valeur inventee n'est affichee a leur place. --- */
+
+.national-metric-card .is-muted { color: #7b8ca0; font-weight: 500; }
+
+.national-dashboard__unavailable {
+  display: flex;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 9px 13px;
+  gap: 9px;
+  border: 1px solid #f3dfaa;
+  background: #fff9eb;
+  border-radius: 10px;
+  color: #8a6300;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.national-dashboard__unavailable svg { flex: none; width: 15px; height: 15px; }
+
+.national-dashboard__popover-error { margin: 0; color: #ef402f; font-size: 11px; font-weight: 600; }
+
+.national-origin-panel__empty,
+.national-alerts-empty {
+  margin: 18px;
+  color: #60738c;
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.national-dashboard__export:disabled { opacity: 0.5; cursor: not-allowed; }

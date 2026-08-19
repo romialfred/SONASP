@@ -1,0 +1,64 @@
+/* Registre des ventes d'or : composition de la page, styles issus du design system. */
+
+.ventes-or__error {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+  padding: 18px;
+  gap: 14px;
+  border-color: var(--sn-danger-line);
+  background: #fff8f7;
+}
+
+.ventes-or__error > svg { width: 28px; height: 28px; flex: 0 0 auto; color: var(--sn-danger); }
+.ventes-or__error > div { flex: 1; min-width: 0; }
+.ventes-or__error h3 { margin: 0; font-size: 13.5px; font-weight: 700; }
+.ventes-or__error p { margin: 4px 0 0; color: var(--sn-muted); font-size: 11.5px; }
+
+.ventes-or__filters { margin-top: 12px; padding: 14px 16px 16px; }
+
+.ventes-or__filters-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ventes-or__filters-row > .sn-search { min-width: 260px; flex: 1 1 260px; }
+
+.ventes-or__field { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.ventes-or__field > span { color: var(--sn-ink-soft); font-size: 11.5px; font-weight: 600; }
+.ventes-or__field .sn-select select { min-width: 168px; }
+
+.ventes-or__dates > div {
+  display: flex;
+  align-items: center;
+  height: var(--sn-control-h-sm);
+  padding: 0 10px;
+  gap: 8px;
+  border: 1px solid var(--sn-field-line);
+  background: var(--sn-surface);
+  border-radius: 8px;
+}
+
+.ventes-or__dates svg { width: 15px; height: 15px; flex: 0 0 auto; color: #8fa0b1; }
+.ventes-or__dates i { color: #b6c3ce; font-style: normal; }
+
+.ventes-or__dates input {
+  width: 112px;
+  border: 0;
+  color: var(--sn-ink);
+  background: transparent;
+  font: inherit;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.ventes-or__statuts { margin-top: 14px; }
+.ventes-or__table { margin-top: 12px; }
+.ventes-or__actions { display: inline-flex; gap: 6px; }
+
+@media (max-width: 1023px) {
+  .ventes-or__filters-row > * { flex: 1 1 100%; }
+  .ventes-or__field .sn-select select { min-width: 0; }
+}

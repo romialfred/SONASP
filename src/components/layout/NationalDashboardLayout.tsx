@@ -70,25 +70,126 @@ const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'artisanal-sites',
-    label: 'Gestion des sites artisanaux',
+    label: 'Sites Artisanaux',
     path: '/artisan-sites',
     icon: MapPinned,
     color: '#21c995',
     children: [
       { label: "Vue d'ensemble", path: '/artisan-sites', icon: Grid2X2, color: '#21c995' },
-      { label: 'Ajouter un site', path: '/artisan-sites/nouveau', icon: MapPinned, color: '#2f6fec' },
       { label: 'Production des sites', path: '/artisan-sites/production', icon: Building2, color: '#d79a00' },
     ],
   },
-  { id: 'production', label: "Collecte de l'Or", path: '/production/daily', icon: Building2, color: '#10976b' },
-  { id: 'shipping', label: 'Expéditions', path: '/shipping/preparation', icon: Truck, color: '#2f6fec' },
-  { id: 'refining', label: 'Raffinage', path: '/refining', icon: FlaskConical, color: '#10976b' },
-  { id: 'inventory', label: 'Suivi des Stocks', path: '/inventory', icon: PackageCheck, color: '#10976b' },
-  { id: 'documents', label: 'Documents', path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
-  { id: 'market', label: 'Marché', path: '/sales/trade-space', icon: CircleDollarSign, color: '#f59e0b' },
-  { id: 'sales', label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
-  { id: 'stakeholders', label: 'Parties prenantes', path: '/stakeholders/mining-companies', icon: Users, color: '#14b8a6' },
-  { id: 'analytics', label: 'Analyses', path: '/analytics', icon: TrendingUp, color: '#3b82f6' },
+  {
+    id: 'production',
+    label: "Collecte de l'Or",
+    path: '/production/daily',
+    icon: Building2,
+    color: '#10976b',
+    children: [
+      { label: 'Production journalière', path: '/production/daily', icon: Building2, color: '#10976b' },
+      { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
+      { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
+      { label: 'Budgets', path: '/performance/budgets', icon: BarChart3, color: '#8b5cf6' },
+      { label: 'Prévisions', path: '/performance/forecasts', icon: TrendingUp, color: '#14b8a6' },
+    ],
+  },
+  {
+    id: 'shipping',
+    label: 'Expéditions',
+    path: '/shipping/preparation',
+    icon: Truck,
+    color: '#2f6fec',
+    children: [
+      { label: 'Préparations', path: '/shipping/preparation', icon: PackageCheck, color: '#2f6fec' },
+      { label: 'Nouvelle préparation', path: '/shipping/preparation/new', icon: Truck, color: '#10976b' },
+      { label: 'Expéditions de fret', path: '/freight', icon: Truck, color: '#d79a00' },
+      { label: 'Formalités douanières', path: '/freight-customs', icon: FileText, color: '#8b5cf6' },
+    ],
+  },
+  {
+    id: 'refining',
+    label: 'Raffinage',
+    path: '/refining',
+    icon: FlaskConical,
+    color: '#10976b',
+    children: [
+      { label: 'Suivi du raffinage', path: '/refining', icon: FlaskConical, color: '#10976b' },
+      { label: 'Lots réceptionnés', path: '/refining/freight-shipments', icon: PackageCheck, color: '#2f6fec' },
+    ],
+  },
+  {
+    id: 'inventory',
+    label: 'Suivi des Stocks',
+    path: '/inventory',
+    icon: PackageCheck,
+    color: '#10976b',
+    children: [
+      { label: "Stock d'or", path: '/inventory', icon: PackageCheck, color: '#d79a00' },
+      { label: "Stock d'argent", path: '/inventory/silver', icon: Layers, color: '#8b5cf6' },
+      { label: 'Nouvelle entrée', path: '/inventory/add', icon: Grid2X2, color: '#10976b' },
+    ],
+  },
+  {
+    id: 'documents',
+    label: 'Documents',
+    path: '/documents/assay-certificates',
+    icon: FileText,
+    color: '#8b5cf6',
+    children: [
+      { label: "Certificats d'essai", path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
+      { label: 'Rapports', path: '/reports', icon: BarChart3, color: '#2f6fec' },
+    ],
+  },
+  {
+    id: 'market',
+    label: 'Marché',
+    path: '/sales/trade-space',
+    icon: CircleDollarSign,
+    color: '#f59e0b',
+    children: [
+      { label: 'Espace de négoce', path: '/sales/trade-space', icon: CircleDollarSign, color: '#f59e0b' },
+      { label: "Cours de l'or", path: '/gold-prices', icon: TrendingUp, color: '#d79a00' },
+      { label: 'Taux de change', path: '/fx-rates', icon: TrendingUp, color: '#2f6fec' },
+    ],
+  },
+  {
+    id: 'sales',
+    label: 'Ventes',
+    path: '/sales',
+    icon: CircleDollarSign,
+    color: '#ec4899',
+    children: [
+      { label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
+      { label: 'Pré-ventes', path: '/presales', icon: Layers, color: '#8b5cf6' },
+      { label: 'Clients', path: '/customers', icon: Users, color: '#14b8a6' },
+      { label: 'Paiements', path: '/payments', icon: CircleDollarSign, color: '#16a363' },
+    ],
+  },
+  {
+    id: 'stakeholders',
+    label: 'Parties prenantes',
+    path: '/stakeholders/mining-companies',
+    icon: Users,
+    color: '#14b8a6',
+    children: [
+      { label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#10976b' },
+      { label: 'Déposants', path: '/stakeholders/depositors', icon: Users, color: '#2f6fec' },
+      { label: 'Transporteurs', path: '/stakeholders/freight-companies', icon: Truck, color: '#d79a00' },
+      { label: 'Raffineries', path: '/stakeholders/refinery-plants', icon: FlaskConical, color: '#8b5cf6' },
+    ],
+  },
+  {
+    id: 'analytics',
+    label: 'Analyses',
+    path: '/analytics',
+    icon: TrendingUp,
+    color: '#3b82f6',
+    children: [
+      { label: "Centre d'analyse", path: '/analytics', icon: TrendingUp, color: '#3b82f6' },
+      { label: 'Tableaux historiques', path: '/analytics/legacy', icon: BarChart3, color: '#8b5cf6' },
+      { label: 'Rapports', path: '/reports', icon: FileText, color: '#2f6fec' },
+    ],
+  },
   {
     id: 'settings',
     label: 'Paramétrage',
@@ -100,7 +201,20 @@ const navigationGroups: NavigationGroup[] = [
       { label: 'Paramètres des statuts', path: '/admin/status-manager', icon: Layers, color: '#14b8a6' },
     ],
   },
-  { id: 'administration', label: 'Administration', path: '/users', icon: Settings, color: '#f97316' },
+  {
+    id: 'administration',
+    label: 'Administration',
+    path: '/users',
+    icon: Settings,
+    color: '#f97316',
+    children: [
+      { label: 'Utilisateurs', path: '/users', icon: Users, color: '#f97316' },
+      { label: 'Modules', path: '/admin/modules', icon: Layers, color: '#8b5cf6' },
+      { label: 'Workflow des ventes', path: '/admin/workflow', icon: SlidersHorizontal, color: '#2f6fec' },
+      { label: 'Raffineries', path: '/admin/refineries', icon: FlaskConical, color: '#10976b' },
+      { label: 'Transporteurs', path: '/admin/transport-companies', icon: Truck, color: '#d79a00' },
+    ],
+  },
 ];
 
 interface NationalDashboardLayoutProps {
@@ -198,6 +312,15 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
 
       <div className="national-sidebar__section-title">
         <span>MES APPLICATIONS</span>
+        <button
+          type="button"
+          className="national-sidebar__collapse"
+          onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}
+          title={sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
+        </button>
       </div>
 
       <nav className="national-sidebar__navigation">
@@ -234,7 +357,7 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
                   aria-expanded={isOpen}
                 >
                   <Icon style={{ color: group.color }} aria-hidden="true" />
-                  <span className={cn(group.id === 'artisanal-sites' && 'text-[9px] font-semibold tracking-[-0.01em]')} title={group.label}>{group.label}</span>
+                  <span title={group.label}>{group.label}</span>
                   {isOpen ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
                 </button>
                 {isOpen && (
@@ -274,13 +397,6 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
         })}
       </nav>
 
-      <div className="national-sidebar__footer">
-        <button type="button" onClick={toggleSidebar} aria-label={sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}>
-          {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
-          <span>{sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}</span>
-        </button>
-        <small>© 2026 SONASP</small>
-      </div>
     </aside>
   );
 
@@ -312,10 +428,8 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
           </button>
 
           <div className="national-header__identity">
-            <span className="national-header__accent" aria-hidden="true" />
             <div>
-              <h1>Plateforme Nationale de Collecte et de Suivi des Ventes d’Or</h1>
-              <p>Transparence, traçabilité et pilotage stratégique de la filière aurifère</p>
+              <h1>Système National de Collecte et du Suivi de la Traçabilité de l’Or</h1>
             </div>
           </div>
 
@@ -413,6 +527,11 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
         </header>
 
         <main className="national-shell__content">{children}</main>
+
+        <footer className="national-shell__footer">
+          <span>© {new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses</span>
+          <span className="national-shell__footer-motto">Confidentialité · Intégrité · Transparence</span>
+        </footer>
       </div>
     </div>
   );

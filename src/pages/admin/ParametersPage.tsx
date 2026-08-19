@@ -1,11 +1,25 @@
-import { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Bell,
+  Loader2,
+  Save,
+  Scale,
+  Settings,
+  Shield,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Field, Note, PageHeader, Section } from '@/components/ui/sn';
 import { Toggle } from '@/components/ui/Toggle';
+import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
-import { Settings, Shield, Bell, Save, User, CheckCircle, XCircle, Scale, AlertTriangle, DollarSign } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
+import { roleLabel, roleTone } from '@/lib/roleLabels';
+import './admin.css';
 
 interface UserProfile {
   id: string;
@@ -16,7 +30,7 @@ interface UserProfile {
   is_active: boolean;
 }
 
-interface BusinessRule {
+export interface BusinessRule {
   id: string;
   rule_key: string;
   rule_name: string;
@@ -27,677 +41,523 @@ interface BusinessRule {
   updated_at: string;
 }
 
+type OngletId = 'preferences' | 'regles' | 'authentification' | 'notifications';
+
+const ONGLETS: Array<{ id: OngletId; label: string; icon: typeof Settings }> = [
+  { id: 'preferences', label: 'Préférences', icon: Settings },
+  { id: 'regles', label: 'Règles métier', icon: Scale },
+  { id: 'authentification', label: 'Double authentification', icon: Shield },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+];
+
+/** Fuseaux proposés ; Ouagadougou manquait à la liste sur une plateforme burkinabè. */
+export const FUSEAUX = [
+  { value: 'Africa/Ouagadougou', label: 'Ouagadougou (GMT+0)' },
+  { value: 'Africa/Abidjan', label: 'Abidjan (GMT+0)' },
+  { value: 'Africa/Bamako', label: 'Bamako (GMT+0)' },
+  { value: 'Africa/Niamey', label: 'Niamey (GMT+1)' },
+  { value: 'UTC', label: 'UTC' },
+];
+
+export const LANGUES = [
+  { value: 'fr', label: 'Français' },
+  { value: 'en', label: 'English' },
+];
+
+export interface PreferencesNotification {
+  email_notifications: boolean;
+  batch_notifications: boolean;
+  approval_notifications: boolean;
+}
+
+export const NOTIFICATIONS: Array<{ clef: keyof PreferencesNotification; label: string; description: string }> = [
+  {
+    clef: 'email_notifications',
+    label: 'Notifications par courriel',
+    description: 'Recevoir un courriel pour les évènements qui vous concernent',
+  },
+  {
+    clef: 'batch_notifications',
+    label: 'Suivi des lots',
+    description: 'Être averti des changements d’état d’un lot',
+  },
+  {
+    clef: 'approval_notifications',
+    label: 'Demandes d’approbation',
+    description: 'Être averti des validations qui vous sont soumises',
+  },
+];
+
+/** Regroupe les règles par catégorie, sans catégorie codée en dur. */
+export function grouperRegles(regles: BusinessRule[]): Array<{ categorie: string; regles: BusinessRule[] }> {
+  const groupes = new Map<string, BusinessRule[]>();
+  regles.forEach((regle) => {
+    const categorie = regle.rule_category?.trim() || 'Autres règles';
+    groupes.set(categorie, [...(groupes.get(categorie) || []), regle]);
+  });
+  return Array.from(groupes.entries())
+    .map(([categorie, liste]) => ({ categorie, regles: liste }))
+    .sort((a, b) => a.categorie.localeCompare(b.categorie, 'fr'));
+}
+
+/** Valeur affichée d'une règle : `0` est une valeur légitime, pas une absence. */
+export const valeurRegle = (editees: Record<string, number>, regle: BusinessRule): number =>
+  editees[regle.rule_key] ?? regle.rule_value;
+
 export function ParametersPage() {
-  const [activeTab, setActiveTab] = useState('preferences');
+  const { user, refreshProfile } = useAuth();
   const { notification, showSuccess, showError, closeNotification } = useNotification();
+  const { open: demanderConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [businessRules, setBusinessRules] = useState<BusinessRule[]>([]);
-  const [editedRules, setEditedRules] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  const [onglet, setOnglet] = useState<OngletId>('preferences');
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeTab === '2fa') {
-      loadUsers();
-    } else if (activeTab === 'business-rules') {
-      loadBusinessRules();
-    }
-  }, [activeTab]);
+  const [comptes, setComptes] = useState<UserProfile[]>([]);
+  const [regles, setRegles] = useState<BusinessRule[]>([]);
+  const [reglesEditees, setReglesEditees] = useState<Record<string, number>>({});
+  const [langue, setLangue] = useState('fr');
+  const [fuseau, setFuseau] = useState('Africa/Ouagadougou');
+  const [prefsChargees, setPrefsChargees] = useState(false);
+  const [notifications, setNotifications] = useState<PreferencesNotification>({
+    email_notifications: true,
+    batch_notifications: true,
+    approval_notifications: true,
+  });
 
-  const loadUsers = async () => {
+  // Les dépendances portent sur des valeurs primitives : dépendre de l'objet `user`
+  // entier relançait le chargement à chaque rendu dès que le contexte recréait l'objet.
+  const userId = user?.id;
+  const prefEmail = user?.email_notifications !== false;
+  const prefLots = user?.batch_notifications !== false;
+  const prefApprobations = user?.approval_notifications !== false;
+
+  const chargerPreferences = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('language_preference, timezone')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) {
+        setLangue(data.language_preference || 'fr');
+        setFuseau(data.timezone || 'Africa/Ouagadougou');
+      }
+      setPrefsChargees(true);
+      setNotifications({
+        email_notifications: prefEmail,
+        batch_notifications: prefLots,
+        approval_notifications: prefApprobations,
+      });
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger vos préférences.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, prefEmail, prefLots, prefApprobations]);
+
+  const chargerComptes = useCallback(async () => {
+    setLoading(true);
+    setErreur(null);
+    try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('id, email, full_name, role, two_factor_enabled, is_active')
         .order('full_name');
-
       if (error) throw error;
-      setUsers(data || []);
-    } catch (error: any) {
-      console.error('Error loading users:', error);
-      showError('Load Failed', 'Could not load users. Please try again.');
+      setComptes(data || []);
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger les comptes.'));
+      setComptes([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleToggle2FA = async (userId: string, currentStatus: boolean) => {
+  const chargerRegles = useCallback(async () => {
+    setLoading(true);
+    setErreur(null);
     try {
-      setSaving(true);
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ two_factor_enabled: !currentStatus })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setUsers(users.map(user =>
-        user.id === userId
-          ? { ...user, two_factor_enabled: !currentStatus }
-          : user
-      ));
-
-      showSuccess(
-        '2FA Updated',
-        `Two-factor authentication has been ${!currentStatus ? 'enabled' : 'disabled'} successfully.`
-      );
-    } catch (error: any) {
-      console.error('Error updating 2FA:', error);
-      showError(
-        'Update Failed',
-        error.message || 'Could not update 2FA status. Please try again.'
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const loadBusinessRules = async () => {
-    try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('business_rules')
         .select('*')
         .order('rule_category', { ascending: true })
         .order('rule_name', { ascending: true });
-
       if (error) throw error;
-      setBusinessRules(data || []);
-
-      const initialValues: Record<string, number> = {};
-      data?.forEach(rule => {
-        initialValues[rule.rule_key] = rule.rule_value;
-      });
-      setEditedRules(initialValues);
-    } catch (error: any) {
-      console.error('Error loading business rules:', error);
-      showError('Load Failed', 'Could not load business rules. Please try again.');
+      setRegles(data || []);
+      setReglesEditees({});
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger les règles métier.'));
+      setRegles([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleRuleChange = (ruleKey: string, value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      setEditedRules(prev => ({ ...prev, [ruleKey]: numValue }));
-    }
-  };
+  useEffect(() => {
+    if (onglet === 'authentification') void chargerComptes();
+    else if (onglet === 'regles') void chargerRegles();
+    else if (onglet === 'preferences' || onglet === 'notifications') void chargerPreferences();
+  }, [onglet, chargerComptes, chargerRegles, chargerPreferences]);
 
-  const saveBusinessRules = async () => {
+  const groupes = useMemo(() => grouperRegles(regles), [regles]);
+  const reglesModifiees = Object.keys(reglesEditees).length > 0;
+
+  const enregistrerPreferences = async () => {
+    if (!userId || saving) return;
+    setSaving(true);
     try {
-      setSaving(true);
-
-      const updates = businessRules.map(rule => ({
-        id: rule.id,
-        rule_value: editedRules[rule.rule_key] || rule.rule_value,
-      }));
-
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('business_rules')
-          .update({ rule_value: update.rule_value })
-          .eq('id', update.id);
-
-        if (error) throw error;
-      }
-
-      await loadBusinessRules();
-      showSuccess('Business Rules Updated', 'All business rules have been saved successfully.');
-    } catch (error: any) {
-      console.error('Error saving business rules:', error);
-      showError(
-        'Save Failed',
-        error.message || 'Could not save business rules. Please try again.'
-      );
+      // L'onglet n'enregistrait rien : ses listes déroulantes n'avaient ni valeur ni
+      // gestionnaire, et le bouton « Save Preferences » aucun `onClick`.
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ language_preference: langue, timezone: fuseau })
+        .eq('id', userId);
+      if (error) throw error;
+      await refreshProfile();
+      showSuccess('Préférences enregistrées', 'Vos préférences d’affichage ont été mises à jour.');
+    } catch (reason) {
+      showError('Enregistrement impossible', errorMessage(reason, 'Vos préférences n’ont pas été modifiées.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const tabs = [
-    { id: 'preferences', label: 'Preferences', icon: Settings },
-    { id: 'business-rules', label: 'Business Rules', icon: Scale },
-    { id: '2fa', label: '2FA Management', icon: Shield },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-  ];
+  const enregistrerNotifications = async (suivant: PreferencesNotification) => {
+    if (saving) return;
+    setSaving(true);
+    const precedent = notifications;
+    setNotifications(suivant);
+    try {
+      // Les interrupteurs étaient figés sur « activé » avec un gestionnaire vide.
+      const { error } = await supabase.auth.updateUser({ data: suivant });
+      if (error) throw error;
+      await refreshProfile();
+      showSuccess('Notifications enregistrées', 'Vos préférences de notification ont été mises à jour.');
+    } catch (reason) {
+      setNotifications(precedent);
+      showError('Enregistrement impossible', errorMessage(reason, 'Vos préférences n’ont pas été modifiées.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const enregistrerRegles = async () => {
+    if (saving || !reglesModifiees) return;
+    setSaving(true);
+    try {
+      for (const regle of regles) {
+        const valeur = valeurRegle(reglesEditees, regle);
+        if (valeur === regle.rule_value) continue;
+        const { error } = await supabase.from('business_rules').update({ rule_value: valeur }).eq('id', regle.id);
+        if (error) throw error;
+      }
+      await chargerRegles();
+      showSuccess('Règles enregistrées', 'Les règles métier ont été mises à jour.');
+    } catch (reason) {
+      showError('Enregistrement impossible', errorMessage(reason, 'Les règles n’ont pas été modifiées.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const basculer2FA = async (compte: UserProfile) => {
+    const confirme = await demanderConfirmation({
+      title: compte.two_factor_enabled ? 'Désactiver la double authentification ?' : 'Activer la double authentification ?',
+      message: compte.two_factor_enabled
+        ? `${compte.full_name || compte.email} pourra se connecter avec son seul mot de passe.`
+        : `${compte.full_name || compte.email} devra fournir un second facteur à la connexion.`,
+      confirmText: compte.two_factor_enabled ? 'Désactiver' : 'Activer',
+      cancelText: 'Annuler',
+      severity: compte.two_factor_enabled ? 'danger' : 'info',
+    });
+    if (!confirme) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ two_factor_enabled: !compte.two_factor_enabled })
+        .eq('id', compte.id);
+      if (error) throw error;
+      setComptes((current) =>
+        current.map((item) =>
+          item.id === compte.id ? { ...item, two_factor_enabled: !compte.two_factor_enabled } : item
+        )
+      );
+      showSuccess(
+        'Double authentification mise à jour',
+        compte.two_factor_enabled ? 'Elle est désormais désactivée.' : 'Elle est désormais exigée.'
+      );
+    } catch (reason) {
+      showError('Modification impossible', errorMessage(reason, 'Le réglage n’a pas été modifié.'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <MainLayout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Parameters</h1>
-          <p className="text-gray-600">Configure system settings and user preferences</p>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page parametres">
+        <NotificationDialog {...notification} onClose={closeNotification} />
+        <ConfirmationDialog />
+
+        <PageHeader
+          icon={Settings}
+          title="Paramètres"
+          subtitle="Préférences personnelles, règles métier et exigences d’authentification."
+          breadcrumb={[{ label: 'Administration' }, { label: 'Paramètres' }]}
+        />
+
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
+        )}
+
+        <div className="user-detail__tabs" role="tablist" aria-label="Sections des paramètres">
+          {ONGLETS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={onglet === item.id}
+                className={onglet === item.id ? 'is-active' : ''}
+                onClick={() => setOnglet(item.id)}
+              >
+                <Icon aria-hidden="true" /> {item.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Horizontal Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
+        {onglet === 'preferences' && (
+          <Section
+            id="preferences"
+            icon={Settings}
+            tone="emerald"
+            title="Préférences d’affichage"
+            description="Réglages personnels appliqués à votre compte."
+          >
+            {loading ? (
+              <div className="admin-page__loading">
+                <Loader2 className="sn-spin" aria-hidden="true" /> Chargement de vos préférences…
+              </div>
+            ) : (
+              <>
+                <div className="admin-form__row is-deux">
+                  <Field label="Langue de l’interface" htmlFor="langue">
+                    <select id="langue" value={langue} onChange={(event) => setLangue(event.target.value)}>
+                      {LANGUES.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Fuseau horaire" htmlFor="fuseau">
+                    <select id="fuseau" value={fuseau} onChange={(event) => setFuseau(event.target.value)}>
+                      {FUSEAUX.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                {/* Devise et unité de poids n'avaient aucun stockage : les proposer
+                    revenait à promettre un réglage qui n'existait pas. */}
+                <Note tone="info" icon={Settings}>
+                  La devise de référence est le franc CFA et les masses sont exprimées en
+                  grammes et en onces troy sur l’ensemble de la plateforme ; ces unités ne
+                  sont pas paramétrables.
+                </Note>
+
+                <div className="sn-form-actions">
                   <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm transition-colors
-                      ${isActive
-                        ? 'border-amber-500 text-amber-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }
-                    `}
+                    type="button"
+                    className="sn-btn sn-btn--primary"
+                    onClick={() => void enregistrerPreferences()}
+                    disabled={saving || !prefsChargees}
                   >
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-amber-500' : 'text-gray-400'}`} />
-                    {tab.label}
+                    {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                    Enregistrer mes préférences
                   </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-6">
-            {activeTab === 'preferences' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">General Preferences</h2>
-                  <Card>
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Default Language</h3>
-                          <p className="text-sm text-gray-500">Set the default language for new users</p>
-                        </div>
-                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                          <option value="en">English</option>
-                          <option value="fr">Français</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Default Currency</h3>
-                          <p className="text-sm text-gray-500">Primary currency for transactions</p>
-                        </div>
-                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                          <option value="USD">USD</option>
-                          <option value="EUR">EUR</option>
-                          <option value="XOF">CFA (XOF)</option>
-                          <option value="GNF">GNF</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Timezone</h3>
-                          <p className="text-sm text-gray-500">Default timezone for the system</p>
-                        </div>
-                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                          <option value="UTC">UTC</option>
-                          <option value="Africa/Abidjan">Africa/Abidjan</option>
-                          <option value="Africa/Conakry">Africa/Conakry</option>
-                          <option value="Africa/Bamako">Africa/Bamako</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center justify-between py-3">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Weight Unit</h3>
-                          <p className="text-sm text-gray-500">Primary unit for weight measurements</p>
-                        </div>
-                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                          <option value="grams">Grams (g)</option>
-                          <option value="ounces">Ounces (oz)</option>
-                          <option value="both">Both</option>
-                        </select>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <div className="flex justify-end mt-6">
-                    <Button variant="primary" className="px-6">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Preferences
-                    </Button>
-                  </div>
                 </div>
-              </div>
+              </>
             )}
+          </Section>
+        )}
 
-            {activeTab === 'business-rules' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Business Rules Configuration</h2>
-                  <p className="text-gray-600 mb-6">
-                    Configure conversion rates and variance thresholds used throughout the system.
-                  </p>
-
-                  {loading ? (
-                    <Card>
-                      <div className="p-12 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-                        <p className="mt-4 text-gray-500">Loading business rules...</p>
-                      </div>
-                    </Card>
-                  ) : (
-                    <>
-                      <div className="grid gap-6 mb-6">
-                        <Card>
-                          <div className="p-6">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="p-2 bg-blue-100 rounded-lg">
-                                <Scale className="h-6 w-6 text-blue-600" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Conversion Rates</h3>
-                                <p className="text-sm text-gray-500">Standard conversion rates for weight measurements</p>
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              {businessRules
-                                .filter(rule => rule.rule_category === 'conversion')
-                                .map((rule) => (
-                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
-                                      <p className="text-sm text-gray-500">{rule.description}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <input
-                                        type="number"
-                                        step="0.0001"
-                                        value={editedRules[rule.rule_key] || rule.rule_value}
-                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
-                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
-                                      />
-                                      {rule.unit && (
-                                        <span className="text-sm text-gray-600 w-32">{rule.unit}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        </Card>
-
-                        {/* Weight Variance Thresholds - Factory to Airport & Airport to Refinery */}
-                        <Card>
-                          <div className="p-6">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="p-2 bg-amber-100 rounded-lg">
-                                <Scale className="h-6 w-6 text-amber-600" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Seuils de Variance des Poids</h3>
-                                <p className="text-sm text-gray-500">Écarts maximaux acceptables entre les points de contrôle</p>
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              {businessRules
-                                .filter(rule =>
-                                  rule.rule_key === 'var_threshold_mine_airport' ||
-                                  rule.rule_key === 'var_threshold_airport_refinery'
-                                )
-                                .map((rule) => (
-                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900">
-                                        {rule.rule_key === 'var_threshold_mine_airport'
-                                          ? 'Seuil Usine → Aéroport'
-                                          : 'Seuil Aéroport → Raffinerie'}
-                                      </h4>
-                                      <p className="text-sm text-gray-500">
-                                        {rule.rule_key === 'var_threshold_mine_airport'
-                                          ? 'Variance maximale acceptable entre le poids de l\'usine et l\'aéroport'
-                                          : 'Variance maximale acceptable entre le poids de l\'aéroport et la raffinerie'}
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="100"
-                                        value={editedRules[rule.rule_key] || rule.rule_value}
-                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
-                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
-                                      />
-                                      <span className="text-sm text-gray-600 w-12">%</span>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        </Card>
-
-                        {/* Gold Price Configuration */}
-                        <Card>
-                          <div className="p-6">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="p-2 bg-yellow-100 rounded-lg">
-                                <DollarSign className="h-6 w-6 text-yellow-600" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Configuration du Cours de l'Or</h3>
-                                <p className="text-sm text-gray-500">Paramètres pour le prix de l'or et marges commerciales</p>
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              {businessRules
-                                .filter(rule => rule.rule_category === 'gold_price')
-                                .map((rule) => (
-                                  <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
-                                      <p className="text-sm text-gray-500">{rule.description}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={editedRules[rule.rule_key] || rule.rule_value}
-                                        onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
-                                        className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
-                                      />
-                                      {rule.unit && (
-                                        <span className="text-sm text-gray-600 w-20">{rule.unit}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-
-                              {/* Show message if no gold price rules exist yet */}
-                              {businessRules.filter(rule => rule.rule_category === 'gold_price').length === 0 && (
-                                <div className="py-8 text-center">
-                                  <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                  <p className="text-gray-500 text-sm">Aucune règle de cours d'or configurée</p>
-                                  <p className="text-gray-400 text-xs mt-1">Ajoutez des règles dans la base de données avec category = 'gold_price'</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-
-                        {/* Other Thresholds (Refining Loss, etc.) */}
-                        {businessRules.filter(rule =>
-                          rule.rule_category === 'threshold' &&
-                          rule.rule_key !== 'var_threshold_mine_airport' &&
-                          rule.rule_key !== 'var_threshold_airport_refinery'
-                        ).length > 0 && (
-                          <Card>
-                            <div className="p-6">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-red-100 rounded-lg">
-                                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-900">Autres Seuils de Contrôle</h3>
-                                  <p className="text-sm text-gray-500">Seuils additionnels pour les processus de transformation</p>
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                {businessRules
-                                  .filter(rule =>
-                                    rule.rule_category === 'threshold' &&
-                                    rule.rule_key !== 'var_threshold_mine_airport' &&
-                                    rule.rule_key !== 'var_threshold_airport_refinery'
-                                  )
-                                  .map((rule) => (
-                                    <div key={rule.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                      <div className="flex-1">
-                                        <h4 className="font-medium text-gray-900">{rule.rule_name}</h4>
-                                        <p className="text-sm text-gray-500">{rule.description}</p>
-                                      </div>
-                                      <div className="flex items-center gap-3">
-                                        <input
-                                          type="number"
-                                          step="0.1"
-                                          min="0"
-                                          max="100"
-                                          value={editedRules[rule.rule_key] || rule.rule_value}
-                                          onChange={(e) => handleRuleChange(rule.rule_key, e.target.value)}
-                                          className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-right"
-                                        />
-                                        {rule.unit && (
-                                          <span className="text-sm text-gray-600 w-12">{rule.unit}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          </Card>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
-                          <AlertTriangle className="h-5 w-5 text-blue-600" />
+        {onglet === 'regles' && (
+          <>
+            {loading ? (
+              <Section id="regles" icon={Scale} tone="blue" title="Règles métier">
+                <div className="admin-page__loading">
+                  <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des règles…
+                </div>
+              </Section>
+            ) : groupes.length === 0 ? (
+              <Section id="regles" icon={Scale} tone="blue" title="Règles métier">
+                <EmptyState
+                  title="Aucune règle métier"
+                  description="Aucune règle n’est déclarée dans le référentiel."
+                />
+              </Section>
+            ) : (
+              <>
+                {groupes.map((groupe) => (
+                  <Section
+                    key={groupe.categorie}
+                    id={`regles-${groupe.categorie}`}
+                    icon={Scale}
+                    tone="blue"
+                    title={groupe.categorie}
+                    description={`${groupe.regles.length} règle(s) de cette catégorie.`}
+                  >
+                    <ul className="parametres__regles">
+                      {groupe.regles.map((regle) => (
+                        <li key={regle.id}>
                           <div>
-                            <p className="text-sm font-medium text-blue-900">Important Notice</p>
-                            <p className="text-sm text-blue-700">Changes to business rules will affect all future calculations throughout the system.</p>
+                            <strong>{regle.rule_name}</strong>
+                            {regle.description && <small>{regle.description}</small>}
                           </div>
-                        </div>
-                      </div>
+                          <div className="parametres__regle-valeur">
+                            <input
+                              type="number"
+                              step="0.0001"
+                              aria-label={regle.rule_name}
+                              // `||` renvoyait l'ancienne valeur dès que l'on saisissait 0.
+                              value={valeurRegle(reglesEditees, regle)}
+                              onChange={(event) =>
+                                setReglesEditees((current) => ({
+                                  ...current,
+                                  [regle.rule_key]: Number(event.target.value),
+                                }))
+                              }
+                            />
+                            {regle.unit && <span>{regle.unit}</span>}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </Section>
+                ))}
 
-                      <div className="flex justify-end mt-6">
-                        <Button
-                          variant="primary"
-                          className="px-6"
-                          onClick={saveBusinessRules}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" />
-                              Save Business Rules
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                <div className="sn-form-actions">
+                  <button
+                    type="button"
+                    className="sn-btn sn-btn--primary"
+                    onClick={() => void enregistrerRegles()}
+                    disabled={saving || !reglesModifiees}
+                  >
+                    {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                    Enregistrer les règles
+                  </button>
                 </div>
+              </>
+            )}
+          </>
+        )}
+
+        {onglet === 'authentification' && (
+          <Section
+            id="authentification"
+            icon={Shield}
+            tone="violet"
+            title="Double authentification"
+            description="Comptes pour lesquels un second facteur est exigé à la connexion."
+          >
+            {loading ? (
+              <div className="admin-page__loading">
+                <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des comptes…
+              </div>
+            ) : comptes.length === 0 ? (
+              <EmptyState title="Aucun compte" description="Aucun compte n’est enregistré." />
+            ) : (
+              <div className="admin-page__table-wrap">
+                <table className="admin-page__table">
+                  <caption className="sr-only">Double authentification par compte</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Compte</th>
+                      <th scope="col">Rôle</th>
+                      <th scope="col">État du compte</th>
+                      <th scope="col">Second facteur</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comptes.map((compte) => (
+                      <tr key={compte.id}>
+                        <td>
+                          <strong>{compte.full_name || 'Nom non renseigné'}</strong>
+                          <small>{compte.email}</small>
+                        </td>
+                        <td>
+                          <Badge tone={roleTone(compte.role)} icon={UserRound}>
+                            {roleLabel(compte.role)}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge tone={compte.is_active ? 'success' : 'danger'}>
+                            {compte.is_active ? 'Actif' : 'Désactivé'}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Toggle
+                            checked={compte.two_factor_enabled}
+                            disabled={saving}
+                            ariaLabel={`Double authentification pour ${compte.full_name || compte.email}`}
+                            onChange={() => void basculer2FA(compte)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
+          </Section>
+        )}
 
-            {activeTab === '2fa' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Two-Factor Authentication Management</h2>
-                  <p className="text-gray-600 mb-6">
-                    Enable or disable 2FA for individual users. Users will be required to set up 2FA on their next login when enabled.
-                  </p>
-
-                  {loading ? (
-                    <Card>
-                      <div className="p-12 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-                        <p className="mt-4 text-gray-500">Loading users...</p>
-                      </div>
-                    </Card>
-                  ) : (
-                    <Card>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                User
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Role
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                2FA Status
-                              </th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {users.map((user) => (
-                              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
-                                      <User className="h-5 w-5 text-white" />
-                                    </div>
-                                    <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900">
-                                        {user.full_name || 'N/A'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-900">{user.email}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 capitalize">
-                                    {user.role}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  {user.is_active ? (
-                                    <span className="flex items-center text-sm text-green-600">
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Active
-                                    </span>
-                                  ) : (
-                                    <span className="flex items-center text-sm text-red-600">
-                                      <XCircle className="h-4 w-4 mr-1" />
-                                      Inactive
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                  {user.two_factor_enabled ? (
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                      <Shield className="h-3 w-3 mr-1" />
-                                      Enabled
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                      Disabled
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                  <Toggle
-                                    checked={user.two_factor_enabled}
-                                    onChange={() => handleToggle2FA(user.id, user.two_factor_enabled)}
-                                    disabled={saving || !user.is_active}
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {users.length === 0 && (
-                        <div className="p-12 text-center">
-                          <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                          <p className="text-gray-500">No users found</p>
-                        </div>
-                      )}
-                    </Card>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
-                  <Card>
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Email Notifications</h3>
-                          <p className="text-sm text-gray-500">Send email notifications for important events</p>
-                        </div>
-                        <Toggle checked={true} onChange={() => {}} />
-                      </div>
-
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Batch Status Updates</h3>
-                          <p className="text-sm text-gray-500">Notify when batch status changes</p>
-                        </div>
-                        <Toggle checked={true} onChange={() => {}} />
-                      </div>
-
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Sales Notifications</h3>
-                          <p className="text-sm text-gray-500">Notify about new sales and approvals</p>
-                        </div>
-                        <Toggle checked={true} onChange={() => {}} />
-                      </div>
-
-                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Variance Alerts</h3>
-                          <p className="text-sm text-gray-500">Alert when weight variances exceed threshold</p>
-                        </div>
-                        <Toggle checked={true} onChange={() => {}} />
-                      </div>
-
-                      <div className="flex items-center justify-between py-3">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Daily Summary</h3>
-                          <p className="text-sm text-gray-500">Receive daily activity summary emails</p>
-                        </div>
-                        <Toggle checked={false} onChange={() => {}} />
-                      </div>
-                    </div>
-                  </Card>
-
-                  <div className="flex justify-end mt-6">
-                    <Button variant="primary" className="px-6">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Settings
-                    </Button>
+        {onglet === 'notifications' && (
+          <Section
+            id="notifications"
+            icon={Bell}
+            tone="amber"
+            title="Mes notifications"
+            description="Évènements pour lesquels vous souhaitez être averti."
+          >
+            <ul className="parametres__notifications">
+              {NOTIFICATIONS.map((item) => (
+                <li key={item.clef}>
+                  <div>
+                    <strong>{item.label}</strong>
+                    <small>{item.description}</small>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                  <Toggle
+                    checked={notifications[item.clef]}
+                    disabled={saving}
+                    ariaLabel={item.label}
+                    onChange={(valeur) => void enregistrerNotifications({ ...notifications, [item.clef]: valeur })}
+                  />
+                </li>
+              ))}
+            </ul>
+            <Note tone="info" icon={ShieldCheck}>
+              Ces réglages ne concernent que votre compte et s’appliquent immédiatement.
+            </Note>
+          </Section>
+        )}
       </div>
-
-      <NotificationDialog
-        isOpen={notification.isOpen}
-        onClose={closeNotification}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-        confirmText={notification.confirmText}
-        onConfirm={notification.onConfirm}
-        cancelText={notification.cancelText}
-        showCancel={notification.showCancel}
-      />
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

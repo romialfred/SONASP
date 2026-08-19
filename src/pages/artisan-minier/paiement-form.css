@@ -1,0 +1,121 @@
+/* Règlement d'une vente : formulaire contextuel + volet facture. */
+
+.paiement-form__layout {
+  display: grid;
+  margin-top: 16px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  align-items: start;
+  gap: 14px;
+}
+
+.paiement-form__main { display: grid; min-width: 0; gap: 12px; }
+
+.paiement-form__methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  gap: 10px;
+}
+
+.paiement-form__methods label {
+  display: flex;
+  align-items: center;
+  padding: 12px 13px;
+  gap: 12px;
+  border: 1px solid #dfe6ee;
+  background: var(--sn-surface);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.paiement-form__methods label:hover { border-color: #a8d7c4; background: #f8fcfa; transform: translateY(-1px); }
+.paiement-form__methods label.is-checked { border-color: #34a37a; background: #f1faf6; box-shadow: 0 0 0 1px #34a37a; }
+.paiement-form__methods input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.paiement-form__method-logo {
+  display: grid;
+  width: 42px;
+  height: 32px;
+  flex: 0 0 42px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.paiement-form__method-logo svg,
+.paiement-form__method-logo img { max-width: 100%; max-height: 100%; }
+.paiement-form__methods label > span:last-child { display: grid; min-width: 0; gap: 2px; }
+.paiement-form__methods strong { font-size: 12.5px; font-weight: 600; }
+.paiement-form__methods small { color: var(--sn-faint); font-size: 10.5px; }
+
+.paiement-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(214px, 1fr));
+  gap: 14px 16px;
+}
+
+.paiement-form__aside {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.paiement-form__recap { display: grid; margin: 0; padding: 4px 16px 16px; gap: 10px; }
+
+.paiement-form__recap > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.paiement-form__recap dt { color: var(--sn-muted); }
+.paiement-form__recap dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.paiement-form__recap .is-total {
+  margin-top: 4px;
+  padding-top: 11px;
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.paiement-form__recap .is-total dt { color: var(--sn-ink); font-weight: 700; }
+.paiement-form__recap .is-total dd { color: var(--sn-green); font-size: 16px; font-weight: 700; }
+
+.paiement-form__blocker {
+  margin: 0 16px 16px;
+  padding: 9px 12px;
+  border: 1px solid #f0dcab;
+  color: #8a6200;
+  background: var(--sn-warning-soft);
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.paiement-form__beneficiaire { padding: 0 16px 16px; }
+
+.paiement-form__beneficiaire > p {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.paiement-form__beneficiaire svg { width: 15px; height: 15px; flex: 0 0 auto; color: #8fa0b1; }
+.paiement-form__beneficiaire > p svg { color: var(--sn-green); }
+.paiement-form__beneficiaire ul { display: grid; margin: 0; padding: 0; gap: 8px; list-style: none; }
+
+.paiement-form__beneficiaire li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--sn-ink-soft);
+  font-size: 11.5px;
+}
+
+@media (max-width: 1180px) {
+  .paiement-form__layout { grid-template-columns: minmax(0, 1fr); }
+  .paiement-form__aside { position: static; }
+}

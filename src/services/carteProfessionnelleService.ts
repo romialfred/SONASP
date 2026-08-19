@@ -108,6 +108,9 @@ export const carteProfessionnelleService = {
         artisan:snp_artisans_miniers(*)
       `)
       .in('statut', ['validee', 'en_exploitation'])
+      // Borne basse indispensable : sans elle, les cartes deja expirees depuis des mois
+      // etaient comptees comme « arrivant a echeance ».
+      .gte('date_expiration', new Date().toISOString().split('T')[0])
       .lte('date_expiration', dateLimit.toISOString().split('T')[0])
       .order('date_expiration', { ascending: true });
 
@@ -346,6 +349,69 @@ export const carteProfessionnelleService = {
 
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Dernieres activites tracees sur les cartes professionnelles.
+   * Requete deplacee depuis la page `CarteSuivi` : l'acces aux donnees appartient au
+   * service (constat F8 de l'audit).
+   */
+  async getRecentActivities(limit = 10) {
+    const { data, error } = await supabase
+      .from('snp_artisan_activities')
+      .select(`
+        *,
+        artisan:snp_artisans_miniers(nom, prenoms, raison_sociale, type_personne, type_artisan),
+        carte:snp_cartes_professionnelles(numero_carte)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /** Artisans les plus actifs, agreges depuis les statistiques mensuelles de carte. */
+  async getTopArtisans(limit = 5) {
+    const { data, error } = await supabase
+      .from('snp_carte_statistics')
+      .select(`
+        *,
+        artisan:snp_artisans_miniers(nom, prenoms, raison_sociale, type_personne),
+        carte:snp_cartes_professionnelles(numero_carte, statut)
+      `)
+      .order('montant_total_ventes', { ascending: false })
+      .limit(limit * 6);
+
+    if (error) throw error;
+
+    const byArtisan = new Map<string, {
+      artisanId: string;
+      artisan: Record<string, unknown> | null;
+      carte: Record<string, unknown> | null;
+      ventes: number;
+      montant: number;
+      grammes: number;
+    }>();
+
+    (data || []).forEach((stat: Record<string, unknown>) => {
+      const key = String(stat.artisan_id || '');
+      if (!key) return;
+      const current = byArtisan.get(key) || {
+        artisanId: key,
+        artisan: (stat.artisan as Record<string, unknown>) || null,
+        carte: (stat.carte as Record<string, unknown>) || null,
+        ventes: 0,
+        montant: 0,
+        grammes: 0,
+      };
+      current.ventes += Number(stat.nombre_ventes || 0);
+      current.montant += Number(stat.montant_total_ventes || 0);
+      current.grammes += Number(stat.quantite_totale_grammes || 0);
+      byArtisan.set(key, current);
+    });
+
+    return [...byArtisan.values()].sort((a, b) => b.montant - a.montant).slice(0, limit);
   },
 
   async getDashboardStats() {

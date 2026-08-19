@@ -1,19 +1,15 @@
-import { useState, useEffect } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Factory, MapPin, TrendingUp, FileText } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { FormField } from '@/components/ui/FormField';
-import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
+import { AlertTriangle, ArrowLeft, Beaker, Contact, Gauge, Loader2, MapPin, Save } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { EmptyState, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { COUNTRIES } from '@/constants/countries';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
 import { useAlert } from '@/hooks/useAlert';
-import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
+import './admin.css';
 
-interface FormData {
+export interface RefineryFormValues {
   name: string;
   location: string;
   country: string;
@@ -24,375 +20,338 @@ interface FormData {
   is_active: boolean;
 }
 
-const statusOptions = [
-  { value: 'true', label: 'Active' },
-  { value: 'false', label: 'Inactive' },
-];
+export const EMPTY_REFINERY_FORM: RefineryFormValues = {
+  name: '',
+  location: '',
+  country: 'Burkina Faso',
+  email: '',
+  phone: '',
+  contact_person: '',
+  capacity_grams_per_month: '',
+  is_active: true,
+};
+
+/** Première obligation non satisfaite, ou `null` si la fiche est enregistrable. */
+export function validateRefinery(values: RefineryFormValues): string | null {
+  if (!values.name.trim()) return 'Le nom de l’établissement est obligatoire.';
+  if (!values.country) return 'Le pays d’implantation est obligatoire.';
+  if (!values.location.trim()) return 'La ville d’implantation est obligatoire.';
+  if (!values.contact_person.trim()) return 'Le contact référent est obligatoire.';
+  if (!values.email.trim()) return 'L’adresse e-mail est obligatoire.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return 'L’adresse e-mail est invalide.';
+  if (!values.phone.trim()) return 'Le numéro de téléphone est obligatoire.';
+  if (values.capacity_grams_per_month) {
+    const capacite = Number(values.capacity_grams_per_month);
+    if (!Number.isFinite(capacite) || capacite < 0) return 'La capacité mensuelle doit être un nombre positif.';
+  }
+  return null;
+}
+
+export function buildRefineryPayload(values: RefineryFormValues) {
+  return {
+    name: values.name.trim(),
+    location: values.location.trim(),
+    country: values.country,
+    email: values.email.trim(),
+    phone: values.phone.trim(),
+    contact_person: values.contact_person.trim(),
+    capacity_grams_per_month: values.capacity_grams_per_month ? Number(values.capacity_grams_per_month) : null,
+    is_active: values.is_active,
+  };
+}
 
 export function RefineryForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const alert = useAlert();
-  const isEditMode = !!id;
+  const alerte = useAlert();
+  const isEditMode = Boolean(id);
 
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    location: '',
-    country: '',
-    email: '',
-    phone: '',
-    contact_person: '',
-    capacity_grams_per_month: '',
-    is_active: true,
-  });
+  const [values, setValues] = useState<RefineryFormValues>(EMPTY_REFINERY_FORM);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [saving, setSaving] = useState(false);
+  const [introuvable, setIntrouvable] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const redirection = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (isEditMode && id) {
-      loadRefinery();
-    }
-  }, [id, isEditMode]);
-
-  const loadRefinery = async () => {
+  const charger = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('refineries')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      // `single()` levait une exception sur une référence inconnue et laissait un
+      // formulaire vide mais enregistrable, visant une ligne inexistante.
+      const { data, error } = await supabase.from('refineries').select('*').eq('id', id).maybeSingle();
       if (error) throw error;
-
-      if (data) {
-        setFormData({
-          name: data.name,
-          location: data.location,
-          country: data.country,
-          email: data.email,
-          phone: data.phone,
-          contact_person: data.contact_person || '',
-          capacity_grams_per_month: data.capacity_grams_per_month?.toString() || '',
-          is_active: data.is_active,
-        });
+      if (!data) {
+        setIntrouvable(true);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error loading refinery:', error);
-      alert.error('Error loading refinery');
+      setValues({
+        name: data.name || '',
+        location: data.location || '',
+        country: data.country || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        contact_person: data.contact_person || '',
+        capacity_grams_per_month: data.capacity_grams_per_month?.toString() || '',
+        is_active: data.is_active !== false,
+      });
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger cette raffinerie.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleChange = (field: keyof FormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-  };
+  useEffect(() => {
+    void charger();
+  }, [charger]);
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {};
+  useEffect(
+    () => () => {
+      if (redirection.current) clearTimeout(redirection.current);
+    },
+    []
+  );
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Refinery name is required';
-    }
+  const setValue = <K extends keyof RefineryFormValues>(clef: K, valeur: RefineryFormValues[K]) =>
+    setValues((current) => ({ ...current, [clef]: valeur }));
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
+  const validationError = validateRefinery(values);
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    }
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (saving) return; // garde-fou contre la double soumission
 
-    if (!formData.contact_person.trim()) {
-      newErrors.contact_person = 'Contact person is required';
-    }
-
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    }
-
-    if (!formData.country) {
-      newErrors.country = 'Country is required';
-    }
-
-    if (formData.capacity_grams_per_month) {
-      const capacity = parseFloat(formData.capacity_grams_per_month);
-      if (isNaN(capacity) || capacity < 0) {
-        newErrors.capacity_grams_per_month = 'Valid capacity is required';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
+    const message = validateRefinery(values);
+    if (message) {
+      setErreur(message);
       return;
     }
 
-    setIsSubmitting(true);
-
+    setSaving(true);
+    setErreur(null);
     try {
-      const submitData = {
-        name: formData.name,
-        location: formData.location,
-        country: formData.country,
-        email: formData.email,
-        phone: formData.phone,
-        contact_person: formData.contact_person,
-        capacity_grams_per_month: formData.capacity_grams_per_month
-          ? parseFloat(formData.capacity_grams_per_month)
-          : null,
-        is_active: formData.is_active,
-      };
-
+      const payload = buildRefineryPayload(values);
       if (isEditMode && id) {
-        const { error } = await supabase
-          .from('refineries')
-          .update(submitData)
-          .eq('id', id);
-
+        const { error } = await supabase.from('refineries').update(payload).eq('id', id);
         if (error) throw error;
-        alert.success('Refinery updated successfully');
+        alerte.success('Raffinerie mise à jour');
       } else {
-        const { error } = await supabase.from('refineries').insert([submitData]);
-
+        const { error } = await supabase.from('refineries').insert([payload]);
         if (error) throw error;
-        alert.success('Refinery created successfully');
+        alerte.success('Raffinerie enregistrée');
       }
-
-      setTimeout(() => {
-        navigateWithAutoRefresh(navigate, '/admin/refineries');
-      }, 1500);
-    } catch (error: any) {
-      console.error('Error saving refinery:', error);
-      alert.error(error.message || 'Error saving refinery');
+      redirection.current = setTimeout(() => navigate('/admin/refineries'), 1200);
+    } catch (reason) {
+      const message = errorMessage(reason, 'Enregistrement impossible.');
+      setErreur(message);
+      alerte.error(message);
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Loading...</div>
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <div className="admin-page__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement de la fiche…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
+    );
+  }
+
+  if (introuvable) {
+    return (
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <PageHeader
+            icon={Beaker}
+            title="Raffinerie introuvable"
+            subtitle="Cette fiche a été supprimée ou la référence est erronée."
+            breadcrumb={[{ label: 'Administration' }, { label: 'Raffineries', to: '/admin/refineries' }]}
+          />
+          <EmptyState
+            title="Aucune fiche à modifier"
+            action={
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/admin/refineries')}>
+                <ArrowLeft aria-hidden="true" /> Retour au référentiel
+              </button>
+            }
+          />
+        </div>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/admin/refineries')}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="font-heading text-3xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Refinery Plant' : 'New Refinery Plant'}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {isEditMode
-                  ? 'Update refinery plant information'
-                  : 'Add a new refinery plant to the system'}
-              </p>
-            </div>
-          </div>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page">
+        <PageHeader
+          icon={Beaker}
+          title={isEditMode ? 'Modifier la raffinerie' : 'Nouvelle raffinerie'}
+          subtitle="Établissement d’affinage habilité à traiter l’or exporté."
+          breadcrumb={[
+            { label: 'Administration' },
+            { label: 'Raffineries', to: '/admin/refineries' },
+            { label: isEditMode ? 'Modification' : 'Nouvelle fiche' },
+          ]}
+          actions={
+            <button type="button" className="sn-btn" onClick={() => navigate('/admin/refineries')}>
+              <ArrowLeft aria-hidden="true" /> Retour au référentiel
+            </button>
+          }
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Refinery Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField label="Refinery Name" required error={errors.name}>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => handleChange('name', e.target.value)}
-                          error={!!errors.name}
-                          placeholder="Enter refinery name"
-                        />
-                      </FormField>
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
+        )}
 
-                      <FormField label="Email Address" required error={errors.email}>
-                        <Input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleChange('email', e.target.value)}
-                          error={!!errors.email}
-                          placeholder="refinery@example.com"
-                        />
-                      </FormField>
-
-                      <FormField label="Phone Number" required error={errors.phone}>
-                        <Input
-                          value={formData.phone}
-                          onChange={(e) => handleChange('phone', e.target.value)}
-                          error={!!errors.phone}
-                          placeholder="+XX XXX XXX XXXX"
-                        />
-                      </FormField>
-
-                      <FormField label="Contact Person" required error={errors.contact_person}>
-                        <Input
-                          value={formData.contact_person}
-                          onChange={(e) => handleChange('contact_person', e.target.value)}
-                          error={!!errors.contact_person}
-                          placeholder="Contact person name"
-                        />
-                      </FormField>
-
-                      <FormField label="Location (City)" required error={errors.location}>
-                        <Input
-                          value={formData.location}
-                          onChange={(e) => handleChange('location', e.target.value)}
-                          error={!!errors.location}
-                          placeholder="City name"
-                        />
-                      </FormField>
-
-                      <FormField label="Country" required error={errors.country}>
-                        <Select
-                          value={formData.country}
-                          onChange={(e) => handleChange('country', e.target.value)}
-                          error={!!errors.country}
-                        >
-                          <option value="">Select a country</option>
-                          {COUNTRIES.map((country) => (
-                            <option key={country} value={country}>
-                              {country}
-                            </option>
-                          ))}
-                        </Select>
-                      </FormField>
-
-                      <FormField
-                        label="Capacity (grams/month)"
-                        error={errors.capacity_grams_per_month}
-                      >
-                        <Input
-                          type="number"
-                          value={formData.capacity_grams_per_month}
-                          onChange={(e) => handleChange('capacity_grams_per_month', e.target.value)}
-                          error={!!errors.capacity_grams_per_month}
-                          placeholder="Monthly processing capacity"
-                          min="0"
-                        />
-                      </FormField>
-
-                      <FormField label="Status">
-                        <Select
-                          value={formData.is_active.toString()}
-                          onChange={(e) => handleChange('is_active', e.target.value === 'true')}
-                        >
-                          {statusOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </Select>
-                      </FormField>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/admin/refineries')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      'Saving...'
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        {isEditMode ? 'Update Refinery' : 'Create Refinery'}
-                      </>
-                    )}
-                  </Button>
-                </div>
+        <form className="admin-form" onSubmit={handleSubmit} noValidate>
+          <Section
+            id="identite"
+            icon={Beaker}
+            tone="emerald"
+            title="Établissement"
+            description="Dénomination et état de l’agrément."
+          >
+            <div className="admin-form__row is-deux">
+              <Field label="Nom de l’établissement" required htmlFor="nom">
+                <input id="nom" value={values.name} onChange={(event) => setValue('name', event.target.value)} />
+              </Field>
+              <div className="sn-field">
+                <span className="sn-field__label">État de l’agrément</span>
+                <Segmented
+                  name="etat-raffinerie"
+                  value={values.is_active ? 'actif' : 'inactif'}
+                  options={[
+                    { value: 'actif', label: 'Active' },
+                    { value: 'inactif', label: 'Inactive' },
+                  ]}
+                  onChange={(etat) => setValue('is_active', etat === 'actif')}
+                  ariaLabel="État de l’agrément"
+                />
               </div>
-            </form>
-          </div>
-
-          <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <InfoPanelGroup>
-                <InfoPanel
-                  title="Refinery Guidelines"
-                  icon={Factory}
-                  variant="purple"
-                  items={[
-                    { text: 'All fields marked with * are required' },
-                    { text: 'Email will be used for batch notifications' },
-                    { text: 'Capacity helps with planning and allocation' },
-                    { text: 'Active refineries appear in selection lists' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Processing Capacity"
-                  icon={TrendingUp}
-                  variant="blue"
-                  items={[
-                    { text: 'Monthly capacity in grams of gold' },
-                    { text: 'Used for workload distribution' },
-                    { text: 'Updated based on operational changes' },
-                    { text: 'Helps prevent overloading facilities' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Location Details"
-                  icon={MapPin}
-                  variant="teal"
-                  items={[
-                    { text: 'City and country required for logistics' },
-                    { text: 'Affects transportation routing' },
-                    { text: 'Determines customs and regulations' },
-                    { text: 'Used for delivery time calculations' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Required Certifications"
-                  icon={FileText}
-                  variant="green"
-                  items={[
-                    { text: 'ISO 9001 quality management', icon: '✓' },
-                    { text: 'Environmental compliance certificates', icon: '✓' },
-                    { text: 'Precious metals handling license', icon: '✓' },
-                    { text: 'Safety and security certifications', icon: '✓' },
-                  ]}
-                />
-              </InfoPanelGroup>
             </div>
+          </Section>
+
+          <Section
+            id="implantation"
+            icon={MapPin}
+            tone="blue"
+            title="Implantation"
+            description="Localisation de l’usine d’affinage."
+          >
+            <div className="admin-form__row is-deux">
+              <Field label="Pays" required htmlFor="pays">
+                <select id="pays" value={values.country} onChange={(event) => setValue('country', event.target.value)}>
+                  <option value="">Sélectionner un pays</option>
+                  {COUNTRIES.map((pays) => (
+                    <option key={pays} value={pays}>
+                      {pays}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Ville" required htmlFor="ville">
+                <input
+                  id="ville"
+                  value={values.location}
+                  onChange={(event) => setValue('location', event.target.value)}
+                  placeholder="Ville d’implantation"
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <Section
+            id="contact"
+            icon={Contact}
+            tone="violet"
+            title="Contact référent"
+            description="Interlocuteur désigné pour le suivi des lots."
+          >
+            <div className="admin-form__row is-trois">
+              <Field label="Nom du contact" required htmlFor="contact">
+                <input
+                  id="contact"
+                  value={values.contact_person}
+                  onChange={(event) => setValue('contact_person', event.target.value)}
+                />
+              </Field>
+              <Field label="Adresse e-mail" required htmlFor="email">
+                <input
+                  id="email"
+                  type="email"
+                  value={values.email}
+                  onChange={(event) => setValue('email', event.target.value)}
+                  placeholder="contact@exemple.com"
+                />
+              </Field>
+              <Field label="Téléphone" required htmlFor="telephone">
+                <input
+                  id="telephone"
+                  value={values.phone}
+                  onChange={(event) => setValue('phone', event.target.value)}
+                  placeholder="+226 …"
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <Section
+            id="capacite"
+            icon={Gauge}
+            tone="amber"
+            title="Capacité de traitement"
+            description="Volume mensuel que l’établissement peut affiner."
+          >
+            <div className="admin-form__row is-un">
+              <Field
+                label="Capacité mensuelle (grammes)"
+                htmlFor="capacite"
+                hint={
+                  values.capacity_grams_per_month && Number(values.capacity_grams_per_month) > 0
+                    ? `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(values.capacity_grams_per_month) / 1000)} kg par mois`
+                    : 'Laisser vide si la capacité n’est pas déclarée'
+                }
+              >
+                <input
+                  id="capacite"
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={values.capacity_grams_per_month}
+                  onChange={(event) => setValue('capacity_grams_per_month', event.target.value)}
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <div className="sn-form-actions">
+            {validationError && <span className="admin-form__hint">{validationError}</span>}
+            <button type="button" className="sn-btn" onClick={() => navigate('/admin/refineries')} disabled={saving}>
+              Annuler
+            </button>
+            <button type="submit" className="sn-btn sn-btn--primary" disabled={saving || Boolean(validationError)}>
+              {saving ? (
+                <>
+                  <Loader2 className="sn-spin" aria-hidden="true" /> Enregistrement…
+                </>
+              ) : (
+                <>
+                  <Save aria-hidden="true" /> {isEditMode ? 'Mettre à jour' : 'Enregistrer la raffinerie'}
+                </>
+              )}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

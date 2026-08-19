@@ -1,302 +1,323 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Grid,
-  Eye,
-  EyeOff,
-  Power,
-  PowerOff,
-  Edit,
-  Save,
-  X
-} from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Loading } from '@/components/ui/Loading';
-import { Input } from '@/components/ui/Input';
-import { TextArea } from '@/components/ui/TextArea';
-import { modulesService, Module } from '@/services/modulesService';
-import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Eye, EyeOff, Info, LayoutGrid, Loader2, PencilLine, Power, Save, X } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Field, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { modulesService, type Module } from '@/services/modulesService';
+import { errorMessage } from '@/lib/errorMessage';
+import './admin.css';
+
+/** Aplatit la hiérarchie pour les décomptes et la recherche. */
+export function aplatirModules(modules: Module[]): Module[] {
+  return modules.flatMap((module) => [module, ...(module.submodules || [])]);
+}
+
+/** Conserve les modules dont le nom, le code ou la route correspond, avec leurs parents. */
+export function filterModules(modules: Module[], recherche: string): Module[] {
+  const terme = recherche.trim().toLowerCase();
+  if (!terme) return modules;
+
+  const correspond = (module: Module) =>
+    [module.nom, module.code, module.route, module.description]
+      .filter(Boolean)
+      .some((valeur) => String(valeur).toLowerCase().includes(terme));
+
+  const retenus: Module[] = [];
+  modules.forEach((module) => {
+    const sousModules = (module.submodules || []).filter(correspond);
+    if (correspond(module)) {
+      retenus.push({ ...module, submodules: module.submodules || [] });
+    } else if (sousModules.length > 0) {
+      retenus.push({ ...module, submodules: sousModules });
+    }
+  });
+  return retenus;
+}
 
 export default function ModulesManagement() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [modules, setModules] = useState<Module[]>([]);
-  const [editingModule, setEditingModule] = useState<Module | null>(null);
-  const [savingModule, setSavingModule] = useState(false);
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
+  const { open: demanderConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
-  useEffect(() => {
-    loadModules();
-  }, []);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [recherche, setRecherche] = useState('');
+  const [enEdition, setEnEdition] = useState<Module | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [enCours, setEnCours] = useState<string | null>(null);
 
-  const loadModules = async () => {
+  const charger = useCallback(async () => {
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      const hierarchy = await modulesService.getHierarchy();
-      setModules(hierarchy);
-    } catch (error) {
-      console.error('Error loading modules:', error);
-      showError('Impossible de charger les modules');
+      setModules(await modulesService.getHierarchy());
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger les modules.'));
+      setModules([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleToggleActive = async (moduleId: string) => {
+  useEffect(() => {
+    void charger();
+  }, [charger]);
+
+  const tous = useMemo(() => aplatirModules(modules), [modules]);
+  const visibles = useMemo(() => filterModules(modules, recherche), [modules, recherche]);
+
+  const basculerActivation = async (module: Module) => {
+    // Désactiver un module retire une section entière de l'application à tous les
+    // utilisateurs, et emporte ses sous-modules : la manœuvre se faisait en un clic.
+    const sousModules = module.submodules?.length || 0;
+    const confirme = await demanderConfirmation({
+      title: module.est_actif ? 'Désactiver ce module ?' : 'Réactiver ce module ?',
+      message: module.est_actif
+        ? `« ${module.nom} » disparaîtra de l’application pour tous les utilisateurs${
+            sousModules > 0 ? `, ainsi que ses ${sousModules} sous-module(s)` : ''
+          }.`
+        : `« ${module.nom} » redeviendra accessible aux utilisateurs habilités.`,
+      confirmText: module.est_actif ? 'Désactiver' : 'Réactiver',
+      cancelText: 'Annuler',
+      severity: module.est_actif ? 'danger' : 'info',
+    });
+    if (!confirme) return;
+
+    setEnCours(module.id);
     try {
-      await modulesService.toggleActive(moduleId);
-      showSuccess('Statut du module modifié');
-      await loadModules();
-    } catch (error) {
-      showError('Impossible de modifier le statut');
-    }
-  };
-
-  const handleToggleVisibility = async (moduleId: string) => {
-    try {
-      await modulesService.toggleVisibility(moduleId);
-      showSuccess('Visibilité du module modifiée');
-      await loadModules();
-    } catch (error) {
-      showError('Impossible de modifier la visibilité');
-    }
-  };
-
-  const handleSaveModule = async () => {
-    if (!editingModule) return;
-
-    try {
-      setSavingModule(true);
-      await modulesService.update(editingModule.id, {
-        nom: editingModule.nom,
-        description: editingModule.description,
-        icone: editingModule.icone,
-        route: editingModule.route,
-        ordre: editingModule.ordre
-      });
-      showSuccess('Module mis à jour avec succès');
-      setEditingModule(null);
-      await loadModules();
-    } catch (error: any) {
-      showError(error.message || 'Impossible de mettre à jour le module');
+      await modulesService.toggleActive(module.id);
+      showSuccess(module.est_actif ? 'Module désactivé' : 'Module réactivé');
+      await charger();
+    } catch (reason) {
+      showError(errorMessage(reason, 'Impossible de modifier l’activation du module'));
     } finally {
-      setSavingModule(false);
+      setEnCours(null);
     }
   };
 
-  const renderModuleCard = (module: Module, isSubmodule: boolean = false) => (
-    <Card
+  const basculerVisibilite = async (module: Module) => {
+    setEnCours(module.id);
+    try {
+      await modulesService.toggleVisibility(module.id);
+      showSuccess(module.est_visible_menu ? 'Module masqué du menu' : 'Module affiché dans le menu');
+      await charger();
+    } catch (reason) {
+      showError(errorMessage(reason, 'Impossible de modifier la visibilité du module'));
+    } finally {
+      setEnCours(null);
+    }
+  };
+
+  const enregistrer = async () => {
+    if (!enEdition || saving) return;
+    if (!enEdition.nom.trim()) {
+      showError('Le nom du module est obligatoire.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await modulesService.update(enEdition.id, {
+        nom: enEdition.nom.trim(),
+        description: enEdition.description,
+        icone: enEdition.icone,
+        route: enEdition.route,
+        ordre: enEdition.ordre,
+      });
+      showSuccess('Module mis à jour');
+      setEnEdition(null);
+      await charger();
+    } catch (reason) {
+      showError(errorMessage(reason, 'Impossible de mettre à jour le module'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const carte = (module: Module, sousModule = false) => (
+    <article
       key={module.id}
-      className={`${isSubmodule ? 'ml-8 bg-gray-50' : ''} ${
-        !module.est_actif ? 'opacity-60' : ''
-      }`}
+      className={`modules__carte${sousModule ? ' is-enfant' : ''}${module.est_actif ? '' : ' is-inactif'}`}
     >
-      <div className="p-4">
-        {editingModule?.id === module.id ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Nom du module
-              </label>
-              <Input
-                value={editingModule.nom}
-                onChange={(e) =>
-                  setEditingModule({ ...editingModule, nom: e.target.value })
-                }
-                placeholder="Nom du module"
+      {enEdition?.id === module.id ? (
+        <div className="modules__edition">
+          <div className="admin-form__row is-deux">
+            <Field label="Nom du module" required htmlFor={`nom-${module.id}`}>
+              <input
+                id={`nom-${module.id}`}
+                value={enEdition.nom}
+                onChange={(event) => setEnEdition({ ...enEdition, nom: event.target.value })}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <TextArea
-                value={editingModule.description || ''}
-                onChange={(e) =>
-                  setEditingModule({ ...editingModule, description: e.target.value })
-                }
-                placeholder="Description du module"
-                rows={2}
+            </Field>
+            <Field label="Route" htmlFor={`route-${module.id}`} hint="Chemin ouvert par l’entrée de menu">
+              <input
+                id={`route-${module.id}`}
+                value={enEdition.route || ''}
+                onChange={(event) => setEnEdition({ ...enEdition, route: event.target.value })}
+                placeholder="/chemin"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Icône (Lucide)
-                </label>
-                <Input
-                  value={editingModule.icone || ''}
-                  onChange={(e) =>
-                    setEditingModule({ ...editingModule, icone: e.target.value })
-                  }
-                  placeholder="Ex: Grid, Users"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Route
-                </label>
-                <Input
-                  value={editingModule.route || ''}
-                  onChange={(e) =>
-                    setEditingModule({ ...editingModule, route: e.target.value })
-                  }
-                  placeholder="/chemin"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={handleSaveModule}
-                disabled={savingModule}
-                className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-              >
-                <Save className="w-3 h-3 mr-1" />
-                Enregistrer
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setEditingModule(null)}
-                className="text-xs"
-              >
-                <X className="w-3 h-3 mr-1" />
-                Annuler
-              </Button>
-            </div>
+            </Field>
           </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <div
-                className={`p-2 rounded-lg ${
-                  module.est_actif ? 'bg-emerald-100' : 'bg-gray-200'
-                }`}
-              >
-                <Grid className={`h-5 w-5 ${module.est_actif ? 'text-emerald-600' : 'text-gray-500'}`} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-gray-900">{module.nom}</h3>
-                  {!module.est_visible_menu && (
-                    <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 text-xs rounded">
-                      Masqué
-                    </span>
-                  )}
-                  {!module.est_actif && (
-                    <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded">
-                      Désactivé
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {module.description || module.code}
-                </p>
-                {module.route && (
-                  <p className="text-xs text-blue-600 mt-0.5">{module.route}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleToggleActive(module.id)}
-                className={`p-2 rounded-lg transition-colors ${
-                  module.est_actif
-                    ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-600'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
-                }`}
-                title={module.est_actif ? 'Désactiver' : 'Activer'}
-              >
-                {module.est_actif ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => handleToggleVisibility(module.id)}
-                className={`p-2 rounded-lg transition-colors ${
-                  module.est_visible_menu
-                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-600'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
-                }`}
-                title={module.est_visible_menu ? 'Masquer du menu' : 'Afficher dans le menu'}
-              >
-                {module.est_visible_menu ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => setEditingModule(module)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-600"
-                title="Modifier"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            </div>
+          <Field label="Description" wide htmlFor={`description-${module.id}`}>
+            <textarea
+              id={`description-${module.id}`}
+              rows={2}
+              value={enEdition.description || ''}
+              onChange={(event) => setEnEdition({ ...enEdition, description: event.target.value })}
+            />
+          </Field>
+          <div className="modules__edition-actions">
+            <button type="button" className="sn-btn" onClick={() => setEnEdition(null)} disabled={saving}>
+              <X aria-hidden="true" /> Annuler
+            </button>
+            <button type="button" className="sn-btn sn-btn--primary" onClick={() => void enregistrer()} disabled={saving}>
+              {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />} Enregistrer
+            </button>
           </div>
-        )}
-      </div>
-    </Card>
+        </div>
+      ) : (
+        <>
+          <span className="modules__icone" aria-hidden="true">
+            <LayoutGrid />
+          </span>
+          <div className="modules__corps">
+            <h3>
+              {module.nom}
+              {!module.est_actif && <Badge tone="danger">Désactivé</Badge>}
+              {!module.est_visible_menu && <Badge tone="neutral">Masqué du menu</Badge>}
+            </h3>
+            <p>{module.description || module.code}</p>
+            {module.route && <code>{module.route}</code>}
+          </div>
+          <div className="admin-page__actions">
+            <button
+              type="button"
+              className="sn-btn sn-btn--icon"
+              aria-label={module.est_actif ? `Désactiver ${module.nom}` : `Réactiver ${module.nom}`}
+              disabled={enCours === module.id}
+              onClick={() => void basculerActivation(module)}
+            >
+              {enCours === module.id ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Power aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              className="sn-btn sn-btn--icon"
+              aria-label={
+                module.est_visible_menu ? `Masquer ${module.nom} du menu` : `Afficher ${module.nom} dans le menu`
+              }
+              disabled={enCours === module.id}
+              onClick={() => void basculerVisibilite(module)}
+            >
+              {module.est_visible_menu ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              className="sn-btn sn-btn--icon"
+              aria-label={`Modifier ${module.nom}`}
+              onClick={() => setEnEdition(module)}
+            >
+              <PencilLine aria-hidden="true" />
+            </button>
+          </div>
+        </>
+      )}
+    </article>
   );
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loading />
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
-    <MainLayout>
-      <CustomAlert {...alertState} onClose={closeAlert} />
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page modules">
+        <CustomAlert {...alertState} onClose={closeAlert} />
+        <ConfirmationDialog />
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestion des Modules</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Activer ou désactiver les modules de l'application
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          icon={LayoutGrid}
+          title="Modules de la plateforme"
+          subtitle="Activation, visibilité dans le menu et libellés des modules fonctionnels."
+          breadcrumb={[{ label: 'Administration' }, { label: 'Modules' }]}
+        />
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Grid className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-semibold text-blue-900 mb-1">
-                Comment fonctionne la gestion des modules ?
-              </h3>
-              <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
-                <li>
-                  <strong>Actif/Désactif</strong> : Un module désactivé n'apparaît plus dans l'application
-                </li>
-                <li>
-                  <strong>Visible/Masqué</strong> : Un module masqué reste actif mais n'apparaît pas dans le menu
-                </li>
-                <li>
-                  <strong>Sous-modules</strong> : La désactivation d'un module parent désactive tous ses sous-modules
-                </li>
-              </ul>
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
+        )}
+
+        <StatGrid
+          ariaLabel="État des modules"
+          items={[
+            { label: 'Modules déclarés', value: tous.length, icon: LayoutGrid, tone: 'blue' },
+            { label: 'Actifs', value: tous.filter((module) => module.est_actif).length, icon: Power, tone: 'green' },
+            {
+              label: 'Masqués du menu',
+              value: tous.filter((module) => !module.est_visible_menu).length,
+              hint: 'Actifs mais absents de la navigation',
+              icon: EyeOff,
+              tone: 'gold',
+            },
+            {
+              label: 'Sous-modules',
+              value: modules.reduce((somme, module) => somme + (module.submodules?.length || 0), 0),
+              icon: LayoutGrid,
+              tone: 'violet',
+            },
+          ]}
+        />
+
+        <Note tone="info" icon={Info}>
+          Un module <strong>désactivé</strong> disparaît de l’application et emporte ses
+          sous-modules. Un module <strong>masqué</strong> reste actif mais n’apparaît plus dans le
+          menu de navigation.
+        </Note>
+
+        <section className="sn-card admin-page__filtres" aria-label="Filtres des modules">
+          <label className="sn-field admin-page__filtre-large">
+            <span className="sn-field__label">Rechercher</span>
+            <input
+              value={recherche}
+              onChange={(event) => setRecherche(event.target.value)}
+              placeholder="Nom, code ou route…"
+            />
+          </label>
+          <button type="button" className="sn-btn" onClick={() => setRecherche('')} disabled={!recherche}>
+            Réinitialiser
+          </button>
+        </section>
+
+        <Section
+          id="modules"
+          icon={LayoutGrid}
+          tone="emerald"
+          title={`Modules (${visibles.length})`}
+          description="Les sous-modules apparaissent sous leur module parent."
+        >
+          {loading ? (
+            <div className="admin-page__loading">
+              <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des modules…
             </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          {modules.map((module) => (
-            <div key={module.id} className="space-y-2">
-              {renderModuleCard(module)}
-              {module.submodules && module.submodules.length > 0 && (
-                <div className="space-y-2">
-                  {module.submodules.map((submodule) => renderModuleCard(submodule, true))}
+          ) : visibles.length === 0 ? (
+            <EmptyState
+              title="Aucun module"
+              description={
+                modules.length === 0
+                  ? 'Aucun module n’est déclaré dans la plateforme.'
+                  : 'Aucun module ne correspond à cette recherche.'
+              }
+            />
+          ) : (
+            <div className="modules__liste">
+              {visibles.map((module) => (
+                <div key={module.id} className="modules__groupe">
+                  {carte(module)}
+                  {(module.submodules || []).map((sousModule) => carte(sousModule, true))}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </Section>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,0 +1,15 @@
+/* Gouttiere heritee de l'ancien layout, conservee pour les pages non refondues. */
+.sn-legacy-page {
+  min-height: 100%;
+  padding: 24px;
+  background: #f8fafb;
+}
+
+/* Une page refondue (`sn-page`) fournit sa propre gouttiere. */
+.sn-legacy-page > .sn-page,
+.sn-legacy-page > .site-form,
+.sn-legacy-page > .sites-dashboard,
+.sn-legacy-page > .artisans-dashboard,
+.sn-legacy-page > .artisan-list {
+  margin: -24px;
+}

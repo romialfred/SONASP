@@ -1,305 +1,253 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { TrendingUp, Activity, BarChart3, Users, DollarSign, Package } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Loading } from '@/components/ui/Loading';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Activity,
+  BadgeCheck,
+  CalendarClock,
+  ClipboardCheck,
+  Clock3,
+  Coins,
+  CreditCard,
+  RefreshCw,
+  ShieldAlert,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Note,
+  PageHeader,
+  StatGrid,
+} from '@/components/ui/sn';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
-import { supabase } from '@/lib/supabase';
+import './carte-suivi.css';
+
+interface DashboardStats {
+  total: number;
+  en_cours: number;
+  validees: number;
+  en_exploitation: number;
+  expirees: number;
+  suspendues: number;
+  expirant_30_jours: number;
+}
+
+interface ActivityRow {
+  id: string;
+  type_activite?: string;
+  description?: string;
+  created_at?: string;
+  artisan?: {
+    nom?: string;
+    prenoms?: string;
+    raison_sociale?: string;
+    type_personne?: string;
+    type_artisan?: string;
+  } | null;
+  carte?: { numero_carte?: string } | null;
+}
+
+interface TopArtisan {
+  artisanId: string;
+  artisan: Record<string, unknown> | null;
+  carte: Record<string, unknown> | null;
+  ventes: number;
+  montant: number;
+  grammes: number;
+}
+
+const integer = new Intl.NumberFormat('fr-FR');
+const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+const holderLabel = (holder?: Record<string, unknown> | null) => {
+  if (!holder) return 'Titulaire inconnu';
+  if (holder.type_personne === 'morale') return String(holder.raison_sociale || 'Société');
+  return [holder.nom, holder.prenoms].filter(Boolean).join(' ') || 'Artisan';
+};
+
+const formatMoney = (value: number) =>
+  value >= 1_000_000 ? `${decimal.format(value / 1_000_000)} M FCFA` : `${integer.format(value)} FCFA`;
+
+/** Ancienneté lisible d'un évènement, sans dépendance de formatage supplémentaire. */
+export function timeAgo(value?: string, reference: Date = new Date()) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const minutes = Math.floor((reference.getTime() - date.getTime()) / 60_000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 31) return `il y a ${days} j`;
+  return date.toLocaleDateString('fr-FR');
+}
 
 export default function CarteSuivi() {
-  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [topArtisans, setTopArtisans] = useState<any[]>([]);
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [topArtisans, setTopArtisans] = useState<TopArtisan[]>([]);
+  const { showAlert } = useCustomAlert();
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
+      // Chaque source est indépendante : une table absente ne doit pas vider l'écran.
+      const [statsResult, activitiesResult, topResult] = await Promise.allSettled([
+        carteProfessionnelleService.getDashboardStats(),
+        carteProfessionnelleService.getRecentActivities(10),
+        carteProfessionnelleService.getTopArtisans(5),
+      ]);
 
-      const dashboardStats = await carteProfessionnelleService.getDashboardStats();
+      if (statsResult.status === 'fulfilled') setStats(statsResult.value as DashboardStats);
+      else showAlert('Erreur lors du chargement des indicateurs', 'error');
 
-      const { data: activitiesData } = await supabase
-        .from('snp_artisan_activities')
-        .select(`
-          *,
-          artisan:snp_artisans_miniers(nom, prenoms, raison_sociale, type_personne, type_artisan),
-          carte:snp_cartes_professionnelles(numero_carte)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      const { data: statsData } = await supabase
-        .from('snp_carte_statistics')
-        .select(`
-          *,
-          artisan:snp_artisans_miniers(nom, prenoms, raison_sociale, type_personne),
-          carte:snp_cartes_professionnelles(numero_carte, statut)
-        `)
-        .order('montant_total_ventes', { ascending: false })
-        .limit(5);
-
-      const topArtisansMap = new Map();
-      statsData?.forEach(stat => {
-        const key = stat.artisan_id;
-        if (!topArtisansMap.has(key)) {
-          topArtisansMap.set(key, {
-            artisan: stat.artisan,
-            carte: stat.carte,
-            total_ventes: 0,
-            total_montant: 0,
-            total_grammes: 0
-          });
-        }
-        const current = topArtisansMap.get(key);
-        current.total_ventes += stat.nombre_ventes || 0;
-        current.total_montant += parseFloat(stat.montant_total_ventes as any) || 0;
-        current.total_grammes += parseFloat(stat.quantite_totale_grammes as any) || 0;
-      });
-
-      setStats(dashboardStats);
-      setActivities(activitiesData || []);
-      setTopArtisans(Array.from(topArtisansMap.values()).slice(0, 5));
-
-    } catch (error) {
-      console.error('Error loading data:', error);
+      setActivities(activitiesResult.status === 'fulfilled' ? (activitiesResult.value as ActivityRow[]) : []);
+      setTopArtisans(topResult.status === 'fulfilled' ? (topResult.value as TopArtisan[]) : []);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <Loading />
-      </MainLayout>
-    );
-  }
+  useEffect(() => {
+    void loadData();
+  }, []);
+
+  const validityRate = useMemo(() => {
+    if (!stats || !stats.total) return 0;
+    return Math.round(((stats.validees + stats.en_exploitation) / stats.total) * 100);
+  }, [stats]);
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Suivi des Cartes Professionnelles
-          </h1>
-          <p className="text-gray-600 mt-2 text-base">
-            Statistiques et activités des artisans miniers
-          </p>
+    <NationalDashboardLayout>
+      <div className="sn-page">
+        <PageHeader
+          icon={TrendingUp}
+          title="Suivi des cartes professionnelles"
+          subtitle="État du parc de cartes, activité récente et artisans les plus actifs."
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: 'Suivi des cartes' },
+          ]}
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => void loadData()}>
+                <RefreshCw aria-hidden="true" /> Actualiser
+              </button>
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/artisan-minier/cartes/validation')}>
+                <ClipboardCheck aria-hidden="true" /> Valider les demandes
+              </button>
+            </>
+          }
+        />
+
+        <div style={{ marginTop: 16 }}>
+          <StatGrid
+            ariaLabel="État du parc de cartes"
+            items={[
+              { label: 'Cartes délivrées', value: integer.format(stats?.total || 0), hint: `${validityRate} % en cours de validité`, icon: CreditCard, tone: 'blue' },
+              { label: 'En exploitation', value: integer.format(stats?.en_exploitation || 0), icon: BadgeCheck, tone: 'green' },
+              { label: 'En attente', value: integer.format(stats?.en_cours || 0), hint: 'À valider', icon: Clock3, tone: 'gold' },
+              { label: 'Expirent sous 30 j', value: integer.format(stats?.expirant_30_jours || 0), icon: CalendarClock, tone: 'gold' },
+              { label: 'Expirées', value: integer.format(stats?.expirees || 0), icon: XCircle, tone: 'red' },
+              { label: 'Suspendues', value: integer.format(stats?.suspendues || 0), icon: ShieldAlert, tone: 'violet' },
+            ]}
+          />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-200 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md">
-                  <Activity className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
-                  Cartes actives
-                </p>
-                <p className="text-5xl font-bold text-purple-600 mb-2">
-                  {stats?.en_exploitation || 0}
-                </p>
-                <p className="text-sm text-gray-600 font-medium">En exploitation</p>
-              </div>
-            </div>
+        {(stats?.expirant_30_jours || 0) > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <Note tone="warning" icon={CalendarClock}>
+              {integer.format(stats?.expirant_30_jours || 0)} carte(s) arrivent à échéance dans les 30 jours.{' '}
+              <button
+                type="button"
+                className="carte-suivi__inline-link"
+                onClick={() => navigate('/artisan-minier/cartes/expirations')}
+              >
+                Traiter les expirations
+              </button>
+            </Note>
+          </div>
+        )}
+
+        <section className="carte-suivi__grid">
+          <Card title="Activité récente" hint="Dix derniers évènements enregistrés sur les cartes.">
+            {loading ? (
+              <p className="sn-empty">Chargement de l’activité…</p>
+            ) : activities.length === 0 ? (
+              <EmptyState
+                title="Aucune activité enregistrée"
+                description="Les évènements de délivrance, validation et suspension apparaîtront ici."
+              />
+            ) : (
+              <ol className="carte-suivi__feed">
+                {activities.map((item) => (
+                  <li key={item.id}>
+                    <span className="carte-suivi__feed-icon">
+                      <Activity aria-hidden="true" />
+                    </span>
+                    <span className="carte-suivi__feed-body">
+                      <strong>{holderLabel(item.artisan)}</strong>
+                      <small>
+                        {item.description || item.type_activite || 'Activité sur la carte'}
+                        {item.carte?.numero_carte ? ` · ${item.carte.numero_carte}` : ''}
+                      </small>
+                    </span>
+                    <em>{timeAgo(item.created_at)}</em>
+                  </li>
+                ))}
+              </ol>
+            )}
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
-                  <BarChart3 className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
-                  Activités totales
-                </p>
-                <p className="text-5xl font-bold text-blue-600 mb-2">
-                  {activities.length}
-                </p>
-                <p className="text-sm text-gray-600 font-medium">Transactions récentes</p>
-              </div>
-            </div>
+          <Card title="Artisans les plus actifs" hint="Classement par montant de ventes déclarées.">
+            {loading ? (
+              <p className="sn-empty">Chargement du classement…</p>
+            ) : topArtisans.length === 0 ? (
+              <EmptyState
+                title="Aucune statistique disponible"
+                description="Le classement se construit à partir des ventes d’or déclarées."
+              />
+            ) : (
+              <ol className="carte-suivi__ranking">
+                {topArtisans.map((item, index) => (
+                  <li key={item.artisanId}>
+                    <span className="carte-suivi__rank">{index + 1}</span>
+                    <span className="carte-suivi__ranking-body">
+                      <strong>{holderLabel(item.artisan)}</strong>
+                      <small>
+                        {integer.format(item.ventes)} vente(s) · {decimal.format(item.grammes)} g
+                      </small>
+                    </span>
+                    <span className="carte-suivi__ranking-value">
+                      <b>{formatMoney(item.montant)}</b>
+                      {item.carte?.statut ? (
+                        <Badge tone={item.carte.statut === 'suspendue' ? 'danger' : 'success'}>
+                          {String(item.carte.statut)}
+                        </Badge>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
           </Card>
+        </section>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div className="p-7">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md">
-                  <TrendingUp className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
-                  Artisans actifs
-                </p>
-                <p className="text-5xl font-bold text-emerald-600 mb-2">
-                  {topArtisans.length}
-                </p>
-                <p className="text-sm text-gray-600 font-medium">Avec transactions</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-sm">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <Activity className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Activités récentes
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    10 dernières transactions
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {activities.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Activity className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Aucune activité enregistrée</p>
-                </div>
-              ) : (
-                activities.map((activity) => (
-                  <div key={activity.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className={`p-2 rounded-lg ${
-                          activity.type_activite === 'vente' ? 'bg-green-100' :
-                          activity.type_activite === 'collecte' ? 'bg-blue-100' :
-                          'bg-purple-100'
-                        }`}>
-                          {activity.type_activite === 'vente' ? (
-                            <DollarSign className={`h-5 w-5 ${
-                              activity.type_activite === 'vente' ? 'text-green-600' :
-                              activity.type_activite === 'collecte' ? 'text-blue-600' :
-                              'text-purple-600'
-                            }`} />
-                          ) : (
-                            <Package className={`h-5 w-5 ${
-                              activity.type_activite === 'vente' ? 'text-green-600' :
-                              activity.type_activite === 'collecte' ? 'text-blue-600' :
-                              'text-purple-600'
-                            }`} />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">
-                            {activity.artisan?.type_personne === 'physique'
-                              ? `${activity.artisan?.nom} ${activity.artisan?.prenoms || ''}`
-                              : activity.artisan?.raison_sociale
-                            }
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            {activity.montant && (
-                              <span>{new Intl.NumberFormat('fr-FR').format(activity.montant)} FCFA</span>
-                            )}
-                            {activity.quantite_grammes && (
-                              <span>{activity.quantite_grammes.toFixed(2)} g</span>
-                            )}
-                            <span>{new Date(activity.created_at).toLocaleDateString('fr-FR')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`px-2 py-1 text-xs font-bold rounded ${
-                        activity.type_activite === 'vente' ? 'bg-green-100 text-green-700' :
-                        activity.type_activite === 'collecte' ? 'bg-blue-100 text-blue-700' :
-                        'bg-purple-100 text-purple-700'
-                      }`}>
-                        {activity.type_activite}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          <Card className="shadow-sm">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-600 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Top 5 Artisans
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Par volume de ventes
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {topArtisans.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Aucune statistique disponible</p>
-                </div>
-              ) : (
-                topArtisans.map((item, index) => (
-                  <div key={index} className="p-5 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-white ${
-                        index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
-                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
-                        index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
-                        'bg-gradient-to-br from-blue-400 to-blue-600'
-                      }`}>
-                        #{index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900">
-                          {item.artisan?.type_personne === 'physique'
-                            ? `${item.artisan?.nom} ${item.artisan?.prenoms || ''}`
-                            : item.artisan?.raison_sociale
-                          }
-                        </h4>
-                        <div className="mt-2 space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Ventes:</span>
-                            <span className="font-semibold text-gray-900">{item.total_ventes}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Montant:</span>
-                            <span className="font-semibold text-emerald-600">
-                              {new Intl.NumberFormat('fr-FR').format(item.total_montant)} FCFA
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Quantité:</span>
-                            <span className="font-semibold text-blue-600">
-                              {item.total_grammes.toFixed(2)} g
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
+        <div style={{ marginTop: 12 }}>
+          <Note icon={Coins}>
+            Les montants proviennent des statistiques mensuelles de carte : ils reflètent les
+            ventes déclarées, pas les paiements encaissés.
+          </Note>
         </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

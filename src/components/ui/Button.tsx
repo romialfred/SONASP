@@ -10,6 +10,28 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode | ComponentType<LucideProps>;
 }
 
+/**
+ * Bouton de la plateforme.
+ *
+ * L'API publique est inchangée ; le rendu s'appuie desormais sur le design system
+ * (`sn-btn`). Les variantes historiques sont projetees sur les trois intentions
+ * retenues : action principale, action neutre, action destructrice.
+ */
+const VARIANT_CLASS: Record<NonNullable<ButtonProps['variant']>, string> = {
+  primary: 'sn-btn--primary',
+  success: 'sn-btn--primary',
+  secondary: '',
+  outline: '',
+  ghost: 'sn-btn--ghost',
+  danger: 'sn-btn--danger',
+};
+
+const SIZE_CLASS: Record<NonNullable<ButtonProps['size']>, string> = {
+  sm: 'sn-btn--sm',
+  md: '',
+  lg: 'sn-btn--lg',
+};
+
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({
     className,
@@ -22,42 +44,21 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     children,
     ...props
   }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-
-    const variantStyles = {
-      primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500',
-      secondary: 'bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500',
-      success: 'bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-500',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-      ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
-      outline: 'bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
-    };
-
-    const sizeStyles = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-base',
-      lg: 'px-6 py-3 text-base',
-    };
-
-    const widthStyles = fullWidth ? 'w-full' : '';
-
     const renderIcon = () => {
       if (!icon || loading) return null;
 
-      // Si icon est un composant (fonction), on l'instancie
       if (typeof icon === 'function') {
         const IconComponent = icon as ComponentType<LucideProps>;
         return (
-          <span className="mr-2 flex items-center" data-testid="button-icon-wrapper">
+          <span className="flex items-center" data-testid="button-icon-wrapper">
             <IconComponent className="h-4 w-4" />
           </span>
         );
       }
 
-      // Sinon, c'est déjà un élément React, on l'affiche tel quel
       return (
-        <span className="mr-2 flex items-center" data-testid="button-icon-wrapper">
-          {icon}
+        <span className="flex items-center" data-testid="button-icon-wrapper">
+          {icon as ReactNode}
         </span>
       );
     };
@@ -65,11 +66,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={cn(baseStyles, variantStyles[variant], sizeStyles[size], widthStyles, className)}
+        className={cn(
+          'sn-btn',
+          VARIANT_CLASS[variant],
+          SIZE_CLASS[size],
+          fullWidth && 'w-full',
+          className
+        )}
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className="h-4 w-4 sn-spin" aria-hidden="true" />}
         {renderIcon()}
         {children}
       </button>

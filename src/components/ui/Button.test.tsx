@@ -42,37 +42,37 @@ describe('Button', () => {
   it('should apply primary variant styles', () => {
     render(<Button variant="primary">Primary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-primary-500');
+    expect(button.className).toContain('sn-btn--primary');
   });
 
   it('should apply secondary variant styles', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-secondary-500');
+    expect(button.className).toContain('sn-btn');
   });
 
   it('should apply outline variant styles', () => {
     render(<Button variant="outline">Outline</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('border');
+    expect(button.className).toContain('sn-btn');
   });
 
   it('should apply danger variant styles', () => {
     render(<Button variant="danger">Danger</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-red-600');
+    expect(button.className).toContain('sn-btn--danger');
   });
 
   it('should apply small size', () => {
     render(<Button size="sm">Small</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('text-sm');
+    expect(button.className).toContain('sn-btn--sm');
   });
 
   it('should apply large size', () => {
     render(<Button size="lg">Large</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('text-base');
+    expect(button.className).toContain('sn-btn--lg');
   });
 
   it('should render full width button', () => {

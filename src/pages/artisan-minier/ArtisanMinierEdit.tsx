@@ -1,111 +1,117 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Loading } from '@/components/ui/Loading';
-import { ArtisanMinierFormWithTabs } from '@/components/artisan/ArtisanMinierFormWithTabs';
-import { artisanMinierService } from '@/services/artisanMinierService';
-import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Loader2, UserRound } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { EmptyState, PageHeader } from '@/components/ui/sn';
+import { ArtisanMinierForm } from '@/components/artisan/ArtisanMinierForm';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { artisanFullName } from '@/utils/artisanIdentity';
 
 export default function ArtisanMinierEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [artisan, setArtisan] = useState<any>(null);
   const { alertState, showError, closeAlert } = useCustomAlert();
 
+  const [loading, setLoading] = useState(true);
+  const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
+
   useEffect(() => {
-    if (id) {
-      loadArtisan();
-    }
+    let active = true;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = id ? await artisanMinierService.getById(id) : null;
+        if (!active) return;
+        setArtisan(data);
+        if (!data) showError('Impossible de charger la fiche de cet artisan');
+      } catch (reason) {
+        if (!active) return;
+        showError(reason instanceof Error ? reason.message : 'Impossible de charger la fiche de cet artisan');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const loadArtisan = async () => {
-    try {
-      setLoading(true);
-      const data = await artisanMinierService.getById(id!);
-      setArtisan(data);
-    } catch (error: any) {
-      console.error('Error loading artisan:', error);
-      showError(error.message || 'Erreur lors du chargement de l\'artisan');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSuccess = () => {
-    navigate(`/artisan-minier/${id}`);
-  };
-
-  const handleCancel = () => {
-    navigate(`/artisan-minier/${id}`);
-  };
+  const retour = id ? `/artisan-minier/${id}` : '/artisan-minier/liste';
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loading />
+      <NationalDashboardLayout>
+        <div className="sn-page">
+          <div className="sn-note" style={{ justifyContent: 'center' }}>
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement de la fiche…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   if (!artisan) {
     return (
-      <MainLayout>
-        <Card className="p-6">
-          <p className="text-red-600">Artisan minier non trouvé</p>
-          <Button onClick={() => navigate('/artisan-minier/liste')} className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour à la liste
-          </Button>
-        </Card>
-      </MainLayout>
+      <NationalDashboardLayout>
+        <div className="sn-page">
+          <CustomAlert {...alertState} onClose={closeAlert} />
+          <PageHeader
+            icon={UserRound}
+            title="Artisan introuvable"
+            subtitle="Cette fiche a été supprimée ou la référence est erronée."
+            breadcrumb={[{ label: 'Artisans miniers', to: '/artisan-minier' }, { label: 'Fiche' }]}
+          />
+          <EmptyState
+            title="Aucune fiche à modifier"
+            description="Revenez à la liste pour retrouver l’artisan concerné."
+            action={
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => navigate('/artisan-minier/liste')}
+              >
+                <ArrowLeft aria-hidden="true" /> Retour à la liste
+              </button>
+            }
+          />
+        </div>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Modifier Artisan Minier
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {artisan.numero_carte}
-              </p>
-            </div>
-          </div>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page">
+        <CustomAlert {...alertState} onClose={closeAlert} />
 
-        <ArtisanMinierFormWithTabs
-          artisan={artisan}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
+        <PageHeader
+          icon={UserRound}
+          title="Modifier la fiche artisan"
+          subtitle={`${artisanFullName(artisan)}${artisan.numero_carte ? ` · ${artisan.numero_carte}` : ''}`}
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: artisanFullName(artisan), to: retour },
+            { label: 'Modification' },
+          ]}
+          actions={
+            <button type="button" className="sn-btn" onClick={() => navigate(retour)}>
+              <ArrowLeft aria-hidden="true" /> Retour au dossier
+            </button>
+          }
         />
 
-        <CustomAlert
-          isOpen={alertState.isOpen}
-          onClose={closeAlert}
-          title={alertState.title}
-          message={alertState.message}
-          type={alertState.type}
+        <ArtisanMinierForm
+          artisan={artisan}
+          onCancel={() => navigate(retour)}
+          onSuccess={() => navigate(retour)}
         />
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { SelectHTMLAttributes, ReactNode, forwardRef, useId } from 'react';
+import { SelectHTMLAttributes, forwardRef, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -21,13 +21,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const errorMessage = typeof error === 'string' ? error : undefined;
     const shownHelper = errorMessage ?? helperText;
 
-    const baseStyles = 'flex w-full appearance-none rounded-lg border px-3 py-2 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-white';
+    const baseStyles = 'sn-input sn-input--select';
 
-    const stateStyles = hasError
-      ? 'border-red-500 focus:ring-red-500'
-      : success
-      ? 'border-accent-500 focus:ring-accent-500'
-      : 'border-gray-300 focus:ring-primary-500';
+    const stateStyles = hasError ? 'sn-input--error' : success ? 'sn-input--success' : '';
 
     const fieldEl = (
       <div className="relative">

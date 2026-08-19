@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
@@ -57,6 +57,22 @@ export default defineConfig({
       },
     }),
   ],
+  /**
+   * Journalisation : les appels `console.*` et `debugger` sont retires du bundle de
+   * production. Ils restent disponibles en developpement. Repond au constat F14 de
+   * l'audit (bruit et fuite d'informations en production) sans modifier le code applicatif.
+   */
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
+  /**
+   * Port fixe : le poste de developpement heberge d'autres projets Vite qui occupent
+   * le 5173 par defaut. Un port dedie evite que l'apercu pointe sur une autre application.
+   */
+  server: {
+    port: 5180,
+    strictPort: true,
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
@@ -65,4 +81,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-});
+}));

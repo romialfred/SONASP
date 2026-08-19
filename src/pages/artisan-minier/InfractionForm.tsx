@@ -1,31 +1,40 @@
-import { useState, useEffect } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Save,
+  AlertCircle,
   AlertTriangle,
-  Calendar,
-  MapPin,
+  ArrowLeft,
+  CheckCircle2,
   FileText,
+  Gavel,
+  HandHelping,
+  Loader2,
+  Paperclip,
+  Save,
+  ScrollText,
+  ShieldQuestion,
+  Trash2,
   Upload,
+  UserRound,
   X,
-  File,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Loading } from '@/components/ui/Loading';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, ChoiceCards, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
+import { CustomAlert } from '@/components/ui/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 import {
   artisanInfractionsService,
-  CreateInfractionData,
-  StatutTraitementInfraction,
-  ConclusionInfraction,
+  type ArtisanInfraction,
+  type ConclusionInfraction,
+  type CreateInfractionData,
+  type StatutTraitementInfraction,
 } from '@/services/artisanInfractionsService';
-import { useCustomAlert } from '@/hooks/useCustomAlert';
-import { CustomAlert } from '@/components/ui/CustomAlert';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { artisanFullName } from '@/utils/artisanIdentity';
+import './infraction-form.css';
 
-const TYPE_INFRACTIONS = [
+/** Qualifications prévues par le dispositif de contrôle ; « Autre » ouvre une saisie libre. */
+export const TYPES_INFRACTION = [
   'Non-déclaration de production',
   'Vente illégale',
   'Exploitation sans autorisation',
@@ -35,488 +44,594 @@ const TYPE_INFRACTIONS = [
   'Non-paiement des taxes',
   'Falsification de documents',
   'Trafic illégal',
-  'Autre',
+] as const;
+
+export const AUTRE_TYPE = 'Autre';
+
+const CONCLUSION_OPTIONS: Array<{
+  value: ConclusionInfraction;
+  label: string;
+  description: string;
+  icon: typeof Gavel;
+}> = [
+  { value: 'reconnu', label: 'Reconnu', description: 'Les faits sont établis', icon: Gavel },
+  { value: 'soupçonne', label: 'Soupçonné', description: 'Faisceau d’indices, preuve incomplète', icon: ShieldQuestion },
+  { value: 'complice', label: 'Complice', description: 'Participation indirecte établie', icon: HandHelping },
+  { value: 'innocente', label: 'Innocenté', description: 'Mis hors de cause', icon: CheckCircle2 },
 ];
 
-interface UploadedFile {
+const STATUT_OPTIONS: Array<{ value: StatutTraitementInfraction; label: string }> = [
+  { value: 'en_cours', label: 'Instruction en cours' },
+  { value: 'cloture', label: 'Dossier clôturé' },
+];
+
+/** 10 Mo : plafond annoncé à l'agent, désormais réellement appliqué. */
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+interface PendingFile {
   file: File;
   preview: string;
-  url?: string;
+}
+
+export interface InfractionDraft {
+  date_infraction: string;
+  type_infraction: string;
+  custom_type: string;
+  lieu: string;
+  description: string;
+  remarques: string;
+  statut_traitement: StatutTraitementInfraction;
+  conclusion: ConclusionInfraction | '';
+  date_cloture: string;
+}
+
+export const EMPTY_DRAFT: InfractionDraft = {
+  date_infraction: new Date().toISOString().split('T')[0],
+  type_infraction: '',
+  custom_type: '',
+  lieu: '',
+  description: '',
+  remarques: '',
+  statut_traitement: 'en_cours',
+  conclusion: '',
+  date_cloture: '',
+};
+
+/**
+ * Restitue un constat existant dans le formulaire.
+ * Une qualification hors nomenclature doit revenir sur « Autre » avec sa saisie libre,
+ * faute de quoi le select s'affichait vide et la qualification était perdue à l'enregistrement.
+ */
+export function draftFromInfraction(infraction: ArtisanInfraction): InfractionDraft {
+  const connu = (TYPES_INFRACTION as readonly string[]).includes(infraction.type_infraction);
+  return {
+    date_infraction: infraction.date_infraction,
+    type_infraction: connu ? infraction.type_infraction : AUTRE_TYPE,
+    custom_type: connu ? '' : infraction.type_infraction,
+    lieu: infraction.lieu || '',
+    description: infraction.description,
+    remarques: infraction.remarques || '',
+    statut_traitement: infraction.statut_traitement,
+    conclusion: infraction.conclusion || '',
+    date_cloture: infraction.date_cloture || '',
+  };
+}
+
+/** Première obligation non satisfaite, ou `null` si le constat est enregistrable. */
+export function validateDraft(draft: InfractionDraft): string | null {
+  if (!draft.date_infraction) return 'La date du constat est obligatoire.';
+  if (draft.date_infraction > new Date().toISOString().split('T')[0])
+    return 'La date du constat ne peut pas être postérieure à aujourd’hui.';
+  if (!draft.type_infraction) return 'Sélectionnez la qualification de l’infraction.';
+  if (draft.type_infraction === AUTRE_TYPE && !draft.custom_type.trim())
+    return 'Précisez la qualification retenue.';
+  if (draft.description.trim().length < 20)
+    return 'Décrivez les faits constatés (20 caractères minimum).';
+  if (draft.statut_traitement === 'cloture') {
+    if (!draft.conclusion) return 'Une clôture exige une conclusion.';
+    if (!draft.date_cloture) return 'Renseignez la date de clôture.';
+    if (draft.date_cloture < draft.date_infraction)
+      return 'La clôture ne peut pas précéder le constat.';
+  }
+  return null;
+}
+
+/**
+ * Traduit le brouillon en enregistrement.
+ * Un dossier rouvert perd sa conclusion et sa date de clôture : les conserver laissait
+ * en base une instruction « en cours » portant un verdict.
+ */
+export function buildInfractionPayload(
+  draft: InfractionDraft,
+  artisanId: string,
+  documents: string[]
+): CreateInfractionData {
+  const cloture = draft.statut_traitement === 'cloture';
+  return {
+    artisan_id: artisanId,
+    date_infraction: draft.date_infraction,
+    type_infraction: draft.type_infraction === AUTRE_TYPE ? draft.custom_type.trim() : draft.type_infraction,
+    description: draft.description.trim(),
+    lieu: draft.lieu.trim() || undefined,
+    statut_traitement: draft.statut_traitement,
+    conclusion: cloture ? (draft.conclusion as ConclusionInfraction) : undefined,
+    date_cloture: cloture ? draft.date_cloture : undefined,
+    remarques: draft.remarques.trim() || undefined,
+    documents,
+  };
 }
 
 export default function InfractionForm() {
   const navigate = useNavigate();
   const { artisanId, infractionId } = useParams();
   const isEditMode = Boolean(infractionId);
-
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
-
-  const [formData, setFormData] = useState<CreateInfractionData>({
-    artisan_id: artisanId || '',
-    date_infraction: new Date().toISOString().split('T')[0],
-    type_infraction: '',
-    description: '',
-    lieu: '',
-    statut_traitement: 'en_cours' as StatutTraitementInfraction,
-    conclusion: undefined,
-    remarques: '',
-    documents: [],
-    date_cloture: undefined,
-  });
-
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [customType, setCustomType] = useState('');
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [draft, setDraft] = useState<InfractionDraft>(EMPTY_DRAFT);
+  const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
+  const [historique, setHistorique] = useState<ArtisanInfraction[]>([]);
+  /** URLs déjà stockées : conservées telles quelles, sinon un nouvel envoi les effaçait. */
+  const [storedDocuments, setStoredDocuments] = useState<string[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    if (isEditMode && infractionId) {
-      loadInfraction();
-    }
-  }, [isEditMode, infractionId]);
+    let active = true;
 
-  const loadInfraction = async () => {
-    try {
+    const load = async () => {
       setLoading(true);
-      const data = await artisanInfractionsService.getById(infractionId!);
-      if (data) {
-        setFormData({
-          artisan_id: data.artisan_id,
-          date_infraction: data.date_infraction,
-          type_infraction: data.type_infraction,
-          description: data.description,
-          lieu: data.lieu,
-          statut_traitement: data.statut_traitement,
-          conclusion: data.conclusion,
-          remarques: data.remarques,
-          documents: data.documents,
-          date_cloture: data.date_cloture,
-        });
-      }
-    } catch (error) {
-      showError('Impossible de charger l\'infraction');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const [dossier, constats, existant] = await Promise.allSettled([
+        artisanId ? artisanMinierService.getById(artisanId) : Promise.resolve(null),
+        artisanId ? artisanInfractionsService.getByArtisanId(artisanId) : Promise.resolve([]),
+        infractionId ? artisanInfractionsService.getById(infractionId) : Promise.resolve(null),
+      ]);
+      if (!active) return;
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newFiles: UploadedFile[] = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setUploadedFiles([...uploadedFiles, ...newFiles]);
-  };
+      if (dossier.status === 'fulfilled') setArtisan(dossier.value);
+      if (constats.status === 'fulfilled') setHistorique(constats.value || []);
 
-  const removeFile = (index: number) => {
-    const newFiles = [...uploadedFiles];
-    URL.revokeObjectURL(newFiles[index].preview);
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
-  };
-
-  const uploadFiles = async () => {
-    const uploadedUrls: string[] = [];
-
-    try {
-      setUploadingFiles(true);
-      for (const fileObj of uploadedFiles) {
-        if (!fileObj.url) {
-          const url = await artisanInfractionsService.uploadDocument(
-            fileObj.file,
-            formData.artisan_id
-          );
-          uploadedUrls.push(url);
+      if (infractionId) {
+        if (existant.status === 'fulfilled' && existant.value) {
+          setDraft(draftFromInfraction(existant.value));
+          setStoredDocuments(existant.value.documents || []);
         } else {
-          uploadedUrls.push(fileObj.url);
+          showError("Impossible de charger ce constat d'infraction");
         }
       }
-      return uploadedUrls;
-    } catch (error) {
-      throw new Error('Erreur lors de l\'upload des fichiers');
-    } finally {
-      setUploadingFiles(false);
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artisanId, infractionId]);
+
+  // Les aperçus locaux sont révoqués à la sortie : sans cela les blobs restaient en mémoire.
+  useEffect(
+    () => () => {
+      pendingFiles.forEach((item) => URL.revokeObjectURL(item.preview));
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    },
+    [pendingFiles]
+  );
+
+  const retour = artisanId ? `/artisan-minier/${artisanId}` : '/artisan-minier/liste';
+
+  const enCours = useMemo(
+    () => historique.filter((item) => item.statut_traitement === 'en_cours' && item.id !== infractionId),
+    [historique, infractionId]
+  );
+  const anterieurs = useMemo(
+    () => historique.filter((item) => item.id !== infractionId).slice(0, 4),
+    [historique, infractionId]
+  );
+
+  const setValue = <K extends keyof InfractionDraft>(key: K, value: InfractionDraft[K]) =>
+    setDraft((current) => ({ ...current, [key]: value }));
+
+  const handleStatut = (statut: StatutTraitementInfraction) =>
+    setDraft((current) => ({
+      ...current,
+      statut_traitement: statut,
+      date_cloture:
+        statut === 'cloture'
+          ? current.date_cloture || new Date().toISOString().split('T')[0]
+          : '',
+      conclusion: statut === 'cloture' ? current.conclusion : '',
+    }));
+
+  const handleFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const trop = files.filter((file) => file.size > MAX_FILE_BYTES);
+    const retenus = files.filter((file) => file.size <= MAX_FILE_BYTES);
+
+    if (trop.length > 0) {
+      showError(`Fichier trop volumineux (10 Mo maximum) : ${trop.map((file) => file.name).join(', ')}`);
     }
+    setPendingFiles((current) => [
+      ...current,
+      ...retenus.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
+    event.target.value = '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const removePending = (index: number) =>
+    setPendingFiles((current) => {
+      URL.revokeObjectURL(current[index].preview);
+      return current.filter((_, position) => position !== index);
+    });
 
-    if (!formData.type_infraction) {
-      showError('Veuillez sélectionner un type d\'infraction');
+  const removeStored = (url: string) =>
+    setStoredDocuments((current) => current.filter((item) => item !== url));
+
+  const validationError = validateDraft(draft);
+  const documentsCount = storedDocuments.length + pendingFiles.length;
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (saving || uploading) return; // garde-fou contre la double soumission
+
+    const message = validateDraft(draft);
+    if (message) {
+      showError(message);
+      return;
+    }
+    if (!artisanId) {
+      showError("Aucun artisan n'est associé à ce constat.");
       return;
     }
 
-    if (!formData.description) {
-      showError('Veuillez fournir une description');
-      return;
-    }
-
+    setSaving(true);
     try {
-      setSaving(true);
-
-      let documentUrls: string[] = formData.documents || [];
-      if (uploadedFiles.length > 0) {
-        documentUrls = await uploadFiles();
+      let documents = storedDocuments;
+      if (pendingFiles.length > 0) {
+        setUploading(true);
+        const cible = infractionId || artisanId;
+        const uploaded: string[] = [];
+        for (const item of pendingFiles) {
+          uploaded.push(await artisanInfractionsService.uploadDocument(item.file, cible));
+        }
+        // Les pièces déjà versées sont préservées : l'ancienne version les remplaçait.
+        documents = [...storedDocuments, ...uploaded];
+        setUploading(false);
       }
 
-      const dataToSave = {
-        ...formData,
-        documents: documentUrls,
-        type_infraction:
-          formData.type_infraction === 'Autre' && customType
-            ? customType
-            : formData.type_infraction,
-      };
+      const payload = buildInfractionPayload(draft, artisanId, documents);
 
       if (isEditMode && infractionId) {
-        await artisanInfractionsService.update(infractionId, dataToSave);
-        showSuccess('Infraction mise à jour avec succès');
+        await artisanInfractionsService.update(infractionId, payload);
+        showSuccess('Constat mis à jour');
       } else {
-        await artisanInfractionsService.create(dataToSave);
-        showSuccess('Infraction enregistrée avec succès');
+        await artisanInfractionsService.create(payload);
+        showSuccess('Constat enregistré');
       }
 
-      setTimeout(() => {
-        navigate(`/artisan-minier/${artisanId}`);
-      }, 1500);
-    } catch (error: any) {
-      showError(error.message || 'Erreur lors de l\'enregistrement');
+      pendingFiles.forEach((item) => URL.revokeObjectURL(item.preview));
+      setPendingFiles([]);
+      setStoredDocuments(documents);
+      redirectTimer.current = setTimeout(() => navigate(retour), 1200);
+    } catch (reason) {
+      showError(reason instanceof Error ? reason.message : "Erreur lors de l'enregistrement");
     } finally {
+      setUploading(false);
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loading />
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
-    <MainLayout>
-      <CustomAlert {...alertState} onClose={closeAlert} />
+    <NationalDashboardLayout>
+      <div className="sn-page infraction-form">
+        <CustomAlert {...alertState} onClose={closeAlert} />
 
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/artisan-minier/${artisanId}`)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {isEditMode ? 'Modifier' : 'Nouvelle'} Infraction
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Enregistrer un manquement ou une infraction
-              </p>
-            </div>
+        <PageHeader
+          icon={AlertTriangle}
+          title={isEditMode ? 'Modifier le constat d’infraction' : 'Nouveau constat d’infraction'}
+          subtitle={
+            artisan
+              ? `Dossier de ${artisanFullName(artisan)}${artisan.numero_carte ? ` · ${artisan.numero_carte}` : ''}`
+              : 'Manquement constaté sur le circuit artisanal'
+          }
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: artisanFullName(artisan), to: retour },
+            { label: isEditMode ? 'Modification du constat' : 'Nouveau constat' },
+          ]}
+          actions={
+            <button type="button" className="sn-btn" onClick={() => navigate(retour)}>
+              <ArrowLeft aria-hidden="true" /> Retour au dossier
+            </button>
+          }
+        />
+
+        {loading ? (
+          <div className="infraction-form__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du constat…
           </div>
-        </div>
+        ) : (
+          <div className="infraction-form__layout">
+            <form className="infraction-form__main" onSubmit={handleSubmit} noValidate>
+              <Section
+                id="constat"
+                icon={ScrollText}
+                tone="amber"
+                title="Constat"
+                description="Quand et où les faits ont été relevés."
+              >
+                <div className="infraction-form__row is-constat">
+                  <Field label="Date du constat" required htmlFor="date-infraction">
+                    <input
+                      id="date-infraction"
+                      type="date"
+                      value={draft.date_infraction}
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={(event) => setValue('date_infraction', event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Lieu du constat" htmlFor="lieu-infraction">
+                    <input
+                      id="lieu-infraction"
+                      value={draft.lieu}
+                      onChange={(event) => setValue('lieu', event.target.value)}
+                      placeholder="Site, village, commune…"
+                    />
+                  </Field>
+                </div>
+              </Section>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Form */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                  Détails de l'Infraction
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Calendar className="w-4 h-4 inline mr-2" />
-                        Date de l'Infraction *
-                      </label>
-                      <Input
-                        type="date"
-                        value={formData.date_infraction}
-                        onChange={(e) =>
-                          setFormData({ ...formData, date_infraction: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <MapPin className="w-4 h-4 inline mr-2" />
-                        Lieu
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.lieu || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lieu: e.target.value })
-                        }
-                        placeholder="Site, village, localité..."
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Type d'Infraction *
-                    </label>
+              <Section
+                id="qualification"
+                icon={Gavel}
+                tone="violet"
+                title="Qualification et faits"
+                description="Nature du manquement et description circonstanciée."
+              >
+                <div className={`infraction-form__row ${draft.type_infraction === AUTRE_TYPE ? 'is-qualif-libre' : 'is-qualif'}`}>
+                  <Field label="Qualification retenue" required htmlFor="type-infraction">
                     <select
-                      value={formData.type_infraction}
-                      onChange={(e) =>
-                        setFormData({ ...formData, type_infraction: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      required
+                      id="type-infraction"
+                      value={draft.type_infraction}
+                      onChange={(event) => setValue('type_infraction', event.target.value)}
                     >
-                      <option value="">Sélectionner un type</option>
-                      {TYPE_INFRACTIONS.map((type) => (
+                      <option value="">Sélectionner une qualification</option>
+                      {TYPES_INFRACTION.map((type) => (
                         <option key={type} value={type}>
                           {type}
                         </option>
                       ))}
+                      <option value={AUTRE_TYPE}>{AUTRE_TYPE}</option>
                     </select>
-                  </div>
-
-                  {formData.type_infraction === 'Autre' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Précisez le type d'infraction *
-                      </label>
-                      <Input
-                        type="text"
-                        value={customType}
-                        onChange={(e) => setCustomType(e.target.value)}
-                        placeholder="Décrivez le type d'infraction..."
-                        required
+                  </Field>
+                  {draft.type_infraction === AUTRE_TYPE && (
+                    <Field label="Qualification libre" required htmlFor="custom-type">
+                      <input
+                        id="custom-type"
+                        value={draft.custom_type}
+                        onChange={(event) => setValue('custom_type', event.target.value)}
+                        placeholder="Formuler la qualification retenue"
                       />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <FileText className="w-4 h-4 inline mr-2" />
-                      Description Détaillée *
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                      rows={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      placeholder="Décrivez en détail les faits constatés, les circonstances, les témoignages, etc."
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Remarques Complémentaires
-                    </label>
-                    <textarea
-                      value={formData.remarques || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, remarques: e.target.value })
-                      }
-                      rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      placeholder="Notes, observations, recommandations..."
-                    />
-                  </div>
-                </div>
-              </Card>
-
-              {/* Documents Upload */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-blue-600" />
-                  Documents & Preuves
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-                    <input
-                      type="file"
-                      id="file-upload"
-                      className="hidden"
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx"
-                      onChange={handleFileSelect}
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className="cursor-pointer flex flex-col items-center"
-                    >
-                      <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                      <p className="text-sm font-medium text-gray-700 mb-1">
-                        Cliquez pour uploader ou glissez-déposez
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Images, PDF, Word (max 10 MB par fichier)
-                      </p>
-                    </label>
-                  </div>
-
-                  {uploadedFiles.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {uploadedFiles.map((fileObj, index) => (
-                        <div
-                          key={index}
-                          className="relative group border border-gray-200 rounded-lg p-2 hover:shadow-md transition-shadow"
-                        >
-                          {fileObj.file.type.startsWith('image/') ? (
-                            <img
-                              src={fileObj.preview}
-                              alt={`Preview ${index}`}
-                              className="w-full h-32 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
-                              <File className="w-12 h-12 text-gray-400" />
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-600 mt-2 truncate">
-                            {fileObj.file.name}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                    </Field>
                   )}
                 </div>
-              </Card>
-            </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Traitement
-                </h3>
+                <Field label="Faits constatés" required wide htmlFor="description">
+                  <textarea
+                    id="description"
+                    rows={7}
+                    value={draft.description}
+                    onChange={(event) => setValue('description', event.target.value)}
+                    placeholder="Circonstances, personnes présentes, quantités en cause, déclarations recueillies…"
+                  />
+                </Field>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Statut du Traitement *
-                    </label>
-                    <select
-                      value={formData.statut_traitement}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          statut_traitement: e.target.value as StatutTraitementInfraction,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      required
-                    >
-                      <option value="en_cours">En Cours</option>
-                      <option value="cloture">Clôturé</option>
-                    </select>
-                  </div>
+                <Field label="Observations de l’agent" wide htmlFor="remarques">
+                  <textarea
+                    id="remarques"
+                    rows={4}
+                    value={draft.remarques}
+                    onChange={(event) => setValue('remarques', event.target.value)}
+                    placeholder="Suites proposées, mesures conservatoires, recommandations…"
+                  />
+                </Field>
+              </Section>
 
-                  {formData.statut_traitement === 'cloture' && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Date de Clôture
-                        </label>
-                        <Input
+              <Section
+                id="instruction"
+                icon={CheckCircle2}
+                tone="emerald"
+                title="Instruction"
+                description="État du dossier et, s’il est clos, verdict retenu."
+              >
+                <div className="infraction-form__statut">
+                  <span className="sn-field__label">État du dossier</span>
+                  <Segmented
+                    name="statut-infraction"
+                    value={draft.statut_traitement}
+                    options={STATUT_OPTIONS}
+                    onChange={handleStatut}
+                    ariaLabel="État du dossier"
+                  />
+                </div>
+
+                {draft.statut_traitement === 'cloture' ? (
+                  <>
+                    <ChoiceCards
+                      name="conclusion"
+                      value={draft.conclusion as ConclusionInfraction}
+                      options={CONCLUSION_OPTIONS}
+                      onChange={(conclusion) => setValue('conclusion', conclusion)}
+                      legend="Conclusion de l’instruction"
+                    />
+                    <div className="infraction-form__row is-cloture">
+                      <Field label="Date de clôture" required htmlFor="date-cloture">
+                        <input
+                          id="date-cloture"
                           type="date"
-                          value={formData.date_cloture || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, date_cloture: e.target.value })
-                          }
+                          value={draft.date_cloture}
+                          min={draft.date_infraction}
+                          onChange={(event) => setValue('date_cloture', event.target.value)}
                         />
-                      </div>
+                      </Field>
+                    </div>
+                  </>
+                ) : (
+                  <Note tone="info" icon={AlertCircle}>
+                    Le dossier reste ouvert : la conclusion et la date de clôture ne seront
+                    demandées qu’au moment de le clore.
+                  </Note>
+                )}
+              </Section>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Conclusion *
-                        </label>
-                        <select
-                          value={formData.conclusion || ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              conclusion: e.target.value as ConclusionInfraction,
-                            })
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                          required
+              <Section
+                id="pieces"
+                icon={Paperclip}
+                tone="blue"
+                title="Pièces du dossier"
+                description="Photographies, procès-verbaux et documents justificatifs."
+              >
+                <label className="infraction-form__drop" htmlFor="pieces-jointes">
+                  <Upload aria-hidden="true" />
+                  <strong>Joindre des pièces</strong>
+                  <small>Images, PDF ou Word — 10 Mo par fichier</small>
+                  <input
+                    id="pieces-jointes"
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx"
+                    onChange={handleFiles}
+                  />
+                </label>
+
+                {documentsCount > 0 && (
+                  <ul className="infraction-form__pieces">
+                    {storedDocuments.map((url) => (
+                      <li key={url}>
+                        <FileText aria-hidden="true" />
+                        <a href={url} target="_blank" rel="noreferrer">
+                          {decodeURIComponent(url.split('/').pop() || 'Pièce jointe')}
+                        </a>
+                        <button
+                          type="button"
+                          aria-label="Retirer cette pièce du dossier"
+                          onClick={() => removeStored(url)}
                         >
-                          <option value="">Sélectionner</option>
-                          <option value="reconnu">Reconnu</option>
-                          <option value="soupçonne">Soupçonné</option>
-                          <option value="complice">Complice</option>
-                          <option value="innocente">Innocenté</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
+                          <Trash2 aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                    {pendingFiles.map((item, index) => (
+                      <li key={`${item.file.name}-${index}`} className="is-pending">
+                        <Paperclip aria-hidden="true" />
+                        <span>
+                          {item.file.name} <small>{Math.round(item.file.size / 1024)} Ko · à envoyer</small>
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Retirer ${item.file.name}`}
+                          onClick={() => removePending(index)}
+                        >
+                          <X aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Section>
 
-              <Card className="p-6 bg-gradient-to-br from-red-50 to-orange-50 border-red-200">
-                <h4 className="text-sm font-semibold text-red-900 mb-2">
-                  ⚠️ Information Importante
-                </h4>
-                <p className="text-xs text-red-700">
-                  L'enregistrement d'une infraction est un acte sérieux. Assurez-vous
-                  d'avoir vérifié tous les faits et de disposer de preuves suffisantes.
-                </p>
-              </Card>
-
-              {/* Actions */}
-              <div className="space-y-3">
-                <Button
+              <div className="sn-form-actions">
+                {validationError && <span className="infraction-form__hint">{validationError}</span>}
+                <button type="button" className="sn-btn" onClick={() => navigate(retour)} disabled={saving}>
+                  Annuler
+                </button>
+                <button
                   type="submit"
-                  className="w-full"
-                  disabled={saving || uploadingFiles}
+                  className="sn-btn sn-btn--primary"
+                  disabled={saving || uploading || Boolean(validationError)}
                 >
-                  {saving || uploadingFiles ? (
+                  {saving || uploading ? (
                     <>
-                      <Loading />
-                      {uploadingFiles ? 'Upload en cours...' : 'Enregistrement...'}
+                      <Loader2 className="sn-spin" aria-hidden="true" />
+                      {uploading ? 'Envoi des pièces…' : 'Enregistrement…'}
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5 mr-2" />
-                      {isEditMode ? 'Mettre à Jour' : 'Enregistrer l\'Infraction'}
+                      <Save aria-hidden="true" /> {isEditMode ? 'Mettre à jour le constat' : 'Enregistrer le constat'}
                     </>
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate(`/artisan-minier/${artisanId}`)}
-                  disabled={saving || uploadingFiles}
-                >
-                  Annuler
-                </Button>
+                </button>
               </div>
-            </div>
+            </form>
+
+            <aside className="infraction-form__aside" aria-label="Contexte du dossier">
+              <section className="sn-card infraction-form__artisan">
+                <h2>
+                  <UserRound aria-hidden="true" /> Artisan mis en cause
+                </h2>
+                {artisan ? (
+                  <>
+                    <p className="infraction-form__artisan-name">{artisanFullName(artisan)}</p>
+                    <dl>
+                      <div>
+                        <dt>Carte professionnelle</dt>
+                        <dd>{artisan.numero_carte || 'Non attribuée'}</dd>
+                      </div>
+                      <div>
+                        <dt>Localisation</dt>
+                        <dd>{[artisan.commune, artisan.region].filter(Boolean).join(' · ') || 'Non renseignée'}</dd>
+                      </div>
+                      <div>
+                        <dt>Téléphone</dt>
+                        <dd>{artisan.telephone || 'Non renseigné'}</dd>
+                      </div>
+                    </dl>
+                    {enCours.length > 0 && (
+                      <Badge tone="danger" icon={AlertTriangle}>
+                        {enCours.length} dossier(s) déjà en cours
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <p className="infraction-form__empty">
+                    Dossier artisan indisponible — le constat reste enregistrable.
+                  </p>
+                )}
+              </section>
+
+              <section className="sn-card infraction-form__historique">
+                <h2>
+                  <ScrollText aria-hidden="true" /> Antécédents
+                </h2>
+                {anterieurs.length === 0 ? (
+                  <p className="infraction-form__empty">Aucun constat antérieur pour cet artisan.</p>
+                ) : (
+                  <ul>
+                    {anterieurs.map((item) => (
+                      <li key={item.id}>
+                        <span className="infraction-form__historique-date">
+                          {new Date(item.date_infraction).toLocaleDateString('fr-FR')}
+                        </span>
+                        <strong>{item.type_infraction}</strong>
+                        <Badge tone={item.statut_traitement === 'cloture' ? 'neutral' : 'warning'}>
+                          {item.statut_traitement === 'cloture' ? 'Clôturé' : 'En cours'}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <Note tone="warning" icon={AlertTriangle}>
+                Un constat engage l’administration. Vérifiez les faits et joignez les pièces
+                justificatives avant l’enregistrement.
+              </Note>
+            </aside>
           </div>
-        </form>
+        )}
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

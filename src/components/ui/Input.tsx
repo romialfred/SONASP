@@ -38,20 +38,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       ? createElement(icon, { 'aria-hidden': true })
       : icon;
 
-    const baseStyles = 'flex w-full rounded-lg border px-3 py-2 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+    const baseStyles = 'sn-input';
 
-    const stateStyles = hasError
-      ? 'border-red-500 focus:ring-red-500'
-      : success
-      ? 'border-accent-500 focus:ring-accent-500'
-      : 'border-gray-300 focus:ring-primary-500';
+    const stateStyles = hasError ? 'sn-input--error' : success ? 'sn-input--success' : '';
 
     const inputEl = (
       <input
         id={inputId}
         ref={ref}
         aria-invalid={hasError || undefined}
-        className={cn(baseStyles, stateStyles, icon ? 'pl-10' : undefined, className)}
+        className={cn(baseStyles, stateStyles, icon ? 'sn-input--with-icon' : undefined, className)}
         {...props}
       />
     );

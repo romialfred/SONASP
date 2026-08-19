@@ -61,16 +61,15 @@ export function Table<T extends Record<string, any>>({
 
   return (
     <div className={cn('w-full', className)}>
-      <div className="overflow-x-auto rounded-lg border border-gray-300">
-        <table className="w-full">
-          <thead className="bg-slate-700 border-b border-gray-300">
+      <div className="sn-table-wrap">
+        <table className="sn-table" style={{ width: '100%' }}>
+          <thead>
             <tr>
               {safeColumns.map((column) => (
                 <th
                   key={column.key}
                   className={cn(
-                    'px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider',
-                    column.sortable && 'cursor-pointer select-none hover:bg-slate-600'
+                    column.sortable && 'cursor-pointer select-none'
                   )}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -80,12 +79,12 @@ export function Table<T extends Record<string, any>>({
                       <div className="flex flex-col">
                         {sortColumn === column.key ? (
                           sortDirection === 'asc' ? (
-                            <ChevronUp className="h-4 w-4 text-white" />
+                            <ChevronUp className="h-3.5 w-3.5" />
                           ) : (
-                            <ChevronDown className="h-4 w-4 text-white" />
+                            <ChevronDown className="h-3.5 w-3.5" />
                           )
                         ) : (
-                          <ChevronDown className="h-4 w-4 text-gray-300" />
+                          <ChevronDown className="h-3.5 w-3.5 opacity-40" />
                         )}
                       </div>
                     )}
@@ -94,14 +93,14 @@ export function Table<T extends Record<string, any>>({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {paginatedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={safeColumns.length || 1}
-                  className="px-6 py-8 text-center text-sm text-gray-700 bg-gray-50"
+                  className="sn-empty"
                 >
-                  No data available
+                  Aucune donnée à afficher
                 </td>
               </tr>
             ) : (

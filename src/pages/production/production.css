@@ -1,0 +1,29 @@
+/* Production : filtres de periode, cumuls et tableaux de declaration. */
+
+.production-page__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  gap: 10px;
+  color: var(--sn-muted);
+  font-size: 13px;
+}
+
+.production-page__filtres {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 12px;
+  padding: 12px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.production-page__filtres .sn-field { margin: 0; min-width: 150px; }
+.production-page__filtre-large { flex: 1 1 240px; }
+.production-page__erreur { align-self: center; color: var(--sn-danger); font-size: 12px; font-weight: 600; }
+
+.production-page .sn-stats { margin-top: 12px; }
+.production-page .sn-section { margin-top: 12px; }
+
+.production-page__table-wrap { overflow-x: auto; }

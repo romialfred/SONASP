@@ -1,164 +1,239 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { Plus, Edit, Search, Loader } from 'lucide-react';
+import { AlertTriangle, Loader2, PencilLine, Plus, Truck } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
+import './admin.css';
 
-interface TransportCompany {
+export type TransportType = 'mine_to_airport' | 'airport_to_refinery' | 'both';
+
+export interface TransportCompany {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both';
+  email: string | null;
+  phone: string | null;
+  company_type: TransportType;
   address: string | null;
   contact_person: string | null;
   is_active: boolean;
   created_at: string;
 }
 
+const TYPES: Record<TransportType, string> = {
+  mine_to_airport: 'Mine → aéroport',
+  airport_to_refinery: 'Aéroport → raffinerie',
+  both: 'Chaîne complète',
+};
+
+export const typeTransport = (type?: string | null): string =>
+  (type && TYPES[type as TransportType]) || 'Type non défini';
+
+/** Recherche tolérante aux champs non renseignés. */
+export function filterCompanies(companies: TransportCompany[], recherche: string): TransportCompany[] {
+  const terme = recherche.trim().toLowerCase();
+  if (!terme) return companies;
+  return companies.filter((company) =>
+    [company.name, company.email, company.contact_person, company.address]
+      .filter(Boolean)
+      .some((valeur) => String(valeur).toLowerCase().includes(terme))
+  );
+}
+
 export function TransportCompaniesPage() {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<TransportCompany[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [recherche, setRecherche] = useState('');
+  const [typeFiltre, setTypeFiltre] = useState<'all' | TransportType>('all');
 
-  useEffect(() => {
-    loadCompanies();
-  }, []);
-
-  const loadCompanies = async () => {
+  const charger = useCallback(async () => {
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      console.log('Loading transport companies from database...');
-      const { data, error } = await supabase
-        .from('transport_companies')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        console.error('Error loading transport companies:', error);
-        throw error;
-      }
-
-      console.log(`Loaded ${data?.length || 0} transport companies:`, data);
+      const { data, error } = await supabase.from('transport_companies').select('*').order('name');
+      if (error) throw error;
       setCompanies(data || []);
-    } catch (error: any) {
-      console.error('Error loading companies - Full error:', error);
+    } catch (reason) {
+      // Une requête en échec donnait un tableau vide, indiscernable d'un référentiel vide.
+      setErreur(errorMessage(reason, 'Impossible de charger le référentiel des transporteurs.'));
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    company.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    company.contact_person?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    void charger();
+  }, [charger]);
 
-  const getCompanyTypeLabel = (type: string) => {
-    switch (type) {
-      case 'mine_to_airport': return 'Mine to Airport';
-      case 'airport_to_refinery': return 'Airport to Refinery';
-      case 'both': return 'Both';
-      default: return type;
-    }
-  };
+  const visibles = useMemo(() => {
+    const parRecherche = filterCompanies(companies, recherche);
+    return typeFiltre === 'all' ? parRecherche : parRecherche.filter((company) => company.company_type === typeFiltre);
+  }, [companies, recherche, typeFiltre]);
+
+  const actives = companies.filter((company) => company.is_active).length;
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Transport Companies</h1>
-            <p className="text-gray-600 mt-1">Manage freight companies for gold shipments</p>
-          </div>
-          <Button onClick={() => navigate('/admin/transport-companies/new')} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Company
-          </Button>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page">
+        <PageHeader
+          icon={Truck}
+          title="Transporteurs agréés"
+          subtitle="Sociétés habilitées à convoyer l’or entre les sites, l’aéroport et les raffineries."
+          breadcrumb={[{ label: 'Administration' }, { label: 'Transporteurs' }]}
+          actions={
+            <button
+              type="button"
+              className="sn-btn sn-btn--primary"
+              onClick={() => navigate('/admin/transport-companies/new')}
+            >
+              <Plus aria-hidden="true" /> Ajouter un transporteur
+            </button>
+          }
+        />
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search companies..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
+        )}
+
+        <StatGrid
+          ariaLabel="Référentiel des transporteurs"
+          items={[
+            { label: 'Transporteurs enregistrés', value: companies.length, icon: Truck, tone: 'blue' },
+            { label: 'Agréments actifs', value: actives, icon: Truck, tone: 'green' },
+            {
+              label: 'Chaîne complète',
+              value: companies.filter((company) => company.company_type === 'both').length,
+              hint: 'Mine jusqu’à la raffinerie',
+              icon: Truck,
+              tone: 'violet',
+            },
+            {
+              label: 'Segment aéroportuaire',
+              value: companies.filter((company) => company.company_type === 'airport_to_refinery').length,
+              icon: Truck,
+              tone: 'gold',
+            },
+          ]}
+        />
+
+        <section className="sn-card admin-page__filtres" aria-label="Filtres du référentiel">
+          <label className="sn-field admin-page__filtre-large">
+            <span className="sn-field__label">Rechercher</span>
+            <input
+              value={recherche}
+              onChange={(event) => setRecherche(event.target.value)}
+              placeholder="Nom, contact, adresse…"
+            />
+          </label>
+          <label className="sn-field">
+            <span className="sn-field__label">Segment desservi</span>
+            <select value={typeFiltre} onChange={(event) => setTypeFiltre(event.target.value as typeof typeFiltre)}>
+              <option value="all">Tous les segments</option>
+              {(Object.keys(TYPES) as TransportType[]).map((type) => (
+                <option key={type} value={type}>
+                  {TYPES[type]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="sn-btn"
+            onClick={() => {
+              setRecherche('');
+              setTypeFiltre('all');
+            }}
+          >
+            Réinitialiser
+          </button>
+        </section>
+
+        <Section
+          id="transporteurs"
+          icon={Truck}
+          tone="emerald"
+          title={`Transporteurs (${visibles.length})`}
+          description="Coordonnées et segment de la chaîne desservi par chaque société."
+        >
+          {loading ? (
+            <div className="admin-page__loading">
+              <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du référentiel…
             </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader className="w-8 h-8 animate-spin text-amber-500" />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCompanies.map((company) => (
-                      <tr key={company.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{company.name}</div>
-                          {company.address && (
-                            <div className="text-xs text-gray-500">{company.address}</div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{company.contact_person || 'N/A'}</div>
-                          <div className="text-xs text-gray-500">{company.email}</div>
-                          <div className="text-xs text-gray-500">{company.phone}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-900">{getCompanyTypeLabel(company.company_type)}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            company.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {company.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
+          ) : visibles.length === 0 ? (
+            <EmptyState
+              title="Aucun transporteur"
+              description={
+                companies.length === 0
+                  ? 'Le référentiel est vide : ajoutez la première société.'
+                  : 'Aucune société ne correspond à ces critères.'
+              }
+              action={
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={() => navigate('/admin/transport-companies/new')}
+                >
+                  Ajouter un transporteur
+                </button>
+              }
+            />
+          ) : (
+            <div className="admin-page__table-wrap">
+              <table className="admin-page__table">
+                <caption className="sr-only">Transporteurs agréés</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Société</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Segment</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">État</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibles.map((company) => (
+                    <tr key={company.id}>
+                      <td>
+                        <strong>{company.name}</strong>
+                      </td>
+                      <td>
+                        <strong>{company.contact_person || 'Contact non renseigné'}</strong>
+                        <small>{[company.email, company.phone].filter(Boolean).join(' · ') || '—'}</small>
+                      </td>
+                      <td>{typeTransport(company.company_type)}</td>
+                      <td>{company.address || '—'}</td>
+                      <td>
+                        <Badge tone={company.is_active ? 'success' : 'neutral'}>
+                          {company.is_active ? 'Actif' : 'Inactif'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div className="admin-page__actions">
                           <button
+                            type="button"
+                            className="sn-btn sn-btn--icon"
+                            aria-label={`Modifier ${company.name}`}
                             onClick={() => navigate(`/admin/transport-companies/edit/${company.id}`)}
-                            className="text-amber-600 hover:text-amber-900"
                           >
-                            <Edit className="h-4 w-4" />
+                            <PencilLine aria-hidden="true" />
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {filteredCompanies.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No transport companies found.</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,17 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Activity, LogIn, Lock, Building2 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { supabase } from '@/lib/supabase';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Tabs } from '@/components/ui/Tabs';
-import { Loading } from '@/components/ui/Loading';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Loader2,
+  Lock,
+  LogIn,
+  PencilLine,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Note, PageHeader } from '@/components/ui/sn';
 import UserStatsCard from '@/components/admin/UserStatsCard';
 import LoginSessionsTab from '@/components/admin/LoginSessionsTab';
 import ActivityHistoryTab from '@/components/admin/ActivityHistoryTab';
 import SiteAccessTab from '@/components/admin/SiteAccessTab';
 import UserPermissionsTab from '@/components/admin/UserPermissionsTab';
+import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
+import { roleLabel, roleTone } from '@/lib/roleLabels';
+import './admin.css';
 
 interface UserProfile {
   id: string;
@@ -33,173 +44,197 @@ interface UserProfile {
   failed_login_attempts: number;
 }
 
+type OngletId = 'apercu' | 'sessions' | 'activite' | 'permissions' | 'sites';
+
+const ONGLETS: Array<{ id: OngletId; label: string; icon: typeof UserRound }> = [
+  { id: 'apercu', label: 'Vue d’ensemble', icon: UserRound },
+  { id: 'sessions', label: 'Connexions', icon: LogIn },
+  { id: 'activite', label: 'Journal d’activité', icon: Activity },
+  { id: 'permissions', label: 'Permissions', icon: Lock },
+  { id: 'sites', label: 'Accès aux sites', icon: Building2 },
+];
+
 export default function UserDetailsPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [onglet, setOnglet] = useState<OngletId>('apercu');
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserDetails();
-    }
-  }, [userId]);
-
-  const fetchUserDetails = async () => {
+  const charger = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
+      const { data, error } = await supabase.from('user_profiles').select('*').eq('id', userId).maybeSingle();
       if (error) throw error;
       setUser(data);
-    } catch (error) {
-      console.error('Error fetching user details:', error);
+      // Un compte absent et une base injoignable donnaient le même écran muet.
+      if (!data) setErreur('Ce compte est introuvable ou a été supprimé.');
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger ce compte.'));
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    void charger();
+  }, [charger]);
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loading />
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <div className="admin-page__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du compte…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   if (!user) {
     return (
-      <MainLayout>
-        <div className="p-6">
-          <Card className="p-6 text-center">
-            <p className="text-slate-600">Utilisateur introuvable</p>
-            <Button onClick={() => navigate('/admin/users')} className="mt-4">
-              Retour à la Liste
-            </Button>
-          </Card>
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <PageHeader
+            icon={UserRound}
+            title="Compte introuvable"
+            subtitle="Ce compte a été supprimé ou la référence est erronée."
+            breadcrumb={[{ label: 'Administration' }, { label: 'Utilisateurs', to: '/admin/users' }, { label: 'Compte' }]}
+          />
+          {erreur && (
+            <Note tone="danger" icon={AlertTriangle}>
+              {erreur}
+            </Note>
+          )}
+          <EmptyState
+            title="Aucun compte à afficher"
+            description="Revenez à la liste pour retrouver le compte concerné."
+            action={
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/admin/users')}>
+                <ArrowLeft aria-hidden="true" /> Retour à la liste
+              </button>
+            }
+          />
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
-  const tabs = [
-    {
-      id: 'overview',
-      label: 'Vue d\'ensemble',
-      icon: User,
-      content: <UserStatsCard userId={user.id} userProfile={user} />
-    },
-    {
-      id: 'login-sessions',
-      label: 'Historique & Sessions',
-      icon: LogIn,
-      content: <LoginSessionsTab userId={user.id} />
-    },
-    {
-      id: 'activity-history',
-      label: 'Historique Actions',
-      icon: Activity,
-      content: <ActivityHistoryTab userId={user.id} />
-    },
-    {
-      id: 'permissions',
-      label: 'Permissions',
-      icon: Lock,
-      content: <UserPermissionsTab userId={user.id} userRole={user.role} />
-    },
-    {
-      id: 'site-access',
-      label: 'Accès aux Sites',
-      icon: Building2,
-      content: <SiteAccessTab userId={user.id} />
-    }
-  ];
+  const ongletActif = ONGLETS.find((item) => item.id === onglet) || ONGLETS[0];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/admin/users')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                {user.full_name}
-              </h1>
-              <p className="text-sm text-slate-600">{user.email}</p>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page user-detail">
+        <PageHeader
+          icon={UserRound}
+          title={user.full_name || 'Nom non renseigné'}
+          subtitle={`${user.email}${user.job_title ? ` · ${user.job_title}` : ''}`}
+          breadcrumb={[
+            { label: 'Administration' },
+            { label: 'Utilisateurs', to: '/admin/users' },
+            { label: user.full_name || user.email },
+          ]}
+          aside={
+            <div className="user-detail__badges">
+              <Badge tone={roleTone(user.role)} icon={ShieldCheck}>
+                {roleLabel(user.role)}
+              </Badge>
+              <Badge tone={user.is_active ? 'success' : 'danger'}>{user.is_active ? 'Actif' : 'Désactivé'}</Badge>
+              {user.account_locked && (
+                <Badge tone="danger" icon={Lock}>
+                  Compte verrouillé
+                </Badge>
+              )}
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                user.is_active
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              {user.is_active ? 'Actif' : 'Inactif'}
-            </span>
-            {user.account_locked && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                Compte Verrouillé
-              </span>
-            )}
-            {user.two_factor_enabled && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                2FA Activé
-              </span>
-            )}
-          </div>
+          }
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => navigate('/admin/users')}>
+                <ArrowLeft aria-hidden="true" /> Liste des comptes
+              </button>
+              {/* La page ne proposait aucune action : c'était un cul-de-sac. */}
+              <button
+                type="button"
+                className="sn-btn"
+                onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
+              >
+                <Lock aria-hidden="true" /> Permissions
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => navigate(`/users/edit?userId=${user.id}`)}
+              >
+                <PencilLine aria-hidden="true" /> Modifier le compte
+              </button>
+            </>
+          }
+        />
+
+        {user.failed_login_attempts > 0 && (
+          <Note tone="warning" icon={AlertTriangle}>
+            {user.failed_login_attempts} tentative(s) de connexion échouée(s) depuis la dernière
+            connexion réussie.
+          </Note>
+        )}
+
+        <section className="sn-card user-detail__facts" aria-label="Informations du compte">
+          <dl>
+            <div>
+              <dt>Rôle</dt>
+              <dd>{roleLabel(user.role)}</dd>
+            </div>
+            <div>
+              <dt>Fonction</dt>
+              <dd>{user.job_title || 'Non renseignée'}</dd>
+            </div>
+            <div>
+              <dt>Direction</dt>
+              <dd>{user.department || 'Non renseignée'}</dd>
+            </div>
+            <div>
+              <dt>Téléphone</dt>
+              <dd>{user.phone || 'Non renseigné'}</dd>
+            </div>
+            <div>
+              <dt>Langue</dt>
+              <dd>{(user.language_preference || 'fr').toUpperCase()}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <div className="user-detail__tabs" role="tablist" aria-label="Sections du compte">
+          {ONGLETS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={onglet === item.id}
+                className={onglet === item.id ? 'is-active' : ''}
+                onClick={() => setOnglet(item.id)}
+              >
+                <Icon aria-hidden="true" /> {item.label}
+              </button>
+            );
+          })}
         </div>
 
-        <Card className="p-4 bg-slate-50 border-slate-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-xs text-slate-600 mb-1">Rôle</p>
-              <p className="text-sm font-medium text-slate-900 capitalize">
-                {user.role}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-600 mb-1">Titre du Poste</p>
-              <p className="text-sm font-medium text-slate-900">
-                {user.job_title || 'N/A'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-600 mb-1">Département</p>
-              <p className="text-sm font-medium text-slate-900">
-                {user.department || 'N/A'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-600 mb-1">Langue</p>
-              <p className="text-sm font-medium text-slate-900 uppercase">
-                {user.language_preference}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Tabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
+        <div className="user-detail__panel" role="tabpanel" aria-label={ongletActif.label}>
+          {onglet === 'apercu' && <UserStatsCard userId={user.id} userProfile={user} />}
+          {onglet === 'sessions' && <LoginSessionsTab userId={user.id} />}
+          {onglet === 'activite' && <ActivityHistoryTab userId={user.id} />}
+          {onglet === 'permissions' && <UserPermissionsTab userId={user.id} userRole={user.role} />}
+          {onglet === 'sites' && <SiteAccessTab userId={user.id} />}
+        </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,106 +1,37 @@
-/**
- * User Management - Version Moderne et Simplifiée
- * Interface ergonomique pour gérer les utilisateurs et permissions
- */
-
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, X, Shield, CheckCircle2,
-  Mail, Phone, Key, Eye, Edit, Trash2, Check
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Contact,
+  KeyRound,
+  Loader2,
+  Save,
+  ShieldCheck,
+  UserRound,
+  X,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { ToggleImproved } from '@/components/ui/ToggleImproved';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
 import { useAuth } from '@/contexts/AuthContext';
 import { createUser } from '@/services/userManagementService';
-import { modulesService, type Module } from '@/services/modulesService';
+import {
+  EMPTY_PERMISSION,
+  userPermissionsService,
+  type ModulePermission,
+  type PermissionMap,
+  type PermissionModule,
+} from '@/services/userPermissionsService';
+import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
 import type { UserRole } from '@/types/auth';
+import './admin.css';
 
-interface ModulePermission {
-  module_id: string;
-  module_name: string;
-  display_name: string;
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_approve: boolean;
-}
-
-/** Charge les permissions persistées d'un utilisateur (table user_permissions). */
-async function loadUserPermissions(userId: string): Promise<Record<string, ModulePermission>> {
-  const { data, error } = await supabase
-    .from('user_permissions')
-    .select('module_id, can_view, can_create, can_edit, can_delete, can_approve')
-    .eq('user_id', userId);
-
-  if (error) {
-    console.error('[permissions] load failed:', error);
-    return {};
-  }
-
-  const result: Record<string, ModulePermission> = {};
-  (data || []).forEach((row: any) => {
-    result[row.module_id] = {
-      module_id: row.module_id,
-      module_name: '',
-      display_name: '',
-      can_view: !!row.can_view,
-      can_create: !!row.can_create,
-      can_edit: !!row.can_edit,
-      can_delete: !!row.can_delete,
-      can_approve: !!row.can_approve,
-    };
-  });
-  return result;
-}
-
-/** Persiste les permissions d'un utilisateur (remplace l'existant). */
-async function saveUserPermissions(
-  userId: string,
-  permissions: Record<string, ModulePermission>,
-  grantedBy?: string
-): Promise<{ success: boolean; error?: string }> {
-  const rows = Object.values(permissions)
-    .filter((p) => p.can_view || p.can_create || p.can_edit || p.can_delete || p.can_approve)
-    .map((p) => ({
-      user_id: userId,
-      module_id: p.module_id,
-      can_view: p.can_view,
-      can_create: p.can_create,
-      can_edit: p.can_edit,
-      can_delete: p.can_delete,
-      can_approve: p.can_approve,
-      // Colonnes historiques maintenues cohérentes.
-      can_read: p.can_view,
-      can_write: p.can_edit,
-      granted_by: grantedBy ?? null,
-    }));
-
-  // Remplace proprement l'existant (robuste sans contrainte d'unicité).
-  const { error: delError } = await supabase.from('user_permissions').delete().eq('user_id', userId);
-  if (delError) {
-    console.error('[permissions] clear failed:', delError);
-    return { success: false, error: delError.message };
-  }
-
-  if (rows.length > 0) {
-    const { error: insError } = await supabase.from('user_permissions').insert(rows);
-    if (insError) {
-      console.error('[permissions] save failed:', insError);
-      return { success: false, error: insError.message };
-    }
-  }
-
-  return { success: true };
-}
-
-interface UserFormData {
+export interface UserFormData {
   fullName: string;
   email: string;
   phone: string;
@@ -110,799 +41,603 @@ interface UserFormData {
   isActive: boolean;
 }
 
-const ROLES: Array<{ value: UserRole; label: string; description: string }> = [
-  { value: 'management', label: 'Management', description: 'Full access to all modules' },
-  { value: 'factory', label: 'Factory', description: 'Create and manage batches' },
-  { value: 'airport', label: 'Airport', description: 'Receive and verify shipments' },
-  { value: 'refinery', label: 'Refinery', description: 'Process refining operations' },
-  { value: 'customer', label: 'Customer', description: 'View sales and documents' },
+export const EMPTY_USER_FORM: UserFormData = {
+  fullName: '',
+  email: '',
+  phone: '',
+  role: '',
+  miningCompanyIds: [],
+  password: '',
+  isActive: true,
+};
+
+/** Vocation de chaque rôle, en français et sans référence à un module inexistant. */
+export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
+  owner: 'Accès complet, y compris l’administration de la plateforme',
+  admin: 'Administration des comptes, référentiels et paramètres',
+  management: 'Pilotage national et validation des opérations',
+  factory: 'Déclaration de la production et préparation des expéditions',
+  airport: 'Réception et contrôle des expéditions au départ',
+  refinery: 'Traitement des lots reçus et suivi de l’affinage',
+  customer: 'Consultation de ses commandes et de ses documents',
+};
+
+type DroitClef = 'can_view' | 'can_create' | 'can_edit' | 'can_delete' | 'can_approve';
+
+export const DROITS: Array<{ clef: DroitClef; label: string }> = [
+  { clef: 'can_view', label: 'Consulter' },
+  { clef: 'can_create', label: 'Créer' },
+  { clef: 'can_edit', label: 'Modifier' },
+  { clef: 'can_delete', label: 'Supprimer' },
+  { clef: 'can_approve', label: 'Approuver' },
 ];
+
+/** Première obligation non satisfaite de l'étape « identité », ou `null`. */
+export function validateIdentite(form: UserFormData, isEditMode: boolean): string | null {
+  if (!form.fullName.trim()) return 'Le nom complet est obligatoire.';
+  if (!form.email.trim()) return 'L’adresse e-mail est obligatoire.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'L’adresse e-mail est invalide.';
+  if (!form.role) return 'Sélectionnez un rôle.';
+  if (form.miningCompanyIds.length === 0) return 'Rattachez le compte à au moins une compagnie.';
+  if (!isEditMode && form.password.length < 12) return 'Le mot de passe doit compter au moins 12 caractères.';
+  return null;
+}
+
+/** Applique un gabarit d'habilitations à tous les modules. */
+export function appliquerGabarit(
+  permissions: Record<string, ModulePermission>,
+  gabarit: 'aucun' | 'consultation' | 'complet'
+): Record<string, ModulePermission> {
+  const resultat: Record<string, ModulePermission> = {};
+  Object.entries(permissions).forEach(([moduleId, permission]) => {
+    resultat[moduleId] = {
+      ...permission,
+      can_view: gabarit !== 'aucun',
+      can_create: gabarit === 'complet',
+      can_edit: gabarit === 'complet',
+      can_delete: gabarit === 'complet',
+      can_approve: gabarit === 'complet',
+    };
+  });
+  return resultat;
+}
+
+/** Mot de passe conforme : majuscule, minuscule, chiffre et caractère spécial. */
+export function genererMotDePasse(longueur = 14): string {
+  const majuscules = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const minuscules = 'abcdefghijkmnopqrstuvwxyz';
+  const chiffres = '23456789';
+  const speciaux = '!@#$%*?';
+  const tout = majuscules + minuscules + chiffres + speciaux;
+
+  const tirer = (source: string) => source[Math.floor(Math.random() * source.length)];
+  const base = [tirer(majuscules), tirer(minuscules), tirer(chiffres), tirer(speciaux)];
+  while (base.length < longueur) base.push(tirer(tout));
+
+  return base.sort(() => Math.random() - 0.5).join('');
+}
+
+interface MiningCompany {
+  id: string;
+  name: string;
+  abbreviation: string | null;
+}
 
 export function UserManagementModern() {
   const { addToast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: utilisateurCourant } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const userId = searchParams.get('userId');
+  const isEditMode = Boolean(userId);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [etape, setEtape] = useState<1 | 2>(1);
+  const [erreur, setErreur] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<UserFormData>({
-    fullName: '',
-    email: '',
-    phone: '',
-    role: '',
-    miningCompanyIds: [],
-    password: '',
-    isActive: true,
-  });
-
-  const [modules, setModules] = useState<Module[]>([]);
+  const [form, setForm] = useState<UserFormData>(EMPTY_USER_FORM);
+  const [modules, setModules] = useState<PermissionModule[]>([]);
+  const [permissionsEnBase, setPermissionsEnBase] = useState<PermissionMap>({});
   const [permissions, setPermissions] = useState<Record<string, ModulePermission>>({});
-  const [miningCompanies, setMiningCompanies] = useState<any[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [compagnies, setCompagnies] = useState<MiningCompany[]>([]);
 
-  useEffect(() => {
-    initialize();
-  }, [searchParams]);
-
-  const initialize = async () => {
+  const charger = useCallback(async () => {
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-
-      // Charger les mining companies
-      const { data: companies } = await supabase
+      const { data: societes, error: erreurSocietes } = await supabase
         .from('mining_companies')
         .select('id, name, abbreviation')
         .order('name');
+      if (erreurSocietes) throw erreurSocietes;
+      setCompagnies(societes || []);
 
-      setMiningCompanies(companies || []);
+      // `user_permissions.module_id` référence `modules`, et non `snp_modules` comme
+      // cet écran le faisait : les droits accordés portaient alors des identifiants
+      // qu'aucun lecteur ne pouvait résoudre.
+      const listeModules = await userPermissionsService.listModules();
+      if (listeModules.error) setErreur(listeModules.error);
+      setModules(listeModules.modules);
 
-      // Charger les modules depuis la base de données
-      const loadedModules = await modulesService.getAll();
-      setModules(loadedModules);
-
-      // Initialiser les permissions
-      const initialPerms: Record<string, ModulePermission> = {};
-      loadedModules.forEach(module => {
-        initialPerms[module.id] = {
-          module_id: module.id,
-          module_name: module.code,
-          display_name: module.nom,
-          can_view: false,
-          can_create: false,
-          can_edit: false,
-          can_delete: false,
-          can_approve: false,
-        };
+      const initiales: Record<string, ModulePermission> = {};
+      listeModules.modules.forEach((module) => {
+        initiales[module.id] = EMPTY_PERMISSION(module.id);
       });
-      setPermissions(initialPerms);
 
-      // Vérifier si mode édition
-      const userId = searchParams.get('userId');
       if (userId) {
-        setIsEditMode(true);
-        setSelectedUserId(userId);
-        await loadUserData(userId, initialPerms);
+        const { data: profil, error: erreurProfil } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        if (erreurProfil) throw erreurProfil;
+
+        const { data: rattachements } = await supabase
+          .from('user_site_assignments')
+          .select('site_id')
+          .eq('user_id', userId);
+
+        setForm({
+          fullName: profil?.full_name || '',
+          email: profil?.email || '',
+          phone: profil?.phone || '',
+          role: (profil?.role as UserRole) || '',
+          miningCompanyIds: (rattachements || []).map((ligne) => ligne.site_id),
+          password: '',
+          isActive: profil?.is_active !== false,
+        });
+
+        const { permissions: persistees, error: erreurPermissions } = await userPermissionsService.load(userId);
+        if (erreurPermissions) setErreur(erreurPermissions);
+        setPermissionsEnBase(persistees);
+        setPermissions({ ...initiales, ...persistees });
+      } else {
+        setPermissions(initiales);
       }
-    } catch (error) {
-      console.error('Failed to initialize:', error);
-      addToast('Failed to load data', 'error');
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger les données du compte.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  const loadUserData = async (userId: string, initialPerms: Record<string, ModulePermission>) => {
-    try {
-      // Charger profil utilisateur
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+  useEffect(() => {
+    void charger();
+  }, [charger]);
 
-      if (profileError) throw profileError;
+  const setValue = <K extends keyof UserFormData>(clef: K, valeur: UserFormData[K]) =>
+    setForm((current) => ({ ...current, [clef]: valeur }));
 
-      // Charger les assignments de mining companies
-      const { data: assignments } = await supabase
-        .from('user_site_assignments')
-        .select('site_id')
-        .eq('user_id', userId);
+  const erreurIdentite = validateIdentite(form, isEditMode);
+  const modulesOuverts = useMemo(
+    () => Object.values(permissions).filter((permission) => permission.can_view).length,
+    [permissions]
+  );
 
-      setFormData({
-        fullName: profile.full_name || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
-        role: profile.role || '',
-        miningCompanyIds: assignments?.map(a => a.site_id) || [],
-        password: '',
-        isActive: profile.is_active !== false,
-      });
-
-      // Charger les permissions
-      const userPerms = await loadUserPermissions(userId);
-
-      // Fusionner avec les permissions initiales
-      const mergedPerms = { ...initialPerms };
-      Object.keys(userPerms).forEach(moduleId => {
-        if (mergedPerms[moduleId]) {
-          mergedPerms[moduleId] = userPerms[moduleId];
-        }
-      });
-
-      setPermissions(mergedPerms);
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      addToast('Failed to load user data', 'error');
-    }
-  };
-
-  const generateSecurePassword = (): string => {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const special = '!@#$%^&*';
-    const allChars = uppercase + lowercase + numbers + special;
-
-    let password = '';
-    password += uppercase[Math.floor(Math.random() * uppercase.length)];
-    password += lowercase[Math.floor(Math.random() * lowercase.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += special[Math.floor(Math.random() * special.length)];
-
-    for (let i = 4; i < 12; i++) {
-      password += allChars[Math.floor(Math.random() * allChars.length)];
-    }
-
-    return password.split('').sort(() => Math.random() - 0.5).join('');
-  };
-
-  const handleGeneratePassword = () => {
-    const newPassword = generateSecurePassword();
-    setFormData({ ...formData, password: newPassword });
-    addToast('Password generated', 'success');
-  };
-
-  const validateStep1 = (): boolean => {
-    if (!formData.fullName.trim()) {
-      addToast('Full name is required', 'error');
-      return false;
-    }
-    if (!formData.email.trim() || !formData.email.includes('@')) {
-      addToast('Valid email is required', 'error');
-      return false;
-    }
-    if (!formData.role) {
-      addToast('Role is required', 'error');
-      return false;
-    }
-    if (formData.miningCompanyIds.length === 0) {
-      addToast('At least one mining company is required', 'error');
-      return false;
-    }
-    if (!isEditMode && !formData.password) {
-      addToast('Password is required', 'error');
-      return false;
-    }
-    return true;
-  };
-
-  const handleNextStep = () => {
-    if (validateStep1()) {
-      setStep(2);
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-
-      if (!currentUser?.id) {
-        addToast('Not authenticated', 'error');
-        return;
+  const basculer = (moduleId: string, droit: DroitClef) =>
+    setPermissions((current) => {
+      const base = current[moduleId] || EMPTY_PERMISSION(moduleId);
+      const valeur = !base[droit];
+      const suivant: ModulePermission = { ...base, [droit]: valeur };
+      if (droit === 'can_view' && !valeur) {
+        suivant.can_create = false;
+        suivant.can_edit = false;
+        suivant.can_delete = false;
+        suivant.can_approve = false;
       }
+      if (droit !== 'can_view' && valeur) suivant.can_view = true;
+      return { ...current, [moduleId]: suivant };
+    });
 
-      let userId = selectedUserId;
+  const enregistrer = async () => {
+    if (saving) return;
+    const message = validateIdentite(form, isEditMode);
+    if (message) {
+      setErreur(message);
+      setEtape(1);
+      return;
+    }
+    if (!utilisateurCourant?.id) {
+      setErreur('Session expirée : reconnectez-vous avant d’enregistrer.');
+      return;
+    }
 
-      // Créer ou mettre à jour l'utilisateur
+    setSaving(true);
+    setErreur(null);
+    try {
+      let identifiant = userId;
+
       if (!isEditMode) {
-        // Mode création — via edge function sécurisée (audit V6), plus de signUp client.
-        const result = await createUser({
-          email: formData.email,
-          password: formData.password,
-          full_name: formData.fullName,
-          phone: formData.phone,
-          role: formData.role as UserRole,
-          is_active: formData.isActive,
+        const resultat = await createUser({
+          email: form.email,
+          password: form.password,
+          full_name: form.fullName,
+          phone: form.phone,
+          role: form.role as UserRole,
+          is_active: form.isActive,
         });
-
-        if (!result.success || !result.user) {
-          addToast(result.error || 'Failed to create user', 'error');
-          return;
+        if (!resultat.success || !resultat.user) {
+          throw new Error(resultat.error || 'La création du compte a échoué.');
         }
-
-        userId = result.user.id;
+        identifiant = resultat.user.id;
       } else {
-        // Mode édition
-        const { error: updateError } = await supabase
+        const { error } = await supabase
           .from('user_profiles')
           .update({
-            full_name: formData.fullName,
-            phone: formData.phone,
-            role: formData.role,
-            is_active: formData.isActive,
+            full_name: form.fullName,
+            phone: form.phone,
+            role: form.role,
+            is_active: form.isActive,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', selectedUserId);
-
-        if (updateError) throw updateError;
+          .eq('id', identifiant);
+        if (error) throw error;
       }
 
-      // Sauvegarder les mining company assignments
-      if (userId) {
-        await supabase
+      if (identifiant) {
+        // Les rattachements étaient supprimés puis réinsérés sans que l'issue de
+        // l'une ou l'autre opération ne soit jamais vérifiée.
+        const { error: erreurSuppression } = await supabase
           .from('user_site_assignments')
           .delete()
-          .eq('user_id', userId);
+          .eq('user_id', identifiant);
+        if (erreurSuppression) throw erreurSuppression;
 
-        const assignments = formData.miningCompanyIds.map(siteId => ({
-          user_id: userId,
-          site_id: siteId,
-        }));
-
-        await supabase
-          .from('user_site_assignments')
-          .insert(assignments);
-
-        // Sauvegarder les permissions
-        const saveResult = await saveUserPermissions(userId, permissions, currentUser.id);
-
-        if (!saveResult.success) {
-          addToast(saveResult.error || 'Failed to save permissions', 'error');
-          return;
+        if (form.miningCompanyIds.length > 0) {
+          const { error: erreurInsertion } = await supabase.from('user_site_assignments').insert(
+            form.miningCompanyIds.map((siteId) => ({ user_id: identifiant, site_id: siteId }))
+          );
+          if (erreurInsertion) throw erreurInsertion;
         }
+
+        const resultat = await userPermissionsService.save(
+          identifiant,
+          permissionsEnBase,
+          permissions,
+          utilisateurCourant.id
+        );
+        if (!resultat.success) throw new Error(resultat.error);
       }
 
-      addToast(
-        isEditMode ? 'User updated successfully' : 'User created successfully',
-        'success'
-      );
-
+      addToast(isEditMode ? 'Compte mis à jour' : 'Compte créé', 'success');
       navigate('/users');
-    } catch (error: any) {
-      console.error('Failed to save user:', error);
-      addToast(error.message || 'Failed to save user', 'error');
+    } catch (reason) {
+      const message = errorMessage(reason, 'Enregistrement impossible.');
+      setErreur(message);
+      addToast(message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const togglePermission = (moduleId: string, permission: keyof ModulePermission) => {
-    setPermissions(prev => ({
-      ...prev,
-      [moduleId]: {
-        ...prev[moduleId],
-        [permission]: !(prev[moduleId][permission] as boolean),
-      },
-    }));
-  };
-
-  const setQuickPermissions = (preset: 'none' | 'view_only' | 'full') => {
-    const updatedPerms = { ...permissions };
-
-    Object.keys(updatedPerms).forEach(moduleId => {
-      switch (preset) {
-        case 'none':
-          updatedPerms[moduleId] = {
-            ...updatedPerms[moduleId],
-            can_view: false,
-            can_create: false,
-            can_edit: false,
-            can_delete: false,
-            can_approve: false,
-          };
-          break;
-        case 'view_only':
-          updatedPerms[moduleId] = {
-            ...updatedPerms[moduleId],
-            can_view: true,
-            can_create: false,
-            can_edit: false,
-            can_delete: false,
-            can_approve: false,
-          };
-          break;
-        case 'full':
-          updatedPerms[moduleId] = {
-            ...updatedPerms[moduleId],
-            can_view: true,
-            can_create: true,
-            can_edit: true,
-            can_delete: true,
-            can_approve: true,
-          };
-          break;
-      }
-    });
-
-    setPermissions(updatedPerms);
-    addToast(`Permissions set to ${preset.replace('_', ' ')}`, 'success');
-  };
-
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading...</div>
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <div className="admin-page__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du compte…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/users')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {isEditMode ? 'Edit User' : 'Add New User'}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {step === 1
-                  ? 'Basic information and authentication'
-                  : 'Configure module permissions'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/users')}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            {step === 2 && (
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Saving...' : isEditMode ? 'Update User' : 'Create User'}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-3 ${step === 1 ? 'text-blue-600' : 'text-green-600'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-              step === 1 ? 'bg-blue-100' : 'bg-green-100'
-            }`}>
-              {step === 1 ? '1' : <CheckCircle2 className="h-6 w-6" />}
-            </div>
-            <span className="font-medium">User Information</span>
-          </div>
-          <div className="flex-1 h-1 bg-gray-200 rounded">
-            <div className={`h-full rounded transition-all ${step === 2 ? 'bg-blue-600 w-full' : 'w-0'}`} />
-          </div>
-          <div className={`flex items-center gap-3 ${step === 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-              step === 2 ? 'bg-blue-100' : 'bg-gray-100'
-            }`}>
-              2
-            </div>
-            <span className="font-medium">Permissions</span>
-          </div>
-        </div>
-
-        {/* Step 1: User Information */}
-        {step === 1 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-blue-600" />
-                    Basic Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name *
-                      </label>
-                      <Input
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        placeholder="John Smith"
-                        icon={<Shield className="h-4 w-4" />}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address *
-                      </label>
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="john.smith@company.com"
-                        disabled={isEditMode}
-                        icon={<Mail className="h-4 w-4" />}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
-                      </label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+224 234 567 8900"
-                        icon={<Phone className="h-4 w-4" />}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        User Role *
-                      </label>
-                      <Select
-                        value={formData.role}
-                        onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                      >
-                        <option value="">Select a role</option>
-                        {ROLES.map(role => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mining Companies * (Multi-select)
-                    </label>
-                    <Select
-                      multiple
-                      value={formData.miningCompanyIds}
-                      onChange={(e) => {
-                        const options = Array.from(e.target.selectedOptions, option => option.value);
-                        setFormData({ ...formData, miningCompanyIds: options });
-                      }}
-                      className="h-32"
-                    >
-                      {miningCompanies.map(company => (
-                        <option key={company.id} value={company.id}>
-                          {company.name} ({company.abbreviation})
-                        </option>
-                      ))}
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Hold Ctrl (Cmd on Mac) to select multiple companies
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {!isEditMode && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Key className="h-5 w-5 text-amber-600" />
-                      Initial Password
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Temporary Password *
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="text"
-                          value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          placeholder="Enter or generate password"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={handleGeneratePassword}
-                          type="button"
-                        >
-                          <Key className="h-4 w-4 mr-2" />
-                          Generate
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        User will be prompted to change on first login
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="flex justify-end">
-                <Button
-                  variant="primary"
-                  onClick={handleNextStep}
-                  size="lg"
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page compte">
+        <PageHeader
+          icon={UserRound}
+          title={isEditMode ? 'Modifier le compte' : 'Créer un compte'}
+          subtitle={
+            etape === 1
+              ? 'Identité, rôle et rattachement aux compagnies minières.'
+              : 'Habilitations accordées sur les modules de la plateforme.'
+          }
+          breadcrumb={[
+            { label: 'Administration' },
+            { label: 'Utilisateurs', to: '/users' },
+            { label: isEditMode ? 'Modification' : 'Nouveau compte' },
+          ]}
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => navigate('/users')} disabled={saving}>
+                <X aria-hidden="true" /> Annuler
+              </button>
+              {etape === 1 ? (
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={() => setEtape(2)}
+                  disabled={Boolean(erreurIdentite)}
                 >
-                  Next: Configure Permissions
-                  <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
-                </Button>
-              </div>
-            </div>
+                  Habilitations <ArrowRight aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={() => void enregistrer()}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                  {isEditMode ? 'Enregistrer les modifications' : 'Créer le compte'}
+                </button>
+              )}
+            </>
+          }
+        />
 
-            {/* Right Column: Guide */}
-            <div className="space-y-6">
-              <Card className="bg-blue-50 border-blue-200">
-                <CardHeader>
-                  <CardTitle className="text-blue-900">Role Descriptions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {ROLES.map(role => (
-                      <div key={role.value} className="pb-3 border-b border-blue-200 last:border-0">
-                        <h4 className="font-semibold text-blue-900">{role.label}</h4>
-                        <p className="text-sm text-blue-700 mt-1">{role.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-amber-50 border-amber-200">
-                <CardHeader>
-                  <CardTitle className="text-amber-900">Important Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-amber-800">
-                    <li>• Email cannot be changed after creation</li>
-                    <li>• User will receive activation email automatically</li>
-                    <li>• Password must be changed on first login</li>
-                    <li>• Mining companies control data visibility</li>
-                    <li>• Permissions can be adjusted anytime</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
         )}
 
-        {/* Step 2: Permissions */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-green-600" />
-                    Module Permissions
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuickPermissions('none')}
+        <div className="compte__etapes" role="tablist" aria-label="Étapes de la saisie">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={etape === 1}
+            className={etape === 1 ? 'is-active' : ''}
+            onClick={() => setEtape(1)}
+          >
+            <span>1</span> Identité et rôle
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={etape === 2}
+            className={etape === 2 ? 'is-active' : ''}
+            onClick={() => !erreurIdentite && setEtape(2)}
+            disabled={Boolean(erreurIdentite)}
+          >
+            <span>2</span> Habilitations
+          </button>
+        </div>
+
+        {etape === 1 ? (
+          <>
+            <Section
+              id="identite"
+              icon={Contact}
+              tone="emerald"
+              title="Identité"
+              description="Coordonnées du titulaire du compte."
+            >
+              <div className="admin-form__row is-deux">
+                <Field label="Nom complet" required htmlFor="nom-complet">
+                  <input
+                    id="nom-complet"
+                    value={form.fullName}
+                    onChange={(event) => setValue('fullName', event.target.value)}
+                  />
+                </Field>
+                <Field label="Adresse e-mail" required htmlFor="courriel">
+                  <input
+                    id="courriel"
+                    type="email"
+                    value={form.email}
+                    disabled={isEditMode}
+                    onChange={(event) => setValue('email', event.target.value)}
+                    placeholder="prenom.nom@sonasp.bf"
+                  />
+                </Field>
+              </div>
+
+              <div className="admin-form__row is-deux">
+                <Field label="Téléphone" htmlFor="telephone">
+                  <input
+                    id="telephone"
+                    value={form.phone}
+                    onChange={(event) => setValue('phone', event.target.value)}
+                    placeholder="+226 …"
+                  />
+                </Field>
+                <div className="sn-field">
+                  <span className="sn-field__label">État du compte</span>
+                  <Segmented
+                    name="etat-compte"
+                    value={form.isActive ? 'actif' : 'inactif'}
+                    options={[
+                      { value: 'actif', label: 'Actif' },
+                      { value: 'inactif', label: 'Désactivé' },
+                    ]}
+                    onChange={(etat) => setValue('isActive', etat === 'actif')}
+                    ariaLabel="État du compte"
+                  />
+                </div>
+              </div>
+            </Section>
+
+            <Section
+              id="role"
+              icon={ShieldCheck}
+              tone="violet"
+              title="Rôle"
+              description="Le rôle détermine les écrans accessibles ; les habilitations affinent les droits."
+            >
+              {/* Les rôles propriétaire et administrateur étaient absents de la liste :
+                  impossible de créer un administrateur depuis cet écran. */}
+              <ul className="compte__roles">
+                {ALL_ROLES.map((role) => (
+                  <li key={role}>
+                    <label className={form.role === role ? 'is-checked' : ''}>
+                      <input
+                        type="radio"
+                        name="role"
+                        value={role}
+                        checked={form.role === role}
+                        onChange={() => setValue('role', role)}
+                      />
+                      <span>
+                        <strong>{roleLabel(role)}</strong>
+                        <small>{DESCRIPTIONS_ROLE[role]}</small>
+                      </span>
+                      <Badge tone={roleTone(role)}>{roleLabel(role)}</Badge>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+
+            <Section
+              id="rattachement"
+              icon={Building2}
+              tone="blue"
+              title="Rattachement"
+              description="Compagnies minières dont le titulaire suit les opérations."
+            >
+              {compagnies.length === 0 ? (
+                <EmptyState
+                  title="Aucune compagnie minière"
+                  description="Aucune compagnie n’est enregistrée : le rattachement est impossible."
+                />
+              ) : (
+                <ul className="compte__compagnies">
+                  {compagnies.map((compagnie) => {
+                    const retenue = form.miningCompanyIds.includes(compagnie.id);
+                    return (
+                      <li key={compagnie.id}>
+                        <label className={retenue ? 'is-checked' : ''}>
+                          <input
+                            type="checkbox"
+                            checked={retenue}
+                            onChange={() =>
+                              setValue(
+                                'miningCompanyIds',
+                                retenue
+                                  ? form.miningCompanyIds.filter((id) => id !== compagnie.id)
+                                  : [...form.miningCompanyIds, compagnie.id]
+                              )
+                            }
+                          />
+                          <span>
+                            <strong>{compagnie.name}</strong>
+                            {compagnie.abbreviation && <small>{compagnie.abbreviation}</small>}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Section>
+
+            {!isEditMode && (
+              <Section
+                id="acces"
+                icon={KeyRound}
+                tone="amber"
+                title="Mot de passe initial"
+                description="À communiquer au titulaire, qui devra le changer à la première connexion."
+              >
+                <div className="admin-form__row is-deux">
+                  <Field label="Mot de passe" required htmlFor="mot-de-passe" hint="12 caractères minimum">
+                    <input
+                      id="mot-de-passe"
+                      type="text"
+                      value={form.password}
+                      onChange={(event) => setValue('password', event.target.value)}
+                    />
+                  </Field>
+                  <div className="sn-field">
+                    <span className="sn-field__label">&nbsp;</span>
+                    <button
+                      type="button"
+                      className="sn-btn"
+                      onClick={() => setValue('password', genererMotDePasse())}
                     >
-                      Clear All
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuickPermissions('view_only')}
-                    >
-                      View Only
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuickPermissions('full')}
-                    >
-                      Full Access
-                    </Button>
+                      <KeyRound aria-hidden="true" /> Générer un mot de passe
+                    </button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {modules.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No modules found. Please create modules in the system first.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {(() => {
-                      // Grouper les modules par catégorie
-                      const modulesByCategory = modules.reduce((acc, module) => {
-                        const category = module.parent_nom || 'other';
-                        if (!acc[category]) {
-                          acc[category] = [];
-                        }
-                        acc[category].push(module);
-                        return acc;
-                      }, {} as Record<string, typeof modules>);
+              </Section>
+            )}
 
-                      // Ordre des catégories
-                      const categoryOrder = ['overview', 'batches', 'sales', 'operations', 'analytics', 'system', 'other'];
-                      const categoryLabels: Record<string, string> = {
-                        overview: 'Overview',
-                        batches: 'Batches Management',
-                        sales: 'Sales Management',
-                        operations: 'Operations',
-                        analytics: 'Analytics & Reports',
-                        system: 'System Administration',
-                        other: 'Other Modules',
-                      };
-
-                      const sortedCategories = Object.keys(modulesByCategory).sort((a, b) => {
-                        const indexA = categoryOrder.indexOf(a);
-                        const indexB = categoryOrder.indexOf(b);
-                        if (indexA === -1) return 1;
-                        if (indexB === -1) return -1;
-                        return indexA - indexB;
-                      });
-
-                      return sortedCategories.map((category) => (
-                        <div key={category} className="space-y-4">
-                          {/* Category Header */}
-                          <div className="flex items-center gap-3">
-                            <div className="h-1 flex-shrink-0 w-8 bg-blue-600 rounded"></div>
-                            <h3 className="text-lg font-bold text-gray-900">
-                              {categoryLabels[category] || category}
-                            </h3>
-                            <div className="h-px flex-1 bg-gray-200"></div>
-                          </div>
-
-                          {/* Modules Table for this category */}
-                          <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <table className="w-full">
-                              <thead className="bg-slate-700">
-                                <tr>
-                                  <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase">
-                                    Module
-                                  </th>
-                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
-                                    <Eye className="h-4 w-4 mx-auto mb-1" />
-                                    View
-                                  </th>
-                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
-                                    <Edit className="h-4 w-4 mx-auto mb-1" />
-                                    Create
-                                  </th>
-                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
-                                    <Edit className="h-4 w-4 mx-auto mb-1" />
-                                    Edit
-                                  </th>
-                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
-                                    <Trash2 className="h-4 w-4 mx-auto mb-1" />
-                                    Delete
-                                  </th>
-                                  <th className="px-6 py-4 text-center text-xs font-medium text-white uppercase w-28">
-                                    <Check className="h-4 w-4 mx-auto mb-1" />
-                                    Approve
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-white divide-y divide-gray-200">
-                                {modulesByCategory[category].map((module, index) => {
-                                  const perm = permissions[module.id];
-                                  return (
-                                    <tr
-                                      key={module.id}
-                                      className={`hover:bg-blue-50 transition-colors ${
-                                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                      }`}
-                                    >
-                                      <td className="px-6 py-4">
-                                        <div>
-                                          <p className="font-semibold text-gray-900">
-                                            {module.nom}
-                                          </p>
-                                          <p className="text-xs text-gray-500 mt-1">{module.description}</p>
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                          <ToggleImproved
-                                            checked={perm?.can_view || false}
-                                            onChange={() => togglePermission(module.id, 'can_view')}
-                                            size="md"
-                                          />
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                          <ToggleImproved
-                                            checked={perm?.can_create || false}
-                                            onChange={() => togglePermission(module.id, 'can_create')}
-                                            size="md"
-                                          />
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                          <ToggleImproved
-                                            checked={perm?.can_edit || false}
-                                            onChange={() => togglePermission(module.id, 'can_edit')}
-                                            size="md"
-                                          />
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                          <ToggleImproved
-                                            checked={perm?.can_delete || false}
-                                            onChange={() => togglePermission(module.id, 'can_delete')}
-                                            size="md"
-                                          />
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                          <ToggleImproved
-                                            checked={perm?.can_approve || false}
-                                            onChange={() => togglePermission(module.id, 'can_approve')}
-                                            size="md"
-                                          />
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setStep(1)}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to User Information
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={saving}
-                size="lg"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Saving...' : isEditMode ? 'Update User' : 'Create User'}
-              </Button>
+            {erreurIdentite && (
+              <Note tone="warning" icon={AlertTriangle}>
+                {erreurIdentite}
+              </Note>
+            )}
+          </>
+        ) : (
+          <Section
+            id="habilitations"
+            icon={ShieldCheck}
+            tone="emerald"
+            title={`Habilitations (${modulesOuverts} module(s) ouverts)`}
+            description="Retirer la consultation retire les droits qui en dépendent."
+          >
+            <div className="compte__gabarits">
+              <span className="sn-field__label">Gabarits</span>
+              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'aucun'))}>
+                Aucun droit
+              </button>
+              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'consultation'))}>
+                Consultation seule
+              </button>
+              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'complet'))}>
+                Tous les droits
+              </button>
             </div>
-          </div>
+
+            {modules.length === 0 ? (
+              <EmptyState
+                title="Aucun module habilitable"
+                description="Aucun module actif n’est déclaré : les habilitations ne peuvent pas être attribuées."
+              />
+            ) : (
+              <div className="admin-page__table-wrap">
+                <table className="admin-page__table permissions__table">
+                  <caption className="sr-only">Habilitations par module</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Module</th>
+                      {DROITS.map((droit) => (
+                        <th key={droit.clef} scope="col" className="is-centre">
+                          {droit.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modules.map((module) => {
+                      const permission = permissions[module.id] || EMPTY_PERMISSION(module.id);
+                      return (
+                        <tr key={module.id}>
+                          <td>
+                            <strong>{module.display_name || module.name}</strong>
+                            {module.description && <small>{module.description}</small>}
+                          </td>
+                          {DROITS.map((droit) => (
+                            <td key={droit.clef} className="is-centre">
+                              <input
+                                type="checkbox"
+                                checked={permission[droit.clef]}
+                                aria-label={`${droit.label} — ${module.display_name || module.name}`}
+                                onChange={() => basculer(module.id, droit.clef)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Section>
         )}
+
+        <div className="sn-form-actions">
+          {etape === 2 && (
+            <button type="button" className="sn-btn" onClick={() => setEtape(1)} disabled={saving}>
+              <ArrowLeft aria-hidden="true" /> Revenir à l’identité
+            </button>
+          )}
+        </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

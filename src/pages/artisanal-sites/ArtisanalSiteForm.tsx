@@ -1,28 +1,146 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
+  Ban,
+  CheckCircle2,
   ClipboardList,
+  Clock3,
+  Cog,
+  Layers,
+  Pickaxe,
   Compass,
   HardHat,
+  ImagePlus,
+  Images,
+  Info,
   Loader2,
+  Lock,
   MapPinned,
+  Phone,
   Save,
+  Search,
+  StickyNote,
+  Trash2,
   UserRoundCog,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Tabs } from '@/components/ui/Tabs';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { SiteLocationPicker } from '@/components/artisanal-sites/SiteLocationPicker';
 import { BURKINA_FASO_REGIONS } from '@/data/burkinaFasoData';
 import { artisanalSiteService } from '@/services/artisanalSiteService';
-import type { ArtisanalSiteInput } from '@/types/artisanalSite';
+import { generateSiteCode } from '@/services/artisanalSiteCode';
+import { MAX_SITE_PHOTOS, resolvePhotoUrl, uploadSitePhoto } from '@/services/sitePhotoService';
+import type { ArtisanalSite, ArtisanalSiteInput, ArtisanalSiteStatus } from '@/types/artisanalSite';
+import './artisanal-site-form.css';
 
-const inputClass =
-  'mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100';
+const CHEMICAL_OPTIONS = ['Borax', 'Charbon actif', 'Cyanure', 'Mercure', 'Aucun produit chimique'];
 
-const chemicalOptions = ['Borax', 'Charbon actif', 'Cyanure', 'Mercure', 'Aucun produit chimique'];
+const STATUS_LABELS: Record<ArtisanalSiteStatus, string> = {
+  active: 'Actif',
+  planned: 'Planifié',
+  suspended: 'Suspendu',
+};
+
+/** Statuts proposés en contrôle segmenté plutôt qu'en liste déroulante. */
+const STATUS_OPTIONS = [
+  { value: 'planned' as const, label: 'Planifié', icon: Clock3 },
+  { value: 'active' as const, label: 'Actif', icon: CheckCircle2 },
+  { value: 'suspended' as const, label: 'Suspendu', icon: Ban },
+];
+
+/** Régimes d'exploitation présentés en cartes : le choix se lit sans ouvrir de menu. */
+const EXPLOITATION_OPTIONS = [
+  {
+    value: 'artisanale' as const,
+    label: 'Artisanale',
+    description: 'Extraction manuelle, outillage léger',
+    icon: Pickaxe,
+  },
+  {
+    value: 'semi_mecanisee' as const,
+    label: 'Semi-mécanisée',
+    description: 'Engins légers et groupe électrogène',
+    icon: Cog,
+  },
+  {
+    value: 'mixte' as const,
+    label: 'Mixte',
+    description: 'Manuelle et mécanisée sur le même périmètre',
+    icon: Layers,
+  },
+];
+
+/** Champs obligatoires, base du taux de complétude affiché en en-tête. */
+const REQUIRED_FIELDS: Array<(form: ArtisanalSiteInput) => boolean> = [
+  (form) => form.name.trim() !== '',
+  (form) => form.region !== '',
+  (form) => form.province !== '',
+  (form) => form.locality.trim() !== '',
+  (form) => form.areaHectares > 0,
+  (form) => form.authorizedMiners > 0,
+  (form) => form.activeMiners >= 0 && form.authorizedMiners > 0,
+  (form) => form.averageHoleDepthMeters > 0,
+  (form) => form.manager.fullName.trim() !== '',
+  (form) => form.manager.phone.trim() !== '',
+  (form) => form.collectionOfficer.fullName.trim() !== '',
+  (form) => form.collectionOfficer.phone.trim() !== '',
+];
+
+interface SectionProps {
+  id: string;
+  title: string;
+  description: string;
+  icon: typeof ClipboardList;
+  tone: 'emerald' | 'blue' | 'amber' | 'violet' | 'slate';
+  children: ReactNode;
+}
+
+function Section({ id, title, description, icon: Icon, tone, children }: SectionProps) {
+  return (
+    <section className="site-form__section" aria-labelledby={`${id}-title`}>
+      <header className={`site-form__section-head is-${tone}`}>
+        <span className="site-form__section-icon"><Icon aria-hidden="true" /></span>
+        <div>
+          <h3 id={`${id}-title`}>{title}</h3>
+          <p>{description}</p>
+        </div>
+      </header>
+      <div className="site-form__section-body">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  required,
+  children,
+  wide,
+}: {
+  label: string;
+  required?: boolean;
+  children: ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <label className={`site-form__field${wide ? ' is-wide' : ''}`}>
+      <span className="site-form__label">
+        {label}
+        {required && <i aria-hidden="true">*</i>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const initials = (fullName: string) =>
+  fullName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toLocaleUpperCase('fr'))
+    .join('') || '—';
 
 const createDefaultForm = (): ArtisanalSiteInput => ({
-  code: `SA-${new Date().getFullYear()}-`,
+  code: '',
   name: '',
   status: 'planned',
   region: '',
@@ -36,33 +154,43 @@ const createDefaultForm = (): ArtisanalSiteInput => ({
   authorizedChemicals: [],
   latitude: 12.3714,
   longitude: -1.5197,
+  photos: [],
   manager: { fullName: '', phone: '', email: '' },
   collectionOfficer: { fullName: '', phone: '', email: '' },
   notes: '',
 });
 
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: ReactNode }) {
-  return (
-    <label className="block text-sm font-semibold text-slate-700">
-      {label} {required && <span className="text-red-500" aria-hidden="true">*</span>}
-      {children}
-      {hint && <span className="mt-1.5 block text-[11px] font-normal text-slate-500">{hint}</span>}
-    </label>
-  );
-}
-
 export default function ArtisanalSiteForm() {
   const { siteId } = useParams<{ siteId: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('identity');
   const [form, setForm] = useState<ArtisanalSiteInput>(createDefaultForm);
+  const [sites, setSites] = useState<ArtisanalSite[]>([]);
+  const [siteSearch, setSiteSearch] = useState('');
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(Boolean(siteId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!siteId) return;
     let mounted = true;
+    artisanalSiteService
+      .listSites()
+      .then((data) => mounted && setSites(data))
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!siteId) {
+      setForm(createDefaultForm());
+      setLoading(false);
+      return;
+    }
+    let mounted = true;
+    setLoading(true);
     artisanalSiteService
       .getSite(siteId)
       .then((site) => {
@@ -87,21 +215,62 @@ export default function ArtisanalSiteForm() {
           authorizedChemicals: site.authorizedChemicals,
           latitude: site.latitude,
           longitude: site.longitude,
+          photos: site.photos || [],
           manager: site.manager,
           collectionOfficer: site.collectionOfficer,
           notes: site.notes,
         });
       })
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Impossible de charger le site.'))
+      .catch((reason: unknown) =>
+        setError(reason instanceof Error ? reason.message : 'Impossible de charger le site.')
+      )
       .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
     };
   }, [siteId]);
 
+  /** Le code est calculé, jamais saisi : il suit la région et le compteur national. */
+  useEffect(() => {
+    if (siteId) return;
+    setForm((current) => ({ ...current, code: generateSiteCode(current.region, sites) }));
+  }, [form.region, siteId, sites]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all(form.photos.map((photo) => resolvePhotoUrl(photo)))
+      .then((urls) => mounted && setPhotoPreviews(urls))
+      .catch(() => mounted && setPhotoPreviews([]));
+    return () => {
+      mounted = false;
+    };
+  }, [form.photos]);
+
   const selectedRegion = useMemo(
     () => BURKINA_FASO_REGIONS.find((region) => region.name === form.region),
     [form.region]
+  );
+
+  const filteredSites = useMemo(() => {
+    const query = siteSearch.trim().toLocaleLowerCase('fr');
+    if (!query) return sites;
+    return sites.filter((site) =>
+      [site.name, site.code, site.region, site.locality]
+        .join(' ')
+        .toLocaleLowerCase('fr')
+        .includes(query)
+    );
+  }, [siteSearch, sites]);
+
+  const occupancy =
+    form.authorizedMiners > 0 ? Math.round((form.activeMiners / form.authorizedMiners) * 100) : 0;
+
+  const completion = useMemo(
+    () =>
+      Math.round(
+        (REQUIRED_FIELDS.filter((isFilled) => isFilled(form)).length / REQUIRED_FIELDS.length) * 100
+      ),
+    [form]
   );
 
   const setValue = <K extends keyof ArtisanalSiteInput>(key: K, value: ArtisanalSiteInput[K]) => {
@@ -111,7 +280,10 @@ export default function ArtisanalSiteForm() {
   const toggleChemical = (chemical: string) => {
     setForm((current) => {
       if (chemical === 'Aucun produit chimique') {
-        return { ...current, authorizedChemicals: current.authorizedChemicals.includes(chemical) ? [] : [chemical] };
+        return {
+          ...current,
+          authorizedChemicals: current.authorizedChemicals.includes(chemical) ? [] : [chemical],
+        };
       }
       const withoutNone = current.authorizedChemicals.filter((item) => item !== 'Aucun produit chimique');
       return {
@@ -123,15 +295,48 @@ export default function ArtisanalSiteForm() {
     });
   };
 
+  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = [...(event.target.files || [])];
+    event.target.value = '';
+    if (files.length === 0) return;
+
+    const room = MAX_SITE_PHOTOS - form.photos.length;
+    if (room <= 0) {
+      setError(`Trois photos au maximum par site.`);
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+    try {
+      const references = await Promise.all(files.slice(0, room).map((file) => uploadSitePhoto(file)));
+      setForm((current) => ({ ...current, photos: [...current.photos, ...references].slice(0, MAX_SITE_PHOTOS) }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "L'ajout de la photo a échoué.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setForm((current) => ({ ...current, photos: current.photos.filter((_, position) => position !== index) }));
+  };
+
   const validate = () => {
-    if (!form.code.trim() || !form.name.trim()) return 'Le code et le nom du site sont obligatoires.';
-    if (!form.region || !form.province || !form.locality.trim()) return 'La région, la province et la localité sont obligatoires.';
+    if (!form.name.trim()) return 'Le nom du site est obligatoire.';
+    if (!form.region || !form.province || !form.locality.trim())
+      return 'La région, la province et la localité sont obligatoires.';
     if (form.areaHectares <= 0) return 'La superficie doit être supérieure à zéro.';
-    if (form.authorizedMiners < 0 || form.activeMiners < 0) return "Le nombre d'artisans ne peut pas être négatif.";
-    if (form.activeMiners > form.authorizedMiners) return "Le nombre d'artisans actifs ne peut pas dépasser la capacité autorisée.";
-    if (form.latitude < 9 || form.latitude > 16 || form.longitude < -6 || form.longitude > 3) return 'Les coordonnées doivent se situer au Burkina Faso.';
-    if (!form.manager.fullName.trim() || !form.manager.phone.trim()) return 'Le responsable du site et son téléphone sont obligatoires.';
-    if (!form.collectionOfficer.fullName.trim() || !form.collectionOfficer.phone.trim()) return 'Le chargé de la collecte et son téléphone sont obligatoires.';
+    if (form.authorizedMiners < 0 || form.activeMiners < 0)
+      return "Le nombre d'artisans ne peut pas être négatif.";
+    if (form.activeMiners > form.authorizedMiners)
+      return "Le nombre d'artisans actifs ne peut pas dépasser la capacité autorisée.";
+    if (form.latitude < 9 || form.latitude > 16 || form.longitude < -6 || form.longitude > 3)
+      return 'Les coordonnées doivent se situer au Burkina Faso.';
+    if (!form.manager.fullName.trim() || !form.manager.phone.trim())
+      return 'Le responsable du site et son téléphone sont obligatoires.';
+    if (!form.collectionOfficer.fullName.trim() || !form.collectionOfficer.phone.trim())
+      return 'Le chargé de la collecte et son téléphone sont obligatoires.';
     return null;
   };
 
@@ -140,6 +345,7 @@ export default function ArtisanalSiteForm() {
     const validationError = validate();
     if (validationError) {
       setError(validationError);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setSaving(true);
@@ -154,178 +360,372 @@ export default function ArtisanalSiteForm() {
     }
   };
 
-  const tabs = [
-    { id: 'identity', label: 'Identification', icon: ClipboardList },
-    { id: 'operation', label: 'Exploitation', icon: HardHat },
-    { id: 'location', label: 'Géolocalisation', icon: Compass },
-    { id: 'team', label: 'Responsables', icon: UserRoundCog },
+  const contacts = [
+    {
+      key: 'manager' as const,
+      title: 'Responsable du site',
+      role: 'Autorité de terrain, garant de l’exploitation',
+      tone: 'is-emerald',
+      contact: form.manager,
+    },
+    {
+      key: 'collectionOfficer' as const,
+      title: 'Chargé de la collecte',
+      role: 'Interlocuteur SONASP pour la remontée de l’or',
+      tone: 'is-blue',
+      contact: form.collectionOfficer,
+    },
   ];
 
   return (
-    <MainLayout>
-      <div className="mx-auto max-w-6xl pb-8">
-        <button
-          type="button"
-          onClick={() => navigate('/artisan-sites')}
-          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Retour aux sites
-        </button>
-
-        <div className="mb-6 flex items-start gap-4">
-          <span className="grid h-12 w-12 flex-none place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
-            <MapPinned className="h-6 w-6" aria-hidden="true" />
-          </span>
+    <NationalDashboardLayout>
+      <div className="site-form">
+        <header className="site-form__intro">
+          <span className="site-form__intro-icon"><MapPinned aria-hidden="true" /></span>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Fiche du site</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{siteId ? 'Modifier le site artisanal' : 'Ajouter un site artisanal'}</h1>
-            <p className="mt-2 text-sm text-slate-600">Renseignez les informations réglementaires, opérationnelles et humaines du site.</p>
+            <h2>{siteId ? 'Modifier le site artisanal' : 'Ajouter un site artisanal'}</h2>
+            <p className="site-form__subtitle">
+              Renseignez les informations réglementaires, opérationnelles et humaines du site.
+            </p>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="px-6 pt-2">
-            <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
-              {(tab) => (
-                <div className="pb-6">
-                  {loading ? (
-                    <div className="grid min-h-64 place-items-center text-sm text-slate-500"><Loader2 className="mr-2 inline h-5 w-5 animate-spin" /> Chargement…</div>
-                  ) : (
-                    <>
-                      {tab === 'identity' && (
-                        <section className="grid gap-5 md:grid-cols-2" aria-label="Identification du site">
-                          <Field label="Code du site" required hint="Identifiant unique utilisé dans les rapports.">
-                            <input className={inputClass} value={form.code} onChange={(event) => setValue('code', event.target.value)} placeholder="SA-2026-007" required />
-                          </Field>
-                          <Field label="Nom du site" required>
-                            <input className={inputClass} value={form.name} onChange={(event) => setValue('name', event.target.value)} placeholder="Site artisanal de…" required />
-                          </Field>
-                          <Field label="Statut" required>
-                            <select className={inputClass} value={form.status} onChange={(event) => setValue('status', event.target.value as ArtisanalSiteInput['status'])}>
-                              <option value="planned">Planifié</option>
-                              <option value="active">Actif</option>
-                              <option value="suspended">Suspendu</option>
-                            </select>
-                          </Field>
-                          <Field label="Type d'exploitation" required>
-                            <select className={inputClass} value={form.exploitationType} onChange={(event) => setValue('exploitationType', event.target.value as ArtisanalSiteInput['exploitationType'])}>
-                              <option value="artisanale">Artisanale</option>
-                              <option value="semi_mecanisee">Semi-mécanisée</option>
-                              <option value="mixte">Mixte</option>
-                            </select>
-                          </Field>
-                          <div className="md:col-span-2">
-                            <Field label="Notes et observations">
-                              <textarea className={`${inputClass} min-h-28 resize-y py-3`} value={form.notes || ''} onChange={(event) => setValue('notes', event.target.value)} placeholder="Contraintes, conditions particulières, historique…" />
-                            </Field>
-                          </div>
-                        </section>
-                      )}
+          <div className="site-form__meta">
+            <div className="site-form__meta-tile is-code">
+              <p><Lock aria-hidden="true" /> Code du site</p>
+              <output>{form.code || 'SA-XXX-AAAA-NNNN'}</output>
+              <small>Attribué automatiquement</small>
+            </div>
 
-                      {tab === 'operation' && (
-                        <section className="space-y-6" aria-label="Paramètres d'exploitation">
-                          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-                            <Field label="Superficie (hectares)" required>
-                              <input type="number" min="0.01" step="0.01" className={inputClass} value={form.areaHectares} onChange={(event) => setValue('areaHectares', Number(event.target.value))} required />
-                            </Field>
-                            <Field label="Artisans autorisés" required>
-                              <input type="number" min="0" step="1" className={inputClass} value={form.authorizedMiners} onChange={(event) => setValue('authorizedMiners', Number(event.target.value))} required />
-                            </Field>
-                            <Field label="Artisans actifs" required hint="Valeur affichée sur la carte.">
-                              <input type="number" min="0" step="1" className={inputClass} value={form.activeMiners} onChange={(event) => setValue('activeMiners', Number(event.target.value))} required />
-                            </Field>
-                            <Field label="Profondeur moyenne (m)" required>
-                              <input type="number" min="0" step="0.1" className={inputClass} value={form.averageHoleDepthMeters} onChange={(event) => setValue('averageHoleDepthMeters', Number(event.target.value))} required />
-                            </Field>
-                          </div>
-                          <fieldset>
-                            <legend className="text-sm font-semibold text-slate-700">Produits chimiques autorisés</legend>
-                            <p className="mt-1 text-xs text-slate-500">Sélection administrative uniquement ; les règles de sécurité applicables restent obligatoires.</p>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                              {chemicalOptions.map((chemical) => (
-                                <label key={chemical} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/60">
-                                  <input type="checkbox" checked={form.authorizedChemicals.includes(chemical)} onChange={() => toggleChemical(chemical)} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                                  {chemical}
-                                </label>
-                              ))}
-                            </div>
-                          </fieldset>
-                        </section>
-                      )}
+            <div className="site-form__meta-tile">
+              <p>Fiche complétée</p>
+              <output>{completion} %</output>
+              <i><b style={{ width: `${completion}%` }} /></i>
+            </div>
 
-                      {tab === 'location' && (
-                        <section className="grid gap-5 md:grid-cols-2" aria-label="Localisation du site">
-                          <Field label="Région" required>
-                            <select
-                              className={inputClass}
-                              value={form.region}
-                              onChange={(event) => setForm((current) => ({ ...current, region: event.target.value, province: '', locality: '' }))}
-                              required
-                            >
-                              <option value="">Sélectionner une région</option>
-                              {BURKINA_FASO_REGIONS.map((region) => <option key={region.name} value={region.name}>{region.name}</option>)}
-                            </select>
-                          </Field>
-                          <Field label="Province" required>
-                            <select className={inputClass} value={form.province} onChange={(event) => setValue('province', event.target.value)} disabled={!selectedRegion} required>
-                              <option value="">Sélectionner une province</option>
-                              {selectedRegion?.provinces?.map((province) => <option key={province} value={province}>{province}</option>)}
-                            </select>
-                          </Field>
-                          <Field label="Localité" required>
-                            <input list="site-localities" className={inputClass} value={form.locality} onChange={(event) => setValue('locality', event.target.value)} placeholder="Village, commune ou localité" required />
-                            <datalist id="site-localities">{selectedRegion?.cities.map((city) => <option key={city} value={city} />)}</datalist>
-                          </Field>
-                          <div className="hidden md:block" />
-                          <Field label="Latitude" required hint="Limites usuelles du Burkina : 9 à 16° N.">
-                            <input type="number" min="9" max="16" step="0.000001" className={inputClass} value={form.latitude} onChange={(event) => setValue('latitude', Number(event.target.value))} required />
-                          </Field>
-                          <Field label="Longitude" required hint="Limites usuelles du Burkina : 6° O à 3° E.">
-                            <input type="number" min="-6" max="3" step="0.000001" className={inputClass} value={form.longitude} onChange={(event) => setValue('longitude', Number(event.target.value))} required />
-                          </Field>
-                          <div className="md:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-900">
-                            Point cartographique : <strong>{form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}</strong>
-                          </div>
-                        </section>
-                      )}
+            <div className={`site-form__meta-tile${occupancy > 100 ? ' is-over' : ''}`}>
+              <p>Taux d’occupation</p>
+              <output>{occupancy} %</output>
+              <i><b style={{ width: `${Math.min(100, occupancy)}%` }} /></i>
+              <small>
+                {occupancy > 100
+                  ? 'Capacité dépassée'
+                  : `${form.activeMiners.toLocaleString('fr-FR')} / ${form.authorizedMiners.toLocaleString('fr-FR')} artisans`}
+              </small>
+            </div>
+          </div>
+        </header>
 
-                      {tab === 'team' && (
-                        <section className="grid gap-5 lg:grid-cols-2" aria-label="Responsables du site">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                            <h2 className="font-bold text-slate-900">Responsable du site</h2>
-                            <div className="mt-4 space-y-4">
-                              <Field label="Nom complet" required><input className={inputClass} value={form.manager.fullName} onChange={(event) => setValue('manager', { ...form.manager, fullName: event.target.value })} required /></Field>
-                              <Field label="Téléphone" required><input type="tel" className={inputClass} value={form.manager.phone} onChange={(event) => setValue('manager', { ...form.manager, phone: event.target.value })} placeholder="+226 …" required /></Field>
-                              <Field label="Adresse e-mail"><input type="email" className={inputClass} value={form.manager.email || ''} onChange={(event) => setValue('manager', { ...form.manager, email: event.target.value })} /></Field>
-                            </div>
+        {error && <div className="site-form__error" role="alert">{error}</div>}
+
+        <div className="site-form__layout">
+          <form onSubmit={handleSubmit} className="site-form__main">
+            {loading ? (
+              <div className="site-form__loading"><Loader2 aria-hidden="true" /> Chargement de la fiche…</div>
+            ) : (
+              <>
+                <Section
+                  id="identity"
+                  title="Identification"
+                  description="Références administratives du site et régime d’exploitation."
+                  icon={ClipboardList}
+                  tone="emerald"
+                >
+                  <div className="site-form__row is-name">
+                    <Field label="Nom du site" required>
+                      <input
+                        className="is-lead"
+                        value={form.name}
+                        onChange={(event) => setValue('name', event.target.value)}
+                        placeholder="Site artisanal de…"
+                        required
+                      />
+                    </Field>
+
+                    <div className="site-form__field">
+                      <span className="site-form__label">Statut <i aria-hidden="true">*</i></span>
+                      <div className="site-form__segmented" role="radiogroup" aria-label="Statut du site">
+                        {STATUS_OPTIONS.map(({ value, label, icon: Icon }) => (
+                          <label key={value} className={form.status === value ? `is-active is-${value}` : ''}>
+                            <input
+                              type="radio"
+                              name="site-status"
+                              value={value}
+                              checked={form.status === value}
+                              onChange={() => setValue('status', value)}
+                            />
+                            <Icon aria-hidden="true" />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <fieldset className="site-form__choices">
+                    <legend>Type d’exploitation <i aria-hidden="true">*</i></legend>
+                    <div>
+                      {EXPLOITATION_OPTIONS.map(({ value, label, description, icon: Icon }) => (
+                        <label key={value} className={form.exploitationType === value ? 'is-checked' : ''}>
+                          <input
+                            type="radio"
+                            name="exploitation-type"
+                            value={value}
+                            checked={form.exploitationType === value}
+                            onChange={() => setValue('exploitationType', value)}
+                          />
+                          <span className="site-form__choice-icon"><Icon aria-hidden="true" /></span>
+                          <span>
+                            <strong>{label}</strong>
+                            <small>{description}</small>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                </Section>
+
+                <Section
+                  id="location"
+                  title="Localisation"
+                  description="Rattachement territorial et point cartographique du périmètre."
+                  icon={Compass}
+                  tone="blue"
+                >
+                  <div className="site-form__row is-territory">
+                    <Field label="Région" required>
+                      <select
+                        value={form.region}
+                        onChange={(event) => setForm((current) => ({ ...current, region: event.target.value, province: '', locality: '' }))}
+                        required
+                      >
+                        <option value="">Sélectionner une région</option>
+                        {BURKINA_FASO_REGIONS.map((region) => (
+                          <option key={region.name} value={region.name}>{region.name}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Province" required>
+                      <select value={form.province} onChange={(event) => setValue('province', event.target.value)} disabled={!selectedRegion} required>
+                        <option value="">Sélectionner une province</option>
+                        {selectedRegion?.provinces?.map((province) => (
+                          <option key={province} value={province}>{province}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Localité" required>
+                      <input list="site-localities" value={form.locality} onChange={(event) => setValue('locality', event.target.value)} placeholder="Village, commune ou localité" required />
+                      <datalist id="site-localities">
+                        {selectedRegion?.cities.map((city) => <option key={city} value={city} />)}
+                      </datalist>
+                    </Field>
+                  </div>
+
+                  <div className="site-form__map-block">
+                    <SiteLocationPicker
+                      latitude={form.latitude}
+                      longitude={form.longitude}
+                      region={form.region}
+                      province={form.province}
+                      onChange={({ latitude, longitude, region, province }) =>
+                        setForm((current) => ({
+                          ...current,
+                          latitude,
+                          longitude,
+                          // Le clic fait foi : il renseigne aussi le rattachement territorial.
+                          region: region || current.region,
+                          province: province || current.province,
+                        }))
+                      }
+                    />
+
+                    <div className="site-form__map-side">
+                      <Field label="Superficie (hectares)" required>
+                        <input type="number" min="0.01" step="0.01" value={form.areaHectares} onChange={(event) => setValue('areaHectares', Number(event.target.value))} required />
+                      </Field>
+                      <Field label="Latitude" required>
+                        <input type="number" min="9" max="16" step="0.000001" value={form.latitude} onChange={(event) => setValue('latitude', Number(event.target.value))} required />
+                      </Field>
+                      <Field label="Longitude" required>
+                        <input type="number" min="-6" max="3" step="0.000001" value={form.longitude} onChange={(event) => setValue('longitude', Number(event.target.value))} required />
+                      </Field>
+                      <p className="site-form__map-tip">
+                        Cliquez sur la carte : la région, la province et les coordonnées se
+                        renseignent ensemble.
+                      </p>
+                    </div>
+                  </div>
+                </Section>
+
+                <Section
+                  id="operation"
+                  title="Capacité d’exploitation"
+                  description="Effectifs autorisés, profondeur des puits et produits chimiques admis."
+                  icon={HardHat}
+                  tone="amber"
+                >
+                  <div className="site-form__row is-capacity">
+                    <Field label="Artisans autorisés" required>
+                      <input type="number" min="0" step="1" value={form.authorizedMiners} onChange={(event) => setValue('authorizedMiners', Number(event.target.value))} required />
+                    </Field>
+                    <Field label="Artisans actifs" required>
+                      <input type="number" min="0" step="1" value={form.activeMiners} onChange={(event) => setValue('activeMiners', Number(event.target.value))} required />
+                    </Field>
+                    <Field label="Profondeur moyenne (m)" required>
+                      <input type="number" min="0" step="0.1" value={form.averageHoleDepthMeters} onChange={(event) => setValue('averageHoleDepthMeters', Number(event.target.value))} required />
+                    </Field>
+                  </div>
+
+                  <fieldset className="site-form__chemicals">
+                    <legend>Produits chimiques autorisés</legend>
+                    <div>
+                      {CHEMICAL_OPTIONS.map((chemical) => (
+                        <label key={chemical} className={form.authorizedChemicals.includes(chemical) ? 'is-checked' : ''}>
+                          <input type="checkbox" checked={form.authorizedChemicals.includes(chemical)} onChange={() => toggleChemical(chemical)} />
+                          {chemical}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <p className="site-form__note">
+                    <Info aria-hidden="true" />
+                    La production du site n’est pas saisie ici : elle est consolidée automatiquement à
+                    partir des ventes d’or déclarées par les artisans rattachés à la localité.
+                  </p>
+                </Section>
+
+                <Section
+                  id="photos"
+                  title="Photos du site"
+                  description={`Jusqu’à ${MAX_SITE_PHOTOS} vues : accès, puits, aire de traitement.`}
+                  icon={Images}
+                  tone="slate"
+                >
+                  <div className="site-form__photos">
+                    {photoPreviews.map((preview, index) => (
+                      <figure key={form.photos[index] || index} className="site-form__photo">
+                        {preview ? <img src={preview} alt={`Photo ${index + 1} du site`} /> : <span className="site-form__photo-missing">Aperçu indisponible</span>}
+                        <button type="button" onClick={() => removePhoto(index)} aria-label={`Retirer la photo ${index + 1}`}>
+                          <Trash2 aria-hidden="true" />
+                        </button>
+                      </figure>
+                    ))}
+
+                    {form.photos.length < MAX_SITE_PHOTOS && (
+                      <label className="site-form__photo-add">
+                        {uploading ? <Loader2 className="is-spinning" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
+                        <span>{uploading ? 'Traitement…' : 'Ajouter une photo'}</span>
+                        <small>JPEG ou PNG · {form.photos.length}/{MAX_SITE_PHOTOS}</small>
+                        <input type="file" accept="image/*" multiple onChange={addPhotos} disabled={uploading} />
+                      </label>
+                    )}
+                  </div>
+                </Section>
+
+                <Section
+                  id="team"
+                  title="Responsables"
+                  description="Interlocuteurs SONASP pour le suivi et la collecte sur le terrain."
+                  icon={UserRoundCog}
+                  tone="violet"
+                >
+                  <div className="site-form__contacts">
+                    {contacts.map(({ key, title, role, tone, contact }) => (
+                      <article key={key} className={`site-form__contact ${tone}`}>
+                        <header>
+                          <span className="site-form__avatar">{initials(contact.fullName)}</span>
+                          <div>
+                            <h4>{title}</h4>
+                            <p>{role}</p>
                           </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                            <h2 className="font-bold text-slate-900">Chargé de la collecte</h2>
-                            <div className="mt-4 space-y-4">
-                              <Field label="Nom complet" required><input className={inputClass} value={form.collectionOfficer.fullName} onChange={(event) => setValue('collectionOfficer', { ...form.collectionOfficer, fullName: event.target.value })} required /></Field>
-                              <Field label="Téléphone" required><input type="tel" className={inputClass} value={form.collectionOfficer.phone} onChange={(event) => setValue('collectionOfficer', { ...form.collectionOfficer, phone: event.target.value })} placeholder="+226 …" required /></Field>
-                              <Field label="Adresse e-mail"><input type="email" className={inputClass} value={form.collectionOfficer.email || ''} onChange={(event) => setValue('collectionOfficer', { ...form.collectionOfficer, email: event.target.value })} /></Field>
-                            </div>
-                          </div>
-                        </section>
-                      )}
-                    </>
-                  )}
+                        </header>
+                        <div className="site-form__contact-fields">
+                          <Field label="Nom complet" required>
+                            <input value={contact.fullName} onChange={(event) => setValue(key, { ...contact, fullName: event.target.value })} placeholder="Prénom et nom" required />
+                          </Field>
+                          <Field label="Téléphone" required>
+                            <span className="site-form__input-icon">
+                              <Phone aria-hidden="true" />
+                              <input type="tel" value={contact.phone} onChange={(event) => setValue(key, { ...contact, phone: event.target.value })} placeholder="+226 …" required />
+                            </span>
+                          </Field>
+                          <Field label="Adresse e-mail">
+                            <input type="email" value={contact.email || ''} onChange={(event) => setValue(key, { ...contact, email: event.target.value })} placeholder="prenom.nom@sonasp.bf" />
+                          </Field>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section
+                  id="notes"
+                  title="Observations"
+                  description="Contraintes, conditions particulières et historique du site."
+                  icon={StickyNote}
+                  tone="slate"
+                >
+                  <Field label="Notes et observations" wide>
+                    <textarea value={form.notes || ''} onChange={(event) => setValue('notes', event.target.value)} placeholder="Contraintes, conditions particulières, historique…" />
+                  </Field>
+                </Section>
+
+                <footer className="site-form__actions">
+                  <button type="button" onClick={() => navigate('/artisan-sites')}>Annuler</button>
+                  <button type="submit" className="is-primary" disabled={saving || uploading}>
+                    {saving ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                    {saving ? 'Enregistrement…' : 'Enregistrer le site'}
+                  </button>
+                </footer>
+              </>
+            )}
+          </form>
+
+          <aside className="site-form__aside" aria-label="Sites référencés et définitions">
+            <section className="site-form__card">
+              <header>
+                <span className="site-form__card-icon is-emerald"><MapPinned aria-hidden="true" /></span>
+                <div>
+                  <h3>Sites artisanaux</h3>
+                  <p>{sites.length} site(s) référencé(s)</p>
                 </div>
-              )}
-            </Tabs>
-          </div>
+              </header>
+              <label className="site-form__search">
+                <Search aria-hidden="true" />
+                <input
+                  type="search"
+                  value={siteSearch}
+                  onChange={(event) => setSiteSearch(event.target.value)}
+                  placeholder="Rechercher un site"
+                  aria-label="Rechercher un site référencé"
+                />
+              </label>
+              <ul className="site-form__site-list">
+                {filteredSites.map((site) => (
+                  <li key={site.id}>
+                    <button
+                      type="button"
+                      className={site.id === siteId ? 'is-current' : ''}
+                      onClick={() => navigate(`/artisan-sites/${site.id}/modifier`)}
+                    >
+                      <span className="site-form__site-head">
+                        <strong>{site.locality}</strong>
+                        <em className={`site-form__chip is-${site.status}`}>{STATUS_LABELS[site.status]}</em>
+                      </span>
+                      <span className="site-form__site-meta">{site.code} · {site.region}</span>
+                      <span className="site-form__site-meta">
+                        {site.activeMiners.toLocaleString('fr-FR')} / {site.authorizedMiners.toLocaleString('fr-FR')} artisans
+                      </span>
+                    </button>
+                  </li>
+                ))}
+                {filteredSites.length === 0 && <li className="site-form__empty">Aucun site ne correspond.</li>}
+              </ul>
+            </section>
 
-          {error && <div className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{error}</div>}
-          <footer className="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row">
-            <button type="button" onClick={() => navigate('/artisan-sites')} className="h-11 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">Annuler</button>
-            <button type="submit" disabled={saving || loading} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-60">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-              {saving ? 'Enregistrement…' : 'Enregistrer le site'}
-            </button>
-          </footer>
-        </form>
+          </aside>
+        </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,354 +1,249 @@
-import { useState } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Tabs } from '@/components/ui/Tabs';
-import { Package, Plane, DollarSign, Settings, Eye, Edit2, Workflow, CreditCard, ArrowRight } from 'lucide-react';
-import { PRODUCTION_STATUSES, ProductionStatus } from '@/constants/productionStatuses';
-import { SHIPPING_STATUSES, ShippingStatus } from '@/constants/shippingStatuses';
-import { SALES_STATUSES, STATUS_LABELS, STATUS_COLORS, SalesStatus } from '@/constants/salesStatuses';
-import { PAYMENT_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_DESCRIPTIONS, PAYMENT_STATUS_TRANSITIONS, PaymentStatus } from '@/constants/paymentStatuses';
-import { StatusFormPanel } from '@/components/admin/StatusFormPanel';
-import { CustomAlert } from '@/components/ui/CustomAlert';
-import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useMemo, useState } from 'react';
+import { ArrowRight, Banknote, CircleDot, Flag, Info, Layers, Search, Workflow } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import {
+  ALLOWED_TRANSITIONS,
+  WorkflowModule,
+  getModuleForStatus,
+} from '@/services/statusTransitionControlService';
+import { SALES_STATUSES, STATUS_LABELS, type SalesStatus } from '@/constants/salesStatuses';
+import {
+  PAYMENT_STATUSES,
+  PAYMENT_STATUS_DESCRIPTIONS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_TRANSITIONS,
+  type PaymentStatus,
+} from '@/constants/paymentStatuses';
+import { formatStatusFr } from '@/utils/statusFormatter';
+import './admin.css';
 
-interface StatusInfo {
-  value: string;
-  label: string;
-  description: string;
-  color: string;
-  canTransitionTo: string[];
+export const MODULE_LABELS: Record<WorkflowModule, string> = {
+  [WorkflowModule.PRODUCTION]: 'Production',
+  [WorkflowModule.SHIPPING_PREPARATION]: 'Préparation d’expédition',
+  [WorkflowModule.FREIGHT_CUSTOMS]: 'Fret et douane',
+  [WorkflowModule.REFINERY]: 'Raffinerie',
+  [WorkflowModule.INVENTORY]: 'Stock',
+  [WorkflowModule.SALE]: 'Vente',
+};
+
+export interface EtapeWorkflow {
+  statut: string;
+  libelle: string;
+  module: string;
+  transitions: string[];
+  estFinal: boolean;
+}
+
+/**
+ * Étapes du circuit de traçabilité, lues dans la table de transitions du service de
+ * contrôle. L'écran reconstituait auparavant une carte de transitions approximative,
+ * codée en dur module par module.
+ */
+export function etapesWorkflow(): EtapeWorkflow[] {
+  return Object.entries(ALLOWED_TRANSITIONS).map(([statut, transitions]) => {
+    const module = getModuleForStatus(statut);
+    return {
+      statut,
+      libelle: formatStatusFr(statut),
+      module: module ? MODULE_LABELS[module] : 'Transverse',
+      transitions,
+      estFinal: transitions.length === 0,
+    };
+  });
+}
+
+export function filtrerEtapes(etapes: EtapeWorkflow[], recherche: string): EtapeWorkflow[] {
+  const terme = recherche.trim().toLowerCase();
+  if (!terme) return etapes;
+  return etapes.filter((etape) =>
+    [etape.statut, etape.libelle, etape.module].some((valeur) => valeur.toLowerCase().includes(terme))
+  );
 }
 
 export default function StatusManagerPage() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [editingStatus, setEditingStatus] = useState<StatusInfo | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const { alertState, showSuccess, closeAlert } = useCustomAlert();
+  const [recherche, setRecherche] = useState('');
 
-  const getProductionStatuses = (): StatusInfo[] => {
-    return Object.entries(PRODUCTION_STATUSES).map(([key, value]) => ({
-      value: key,
-      label: value.label,
-      description: value.description,
-      color: value.bgColor + ' ' + value.color,
-      canTransitionTo: key === 'prepared' ? ['ready_for_customs'] : []
-    }));
-  };
+  const etapes = useMemo(() => etapesWorkflow(), []);
+  const visibles = useMemo(() => filtrerEtapes(etapes, recherche), [etapes, recherche]);
 
-  const getShippingStatuses = (): StatusInfo[] => {
-    return Object.entries(SHIPPING_STATUSES).map(([key, value]) => ({
-      value: key,
-      label: value.label,
-      description: value.description,
-      color: value.bgColor + ' ' + value.textColor,
-      canTransitionTo: value.canTransitionTo
-    }));
-  };
-
-  const getSalesStatuses = (): StatusInfo[] => {
-    return Object.entries(SALES_STATUSES).map(([key, value]) => ({
-      value: value,
-      label: STATUS_LABELS[value as SalesStatus],
-      description: `Statut de vente: ${STATUS_LABELS[value as SalesStatus]}`,
-      color: STATUS_COLORS[value as SalesStatus],
-      canTransitionTo: []
-    }));
-  };
-
-  const getPaymentStatuses = (): StatusInfo[] => {
-    return Object.entries(PAYMENT_STATUSES).map(([key, value]) => ({
-      value: value,
-      label: PAYMENT_STATUS_LABELS[value as PaymentStatus],
-      description: PAYMENT_STATUS_DESCRIPTIONS[value as PaymentStatus],
-      color: PAYMENT_STATUS_COLORS[value as PaymentStatus],
-      canTransitionTo: PAYMENT_STATUS_TRANSITIONS[value as PaymentStatus] || []
-    }));
-  };
-
-  const handleEditStatus = (status: StatusInfo) => {
-    setEditingStatus(status);
-    setIsEditorOpen(true);
-  };
-
-  const handleSaveStatus = (updatedStatus: StatusInfo) => {
-    console.log('Statut mis à jour:', updatedStatus);
-    showSuccess('Les modifications seront appliquées dans une prochaine version');
-    setIsEditorOpen(false);
-    setEditingStatus(null);
-  };
-
-  const renderStatusCard = (status: StatusInfo, showActions = true) => {
-    return (
-      <Card key={status.value} className="p-4 hover:shadow-md transition-shadow">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`px-3 py-1 rounded-lg text-sm font-semibold border ${status.color}`}>
-                {status.label}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
-              {status.description}
-            </p>
-          </div>
-          {showActions && (
-            <div className="flex gap-1">
-              <button
-                onClick={() => handleEditStatus(status)}
-                className="p-2 hover:bg-amber-100 rounded-lg transition-colors"
-                title="Éditer le statut"
-              >
-                <Edit2 className="w-4 h-4 text-amber-600" />
-              </button>
-              <button
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Voir les détails"
-              >
-                <Eye className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {status.canTransitionTo.length > 0 && (
-          <div className="border-t border-gray-200 pt-3 mt-3">
-            <p className="text-xs text-gray-500 font-medium mb-2">Transitions possibles:</p>
-            <div className="flex flex-wrap gap-2">
-              {status.canTransitionTo.map(nextStatus => {
-                const nextStatusLabel = activeTab === 'production'
-                  ? PRODUCTION_STATUSES[nextStatus as ProductionStatus]?.label
-                  : activeTab === 'shipping'
-                  ? SHIPPING_STATUSES[nextStatus as ShippingStatus]?.label
-                  : activeTab === 'payment'
-                  ? PAYMENT_STATUS_LABELS[nextStatus as PaymentStatus]
-                  : nextStatus;
-
-                return (
-                  <span
-                    key={nextStatus}
-                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium"
-                  >
-                    → {nextStatusLabel}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </Card>
-    );
-  };
-
-  const renderOverview = () => {
-    const allWorkflows = [
-      {
-        name: 'Production',
-        icon: Package,
-        color: 'bg-blue-50 border-blue-200',
-        iconColor: 'text-blue-600',
-        statuses: getProductionStatuses()
-      },
-      {
-        name: 'Expédition',
-        icon: Plane,
-        color: 'bg-amber-50 border-amber-200',
-        iconColor: 'text-amber-600',
-        statuses: getShippingStatuses()
-      },
-      {
-        name: 'Ventes',
-        icon: DollarSign,
-        color: 'bg-emerald-50 border-emerald-200',
-        iconColor: 'text-emerald-600',
-        statuses: getSalesStatuses()
-      },
-      {
-        name: 'Paiements',
-        icon: CreditCard,
-        color: 'bg-slate-50 border-slate-200',
-        iconColor: 'text-slate-600',
-        statuses: getPaymentStatuses()
-      }
-    ];
-
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {allWorkflows.map(workflow => {
-            const Icon = workflow.icon;
-            return (
-              <Card key={workflow.name} className={`p-5 border-2 ${workflow.color}`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 bg-white rounded-lg`}>
-                    <Icon className={`w-5 h-5 ${workflow.iconColor}`} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{workflow.name}</h3>
-                    <p className="text-xs text-gray-600">{workflow.statuses.length} statuts</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {workflow.statuses.map((status, idx) => (
-                    <div key={status.value} className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium border ${status.color}`}>
-                        {status.label}
-                      </span>
-                      {idx < workflow.statuses.length - 1 && status.canTransitionTo.length > 0 && (
-                        <ArrowRight className="w-3 h-3 text-gray-400" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const tabs = [
-    {
-      id: 'overview',
-      label: 'Vue Globale',
-      icon: Workflow
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      icon: Package
-    },
-    {
-      id: 'shipping',
-      label: 'Expédition',
-      icon: Plane
-    },
-    {
-      id: 'sales',
-      label: 'Ventes',
-      icon: DollarSign
-    },
-    {
-      id: 'payment',
-      label: 'Paiements',
-      icon: CreditCard
-    }
-  ];
-
-  const getStatusesForTab = () => {
-    switch (activeTab) {
-      case 'production':
-        return getProductionStatuses();
-      case 'shipping':
-        return getShippingStatuses();
-      case 'sales':
-        return getSalesStatuses();
-      case 'payment':
-        return getPaymentStatuses();
-      default:
-        return [];
-    }
-  };
-
-  const getAvailableStatusesForEditor = () => {
-    const statuses = getStatusesForTab();
-    return statuses.map(s => ({ value: s.value, label: s.label }));
-  };
+  const statutsVente = Object.values(SALES_STATUSES) as SalesStatus[];
+  const statutsPaiement = Object.values(PAYMENT_STATUSES) as PaymentStatus[];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        {/* Header - Titre réduit */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Settings className="w-6 h-6 text-amber-600" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                Gestion des Statuts
-              </h1>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page statuts">
+        <PageHeader
+          icon={Workflow}
+          title="Référentiel des statuts"
+          subtitle="Circuit de traçabilité de l’or, module responsable de chaque étape et transitions autorisées."
+          breadcrumb={[{ label: 'Administration' }, { label: 'Statuts' }]}
+        />
+
+        {/* L'écran proposait « Éditer » et « Voir les détails » : le premier n'écrivait
+            rien et annonçait « une prochaine version », le second n'avait aucune action. */}
+        <Note tone="info" icon={Info}>
+          Ce référentiel est <strong>en lecture seule</strong> : les statuts et leurs
+          transitions sont définis dans le code du circuit de traçabilité, et non en base.
+          Toute évolution passe par une mise à jour applicative.
+        </Note>
+
+        <StatGrid
+          ariaLabel="Portée du référentiel"
+          items={[
+            { label: 'Étapes du circuit', value: etapes.length, icon: Layers, tone: 'blue' },
+            {
+              label: 'États finaux',
+              value: etapes.filter((etape) => etape.estFinal).length,
+              hint: 'Aucune transition sortante',
+              icon: Flag,
+              tone: 'violet',
+            },
+            { label: 'Statuts de vente', value: statutsVente.length, icon: CircleDot, tone: 'green' },
+            { label: 'Statuts de paiement', value: statutsPaiement.length, icon: Banknote, tone: 'gold' },
+          ]}
+        />
+
+        <section className="sn-card admin-page__filtres" aria-label="Filtres du référentiel">
+          <label className="sn-field admin-page__filtre-large">
+            <span className="sn-field__label">Rechercher</span>
+            <input
+              value={recherche}
+              onChange={(event) => setRecherche(event.target.value)}
+              placeholder="Statut, libellé ou module…"
+            />
+          </label>
+          <button type="button" className="sn-btn" onClick={() => setRecherche('')} disabled={!recherche}>
+            <Search aria-hidden="true" /> Réinitialiser
+          </button>
+        </section>
+
+        <Section
+          id="circuit"
+          icon={Workflow}
+          tone="emerald"
+          title={`Circuit de traçabilité (${visibles.length} étapes)`}
+          description="Chaîne unique suivie par un lot, de la production au paiement."
+        >
+          {visibles.length === 0 ? (
+            <EmptyState title="Aucune étape" description="Aucun statut ne correspond à cette recherche." />
+          ) : (
+            <div className="admin-page__table-wrap">
+              <table className="admin-page__table">
+                <caption className="sr-only">Étapes du circuit de traçabilité</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Étape</th>
+                    <th scope="col">Module responsable</th>
+                    <th scope="col">Transitions autorisées</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibles.map((etape) => (
+                    <tr key={etape.statut}>
+                      <td>
+                        <strong>{etape.libelle}</strong>
+                        <small>{etape.statut}</small>
+                      </td>
+                      <td>
+                        <Badge tone="info">{etape.module}</Badge>
+                      </td>
+                      <td>
+                        {etape.estFinal ? (
+                          <Badge tone="neutral" icon={Flag}>
+                            État final
+                          </Badge>
+                        ) : (
+                          <span className="statuts__transitions">
+                            {etape.transitions.map((cible) => (
+                              <span key={cible}>
+                                <ArrowRight aria-hidden="true" /> {formatStatusFr(cible)}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <p className="text-sm text-gray-600">
-              Visualisez et gérez les workflows de l'application
-            </p>
+          )}
+        </Section>
+
+        <Section
+          id="ventes"
+          icon={CircleDot}
+          tone="blue"
+          title="Statuts de vente"
+          description="États d’une vente au fil de son circuit d’approbation."
+        >
+          {/* Aucune carte de transitions n'est définie pour les ventes : l'écran en
+              affichait une, vide, laissant croire qu'aucune transition n'existe. */}
+          <Note tone="info" icon={Info}>
+            Le circuit d’approbation des ventes est porté par le moteur de validation ; aucune
+            carte de transitions n’est déclarée dans le référentiel des statuts.
+          </Note>
+          <ul className="statuts__liste">
+            {statutsVente.map((statut) => (
+              <li key={statut}>
+                <strong>{STATUS_LABELS[statut]}</strong>
+                <code>{statut}</code>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
+        <Section
+          id="paiements"
+          icon={Banknote}
+          tone="amber"
+          title="Statuts de paiement"
+          description="États d’un règlement et suites possibles."
+        >
+          <div className="admin-page__table-wrap">
+            <table className="admin-page__table">
+              <caption className="sr-only">Statuts de paiement</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Statut</th>
+                  <th scope="col">Signification</th>
+                  <th scope="col">Transitions autorisées</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statutsPaiement.map((statut) => {
+                  const transitions = PAYMENT_STATUS_TRANSITIONS[statut] || [];
+                  return (
+                    <tr key={statut}>
+                      <td>
+                        <strong>{PAYMENT_STATUS_LABELS[statut]}</strong>
+                        <small>{statut}</small>
+                      </td>
+                      <td>{PAYMENT_STATUS_DESCRIPTIONS[statut] || '—'}</td>
+                      <td>
+                        {transitions.length === 0 ? (
+                          <Badge tone="neutral" icon={Flag}>
+                            État final
+                          </Badge>
+                        ) : (
+                          <span className="statuts__transitions">
+                            {transitions.map((cible) => (
+                              <span key={cible}>
+                                <ArrowRight aria-hidden="true" /> {PAYMENT_STATUS_LABELS[cible as PaymentStatus] || cible}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <Card className="p-1">
-          <Tabs
-            tabs={tabs}
-            activeTab={activeTab}
-            onChange={setActiveTab}
-          />
-        </Card>
-
-        {/* Content */}
-        {activeTab === 'overview' ? (
-          renderOverview()
-        ) : (
-          <>
-            {/* Status Cards Grid */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {tabs.find(t => t.id === activeTab)?.label}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {getStatusesForTab().length} statut(s) configuré(s)
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getStatusesForTab().map(status => renderStatusCard(status))}
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <Card className="bg-amber-50 border-amber-200 p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Settings className="w-5 h-5 text-amber-700" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-900 mb-1 text-sm">
-                    Statuts du Système
-                  </h3>
-                  <p className="text-xs text-amber-800">
-                    Les statuts affichés sont définis dans le code et utilisés pour suivre
-                    la progression des processus. Les modifications seront disponibles dans une prochaine version.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </>
-        )}
+        </Section>
       </div>
-
-      {/* Editor Form Panel */}
-      {isEditorOpen && editingStatus && (
-        <StatusFormPanel
-          status={editingStatus}
-          availableStatuses={getAvailableStatusesForEditor()}
-          onSave={handleSaveStatus}
-          onCancel={() => {
-            setIsEditorOpen(false);
-            setEditingStatus(null);
-          }}
-          module={tabs.find(t => t.id === activeTab)?.label || ''}
-        />
-      )}
-
-      {/* Alert */}
-      {alertState.isOpen && (
-        <CustomAlert
-          isOpen={alertState.isOpen}
-          onClose={closeAlert}
-          title={alertState.title}
-          message={alertState.message}
-          type={alertState.type}
-        />
-      )}
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

@@ -1,12 +1,19 @@
 interface ToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
+  /** Texte affiche a cote de l'interrupteur. */
   label?: string;
+  /**
+   * Nom accessible lorsqu'aucun libelle visible n'accompagne l'interrupteur.
+   * Sans lui, une bascule sans `label` n'avait aucun nom pour les technologies
+   * d'assistance : impossible de savoir ce qu'elle commande.
+   */
+  ariaLabel?: string;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function Toggle({ checked, onChange, label, disabled = false, size = 'md' }: ToggleProps) {
+export function Toggle({ checked, onChange, label, ariaLabel, disabled = false, size = 'md' }: ToggleProps) {
   const sizeClasses = {
     sm: 'w-8 h-4',
     md: 'w-11 h-6',
@@ -30,6 +37,8 @@ export function Toggle({ checked, onChange, label, disabled = false, size = 'md'
       <div className="relative">
         <input
           type="checkbox"
+          role="switch"
+          aria-label={ariaLabel}
           className="sr-only"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}

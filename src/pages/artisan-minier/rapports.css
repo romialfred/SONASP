@@ -1,0 +1,74 @@
+/* Rapports artisanaux : barre de filtres, grilles de graphiques et tableaux de synthèse. */
+
+.rapports__filtres {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 12px;
+  padding: 12px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rapports__filtres .sn-field { margin: 0; min-width: 150px; }
+.rapports__filtres .sn-field--large { min-width: 220px; }
+.rapports__filtres .sn-btn { height: var(--sn-control-h); }
+.rapports__erreur { color: var(--sn-danger); font-size: 12px; font-weight: 600; align-self: center; }
+
+.rapports .sn-stats { margin-top: 12px; }
+.rapports .sn-section { margin-top: 12px; }
+
+.rapports__duo {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.rapports__duo .sn-section { margin-top: 0; }
+
+.rapports__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 10px;
+  color: var(--sn-muted);
+  font-size: 13px;
+}
+
+/* --- Tableaux de synthèse --- */
+
+.rapports__table-wrap { overflow-x: auto; }
+
+.rapports__table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+
+.rapports__table th,
+.rapports__table td { padding: 9px 12px; border-bottom: 1px solid var(--sn-line); text-align: left; }
+.rapports__table th { color: var(--sn-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+.rapports__table td.is-num,
+.rapports__table th.is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rapports__table tbody tr:hover { background: #f6f9fb; }
+.rapports__table tfoot td { border-top: 2px solid var(--sn-line); border-bottom: 0; font-weight: 700; background: #f4f7f9; }
+.rapports__table .is-brut { color: var(--sn-ink); font-weight: 600; }
+.rapports__table .is-taxe { color: var(--sn-danger); }
+.rapports__table .is-net { color: var(--sn-green); font-weight: 600; }
+
+.rapports__note-total { margin: 8px 0 0; color: var(--sn-muted); font-size: 11px; }
+
+/* --- Récapitulatif chiffré --- */
+
+.rapports__recap { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.rapports__recap h3 { margin: 0 0 10px; color: var(--sn-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.rapports__recap dl { display: grid; margin: 0; gap: 8px; }
+.rapports__recap dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.rapports__recap dt { color: var(--sn-muted); font-size: 12px; }
+.rapports__recap dd { margin: 0; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rapports__recap dl > div.is-total { padding-top: 8px; border-top: 1px solid var(--sn-line); }
+.rapports__recap dd.is-taxe { color: var(--sn-danger); }
+.rapports__recap dd.is-royalty { color: #7c3aed; }
+
+@media (max-width: 900px) {
+  .rapports__filtres { align-items: stretch; }
+  .rapports__filtres .sn-field { min-width: 0; flex: 1 1 140px; }
+}

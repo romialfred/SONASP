@@ -86,7 +86,12 @@ const STATUS_MODULE_CONTROL_MATRIX: Record<WorkflowModule, string[]> = {
  * Inventory: En inventaire
  * Sale: En vente → Vendu → Payé
  */
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+/**
+ * Chaîne de transitions autorisées, source de vérité du circuit de traçabilité.
+ * Exportée pour que l'écran de référence des statuts la présente telle quelle au lieu
+ * d'en reconstituer une approximation.
+ */
+export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   // ===== PHASE PRODUCTION =====
   'prepared': ['ready_for_customs', 'cancelled'],
   'ready_for_customs': ['waiting_for_customs_approval', 'cancelled'],

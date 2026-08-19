@@ -1,0 +1,96 @@
+/* Dossier artisan : onglets de section et blocs d'information hiérarchisés. */
+
+.artisan-detail__badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.artisan-detail__tabs {
+  display: flex;
+  margin-top: 14px;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+  overflow-x: auto;
+}
+
+.artisan-detail__tabs button {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  gap: 8px;
+  border: 0;
+  color: #5a6f86;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.artisan-detail__tabs button:hover { color: var(--sn-ink); background: #f4f7f9; }
+.artisan-detail__tabs button.is-active { color: #fff; background: var(--sn-green); }
+.artisan-detail__tabs button.is-active .sn-count { color: #fff; background: rgb(255 255 255 / 22%); }
+
+.artisan-detail__grid {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.sn-page.artisan-detail .sn-section { margin-top: 12px; }
+.artisan-detail__grid .sn-section { margin-top: 0; }
+
+.artisan-detail__facts {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px 18px;
+}
+
+.artisan-detail__facts dt { color: var(--sn-muted); font-size: 11px; }
+.artisan-detail__facts dd { margin: 4px 0 0; font-size: 12.5px; font-weight: 600; }
+
+.artisan-detail__contact { display: grid; margin: 0; padding: 0; gap: 10px; list-style: none; }
+
+.artisan-detail__contact li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+}
+
+.artisan-detail__contact svg { width: 15px; height: 15px; flex: 0 0 auto; color: #8fa0b1; }
+
+.artisan-detail__notes {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--sn-line);
+  color: var(--sn-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.artisan-detail__toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.artisan-detail__toolbar > .sn-search { min-width: 260px; flex: 1 1 260px; }
+
+.artisan-detail__card-actions { display: flex; margin-top: 16px; gap: 10px; flex-wrap: wrap; }
+.artisan-detail__muted { color: var(--sn-faint); font-size: 11px; }
+
+@media (max-width: 1180px) {
+  .artisan-detail__grid { grid-template-columns: minmax(0, 1fr); }
+}

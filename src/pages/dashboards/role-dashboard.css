@@ -1,0 +1,79 @@
+/* Tableaux de bord metier : indicateurs, evolution et derniers dossiers. */
+
+.role-dashboard__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 10px;
+  color: var(--sn-muted);
+  font-size: 13px;
+}
+
+.role-dashboard .sn-stats { margin-top: 12px; }
+.role-dashboard .sn-section { margin-top: 12px; }
+
+.role-dashboard__table-wrap { overflow-x: auto; }
+.role-dashboard__table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+
+.role-dashboard__table th,
+.role-dashboard__table td { padding: 9px 12px; border-bottom: 1px solid var(--sn-line); text-align: left; }
+
+.role-dashboard__table th {
+  color: var(--sn-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.role-dashboard__table td.is-num,
+.role-dashboard__table th.is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.role-dashboard__table tbody tr:hover { background: #f6f9fb; }
+.role-dashboard__table tbody tr:last-child td { border-bottom: 0; }
+
+.role-dashboard__statut {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid var(--sn-line);
+  background: #f4f7f9;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- Tableau de bord production --- */
+
+.production-dashboard__filtre { margin: 0; min-width: 220px; }
+
+.production-dashboard__grid {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.production-dashboard__grid .sn-section { margin-top: 0; }
+
+.production-dashboard__etats { display: grid; margin: 0; padding: 0; gap: 14px; list-style: none; }
+.production-dashboard__etats li > div:first-child { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.production-dashboard__etats strong { margin-left: auto; font-size: 13px; font-weight: 700; }
+.production-dashboard__etats strong small { color: var(--sn-muted); font-weight: 500; }
+.production-dashboard__etats > li > small { display: block; margin-top: 4px; color: var(--sn-muted); font-size: 11px; text-align: right; }
+
+.production-dashboard__puce { width: 9px; height: 9px; flex: none; border-radius: 999px; }
+
+.production-dashboard__barre { height: 7px; margin-top: 6px; overflow: hidden; background: #e7edf2; border-radius: 999px; }
+.production-dashboard__barre span { display: block; height: 100%; border-radius: 999px; transition: width 220ms ease; }
+
+.role-dashboard__table tbody tr.is-selected { background: #eef7f2; }
+.role-dashboard__table tbody tr[onclick] { cursor: pointer; }
+
+@media (max-width: 1100px) {
+  .production-dashboard__grid { grid-template-columns: minmax(0, 1fr); }
+}

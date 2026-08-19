@@ -1,17 +1,20 @@
 import { supabase } from '@/lib/supabase';
 import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/data/artisanalSitesData';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
+import { buildProductionFromArtisanSales } from '@/services/artisanalSiteInsights';
 import type {
   ArtisanalSite,
   ArtisanalSiteInput,
   ArtisanalSiteMetrics,
   SiteContact,
   SiteProduction,
-  SiteProductionInput,
   SiteProductionSummary,
 } from '@/types/artisanalSite';
 
-const SITES_STORAGE_KEY = 'sonasp:artisanal-sites';
-const PRODUCTIONS_STORAGE_KEY = 'sonasp:artisanal-site-productions';
+// Clé versionnée : un changement de format du jeu de démonstration invalide le cache local.
+const SITES_STORAGE_KEY = 'sonasp:artisanal-sites:v2';
+const PRODUCTIONS_STORAGE_KEY = 'sonasp:artisanal-site-productions:v2';
 
 let fallbackMode = false;
 
@@ -98,6 +101,7 @@ const mapSiteRow = (row: SiteRow, assignments: SiteRow[] = []): ArtisanalSite =>
       : [],
     latitude: Number(row.latitude || 0),
     longitude: Number(row.longitude || 0),
+    photos: Array.isArray(row.photos) ? (row.photos as string[]) : [],
     manager: assignmentFor(siteAssignments, 'site_manager'),
     collectionOfficer: assignmentFor(siteAssignments, 'collection_officer'),
     notes: (row.notes as string) || undefined,
@@ -105,18 +109,6 @@ const mapSiteRow = (row: SiteRow, assignments: SiteRow[] = []): ArtisanalSite =>
     updatedAt: row.updated_at as string,
   };
 };
-
-const mapProductionRow = (row: SiteRow): SiteProduction => ({
-  id: row.id as string,
-  siteId: row.site_id as string,
-  productionDate: row.production_date as string,
-  goldWeightGrams: Number(row.gold_weight_grams || 0),
-  revenueFcfa: Number(row.revenue_fcfa || 0),
-  taxesFcfa: Number(row.taxes_fcfa || 0),
-  artisanCount: Number(row.artisan_count || 0),
-  notes: (row.notes as string) || undefined,
-  createdAt: row.created_at as string,
-});
 
 export const calculateSiteMetrics = (
   sites: ArtisanalSite[],
@@ -169,19 +161,32 @@ const listSites = async (): Promise<ArtisanalSite[]> => {
   }
 };
 
-const listProductions = async (): Promise<SiteProduction[]> => {
+/**
+ * Charge les sites et leur production.
+ *
+ * La production n'est pas saisie site par site : elle est **reconstituée** à partir
+ * des ventes d'or déclarées par les artisans rattachés à chaque site. Le jeu de
+ * démonstration local ne sert que lorsque les tables ne sont pas joignables.
+ */
+const loadSiteData = async (): Promise<{ sites: ArtisanalSite[]; productions: SiteProduction[] }> => {
+  const sites = await listSites();
+  let productions: SiteProduction[] = [];
+
   try {
-    const { data, error } = await supabase
-      .from('artisanal_site_productions')
-      .select('*')
-      .order('production_date', { ascending: false });
-    if (error) throw error;
-    return (data || []).map((row) => mapProductionRow(row as SiteRow));
+    const [artisans, sales] = await Promise.all([
+      artisanMinierService.getAll(),
+      artisanGoldSalesService.getAll(),
+    ]);
+    productions = buildProductionFromArtisanSales(sites, (artisans || []) as ArtisanMinier[], sales || []);
   } catch (error) {
     if (!isFallbackEligible(error)) throw error;
     fallbackMode = true;
-    return readLocal(PRODUCTIONS_STORAGE_KEY, DEMO_SITE_PRODUCTIONS);
   }
+
+  if (productions.length === 0 && fallbackMode) {
+    return { sites, productions: readLocal(PRODUCTIONS_STORAGE_KEY, DEMO_SITE_PRODUCTIONS) };
+  }
+  return { sites, productions };
 };
 
 const saveLocalSite = (input: ArtisanalSiteInput): ArtisanalSite => {
@@ -223,6 +228,7 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
       authorized_chemicals: input.authorizedChemicals,
       latitude: input.latitude,
       longitude: input.longitude,
+      photos: input.photos || [],
       notes: input.notes || null,
     };
     const { data, error } = await supabase
@@ -262,46 +268,10 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
   }
 };
 
-const addProduction = async (input: SiteProductionInput): Promise<SiteProduction> => {
-  if (fallbackMode) {
-    const productions = readLocal(PRODUCTIONS_STORAGE_KEY, DEMO_SITE_PRODUCTIONS);
-    const production: SiteProduction = {
-      ...input,
-      id: createId(),
-      createdAt: new Date().toISOString(),
-    };
-    writeLocal(PRODUCTIONS_STORAGE_KEY, [production, ...productions]);
-    return production;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('artisanal_site_productions')
-      .insert({
-        site_id: input.siteId,
-        production_date: input.productionDate,
-        gold_weight_grams: input.goldWeightGrams,
-        revenue_fcfa: input.revenueFcfa,
-        taxes_fcfa: input.taxesFcfa,
-        artisan_count: input.artisanCount,
-        notes: input.notes || null,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return mapProductionRow(data as SiteRow);
-  } catch (error) {
-    if (!isFallbackEligible(error)) throw error;
-    fallbackMode = true;
-    return addProduction(input);
-  }
-};
-
 export const artisanalSiteService = {
   listSites,
-  listProductions,
+  loadSiteData,
   saveSite,
-  addProduction,
   async getSite(id: string) {
     const sites = await listSites();
     return sites.find((site) => site.id === id) || null;

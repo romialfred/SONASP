@@ -1,388 +1,434 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Calendar, DollarSign, CheckCircle, Clock, XCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Banknote,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  Download,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Wallet,
+} from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  Badge,
+  DataTable,
+  EmptyState,
+  PageHeader,
+  SearchInput,
+  SelectControl,
+  StatGrid,
+  type BadgeTone,
+  type Column,
+} from '@/components/ui/sn';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { CustomAlert } from '@/components/ui/CustomAlert';
 import artisanPaiementsService, { type PaiementArtisan } from '@/services/artisanPaiementsService';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Loading } from '@/components/ui/Loading';
-import { MainLayout } from '@/components/layout/MainLayout';
+import './paiements-ventes.css';
 
-const PaiementsHistorique = () => {
+type Statut = PaiementArtisan['statut'];
+type TypePaiement = PaiementArtisan['type_paiement'];
+
+interface PaiementRow extends PaiementArtisan {
+  artisan?: { nom?: string; prenoms?: string; raison_sociale?: string; numero_carte?: string } | null;
+}
+
+const STATUT_LABELS: Record<Statut, string> = {
+  en_attente: 'En attente',
+  en_traitement: 'En traitement',
+  valide: 'Validé',
+  complete: 'Complété',
+  annule: 'Annulé',
+  echec: 'Échec',
+};
+
+const STATUT_TONES: Record<Statut, BadgeTone> = {
+  en_attente: 'neutral',
+  en_traitement: 'info',
+  valide: 'warning',
+  complete: 'success',
+  annule: 'danger',
+  echec: 'danger',
+};
+
+const TYPE_LABELS: Record<TypePaiement, string> = {
+  virement_bancaire: 'Virement bancaire',
+  cash: 'Espèces',
+  orange_money: 'Orange Money',
+  mobile_money: 'Mobile Money',
+  moov_money: 'Moov Money',
+  wave: 'Wave',
+  cheque: 'Chèque',
+};
+
+const STATUT_ORDER: Statut[] = ['en_attente', 'en_traitement', 'valide', 'complete', 'annule', 'echec'];
+/** Statuts considérés comme en cours de traitement (ni soldés, ni abandonnés). */
+export const STATUTS_EN_COURS: Statut[] = ['en_attente', 'en_traitement', 'valide'];
+
+const integer = new Intl.NumberFormat('fr-FR');
+const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+const formatFcfa = (value?: number) => {
+  const amount = value || 0;
+  return amount >= 1_000_000
+    ? `${decimal.format(amount / 1_000_000)} M FCFA`
+    : `${integer.format(Math.round(amount))} FCFA`;
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
+};
+
+const holderName = (paiement: PaiementRow) => {
+  const artisan = paiement.artisan;
+  if (!artisan) return 'Artisan inconnu';
+  return artisan.raison_sociale || [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') || 'Artisan';
+};
+
+export interface HistoriqueFilters {
+  search: string;
+  statut: Statut | 'tous';
+  type: TypePaiement | 'tous';
+  from: string;
+  to: string;
+}
+
+export const EMPTY_HISTORIQUE_FILTERS: HistoriqueFilters = {
+  search: '',
+  statut: 'tous',
+  type: 'tous',
+  from: '',
+  to: '',
+};
+
+/** Filtrage combinable de l'historique ; les bornes de date sont inclusives. */
+export function filterPaiements(paiements: PaiementRow[], filters: HistoriqueFilters): PaiementRow[] {
+  const query = filters.search.trim().toLocaleLowerCase('fr');
+  return paiements.filter((paiement) => {
+    if (filters.statut !== 'tous' && paiement.statut !== filters.statut) return false;
+    if (filters.type !== 'tous' && paiement.type_paiement !== filters.type) return false;
+
+    const date = (paiement.date_paiement || '').slice(0, 10);
+    if (filters.from && date < filters.from) return false;
+    if (filters.to && date > filters.to) return false;
+
+    if (!query) return true;
+    return [paiement.reference_paiement, holderName(paiement), paiement.artisan?.numero_carte]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase('fr')
+      .includes(query);
+  });
+}
+
+export default function PaiementsHistorique() {
   const navigate = useNavigate();
+  const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paiements, setPaiements] = useState<PaiementArtisan[]>([]);
-  const [filteredPaiements, setFilteredPaiements] = useState<PaiementArtisan[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statutFilter, setStatutFilter] = useState<string>('tous');
-  const [typePaiementFilter, setTypePaiementFilter] = useState<string>('tous');
-  const [dateDebut, setDateDebut] = useState('');
-  const [dateFin, setDateFin] = useState('');
-
-  useEffect(() => {
-    chargerHistorique();
-  }, []);
-
-  useEffect(() => {
-    filtrerPaiements();
-  }, [searchTerm, statutFilter, typePaiementFilter, dateDebut, dateFin, paiements]);
+  const [exporting, setExporting] = useState(false);
+  const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
+  const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   const chargerHistorique = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await artisanPaiementsService.getAllPaiements();
-      setPaiements(data);
-    } catch (error) {
-      console.error('Erreur chargement historique:', error);
+      setPaiements((data || []) as PaiementRow[]);
+    } catch {
+      showError("Impossible de charger l'historique des paiements");
+      setPaiements([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filtrerPaiements = () => {
-    let result = [...paiements];
+  useEffect(() => {
+    void chargerHistorique();
+  }, []);
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(p =>
-        p.reference_paiement?.toLowerCase().includes(term) ||
-        (p as any).artisan?.nom?.toLowerCase().includes(term) ||
-        (p as any).artisan?.prenoms?.toLowerCase().includes(term) ||
-        (p as any).artisan?.numero_carte?.toLowerCase().includes(term)
-      );
-    }
+  const results = useMemo(() => filterPaiements(paiements, filters), [filters, paiements]);
 
-    if (statutFilter && statutFilter !== 'tous') {
-      result = result.filter(p => p.statut === statutFilter);
-    }
+  const stats = useMemo(
+    () => ({
+      total: paiements.length,
+      completes: paiements.filter((p) => p.statut === 'complete').length,
+      enCours: paiements.filter((p) => STATUTS_EN_COURS.includes(p.statut)).length,
+      montantRegle: paiements
+        .filter((p) => p.statut === 'complete')
+        .reduce((sum, p) => sum + (p.montant_paye || 0), 0),
+      taxesRetenues: paiements
+        .filter((p) => p.statut === 'complete')
+        .reduce((sum, p) => sum + (p.montant_taxes_retenues || 0), 0),
+    }),
+    [paiements]
+  );
 
-    if (typePaiementFilter && typePaiementFilter !== 'tous') {
-      result = result.filter(p => p.type_paiement === typePaiementFilter);
-    }
+  const countByStatut = useMemo(
+    () =>
+      STATUT_ORDER.reduce(
+        (counters, key) => ({ ...counters, [key]: paiements.filter((p) => p.statut === key).length }),
+        {} as Record<Statut, number>
+      ),
+    [paiements]
+  );
 
-    if (dateDebut) {
-      result = result.filter(p => new Date(p.date_paiement) >= new Date(dateDebut));
-    }
-
-    if (dateFin) {
-      result = result.filter(p => new Date(p.date_paiement) <= new Date(dateFin));
-    }
-
-    setFilteredPaiements(result);
-  };
-
-  const getStatutBadge = (statut: string) => {
-    const badges = {
-      'en_attente': { bg: 'bg-gray-100', text: 'text-gray-700', label: 'En attente', icon: Clock },
-      'en_traitement': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'En traitement', icon: Clock },
-      'valide': { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Validé', icon: CheckCircle },
-      'complete': { bg: 'bg-green-100', text: 'text-green-700', label: 'Complété', icon: CheckCircle },
-      'annule': { bg: 'bg-red-100', text: 'text-red-700', label: 'Annulé', icon: XCircle },
-      'echec': { bg: 'bg-red-100', text: 'text-red-700', label: 'Échec', icon: XCircle }
-    };
-
-    const badge = badges[statut as keyof typeof badges] || badges.en_attente;
-    const Icon = badge.icon;
-
-    return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
-        <Icon className="w-3 h-3" />
-        {badge.label}
-      </span>
-    );
-  };
-
-  const getTypePaiementLabel = (type: string) => {
-    const types: Record<string, string> = {
-      'virement_bancaire': 'Virement bancaire',
-      'cash': 'Cash',
-      'orange_money': 'Orange Money',
-      'mobile_money': 'Mobile Money',
-      'moov_money': 'Moov Money',
-      'wave': 'Wave',
-      'cheque': 'Chèque'
-    };
-    return types[type] || type;
-  };
-
+  /**
+   * Export CSV réel des lignes filtrées.
+   * L'ancienne implémentation se contentait d'un `console.log` : le bouton était inactif.
+   */
   const exporterHistorique = () => {
-    console.log('Export historique:', filteredPaiements);
+    if (results.length === 0) {
+      showError('Aucun paiement à exporter avec les filtres actuels');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const headers = [
+        'Référence',
+        'Date',
+        'Artisan',
+        'N° de carte',
+        'Type de paiement',
+        'Montant payé (FCFA)',
+        'Taxes retenues (FCFA)',
+        'Statut',
+      ];
+      const rows = results.map((paiement) => [
+        paiement.reference_paiement || '',
+        formatDate(paiement.date_paiement),
+        holderName(paiement),
+        paiement.artisan?.numero_carte || '',
+        TYPE_LABELS[paiement.type_paiement] || paiement.type_paiement,
+        String(Math.round(paiement.montant_paye || 0)),
+        String(Math.round(paiement.montant_taxes_retenues || 0)),
+        STATUT_LABELS[paiement.statut] || paiement.statut,
+      ]);
+
+      const csv = [headers, ...rows]
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+        .join('\n');
+
+      const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `paiements-artisans-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showSuccess(`${results.length} paiement(s) exporté(s)`);
+    } finally {
+      setExporting(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <Loading size="lg" />
-          <p className="mt-4 text-gray-600">Chargement de l'historique...</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  const stats = {
-    total: paiements.length,
-    completes: paiements.filter(p => p.statut === 'complete').length,
-    enCours: paiements.filter(p => ['en_attente', 'en_traitement', 'valide'].includes(p.statut)).length,
-    annules: paiements.filter(p => p.statut === 'annule').length,
-    montantTotal: paiements
-      .filter(p => p.statut === 'complete')
-      .reduce((sum, p) => sum + (p.montant_paye || 0), 0)
-  };
+  const columns: Column<PaiementRow & { id?: string }>[] = [
+    {
+      key: 'reference_paiement',
+      header: 'Référence',
+      render: (paiement) => <strong>{paiement.reference_paiement || '—'}</strong>,
+    },
+    { key: 'date_paiement', header: 'Date', render: (paiement) => formatDate(paiement.date_paiement) },
+    {
+      key: 'artisan',
+      header: 'Artisan',
+      render: (paiement) => (
+        <span className="paiements__artisan">
+          <strong>{holderName(paiement)}</strong>
+          <small>{paiement.artisan?.numero_carte || '—'}</small>
+        </span>
+      ),
+    },
+    {
+      key: 'type_paiement',
+      header: 'Moyen',
+      render: (paiement) => TYPE_LABELS[paiement.type_paiement] || paiement.type_paiement,
+    },
+    { key: 'montant_paye', header: 'Montant payé', numeric: true, render: (paiement) => formatFcfa(paiement.montant_paye) },
+    {
+      key: 'taxes',
+      header: 'Taxes retenues',
+      numeric: true,
+      render: (paiement) => formatFcfa(paiement.montant_taxes_retenues),
+    },
+    {
+      key: 'statut',
+      header: 'Statut',
+      render: (paiement) => (
+        <Badge tone={STATUT_TONES[paiement.statut] || 'neutral'}>
+          {STATUT_LABELS[paiement.statut] || paiement.statut}
+        </Badge>
+      ),
+    },
+    {
+      key: 'preuve',
+      header: 'Justificatif',
+      render: (paiement) =>
+        paiement.recu_paiement_url || paiement.preuve_paiement_url ? (
+          <a
+            className="sn-btn sn-btn--sm"
+            href={paiement.recu_paiement_url || paiement.preuve_paiement_url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <FileText aria-hidden="true" /> Ouvrir
+          </a>
+        ) : (
+          <span className="paiements__muted">Aucun</span>
+        ),
+    },
+  ];
 
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="secondary" onClick={() => navigate('/artisan-minier/paiements')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Historique des Paiements
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Consultation complète de tous les paiements effectués
-              </p>
-            </div>
-          </div>
-          <Button onClick={exporterHistorique} variant="secondary">
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
-          </Button>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page">
+        <CustomAlert {...alertState} onClose={closeAlert} />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total paiements</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Complétés</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.completes}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">En cours</p>
-                <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.enCours}</p>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Montant total</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
-                  {stats.montantTotal.toLocaleString('fr-FR')}
-                </p>
-                <p className="text-xs text-gray-500">FCFA</p>
-              </div>
-              <div className="bg-emerald-100 p-3 rounded-full">
-                <DollarSign className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <Card className="p-6">
-          <div className="space-y-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  placeholder="Rechercher par référence, artisan, numéro carte..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              <select
-                value={statutFilter}
-                onChange={(e) => setStatutFilter(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                <option value="tous">Tous les statuts</option>
-                <option value="en_attente">En attente</option>
-                <option value="en_traitement">En traitement</option>
-                <option value="valide">Validé</option>
-                <option value="complete">Complété</option>
-                <option value="annule">Annulé</option>
-                <option value="echec">Échec</option>
-              </select>
-
-              <select
-                value={typePaiementFilter}
-                onChange={(e) => setTypePaiementFilter(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                <option value="tous">Tous les types</option>
-                <option value="virement_bancaire">Virement bancaire</option>
-                <option value="orange_money">Orange Money</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="moov_money">Moov Money</option>
-                <option value="wave">Wave</option>
-                <option value="cash">Cash</option>
-                <option value="cheque">Chèque</option>
-              </select>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <Input
-                  type="date"
-                  value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
-                  placeholder="Date début"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <Input
-                  type="date"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  placeholder="Date fin"
-                />
-              </div>
-              {(dateDebut || dateFin || searchTerm || statutFilter !== 'tous' || typePaiementFilter !== 'tous') && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatutFilter('tous');
-                    setTypePaiementFilter('tous');
-                    setDateDebut('');
-                    setDateFin('');
-                  }}
-                >
-                  Réinitialiser
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {filteredPaiements.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">Aucun paiement trouvé</p>
-              <p className="text-gray-500 mt-2">
-                {searchTerm || statutFilter !== 'tous' || typePaiementFilter !== 'tous'
-                  ? 'Essayez de modifier vos filtres'
-                  : 'Aucun paiement enregistré pour le moment'}
-              </p>
-            </div>
-          ) : (
+        <PageHeader
+          icon={Wallet}
+          title="Historique des paiements"
+          subtitle="Traçabilité des règlements effectués auprès des artisans miniers."
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: 'Paiements des ventes', to: '/artisan-minier/paiements' },
+            { label: 'Historique' },
+          ]}
+          actions={
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Référence</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Artisan</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Montant</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Statut</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPaiements.map((paiement) => (
-                      <tr
-                        key={paiement.id}
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <span className="font-medium text-blue-600">
-                            {paiement.reference_paiement}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {(paiement as any).artisan?.nom} {(paiement as any).artisan?.prenoms}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {(paiement as any).artisan?.numero_carte}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-700">
-                          {getTypePaiementLabel(paiement.type_paiement)}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-700">
-                          {new Date(paiement.date_paiement).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <span className="font-semibold text-gray-900">
-                            {paiement.montant_paye?.toLocaleString('fr-FR')} FCFA
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {getStatutBadge(paiement.statut)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => navigate(`/artisan-minier/paiements/${paiement.id}/details`)}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-                <p>
-                  {filteredPaiements.length} paiement{filteredPaiements.length > 1 ? 's' : ''} trouvé{filteredPaiements.length > 1 ? 's' : ''}
-                </p>
-                <p>
-                  Total:{' '}
-                  <span className="font-semibold text-gray-900">
-                    {filteredPaiements
-                      .filter(p => p.statut === 'complete')
-                      .reduce((sum, p) => sum + (p.montant_paye || 0), 0)
-                      .toLocaleString('fr-FR')}{' '}
-                    FCFA
-                  </span>
-                </p>
-              </div>
+              <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
+                <ArrowLeft aria-hidden="true" /> Dossiers en attente
+              </button>
+              <button type="button" className="sn-btn" onClick={() => void chargerHistorique()}>
+                <RefreshCw aria-hidden="true" /> Actualiser
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={exporterHistorique}
+                disabled={exporting || loading}
+              >
+                {exporting ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
+                Exporter ({integer.format(results.length)})
+              </button>
             </>
-          )}
-        </Card>
-      </div>
-    </MainLayout>
-  );
-};
+          }
+        />
 
-export default PaiementsHistorique;
+        <div style={{ marginTop: 16 }}>
+          <StatGrid
+            ariaLabel="Indicateurs de l’historique"
+            items={[
+              { label: 'Paiements enregistrés', value: integer.format(stats.total), icon: Banknote, tone: 'blue' },
+              { label: 'Règlements finalisés', value: integer.format(stats.completes), icon: BadgeCheck, tone: 'green' },
+              { label: 'En cours de traitement', value: integer.format(stats.enCours), icon: Clock3, tone: 'gold' },
+              { label: 'Montant réglé', value: formatFcfa(stats.montantRegle), hint: `${formatFcfa(stats.taxesRetenues)} de taxes retenues`, icon: CheckCircle2, tone: 'violet' },
+            ]}
+          />
+        </div>
+
+        <section className="sn-card paiements__panel" aria-label="Historique des règlements">
+          <div className="sn-card__head">
+            <div>
+              <h3>
+                Règlements <span className="sn-count">{integer.format(results.length)}</span>
+              </h3>
+              <p className="sn-card__hint">Filtres combinables : statut, moyen de paiement et période.</p>
+            </div>
+          </div>
+
+          <div className="paiements__filters">
+            <SearchInput
+              value={filters.search}
+              onChange={(search) => setFilters((current) => ({ ...current, search }))}
+              placeholder="Rechercher par référence, artisan ou numéro de carte"
+            />
+            <label className="paiements__field">
+              <span>Moyen de paiement</span>
+              <SelectControl
+                value={filters.type}
+                onChange={(value) => setFilters((current) => ({ ...current, type: value as TypePaiement | 'tous' }))}
+                ariaLabel="Filtrer par moyen de paiement"
+              >
+                <option value="tous">Tous les moyens</option>
+                {(Object.keys(TYPE_LABELS) as TypePaiement[]).map((type) => (
+                  <option key={type} value={type}>{TYPE_LABELS[type]}</option>
+                ))}
+              </SelectControl>
+            </label>
+            <label className="paiements__field paiements__dates">
+              <span>Période</span>
+              <div>
+                <Calendar aria-hidden="true" />
+                <input
+                  type="date"
+                  value={filters.from}
+                  aria-label="Payé à partir du"
+                  onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))}
+                />
+                <i aria-hidden="true">–</i>
+                <input
+                  type="date"
+                  value={filters.to}
+                  aria-label="Payé jusqu’au"
+                  onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))}
+                />
+              </div>
+            </label>
+            <button
+              type="button"
+              className="sn-btn sn-btn--ghost"
+              onClick={() => setFilters(EMPTY_HISTORIQUE_FILTERS)}
+            >
+              Réinitialiser
+            </button>
+          </div>
+
+          <div className="paiements__filters" style={{ paddingTop: 0 }}>
+            <div className="sn-chips" role="group" aria-label="Statut du règlement">
+              <button
+                type="button"
+                className={filters.statut === 'tous' ? 'is-active' : ''}
+                onClick={() => setFilters((current) => ({ ...current, statut: 'tous' }))}
+              >
+                Tous <b>({integer.format(paiements.length)})</b>
+              </button>
+              {STATUT_ORDER.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={filters.statut === key ? 'is-active' : ''}
+                  onClick={() => setFilters((current) => ({ ...current, statut: key }))}
+                >
+                  {STATUT_LABELS[key]} <b>({integer.format(countByStatut[key] || 0)})</b>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {!loading && paiements.length === 0 ? (
+            <EmptyState
+              title="Aucun paiement enregistré"
+              description="L’historique se remplit dès le premier règlement effectué auprès d’un artisan."
+            />
+          ) : (
+            <div style={{ padding: '0 16px 16px' }}>
+              <DataTable
+                columns={columns}
+                rows={results.map((paiement) => ({ ...paiement, id: paiement.id || paiement.reference_paiement }))}
+                loading={loading}
+                empty="Aucun règlement ne correspond aux filtres sélectionnés."
+                caption="Historique des paiements aux artisans"
+              />
+            </div>
+          )}
+        </section>
+      </div>
+    </NationalDashboardLayout>
+  );
+}

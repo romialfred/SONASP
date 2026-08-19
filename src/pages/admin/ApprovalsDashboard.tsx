@@ -1,217 +1,194 @@
-import { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { AlertBox } from '@/components/dashboard/AlertBox';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, ClipboardCheck, Clock, Loader2, XCircle } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { EmptyState, Note, PageHeader, Section, Segmented, StatGrid } from '@/components/ui/sn';
 import { ApprovalRequestCard } from '@/components/approval/ApprovalRequestCard';
 import { SalesApprovalCard } from '@/components/approval/SalesApprovalCard';
 import { SalesApprovalWorkflowPanel } from '@/components/sales/SalesApprovalWorkflowPanel';
 import { supabase } from '@/lib/supabase';
-import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { errorMessage } from '@/lib/errorMessage';
+import './admin.css';
+
+export type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
+
+export interface ApprovalRequest {
+  id: string;
+  status: string;
+  approval_type: string;
+  entity_id: string | null;
+  requested_at: string | null;
+  [key: string]: unknown;
+}
+
+const FILTRES: Array<{ value: ApprovalFilter; label: string }> = [
+  { value: 'pending', label: 'En attente' },
+  { value: 'approved', label: 'Approuvées' },
+  { value: 'rejected', label: 'Rejetées' },
+  { value: 'all', label: 'Toutes' },
+];
+
+export const LIBELLES_FILTRE: Record<ApprovalFilter, string> = {
+  pending: 'en attente',
+  approved: 'approuvée',
+  rejected: 'rejetée',
+  all: '',
+};
+
+/** Décomptes par état, calculés sur l'ensemble des demandes. */
+export function compterParStatut(demandes: ApprovalRequest[]) {
+  return {
+    pending: demandes.filter((demande) => demande.status === 'pending').length,
+    approved: demandes.filter((demande) => demande.status === 'approved').length,
+    rejected: demandes.filter((demande) => demande.status === 'rejected').length,
+  };
+}
+
+export const filtrerDemandes = (demandes: ApprovalRequest[], filtre: ApprovalFilter) =>
+  filtre === 'all' ? demandes : demandes.filter((demande) => demande.status === filtre);
 
 export function ApprovalsDashboard() {
-  const [approvals, setApprovals] = useState<any[]>([]);
+  const [demandes, setDemandes] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [filtre, setFiltre] = useState<ApprovalFilter>('pending');
+  const [venteSuivie, setVenteSuivie] = useState<{ status: string } | null>(null);
 
-  useEffect(() => {
-    loadApprovals();
-  }, [filter]);
-
-  const loadApprovals = async () => {
+  const charger = useCallback(async () => {
     setLoading(true);
+    setErreur(null);
     try {
-      let query = supabase
+      // Les demandes sont chargées sans filtre d'état : les compteurs étaient calculés
+      // sur la liste déjà filtrée, donc « approuvées » et « rejetées » affichaient
+      // toujours zéro tant que le filtre « en attente » était actif.
+      const { data, error } = await supabase
         .from('approval_requests')
         .select('*')
         .order('requested_at', { ascending: false });
-
-      if (filter !== 'all') {
-        query = query.eq('status', filter);
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
-      setApprovals(data || []);
 
-      // Auto-select first pending sale for workflow display
-      const firstPendingSale = data?.find(a => a.status === 'pending' && a.approval_type === 'sale');
-      if (firstPendingSale && !selectedSale) {
-        const { data: saleData } = await supabase
+      const lignes = (data || []) as ApprovalRequest[];
+      setDemandes(lignes);
+
+      const premiereVente = lignes.find(
+        (demande) => demande.status === 'pending' && demande.approval_type === 'sale' && demande.entity_id
+      );
+      if (premiereVente?.entity_id) {
+        const { data: vente } = await supabase
           .from('sales')
           .select('status')
-          .eq('id', firstPendingSale.entity_id)
+          .eq('id', premiereVente.entity_id)
           .maybeSingle();
-
-        if (saleData) {
-          setSelectedSale(saleData);
-        }
+        setVenteSuivie(vente || null);
+      } else {
+        setVenteSuivie(null);
       }
-    } catch (error) {
-      console.error('Error loading approvals:', error);
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger les demandes d’approbation.'));
+      setDemandes([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const pendingCount = approvals.filter(a => a.status === 'pending').length;
-  const approvedCount = approvals.filter(a => a.status === 'approved').length;
-  const rejectedCount = approvals.filter(a => a.status === 'rejected').length;
+  useEffect(() => {
+    void charger();
+  }, [charger]);
+
+  const compteurs = useMemo(() => compterParStatut(demandes), [demandes]);
+  const visibles = useMemo(() => filtrerDemandes(demandes, filtre), [demandes, filtre]);
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-gray-900">
-            Approval Requests
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Review and approve pending requests
-          </p>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page approvals">
+        <PageHeader
+          icon={ClipboardCheck}
+          title="Demandes d’approbation"
+          subtitle="Validations en attente sur les ventes et les autres opérations soumises à contrôle."
+          breadcrumb={[{ label: 'Administration' }, { label: 'Approbations' }]}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-amber-600">{pendingCount}</p>
-                </div>
-                <Clock className="w-8 h-8 text-amber-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Rejected</p>
-                  <p className="text-2xl font-bold text-red-600">{rejectedCount}</p>
-                </div>
-                <XCircle className="w-8 h-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {pendingCount > 0 && filter === 'pending' && (
-          <AlertBox
-            type="warning"
-            title="Pending Approvals"
-            message={`You have ${pendingCount} pending approval${pendingCount !== 1 ? 's' : ''} requiring your attention.`}
-          />
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
         )}
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Approval Requests</CardTitle>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter('pending')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    filter === 'pending'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Pending
-                </button>
-                <button
-                  onClick={() => setFilter('approved')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    filter === 'approved'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Approved
-                </button>
-                <button
-                  onClick={() => setFilter('rejected')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    filter === 'rejected'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Rejected
-                </button>
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    filter === 'all'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="text-gray-600">Loading approvals...</div>
-              </div>
-            ) : approvals.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No {filter !== 'all' ? filter : ''} approval requests found</p>
-              </div>
-            ) : (
-              <div className="flex gap-6">
-                {/* Left Column: Approval Cards */}
-                <div className="flex-1 space-y-4 min-w-0">
-                  {approvals.map((approval) => (
-                    approval.approval_type === 'sale' ? (
-                      <SalesApprovalCard
-                        key={approval.id}
-                        approval={approval}
-                        onApproved={loadApprovals}
-                        onRejected={loadApprovals}
-                      />
-                    ) : (
-                      <ApprovalRequestCard
-                        key={approval.id}
-                        approval={approval}
-                        onApproved={loadApprovals}
-                        onRejected={loadApprovals}
-                      />
-                    )
-                  ))}
-                </div>
+        <StatGrid
+          ariaLabel="État des demandes"
+          items={[
+            { label: 'En attente', value: compteurs.pending, icon: Clock, tone: 'gold' },
+            { label: 'Approuvées', value: compteurs.approved, icon: CheckCircle2, tone: 'green' },
+            { label: 'Rejetées', value: compteurs.rejected, icon: XCircle, tone: 'red' },
+          ]}
+        />
 
-                {/* Right Panel: Workflow Visualizer (only for sales) */}
-                {selectedSale && filter === 'pending' && (
-                  <div className="hidden xl:block w-96 flex-shrink-0">
-                    <div className="sticky top-6">
-                      <SalesApprovalWorkflowPanel
-                        currentStatus={selectedSale.status}
-                      />
-                    </div>
-                  </div>
+        {compteurs.pending > 0 && (
+          <Note tone="warning" icon={Clock}>
+            {compteurs.pending} demande(s) attendent une décision.
+          </Note>
+        )}
+
+        <Section
+          id="demandes"
+          icon={ClipboardCheck}
+          tone="emerald"
+          title={`Demandes (${visibles.length})`}
+          description="Chaque décision est tracée et notifiée au demandeur."
+        >
+          <div className="approvals__filtres">
+            <Segmented
+              name="filtre-approbations"
+              value={filtre}
+              options={FILTRES}
+              onChange={setFiltre}
+              ariaLabel="Filtrer les demandes"
+            />
+          </div>
+
+          {loading ? (
+            <div className="admin-page__loading">
+              <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des demandes…
+            </div>
+          ) : visibles.length === 0 ? (
+            <EmptyState
+              title={`Aucune demande ${LIBELLES_FILTRE[filtre]}`.trim()}
+              description={
+                demandes.length === 0
+                  ? 'Aucune demande d’approbation n’a été enregistrée.'
+                  : 'Changez de filtre pour consulter les autres demandes.'
+              }
+            />
+          ) : (
+            <div className="approvals__layout">
+              <div className="approvals__liste">
+                {visibles.map((demande) =>
+                  demande.approval_type === 'sale' ? (
+                    <SalesApprovalCard
+                      key={demande.id}
+                      approval={demande}
+                      onApproved={charger}
+                      onRejected={charger}
+                    />
+                  ) : (
+                    <ApprovalRequestCard
+                      key={demande.id}
+                      approval={demande}
+                      onApproved={charger}
+                      onRejected={charger}
+                    />
+                  )
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {venteSuivie && filtre === 'pending' && (
+                <aside className="approvals__workflow" aria-label="Circuit de validation de la vente">
+                  <SalesApprovalWorkflowPanel currentStatus={venteSuivie.status} />
+                </aside>
+              )}
+            </div>
+          )}
+        </Section>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

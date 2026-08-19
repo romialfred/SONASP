@@ -1,665 +1,532 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
-  CheckCircle,
-  Clock,
-  Users,
-  TrendingUp,
-  Calendar,
-  Search,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  CreditCard,
+  Download,
+  Map as MapIcon,
   MapPin,
-  Activity,
-  BarChart3,
-  PieChart as PieChartIcon
+  Mountain,
+  Plus,
+  RotateCcw,
+  Search,
+  Users,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Loading } from '@/components/ui/Loading';
-import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
-import { artisanMinierService } from '@/services/artisanMinierService';
 import {
-  PieChart,
-  Pie,
+  CartesianGrid,
   Cell,
-  BarChart,
-  Bar,
-  LineChart,
+  LabelList,
   Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
 } from 'recharts';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { BurkinaTerritoryMap } from '@/components/artisanal-sites/BurkinaTerritoryMap';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { carteProfessionnelleService, type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
+import { artisanalSiteService } from '@/services/artisanalSiteService';
+import {
+  SITE_HEALTH_LABELS,
+  TOTAL_REGIONS,
+  buildAdministrativeState,
+  buildRegionStats,
+  buildRegistrationTrend,
+  buildSiteRows,
+  buildTypeShares,
+  isValidCard,
+  latestCardByArtisan,
+} from '@/services/artisanTerritoryInsights';
+import type { ArtisanalSite } from '@/types/artisanalSite';
+import './artisan-minier-dashboard.css';
 
-const COLORS = {
-  exploitant: '#10B981',
-  collecteur: '#3B82F6',
-  intermediaire: '#F59E0B',
-  fournisseur: '#8B5CF6',
-  M: '#3B82F6',
-  F: '#EC4899',
-  validees: '#10B981',
-  en_cours: '#F59E0B',
-  suspendues: '#EF4444',
-  expirees: '#6B7280'
-};
+type TerritoryTab = 'map' | 'list';
+
+const integer = new Intl.NumberFormat('fr-FR');
+const YEAR = new Date().getFullYear();
+
+function formatUpdatedAt(value?: string) {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+
+  const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const days = Math.round((startOfDay(new Date()) - startOfDay(parsed)) / 86_400_000);
+  const time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(parsed);
+
+  if (days === 0) return `Aujourd’hui, ${time}`;
+  if (days === 1) return `Hier, ${time}`;
+  return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(parsed);
+}
 
 export default function ArtisanMinierDashboard() {
   const navigate = useNavigate();
+  const [artisans, setArtisans] = useState<ArtisanMinier[]>([]);
+  const [cards, setCards] = useState<CarteProfessionnelle[]>([]);
+  const [sites, setSites] = useState<ArtisanalSite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
-  const [, setArtisans] = useState<any[]>([]);
-  const [cartesExpirant, setCartesExpirant] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  // Analytics data
-  const [typeDistribution, setTypeDistribution] = useState<any[]>([]);
-  const [genreDistribution, setGenreDistribution] = useState<any[]>([]);
-  const [regionDistribution, setRegionDistribution] = useState<any[]>([]);
-  const [statusDistribution, setStatusDistribution] = useState<any[]>([]);
-  const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [region, setRegion] = useState('all');
+  const [province, setProvince] = useState('all');
+  const [siteId, setSiteId] = useState('all');
+  const [type, setType] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [territoryTab, setTerritoryTab] = useState<TerritoryTab>('map');
 
   useEffect(() => {
-    loadData();
+    let mounted = true;
+    Promise.all([
+      artisanMinierService.getAll().catch(() => [] as ArtisanMinier[]),
+      carteProfessionnelleService.getAllCartes().catch(() => [] as CarteProfessionnelle[]),
+      artisanalSiteService.listSites().catch(() => [] as ArtisanalSite[]),
+    ])
+      .then(([artisanData, cardData, siteData]) => {
+        if (!mounted) return;
+        setArtisans((artisanData || []) as ArtisanMinier[]);
+        setCards((cardData || []) as CarteProfessionnelle[]);
+        setSites(siteData || []);
+      })
+      .catch((reason: unknown) => {
+        if (!mounted) return;
+        setError(reason instanceof Error ? reason.message : 'Impossible de charger les données des artisans.');
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [dashboardStats, expiringCartes, allArtisans] = await Promise.all([
-        carteProfessionnelleService.getDashboardStats(),
-        carteProfessionnelleService.getCartesExpirant(60),
-        artisanMinierService.getAll()
-      ]);
+  const cardsByArtisan = useMemo(() => latestCardByArtisan(cards), [cards]);
 
-      setStats(dashboardStats);
-      setCartesExpirant(expiringCartes);
-      setArtisans(allArtisans || []);
+  const siteOptions = useMemo(
+    () => [...sites].sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+    [sites]
+  );
+  const regionOptions = useMemo(
+    () =>
+      [...new Set([...artisans.map((item) => item.region), ...sites.map((item) => item.region)].filter(Boolean) as string[])]
+        .sort((a, b) => a.localeCompare(b, 'fr')),
+    [artisans, sites]
+  );
+  const provinceOptions = useMemo(
+    () => [...new Set(sites.map((site) => site.province))].sort((a, b) => a.localeCompare(b, 'fr')),
+    [sites]
+  );
 
-      // Calculer les distributions
-      if (allArtisans && allArtisans.length > 0) {
-        calculateDistributions(allArtisans);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filteredSites = useMemo(
+    () =>
+      sites.filter((site) => {
+        const matchesRegion = region === 'all' || site.region === region;
+        const matchesProvince = province === 'all' || site.province === province;
+        const matchesSite = siteId === 'all' || site.id === siteId;
+        return matchesRegion && matchesProvince && matchesSite;
+      }),
+    [province, region, siteId, sites]
+  );
 
-  const calculateDistributions = (data: any[]) => {
-    // Distribution par type d'artisan
-    const typeCount: any = {};
-    data.forEach(a => {
-      const type = a.type_artisan || 'non-specifie';
-      typeCount[type] = (typeCount[type] || 0) + 1;
+  const filteredArtisans = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase('fr');
+    const localities = new Set(filteredSites.map((site) => site.locality.toLocaleLowerCase('fr')));
+
+    return artisans.filter((artisan) => {
+      const card = cardsByArtisan.get(artisan.id);
+      const matchesRegion = region === 'all' || artisan.region === region;
+      const matchesType = type === 'all' || artisan.type_artisan === type;
+      const matchesStatus =
+        status === 'all' ||
+        (status === 'valide' ? isValidCard(card) : card?.statut === status);
+      const matchesSite =
+        (province === 'all' && siteId === 'all') ||
+        localities.has((artisan.commune || '').toLocaleLowerCase('fr'));
+      const matchesSearch =
+        !query ||
+        [artisan.nom, artisan.prenoms, artisan.raison_sociale, artisan.numero_carte, artisan.commune, artisan.region]
+          .filter(Boolean)
+          .join(' ')
+          .toLocaleLowerCase('fr')
+          .includes(query);
+
+      return matchesRegion && matchesType && matchesStatus && matchesSite && matchesSearch;
     });
-    setTypeDistribution(
-      Object.entries(typeCount).map(([name, value]) => ({ name, value }))
-    );
+  }, [artisans, cardsByArtisan, filteredSites, province, region, search, siteId, status, type]);
 
-    // Distribution par genre
-    const genreCount: any = {};
-    data.forEach(a => {
-      if (a.type_personne === 'physique') {
-        const genre = a.sexe || 'non-specifie';
-        genreCount[genre] = (genreCount[genre] || 0) + 1;
-      }
-    });
-    setGenreDistribution(
-      Object.entries(genreCount).map(([name, value]) => ({ name, value }))
-    );
+  const filteredCards = useMemo(() => {
+    const ids = new Set(filteredArtisans.map((artisan) => artisan.id));
+    return cards.filter((card) => ids.has(card.artisan_id));
+  }, [cards, filteredArtisans]);
 
-    // Distribution par région
-    const regionCount: any = {};
-    data.forEach(a => {
-      const region = a.region || 'Non spécifiée';
-      regionCount[region] = (regionCount[region] || 0) + 1;
-    });
-    const topRegions = Object.entries(regionCount)
-      .sort((a: any, b: any) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([name, count]) => ({ name, count }));
-    setRegionDistribution(topRegions);
+  const regionStats = useMemo(
+    () => buildRegionStats(filteredArtisans, filteredSites),
+    [filteredArtisans, filteredSites]
+  );
+  const siteRows = useMemo(
+    () => buildSiteRows(filteredSites, filteredArtisans, cardsByArtisan),
+    [cardsByArtisan, filteredArtisans, filteredSites]
+  );
+  const typeShares = useMemo(() => buildTypeShares(filteredArtisans), [filteredArtisans]);
+  const administrative = useMemo(() => buildAdministrativeState(filteredCards), [filteredCards]);
+  const trend = useMemo(
+    () => buildRegistrationTrend(filteredArtisans, filteredCards, YEAR),
+    [filteredArtisans, filteredCards]
+  );
 
-    // Distribution par statut (simulé - à adapter selon votre modèle)
-    const statusCount = {
-      validees: stats?.validees || 0,
-      en_cours: stats?.en_cours || 0,
-      suspendues: stats?.suspendues || 0,
-      expirees: stats?.expirees || 0
+  const metrics = useMemo(() => {
+    const validCards = filteredArtisans.filter((artisan) => isValidCard(cardsByArtisan.get(artisan.id))).length;
+    const pending = filteredArtisans.filter((artisan) => cardsByArtisan.get(artisan.id)?.statut === 'en_cours').length;
+    const alerts = filteredArtisans.filter((artisan) => {
+      const card = cardsByArtisan.get(artisan.id);
+      return !card || card.statut === 'expiree' || card.statut === 'suspendue';
+    }).length;
+
+    return {
+      registered: filteredArtisans.length,
+      regionsCovered: new Set(filteredArtisans.map((artisan) => artisan.region).filter(Boolean)).size,
+      activeSites: filteredSites.filter((site) => site.status === 'active').length,
+      validCards,
+      pending,
+      alerts,
     };
-    setStatusDistribution(
-      Object.entries(statusCount).map(([name, value]) => ({ name, value }))
-    );
+  }, [cardsByArtisan, filteredArtisans, filteredSites]);
 
-    // Tendance mensuelle (simulation - à adapter)
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const trendData = months.map((month) => ({
-      month,
-      nouveaux: Math.floor(Math.random() * 20) + 5,
-      actifs: Math.floor(Math.random() * 50) + 20
-    }));
-    setMonthlyTrend(trendData);
+  const regionValues = useMemo(
+    () =>
+      Object.fromEntries(
+        regionStats.map((stat) => [stat.region, { artisans: stat.artisans, sites: stat.sites }])
+      ),
+    [regionStats]
+  );
+
+  const mapSites = useMemo(
+    () =>
+      filteredSites
+        .filter((site) => site.status === 'active')
+        .map((site) => ({
+          id: site.id,
+          name: site.name,
+          region: site.region,
+          longitude: site.longitude,
+          latitude: site.latitude,
+          status: 'active' as const,
+          details: [`${site.locality}, ${site.province}`, `${integer.format(site.activeMiners)} artisans`],
+        })),
+    [filteredSites]
+  );
+
+  const maxRegionArtisans = Math.max(1, ...regionStats.map((stat) => stat.artisans));
+
+  const resetFilters = () => {
+    setSearch('');
+    setRegion('all');
+    setProvince('all');
+    setSiteId('all');
+    setType('all');
+    setStatus('all');
   };
 
-  const searchArtisans = async () => {
-    if (!searchQuery.trim()) return;
-    try {
-      await artisanMinierService.searchArtisans(searchQuery);
-      navigate('/artisan-minier/liste');
-    } catch (error) {
-      console.error('Error searching:', error);
-    }
+  const exportArtisans = () => {
+    const rows = [
+      ['Numéro de carte', 'Nom', 'Type', 'Région', 'Commune', 'Statut carte'],
+      ...filteredArtisans.map((artisan) => [
+        artisan.numero_carte || '',
+        [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') || artisan.raison_sociale || '',
+        artisan.type_artisan || '',
+        artisan.region || '',
+        artisan.commune || '',
+        cardsByArtisan.get(artisan.id)?.statut || 'sans_carte',
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `artisans-miniers-${YEAR}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
-
-  // Traffic Light Indicator
-  const getTrafficLight = (value: number, thresholds: { good: number; warning: number }) => {
-    if (value >= thresholds.good) return { color: 'bg-green-500', label: 'Excellent' };
-    if (value >= thresholds.warning) return { color: 'bg-yellow-500', label: 'Attention' };
-    return { color: 'bg-red-500', label: 'Critique' };
-  };
-
-  const validationRate = stats?.total > 0 ? (stats.validees / stats.total) * 100 : 0;
-  const trafficLight = getTrafficLight(validationRate, { good: 80, warning: 60 });
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <Loading />
-      </MainLayout>
-    );
-  }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <NationalDashboardLayout>
+      <div className="artisans-dashboard">
+        <header className="artisans-dashboard__intro">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Gestion des Artisans Miniers
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Tableau de Bord Analytique - SONASP
-            </p>
+            <h2>Gestion des Artisans Miniers</h2>
+            <p>Vue territoriale des artisans, régions et sites miniers</p>
           </div>
-        </div>
-
-        {/* Barre de recherche */}
-        <Card>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Rechercher un artisan (nom, prénom, n° carte, téléphone...)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') searchArtisans();
-                }}
-                icon={<Search className="w-4 h-4" />}
-              />
-            </div>
-            <Button variant="secondary" onClick={searchArtisans}>
-              Rechercher
-            </Button>
-            <Link to="/artisan-minier/liste">
-              <Button variant="outline">
-                Voir tout
-              </Button>
-            </Link>
+          <div className="artisans-dashboard__actions">
+            <button type="button" className="artisans-button artisans-button--gold" onClick={() => navigate('/artisan-minier/liste')}>
+              <Plus aria-hidden="true" /> Nouvel artisan
+            </button>
+            <button type="button" className="artisans-button" onClick={exportArtisans}>
+              <Download aria-hidden="true" /> Exporter
+            </button>
           </div>
-        </Card>
+        </header>
 
-        {/* KPIs avec Traffic Lights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between p-6">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium mb-3">Total Artisans</p>
-                <p className="text-4xl font-bold text-emerald-600 mb-2">
-                  {stats?.total || 0}
-                </p>
-                <p className="text-xs text-gray-500">Enregistrés</p>
-              </div>
-              <div className="p-3 bg-emerald-100 rounded-xl shadow-sm">
-                <Users className="h-7 w-7 text-emerald-600" />
-              </div>
-            </div>
-          </Card>
+        <section className="artisans-filters" aria-label="Filtres des artisans">
+          <label className="artisans-filter artisans-filter--search">
+            <Search aria-hidden="true" />
+            <input
+              type="search"
+              value={search}
+              placeholder="Rechercher un artisan ou un site"
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Rechercher un artisan ou un site"
+            />
+          </label>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between p-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-sm text-gray-600 font-medium">Cartes Validées</p>
-                  <div className={`w-3 h-3 rounded-full ${trafficLight.color} animate-pulse`}></div>
-                </div>
-                <p className="text-4xl font-bold text-blue-600 mb-2">
-                  {stats?.validees || 0}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Taux: {validationRate.toFixed(1)}% - {trafficLight.label}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl shadow-sm">
-                <CheckCircle className="h-7 w-7 text-blue-600" />
-              </div>
-            </div>
-          </Card>
+          <label className="artisans-filter">
+            <span>Région</span>
+            <select value={region} onChange={(event) => setRegion(event.target.value)}>
+              <option value="all">Toutes</option>
+              {regionOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between p-6">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium mb-3">En Attente</p>
-                <p className="text-4xl font-bold text-orange-600 mb-2">
-                  {stats?.en_cours || 0}
-                </p>
-                <p className="text-xs text-gray-500">À valider</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-xl shadow-sm">
-                <Clock className="h-7 w-7 text-orange-600" />
-              </div>
-            </div>
-          </Card>
+          <label className="artisans-filter">
+            <span>Province</span>
+            <select value={province} onChange={(event) => setProvince(event.target.value)}>
+              <option value="all">Toutes</option>
+              {provinceOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
 
-          <Card className="bg-gradient-to-br from-red-50 to-white border-red-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between p-6">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium mb-3">Alertes</p>
-                <p className="text-4xl font-bold text-red-600 mb-2">
-                  {stats?.expirant_60_jours || 0}
-                </p>
-                <p className="text-xs text-gray-500">Expirent sous 60j</p>
-              </div>
-              <div className="p-3 bg-red-100 rounded-xl shadow-sm">
-                <AlertTriangle className="h-7 w-7 text-red-600" />
-              </div>
-            </div>
-          </Card>
-        </div>
+          <label className="artisans-filter">
+            <span>Site minier</span>
+            <select value={siteId} onChange={(event) => setSiteId(event.target.value)}>
+              <option value="all">Tous</option>
+              {siteOptions.map((item) => <option key={item.id} value={item.id}>{item.locality}</option>)}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
 
-        {/* Graphique Donut Distribution par Statut */}
-        <Card className="shadow-lg border-gray-200">
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-600 rounded-lg shadow-sm">
-                <PieChartIcon className="h-6 w-6 text-white" />
-              </div>
+          <label className="artisans-filter">
+            <span>Type d’artisan</span>
+            <select value={type} onChange={(event) => setType(event.target.value)}>
+              <option value="all">Tous</option>
+              <option value="exploitant">Exploitant</option>
+              <option value="collecteur">Collecteur</option>
+              <option value="fournisseur">Fournisseur</option>
+              <option value="intermediaire">Intermédiaire</option>
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
+
+          <label className="artisans-filter">
+            <span>Statut</span>
+            <select value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="all">Tous</option>
+              <option value="valide">Carte valide</option>
+              <option value="en_cours">En attente</option>
+              <option value="expiree">Expirée</option>
+              <option value="suspendue">Suspendue</option>
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
+
+          <button type="button" className="artisans-filters__reset" onClick={resetFilters}>
+            <RotateCcw aria-hidden="true" /> Réinitialiser
+          </button>
+        </section>
+
+        {error && <div className="artisans-dashboard__error" role="alert">{error}</div>}
+
+        <section className="artisans-dashboard__metrics" aria-label="Indicateurs des artisans miniers">
+          {[
+            { key: 'registered', label: 'Artisans enregistrés', value: integer.format(metrics.registered), icon: Users, tone: 'green' },
+            { key: 'regions', label: 'Régions couvertes', value: `${metrics.regionsCovered} / ${TOTAL_REGIONS}`, icon: MapIcon, tone: 'blue' },
+            { key: 'sites', label: 'Sites miniers actifs', value: integer.format(metrics.activeSites), icon: Mountain, tone: 'teal' },
+            { key: 'cards', label: 'Cartes valides', value: integer.format(metrics.validCards), icon: CreditCard, tone: 'indigo' },
+            { key: 'pending', label: 'Dossiers en attente', value: integer.format(metrics.pending), icon: Clock3, tone: 'amber' },
+            { key: 'alerts', label: 'Alertes conformité', value: integer.format(metrics.alerts), icon: AlertTriangle, tone: 'red' },
+          ].map(({ key, label, value, icon: Icon, tone }) => (
+            <article key={key} className={`artisans-metric is-${tone}`}>
+              <span className="artisans-metric__icon"><Icon aria-hidden="true" /></span>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Distribution des Cartes par Statut
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">Vue d'ensemble de l'état des cartes professionnelles</p>
+                <h3>{label}</h3>
+                <strong>{value}</strong>
               </div>
-            </div>
-          </div>
-          <div className="p-8 bg-white">
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={statusDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  label={({ name, percent, value }) => {
-                    const statusLabels: any = {
-                      validees: 'Validées',
-                      en_cours: 'En cours',
-                      suspendues: 'Suspendues',
-                      expirees: 'Expirées'
-                    };
-                    return `${statusLabels[name ?? ''] || name}: ${value} (${((percent ?? 0) * 100).toFixed(1)}%)`;
-                  }}
-                  outerRadius={120}
-                  innerRadius={70}
-                  fill="#8884d8"
-                  dataKey="value"
-                  paddingAngle={3}
-                >
-                  {statusDistribution.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[entry.name as keyof typeof COLORS] || '#94A3B8'}
-                      stroke="#fff"
-                      strokeWidth={2}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any, name: any) => {
-                    const statusLabels: any = {
-                      validees: 'Validées',
-                      en_cours: 'En cours',
-                      suspendues: 'Suspendues',
-                      expirees: 'Expirées'
-                    };
-                    return [value, statusLabels[name] || name];
-                  }}
-                />
-                <Legend
-                  formatter={(value: any) => {
-                    const statusLabels: any = {
-                      validees: 'Validées',
-                      en_cours: 'En cours',
-                      suspendues: 'Suspendues',
-                      expirees: 'Expirées'
-                    };
-                    return statusLabels[value] || value;
-                  }}
-                  verticalAlign="bottom"
-                  height={50}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                <p className="text-2xl font-bold text-green-600">{stats?.validees || 0}</p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">Validées</p>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
-                <p className="text-2xl font-bold text-orange-600">{stats?.en_cours || 0}</p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">En cours</p>
-              </div>
-              <div className="text-center p-4 bg-red-50 rounded-xl border-2 border-red-200">
-                <p className="text-2xl font-bold text-red-600">{stats?.suspendues || 0}</p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">Suspendues</p>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
-                <p className="text-2xl font-bold text-gray-600">{stats?.expirees || 0}</p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">Expirées</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+            </article>
+          ))}
+        </section>
 
-        {/* Graphiques Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Distribution par Type d'Artisan */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-5 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <PieChartIcon className="h-5 w-5 text-emerald-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Distribution par Type d'Artisan
-                </h3>
+        <section className="artisans-dashboard__territory">
+          <article className="artisans-panel">
+            <div className="artisans-panel__header">
+              <h3>Répartition territoriale des artisans</h3>
+              <div className="artisans-tabs" role="tablist" aria-label="Affichage territorial">
+                <button type="button" role="tab" aria-selected={territoryTab === 'map'} className={territoryTab === 'map' ? 'is-active' : ''} onClick={() => setTerritoryTab('map')}>Carte</button>
+                <button type="button" role="tab" aria-selected={territoryTab === 'list'} className={territoryTab === 'list' ? 'is-active' : ''} onClick={() => setTerritoryTab('list')}>Liste</button>
               </div>
             </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={typeDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {typeDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#94A3B8'} />
+            {territoryTab === 'map' ? (
+              <BurkinaTerritoryMap
+                variant="density"
+                sites={mapSites}
+                regionValues={regionValues}
+                defaultHighlight={regionStats[0]?.region}
+              />
+            ) : (
+              <div className="artisans-region-list">
+                <table>
+                  <thead>
+                    <tr><th>Région</th><th>Artisans</th><th>Sites actifs</th></tr>
+                  </thead>
+                  <tbody>
+                    {regionStats.map((stat) => (
+                      <tr key={stat.region}>
+                        <td>{stat.region}</td>
+                        <td>{integer.format(stat.artisans)}</td>
+                        <td>{integer.format(stat.sites)}</td>
+                      </tr>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
 
-          {/* Distribution par Genre */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-5 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Distribution par Genre
-                </h3>
+          <article className="artisans-panel">
+            <div className="artisans-panel__header"><h3>Classement par région</h3></div>
+            <ol className="artisans-ranking">
+              {regionStats.slice(0, 6).map((stat, index) => (
+                <li key={stat.region}>
+                  <span className="artisans-ranking__rank">{index + 1}</span>
+                  <span className="artisans-ranking__label">
+                    <strong>{stat.region}</strong>
+                    <small>{integer.format(stat.sites)} sites</small>
+                  </span>
+                  <i><b style={{ width: `${(stat.artisans / maxRegionArtisans) * 100}%` }} /></i>
+                  <b className="artisans-ranking__value">{integer.format(stat.artisans)}</b>
+                </li>
+              ))}
+              {regionStats.length === 0 && <li className="artisans-ranking__empty">Aucune donnée pour ces filtres.</li>}
+            </ol>
+          </article>
+        </section>
+
+        <section className="artisans-panel artisans-sites-panel" aria-labelledby="artisans-sites-title">
+          <div className="artisans-panel__header">
+            <h3 id="artisans-sites-title">État des sites miniers <span className="artisans-badge">{integer.format(siteRows.length)} sites</span></h3>
+            <Link to="/artisan-sites" className="artisans-panel__link">Voir tous les sites <ChevronRight aria-hidden="true" /></Link>
+          </div>
+          <div className="artisans-table-wrap">
+            <table className="artisans-table">
+              <thead>
+                <tr>
+                  <th>Site minier</th>
+                  <th>Région</th>
+                  <th>Province</th>
+                  <th>Artisans</th>
+                  <th>Cartes valides</th>
+                  <th>En attente</th>
+                  <th>Statut</th>
+                  <th>Dernière mise à jour</th>
+                </tr>
+              </thead>
+              <tbody>
+                {siteRows.slice(0, 5).map((row) => (
+                  <tr key={row.site.id}>
+                    <td>
+                      <span className="artisans-table__site">
+                        <MapPin aria-hidden="true" /> {row.site.locality}
+                      </span>
+                    </td>
+                    <td>{row.site.region}</td>
+                    <td>{row.site.province}</td>
+                    <td>{integer.format(row.artisans)}</td>
+                    <td>{integer.format(row.validCards)}</td>
+                    <td>{integer.format(row.pending)}</td>
+                    <td><span className={`artisans-health artisans-health--${row.health}`}>{SITE_HEALTH_LABELS[row.health]}</span></td>
+                    <td>{formatUpdatedAt(row.updatedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!loading && siteRows.length === 0 && (
+              <p className="artisans-table__empty">Aucun site ne correspond aux filtres sélectionnés.</p>
+            )}
+            {loading && <p className="artisans-table__empty">Chargement des données…</p>}
+          </div>
+        </section>
+
+        <section className="artisans-dashboard__charts">
+          <article className="artisans-panel">
+            <div className="artisans-panel__header"><h3>Répartition par type d’artisan</h3></div>
+            <div className="artisans-donut">
+              <div className="artisans-donut__chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={typeShares} dataKey="value" nameKey="label" innerRadius={44} outerRadius={72} paddingAngle={1} stroke="#fff" strokeWidth={2}>
+                      {typeShares.map((share) => <Cell key={share.type} fill={share.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${integer.format(Number(value))} artisans`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="artisans-donut__legend">
+                {typeShares.map((share) => (
+                  <li key={share.type}>
+                    <i style={{ background: share.color }} aria-hidden="true" />
+                    <span>{share.label}</span>
+                    <strong>{share.share}%</strong>
+                  </li>
+                ))}
+                {typeShares.length === 0 && <li className="artisans-ranking__empty">Aucun artisan enregistré.</li>}
+              </ul>
+            </div>
+          </article>
+
+          <article className="artisans-panel">
+            <div className="artisans-panel__header"><h3>État administratif</h3></div>
+            <ul className="artisans-bars">
+              {administrative.map((row) => (
+                <li key={row.key}>
+                  <span>{row.label}</span>
+                  <i><b style={{ width: `${row.share}%`, background: row.color }} /></i>
+                  <strong>{row.share}%</strong>
+                </li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="artisans-panel">
+            <div className="artisans-panel__header">
+              <h3>Évolution des enregistrements</h3>
+              <div className="artisans-chart-legend">
+                <span><i style={{ background: '#0f7a56' }} aria-hidden="true" /> Nouveaux artisans</span>
+                <span><i style={{ background: '#e2a000' }} aria-hidden="true" /> Cartes validées</span>
               </div>
             </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={genreDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name === 'M' ? 'Masculin' : name === 'F' ? 'Féminin' : name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {genreDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#94A3B8'} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </div>
-
-        {/* Graphiques Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Distribution par Région */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-5 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Distribution par Région (Top 10)
-                </h3>
-              </div>
-            </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={regionDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8B5CF6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-
-          {/* Évolution Mensuelle */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-5 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Évolution des Enregistrements
-                </h3>
-              </div>
-            </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="nouveaux" stroke="#10B981" strokeWidth={2} name="Nouveaux" />
-                  <Line type="monotone" dataKey="actifs" stroke="#3B82F6" strokeWidth={2} name="Actifs" />
+            <div className="artisans-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trend} margin={{ top: 18, right: 14, left: -16, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#e6ecf1" strokeDasharray="2 3" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={{ stroke: '#d7e0e8' }} tick={{ fill: '#61748a', fontSize: 9.5 }} />
+                  <YAxis tickLine={false} axisLine={false} width={40} tick={{ fill: '#61748a', fontSize: 9.5 }} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2eaf0', fontSize: 11 }} />
+                  <Line type="monotone" dataKey="nouveaux" stroke="#0f7a56" strokeWidth={2} dot={{ r: 3, fill: '#0f7a56', strokeWidth: 0 }}>
+                    <LabelList dataKey="nouveaux" position="top" style={{ fill: '#0f7a56', fontSize: 9 }} />
+                  </Line>
+                  <Line type="monotone" dataKey="validees" stroke="#e2a000" strokeWidth={2} dot={{ r: 3, fill: '#e2a000', strokeWidth: 0 }}>
+                    <LabelList dataKey="validees" position="bottom" style={{ fill: '#c98f00', fontSize: 9 }} />
+                  </Line>
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </Card>
-        </div>
-
-        {/* Statistiques par statut */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">En Exploitation</h3>
-                <div className="p-3 bg-green-100 rounded-xl shadow-sm">
-                  <Activity className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-              <p className="text-4xl font-bold text-green-600 mb-2">{stats?.en_exploitation || 0}</p>
-              <p className="text-sm text-gray-600 mb-4">Cartes actives</p>
-              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-600 transition-all duration-500"
-                  style={{ width: `${stats?.total > 0 ? ((stats.en_exploitation || 0) / stats.total) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Suspendues</h3>
-                <div className="p-3 bg-yellow-100 rounded-xl shadow-sm">
-                  <AlertTriangle className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-              <p className="text-4xl font-bold text-yellow-600 mb-2">{stats?.suspendues || 0}</p>
-              <p className="text-sm text-gray-600 mb-4">Temporairement</p>
-              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-yellow-600 transition-all duration-500"
-                  style={{ width: `${stats?.total > 0 ? ((stats.suspendues || 0) / stats.total) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Expirées</h3>
-                <div className="p-3 bg-gray-100 rounded-xl shadow-sm">
-                  <Calendar className="h-6 w-6 text-gray-600" />
-                </div>
-              </div>
-              <p className="text-4xl font-bold text-gray-600 mb-2">{stats?.expirees || 0}</p>
-              <p className="text-sm text-gray-600 mb-4">À renouveler</p>
-              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gray-600 transition-all duration-500"
-                  style={{ width: `${stats?.total > 0 ? ((stats.expirees || 0) / stats.total) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Alertes d'expiration */}
-        {cartesExpirant && cartesExpirant.length > 0 && (
-          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm">
-            <div className="flex items-start gap-4 p-6">
-              <div className="p-4 bg-orange-100 rounded-xl shadow-sm">
-                <AlertTriangle className="h-7 w-7 text-orange-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Cartes expirant prochainement
-                </h3>
-                <p className="text-gray-700 mb-5 font-medium">
-                  {cartesExpirant.length} carte(s) expire(nt) dans les 60 prochains jours
-                </p>
-                <div className="space-y-2">
-                  {cartesExpirant.slice(0, 5).map((carte: any) => {
-                    const joursRestants = carteProfessionnelleService.getJoursRestants(carte.date_expiration);
-                    return (
-                      <div
-                        key={carte.id}
-                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200"
-                      >
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {carte.artisan?.nom} {carte.artisan?.prenoms || carte.artisan?.raison_sociale}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            N° {carte.numero_carte}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-orange-600">
-                            {joursRestants} jours restants
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Expire le {new Date(carte.date_expiration).toLocaleDateString('fr-FR')}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {cartesExpirant.length > 5 && (
-                  <Link to="/artisan-minier/cartes/expirations">
-                    <Button variant="outline" className="mt-4">
-                      Voir toutes les expirations ({cartesExpirant.length})
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Actions rapides */}
-        <Card className="shadow-sm">
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-5">
-              Actions rapides
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <Link to="/artisan-minier/cartes/validation" className="block">
-                <div className="p-5 border-2 border-blue-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <div className="p-3 bg-blue-100 rounded-xl inline-flex mb-3">
-                    <CheckCircle className="h-7 w-7 text-blue-600" />
-                  </div>
-                  <h4 className="font-bold text-gray-900 mb-2">Valider des cartes</h4>
-                  <p className="text-sm text-gray-600">
-                    {stats?.en_cours || 0} carte(s) en attente
-                  </p>
-                </div>
-              </Link>
-
-              <Link to="/artisan-minier/cartes/suivi" className="block">
-                <div className="p-5 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <div className="p-3 bg-purple-100 rounded-xl inline-flex mb-3">
-                    <BarChart3 className="h-7 w-7 text-purple-600" />
-                  </div>
-                  <h4 className="font-bold text-gray-900 mb-2">Suivi des activités</h4>
-                  <p className="text-sm text-gray-600">
-                    Statistiques et performances
-                  </p>
-                </div>
-              </Link>
-
-              <Link to="/artisan-minier/liste" className="block">
-                <div className="p-5 border-2 border-emerald-200 rounded-xl hover:border-emerald-400 hover:bg-emerald-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <div className="p-3 bg-emerald-100 rounded-xl inline-flex mb-3">
-                    <Users className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h4 className="font-bold text-gray-900 mb-2">Gérer les artisans</h4>
-                  <p className="text-sm text-gray-600">
-                    Liste complète et modifications
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </Card>
+          </article>
+        </section>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

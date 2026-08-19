@@ -1,0 +1,69 @@
+.location-picker {
+  overflow: hidden;
+  border: 1px solid #d9e2ea;
+  background: linear-gradient(180deg, #f7fbf9 0%, #fff 100%);
+  border-radius: 11px;
+}
+
+.location-picker svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 760 / 380;
+  cursor: crosshair;
+}
+
+.location-picker__province {
+  fill: #f0f4f6;
+  stroke: #dbe5ea;
+  stroke-width: 0.7;
+  transition: fill 120ms ease;
+}
+
+.location-picker__province:hover { fill: #dceee5; }
+
+/* Provinces de la région sélectionnée. */
+.location-picker__province.is-region { fill: #dff0e8; stroke: #b9dbcb; }
+
+/* Province sélectionnée. */
+.location-picker__province.is-province { fill: #9ed7bd; stroke: #0f7a56; stroke-width: 1.4; }
+
+.location-picker__region-line {
+  fill: none;
+  stroke: #93a8b8;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.location-picker__label {
+  fill: #3d5468;
+  font-size: 8.5px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.location-picker__marker { pointer-events: none; }
+.location-picker__marker circle:first-child { fill: rgb(15 122 86 / 18%); }
+
+.location-picker__marker circle:last-child {
+  fill: #0f7a56;
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+
+.location-picker__hint {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 0;
+  padding: 9px 13px;
+  gap: 8px;
+  border-top: 1px solid #e6ecf2;
+  color: #4d647d;
+  background: #fff;
+  font-size: 11px;
+}
+
+.location-picker__hint svg { width: 14px; height: 14px; flex: 0 0 auto; color: #0f7a56; }
+.location-picker__hint strong { color: #10243e; }

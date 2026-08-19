@@ -49,7 +49,6 @@ import { UsersListPage } from './pages/admin/UsersListPage';
 import { UserManagementModern } from './pages/admin/UserManagementModern';
 import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
 import UserDetailsPage from './pages/admin/UserDetailsPage';
-import { SystemSettings } from './pages/admin/SystemSettings';
 import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
 import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
 import { TransportCompanyForm } from './pages/admin/TransportCompanyForm';
@@ -1020,14 +1019,10 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SETTINGS_VIEW}>
-                  <SystemSettings />
-                </ProtectedRoute>
-              }
-            />
+            {/* `/settings` proposait un ecran de configuration qui n'enregistrait rien :
+                son bouton « Save Changes » se contentait d'un `console.log`. Le
+                parametrage reel vit sur `/parameters`. */}
+            <Route path="/settings" element={<Navigate to="/parameters" replace />} />
             <Route
               path="/audit"
               element={

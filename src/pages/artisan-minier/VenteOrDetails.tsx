@@ -1,39 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
-  Edit2,
-  Calendar,
-  Coins,
-  DollarSign,
-  FileText,
-  User,
-  Phone,
-  MapPin,
-  CreditCard,
-  AlertCircle,
-  Scale,
-  Receipt,
-  Sparkles,
+  Banknote,
   BadgeCheck,
-  Building2,
+  Coins,
+  CreditCard,
+  Loader2,
   Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Receipt,
+  Scale,
+  StickyNote,
+  UserRound,
+  Wallet,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Loading } from '@/components/ui/Loading';
-import { Tabs } from '@/components/ui/Tabs';
-import { artisanGoldSalesService, ArtisanGoldSale } from '@/services/artisanGoldSalesService';
-import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  Badge,
+  EmptyState,
+  Note,
+  PageHeader,
+  Section,
+  StatGrid,
+  type BadgeTone,
+} from '@/components/ui/sn';
+import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
+import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
+import './vente-or-details.css';
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  en_attente: { label: 'En Attente', color: 'bg-yellow-100 text-yellow-800' },
-  validee: { label: 'Validée', color: 'bg-blue-100 text-blue-800' },
-  payee: { label: 'Payée', color: 'bg-green-100 text-green-800' },
-  annulee: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
+type Statut = ArtisanGoldSale['statut'];
+
+const STATUT_LABELS: Record<Statut, string> = {
+  en_attente: 'En attente',
+  validee: 'Validée',
+  payee: 'Payée',
+  annulee: 'Annulée',
+};
+
+const STATUT_TONES: Record<Statut, BadgeTone> = {
+  en_attente: 'warning',
+  validee: 'info',
+  payee: 'success',
+  annulee: 'danger',
 };
 
 const TYPE_OR_LABELS: Record<string, string> = {
@@ -44,490 +59,381 @@ const TYPE_OR_LABELS: Record<string, string> = {
   autre: 'Autre',
 };
 
+const integer = new Intl.NumberFormat('fr-FR');
+const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const formatFcfa = (value?: number) => `${integer.format(Math.round(value || 0))} FCFA`;
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
+};
+
+const formatDateTime = (value?: string) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return `${date.toLocaleDateString('fr-FR')} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+export const artisanLabel = (artisan: ArtisanMinier | null) => {
+  if (!artisan) return 'Artisan inconnu';
+  return (
+    artisan.raison_sociale ||
+    [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') ||
+    'Artisan sans nom'
+  );
+};
+
+/** Actions ouvertes selon le statut courant de la vente. */
+export function availableActions(statut: Statut) {
+  return {
+    modifier: statut === 'en_attente',
+    valider: statut === 'en_attente',
+    annuler: statut === 'en_attente' || statut === 'validee',
+    payer: statut === 'validee',
+  };
+}
+
 export default function VenteOrDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [loading, setLoading] = useState(true);
   const [vente, setVente] = useState<ArtisanGoldSale | null>(null);
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
-  const [activeTab, setActiveTab] = useState('informations');
-  const { alertState, showError, closeAlert } = useCustomAlert();
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
+  const confirmation = useConfirmationDialog();
 
-  useEffect(() => {
-    if (id) {
-      loadVente(id);
-    }
-  }, [id]);
-
-  const loadVente = async (venteId: string) => {
+  const charger = async (venteId: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await artisanGoldSalesService.getById(venteId);
-      if (data) {
-        setVente(data);
-        if (data.artisan_id) {
-          loadArtisan(data.artisan_id);
-        }
-      } else {
-        showError('Vente introuvable');
+      if (!data) {
+        setVente(null);
+        return;
       }
-    } catch (error) {
+      setVente(data);
+      if (data.artisan_id) {
+        try {
+          setArtisan(await artisanMinierService.getById(data.artisan_id));
+        } catch {
+          setArtisan(null); // le détail de la vente reste consultable sans la fiche artisan
+        }
+      }
+    } catch {
       showError('Impossible de charger les détails de la vente');
+      setVente(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadArtisan = async (artisanId: string) => {
-    try {
-      const data = await artisanMinierService.getById(artisanId);
-      if (data) {
-        setArtisan(data);
-      }
-    } catch (error) {
-      console.error('Error loading artisan:', error);
-    }
-  };
+  useEffect(() => {
+    if (id) void charger(id);
+  }, [id]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const orFin = useMemo(() => {
+    if (!vente) return 0;
+    return (vente.quantite_grammes * (vente.purete_karat / 24) * 100) / 100;
+  }, [vente]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+  const actions = vente ? availableActions(vente.statut) : null;
+
+  const changerStatut = async (statut: Statut, libelle: string) => {
+    if (!vente || updating) return;
+
+    const confirmed = await confirmation.open({
+      title: `${libelle} cette vente ?`,
+      message: `La vente ${vente.numero_recu || ''} passera au statut « ${STATUT_LABELS[statut]} ».`,
+      confirmText: libelle,
+      cancelText: 'Annuler',
+      severity: statut === 'annulee' ? 'danger' : 'warning',
+      details: {
+        Quantité: `${decimal.format(vente.quantite_grammes)} g`,
+        Montant: formatFcfa(vente.montant_total_fcfa),
+      },
     });
+    if (!confirmed) return;
+
+    setUpdating(true);
+    try {
+      await artisanGoldSalesService.updateStatus(vente.id, statut);
+      showSuccess(`Vente ${STATUT_LABELS[statut].toLocaleLowerCase('fr')}`);
+      await charger(vente.id);
+    } catch {
+      showError('Le changement de statut a échoué');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loading />
+      <NationalDashboardLayout>
+        <div className="sn-page">
+          <p className="sn-empty">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement de la vente…
+          </p>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   if (!vente) {
     return (
-      <MainLayout>
-        <div className="space-y-6">
-          <Card className="p-8">
-            <div className="text-center">
-              <Coins className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Vente introuvable
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Cette vente n'existe pas ou a été supprimée.
-              </p>
-              <Button onClick={() => navigate('/artisan-minier/ventes-or')}>
-                Retour à la liste
-              </Button>
-            </div>
-          </Card>
+      <NationalDashboardLayout>
+        <div className="sn-page">
+          <PageHeader
+            icon={Coins}
+            title="Vente introuvable"
+            subtitle="Cette vente n’existe pas ou a été supprimée du registre."
+            breadcrumb={[
+              { label: 'Artisans miniers', to: '/artisan-minier' },
+              { label: "Ventes d'or", to: '/artisan-minier/ventes-or' },
+              { label: 'Détail' },
+            ]}
+          />
+          <EmptyState
+            title="Aucune vente à afficher"
+            description="Retournez au registre pour sélectionner une déclaration existante."
+            action={
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/artisan-minier/ventes-or')}>
+                <ArrowLeft aria-hidden="true" /> Retour au registre
+              </button>
+            }
+          />
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
-  const canEdit = vente && !['validee', 'payee'].includes(vente.statut);
-
-  const getArtisanDisplayName = () => {
-    if (!artisan) return 'Chargement...';
-    if (artisan.raison_sociale) {
-      return artisan.raison_sociale;
-    }
-    return `${artisan.nom || ''} ${artisan.prenoms || ''}`.trim() || 'Sans nom';
-  };
-
-  const tabs = [
-    { id: 'informations', label: 'Informations' },
-    { id: 'artisan', label: 'Artisan' },
-    { id: 'documents', label: 'Documents & Facture' },
-  ];
-
   return (
-    <MainLayout>
-      <CustomAlert {...alertState} onClose={closeAlert} />
+    <NationalDashboardLayout>
+      <div className="sn-page vente-detail">
+        <CustomAlert {...alertState} onClose={closeAlert} />
+        <confirmation.ConfirmationDialog />
 
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/artisan-minier/ventes-or')}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Détails de la Vente
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {vente.numero_recu || `VENTE/OR/2025/12/${id?.slice(0, 4)}`}
-              </p>
+        <PageHeader
+          icon={Coins}
+          title={vente.numero_recu || 'Vente sans numéro de reçu'}
+          subtitle={`Déclarée le ${formatDate(vente.date_vente)} · ${TYPE_OR_LABELS[vente.type_or] || vente.type_or}`}
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: "Ventes d'or", to: '/artisan-minier/ventes-or' },
+            { label: vente.numero_recu || 'Détail' },
+          ]}
+          aside={
+            <div className="vente-detail__statut">
+              <Badge tone={STATUT_TONES[vente.statut]}>{STATUT_LABELS[vente.statut]}</Badge>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {!canEdit && (
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-blue-700 font-medium">
-                  Vente validée - Modification impossible
-                </span>
-              </div>
-            )}
-            <Button
-              onClick={() => navigate(`/artisan-minier/ventes-or/${id}/modifier`)}
-              disabled={!canEdit}
-              title={!canEdit ? 'Impossible de modifier une vente validée ou payée' : ''}
-            >
-              <Edit2 className="w-5 h-5 mr-2" />
-              Modifier
-            </Button>
-          </div>
+          }
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/ventes-or')}>
+                <ArrowLeft aria-hidden="true" /> Registre
+              </button>
+              {actions?.modifier && (
+                <button
+                  type="button"
+                  className="sn-btn"
+                  onClick={() => navigate(`/artisan-minier/ventes-or/${vente.id}/modifier`)}
+                >
+                  <Pencil aria-hidden="true" /> Modifier
+                </button>
+              )}
+              {actions?.valider && (
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  disabled={updating}
+                  onClick={() => void changerStatut('validee', 'Valider')}
+                >
+                  {updating ? <Loader2 className="sn-spin" aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />}
+                  Valider la vente
+                </button>
+              )}
+              {actions?.payer && (
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={() => navigate(`/artisan-minier/paiements/${vente.id}/nouveau`)}
+                >
+                  <CreditCard aria-hidden="true" /> Ouvrir le paiement
+                </button>
+              )}
+            </>
+          }
+        />
+
+        <div style={{ marginTop: 16 }}>
+          <StatGrid
+            ariaLabel="Indicateurs de la vente"
+            items={[
+              { label: 'Quantité déclarée', value: `${decimal.format(vente.quantite_grammes)} g`, hint: `${decimal.format(vente.quantite_grammes / TROY_OZ_GRAMS)} oz troy`, icon: Scale, tone: 'gold' },
+              { label: 'Or fin estimé', value: `${decimal.format(orFin)} g`, hint: `${vente.purete_karat} carats`, icon: Coins, tone: 'green' },
+              { label: 'Montant total', value: formatFcfa(vente.montant_total_fcfa), hint: 'Taxes comprises', icon: Banknote, tone: 'blue' },
+              { label: 'Taxes appliquées', value: formatFcfa((vente.tva_montant_fcfa || 0) + (vente.taxe_dev_comm_montant_fcfa || 0)), icon: Receipt, tone: 'violet' },
+            ]}
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <Tabs
-                tabs={tabs}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-              />
+        <div className="vente-detail__layout">
+          <div className="vente-detail__main">
+            <Section
+              id="caracteristiques"
+              icon={Scale}
+              tone="amber"
+              title="Caractéristiques de la collecte"
+              description="Nature, titre et volume de l’or déclaré."
+            >
+              <dl className="vente-detail__facts">
+                <div>
+                  <dt>Type d’or</dt>
+                  <dd>{TYPE_OR_LABELS[vente.type_or] || vente.type_or}</dd>
+                </div>
+                <div>
+                  <dt>Titre</dt>
+                  <dd>{vente.purete_karat} carats ({decimal.format((vente.purete_karat / 24) * 100)} %)</dd>
+                </div>
+                <div>
+                  <dt>Quantité</dt>
+                  <dd>{decimal.format(vente.quantite_grammes)} g</dd>
+                </div>
+                <div>
+                  <dt>Prix au kilogramme</dt>
+                  <dd>{formatFcfa(vente.prix_kg_fcfa)}</dd>
+                </div>
+                <div>
+                  <dt>Prix au gramme</dt>
+                  <dd>{formatFcfa(vente.prix_kg_fcfa / 1000)}</dd>
+                </div>
+                <div>
+                  <dt>Date de vente</dt>
+                  <dd>{formatDate(vente.date_vente)}</dd>
+                </div>
+              </dl>
+            </Section>
 
-              <div className="p-6">
-                {activeTab === 'informations' && (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-emerald-600" />
-                        Informations de la Vente
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <Calendar className="w-3.5 h-3.5 inline mr-1" />
-                            Date de Vente
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {formatDate(vente.date_vente)}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <FileText className="w-3.5 h-3.5 inline mr-1" />
-                            Numéro de Reçu
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {vente.numero_recu || '-'}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <Coins className="w-3.5 h-3.5 inline mr-1" />
-                            Type d'Or
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {TYPE_OR_LABELS[vente.type_or] || vente.type_or}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <Scale className="w-3.5 h-3.5 inline mr-1" />
-                            Quantité
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {vente.quantite_grammes.toFixed(2)} grammes
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {(vente.quantite_grammes / 31.1034768).toFixed(3)} oz
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <Sparkles className="w-3.5 h-3.5 inline mr-1" />
-                            Pureté
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {vente.purete_karat} Karat
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {((vente.purete_karat / 24) * 100).toFixed(2)}%
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
-                            <DollarSign className="w-3.5 h-3.5 inline mr-1" />
-                            Prix par Gramme
-                          </label>
-                          <p className="text-base font-semibold text-gray-900">
-                            {formatCurrency(vente.prix_kg_fcfa / 1000)}/g
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+            <Section
+              id="fiscal"
+              icon={Receipt}
+              tone="blue"
+              title="Détail fiscal"
+              description="Décomposition du montant enregistré au registre national."
+            >
+              <dl className="vente-detail__amounts">
+                <div>
+                  <dt>Montant brut</dt>
+                  <dd>{formatFcfa(vente.montant_brut_fcfa)}</dd>
+                </div>
+                <div>
+                  <dt>TVA ({vente.tva_taux || 0} %)</dt>
+                  <dd>{formatFcfa(vente.tva_montant_fcfa)}</dd>
+                </div>
+                <div>
+                  <dt>Taxe de développement communal ({vente.taxe_dev_comm_taux || 0} %)</dt>
+                  <dd>{formatFcfa(vente.taxe_dev_comm_montant_fcfa)}</dd>
+                </div>
+                <div className="is-total">
+                  <dt>Montant total</dt>
+                  <dd>{formatFcfa(vente.montant_total_fcfa)}</dd>
+                </div>
+              </dl>
+            </Section>
 
-                    <div className="border-t pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-blue-600" />
-                        Détails Financiers
-                      </h3>
-                      <div className="space-y-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-700">Montant Brut</span>
-                          <span className="text-base font-bold text-gray-900">
-                            {formatCurrency(vente.montant_brut_fcfa)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            TVA ({vente.tva_taux}%)
-                          </span>
-                          <span className="text-base font-semibold text-gray-700">
-                            {formatCurrency(vente.tva_montant_fcfa)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            Taxe Dev. Comm. ({vente.taxe_dev_comm_taux}%)
-                          </span>
-                          <span className="text-base font-semibold text-gray-700">
-                            {formatCurrency(vente.taxe_dev_comm_montant_fcfa)}
-                          </span>
-                        </div>
-                        <div className="border-t border-blue-300 pt-3 flex justify-between items-center">
-                          <span className="text-base font-bold text-gray-900">Montant Total TTC</span>
-                          <span className="text-xl font-bold text-emerald-600">
-                            {formatCurrency(vente.montant_total_fcfa)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {vente.observations && (
-                      <div className="border-t pt-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Observations
-                        </h3>
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                          <p className="text-gray-700 whitespace-pre-wrap">
-                            {vente.observations}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'artisan' && (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <User className="w-5 h-5 text-blue-600" />
-                        Informations du Vendeur
-                      </h3>
-                      {artisan ? (
-                        <div className="space-y-4">
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <h4 className="text-xl font-bold text-gray-900">
-                                  {getArtisanDisplayName()}
-                                </h4>
-                                {artisan.raison_sociale && (
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {artisan.nom} {artisan.prenoms}
-                                  </p>
-                                )}
-                              </div>
-                              {artisan.actif && (
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-                                  <BadgeCheck className="w-3.5 h-3.5" />
-                                  Actif
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                              <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
-                                  <CreditCard className="w-3.5 h-3.5 inline mr-1" />
-                                  Numéro de Carte
-                                </label>
-                                <p className="text-sm font-semibold text-gray-900">
-                                  {artisan.numero_carte}
-                                </p>
-                              </div>
-
-                              {artisan.telephone && (
-                                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                  <label className="block text-xs font-medium text-gray-500 mb-1">
-                                    <Phone className="w-3.5 h-3.5 inline mr-1" />
-                                    Téléphone
-                                  </label>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {artisan.telephone}
-                                  </p>
-                                </div>
-                              )}
-
-                              {artisan.email && (
-                                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                  <label className="block text-xs font-medium text-gray-500 mb-1">
-                                    <Mail className="w-3.5 h-3.5 inline mr-1" />
-                                    Email
-                                  </label>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {artisan.email}
-                                  </p>
-                                </div>
-                              )}
-
-                              {artisan.adresse && (
-                                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                  <label className="block text-xs font-medium text-gray-500 mb-1">
-                                    <MapPin className="w-3.5 h-3.5 inline mr-1" />
-                                    Adresse
-                                  </label>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {artisan.adresse}
-                                  </p>
-                                </div>
-                              )}
-
-                              {artisan.ville && (
-                                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                  <label className="block text-xs font-medium text-gray-500 mb-1">
-                                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                                    Ville
-                                  </label>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {artisan.ville}
-                                  </p>
-                                </div>
-                              )}
-
-                              {artisan.pays && (
-                                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                  <label className="block text-xs font-medium text-gray-500 mb-1">
-                                    Pays
-                                  </label>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {artisan.pays}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-center py-8">
-                          <Loading />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'documents' && (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-purple-600" />
-                        Documents et Factures
-                      </h3>
-                      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8">
-                        <div className="text-center">
-                          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p className="text-gray-600 mb-2">Aucun document joint</p>
-                          <p className="text-sm text-gray-500">
-                            Les factures et documents seront disponibles ici
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
+            {vente.observations ? (
+              <Section
+                id="observations"
+                icon={StickyNote}
+                tone="slate"
+                title="Observations"
+                description="Remarques consignées lors de la déclaration."
+              >
+                <p className="vente-detail__notes">{vente.observations}</p>
+              </Section>
+            ) : null}
           </div>
 
-          <div className="space-y-4">
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Statut</h3>
-              <div className="text-center">
-                <span
-                  className={`inline-block px-4 py-2 text-sm font-bold rounded-full ${
-                    STATUS_LABELS[vente.statut]?.color ||
-                    'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {STATUS_LABELS[vente.statut]?.label || vente.statut}
-                </span>
+          <aside className="vente-detail__aside" aria-label="Artisan et suivi">
+            <section className="sn-card">
+              <div className="sn-card__head">
+                <div>
+                  <h3>Artisan vendeur</h3>
+                  <p className="sn-card__hint">Titulaire de la déclaration.</p>
+                </div>
               </div>
-            </Card>
-
-            <Card className="p-4 bg-gradient-to-br from-emerald-50 to-green-100 border-2 border-emerald-200">
-              <h3 className="text-sm font-semibold text-emerald-900 mb-3 flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4" />
-                Montant Total
-              </h3>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-emerald-700">
-                  {formatCurrency(vente.montant_total_fcfa)}
-                </p>
-                <div className="mt-3 pt-3 border-t border-emerald-200">
-                  <p className="text-xs text-gray-600">
-                    {vente.quantite_grammes.toFixed(2)} g × {formatCurrency(vente.prix_kg_fcfa / 1000)}/g
+              {!artisan ? (
+                <p className="sn-empty">Fiche artisan indisponible.</p>
+              ) : (
+                <div className="vente-detail__artisan">
+                  <p className="vente-detail__artisan-name">
+                    <UserRound aria-hidden="true" />
+                    <strong>{artisanLabel(artisan)}</strong>
                   </p>
+                  <ul>
+                    <li><CreditCard aria-hidden="true" /> {artisan.numero_carte || 'Carte non renseignée'}</li>
+                    <li><MapPin aria-hidden="true" /> {[artisan.commune, artisan.region].filter(Boolean).join(', ') || 'Localisation inconnue'}</li>
+                    <li><Phone aria-hidden="true" /> {artisan.telephone || 'Téléphone non renseigné'}</li>
+                    <li><Mail aria-hidden="true" /> {artisan.email || 'E-mail non renseigné'}</li>
+                  </ul>
+                  <button
+                    type="button"
+                    className="sn-btn sn-btn--sm"
+                    onClick={() => navigate(`/artisan-minier/${artisan.id}`)}
+                  >
+                    Ouvrir la fiche artisan
+                  </button>
                 </div>
-              </div>
-            </Card>
+              )}
+            </section>
 
-            <Card className="p-4 bg-blue-50 border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900 mb-3">
-                Résumé Rapide
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Montant Brut:</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(vente.montant_brut_fcfa)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">TVA:</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(vente.tva_montant_fcfa)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Taxe Dev:</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(vente.taxe_dev_comm_montant_fcfa)}
-                  </span>
-                </div>
-                <div className="border-t border-blue-300 pt-2 flex justify-between">
-                  <span className="font-bold text-gray-900">Total:</span>
-                  <span className="font-bold text-emerald-600">
-                    {formatCurrency(vente.montant_total_fcfa)}
-                  </span>
+            <section className="sn-card">
+              <div className="sn-card__head">
+                <div>
+                  <h3>Suivi</h3>
+                  <p className="sn-card__hint">Traçabilité de la déclaration.</p>
                 </div>
               </div>
-            </Card>
-          </div>
+              <ol className="vente-detail__timeline">
+                <li>
+                  <span>Déclaration créée</span>
+                  <b>{formatDateTime(vente.created_at)}</b>
+                </li>
+                <li>
+                  <span>Dernière modification</span>
+                  <b>{formatDateTime(vente.updated_at)}</b>
+                </li>
+                <li>
+                  <span>Statut courant</span>
+                  <b>{STATUT_LABELS[vente.statut]}</b>
+                </li>
+              </ol>
+
+              {actions?.annuler && (
+                <div className="vente-detail__danger">
+                  <button
+                    type="button"
+                    className="sn-btn sn-btn--sm sn-btn--danger"
+                    disabled={updating}
+                    onClick={() => void changerStatut('annulee', 'Annuler')}
+                  >
+                    Annuler la vente
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {vente.statut === 'payee' && (
+              <Note icon={Wallet}>
+                Cette vente a été réglée. Le détail du paiement est consultable depuis
+                l’historique des paiements.
+              </Note>
+            )}
+          </aside>
         </div>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

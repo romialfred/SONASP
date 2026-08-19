@@ -1,34 +1,55 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus,
-  Search,
-  Eye,
-  Edit2,
-  Trash2,
-  DollarSign,
   Calendar,
-  TrendingUp,
-  Clock,
+  AlertCircle,
   Coins,
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Scale,
+  Trash2,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Loading } from '@/components/ui/Loading';
-import { artisanGoldSalesService, ArtisanGoldSale } from '@/services/artisanGoldSalesService';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  Badge,
+  DataTable,
+  EmptyState,
+  PageHeader,
+  SearchInput,
+  SelectControl,
+  StatGrid,
+  type BadgeTone,
+  type Column,
+} from '@/components/ui/sn';
+import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
+import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
+import './ventes-or.css';
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  en_attente: { label: 'En Attente', color: 'bg-yellow-100 text-yellow-800' },
-  validee: { label: 'Validée', color: 'bg-blue-100 text-blue-800' },
-  payee: { label: 'Payée', color: 'bg-green-100 text-green-800' },
-  annulee: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
+type Statut = ArtisanGoldSale['statut'];
+type TypeOr = ArtisanGoldSale['type_or'];
+type SortKey = 'date' | 'montant' | 'quantite';
+
+const STATUT_LABELS: Record<Statut, string> = {
+  en_attente: 'En attente',
+  validee: 'Validée',
+  payee: 'Payée',
+  annulee: 'Annulée',
 };
 
-const TYPE_OR_LABELS: Record<string, string> = {
+const STATUT_TONES: Record<Statut, BadgeTone> = {
+  en_attente: 'warning',
+  validee: 'info',
+  payee: 'success',
+  annulee: 'danger',
+};
+
+const TYPE_OR_LABELS: Record<TypeOr, string> = {
   poudre: 'Poudre',
   lingot: 'Lingot',
   pepites: 'Pépites',
@@ -36,351 +57,363 @@ const TYPE_OR_LABELS: Record<string, string> = {
   autre: 'Autre',
 };
 
+const STATUT_ORDER: Statut[] = ['en_attente', 'validee', 'payee', 'annulee'];
+
+const integer = new Intl.NumberFormat('fr-FR');
+const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+const formatFcfa = (value: number) =>
+  value >= 1_000_000 ? `${decimal.format(value / 1_000_000)} M FCFA` : `${integer.format(Math.round(value))} FCFA`;
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
+};
+
+interface Filters {
+  search: string;
+  statut: Statut | 'all';
+  typeOr: TypeOr | 'all';
+  from: string;
+  to: string;
+}
+
+const EMPTY_FILTERS: Filters = { search: '', statut: 'all', typeOr: 'all', from: '', to: '' };
+
+/** Filtrage combinable : chaque critère se cumule aux autres. */
+export function filterSales(sales: ArtisanGoldSale[], filters: Filters): ArtisanGoldSale[] {
+  const query = filters.search.trim().toLocaleLowerCase('fr');
+  return sales.filter((sale) => {
+    if (filters.statut !== 'all' && sale.statut !== filters.statut) return false;
+    if (filters.typeOr !== 'all' && sale.type_or !== filters.typeOr) return false;
+    if (filters.from && (sale.date_vente || '') < filters.from) return false;
+    if (filters.to && (sale.date_vente || '') > filters.to) return false;
+    if (!query) return true;
+    return [sale.numero_recu, sale.observations, TYPE_OR_LABELS[sale.type_or]]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase('fr')
+      .includes(query);
+  });
+}
+
+export function sortSales(sales: ArtisanGoldSale[], key: SortKey): ArtisanGoldSale[] {
+  return [...sales].sort((a, b) => {
+    if (key === 'montant') return b.montant_total_fcfa - a.montant_total_fcfa;
+    if (key === 'quantite') return b.quantite_grammes - a.quantite_grammes;
+    return (b.date_vente || '').localeCompare(a.date_vente || '');
+  });
+}
+
 export default function VentesOr() {
   const navigate = useNavigate();
+  const [sales, setSales] = useState<ArtisanGoldSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ventes, setVentes] = useState<ArtisanGoldSale[]>([]);
-  const [filteredVentes, setFilteredVentes] = useState<ArtisanGoldSale[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [sort, setSort] = useState<SortKey>('date');
+
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
+  const confirmation = useConfirmationDialog();
 
-  useEffect(() => {
-    loadVentes();
-  }, []);
-
-  useEffect(() => {
-    filterVentes();
-  }, [searchTerm, statusFilter, ventes]);
-
-  const loadVentes = async () => {
+  const loadSales = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
       const data = await artisanGoldSalesService.getAll();
-      setVentes(data || []);
-      setFilteredVentes(data || []);
-    } catch (err: any) {
-      console.error('Error loading ventes:', err);
-      const errorMessage = err.message || 'Impossible de charger les ventes d\'or';
-      setError(errorMessage);
-      showError(errorMessage);
-      setVentes([]);
-      setFilteredVentes([]);
+      setSales(data || []);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Impossible de charger les ventes d'or";
+      setError(message);
+      setSales([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterVentes = () => {
-    let filtered = [...ventes];
+  useEffect(() => {
+    void loadSales();
+  }, []);
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (vente) =>
-          vente.numero_recu?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          vente.observations?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  const results = useMemo(() => sortSales(filterSales(sales, filters), sort), [filters, sales, sort]);
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((vente) => vente.statut === statusFilter);
-    }
+  const stats = useMemo(
+    () => ({
+      total: results.length,
+      enAttente: results.filter((sale) => sale.statut === 'en_attente').length,
+      quantite: results.reduce((sum, sale) => sum + (sale.quantite_grammes || 0), 0),
+      montant: results.reduce((sum, sale) => sum + (sale.montant_total_fcfa || 0), 0),
+      taxes: results.reduce(
+        (sum, sale) => sum + (sale.tva_montant_fcfa || 0) + (sale.taxe_dev_comm_montant_fcfa || 0),
+        0
+      ),
+    }),
+    [results]
+  );
 
-    setFilteredVentes(filtered);
-  };
+  const countByStatut = useMemo(
+    () =>
+      STATUT_ORDER.reduce(
+        (counters, statut) => ({ ...counters, [statut]: sales.filter((sale) => sale.statut === statut).length }),
+        {} as Record<Statut, number>
+      ),
+    [sales]
+  );
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette vente ?')) return;
-
-    try {
-      await artisanGoldSalesService.delete(id);
-      showSuccess('Vente supprimée avec succès');
-      loadVentes();
-    } catch (error) {
-      showError('Impossible de supprimer la vente');
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+  /** Suppression confirmée par le dialogue de la plateforme (plus de `confirm()` natif). */
+  const handleDelete = async (sale: ArtisanGoldSale) => {
+    const confirmed = await confirmation.open({
+      title: 'Supprimer cette vente ?',
+      message: `La vente ${sale.numero_recu || ''} sera définitivement retirée du registre.`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      severity: 'danger',
+      details: {
+        Quantité: `${decimal.format(sale.quantite_grammes)} g`,
+        Montant: formatFcfa(sale.montant_total_fcfa),
+        Statut: STATUT_LABELS[sale.statut],
+      },
     });
+    if (!confirmed) return;
+
+    setDeleting(sale.id);
+    try {
+      await artisanGoldSalesService.delete(sale.id);
+      showSuccess('Vente supprimée avec succès');
+      await loadSales();
+    } catch {
+      showError('Impossible de supprimer la vente');
+    } finally {
+      setDeleting(null);
+    }
   };
 
-  const getTotalStats = () => {
-    return {
-      total: filteredVentes.length,
-      en_attente: filteredVentes.filter((v) => v.statut === 'en_attente').length,
-      validee: filteredVentes.filter((v) => v.statut === 'validee').length,
-      payee: filteredVentes.filter((v) => v.statut === 'payee').length,
-      montant_total: filteredVentes.reduce((sum, v) => sum + v.montant_total_fcfa, 0),
-      quantite_totale: filteredVentes.reduce((sum, v) => sum + v.quantite_grammes, 0),
-    };
-  };
-
-  const stats = getTotalStats();
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-96">
-          <Loading />
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ventes d'Or des Artisans</h1>
-            <p className="text-gray-600 mt-2">
-              Gestion de la collecte et des ventes d'or auprès des artisans miniers
-            </p>
-          </div>
-          <Card className="p-8">
-            <div className="text-center">
-              <div className="flex justify-center mb-4">
-                <Coins className="w-16 h-16 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <p className="text-sm text-gray-500 mb-4">
-                La table des ventes d'or n'existe peut-être pas encore. Veuillez exécuter le script SQL de création.
-              </p>
-              <Button onClick={loadVentes}>
-                Réessayer
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </MainLayout>
-    );
-  }
+  const columns: Column<ArtisanGoldSale>[] = [
+    { key: 'numero_recu', header: 'N° de reçu', render: (sale) => <strong>{sale.numero_recu || '—'}</strong> },
+    { key: 'date_vente', header: 'Date', render: (sale) => formatDate(sale.date_vente) },
+    { key: 'type_or', header: 'Type d’or', render: (sale) => TYPE_OR_LABELS[sale.type_or] || sale.type_or },
+    { key: 'purete', header: 'Pureté', numeric: true, render: (sale) => `${sale.purete_karat} K` },
+    { key: 'quantite', header: 'Quantité', numeric: true, render: (sale) => `${decimal.format(sale.quantite_grammes)} g` },
+    { key: 'montant', header: 'Montant total', numeric: true, render: (sale) => formatFcfa(sale.montant_total_fcfa) },
+    {
+      key: 'statut',
+      header: 'Statut',
+      render: (sale) => <Badge tone={STATUT_TONES[sale.statut]}>{STATUT_LABELS[sale.statut]}</Badge>,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (sale) => (
+        <span className="ventes-or__actions">
+          <button
+            type="button"
+            className="sn-btn sn-btn--sm sn-btn--icon"
+            aria-label={`Consulter la vente ${sale.numero_recu || ''}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/artisan-minier/ventes-or/${sale.id}`);
+            }}
+          >
+            <Eye aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="sn-btn sn-btn--sm sn-btn--icon"
+            aria-label={`Modifier la vente ${sale.numero_recu || ''}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/artisan-minier/ventes-or/${sale.id}/modifier`);
+            }}
+          >
+            <Pencil aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="sn-btn sn-btn--sm sn-btn--icon sn-btn--danger"
+            aria-label={`Supprimer la vente ${sale.numero_recu || ''}`}
+            disabled={deleting === sale.id}
+            onClick={(event) => {
+              event.stopPropagation();
+              void handleDelete(sale);
+            }}
+          >
+            <Trash2 aria-hidden="true" />
+          </button>
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <MainLayout>
-      <CustomAlert {...alertState} onClose={closeAlert} />
+    <NationalDashboardLayout>
+      <div className="sn-page">
+        <CustomAlert {...alertState} onClose={closeAlert} />
+        <confirmation.ConfirmationDialog />
 
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ventes d'Or des Artisans</h1>
-            <p className="text-gray-600 mt-2">
-              Gestion de la collecte et des ventes d'or auprès des artisans miniers
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Nouvelle Vente
-          </Button>
-        </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Ventes</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Montant Total</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(stats.montant_total)}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Quantité Totale</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.quantite_totale.toFixed(2)} g</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">En Attente</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.en_attente}</p>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  placeholder="Rechercher par numéro de reçu ou observations..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="lg:w-64">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+        <PageHeader
+          icon={Coins}
+          title="Ventes d’or des artisans"
+          subtitle="Registre des collectes déclarées par les artisans miniers, taxes incluses."
+          breadcrumb={[
+            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: "Ventes d'or" },
+          ]}
+          actions={
+            <>
+              <button type="button" className="sn-btn" onClick={() => void loadSales()}>
+                <RefreshCw aria-hidden="true" /> Actualiser
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
               >
-                <option value="all">Tous les statuts</option>
-                <option value="en_attente">En Attente</option>
-                <option value="validee">Validée</option>
-                <option value="payee">Payée</option>
-                <option value="annulee">Annulée</option>
-              </select>
-            </div>
-          </div>
-        </Card>
+                <Plus aria-hidden="true" /> Nouvelle vente
+              </button>
+            </>
+          }
+        />
 
-        {/* Ventes Table */}
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Numéro Reçu
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type d'Or
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantité (g)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pureté (K)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Montant Total
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredVentes.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      Aucune vente trouvée
-                    </td>
-                  </tr>
-                ) : (
-                  filteredVentes.map((vente) => (
-                    <tr key={vente.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(vente.date_vente)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {vente.numero_recu || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {TYPE_OR_LABELS[vente.type_or] || vente.type_or}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {vente.quantite_grammes.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {vente.purete_karat}K
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(vente.montant_total_fcfa)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            STATUS_LABELS[vente.statut]?.color || 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {STATUS_LABELS[vente.statut]?.label || vente.statut}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => navigate(`/artisan-minier/ventes-or/${vente.id}`)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Voir détails"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/artisan-minier/ventes-or/${vente.id}/modifier`)
-                            }
-                            className="text-emerald-600 hover:text-emerald-900"
-                            title="Modifier"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(vente.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {error ? (
+          <div className="sn-card ventes-or__error">
+            <AlertCircle aria-hidden="true" />
+            <div>
+              <h3>Impossible de charger le registre</h3>
+              <p>{error}</p>
+            </div>
+            <button type="button" className="sn-btn sn-btn--primary" onClick={() => void loadSales()}>
+              <RefreshCw aria-hidden="true" /> Réessayer
+            </button>
           </div>
-        </Card>
+        ) : (
+          <>
+            <div style={{ marginTop: 16 }}>
+              <StatGrid
+                ariaLabel="Indicateurs des ventes d’or"
+                items={[
+                  { label: 'Ventes filtrées', value: integer.format(stats.total), hint: `${integer.format(stats.enAttente)} en attente`, icon: Coins, tone: 'gold' },
+                  { label: 'Quantité collectée', value: `${decimal.format(stats.quantite)} g`, icon: Scale, tone: 'green' },
+                  { label: 'Montant déclaré', value: formatFcfa(stats.montant), icon: Wallet, tone: 'blue' },
+                  { label: 'Taxes et redevances', value: formatFcfa(stats.taxes), hint: 'TVA + taxe de développement', icon: TrendingUp, tone: 'violet' },
+                ]}
+              />
+            </div>
+
+            <section className="sn-card ventes-or__filters" aria-label="Filtres du registre">
+              <div className="ventes-or__filters-row">
+                <SearchInput
+                  value={filters.search}
+                  onChange={(search) => setFilters((current) => ({ ...current, search }))}
+                  placeholder="Rechercher par numéro de reçu ou observation"
+                />
+                <label className="ventes-or__field">
+                  <span>Type d’or</span>
+                  <SelectControl
+                    value={filters.typeOr}
+                    onChange={(value) => setFilters((current) => ({ ...current, typeOr: value as TypeOr | 'all' }))}
+                    ariaLabel="Filtrer par type d’or"
+                  >
+                    <option value="all">Tous les types</option>
+                    {(Object.keys(TYPE_OR_LABELS) as TypeOr[]).map((type) => (
+                      <option key={type} value={type}>{TYPE_OR_LABELS[type]}</option>
+                    ))}
+                  </SelectControl>
+                </label>
+                <label className="ventes-or__field">
+                  <span>Trier par</span>
+                  <SelectControl value={sort} onChange={(value) => setSort(value as SortKey)} ariaLabel="Trier les ventes">
+                    <option value="date">Date (récentes)</option>
+                    <option value="montant">Montant décroissant</option>
+                    <option value="quantite">Quantité décroissante</option>
+                  </SelectControl>
+                </label>
+                <label className="ventes-or__field ventes-or__dates">
+                  <span>Période</span>
+                  <div>
+                    <Calendar aria-hidden="true" />
+                    <input
+                      type="date"
+                      value={filters.from}
+                      aria-label="Vendu à partir du"
+                      onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))}
+                    />
+                    <i aria-hidden="true">–</i>
+                    <input
+                      type="date"
+                      value={filters.to}
+                      aria-label="Vendu jusqu’au"
+                      onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))}
+                    />
+                  </div>
+                </label>
+                <button type="button" className="sn-btn sn-btn--ghost" onClick={() => setFilters(EMPTY_FILTERS)}>
+                  Réinitialiser
+                </button>
+              </div>
+
+              <div className="sn-chips ventes-or__statuts" role="group" aria-label="Statut de la vente">
+                <button
+                  type="button"
+                  className={filters.statut === 'all' ? 'is-active' : ''}
+                  onClick={() => setFilters((current) => ({ ...current, statut: 'all' }))}
+                >
+                  Toutes <b>({integer.format(sales.length)})</b>
+                </button>
+                {STATUT_ORDER.map((statut) => (
+                  <button
+                    key={statut}
+                    type="button"
+                    className={filters.statut === statut ? 'is-active' : ''}
+                    onClick={() => setFilters((current) => ({ ...current, statut }))}
+                  >
+                    {STATUT_LABELS[statut]} <b>({integer.format(countByStatut[statut] || 0)})</b>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="sn-card ventes-or__table" aria-label="Registre des ventes">
+              <div className="sn-card__head">
+                <div>
+                  <h3>
+                    Registre des ventes <span className="sn-count">{integer.format(results.length)}</span>
+                  </h3>
+                  <p className="sn-card__hint">Cliquez sur une ligne pour ouvrir le détail de la vente.</p>
+                </div>
+              </div>
+
+              {!loading && sales.length === 0 ? (
+                <EmptyState
+                  title="Aucune vente enregistrée"
+                  description="Enregistrez la première collecte déclarée par un artisan minier."
+                  action={
+                    <button
+                      type="button"
+                      className="sn-btn sn-btn--primary"
+                      onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
+                    >
+                      <Plus aria-hidden="true" /> Nouvelle vente
+                    </button>
+                  }
+                />
+              ) : (
+                <div style={{ padding: '0 16px 16px' }}>
+                  <DataTable
+                    columns={columns}
+                    rows={results}
+                    loading={loading}
+                    empty="Aucune vente ne correspond aux filtres sélectionnés."
+                    caption="Registre des ventes d’or des artisans"
+                    onRowClick={(sale) => navigate(`/artisan-minier/ventes-or/${sale.id}`)}
+                  />
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

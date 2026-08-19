@@ -29,6 +29,8 @@ export interface ArtisanalSite {
   authorizedChemicals: string[];
   latitude: number;
   longitude: number;
+  /** URLs (ou données encodées) des photos du site, 3 au maximum. */
+  photos: string[];
   manager: SiteContact;
   collectionOfficer: SiteContact;
   notes?: string;
@@ -52,6 +54,7 @@ export interface ArtisanalSiteInput {
   authorizedChemicals: string[];
   latitude: number;
   longitude: number;
+  photos: string[];
   manager: Omit<SiteContact, 'role'>;
   collectionOfficer: Omit<SiteContact, 'role'>;
   notes?: string;
@@ -67,16 +70,6 @@ export interface SiteProduction {
   artisanCount: number;
   notes?: string;
   createdAt: string;
-}
-
-export interface SiteProductionInput {
-  siteId: string;
-  productionDate: string;
-  goldWeightGrams: number;
-  revenueFcfa: number;
-  taxesFcfa: number;
-  artisanCount: number;
-  notes?: string;
 }
 
 export interface ArtisanalSiteMetrics {

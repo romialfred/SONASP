@@ -30,6 +30,11 @@ export function formatStatusFr(status: string): string {
     'refined': 'Raffiné',
     'in_sale': 'En Vente',
     'sold': 'Vendu',
+    // Trois etapes du circuit de tracabilite n'avaient pas de libelle francais et
+    // retombaient sur leur identifiant technique anglicise a l'ecran.
+    'waiting_for_customs_approval': 'En attente d’approbation douanière',
+    'in_inventory': 'En stock',
+    'paid': 'Payé',
     
     // Shipping statuses
     'pending': 'En Attente',

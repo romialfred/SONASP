@@ -33,7 +33,6 @@ import {
   AlertTriangle,
   Ship,
   Grid,
-  Plus,
   MapPinned,
   SlidersHorizontal,
   PanelLeftClose,
@@ -83,7 +82,6 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIcon: MapPinned,
       items: [
         { label: t('nav.artisanalSitesOverview'), path: '/artisan-sites', icon: Grid, iconColor: 'text-emerald-600' },
-        { label: t('nav.addArtisanalSite'), path: '/artisan-sites/nouveau', icon: Plus, iconColor: 'text-blue-600' },
         { label: t('nav.artisanalSiteProduction'), path: '/artisan-sites/production', icon: Factory, iconColor: 'text-amber-600' },
       ],
     },
@@ -350,7 +348,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 type="button"
                 onClick={() => toggleGroup(group.id)}
                 className={cn(
-                  'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] transition-colors',
+                  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-[13px] transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-inset',
                   isOpen || hasActiveItem
                     ? 'bg-white/10 font-semibold text-white'
@@ -364,7 +362,7 @@ export function AccordionSidebar({ onToggle }: AccordionSidebarProps) {
                 {!collapsed && (
                   <>
                     <span
-                      className={cn('min-w-0 flex-1 truncate', group.id === 'artisanal-sites' && 'text-[9px] font-semibold tracking-[-0.01em]')}
+                      className="min-w-0 flex-1 truncate"
                       title={group.label}
                     >
                       {group.label}

@@ -66,8 +66,9 @@ describe('AccordionSidebar', () => {
 
     expect(screen.getByRole('button', { name: 'nav.artisanalSites' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'nav.artisanalSitesOverview' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'nav.addArtisanalSite' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'nav.artisanalSiteProduction' })).toBeInTheDocument();
+    // La création d'un site se fait depuis les pages du module, plus depuis la navigation.
+    expect(screen.queryByRole('link', { name: 'nav.addArtisanalSite' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'nav.configuration' }));
 

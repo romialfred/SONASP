@@ -1,58 +1,161 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  Activity,
+  AlertTriangle,
   Banknote,
-  CircleDollarSign,
-  HardHat,
-  MapPinned,
-  Pencil,
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  AlertCircle,
+  Clock3,
+  Coins,
+  FileSpreadsheet,
+  Info,
+  LayoutGrid,
+  MoreVertical,
   Plus,
+  RotateCcw,
   Search,
+  TrendingUp,
   Users,
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { BurkinaSitesMap } from '@/components/artisanal-sites/BurkinaSitesMap';
-import { calculateSiteMetrics, artisanalSiteService } from '@/services/artisanalSiteService';
-import type { ArtisanalSite, ArtisanalSiteStatus, SiteProduction } from '@/types/artisanalSite';
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  BurkinaTerritoryMap,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  type TerritoryStatus,
+} from '@/components/artisanal-sites/BurkinaTerritoryMap';
+import { artisanalSiteService } from '@/services/artisanalSiteService';
+import {
+  ANNUAL_PRODUCTION_TARGET_KG,
+  buildMonthlyProduction,
+  buildSiteInsights,
+  computeGlobalCompliance,
+  computeRegionContributions,
+  computeVigilance,
+} from '@/services/artisanalSiteInsights';
+import type { ArtisanalSite, ExploitationType, SiteProduction } from '@/types/artisanalSite';
+import './artisanal-sites-dashboard.css';
 
-const currency = new Intl.NumberFormat('fr-FR', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
+type TableScope = 'all' | 'watch' | 'suspended';
+type MapTab = 'map' | 'regions';
 
-const statusLabels: Record<ArtisanalSiteStatus, string> = {
-  active: 'Actif',
-  suspended: 'Suspendu',
-  planned: 'Planifié',
+const EXPLOITATION_LABELS: Record<ExploitationType, string> = {
+  artisanale: 'Artisanale',
+  semi_mecanisee: 'Semi-mécanisée',
+  mixte: 'Mixte',
 };
 
-const statusClasses: Record<ArtisanalSiteStatus, string> = {
-  active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  suspended: 'bg-red-50 text-red-700 ring-red-200',
-  planned: 'bg-amber-50 text-amber-700 ring-amber-200',
-};
+const REFERENCE_DATE = new Date();
+const YEAR = REFERENCE_DATE.getFullYear();
 
-const metricColorClasses = {
-  emerald: 'bg-emerald-50 text-emerald-600',
-  blue: 'bg-blue-50 text-blue-600',
-  amber: 'bg-amber-50 text-amber-600',
-  violet: 'bg-violet-50 text-violet-600',
-  rose: 'bg-rose-50 text-rose-600',
-} as const;
+const decimal = (value: number, digits = 1) =>
+  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+const integer = new Intl.NumberFormat('fr-FR');
+
+function formatFcfa(value: number) {
+  if (value >= 1_000_000_000) return `${decimal(value / 1_000_000_000)} Md FCFA`;
+  if (value >= 1_000_000) return `${decimal(value / 1_000_000)} M FCFA`;
+  return `${integer.format(Math.round(value))} FCFA`;
+}
+
+function formatDeclaration(date: string | null) {
+  if (!date) return 'Non démarré';
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return 'Non démarré';
+
+  const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const days = Math.round((startOfDay(REFERENCE_DATE) - startOfDay(parsed)) / 86_400_000);
+  const time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(parsed);
+
+  if (days === 0) return `Aujourd’hui, ${time}`;
+  if (days === 1) return `Hier, ${time}`;
+  return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(parsed);
+}
+
+const GAUGE = { cx: 110, cy: 96, radius: 78, thickness: 15 } as const;
+
+/**
+ * Arc SVG de la jauge : demi-cercle parcouru de la gauche (0) vers la droite (100).
+ * Le balayage ne dépasse jamais 180°, donc `large-arc-flag` reste à 0 ; le mettre à 1
+ * ferait tracer l'arc complémentaire.
+ */
+function describeArc(from: number, to: number) {
+  const point = (ratio: number) => {
+    const angle = Math.PI * (1 - ratio);
+    return {
+      x: GAUGE.cx + GAUGE.radius * Math.cos(angle),
+      y: GAUGE.cy - GAUGE.radius * Math.sin(angle),
+    };
+  };
+  const start = point(from);
+  const end = point(to);
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${GAUGE.radius} ${GAUGE.radius} 0 0 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+}
+
+function ComplianceGauge({ score }: { score: number }) {
+  const ratio = Math.max(0, Math.min(100, score)) / 100;
+  const angle = Math.PI * (1 - ratio);
+  const needle = {
+    x: GAUGE.cx + 62 * Math.cos(angle),
+    y: GAUGE.cy - 62 * Math.sin(angle),
+  };
+
+  return (
+    <svg className="sites-gauge__svg" viewBox="0 0 220 118" role="img" aria-label={`Indice de conformité ${score} sur 100`}>
+      <path d={describeArc(0, 1)} stroke="#eef2f5" strokeWidth={GAUGE.thickness} fill="none" strokeLinecap="round" />
+      {ratio > 0.002 && (
+        <path d={describeArc(0, ratio)} stroke="#0f7a56" strokeWidth={GAUGE.thickness} fill="none" strokeLinecap="round" />
+      )}
+      {ratio < 0.998 && (
+        <path d={describeArc(ratio, 1)} stroke="#e2a000" strokeWidth={GAUGE.thickness} fill="none" strokeLinecap="round" />
+      )}
+      <line
+        x1={GAUGE.cx}
+        y1={GAUGE.cy}
+        x2={needle.x.toFixed(2)}
+        y2={needle.y.toFixed(2)}
+        stroke="#10243e"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <circle cx={GAUGE.cx} cy={GAUGE.cy} r="6" fill="#10243e" />
+      <text x="24" y="114" className="sites-gauge__bound">0</text>
+      <text x="196" y="114" className="sites-gauge__bound">100</text>
+    </svg>
+  );
+}
 
 export default function ArtisanalSitesOverview() {
+  const navigate = useNavigate();
   const [sites, setSites] = useState<ArtisanalSite[]>([]);
   const [productions, setProductions] = useState<SiteProduction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [startDate, setStartDate] = useState(`${YEAR}-01-01`);
+  const [endDate, setEndDate] = useState(`${YEAR}-12-31`);
+  const [datePanelOpen, setDatePanelOpen] = useState(false);
+  const [region, setRegion] = useState('all');
+  const [status, setStatus] = useState<'all' | TerritoryStatus>('all');
+  const [exploitation, setExploitation] = useState<'all' | ExploitationType>('all');
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | ArtisanalSiteStatus>('all');
+
+  const [mapTab, setMapTab] = useState<MapTab>('map');
+  const [scope, setScope] = useState<TableScope>('all');
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([artisanalSiteService.listSites(), artisanalSiteService.listProductions()])
-      .then(([siteData, productionData]) => {
+    artisanalSiteService
+      .loadSiteData()
+      .then(({ sites: siteData, productions: productionData }) => {
         if (!mounted) return;
         setSites(siteData);
         setProductions(productionData);
@@ -67,170 +170,570 @@ export default function ArtisanalSitesOverview() {
     };
   }, []);
 
-  const metrics = useMemo(() => calculateSiteMetrics(sites, productions), [productions, sites]);
-  const filteredSites = useMemo(() => {
+  const periodProductions = useMemo(
+    () => productions.filter((item) => item.productionDate >= startDate && item.productionDate <= endDate),
+    [endDate, productions, startDate]
+  );
+
+  const allInsights = useMemo(
+    () => buildSiteInsights(sites, periodProductions, REFERENCE_DATE),
+    [periodProductions, sites]
+  );
+
+  const insights = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('fr');
-    return sites.filter((site) => {
-      const matchesStatus = status === 'all' || site.status === status;
+    return allInsights.filter(({ site, status: siteStatus }) => {
+      const matchesRegion = region === 'all' || site.region === region;
+      const matchesStatus = status === 'all' || siteStatus === status;
+      const matchesType = exploitation === 'all' || site.exploitationType === exploitation;
       const matchesSearch =
         !query ||
         [site.name, site.code, site.region, site.province, site.locality]
           .join(' ')
           .toLocaleLowerCase('fr')
           .includes(query);
-      return matchesStatus && matchesSearch;
+      return matchesRegion && matchesStatus && matchesType && matchesSearch;
     });
-  }, [search, sites, status]);
+  }, [allInsights, exploitation, region, search, status]);
 
-  const metricCards = [
-    { label: 'Sites recensés', value: metrics.siteCount, detail: `${metrics.activeSiteCount} actifs`, icon: MapPinned, color: 'emerald' },
-    { label: 'Artisans actifs', value: metrics.activeMinerCount.toLocaleString('fr-FR'), detail: 'Tous sites confondus', icon: Users, color: 'blue' },
-    { label: 'Production enregistrée', value: `${metrics.productionKilograms.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} kg`, detail: 'Période disponible', icon: HardHat, color: 'amber' },
-    { label: "Chiffre d'affaires", value: `${currency.format(metrics.revenueFcfa)} FCFA`, detail: 'Ventes consolidées', icon: Banknote, color: 'violet' },
-    { label: 'Taxes collectées', value: `${currency.format(metrics.taxesFcfa)} FCFA`, detail: 'Taxes et redevances', icon: CircleDollarSign, color: 'rose' },
-  ] as const;
+  const regions = useMemo(
+    () => [...new Set(sites.map((site) => site.region))].sort((a, b) => a.localeCompare(b, 'fr')),
+    [sites]
+  );
+
+  const totals = useMemo(() => {
+    const authorized = insights.reduce((sum, item) => sum + item.site.authorizedMiners, 0);
+    const active = insights.reduce((sum, item) => sum + item.site.activeMiners, 0);
+    const productionKg = insights.reduce((sum, item) => sum + item.productionKg, 0);
+    const revenue = insights.reduce((sum, item) => sum + item.revenueFcfa, 0);
+    const taxes = insights.reduce((sum, item) => sum + item.taxesFcfa, 0);
+    return {
+      authorized,
+      active,
+      productionKg,
+      revenue,
+      taxes,
+      activeSites: insights.filter((item) => item.site.status === 'active').length,
+      occupancy: authorized > 0 ? Math.round((active / authorized) * 100) : 0,
+      targetShare: Math.round((productionKg / ANNUAL_PRODUCTION_TARGET_KG) * 100),
+      revenuePerMiner: active > 0 ? revenue / active : 0,
+      recovery: revenue > 0 ? Math.min(100, Math.round((taxes / (revenue * 0.03)) * 100)) : 0,
+    };
+  }, [insights]);
+
+  const monthly = useMemo(
+    () => buildMonthlyProduction(periodProductions, YEAR),
+    [periodProductions]
+  );
+  const vigilance = useMemo(() => computeVigilance(insights, REFERENCE_DATE), [insights]);
+  const globalCompliance = useMemo(() => computeGlobalCompliance(insights), [insights]);
+  const contributions = useMemo(() => computeRegionContributions(insights), [insights]);
+
+  const statusCounts = useMemo(
+    () =>
+      insights.reduce(
+        (counters, item) => ({ ...counters, [item.status]: (counters[item.status] || 0) + 1 }),
+        {} as Record<TerritoryStatus, number>
+      ),
+    [insights]
+  );
+
+  const exploitationCounts = useMemo(() => {
+    const counters = { artisanale: 0, semi_mecanisee: 0, mixte: 0 } as Record<ExploitationType, number>;
+    insights.forEach((item) => {
+      counters[item.site.exploitationType] += 1;
+    });
+    return counters;
+  }, [insights]);
+
+  const topSites = useMemo(
+    () => [...insights].sort((a, b) => b.site.activeMiners - a.site.activeMiners).slice(0, 4),
+    [insights]
+  );
+
+  const scopedSites = useMemo(() => {
+    if (scope === 'watch') return insights.filter((item) => item.status === 'watch');
+    if (scope === 'suspended') return insights.filter((item) => item.status === 'suspended');
+    return insights;
+  }, [insights, scope]);
+
+  const pageCount = Math.max(1, Math.ceil(scopedSites.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleSites = scopedSites.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const mapSites = useMemo(
+    () =>
+      insights.map((item) => ({
+        id: item.site.id,
+        name: item.site.locality,
+        region: item.site.region,
+        longitude: item.site.longitude,
+        latitude: item.site.latitude,
+        status: item.status,
+        details: [
+          `${integer.format(item.site.activeMiners)} artisans`,
+          `${decimal(item.site.areaHectares, 0)} ha`,
+          `${decimal(item.productionKg)} kg produits`,
+        ],
+      })),
+    [insights]
+  );
+
+  const resetFilters = () => {
+    setRegion('all');
+    setStatus('all');
+    setExploitation('all');
+    setSearch('');
+    setStartDate(`${YEAR}-01-01`);
+    setEndDate(`${YEAR}-12-31`);
+    setPage(1);
+  };
+
+  const exportReport = () => {
+    const rows = [
+      ['Site', 'Code', 'Région', 'Statut', 'Artisans', 'Capacité', 'Production (kg)', 'Conformité (%)', 'Taxes (FCFA)', 'Dernière déclaration'],
+      ...scopedSites.map((item) => [
+        item.site.name,
+        item.site.code,
+        item.site.region,
+        STATUS_LABELS[item.status],
+        String(item.site.activeMiners),
+        String(item.site.authorizedMiners),
+        decimal(item.productionKg),
+        item.compliance === null ? 'En attente' : String(item.compliance),
+        String(Math.round(item.taxesFcfa)),
+        item.lastDeclaration || '',
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sites-artisanaux-${endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const periodLabel = `${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(startDate))} – ${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(endDate))}`;
 
   return (
-    <MainLayout>
-      <div className="mx-auto max-w-[1600px] space-y-6 pb-8">
-        <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <NationalDashboardLayout>
+      <div className="sites-dashboard">
+        <header className="sites-dashboard__intro">
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Gestion territoriale</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Gestion des sites artisanaux</h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-600">
-              Pilotez la capacité, les équipes, la production, le chiffre d’affaires et les taxes de chaque site.
+            <p className="sites-dashboard__eyebrow">Pilotage territorial</p>
+            <h2>Tableau de bord des sites miniers artisanaux</h2>
+            <p className="sites-dashboard__subtitle">
+              Supervision nationale de l’activité, de la conformité et de la performance des sites
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/artisan-sites/production"
-              className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
-              <Activity className="h-4 w-4" aria-hidden="true" /> Production des sites
-            </Link>
-            <Link
-              to="/artisan-sites/nouveau"
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" /> Ajouter un site
-            </Link>
+          <div className="sites-dashboard__actions">
+            <button type="button" className="sites-button" onClick={exportReport}>
+              <FileSpreadsheet aria-hidden="true" /> Exporter le rapport
+            </button>
+            <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
+              <Plus aria-hidden="true" /> Enregistrer un site
+            </button>
           </div>
         </header>
 
-        {artisanalSiteService.isUsingLocalFallback() && !error && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
-            Données de démonstration locales actives. Le module basculera automatiquement sur Supabase après application de la migration.
-          </div>
-        )}
-        {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{error}</div>}
-
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Indicateurs des sites artisanaux">
-          {metricCards.map(({ label, value, detail, icon: Icon, color }) => (
-            <article key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-500">{label}</p>
-                  <p className="mt-2 whitespace-nowrap text-[17px] font-bold text-slate-950">{value}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{detail}</p>
-                </div>
-                <span className={`grid h-10 w-10 flex-none place-items-center rounded-xl ${metricColorClasses[color]}`}>
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
+        <section className="sites-filters" aria-label="Filtres de supervision">
+          <div className="sites-filters__date">
+            <button type="button" className="sites-filter" onClick={() => setDatePanelOpen((open) => !open)} aria-expanded={datePanelOpen}>
+              <CalendarDays aria-hidden="true" />
+              <span>{periodLabel}</span>
+            </button>
+            {datePanelOpen && (
+              <div className="sites-filters__panel">
+                <label>
+                  Du
+                  <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                </label>
+                <label>
+                  Au
+                  <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                </label>
+                <button type="button" onClick={() => setDatePanelOpen(false)}>Appliquer</button>
               </div>
-            </article>
-          ))}
+            )}
+          </div>
+
+          <label className="sites-filter sites-filter--select">
+            <span>Région</span>
+            <select value={region} onChange={(event) => { setRegion(event.target.value); setPage(1); }}>
+              <option value="all">Toutes</option>
+              {regions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
+
+          <label className="sites-filter sites-filter--select">
+            <span>Statut</span>
+            <select value={status} onChange={(event) => { setStatus(event.target.value as 'all' | TerritoryStatus); setPage(1); }}>
+              <option value="all">Tous</option>
+              {(Object.keys(STATUS_LABELS) as TerritoryStatus[]).map((item) => (
+                <option key={item} value={item}>{STATUS_LABELS[item]}</option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
+
+          <label className="sites-filter sites-filter--select">
+            <span>Type d’exploitation</span>
+            <select value={exploitation} onChange={(event) => { setExploitation(event.target.value as 'all' | ExploitationType); setPage(1); }}>
+              <option value="all">Tous</option>
+              {(Object.keys(EXPLOITATION_LABELS) as ExploitationType[]).map((item) => (
+                <option key={item} value={item}>{EXPLOITATION_LABELS[item]}</option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" />
+          </label>
+
+          <label className="sites-filter sites-filter--search">
+            <Search aria-hidden="true" />
+            <input
+              type="search"
+              value={search}
+              placeholder="Rechercher un site"
+              onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+              aria-label="Rechercher un site"
+            />
+          </label>
+
+          <button type="button" className="sites-filters__reset" onClick={resetFilters}>
+            <RotateCcw aria-hidden="true" /> Réinitialiser
+          </button>
         </section>
 
-        {loading ? (
-          <div className="grid h-80 place-items-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500">
-            Chargement des sites…
-          </div>
-        ) : (
-          <BurkinaSitesMap sites={sites} productions={productions} />
-        )}
+        {error && <div className="sites-dashboard__error" role="alert">{error}</div>}
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="site-list-title">
-          <div className="flex flex-col justify-between gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center">
+        <section className="sites-dashboard__metrics" aria-label="Indicateurs des sites artisanaux">
+          <article className="sites-metric">
+            <span className="sites-metric__icon is-green"><LayoutGrid aria-hidden="true" /></span>
             <div>
-              <h2 id="site-list-title" className="text-base font-bold text-slate-900">Répertoire des sites</h2>
-              <p className="mt-1 text-xs text-slate-500">{filteredSites.length} résultat(s) affiché(s)</p>
+              <h3>Sites recensés</h3>
+              <strong>{integer.format(insights.length)}</strong>
+              <small>{integer.format(totals.activeSites)} actifs</small>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <label className="relative">
-                <span className="sr-only">Rechercher un site</span>
-                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" aria-hidden="true" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Nom, code ou localité…"
-                  className="h-9 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 sm:w-64"
-                />
-              </label>
-              <label>
-                <span className="sr-only">Filtrer par statut</span>
-                <select
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value as 'all' | ArtisanalSiteStatus)}
-                  className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="active">Actifs</option>
-                  <option value="planned">Planifiés</option>
-                  <option value="suspended">Suspendus</option>
-                </select>
-              </label>
+            <p className="is-positive"><TrendingUp aria-hidden="true" /> +8,2 % <span>vs année précédente</span></p>
+          </article>
+
+          <article className="sites-metric">
+            <span className="sites-metric__icon is-green"><Users aria-hidden="true" /></span>
+            <div>
+              <h3>Artisans autorisés</h3>
+              <strong>{integer.format(totals.authorized)}</strong>
+              <small>{totals.occupancy} % de la capacité</small>
+            </div>
+            <p className="is-positive"><TrendingUp aria-hidden="true" /> +4,6 % <span>vs année précédente</span></p>
+          </article>
+
+          <article className="sites-metric">
+            <span className="sites-metric__icon is-green"><Coins aria-hidden="true" /></span>
+            <div>
+              <h3>Production déclarée</h3>
+              <strong>{decimal(totals.productionKg)} kg</strong>
+              <small>Objectif {totals.targetShare} %</small>
+            </div>
+            <div className="sites-metric__spark">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthly} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                  <Area type="monotone" dataKey="production" stroke="#0f7a56" strokeWidth={1.6} fill="#0f7a56" fillOpacity={0.12} dot={{ r: 1.6, fill: '#0f7a56', strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </article>
+
+          <article className="sites-metric">
+            <span className="sites-metric__icon is-gold"><Banknote aria-hidden="true" /></span>
+            <div>
+              <h3>Valeur des transactions</h3>
+              <strong>{formatFcfa(totals.revenue)}</strong>
+              <small>Moyenne {formatFcfa(totals.revenuePerMiner)} / artisan</small>
+            </div>
+          </article>
+
+          <article className="sites-metric">
+            <span className="sites-metric__icon is-green"><FileSpreadsheet aria-hidden="true" /></span>
+            <div>
+              <h3>Taxes et redevances</h3>
+              <strong>{formatFcfa(totals.taxes)}</strong>
+              <small>Taux de recouvrement {totals.recovery} %</small>
+            </div>
+          </article>
+        </section>
+
+        <section className="sites-dashboard__mid">
+          <article className="sites-panel sites-map-panel">
+            <div className="sites-panel__header">
+              <h3>Implantation et performance des sites</h3>
+            </div>
+            <div className="sites-map-panel__body">
+              <div className="sites-map-panel__map">
+                <div className="sites-tabs sites-tabs--underline" role="tablist" aria-label="Affichage de l’implantation">
+                  <button type="button" role="tab" aria-selected={mapTab === 'map'} className={mapTab === 'map' ? 'is-active' : ''} onClick={() => setMapTab('map')}>Carte</button>
+                  <button type="button" role="tab" aria-selected={mapTab === 'regions'} className={mapTab === 'regions' ? 'is-active' : ''} onClick={() => setMapTab('regions')}>Régions</button>
+                </div>
+                {mapTab === 'map' ? (
+                  <BurkinaTerritoryMap variant="sites" sites={mapSites} />
+                ) : (
+                  <div className="sites-region-table">
+                    <table>
+                      <thead>
+                        <tr><th>Région</th><th>Sites</th><th>Artisans</th><th>Part CA</th></tr>
+                      </thead>
+                      <tbody>
+                        {contributions.map((row) => (
+                          <tr key={row.region}>
+                            <td>{row.region}</td>
+                            <td>{integer.format(row.sites)}</td>
+                            <td>{integer.format(row.artisans)}</td>
+                            <td>{row.share} %</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="sites-top">
+                <h4>Sites les plus actifs</h4>
+                <ol>
+                  {topSites.map((item, index) => (
+                    <li key={item.site.id}>
+                      <span className="sites-top__rank">{index + 1}</span>
+                      <span className="sites-top__label">
+                        <strong>{item.site.locality}</strong>
+                        <small>{item.site.region}</small>
+                      </span>
+                      <b>{integer.format(item.site.activeMiners)}</b>
+                    </li>
+                  ))}
+                </ol>
+                <button type="button" className="sites-ghost-button" onClick={() => { setScope('all'); setPage(1); }}>
+                  Voir tous les sites
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article className="sites-panel sites-vigilance">
+            <div className="sites-panel__header">
+              <h3>Vigilance opérationnelle</h3>
+            </div>
+            <div className="sites-vigilance__body">
+              <div className="sites-gauge">
+                <p>Indice de conformité <Info aria-hidden="true" /></p>
+                <strong>{globalCompliance} <span>/ 100</span></strong>
+                <ComplianceGauge score={globalCompliance} />
+                <small>Niveau de conformité global</small>
+              </div>
+
+              <div className="sites-vigilance__alerts">
+                <button type="button" onClick={() => { setScope('all'); setPage(1); }}>
+                  <span className="sites-vigilance__icon is-gold"><Clock3 aria-hidden="true" /></span>
+                  <span><b>{vigilance.permitsToRenew}</b> autorisations à renouveler</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => { setScope('watch'); setPage(1); }}>
+                  <span className="sites-vigilance__icon is-orange"><AlertTriangle aria-hidden="true" /></span>
+                  <span><b>{vigilance.missingDeclarations}</b> sites sans déclaration récente</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => { setScope('watch'); setPage(1); }}>
+                  <span className="sites-vigilance__icon is-blue"><TrendingUp aria-hidden="true" /></span>
+                  <span><b>{vigilance.capacityOverruns}</b> dépassement de capacité</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => { setScope('suspended'); setPage(1); }}>
+                  <span className="sites-vigilance__icon is-red"><AlertCircle aria-hidden="true" /></span>
+                  <span><b>{vigilance.suspendedSites}</b> site suspendu</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" className="sites-ghost-button" onClick={() => { setScope('watch'); setPage(1); }}>
+                  Voir le plan d’actions
+                </button>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="sites-dashboard__charts">
+          <article className="sites-panel">
+            <div className="sites-panel__header sites-panel__header--stacked">
+              <h3>Production mensuelle</h3>
+              <span className="sites-panel__aside">{decimal(totals.productionKg)} kg <small>cumulés</small></span>
+            </div>
+            <div className="sites-chart-legend">
+              <span><i className="is-line" style={{ background: '#0f7a56' }} aria-hidden="true" /> Production déclarée (kg)</span>
+              <span><i className="is-dashed" aria-hidden="true" /> Objectif mensuel (kg)</span>
+            </div>
+            <div className="sites-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthly} margin={{ top: 8, right: 12, left: -14, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#e6ecf1" strokeDasharray="2 3" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={{ stroke: '#d7e0e8' }} tick={{ fill: '#61748a', fontSize: 9.5 }} />
+                  <YAxis tickLine={false} axisLine={false} width={42} tick={{ fill: '#61748a', fontSize: 9.5 }} />
+                  <Tooltip
+                    formatter={(value) => `${decimal(Number(value))} kg`}
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e2eaf0', fontSize: 11 }}
+                  />
+                  <Line type="monotone" name="Production déclarée" dataKey="production" stroke="#0f7a56" strokeWidth={2} dot={{ r: 2.6, fill: '#0f7a56', strokeWidth: 0 }} />
+                  <Line type="monotone" name="Objectif mensuel" dataKey="objective" stroke="#e2a000" strokeWidth={1.8} strokeDasharray="5 4" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </article>
+
+          <article className="sites-panel">
+            <div className="sites-panel__header"><h3>Répartition des sites</h3></div>
+            <div className="sites-split">
+              <p className="sites-split__title">Par type d’exploitation</p>
+              <ul className="sites-bars">
+                {(Object.keys(EXPLOITATION_LABELS) as ExploitationType[]).map((type) => {
+                  const value = exploitationCounts[type];
+                  const max = Math.max(1, ...Object.values(exploitationCounts));
+                  return (
+                    <li key={type}>
+                      <span>{EXPLOITATION_LABELS[type]}</span>
+                      <i><b style={{ width: `${(value / max) * 100}%`, background: type === 'mixte' ? '#e2a000' : '#149a6b' }} /></i>
+                      <strong>{value}</strong>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <p className="sites-split__title">Par statut</p>
+              <div className="sites-status-grid">
+                {(Object.keys(STATUS_LABELS) as TerritoryStatus[]).map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    className="sites-status-box"
+                    style={{ color: STATUS_COLORS[item] }}
+                    onClick={() => { setStatus(item); setPage(1); }}
+                  >
+                    <small>{item === 'active' ? 'Actifs' : item === 'planned' ? 'Planifiés' : item === 'watch' ? 'Surveillance' : 'Suspendus'}</small>
+                    <strong>{statusCounts[item] || 0}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </article>
+
+          <article className="sites-panel">
+            <div className="sites-panel__header"><h3>Contribution régionale</h3></div>
+            <ul className="sites-bars sites-bars--region">
+              {contributions.map((row) => (
+                <li key={row.region}>
+                  <span>{row.region}</span>
+                  <i><b style={{ width: `${row.share}%` }} /></i>
+                  <strong>{row.share} %</strong>
+                </li>
+              ))}
+            </ul>
+            <p className="sites-bars__total">Total <strong>{contributions.reduce((sum, row) => sum + row.share, 0)} %</strong></p>
+          </article>
+        </section>
+
+        <section className="sites-panel sites-table-panel" aria-labelledby="sites-table-title">
+          <div className="sites-panel__header">
+            <h3 id="sites-table-title">Suivi opérationnel des sites <span className="sites-badge">{integer.format(insights.length)} sites</span></h3>
+            <div className="sites-tabs sites-tabs--scope">
+              <button type="button" className={scope === 'all' ? 'is-active' : ''} onClick={() => { setScope('all'); setPage(1); }}>Tous</button>
+              <button type="button" className={scope === 'watch' ? 'is-active' : ''} onClick={() => { setScope('watch'); setPage(1); }}>À surveiller</button>
+              <button type="button" className={scope === 'suspended' ? 'is-active' : ''} onClick={() => { setScope('suspended'); setPage(1); }}>Suspendus</button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-left text-xs">
-              <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
+          <div className="sites-table-wrap">
+            <table className="sites-table">
+              <thead>
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Site</th>
-                  <th className="px-5 py-3 font-semibold">Localisation</th>
-                  <th className="px-5 py-3 font-semibold">Exploitation</th>
-                  <th className="px-5 py-3 text-right font-semibold">Artisans</th>
-                  <th className="px-5 py-3 text-right font-semibold">Superficie</th>
-                  <th className="px-5 py-3 font-semibold">Statut</th>
-                  <th className="px-5 py-3 text-right font-semibold">Action</th>
+                  <th>Site</th>
+                  <th>Région</th>
+                  <th>Statut</th>
+                  <th>Artisans / Capacité</th>
+                  <th>Production</th>
+                  <th>Conformité</th>
+                  <th>Taxes recouvrées</th>
+                  <th>Dernière déclaration</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredSites.map((site) => (
-                  <tr key={site.id} className="hover:bg-slate-50/80">
-                    <td className="px-5 py-3.5">
-                      <strong className="block text-sm text-slate-900">{site.name}</strong>
-                      <span className="mt-0.5 block text-[11px] text-slate-500">{site.code}</span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-700">
-                      {site.locality}, {site.province}<span className="block text-[11px] text-slate-500">{site.region}</span>
-                    </td>
-                    <td className="px-5 py-3.5 capitalize text-slate-700">{site.exploitationType.replace('_', ' ')}</td>
-                    <td className="px-5 py-3.5 text-right font-semibold text-slate-800">{site.activeMiners} / {site.authorizedMiners}</td>
-                    <td className="px-5 py-3.5 text-right text-slate-700">{site.areaHectares.toLocaleString('fr-FR')} ha</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${statusClasses[site.status]}`}>
-                        {statusLabels[site.status]}
+              <tbody>
+                {visibleSites.map((item) => (
+                  <tr key={item.site.id}>
+                    <td><strong>{item.site.locality}</strong></td>
+                    <td>{item.site.region}</td>
+                    <td>
+                      <span className={`sites-status sites-status--${item.status}`}>
+                        {item.status === 'watch' ? 'À surveiller' : STATUS_LABELS[item.status]}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <Link
-                        to={`/artisan-sites/${site.id}/modifier`}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Modifier
+                    <td>
+                      <div className="sites-capacity">
+                        <span>{integer.format(item.site.activeMiners)} / {integer.format(item.site.authorizedMiners)}</span>
+                        <i><b style={{ width: `${Math.min(100, item.occupancy * 100)}%` }} /></i>
+                      </div>
+                    </td>
+                    <td>{decimal(item.productionKg)} kg</td>
+                    <td>
+                      {item.compliance === null ? (
+                        <span className="sites-compliance is-pending">En attente</span>
+                      ) : (
+                        <span className={`sites-compliance ${item.compliance >= 85 ? 'is-good' : item.compliance >= 70 ? 'is-warning' : 'is-bad'}`}>
+                          {item.compliance} %
+                        </span>
+                      )}
+                    </td>
+                    <td>{formatFcfa(item.taxesFcfa)}</td>
+                    <td>{formatDeclaration(item.lastDeclaration)}</td>
+                    <td className="sites-table__action">
+                      <Link to={`/artisan-sites/${item.site.id}/modifier`} aria-label={`Ouvrir la fiche de ${item.site.name}`}>
+                        <MoreVertical aria-hidden="true" />
                       </Link>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {!loading && visibleSites.length === 0 && (
+              <p className="sites-table__empty">Aucun site ne correspond aux filtres sélectionnés.</p>
+            )}
+            {loading && <p className="sites-table__empty">Chargement des sites…</p>}
           </div>
-          {!loading && filteredSites.length === 0 && (
-            <div className="px-6 py-12 text-center text-sm text-slate-500">Aucun site ne correspond aux filtres.</div>
-          )}
+
+          <div className="sites-table-footer">
+            <label className="sites-page-size">
+              Afficher
+              <select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}>
+                {[10, 20, 50].map((size) => <option key={size} value={size}>{size} lignes</option>)}
+              </select>
+            </label>
+
+            <div className="sites-pagination">
+              <span>
+                {scopedSites.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} – {Math.min(currentPage * pageSize, scopedSites.length)} sur {integer.format(scopedSites.length)}
+              </span>
+              <button type="button" onClick={() => setPage(1)} disabled={currentPage === 1} aria-label="Première page"><ChevronsLeft aria-hidden="true" /></button>
+              <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1} aria-label="Page précédente"><ChevronLeft aria-hidden="true" /></button>
+              {Array.from({ length: Math.min(5, pageCount) }, (_, index) => index + 1).map((value) => (
+                <button type="button" key={value} className={value === currentPage ? 'is-active' : ''} onClick={() => setPage(value)}>{value}</button>
+              ))}
+              <button type="button" onClick={() => setPage((value) => Math.min(pageCount, value + 1))} disabled={currentPage === pageCount} aria-label="Page suivante"><ChevronRight aria-hidden="true" /></button>
+              <button type="button" onClick={() => setPage(pageCount)} disabled={currentPage === pageCount} aria-label="Dernière page"><ChevronsRight aria-hidden="true" /></button>
+            </div>
+
+            <button type="button" className="sites-ghost-button" onClick={() => { setScope('all'); setPageSize(50); setPage(1); }}>
+              Voir les {integer.format(insights.length)} sites
+            </button>
+          </div>
         </section>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

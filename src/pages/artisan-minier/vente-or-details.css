@@ -1,0 +1,101 @@
+/* Détail d'une vente d'or : information hiérarchisée, pas de liste uniforme. */
+
+.vente-detail__statut { display: flex; align-items: center; }
+
+.vente-detail__layout {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 12px;
+}
+
+.vente-detail__main { display: grid; min-width: 0; gap: 12px; }
+
+.vente-detail__facts,
+.vente-detail__amounts { display: grid; margin: 0; gap: 12px 18px; }
+.vente-detail__facts { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+.vente-detail__facts dt,
+.vente-detail__amounts dt { color: var(--sn-muted); font-size: 11px; }
+
+.vente-detail__facts dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vente-detail__amounts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.vente-detail__amounts dd { margin: 0; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.vente-detail__amounts .is-total {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.vente-detail__amounts .is-total dt { color: var(--sn-ink); font-size: 12.5px; font-weight: 700; }
+.vente-detail__amounts .is-total dd { color: var(--sn-green); font-size: 17px; font-weight: 700; }
+
+.vente-detail__notes { margin: 0; color: var(--sn-ink-soft); font-size: 12.5px; line-height: 1.6; }
+
+.vente-detail__aside {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.vente-detail__artisan { padding: 0 16px 16px; }
+
+.vente-detail__artisan-name {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.vente-detail__artisan-name svg { width: 16px; height: 16px; color: var(--sn-green); }
+.vente-detail__artisan ul { display: grid; margin: 0 0 12px; padding: 0; gap: 8px; list-style: none; }
+
+.vente-detail__artisan li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
+  color: var(--sn-ink-soft);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vente-detail__artisan li svg { width: 14px; height: 14px; flex: 0 0 auto; color: #8fa0b1; }
+
+.vente-detail__timeline { display: grid; margin: 0; padding: 0 16px 16px; gap: 10px; list-style: none; }
+
+.vente-detail__timeline li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11.5px;
+}
+
+.vente-detail__timeline span { color: var(--sn-muted); }
+.vente-detail__timeline b { font-weight: 600; }
+
+.vente-detail__danger { padding: 0 16px 16px; border-top: 1px solid var(--sn-line-soft); padding-top: 12px; }
+
+@media (max-width: 1180px) {
+  .vente-detail__layout { grid-template-columns: minmax(0, 1fr); }
+  .vente-detail__aside { position: static; }
+}

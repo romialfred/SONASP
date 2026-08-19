@@ -1,400 +1,337 @@
-import { useState, useEffect } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Truck, MapPin, Shield, FileText } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { FormField } from '@/components/ui/FormField';
-import { InfoPanel, InfoPanelGroup } from '@/components/ui/InfoPanel';
+import { AlertTriangle, ArrowLeft, Contact, Loader2, MapPin, Route, Save, Truck } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { ChoiceCards, EmptyState, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errorMessage';
 import { useAlert } from '@/hooks/useAlert';
-import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
+import type { TransportType } from './TransportCompaniesPage';
+import './admin.css';
 
-interface FormData {
+export interface TransportFormValues {
   name: string;
   email: string;
   phone: string;
-  company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both';
+  company_type: TransportType;
   address: string;
   contact_person: string;
   is_active: boolean;
 }
 
-const companyTypeOptions = [
-  { value: 'mine_to_airport', label: 'Mine to Airport' },
-  { value: 'airport_to_refinery', label: 'Airport to Refinery' },
-  { value: 'both', label: 'Both Routes' },
+export const EMPTY_TRANSPORT_FORM: TransportFormValues = {
+  name: '',
+  email: '',
+  phone: '',
+  company_type: 'both',
+  address: '',
+  contact_person: '',
+  is_active: true,
+};
+
+const SEGMENTS: Array<{ value: TransportType; label: string; description: string; icon: typeof Truck }> = [
+  { value: 'mine_to_airport', label: 'Mine → aéroport', description: 'Convoyage du site vers l’aéroport', icon: Truck },
+  { value: 'airport_to_refinery', label: 'Aéroport → raffinerie', description: 'Acheminement international', icon: Route },
+  { value: 'both', label: 'Chaîne complète', description: 'Du site jusqu’à la raffinerie', icon: MapPin },
 ];
 
-const statusOptions = [
-  { value: 'true', label: 'Active' },
-  { value: 'false', label: 'Inactive' },
-];
+/** Première obligation non satisfaite, ou `null` si la fiche est enregistrable. */
+export function validateTransport(values: TransportFormValues): string | null {
+  if (!values.name.trim()) return 'La raison sociale est obligatoire.';
+  if (!values.contact_person.trim()) return 'Le contact référent est obligatoire.';
+  if (!values.email.trim()) return 'L’adresse e-mail est obligatoire.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return 'L’adresse e-mail est invalide.';
+  if (!values.phone.trim()) return 'Le numéro de téléphone est obligatoire.';
+  if (!values.company_type) return 'Sélectionnez le segment desservi.';
+  return null;
+}
+
+export function buildTransportPayload(values: TransportFormValues) {
+  return {
+    name: values.name.trim(),
+    email: values.email.trim(),
+    phone: values.phone.trim(),
+    company_type: values.company_type,
+    address: values.address.trim() || null,
+    contact_person: values.contact_person.trim(),
+    is_active: values.is_active,
+  };
+}
 
 export function TransportCompanyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const alert = useAlert();
-  const isEditMode = !!id;
+  const alerte = useAlert();
+  const isEditMode = Boolean(id);
 
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    phone: '',
-    company_type: 'both',
-    address: '',
-    contact_person: '',
-    is_active: true,
-  });
+  const [values, setValues] = useState<TransportFormValues>(EMPTY_TRANSPORT_FORM);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [saving, setSaving] = useState(false);
+  const [introuvable, setIntrouvable] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const redirection = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (isEditMode && id) {
-      loadCompany();
-    }
-  }, [id, isEditMode]);
-
-  const loadCompany = async () => {
+  const charger = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setErreur(null);
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('transport_companies')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      // `single()` levait une exception sur une référence inconnue et laissait un
+      // formulaire vide mais enregistrable, visant une ligne inexistante.
+      const { data, error } = await supabase.from('transport_companies').select('*').eq('id', id).maybeSingle();
       if (error) throw error;
-
-      if (data) {
-        setFormData({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          company_type: data.company_type,
-          address: data.address || '',
-          contact_person: data.contact_person || '',
-          is_active: data.is_active,
-        });
+      if (!data) {
+        setIntrouvable(true);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error loading company:', error);
-      alert.error('Error loading transport company');
+      setValues({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        company_type: (data.company_type as TransportType) || 'both',
+        address: data.address || '',
+        contact_person: data.contact_person || '',
+        is_active: data.is_active !== false,
+      });
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de charger ce transporteur.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleChange = (field: keyof FormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-  };
+  useEffect(() => {
+    void charger();
+  }, [charger]);
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {};
+  useEffect(
+    () => () => {
+      if (redirection.current) clearTimeout(redirection.current);
+    },
+    []
+  );
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
-    }
+  const setValue = <K extends keyof TransportFormValues>(clef: K, valeur: TransportFormValues[K]) =>
+    setValues((current) => ({ ...current, [clef]: valeur }));
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
+  const validationError = validateTransport(values);
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    }
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (saving) return; // garde-fou contre la double soumission
 
-    if (!formData.contact_person.trim()) {
-      newErrors.contact_person = 'Contact person is required';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      console.log('Form validation failed');
+    const message = validateTransport(values);
+    if (message) {
+      setErreur(message);
       return;
     }
 
-    setIsSubmitting(true);
-
+    setSaving(true);
+    setErreur(null);
     try {
-      const submitData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        company_type: formData.company_type,
-        address: formData.address,
-        contact_person: formData.contact_person,
-        is_active: formData.is_active,
-      };
-
-      console.log('Submitting transport company data:', submitData);
-
+      const payload = buildTransportPayload(values);
       if (isEditMode && id) {
-        console.log('Updating transport company with ID:', id);
-        const { data, error } = await supabase
-          .from('transport_companies')
-          .update(submitData)
-          .eq('id', id)
-          .select();
-
-        if (error) {
-          console.error('Error updating transport company:', error);
-          throw error;
-        }
-        console.log('Transport company updated successfully:', data);
-        alert.success('Transport company updated successfully');
+        const { error } = await supabase.from('transport_companies').update(payload).eq('id', id);
+        if (error) throw error;
+        alerte.success('Transporteur mis à jour');
       } else {
-        console.log('Inserting new transport company');
-        const { data, error } = await supabase
-          .from('transport_companies')
-          .insert([submitData])
-          .select();
-
-        if (error) {
-          console.error('Error inserting transport company:', error);
-          throw error;
-        }
-        console.log('Transport company created successfully:', data);
-        alert.success('Transport company created successfully');
+        const { error } = await supabase.from('transport_companies').insert([payload]);
+        if (error) throw error;
+        alerte.success('Transporteur enregistré');
       }
-
-      setTimeout(() => {
-        navigateWithAutoRefresh(navigate, '/admin/transport-companies');
-      }, 1500);
-    } catch (error: any) {
-      console.error('Error saving transport company - Full error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      alert.error(error.message || 'Error saving transport company');
+      redirection.current = setTimeout(() => navigate('/admin/transport-companies'), 1200);
+    } catch (reason) {
+      const message = errorMessage(reason, 'Enregistrement impossible.');
+      setErreur(message);
+      alerte.error(message);
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Loading...</div>
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <div className="admin-page__loading">
+            <Loader2 className="sn-spin" aria-hidden="true" /> Chargement de la fiche…
+          </div>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
+    );
+  }
+
+  if (introuvable) {
+    return (
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page">
+          <PageHeader
+            icon={Truck}
+            title="Transporteur introuvable"
+            subtitle="Cette fiche a été supprimée ou la référence est erronée."
+            breadcrumb={[
+              { label: 'Administration' },
+              { label: 'Transporteurs', to: '/admin/transport-companies' },
+            ]}
+          />
+          <EmptyState
+            title="Aucune fiche à modifier"
+            action={
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => navigate('/admin/transport-companies')}
+              >
+                <ArrowLeft aria-hidden="true" /> Retour au référentiel
+              </button>
+            }
+          />
+        </div>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/admin/transport-companies')}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="font-heading text-3xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Transport Company' : 'New Transport Company'}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {isEditMode
-                  ? 'Update transport company information'
-                  : 'Add a new transport company to the system'}
-              </p>
-            </div>
-          </div>
-        </div>
+    <NationalDashboardLayout>
+      <div className="sn-page admin-page">
+        <PageHeader
+          icon={Truck}
+          title={isEditMode ? 'Modifier le transporteur' : 'Nouveau transporteur'}
+          subtitle="Société habilitée à convoyer l’or sur la chaîne d’exportation."
+          breadcrumb={[
+            { label: 'Administration' },
+            { label: 'Transporteurs', to: '/admin/transport-companies' },
+            { label: isEditMode ? 'Modification' : 'Nouvelle fiche' },
+          ]}
+          actions={
+            <button type="button" className="sn-btn" onClick={() => navigate('/admin/transport-companies')}>
+              <ArrowLeft aria-hidden="true" /> Retour au référentiel
+            </button>
+          }
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Company Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField label="Company Name" required error={errors.name}>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => handleChange('name', e.target.value)}
-                          error={!!errors.name}
-                          placeholder="Enter company name"
-                        />
-                      </FormField>
+        {erreur && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {erreur}
+          </Note>
+        )}
 
-                      <FormField label="Email Address" required error={errors.email}>
-                        <Input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleChange('email', e.target.value)}
-                          error={!!errors.email}
-                          placeholder="company@example.com"
-                        />
-                      </FormField>
-
-                      <FormField label="Phone Number" required error={errors.phone}>
-                        <Input
-                          value={formData.phone}
-                          onChange={(e) => handleChange('phone', e.target.value)}
-                          error={!!errors.phone}
-                          placeholder="+XX XXX XXX XXXX"
-                        />
-                      </FormField>
-
-                      <FormField label="Contact Person" required error={errors.contact_person}>
-                        <Input
-                          value={formData.contact_person}
-                          onChange={(e) => handleChange('contact_person', e.target.value)}
-                          error={!!errors.contact_person}
-                          placeholder="Contact person name"
-                        />
-                      </FormField>
-
-                      <FormField label="Company Type" required>
-                        <Select
-                          value={formData.company_type}
-                          onChange={(e) =>
-                            handleChange('company_type', e.target.value as FormData['company_type'])
-                          }
-                        >
-                          {companyTypeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </Select>
-                      </FormField>
-
-                      <FormField label="Status">
-                        <Select
-                          value={formData.is_active.toString()}
-                          onChange={(e) => handleChange('is_active', e.target.value === 'true')}
-                        >
-                          {statusOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </Select>
-                      </FormField>
-
-                      <FormField
-                        label="Address"
-                        required
-                        error={errors.address}
-                        className="md:col-span-2"
-                      >
-                        <Input
-                          value={formData.address}
-                          onChange={(e) => handleChange('address', e.target.value)}
-                          error={!!errors.address}
-                          placeholder="Full address"
-                        />
-                      </FormField>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/admin/transport-companies')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      'Saving...'
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        {isEditMode ? 'Update Company' : 'Create Company'}
-                      </>
-                    )}
-                  </Button>
-                </div>
+        <form className="admin-form" onSubmit={handleSubmit} noValidate>
+          <Section
+            id="societe"
+            icon={Truck}
+            tone="emerald"
+            title="Société"
+            description="Raison sociale et état de l’agrément."
+          >
+            <div className="admin-form__row is-deux">
+              <Field label="Raison sociale" required htmlFor="raison-sociale">
+                <input
+                  id="raison-sociale"
+                  value={values.name}
+                  onChange={(event) => setValue('name', event.target.value)}
+                />
+              </Field>
+              <div className="sn-field">
+                <span className="sn-field__label">État de l’agrément</span>
+                <Segmented
+                  name="etat-transporteur"
+                  value={values.is_active ? 'actif' : 'inactif'}
+                  options={[
+                    { value: 'actif', label: 'Actif' },
+                    { value: 'inactif', label: 'Inactif' },
+                  ]}
+                  onChange={(etat) => setValue('is_active', etat === 'actif')}
+                  ariaLabel="État de l’agrément"
+                />
               </div>
-            </form>
-          </div>
-
-          <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <InfoPanelGroup>
-                <InfoPanel
-                  title="Company Guidelines"
-                  icon={Truck}
-                  variant="blue"
-                  items={[
-                    { text: 'All fields marked with * are required' },
-                    { text: 'Email will be used for notifications' },
-                    { text: 'Select appropriate company type for operations' },
-                    { text: 'Active companies appear in shipment selection' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Transport Routes"
-                  icon={MapPin}
-                  variant="teal"
-                  items={[
-                    { text: 'Mine to Airport: Transport from mining sites to airport' },
-                    { text: 'Airport to Refinery: Transport from airport to refinery' },
-                    { text: 'Both Routes: Company handles all transport stages' },
-                    { text: 'Route affects availability in shipment forms' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Required Documents"
-                  icon={FileText}
-                  variant="green"
-                  items={[
-                    { text: 'Business registration certificate', icon: '✓' },
-                    { text: 'Transport license and permits', icon: '✓' },
-                    { text: 'Insurance coverage documents', icon: '✓' },
-                    { text: 'Vehicle fleet information', icon: '✓' },
-                  ]}
-                />
-
-                <InfoPanel
-                  title="Security Requirements"
-                  icon={Shield}
-                  variant="amber"
-                  items={[
-                    { text: 'GPS tracking on all vehicles', icon: '⚠' },
-                    { text: 'Security clearance for drivers', icon: '⚠' },
-                    { text: 'Insurance minimum: $1M coverage', icon: '⚠' },
-                    { text: 'Regular vehicle inspections required', icon: '⚠' },
-                  ]}
-                />
-              </InfoPanelGroup>
             </div>
+          </Section>
+
+          <Section
+            id="segment"
+            icon={Route}
+            tone="blue"
+            title="Segment desservi"
+            description="Portion de la chaîne logistique couverte par l’agrément."
+          >
+            <ChoiceCards
+              name="segment-transport"
+              value={values.company_type}
+              options={SEGMENTS}
+              onChange={(segment) => setValue('company_type', segment)}
+              legend="Segment couvert"
+            />
+          </Section>
+
+          <Section
+            id="contact"
+            icon={Contact}
+            tone="violet"
+            title="Contact et adresse"
+            description="Interlocuteur opérationnel et siège de la société."
+          >
+            <div className="admin-form__row is-trois">
+              <Field label="Nom du contact" required htmlFor="contact">
+                <input
+                  id="contact"
+                  value={values.contact_person}
+                  onChange={(event) => setValue('contact_person', event.target.value)}
+                />
+              </Field>
+              <Field label="Adresse e-mail" required htmlFor="email">
+                <input
+                  id="email"
+                  type="email"
+                  value={values.email}
+                  onChange={(event) => setValue('email', event.target.value)}
+                  placeholder="contact@exemple.bf"
+                />
+              </Field>
+              <Field label="Téléphone" required htmlFor="telephone">
+                <input
+                  id="telephone"
+                  value={values.phone}
+                  onChange={(event) => setValue('phone', event.target.value)}
+                  placeholder="+226 …"
+                />
+              </Field>
+            </div>
+
+            <Field label="Adresse du siège" wide htmlFor="adresse">
+              <input
+                id="adresse"
+                value={values.address}
+                onChange={(event) => setValue('address', event.target.value)}
+                placeholder="Quartier, ville…"
+              />
+            </Field>
+          </Section>
+
+          <div className="sn-form-actions">
+            {validationError && <span className="admin-form__hint">{validationError}</span>}
+            <button
+              type="button"
+              className="sn-btn"
+              onClick={() => navigate('/admin/transport-companies')}
+              disabled={saving}
+            >
+              Annuler
+            </button>
+            <button type="submit" className="sn-btn sn-btn--primary" disabled={saving || Boolean(validationError)}>
+              {saving ? (
+                <>
+                  <Loader2 className="sn-spin" aria-hidden="true" /> Enregistrement…
+                </>
+              ) : (
+                <>
+                  <Save aria-hidden="true" /> {isEditMode ? 'Mettre à jour' : 'Enregistrer le transporteur'}
+                </>
+              )}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
-    </MainLayout>
+    </NationalDashboardLayout>
   );
 }

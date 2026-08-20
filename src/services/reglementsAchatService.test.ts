@@ -42,6 +42,7 @@ vi.mock('@/lib/supabase', () => {
 
 import {
   formaterFcfa,
+  formaterMontant,
   masquerCompte,
   montantEnLettres,
   reglementsAchatService,
@@ -77,6 +78,19 @@ describe('lisibilité des montants', () => {
 
   it('n’introduit aucune dérive sur un très grand nombre', () => {
     expect(formaterFcfa(9_876_543_210)).toMatch(/^9\s876\s543\s210 FCFA$/);
+  });
+
+  it('sait présenter un montant sans sa devise', () => {
+    // Dans un tableau dont l'en-tête porte « (FCFA) », répéter l'unité à chaque
+    // cellule allonge les colonnes sans rien apprendre.
+    expect(formaterMontant(485_750_000)).toMatch(/^485\s750\s000$/);
+    expect(formaterMontant(1234.5, true)).toMatch(/^1\s234,50$/);
+  });
+
+  it('signale la valeur absente de la même façon, avec ou sans devise', () => {
+    expect(formaterMontant(null)).toBe('—');
+    expect(formaterMontant(undefined)).toBe('—');
+    expect(formaterMontant(Number.NaN)).toBe('—');
   });
 });
 

@@ -9,6 +9,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService, type ReglementAchat } from '@/services/achatsIndustrielsService';
 import {
   formaterFcfa,
+  formaterMontant,
   LIBELLES_CYCLE,
   masquerCompte,
   montantEnLettres,
@@ -77,6 +78,7 @@ export function ReglementForm() {
   const [compteChoisi, setCompteChoisi] = useState<string>('');
   const [factures, setFactures] = useState<FactureEligible[]>([]);
   const [imputations, setImputations] = useState<Record<string, string>>({});
+  const [factureActiveId, setFactureActiveId] = useState<string | null>(null);
   const [derniersReglements, setDerniersReglements] = useState<ReglementAchat[]>([]);
   const [factureOuverte, setFactureOuverte] = useState<FactureEligible | null>(null);
 
@@ -114,6 +116,7 @@ export function ReglementForm() {
   const choisirSociete = async (societe: SocieteEligible) => {
     setSocieteChoisie(societe);
     setImputations({});
+    setFactureActiveId(null);
     setCompteChoisi('');
     setChargementSociete(true);
     setErreur(null);
@@ -125,6 +128,8 @@ export function ReglementForm() {
       ]);
       setComptes(comptesCharges);
       setFactures(facturesChargees);
+      // La plus ancienne s'ouvre d'emblée : c'est celle qu'on règle en premier.
+      setFactureActiveId(facturesChargees[0]?.facture_id ?? null);
       setDerniersReglements(reglements.slice(0, 6));
       // Un seul compte principal : il se présélectionne, l'agent n'a rien à
       // choisir là où il n'y a pas de choix.
@@ -176,7 +181,32 @@ export function ReglementForm() {
     };
   }, [lignes, montantSaisi, societeChoisie]);
 
-  /** Imputation automatique, la plus ancienne d'abord. */
+  const ligneActive = lignes.find((ligne) => ligne.facture.facture_id === factureActiveId) ?? null;
+
+  /** Porte sur la facture ouverte tout ce que le virement peut encore couvrir. */
+  const solderFactureActive = () => {
+    if (!ligneActive) return;
+    if (montantSaisi <= 0) {
+      setErreur('Saisissez d’abord le montant du virement.');
+      return;
+    }
+    const disponible = Math.max(0, montantSaisi - (totaux.affecte - ligneActive.impute));
+    setImputations((actuelles) => ({
+      ...actuelles,
+      [ligneActive.facture.facture_id]: String(Math.min(ligneActive.plafond, disponible)),
+    }));
+    setErreur(null);
+  };
+
+  const retirerImputation = (factureId: string) => {
+    setImputations((actuelles) => {
+      const suite = { ...actuelles };
+      delete suite[factureId];
+      return suite;
+    });
+  };
+
+  /** Imputation automatique, la plus ancienne d’abord. */
   const imputerFifo = () => {
     if (montantSaisi <= 0) {
       setErreur('Saisissez d’abord le montant du virement.');
@@ -389,7 +419,6 @@ export function ReglementForm() {
                         <span className="site-form__section-icon"><Landmark aria-hidden="true" /></span>
                         <div>
                           <h3>Compte bancaire bénéficiaire</h3>
-                          <p>Défini sur la fiche de la société. Il ne se saisit pas ici.</p>
                         </div>
                       </header>
                       <div className="site-form__section-body">
@@ -464,14 +493,14 @@ export function ReglementForm() {
                         <span className="site-form__section-icon"><Wallet aria-hidden="true" /></span>
                         <div>
                           <h3>Informations du virement</h3>
-                          <p>Montant, échéance d’exécution et références de suivi.</p>
+                          <p>Montant, date d’exécution et références de suivi.</p>
                         </div>
                       </header>
                       <div className="site-form__section-body">
-                        <div className="site-form__grid">
-                          <div className="site-form__field">
+                        <div className="reglement-form__virement">
+                          <div className="site-form__field reglement-form__virement-montant">
                             <label className="site-form__label" htmlFor="montant">
-                              Montant du virement (FCFA) <i>*</i>
+                              Montant du virement, en {societeChoisie.devise} <i>*</i>
                             </label>
                             <input
                               id="montant" type="number" min={0} step={1000}
@@ -479,14 +508,11 @@ export function ReglementForm() {
                               onChange={(evenement) => setEntete((e) => ({ ...e, montant: evenement.target.value }))}
                               placeholder="0"
                             />
-                            {montantSaisi > 0 && (
-                              <small>{montantEnLettres(montantSaisi)}</small>
-                            )}
-                          </div>
-
-                          <div className="site-form__field">
-                            <label className="site-form__label" htmlFor="devise">Devise</label>
-                            <input id="devise" value={societeChoisie.devise} disabled />
+                            <small>
+                              {montantSaisi > 0
+                                ? montantEnLettres(montantSaisi)
+                                : 'Le montant s’écrira en toutes lettres sur l’ordre de virement.'}
+                            </small>
                           </div>
 
                           <div className="site-form__field">
@@ -500,7 +526,9 @@ export function ReglementForm() {
                               }))}
                             />
                           </div>
+                        </div>
 
+                        <div className="reglement-form__virement-suivi">
                           <div className="site-form__field">
                             <label className="site-form__label" htmlFor="reference">
                               Référence interne
@@ -514,7 +542,7 @@ export function ReglementForm() {
                             />
                           </div>
 
-                          <div className="site-form__field is-wide">
+                          <div className="site-form__field">
                             <label className="site-form__label" htmlFor="objet">Objet du virement</label>
                             <input
                               id="objet" value={entete.objet}
@@ -543,8 +571,9 @@ export function ReglementForm() {
                         <div>
                           <h3>Imputation sur les factures</h3>
                           <p>
-                            Un virement peut couvrir plusieurs factures, et une facture recevoir
-                            plusieurs virements.
+                            Le virement se répartit sur les factures ouvertes de la société : une
+                            facture peut recevoir plusieurs virements, un virement en couvrir
+                            plusieurs.
                           </p>
                         </div>
                       </header>
@@ -577,7 +606,7 @@ export function ReglementForm() {
                           </div>
                         </dl>
 
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+                        <div className="reglement-form__outils">
                           <button type="button" className="reglement-form__voir" onClick={imputerFifo}>
                             <ShieldCheck aria-hidden="true" /> Affecter aux factures les plus anciennes
                           </button>
@@ -593,84 +622,166 @@ export function ReglementForm() {
                           <p className="reglement-form__vide" style={{ padding: 0 }}>
                             Cette société n’a aucune facture imputable.
                           </p>
+                        ) : !ligneActive ? (
+                          <p className="reglement-form__vide" style={{ padding: 0 }}>
+                            Choisissez une facture dans la liste « Factures liées aux achats », à droite.
+                          </p>
                         ) : (
-                          <div className="reglement-form__factures">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th scope="col">Facture</th>
-                                  <th scope="col">Achat</th>
-                                  <th scope="col">Échéance</th>
-                                  <th scope="col">Ancienneté</th>
-                                  <th scope="col" className="est-nombre">Montant TTC</th>
-                                  <th scope="col" className="est-nombre">Déjà payé</th>
-                                  <th scope="col" className="est-nombre">Reste dû</th>
-                                  <th scope="col" className="est-nombre">Imputable</th>
-                                  <th scope="col" className="est-nombre">À imputer</th>
-                                  <th scope="col" className="est-nombre">Solde après</th>
-                                  <th scope="col" />
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {lignes.map((ligne) => (
-                                  <tr
-                                    key={ligne.facture.facture_id}
-                                    className={ligne.impute > 0 ? 'est-retenue' : undefined}
-                                  >
-                                    <td><strong>{ligne.facture.numero_facture}</strong></td>
-                                    <td>{ligne.facture.achat_numero || '—'}</td>
-                                    <td>{formaterDate(ligne.facture.date_echeance)}</td>
-                                    <td>
-                                      <span className={`reglement-form__age est-${ligne.facture.tranche}`}>
-                                        {LIBELLES_TRANCHE[ligne.facture.tranche as TrancheAge]
-                                          ?? ligne.facture.tranche}
-                                      </span>
-                                    </td>
-                                    <td className="est-nombre">{formaterFcfa(ligne.facture.montant_ttc)}</td>
-                                    <td className="est-nombre">{formaterFcfa(ligne.facture.montant_paye)}</td>
-                                    <td className="est-nombre">{formaterFcfa(ligne.facture.reste_du)}</td>
-                                    <td className="est-nombre">{formaterFcfa(ligne.plafond)}</td>
-                                    <td className="est-nombre">
-                                      <input
-                                        type="number" min={0} max={ligne.plafond} step={1000}
-                                        aria-label={`Montant à imputer sur ${ligne.facture.numero_facture}`}
-                                        aria-invalid={ligne.excede ? true : undefined}
-                                        value={imputations[ligne.facture.facture_id] ?? ''}
-                                        onChange={(evenement) => setImputations((actuelles) => ({
-                                          ...actuelles,
-                                          [ligne.facture.facture_id]: evenement.target.value,
-                                        }))}
-                                      />
-                                    </td>
-                                    <td className="est-nombre">{formaterFcfa(ligne.soldeApres)}</td>
-                                    <td>
-                                      <button
-                                        type="button" className="reglement-form__voir"
-                                        onClick={() => setFactureOuverte(ligne.facture)}
-                                      >
-                                        <Eye aria-hidden="true" /> Voir la facture
-                                      </button>
-                                    </td>
+                          <article className="reglement-form__selection">
+                            <header>
+                              <div>
+                                <strong>{ligneActive.facture.numero_facture}</strong>
+                                <em>
+                                  Émise le {formaterDate(ligneActive.facture.date_emission)},
+                                  échéance le {formaterDate(ligneActive.facture.date_echeance)}
+                                </em>
+                              </div>
+                              <span className={`reglement-form__age est-${ligneActive.facture.tranche}`}>
+                                {LIBELLES_TRANCHE[ligneActive.facture.tranche as TrancheAge]
+                                  ?? ligneActive.facture.tranche}
+                              </span>
+                              <button
+                                type="button" className="reglement-form__voir"
+                                onClick={() => setFactureOuverte(ligneActive.facture)}
+                              >
+                                <Eye aria-hidden="true" /> Voir la facture
+                              </button>
+                            </header>
+
+                            <dl className="reglement-form__chiffres">
+                              <div>
+                                <dt>Montant TTC</dt>
+                                <dd>{formaterFcfa(ligneActive.facture.montant_ttc)}</dd>
+                              </div>
+                              <div>
+                                <dt>Déjà payé</dt>
+                                <dd>{formaterFcfa(ligneActive.facture.montant_paye)}</dd>
+                              </div>
+                              <div>
+                                <dt>Reste dû</dt>
+                                <dd>{formaterFcfa(ligneActive.facture.reste_du)}</dd>
+                              </div>
+                              <div className="est-imputable">
+                                <dt>Imputable</dt>
+                                <dd>{formaterFcfa(ligneActive.plafond)}</dd>
+                                <small>
+                                  Le reste dû, diminué de ce que des règlements déjà préparés
+                                  retiennent sur cette facture sans l’avoir encore payée.
+                                </small>
+                              </div>
+                            </dl>
+
+                            <div className="reglement-form__saisie">
+                              <div className="site-form__field">
+                                <label className="site-form__label" htmlFor="imputation">
+                                  Montant à imputer sur cette facture, en {societeChoisie.devise}
+                                </label>
+                                <input
+                                  id="imputation" type="number" min={0} max={ligneActive.plafond}
+                                  step={1000}
+                                  aria-invalid={ligneActive.excede ? true : undefined}
+                                  value={imputations[ligneActive.facture.facture_id] ?? ''}
+                                  onChange={(evenement) => setImputations((actuelles) => ({
+                                    ...actuelles,
+                                    [ligneActive.facture.facture_id]: evenement.target.value,
+                                  }))}
+                                  placeholder="0"
+                                />
+                                {ligneActive.excede ? (
+                                  <small className="is-warning">
+                                    Dépasse de {formaterFcfa(ligneActive.impute - ligneActive.plafond)}
+                                    {' '}ce que cette facture peut recevoir.
+                                  </small>
+                                ) : (
+                                  <small>
+                                    Reste du virement à répartir :{' '}
+                                    {formaterFcfa(Math.max(0, totaux.reste))}
+                                  </small>
+                                )}
+                              </div>
+
+                              <div className="reglement-form__saisie-gestes">
+                                <button
+                                  type="button" className="reglement-form__voir"
+                                  onClick={solderFactureActive}
+                                >
+                                  <CheckCircle2 aria-hidden="true" /> Solder cette facture
+                                </button>
+                                <button
+                                  type="button" className="reglement-form__voir"
+                                  onClick={() => retirerImputation(ligneActive.facture.facture_id)}
+                                  disabled={ligneActive.impute <= 0}
+                                >
+                                  <X aria-hidden="true" /> Retirer
+                                </button>
+                              </div>
+
+                              <div className="reglement-form__apres">
+                                <span>Solde de la facture après imputation</span>
+                                <strong>{formaterFcfa(ligneActive.soldeApres)}</strong>
+                              </div>
+                            </div>
+                          </article>
+                        )}
+
+                        {totaux.nbRetenues > 0 && (
+                          <div className="reglement-form__retenues">
+                            <h4>Imputations retenues</h4>
+                            <div className="reglement-form__factures">
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th scope="col">Facture</th>
+                                    <th scope="col">Échéance</th>
+                                    <th scope="col" className="est-nombre">Reste dû (FCFA)</th>
+                                    <th scope="col" className="est-nombre">Imputé (FCFA)</th>
+                                    <th scope="col" className="est-nombre">Solde après (FCFA)</th>
+                                    <th scope="col" aria-label="Retirer" />
                                   </tr>
-                                ))}
-                              </tbody>
-                              <tfoot>
-                                <tr>
-                                  <td colSpan={6}>Total</td>
-                                  <td className="est-nombre">
-                                    {formaterFcfa(lignes.reduce((s, l) => s + auFranc(l.facture.reste_du), 0))}
-                                  </td>
-                                  <td className="est-nombre">
-                                    {formaterFcfa(lignes.reduce((s, l) => s + l.plafond, 0))}
-                                  </td>
-                                  <td className="est-nombre">{formaterFcfa(totaux.affecte)}</td>
-                                  <td className="est-nombre">
-                                    {formaterFcfa(lignes.reduce((s, l) => s + l.soldeApres, 0))}
-                                  </td>
-                                  <td />
-                                </tr>
-                              </tfoot>
-                            </table>
+                                </thead>
+                                <tbody>
+                                  {lignes.filter((ligne) => ligne.impute > 0).map((ligne) => (
+                                    <tr
+                                      key={ligne.facture.facture_id}
+                                      className={[
+                                        'est-retenue',
+                                        ligne.facture.facture_id === factureActiveId ? 'est-ouverte' : '',
+                                      ].filter(Boolean).join(' ')}
+                                    >
+                                      <td>
+                                        <button
+                                          type="button" className="reglement-form__lien"
+                                          onClick={() => setFactureActiveId(ligne.facture.facture_id)}
+                                        >
+                                          {ligne.facture.numero_facture}
+                                        </button>
+                                      </td>
+                                      <td>{formaterDate(ligne.facture.date_echeance)}</td>
+                                      <td className="est-nombre">{formaterMontant(ligne.facture.reste_du)}</td>
+                                      <td className="est-nombre">{formaterMontant(ligne.impute)}</td>
+                                      <td className="est-nombre">{formaterMontant(ligne.soldeApres)}</td>
+                                      <td>
+                                        <button
+                                          type="button" className="reglement-form__retirer"
+                                          onClick={() => retirerImputation(ligne.facture.facture_id)}
+                                          aria-label={`Retirer l’imputation sur ${ligne.facture.numero_facture}`}
+                                        >
+                                          <X aria-hidden="true" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                                <tfoot>
+                                  <tr>
+                                    <td colSpan={3}>Total imputé</td>
+                                    <td className="est-nombre">{formaterMontant(totaux.affecte)}</td>
+                                    <td className="est-nombre">{formaterMontant(totaux.detteApres)}</td>
+                                    <td />
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -714,9 +825,9 @@ export function ReglementForm() {
                         <tr>
                           <th scope="col">Facture</th>
                           <th scope="col">Échéance</th>
-                          <th scope="col" className="est-nombre">Solde avant</th>
-                          <th scope="col" className="est-nombre">Imputé</th>
-                          <th scope="col" className="est-nombre">Solde après</th>
+                          <th scope="col" className="est-nombre">Solde avant (FCFA)</th>
+                          <th scope="col" className="est-nombre">Imputé (FCFA)</th>
+                          <th scope="col" className="est-nombre">Solde après (FCFA)</th>
                           <th scope="col" />
                         </tr>
                       </thead>
@@ -725,9 +836,9 @@ export function ReglementForm() {
                           <tr key={ligne.facture.facture_id}>
                             <td><strong>{ligne.facture.numero_facture}</strong></td>
                             <td>{formaterDate(ligne.facture.date_echeance)}</td>
-                            <td className="est-nombre">{formaterFcfa(ligne.facture.reste_du)}</td>
-                            <td className="est-nombre">{formaterFcfa(ligne.impute)}</td>
-                            <td className="est-nombre">{formaterFcfa(ligne.soldeApres)}</td>
+                            <td className="est-nombre">{formaterMontant(ligne.facture.reste_du)}</td>
+                            <td className="est-nombre">{formaterMontant(ligne.impute)}</td>
+                            <td className="est-nombre">{formaterMontant(ligne.soldeApres)}</td>
                             <td>
                               <button
                                 type="button" className="reglement-form__voir"
@@ -742,8 +853,8 @@ export function ReglementForm() {
                       <tfoot>
                         <tr>
                           <td colSpan={3}>Total imputé</td>
-                          <td className="est-nombre">{formaterFcfa(totaux.affecte)}</td>
-                          <td className="est-nombre">{formaterFcfa(totaux.detteApres)}</td>
+                          <td className="est-nombre">{formaterMontant(totaux.affecte)}</td>
+                          <td className="est-nombre">{formaterMontant(totaux.detteApres)}</td>
                           <td />
                         </tr>
                       </tfoot>
@@ -900,7 +1011,11 @@ export function ReglementForm() {
                 <span className="site-form__card-icon is-amber"><FileText aria-hidden="true" /></span>
                 <div>
                   <h3>Factures liées aux achats</h3>
-                  <p>{factures.length} facture(s) imputable(s)</p>
+                  <p>
+                    {factures.length === 0
+                      ? 'Aucune facture imputable'
+                      : `${factures.length} facture(s) · cliquez pour imputer`}
+                  </p>
                 </div>
               </header>
               {factures.length === 0 ? (
@@ -910,31 +1025,49 @@ export function ReglementForm() {
                     : 'Choisissez une société pour voir ses factures.'}
                 </p>
               ) : (
-                <ul className="reglement-form__liste est-defilante">
-                  {factures.map((facture) => (
-                    <li key={facture.facture_id}>
-                      <div className="reglement-form__liste-tete">
-                        <strong>{facture.numero_facture}</strong>
-                        <span>{formaterFcfa(facture.reste_du)}</span>
-                      </div>
-                      <span className="reglement-form__liste-meta">
-                        {facture.achat_numero || '—'} · échéance {formaterDate(facture.date_echeance)}
-                      </span>
-                      <span className="reglement-form__liste-meta">
-                        <span className={`reglement-form__age est-${facture.tranche}`}>
-                          {LIBELLES_TRANCHE[facture.tranche as TrancheAge] ?? facture.tranche}
-                        </span>
-                        {' '}
+                <ul className="reglement-form__liste est-defilante est-cliquable">
+                  {factures.map((facture) => {
+                    const impute = auFranc(Number(imputations[facture.facture_id]) || 0);
+                    return (
+                      <li
+                        key={facture.facture_id}
+                        className={[
+                          facture.facture_id === factureActiveId ? 'est-ouverte' : '',
+                          impute > 0 ? 'est-retenue' : '',
+                        ].filter(Boolean).join(' ')}
+                      >
+                        <button
+                          type="button"
+                          className="reglement-form__facture"
+                          aria-pressed={facture.facture_id === factureActiveId}
+                          onClick={() => setFactureActiveId(facture.facture_id)}
+                        >
+                          <span className="reglement-form__liste-tete">
+                            <strong>{facture.numero_facture}</strong>
+                            <span>{formaterFcfa(facture.reste_du)}</span>
+                          </span>
+                          <span className="reglement-form__liste-meta">
+                            Échéance {formaterDate(facture.date_echeance)}
+                            {' · '}
+                            <span className={`reglement-form__age est-${facture.tranche}`}>
+                              {LIBELLES_TRANCHE[facture.tranche as TrancheAge] ?? facture.tranche}
+                            </span>
+                          </span>
+                          {impute > 0 && (
+                            <span className="reglement-form__facture-impute">
+                              Imputé : {formaterFcfa(impute)}
+                            </span>
+                          )}
+                        </button>
                         <button
                           type="button" className="reglement-form__voir"
-                          style={{ height: 22, fontSize: 10 }}
                           onClick={() => setFactureOuverte(facture)}
                         >
                           <Eye aria-hidden="true" /> Voir
                         </button>
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

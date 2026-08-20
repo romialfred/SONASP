@@ -2360,3 +2360,59 @@ Balayage complet de `src` sur deux critères :
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
 - Console du navigateur : aucune erreur
+
+---
+
+## Itération — 20 août 2026 — La facture se choisit à droite, se règle à gauche
+
+### La note de conception qui restait
+
+Sous « Compte bancaire bénéficiaire » : « Défini sur la fiche de la société. Il ne se saisit
+pas ici. » Le balayage précédent cherchait des chaînes passées en propriété ; celle-ci était
+du texte JSX dans un en-tête de section, et il est passé au travers.
+
+La phrase n'apprend rien. Le champ n'existe pas dans le formulaire : c'est déjà la réponse.
+Retirée, avec trois autres de la même famille dans le paiement des artisans et la fiche
+artisan (« Aucune saisie au moment de payer », « elles ne se modifient qu'à cet endroit »,
+« il ne peut pas être modifié depuis cet écran »).
+
+Le critère, pour la suite : une description de section nomme ce que la section contient, ou
+donne une règle de gestion utile à qui décide. Elle ne raconte pas où la donnée se saisit
+ailleurs (A186).
+
+### Informations du virement : deux rangées au lieu d'une grille
+
+Six champs de même largeur, dans une grille qui les répartissait au hasard de la place
+disponible, dont un champ « Devise » verrouillé sur XOF que personne n'a jamais rempli.
+
+La devise passe dans le libellé du montant — « Montant du virement, en XOF » — et le champ
+disparaît. Restent deux rangées : les montants d'abord, le montant sur deux tiers de la
+largeur et en gros caractères parce que c'est lui qu'on relit ; les références de suivi
+ensuite, séparées par un filet.
+
+### L'imputation : une facture à la fois, choisie à droite
+
+Le tableau portait onze colonnes pour douze factures. Il débordait, imposait un défilement
+horizontal, répétait « FCFA » dans soixante-six cellules, et affichait une colonne « Achat »
+que personne ne lisait.
+
+La liste des factures était déjà dans le volet de droite. Elle devient le point de choix :
+un clic ouvre la facture dans la section de gauche, en entier — numéro, dates, ancienneté,
+montant TTC, déjà payé, reste dû, imputable — avec son champ de saisie et un bouton
+« Solder cette facture » qui y porte tout ce que le virement peut encore couvrir.
+
+Le tableau ne garde que les factures **retenues**, en cinq colonnes qui tiennent dans la
+largeur. L'unité monte dans l'en-tête : « Reste dû (FCFA) », et les cellules ne portent plus
+que le nombre. `formaterMontant()` double `formaterFcfa()` pour cet usage.
+
+**« Imputable » expliqué**, puisque la colonne le demandait : c'est le reste dû, diminué de
+ce que des règlements déjà préparés retiennent sur cette facture sans l'avoir encore payée.
+L'explication tient sous la valeur, dans l'encadré qui la porte — c'est une règle de gestion,
+pas une note de développement.
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts** (deux tests ajoutés sur `formaterMontant`)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+- Console du navigateur : aucune erreur

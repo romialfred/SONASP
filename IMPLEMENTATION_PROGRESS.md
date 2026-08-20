@@ -635,6 +635,9 @@ estimée.
 | A183 | Formulaires portant des mentions du carnet de développement (« c'est la protection contre le double ordre », « seul mode admis ») | Socle | Six mentions retirées ; un formulaire applique ses règles, il ne les récite pas |
 | A184 | Aucune imputation possible sur un règlement exécuté ou rapproché : les 450 M non imputés de REG-DEMO-0003 restaient inaccessibles | Règlements | Le reliquat s'impute toujours ; seule la modification d'une imputation exécutée est interdite |
 | A185 | Tirets cadratins dans les libellés et notes décrivant le fonctionnement interne, sur l'ensemble de la plateforme | Socle | 9 tirets et 3 notes traités ; règle posée pour les écrans à venir |
+| A186 | Descriptions de section décrivant où la donnée se saisit ailleurs (« Défini sur la fiche de la société. Il ne se saisit pas ici. ») : le balayage précédent ne couvrait que les chaînes passées en propriété, pas le texte JSX | Socle | Quatre mentions retirées ; critère posé : une description nomme un contenu ou une règle de gestion, jamais un parcours de saisie |
+| A187 | Section « Informations du virement » : six champs de même largeur dans une grille flottante, dont un champ « Devise » verrouillé sur XOF | Règlements | Deux rangées, montant en tête et sur deux tiers de largeur, devise portée par son libellé |
+| A188 | Grille d'imputation à onze colonnes : défilement horizontal, colonne « Achat » inutile, « FCFA » répété dans chaque cellule | Règlements | La facture se choisit dans le volet droit et s'ouvre à gauche ; le tableau ne garde que les factures retenues, en cinq colonnes, unité en en-tête |
 
 ---
 

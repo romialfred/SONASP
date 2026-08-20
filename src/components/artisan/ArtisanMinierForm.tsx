@@ -676,7 +676,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
             id="moyens-paiement"
             icon={Wallet}
             title="Moyens de paiement"
-            description="Coordonnées de règlement de l’artisan, saisies ici et non au moment de payer."
+            description="Coordonnées de règlement de l’artisan."
           >
             {/* Les coordonnées étaient frappées à chaque règlement, sur l'écran de
                 paiement : ressaisie du numéro à chaque fois, et aucune garantie que le

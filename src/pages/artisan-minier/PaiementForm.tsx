@@ -486,7 +486,7 @@ export default function PaiementForm() {
               id="moyen"
               icon={Banknote}
               title="Moyen de paiement de l’artisan"
-              description="Coordonnées enregistrées sur sa fiche. Aucune saisie au moment de payer."
+              description="Coordonnées de règlement de l’artisan."
             >
               {/* Les coordonnees etaient frappees ici, a chaque reglement : ressaisie du
                   numero a chaque fois, et rien ne garantissait que le compte credite
@@ -539,7 +539,7 @@ export default function PaiementForm() {
                 id="coordonnees"
                 icon={Landmark}
                 title={`Coordonnées — ${methode.label}`}
-                description="Reprises de la fiche de l’artisan ; elles ne se modifient qu’à cet endroit."
+                description="Banque, guichet et numéro de compte du bénéficiaire."
               >
                 <dl className="paiement-form__coordonnees">
                   <div>
@@ -672,8 +672,7 @@ export default function PaiementForm() {
             </section>
 
             <Note tone="info" icon={Receipt}>
-              Le montant réglé est celui de la facture définitive : il ne peut pas être
-              modifié depuis cet écran.
+              Le montant réglé est celui de la facture définitive.
             </Note>
           </aside>
         </div>

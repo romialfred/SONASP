@@ -173,7 +173,7 @@
 /* ---------------------------------------------------------------------------
    Grille d'imputation
    --------------------------------------------------------------------------- */
-.reglement-form__factures { overflow-x: auto; }
+.reglement-form__factures table { table-layout: fixed; }
 .reglement-form__factures table { width: 100%; border-collapse: collapse; font-size: 12px; }
 
 .reglement-form__factures th {
@@ -549,3 +549,299 @@
    --------------------------------------------------------------------------- */
 .reglement-form__liste li { transition: background 140ms ease; }
 .reglement-form__liste li:hover { background: rgb(246 249 251 / 70%); }
+
+
+/* ---------------------------------------------------------------------------
+   Informations du virement
+
+   Le montant est la donnée qui commande tout le reste : il occupe deux fois la
+   largeur d'un champ ordinaire et porte sa devise dans son libellé, ce qui
+   supprime le champ « Devise » que personne ne remplissait. Les références de
+   suivi forment leur propre rangée, sous la ligne des montants.
+   --------------------------------------------------------------------------- */
+.reglement-form__virement {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 14px 16px;
+}
+
+.reglement-form__virement-montant input {
+  height: 52px;
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.reglement-form__virement-suivi {
+  display: grid;
+  margin-top: 16px;
+  padding-top: 16px;
+  gap: 14px 16px;
+  border-top: 1px dashed #e6ecf2;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+@media (max-width: 720px) {
+  .reglement-form__virement,
+  .reglement-form__virement-suivi { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------------------------------------------------------------------------
+   Facture ouverte
+
+   La facture se choisit dans le volet de droite et s'ouvre ici : ses quatre
+   montants d'abord, le champ d'imputation ensuite. Une seule facture à la fois,
+   présentée en entier, plutôt qu'une ligne de tableau à faire défiler.
+   --------------------------------------------------------------------------- */
+.reglement-form__outils {
+  display: flex;
+  margin-bottom: 16px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reglement-form__selection {
+  overflow: hidden;
+  border: 1px solid #e0e7ee;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fdfefe 0%, #f8fafc 100%);
+}
+
+.reglement-form__selection > header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #eef2f6;
+  background: rgb(255 255 255 / 70%);
+}
+
+.reglement-form__selection > header > div { min-width: 0; flex: 1 1 220px; }
+
+.reglement-form__selection > header strong {
+  display: block;
+  color: #10243e;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.reglement-form__selection > header em {
+  display: block;
+  margin-top: 2px;
+  color: #7a8ca0;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.reglement-form__chiffres {
+  display: grid;
+  margin: 0;
+  padding: 16px;
+  gap: 12px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+}
+
+.reglement-form__chiffres > div { min-width: 0; }
+
+.reglement-form__chiffres dt {
+  color: #7a8ca0;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.reglement-form__chiffres dd {
+  margin: 3px 0 0;
+  color: #10243e;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__chiffres small {
+  display: block;
+  margin-top: 5px;
+  color: #7a8ca0;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/* La colonne « Imputable » est la seule qui demande une explication : elle se
+   détache et la porte sous sa valeur. */
+.reglement-form__chiffres .est-imputable {
+  padding: 10px 12px;
+  border: 1px solid #d7ebe2;
+  border-radius: 10px;
+  background: rgb(238 250 244 / 70%);
+  grid-column: span 2;
+}
+
+.reglement-form__chiffres .est-imputable dt,
+.reglement-form__chiffres .est-imputable small { color: #4a7d68; }
+.reglement-form__chiffres .est-imputable dd { color: #0d5c41; }
+
+.reglement-form__saisie {
+  display: grid;
+  align-items: end;
+  padding: 0 16px 16px;
+  gap: 12px 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.reglement-form__saisie .site-form__field input {
+  height: 46px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__saisie .site-form__field input[aria-invalid='true'] {
+  border-color: #f3c8c3;
+  background: #fff2f0;
+}
+
+.reglement-form__saisie .site-form__field small.is-warning { color: #b3261e; font-weight: 600; }
+
+.reglement-form__saisie-gestes { display: flex; gap: 8px; padding-bottom: 22px; flex-wrap: wrap; }
+.reglement-form__saisie-gestes button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.reglement-form__apres {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 11px 14px;
+  gap: 12px;
+  border-radius: 10px;
+  background: rgb(16 36 62 / 4%);
+  grid-column: 1 / -1;
+}
+
+.reglement-form__apres span { color: #60738c; font-size: 11.5px; }
+.reglement-form__apres strong {
+  color: #10243e;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .reglement-form__saisie { grid-template-columns: minmax(0, 1fr); }
+  .reglement-form__saisie-gestes { padding-bottom: 0; }
+  .reglement-form__chiffres .est-imputable { grid-column: 1 / -1; }
+}
+
+/* ---------------------------------------------------------------------------
+   Imputations retenues
+   --------------------------------------------------------------------------- */
+.reglement-form__retenues { margin-top: 18px; }
+
+.reglement-form__retenues h4 {
+  margin: 0 0 8px;
+  color: #33485f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reglement-form__retenues table { table-layout: fixed; }
+.reglement-form__retenues td { height: 42px; }
+.reglement-form__retenues th:first-child,
+.reglement-form__retenues td:first-child { width: 22%; }
+.reglement-form__retenues th:nth-child(2),
+.reglement-form__retenues td:nth-child(2) { width: 15%; }
+.reglement-form__retenues th:last-child,
+.reglement-form__retenues td:last-child { width: 44px; }
+
+.reglement-form__retenues tr.est-ouverte { background: rgb(238 246 254 / 90%); }
+.reglement-form__retenues tr.est-ouverte td:first-child { box-shadow: inset 3px 0 0 #1f4fae; }
+
+.reglement-form__lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #10243e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgb(16 36 62 / 22%);
+  text-underline-offset: 3px;
+  transition: color 140ms ease, text-decoration-color 140ms ease;
+}
+
+.reglement-form__lien:hover { color: #0f7a56; text-decoration-color: #0f7a56; }
+
+.reglement-form__retirer {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid #e0e7ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #8fa0b1;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.reglement-form__retirer:hover { border-color: #f3c8c3; color: #b3261e; background: #fff2f0; }
+.reglement-form__retirer svg { width: 14px; height: 14px; }
+
+/* ---------------------------------------------------------------------------
+   Volet droit : la liste des factures commande la section de gauche
+   --------------------------------------------------------------------------- */
+.reglement-form__liste.est-cliquable li {
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 0;
+  gap: 8px;
+  border-radius: 9px;
+}
+
+.reglement-form__liste.est-cliquable li:hover { background: rgb(246 249 251 / 90%); }
+
+.reglement-form__facture {
+  min-width: 0;
+  flex: 1;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reglement-form__liste li.est-ouverte {
+  background: rgb(238 246 254 / 85%);
+  box-shadow: inset 3px 0 0 #1f4fae;
+}
+
+.reglement-form__liste li.est-retenue .reglement-form__liste-tete strong::after {
+  content: '·';
+  margin-left: 5px;
+  color: #0f7a56;
+  font-size: 15px;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.reglement-form__facture-impute {
+  display: block;
+  margin-top: 4px;
+  color: #0f7a56;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__liste.est-cliquable .reglement-form__voir {
+  height: 24px;
+  margin-top: 2px;
+  flex: none;
+  font-size: 10px;
+}

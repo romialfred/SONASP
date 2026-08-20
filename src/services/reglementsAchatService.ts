@@ -152,10 +152,21 @@ const formateurDecimal = new Intl.NumberFormat('fr-FR', {
  * de travers, et un virement se trompe d'un facteur dix.
  */
 export function formaterFcfa(valeur: number | null | undefined, decimales = false): string {
+  const formate = formaterMontant(valeur, decimales);
+  return formate === '—' ? formate : `${formate} FCFA`;
+}
+
+/**
+ * Le même montant, sans sa devise.
+ *
+ * Dans un tableau dont l'en-tête porte déjà « (FCFA) », répéter l'unité à chaque
+ * cellule allonge les colonnes et force un défilement horizontal, sans rien
+ * apprendre à personne.
+ */
+export function formaterMontant(valeur: number | null | undefined, decimales = false): string {
   if (valeur === null || valeur === undefined || Number.isNaN(Number(valeur))) return '—';
   const nombre = Number(valeur);
-  const formate = decimales ? formateurDecimal.format(nombre) : formateurEntier.format(nombre);
-  return `${formate} FCFA`;
+  return decimales ? formateurDecimal.format(nombre) : formateurEntier.format(nombre);
 }
 
 const UNITES = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',

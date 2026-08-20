@@ -601,6 +601,9 @@ estimée.
 | A149 | Rien ne détectait une vente créée hors du formulaire, qui entamerait le stock sans origine tracée | Traçabilité | Contrôle de cohérence masse/lots, bannière nommant les ventes concernées sur le tableau de bord des ventes |
 | A150 | `ProductionInSafe` comparait le réalisé à des objectifs codés en dur (850/2 800/5 500 oz), affichés avec feux tricolores comme s'ils venaient d'une source | Production | Budget et prévision lus dans `monthly_budgets` et `quarterly_forecasts`, cumulés au prorata des jours ; mois non couvert nommé |
 | A151 | Semaine de suivi ouverte le dimanche, contre l'usage burkinabè et le découpage des déclarations | Production | Semaine ouverte le lundi |
+| A152 | `ProductionDetails` comblait les données absentes par « Kourousa », « KOURO-2511-1000 » et le pays « Guinée » — vestiges d'un autre projet affichés comme réels | Production | Aucune valeur suppléée ; le pays vient de `mining_companies.country` |
+| A153 | Bouton « Modifier » pointant `/production/daily-production`, route inexistante : la modification n'aboutissait jamais | Production | Renvoi vers `/production/daily` avec ouverture du formulaire sur la déclaration |
+| A154 | Historique des statuts résolvant les auteurs dans la table `profiles`, absente du schéma : toute modification attribuée à « Système » | Production | Résolution sur `user_profiles`, en une requête, avec distinction système / auteur inconnu |
 
 ---
 
@@ -637,8 +640,8 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 
 ## 9. Prochaine action exacte
 
-**Poursuivre le lot 7 — Production (3/7 traités).** Restent : `ProductionDetails` (643),
-`ExportLicenseForm` (836), `ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
+**Poursuivre le lot 7 — Production (4/7 traités).** Restent : `ExportLicenseForm` (836),
+`ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
 
 En parallèle, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
 charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564

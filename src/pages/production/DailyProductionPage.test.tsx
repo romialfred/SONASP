@@ -12,6 +12,7 @@ import type { DailyProduction } from '@/services/dailyProductionService';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  emplacement: { pathname: '/production/daily', state: null } as { pathname: string; state: unknown },
   from: vi.fn(),
   listProduction: vi.fn(),
   deleteProduction: vi.fn(),
@@ -22,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mocks.navigate,
+  useLocation: () => mocks.emplacement,
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
@@ -177,6 +179,7 @@ describe('DailyProductionPage', () => {
     mocks.listProduction.mockResolvedValue(productions);
     mocks.deleteProduction.mockResolvedValue(undefined);
     mocks.reponses = { mining_companies: compagnies };
+    mocks.emplacement = { pathname: '/production/daily', state: null };
     mocks.from.mockImplementation((table: string) => stub(table));
   });
 
@@ -258,6 +261,25 @@ describe('DailyProductionPage', () => {
 
     await waitFor(() => expect(mocks.showConfirm).toHaveBeenCalled());
     expect(mocks.deleteProduction).not.toHaveBeenCalled();
+  });
+
+  it('ouvre le formulaire sur la déclaration désignée par la fiche', async () => {
+    // La fiche renvoie ici pour modifier : le bouton menait auparavant vers
+    // `/production/daily-production`, route inexistante.
+    mocks.emplacement = { pathname: '/production/daily', state: { productionId: 'p1' } };
+    render(<DailyProductionPage />);
+
+    expect(await screen.findByText('Formulaire de production')).toBeInTheDocument();
+    expect(screen.getByText('Modifier la déclaration')).toBeInTheDocument();
+    // L'état est consommé : un retour arrière ne rouvre pas le formulaire.
+    expect(mocks.navigate).toHaveBeenCalledWith('.', { replace: true, state: null });
+  });
+
+  it('ignore un identifiant de déclaration absent de la liste', async () => {
+    mocks.emplacement = { pathname: '/production/daily', state: { productionId: 'inconnue' } };
+    render(<DailyProductionPage />);
+    await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
+    expect(screen.queryByText('Formulaire de production')).not.toBeInTheDocument();
   });
 
   it('mène vers la route de budget qui existe', async () => {

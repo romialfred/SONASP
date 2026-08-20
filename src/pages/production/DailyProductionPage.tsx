@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, Coins, Factory, Loader2, Plus, RotateCcw, Scale, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
@@ -99,6 +99,10 @@ export function lignesExport(
 
 export function DailyProductionPage() {
   const navigate = useNavigate();
+  const emplacement = useLocation();
+  // La fiche d'une déclaration renvoie ici pour la modifier : sans cela, le
+  // bouton « Modifier » ouvrait la liste sans rien présélectionner.
+  const declarationAModifier = (emplacement.state as { productionId?: string } | null)?.productionId;
   const {
     alertState,
     confirmState,
@@ -154,6 +158,17 @@ export function DailyProductionPage() {
   useEffect(() => {
     void chargerProductions();
   }, [chargerProductions]);
+
+  useEffect(() => {
+    if (!declarationAModifier) return;
+    const cible = productions.find((production) => production.id === declarationAModifier);
+    if (!cible) return;
+    setSelection(cible);
+    setFormOuvert(true);
+    // L'état de navigation est consommé une fois : un retour arrière ne doit
+    // pas rouvrir le formulaire.
+    navigate('.', { replace: true, state: null });
+  }, [declarationAModifier, productions, navigate]);
 
   useEffect(() => {
     if (!filtresOuverts) return;

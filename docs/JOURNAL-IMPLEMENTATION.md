@@ -1693,3 +1693,62 @@ traductions `t('production.*')` qui coexistaient avec du texte anglais en dur.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
 - Audit d'habillage : 120 routes, aucune hors habillage
+
+---
+
+## Itération — 20 août 2026 — La fiche de production cesse de suppléer aux données
+
+### Ce qui a été trouvé
+
+`ProductionDetails` comblait chaque donnée absente par une valeur d'un autre projet :
+
+```tsx
+{miningCompany?.name || 'Kourousa'}
+{production.bar_reference || 'KOURO-2511-1000'}
+Production {production.bar_reference || `KOURO-${production.id.slice(0, 8)}`}
+const [siteCountry] = useState<string>('Guinée');
+```
+
+Kourousa est une mine guinéenne ; « KOURO » est son préfixe de barres. Sur une plateforme
+burkinabè, une déclaration sans référence s'affichait donc sous une référence guinéenne
+inventée, rattachée à une mine guinéenne, dans un pays guinéen (A152). Pire : `siteCountry`
+n'était jamais renseigné — `setSiteCountry` n'est appelé nulle part — et cette constante
+alimentait la fenêtre de confirmation des changements de statut ainsi que l'historique, où
+elle passait pour le pays du site.
+
+Deux autres défauts, du même ordre :
+
+- Le bouton **Modifier** menait vers `/production/daily-production`, **route inexistante** :
+  la modification n'aboutissait jamais (A153).
+- L'historique résolvait les auteurs dans la table `profiles`, **absente de ce schéma** — le
+  référentiel s'appelle `user_profiles`. Chaque requête échouait en silence et **toute**
+  modification était attribuée à « Système » (A154). Une piste d'audit qui ne nomme jamais
+  son auteur ne vaut rien.
+
+### Ce qui a été décidé
+
+- **Rien n'est suppléé.** Une référence absente s'affiche « Barre sans référence », une
+  compagnie inconnue « — ». Le pays vient de `mining_companies.country` ; s'il manque, aucun
+  pays n'est transmis à la fenêtre de confirmation.
+- **Les auteurs sont résolus en une requête** sur `user_profiles`, et l'on distingue trois
+  cas au lieu d'un : un changement automatique est dit « Système », un compte introuvable
+  « Auteur inconnu », un compte connu porte son nom. Les confondre effaçait la
+  responsabilité de chaque modification.
+- **Modifier ouvre réellement le formulaire** sur la déclaration concernée : la fiche passe
+  l'identifiant par l'état de navigation, que la page des déclarations consomme une fois — un
+  retour arrière ne doit pas rouvrir le formulaire.
+- **Les impuretés ne deviennent pas négatives** sur un titre incohérent : le complément à
+  100 % est borné à zéro, et l'incohérence se lit dans les parts d'or et d'argent.
+- **Un onglet d'historique** remplace la colonne latérale : l'historique était affiché en
+  permanence dans un tiers de l'écran, y compris quand il était vide.
+- Chaque source annexe s'affiche ou se tait pour son compte : un historique illisible ne
+  vide plus la fiche.
+
+L'écran rejoint le socle et passe entièrement au français — « Mining Company », « Bar
+Reference », « Bullion Total » subsistaient en anglais au milieu du texte français.
+
+### Contrôles
+
+- `npx vitest run` : **639/639 verts** (71 fichiers, 21 ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **140**, une erreur héritée de moins

@@ -142,3 +142,102 @@
 
 .production-page__objectif dd.est-atteint { color: #10976b; }
 .production-page__objectif dd.est-manque { color: #b4442b; }
+
+/* Fiche d'une déclaration : libellé à gauche, valeur à droite. */
+.production-page__fiche {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 24px;
+}
+
+.production-page__fiche > div {
+  border-bottom: 1px solid var(--sn-line-soft);
+  padding-bottom: 8px;
+}
+
+.production-page__fiche dt {
+  font-size: 11.5px;
+  color: var(--sn-muted, #6b7a88);
+  margin-bottom: 2px;
+}
+
+.production-page__fiche dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sn-navy);
+}
+
+/* Décomposition de la barre : doré, or, argent, impuretés. */
+.production-page__composition {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.production-page__composition article {
+  border: 1px solid var(--sn-line-soft);
+  border-radius: var(--sn-radius);
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.production-page__composition article.est-or {
+  border-color: #e8d9a8;
+  background: #fffdf5;
+}
+
+.production-page__composition header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.production-page__composition h4 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sn-navy);
+}
+
+.production-page__composition-poids {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sn-navy);
+}
+
+.production-page__composition-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--sn-muted, #6b7a88);
+}
+
+.production-page__notes {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.production-page__notes h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sn-navy);
+}
+
+.production-page__notes p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--sn-ink, #2b3742);
+  white-space: pre-wrap;
+}
+
+.production-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}

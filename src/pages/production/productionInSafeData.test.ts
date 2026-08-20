@@ -132,7 +132,18 @@ describe('realiseSur', () => {
 describe('ecartAuBut', () => {
   it('mesure le dépassement', () => {
     const ecart = ecartAuBut(120, { totalOz: 100, moisManquants: [], complet: true });
-    expect(ecart).toEqual({ ecartOz: 20, pourcentage: 20, atteint: true });
+    expect(ecart).toEqual({ ecartOz: 20, pourcentage: 20, atteint: true, tauxAtteinte: 100 });
+  });
+
+  it('borne la jauge à 100 % sans écraser l’écart chiffré', () => {
+    // La jauge ne peut pas déborder ; le dépassement reste lisible en onces.
+    const ecart = ecartAuBut(250, { totalOz: 100, moisManquants: [], complet: true });
+    expect(ecart?.tauxAtteinte).toBe(100);
+    expect(ecart?.ecartOz).toBe(150);
+  });
+
+  it('donne la part atteinte quand l’objectif n’est pas tenu', () => {
+    expect(ecartAuBut(30, { totalOz: 120, moisManquants: [], complet: true })?.tauxAtteinte).toBe(25);
   });
 
   it('mesure le retard', () => {

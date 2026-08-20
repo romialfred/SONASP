@@ -11,6 +11,7 @@ import {
   Shield,
   SlidersHorizontal,
   Target,
+  Vault,
   X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -26,15 +27,32 @@ import {
   ecartAuBut,
   libelleMois,
   realiseSur,
+  type Ecart,
   type LigneObjectif,
+  type Objectif,
   type Periode,
 } from './productionInSafeData';
 import './production.css';
 
 /**
- * Or en coffre : ce que les compagnies ont déclaré et qui n'est ni annulé ni
- * sorti. L'écran compare le réalisé aux objectifs **votés** — budget mensuel et
- * prévision révisée — là où il affichait auparavant des objectifs codés en dur.
+ * Or en coffre — définition retenue
+ *
+ * L'or que la SONASP **détient encore** : entré au coffre par une déclaration de
+ * production, il n'en est pas ressorti.
+ *
+ *   entre  — toute déclaration de production d'une mine industrielle ;
+ *   reste  — tant qu'elle est « Préparée » ou « Prête pour la douane » ;
+ *   sort   — quand son expédition part vers le raffineur ;
+ *   jamais — les déclarations annulées n'y sont pas entrées.
+ *
+ * L'écran comptait auparavant **toutes** les déclarations non annulées, y
+ * compris celles déjà parties : quatre barres sur dix étaient rattachées à une
+ * expédition partie, dont deux déjà chez le raffineur. Le coffre affichait donc
+ * de l'or qu'il ne détenait plus. Les barres sorties sont désormais retirées du
+ * cumul, et l'écran dit combien il en a retiré.
+ *
+ * Le réalisé se compare aux objectifs **votés** — budget mensuel et prévision
+ * révisée — jamais à des cibles codées en dur.
  */
 
 interface Compagnie {
@@ -70,12 +88,16 @@ export const formatDate = (iso: string) => {
 /** Le coffre exclut les déclarations annulées : elles n'y sont plus. */
 const STATUT_EXCLU = 'cancelled';
 
+/**
+ * `production_status_v2` ne connaît que trois valeurs. « Expédié » et « Affiné »
+ * y figuraient : aucune déclaration ne pouvait les porter, et les choisir vidait
+ * la table sans rien expliquer. Un filtre qui ne peut rien trouver n'est pas un
+ * filtre.
+ */
 const STATUTS_FILTRABLES: Array<{ valeur: string; libelle: string }> = [
   { valeur: 'all', libelle: 'Tous les statuts' },
   { valeur: 'prepared', libelle: 'Préparé' },
   { valeur: 'ready_for_customs', libelle: 'Prêt pour la douane' },
-  { valeur: 'shipped', libelle: 'Expédié' },
-  { valeur: 'refined', libelle: 'Affiné' },
 ];
 
 export function ProductionInSafe() {
@@ -84,6 +106,9 @@ export function ProductionInSafe() {
   const [productions, setProductions] = useState<LigneProduction[]>([]);
   const [compagnies, setCompagnies] = useState<Compagnie[]>([]);
   const [budgets, setBudgets] = useState<LigneObjectif[] | null>(null);
+  /** Barres rattachées à une expédition déjà partie : elles ont quitté le coffre. */
+  const [sorties, setSorties] = useState<Set<string>>(new Set());
+  const [sortiesLues, setSortiesLues] = useState(true);
   const [previsions, setPrevisions] = useState<LigneObjectif[] | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -105,6 +130,34 @@ export function ProductionInSafe() {
       .order('name');
     if (error) throw error;
     setCompagnies(data || []);
+  }, []);
+
+  /**
+   * Une barre quitte le coffre au départ de son expédition. Le rattachement seul
+   * ne suffit pas : tant que l'expédition n'est pas partie, l'or est encore là.
+   */
+  const chargerSorties = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('freight_shipment_productions')
+      .select('production_id, expedition:freight_shipments!inner(shipped_at)')
+      .not('freight_shipments.shipped_at', 'is', null);
+
+    if (error) {
+      // Sans cette lecture, le coffre serait surestimé sans le dire. L'écran
+      // préfère l'annoncer plutôt que de présenter un cumul qu'il sait faux.
+      setSortiesLues(false);
+      setSorties(new Set());
+      return;
+    }
+
+    setSortiesLues(true);
+    setSorties(
+      new Set(
+        (data || [])
+          .filter((ligne: Record<string, any>) => ligne.expedition?.shipped_at)
+          .map((ligne: Record<string, any>) => String(ligne.production_id))
+      )
+    );
   }, []);
 
   const chargerProductions = useCallback(async () => {
@@ -178,14 +231,19 @@ export function ProductionInSafe() {
     setChargement(true);
     setErreur(null);
     try {
-      await Promise.all([chargerCompagnies(), chargerProductions(), chargerObjectifs()]);
+      await Promise.all([
+        chargerCompagnies(),
+        chargerProductions(),
+        chargerObjectifs(),
+        chargerSorties(),
+      ]);
     } catch (raison) {
       setErreur(errorMessage(raison, 'Impossible de charger les déclarations du coffre.'));
       setProductions([]);
     } finally {
       setChargement(false);
     }
-  }, [periodeInvalide, chargerCompagnies, chargerProductions, chargerObjectifs]);
+  }, [periodeInvalide, chargerCompagnies, chargerProductions, chargerObjectifs, chargerSorties]);
 
   useEffect(() => {
     void charger();
@@ -200,21 +258,29 @@ export function ProductionInSafe() {
     return () => document.removeEventListener('keydown', surTouche);
   }, [filtresOuverts]);
 
+  /** Ce qui est encore au coffre, une fois les barres parties écartées. */
+  const auCoffre = useMemo(
+    () => productions.filter((ligne) => !sorties.has(ligne.id)),
+    [productions, sorties]
+  );
+
+  const nombreSorties = productions.length - auCoffre.length;
+
   const cumuls = useMemo(() => {
-    const dore = productions.reduce((total, ligne) => total + Number(ligne.bullion_grams || 0), 0);
-    const fin = productions.reduce((total, ligne) => total + Number(ligne.pure_gold_grams || 0), 0);
-    const oz = productions.reduce((total, ligne) => total + Number(ligne.estimated_oz || 0), 0);
-    const titres = productions
+    const dore = auCoffre.reduce((total, ligne) => total + Number(ligne.bullion_grams || 0), 0);
+    const fin = auCoffre.reduce((total, ligne) => total + Number(ligne.pure_gold_grams || 0), 0);
+    const oz = auCoffre.reduce((total, ligne) => total + Number(ligne.estimated_oz || 0), 0);
+    const titres = auCoffre
       .map((ligne) => Number(ligne.estimated_fineness_pct || 0))
       .filter((titre) => titre > 0);
     return {
-      declarations: productions.length,
+      declarations: auCoffre.length,
       dore,
       fin,
       oz,
       titreMoyen: titres.length ? titres.reduce((a, b) => a + b, 0) / titres.length : null,
     };
-  }, [productions]);
+  }, [auCoffre]);
 
   const nomCompagnie = useCallback(
     (id: string | null) => (id ? compagnies.find((c) => c.id === id)?.name || 'Société inconnue' : '—'),
@@ -238,7 +304,7 @@ export function ProductionInSafe() {
         <PageHeader
           icon={Shield}
           title="Or en coffre"
-          subtitle="Déclarations détenues au coffre, comparées au budget voté et à la prévision révisée."
+          subtitle="L’or déclaré par les mines et encore détenu par la SONASP : entré au coffre, pas encore expédié."
           breadcrumb={[{ label: 'Mines industrielles' }, { label: 'Or en coffre' }]}
           actions={
             <>
@@ -263,18 +329,29 @@ export function ProductionInSafe() {
           </Note>
         )}
 
-        <p className="production-page__resume">
-          <span>
-            Période du <strong>{formatDate(periode.debut)}</strong> au <strong>{formatDate(periode.fin)}</strong>
-          </span>
-          <span>
-            {compagnieFiltre === 'all' ? 'Toutes les compagnies' : nomCompagnie(compagnieFiltre)}
-          </span>
-          <span>{STATUTS_FILTRABLES.find((s) => s.valeur === statutFiltre)?.libelle}</span>
-          {periodeInvalide && (
-            <span className="production-page__erreur">La date de début est postérieure à la date de fin.</span>
-          )}
-        </p>
+        {/* Les trois pastilles qui répétaient ici les filtres actifs ont été
+            retirées : les filtres vivent dans le panneau de droite, dont le
+            bouton porte déjà leur compte. La place revient à la définition, qui
+            manquait. */}
+        {periodeInvalide && (
+          <Note tone="danger" icon={AlertTriangle}>
+            La date de début est postérieure à la date de fin : aucune période n’est lisible.
+          </Note>
+        )}
+
+        <Note tone="info" icon={Vault}>
+          <strong>Ce que contient le coffre.</strong> Une barre y entre à sa déclaration de
+          production et en sort au départ de son expédition vers le raffineur ; les déclarations
+          annulées n’y entrent jamais. Les cumuls ci-dessous ne portent donc que sur l’or
+          effectivement détenu.
+        </Note>
+
+        {!sortiesLues && (
+          <Note tone="warning" icon={AlertTriangle}>
+            Les expéditions n’ont pas pu être lues : les barres déjà parties ne peuvent pas être
+            écartées et les cumuls sont probablement surestimés.
+          </Note>
+        )}
 
         {filtresOuverts && (
           <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Filtres du coffre">
@@ -367,8 +444,8 @@ export function ProductionInSafe() {
         <Section
           id="objectifs"
           icon={Target}
-          title="Réalisé par rapport aux objectifs"
-          description="Budget voté et prévision révisée, cumulés au prorata des jours écoulés."
+          title="Production réalisée par rapport aux objectifs"
+          description="Budget voté et prévision révisée, cumulés au prorata des jours écoulés. L’or déjà expédié y compte : il a bien été produit."
         >
           <div className="production-page__objectifs">
             {[
@@ -382,6 +459,46 @@ export function ProductionInSafe() {
               const ecartBudget = budget ? ecartAuBut(realise, budget) : null;
               const ecartPrevision = prevision ? ecartAuBut(realise, prevision) : null;
 
+              /**
+               * La jauge dit d'un coup d'œil ce que trois nombres disaient mal :
+               * la part de l'objectif atteinte. L'écart chiffré reste dessous,
+               * pour qui veut le montant exact.
+               */
+              const jauge = (ecart: Ecart | null) =>
+                ecart === null ? null : (
+                  <div
+                    className="production-page__jauge"
+                    role="img"
+                    aria-label={`${ecart.tauxAtteinte} % de l’objectif atteint`}
+                  >
+                    <span
+                      className={ecart.atteint ? 'est-atteint' : 'est-manque'}
+                      style={{ width: `${ecart.tauxAtteinte}%` }}
+                    />
+                  </div>
+                );
+
+              const cible = (
+                clef: string,
+                libelle: string,
+                objectif: Objectif | null,
+                ecart: Ecart | null,
+                absence: string
+              ) => (
+                <div key={clef} className="production-page__cible">
+                  <div className="production-page__cible-tete">
+                    <dt>{libelle}</dt>
+                    <dd>{objectif?.complet ? onces(objectif.totalOz) : '—'}</dd>
+                  </div>
+                  {jauge(ecart)}
+                  <dd className={ecart ? (ecart.atteint ? 'est-atteint' : 'est-manque') : 'est-absent'}>
+                    {ecart
+                      ? `${ecart.atteint ? '+' : ''}${decimal.format(ecart.ecartOz)} oz · ${ecart.tauxAtteinte} % de l’objectif`
+                      : absence}
+                  </dd>
+                </div>
+              );
+
               return (
                 <article key={cle} className="production-page__objectif">
                   <header>
@@ -394,48 +511,33 @@ export function ProductionInSafe() {
                     </div>
                   </header>
 
-                  <p className="production-page__objectif-realise">{onces(realise)}</p>
+                  <p className="production-page__objectif-realise">
+                    {decimal.format(realise)} <span>oz produites</span>
+                  </p>
 
                   <dl>
-                    <div>
-                      <dt>Budget</dt>
-                      <dd>{budget?.complet ? onces(budget.totalOz) : '—'}</dd>
-                      <dd
-                        className={
-                          ecartBudget ? (ecartBudget.atteint ? 'est-atteint' : 'est-manque') : undefined
-                        }
-                      >
-                        {ecartBudget
-                          ? `${ecartBudget.ecartOz >= 0 ? '+' : ''}${decimal.format(ecartBudget.ecartOz)} oz · ${
-                              ecartBudget.pourcentage >= 0 ? '+' : ''
-                            }${ecartBudget.pourcentage} %`
-                          : budgets === null
-                            ? 'Source « budgets mensuels » non lue'
-                            : budget && budget.moisManquants.length
-                              ? `Budget non voté pour ${budget.moisManquants.map(libelleMois).join(', ')}`
-                              : 'Budget non renseigné'}
-                      </dd>
-                    </div>
-
-                    <div>
-                      <dt>Prévision</dt>
-                      <dd>{prevision?.complet ? onces(prevision.totalOz) : '—'}</dd>
-                      <dd
-                        className={
-                          ecartPrevision ? (ecartPrevision.atteint ? 'est-atteint' : 'est-manque') : undefined
-                        }
-                      >
-                        {ecartPrevision
-                          ? `${ecartPrevision.ecartOz >= 0 ? '+' : ''}${decimal.format(ecartPrevision.ecartOz)} oz · ${
-                              ecartPrevision.pourcentage >= 0 ? '+' : ''
-                            }${ecartPrevision.pourcentage} %`
-                          : previsions === null
-                            ? 'Source « prévisions trimestrielles » non lue'
-                            : prevision && prevision.moisManquants.length
-                              ? `Prévision absente pour ${prevision.moisManquants.map(libelleMois).join(', ')}`
-                              : 'Prévision non renseignée'}
-                      </dd>
-                    </div>
+                    {cible(
+                      'budget',
+                      'Budget voté',
+                      budget,
+                      ecartBudget,
+                      budgets === null
+                        ? 'Source « budgets mensuels » non lue'
+                        : budget && budget.moisManquants.length
+                          ? `Budget non voté pour ${budget.moisManquants.map(libelleMois).join(', ')}`
+                          : 'Budget non renseigné'
+                    )}
+                    {cible(
+                      'prevision',
+                      'Prévision révisée',
+                      prevision,
+                      ecartPrevision,
+                      previsions === null
+                        ? 'Source « prévisions trimestrielles » non lue'
+                        : prevision && prevision.moisManquants.length
+                          ? `Prévision absente pour ${prevision.moisManquants.map(libelleMois).join(', ')}`
+                          : 'Prévision non renseignée'
+                    )}
                   </dl>
                 </article>
               );
@@ -447,11 +549,15 @@ export function ProductionInSafe() {
           id="declarations"
           icon={Shield}
           title="Barres au coffre"
-          description="Les déclarations annulées sont exclues : elles ne sont plus au coffre."
+          description={
+            nombreSorties > 0
+              ? `${nombreSorties} barre${nombreSorties > 1 ? 's' : ''} de la période ${nombreSorties > 1 ? 'ont' : 'a'} quitté le coffre avec une expédition et ${nombreSorties > 1 ? 'ne figurent' : 'ne figure'} plus ici.`
+              : 'Chaque barre listée est encore détenue : aucune n’a quitté le coffre sur la période.'
+          }
         >
           {chargement ? (
             <p className="production-page__loading">Chargement des déclarations…</p>
-          ) : productions.length === 0 ? (
+          ) : auCoffre.length === 0 ? (
             <EmptyState
               title="Aucune barre au coffre"
               description="Aucune déclaration ne répond aux critères retenus sur cette période."
@@ -472,7 +578,7 @@ export function ProductionInSafe() {
                   </tr>
                 </thead>
                 <tbody>
-                  {productions.map((ligne) => (
+                  {auCoffre.map((ligne) => (
                     <tr
                       key={ligne.id}
                       className="is-clickable"

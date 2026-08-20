@@ -1840,3 +1840,62 @@ référentiels, pas l'identité de la plateforme.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, neuf erreurs héritées de moins
 - Audit d'habillage : 120 routes, aucune hors habillage
+
+---
+
+## Itération — 20 août 2026 — « Or en coffre » : définir avant de dessiner
+
+Demande : améliorer le design des tuiles, retirer les pastilles de filtres sous le titre — les
+filtres sont déjà dans le panneau latéral — et **d'abord définir ce qu'est l'or en coffre**.
+
+### La définition manquait, et son absence faussait les chiffres
+
+L'écran ne disait nulle part ce qu'il comptait. En cherchant à l'écrire, la règle appliquée par
+le code s'est révélée fausse : le coffre retenait **toute déclaration non annulée**, y compris
+celles déjà parties. Quatre barres sur dix étaient rattachées à une expédition partie, dont
+deux déjà chez le raffineur (`shipped_to_refinery`). Le coffre affichait de l'or qu'il ne
+détenait plus (A165).
+
+Définition retenue, désormais écrite en tête du module et affichée à l'écran :
+
+> Une barre **entre** au coffre à sa déclaration de production, **y reste** tant qu'elle est
+> préparée ou prête pour la douane, **en sort** au départ de son expédition vers le raffineur.
+> Les déclarations annulées n'y entrent jamais.
+
+Trois conséquences : les barres parties sont retirées des cumuls ; l'écran dit combien il en a
+retiré ; si les expéditions ne peuvent pas être lues, il l'annonce plutôt que de présenter un
+cumul qu'il sait surestimé.
+
+**Distinction préservée** — la section « Production réalisée par rapport aux objectifs » compte,
+elle, l'or expédié : il a bien été produit. Comparer une production à un budget de production
+n'a rien à voir avec inventorier un coffre. Les deux notions cohabitent désormais avec des
+libellés qui les distinguent.
+
+### Un filtre qui ne pouvait rien trouver
+
+Le filtre de statut proposait « Expédié » et « Affiné ». L'énumération `production_status_v2`
+ne connaît que `prepared`, `ready_for_customs` et `cancelled` : choisir l'une de ces deux
+valeurs vidait la table sans rien expliquer (A166). Les deux entrées sont retirées.
+
+### Design
+
+- **Pastilles de filtres supprimées.** Elles répétaient sous le titre ce que le bouton
+  « Filtres » porte déjà en compteur. La place revient à la définition. La règle CSS est
+  conservée : « Production journalière » s'en sert encore.
+- **Tuiles de période refondues.** Elles empilaient quatre nombres de même poids — réalisé,
+  objectif, écart en onces, écart en pourcentage — et une phrase grise aussi longue qu'eux.
+  Rien ne disait où porter l'œil. Désormais : le réalisé domine (30 px, chiffres tabulaires),
+  une **jauge** donne la part d'objectif atteinte d'un coup d'œil, l'écart chiffré passe en
+  second rang, et les mentions de source manquante passent en italique discret.
+- La jauge est bornée à 100 % — elle ne peut pas déborder — tandis que l'écart chiffré garde le
+  dépassement entier.
+
+### Contrôles
+
+- `npx vitest run` : **646/646 verts** (7 tests ajoutés : sorties du coffre, avertissement de
+  source illisible, définition affichée, absence des pastilles, bornage de la jauge)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+Vérification visuelle non faite : la session du navigateur d'aperçu s'est déconnectée et je
+n'ai pas à saisir d'identifiants.

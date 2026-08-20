@@ -134,6 +134,11 @@ export interface Ecart {
   pourcentage: number;
   /** Vrai quand le réalisé atteint ou dépasse l'objectif. */
   atteint: boolean;
+  /**
+   * Part de l'objectif atteinte, en pourcentage et bornée à 100 : c'est ce que
+   * remplit la jauge. L'écart chiffré, lui, garde le dépassement entier.
+   */
+  tauxAtteinte: number;
 }
 
 /**
@@ -147,6 +152,7 @@ export function ecartAuBut(realiseOz: number, objectif: Objectif): Ecart | null 
     ecartOz,
     pourcentage: Math.round((ecartOz / objectif.totalOz) * 1000) / 10,
     atteint: ecartOz >= 0,
+    tauxAtteinte: Math.max(0, Math.min(100, Math.round((realiseOz / objectif.totalOz) * 1000) / 10)),
   };
 }
 

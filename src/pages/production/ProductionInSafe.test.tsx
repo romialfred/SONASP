@@ -31,7 +31,7 @@ vi.mock('@/lib/supabase', () => {
     const chaine: Record<string, unknown> = {
       then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(resultat()).then(resoudre),
     };
-    ['select', 'eq', 'neq', 'gte', 'lte', 'order'].forEach((methode) => {
+    ['select', 'eq', 'neq', 'not', 'gte', 'lte', 'order'].forEach((methode) => {
       chaine[methode] = () => chaine;
     });
     return chaine;
@@ -62,6 +62,7 @@ beforeEach(() => {
     daily_production: { data: [production({ id: 'p1' })], error: null },
     monthly_budgets: { data: [], error: null },
     quarterly_forecasts: { data: [], error: null },
+    freight_shipment_productions: { data: [], error: null },
   };
 });
 
@@ -82,6 +83,60 @@ describe('ProductionInSafe', () => {
     render(<ProductionInSafe />);
     expect(await screen.findByText('BAR-001')).toBeInTheDocument();
     expect(screen.getAllByText('Wahgnion Gold Mine').length).toBeGreaterThan(0);
+  });
+
+  it('écarte du coffre une barre partie avec son expédition', async () => {
+    // Une barre rattachée à une expédition déjà partie n'est plus détenue :
+    // l'écran la retire du cumul plutôt que de compter de l'or qu'il n'a plus.
+    mocks.reponses.daily_production = {
+      data: [production({ id: 'p1' }), production({ id: 'p2', bar_reference: 'BAR-002' })],
+      error: null,
+    };
+    mocks.reponses.freight_shipment_productions = {
+      data: [{ production_id: 'p2', expedition: { shipped_at: '2026-08-19T10:00:00Z' } }],
+      error: null,
+    };
+
+    render(<ProductionInSafe />);
+    await screen.findByText('BAR-001');
+
+    expect(screen.queryByText('BAR-002')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 barre de la période a quitté le coffre/)).toBeInTheDocument();
+  });
+
+  it('garde au coffre une barre dont l’expédition n’est pas partie', async () => {
+    mocks.reponses.daily_production = {
+      data: [production({ id: 'p1' }), production({ id: 'p2', bar_reference: 'BAR-002' })],
+      error: null,
+    };
+    mocks.reponses.freight_shipment_productions = {
+      data: [{ production_id: 'p2', expedition: { shipped_at: null } }],
+      error: null,
+    };
+
+    render(<ProductionInSafe />);
+    expect(await screen.findByText('BAR-002')).toBeInTheDocument();
+  });
+
+  it('avertit quand les expéditions sont illisibles plutôt que de surestimer', async () => {
+    mocks.reponses.freight_shipment_productions = { data: null, error: { message: 'table absente' } };
+    render(<ProductionInSafe />);
+    await screen.findByText('BAR-001');
+    expect(screen.getByText(/cumuls sont probablement surestimés/)).toBeInTheDocument();
+  });
+
+  it('définit le coffre à l’écran', async () => {
+    render(<ProductionInSafe />);
+    await screen.findByText('BAR-001');
+    expect(screen.getByText(/Ce que contient le coffre/)).toBeInTheDocument();
+  });
+
+  it('ne répète plus les filtres actifs sous le titre', async () => {
+    // Les filtres vivent dans le panneau latéral ; les pastilles faisaient
+    // doublon avec le compte porté par le bouton.
+    render(<ProductionInSafe />);
+    await screen.findByText('BAR-001');
+    expect(document.querySelector('.production-page__resume')).toBeNull();
   });
 
   it('nomme la source manquante au lieu d’afficher un objectif inventé', async () => {

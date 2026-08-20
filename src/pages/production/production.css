@@ -12,6 +12,8 @@
 
 /* Les filtres sont passes dans un volet lateral : la page ne porte plus qu'un
    rappel des criteres retenus. */
+/* Résumé des filtres actifs. L'écran « Or en coffre » ne s'en sert plus — ses
+   filtres vivent dans le panneau latéral — mais « Production journalière » oui. */
 .production-page__resume {
   display: flex;
   align-items: center;
@@ -34,6 +36,11 @@
 
 .production-page__resume strong { color: var(--sn-navy); font-weight: 600; }
 
+.production-page__resume .production-page__erreur {
+  border-color: var(--sn-danger-line);
+  background: var(--sn-danger-soft);
+}
+
 .production-page__erreur {
   margin: 0;
   color: var(--sn-danger);
@@ -41,11 +48,7 @@
   font-weight: 600;
 }
 
-.production-page__resume .production-page__erreur {
-  border-color: var(--sn-danger-line);
-  background: var(--sn-danger-soft);
-}
-
+.production-page .sn-note { margin-top: 12px; }
 .production-page .sn-stats { margin-top: 12px; }
 .production-page .sn-section { margin-top: 12px; }
 
@@ -61,32 +64,53 @@
   font-size: 12.5px;
 }
 
-/* Trois périodes de suivi : semaine, mois, année. */
+/* ---------------------------------------------------------------------------
+   Trois périodes de suivi : semaine, mois, année.
+
+   Les tuiles empilaient quatre nombres de même poids — réalisé, objectif, écart
+   en onces, écart en pourcentage — et une phrase grise aussi longue qu'eux. Rien
+   ne disait où porter l'œil. La hiérarchie est désormais explicite : le réalisé
+   domine, une jauge donne la part d'objectif atteinte d'un coup d'œil, l'écart
+   chiffré passe en second rang.
+   --------------------------------------------------------------------------- */
 .production-page__objectifs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+  gap: 14px;
 }
 
 .production-page__objectif {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--sn-line-soft);
   border-radius: var(--sn-radius);
-  padding: 14px;
+  padding: 16px 16px 14px;
   background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.production-page__objectif:hover {
+  border-color: var(--sn-line);
+  box-shadow: 0 1px 3px rgb(16 36 62 / 6%);
 }
 
 .production-page__objectif > header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sn-line-soft);
 }
 
+/* L'icône de période prend une pastille, comme les icônes de section. */
 .production-page__objectif > header svg {
-  width: 18px;
-  height: 18px;
-  color: var(--sn-gold, #d79a00);
+  width: 32px;
+  height: 32px;
+  padding: 7px;
   flex: none;
+  color: var(--sn-gold-dark, #b97f00);
+  background: var(--sn-gold-soft, #fdf4e1);
+  border-radius: var(--sn-radius-sm, 8px);
 }
 
 .production-page__objectif h4 {
@@ -100,48 +124,89 @@
   margin: 2px 0 0;
   font-size: 11px;
   color: var(--sn-muted, #6b7a88);
+  font-variant-numeric: tabular-nums;
 }
 
+/* Le réalisé porte la tuile : l'unité l'accompagne sans lui disputer la place. */
 .production-page__objectif-realise {
-  margin: 0 0 12px;
-  font-size: 22px;
+  margin: 14px 0 16px;
+  font-size: 30px;
+  line-height: 1.1;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--sn-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.production-page__objectif-realise span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--sn-muted, #6b7a88);
 }
 
 .production-page__objectif dl {
   margin: 0;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
-.production-page__objectif dl > div {
-  display: grid;
-  grid-template-columns: 72px 1fr;
+.production-page__cible-tete {
+  display: flex;
   align-items: baseline;
-  gap: 4px 8px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .production-page__objectif dt {
   font-size: 11.5px;
+  font-weight: 500;
   color: var(--sn-muted, #6b7a88);
 }
 
 .production-page__objectif dd {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--sn-navy);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Deuxième ligne : l'écart, sous les deux colonnes. */
-.production-page__objectif dd:last-child {
-  grid-column: 1 / -1;
+/* Part de l'objectif atteinte. */
+.production-page__jauge {
+  height: 5px;
+  margin: 7px 0 5px;
+  border-radius: 999px;
+  background: var(--sn-line-soft, #eef2f6);
+  overflow: hidden;
+}
+
+.production-page__jauge span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+
+.production-page__jauge span.est-atteint { background: var(--sn-success, #0c8a5f); }
+.production-page__jauge span.est-manque { background: var(--sn-gold, #d99a00); }
+
+/* Second rang : l'écart chiffré, ou la raison de son absence. */
+.production-page__cible > dd:last-child {
   font-size: 11.5px;
+  font-weight: 500;
+}
+
+.production-page__cible > dd.est-atteint { color: var(--sn-success, #0c8a5f); }
+.production-page__cible > dd.est-manque { color: var(--sn-gold-dark, #b97f00); }
+
+.production-page__cible > dd.est-absent {
+  font-weight: 400;
+  font-style: italic;
   color: var(--sn-muted, #6b7a88);
 }
-
-.production-page__objectif dd.est-atteint { color: #10976b; }
-.production-page__objectif dd.est-manque { color: #b4442b; }
 
 /* Fiche d'une déclaration : libellé à gauche, valeur à droite. */
 .production-page__fiche {

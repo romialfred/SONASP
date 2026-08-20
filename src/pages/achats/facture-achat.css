@@ -14,7 +14,7 @@
   inset: 0;
   z-index: 70;
   display: grid;
-  padding: 28px 20px;
+  padding: 18px 16px;
   place-items: start center;
   overflow-y: auto;
   background: rgb(16 36 62 / 46%);
@@ -28,7 +28,7 @@
 }
 
 .facture-achat__cadre {
-  width: min(980px, 100%);
+  width: min(1060px, 100%);
   overflow: hidden;
   border: 1px solid #e0e7ee;
   border-radius: 16px;
@@ -89,12 +89,19 @@
 .facture-achat__fermer svg { width: 17px; height: 17px; }
 
 .facture-achat__corps {
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
-  padding: 22px;
+  padding: 16px;
 }
 
 .facture-achat__corps .facture { margin: 0 auto; }
+
+/* La facture se reduit jusqu'a tenir en entier : le facteur est calcule au
+   rendu, depuis la hauteur reelle de la piece et la place restante. */
+.facture-achat__page {
+  transform: scale(var(--facture-echelle, 1));
+  transform-origin: top center;
+}
 
 .facture-achat__erreur {
   display: flex;
@@ -131,6 +138,9 @@
   .facture-achat__cadre { width: 100%; border: 0; border-radius: 0; box-shadow: none; background: #fff; }
   .facture-achat__barre { display: none; }
   .facture-achat__corps { max-height: none; overflow: visible; padding: 0; }
+
+  /* Le papier a sa propre largeur : l'echelle d'ecran ne le concerne pas. */
+  .facture-achat__page { transform: none; margin-bottom: 0 !important; }
 }
 
 /* ---------------------------------------------------------------------------

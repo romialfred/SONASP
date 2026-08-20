@@ -1,5 +1,5 @@
 import { AlertTriangle, Loader2, Printer, ShieldCheck, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService } from '@/services/achatsIndustrielsService';
@@ -151,6 +151,8 @@ export function FactureAchatApercu({ factureId, onFermer }: {
   const [erreur, setErreur] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const qrRef = useRef<string | null>(null);
+  const corpsRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let vivant = true;
@@ -210,6 +212,43 @@ export function FactureAchatApercu({ factureId, onFermer }: {
       .catch(() => setQr(null));
   }, [facture, certifiee, netAPayer]);
 
+  /**
+   * Met la facture à l'échelle de la place restante sous la barre de titre.
+   * `offsetHeight` donne la hauteur de mise en page, insensible au `scale` : la
+   * mesure ne se dégrade pas d'un ajustement à l'autre.
+   */
+  useLayoutEffect(() => {
+    if (!facture) return undefined;
+    const corps = corpsRef.current;
+    const page = pageRef.current;
+    if (!corps || !page) return undefined;
+
+    const ajuster = () => {
+      const hauteur = page.offsetHeight;
+      const largeur = page.offsetWidth;
+      if (!hauteur || !largeur) return;
+      const disponible = window.innerHeight - corps.getBoundingClientRect().top - 22;
+      const echelle = Math.max(0.4, Math.min(
+        1,
+        disponible / hauteur,
+        corps.clientWidth / largeur
+      ));
+      page.style.setProperty('--facture-echelle', String(echelle));
+      // Le `scale` ne rend pas sa place : on la reprend en marge negative,
+      // sinon la fenetre defile sur du vide.
+      page.style.marginBottom = `${-Math.round(hauteur * (1 - echelle))}px`;
+    };
+
+    ajuster();
+    const observateur = new ResizeObserver(ajuster);
+    observateur.observe(page);
+    window.addEventListener('resize', ajuster);
+    return () => {
+      observateur.disconnect();
+      window.removeEventListener('resize', ajuster);
+    };
+  }, [facture, qr]);
+
   return (
     <div className="facture-achat__voile" role="dialog" aria-modal="true" aria-label="Facture d’achat">
       <div className="facture-achat__cadre">
@@ -232,7 +271,7 @@ export function FactureAchatApercu({ factureId, onFermer }: {
           </div>
         </header>
 
-        <div className="facture-achat__corps">
+        <div className="facture-achat__corps" ref={corpsRef}>
           {chargement ? (
             <p className="facture-page__chargement">
               <Loader2 className="sn-spin" aria-hidden="true" /> Composition de la facture…
@@ -242,7 +281,11 @@ export function FactureAchatApercu({ factureId, onFermer }: {
               <AlertTriangle aria-hidden="true" /> {erreur ?? 'Facture introuvable.'}
             </p>
           ) : (
-            <article className="facture" aria-label={`Facture d’achat ${facture.numero_facture}`}>
+            <article
+              ref={pageRef}
+              className="facture facture-achat__page"
+              aria-label={`Facture d’achat ${facture.numero_facture}`}
+            >
               {!certifiee && <div className="facture__filigrane" aria-hidden="true" />}
 
               <p className={`facture__bandeau${certifiee ? ' est-certifiee' : ''}`}>

@@ -20,11 +20,7 @@ import {
   type SocieteEligible,
   type StatutReglementCycle,
 } from '@/services/reglementsAchatService';
-import {
-  LIBELLES_TRANCHE,
-  simulerAffectationFifo,
-  type TrancheAge,
-} from '@/services/achatsIndustrielsCalculs';
+import { LIBELLES_TRANCHE, type TrancheAge } from '@/services/achatsIndustrielsCalculs';
 import { FactureAchatApercu } from './FactureAchatApercu';
 import '@/pages/artisanal-sites/artisanal-site-form.css';
 import './reglement-form.css';
@@ -43,7 +39,10 @@ import './reglement-form.css';
  *    compte actif, la préparation est bloquée et l'écran renvoie à la fiche.
  * 3. Le mode de règlement est le virement bancaire, sans alternative. Espèces,
  *    chèque et mobile money n'ont pas cours pour des montants de cet ordre.
- * 4. Rien n'est enregistré avant l'étape de vérification. Consulter une facture
+ * 4. Le montant de l'ordre est la somme des imputations. Il ne se saisit pas :
+ *    un virement qui ne correspondrait pas à ce qu'on porte sur les factures
+ *    laisserait un écart que personne ne rattraperait.
+ * 5. Rien n'est enregistré avant l'étape de vérification. Consulter une facture
  *    n'efface pas la saisie en cours.
  *
  * L'habillage est celui du formulaire de création d'un site artisanal — même
@@ -88,10 +87,8 @@ export function ReglementForm() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const [entete, setEntete] = useState({
-    montant: '',
     date_execution_prevue: '',
     objet: '',
-    reference_interne: '',
     observations: '',
   });
 
@@ -154,7 +151,6 @@ export function ReglementForm() {
   }, [societes, recherche]);
 
   const compte = comptes.find((element) => element.id === compteChoisi) ?? null;
-  const montantSaisi = auFranc(Number(entete.montant) || 0);
 
   const lignes = useMemo(() => factures.map((facture) => {
     const impute = auFranc(Number(imputations[facture.facture_id]) || 0);
@@ -170,30 +166,25 @@ export function ReglementForm() {
 
   const totaux = useMemo(() => {
     const affecte = lignes.reduce((somme, ligne) => somme + ligne.impute, 0);
-    const retenues = lignes.filter((ligne) => ligne.impute > 0);
     return {
       affecte,
-      reste: montantSaisi - affecte,
-      nbRetenues: retenues.length,
-      totalRetenues: retenues.reduce((somme, ligne) => somme + auFranc(ligne.facture.reste_du), 0),
+      nbRetenues: lignes.filter((ligne) => ligne.impute > 0).length,
       enExces: lignes.filter((ligne) => ligne.excede).length,
       detteApres: Math.max(0, auFranc(societeChoisie?.reste_du ?? 0) - affecte),
     };
-  }, [lignes, montantSaisi, societeChoisie]);
+  }, [lignes, societeChoisie]);
+
+  /** Le virement vaut ce qu'on porte sur les factures, ni plus ni moins. */
+  const montantVirement = totaux.affecte;
 
   const ligneActive = lignes.find((ligne) => ligne.facture.facture_id === factureActiveId) ?? null;
 
-  /** Porte sur la facture ouverte tout ce que le virement peut encore couvrir. */
+  /** Porte sur la facture ouverte la totalité de ce qu'elle peut recevoir. */
   const solderFactureActive = () => {
     if (!ligneActive) return;
-    if (montantSaisi <= 0) {
-      setErreur('Saisissez d’abord le montant du virement.');
-      return;
-    }
-    const disponible = Math.max(0, montantSaisi - (totaux.affecte - ligneActive.impute));
     setImputations((actuelles) => ({
       ...actuelles,
-      [ligneActive.facture.facture_id]: String(Math.min(ligneActive.plafond, disponible)),
+      [ligneActive.facture.facture_id]: String(ligneActive.plafond),
     }));
     setErreur(null);
   };
@@ -206,24 +197,12 @@ export function ReglementForm() {
     });
   };
 
-  /** Imputation automatique, la plus ancienne d’abord. */
-  const imputerFifo = () => {
-    if (montantSaisi <= 0) {
-      setErreur('Saisissez d’abord le montant du virement.');
-      return;
-    }
-    const { affectations } = simulerAffectationFifo(
-      montantSaisi,
-      factures.map((facture) => ({
-        id: facture.facture_id,
-        numero_facture: facture.numero_facture,
-        date_echeance: facture.date_echeance,
-        date_emission: facture.date_emission,
-        reste_du_fcfa: auFranc(facture.reste_a_affecter),
-      }))
-    );
+  /** Solde d'un geste toutes les factures ouvertes de la société. */
+  const toutSolder = () => {
     setImputations(Object.fromEntries(
-      affectations.map((affectation) => [affectation.facture_id, String(affectation.montant_affecte_fcfa)])
+      factures
+        .map((facture) => [facture.facture_id, String(auFranc(facture.reste_a_affecter))])
+        .filter(([, montant]) => Number(montant) > 0)
     ));
     setErreur(null);
   };
@@ -231,14 +210,12 @@ export function ReglementForm() {
   const validerSaisie = (): string | null => {
     if (!societeChoisie) return 'Choisissez la société bénéficiaire.';
     if (!compte) return 'Aucun compte bancaire actif n’est rattaché à cette société.';
-    if (montantSaisi <= 0) return 'Le montant du virement doit être supérieur à zéro.';
     if (totaux.enExces > 0) {
       return `${totaux.enExces} imputation(s) dépassent le reste imputable de leur facture.`;
     }
-    if (totaux.affecte > montantSaisi) {
-      return 'Le total imputé dépasse le montant du virement.';
+    if (montantVirement <= 0) {
+      return 'Portez un montant sur au moins une facture : le virement en est la somme.';
     }
-    if (totaux.affecte <= 0) return 'Imputez le virement sur au moins une facture.';
     return null;
   };
 
@@ -266,13 +243,12 @@ export function ReglementForm() {
       const resultat = await reglementsAchatService.preparer({
         mining_company_id: societeChoisie!.mining_company_id,
         compte_bancaire_id: compteChoisi,
-        montant_fcfa: montantSaisi,
+        montant_fcfa: montantVirement,
         affectations: lignes
           .filter((ligne) => ligne.impute > 0)
           .map((ligne) => ({ facture_id: ligne.facture.facture_id, montant: ligne.impute })),
         date_execution_prevue: entete.date_execution_prevue || null,
         objet: entete.objet || null,
-        reference_interne: entete.reference_interne || null,
         observations: entete.observations || null,
       });
       navigate(`/achats/reglements?prepare=${resultat?.r_reference ?? ''}`);
@@ -305,8 +281,8 @@ export function ReglementForm() {
             </div>
             <div className="site-form__meta-tile">
               <p>Montant du virement</p>
-              <output>{montantSaisi > 0 ? formaterFcfa(montantSaisi) : '—'}</output>
-              {montantSaisi > 0 && <small>{montantEnLettres(montantSaisi)}</small>}
+              <output>{montantVirement > 0 ? formaterFcfa(montantVirement) : '—'}</output>
+              {montantVirement > 0 && <small>{montantEnLettres(montantVirement)}</small>}
             </div>
           </div>
         </header>
@@ -493,26 +469,15 @@ export function ReglementForm() {
                         <span className="site-form__section-icon"><Wallet aria-hidden="true" /></span>
                         <div>
                           <h3>Informations du virement</h3>
-                          <p>Montant, date d’exécution et références de suivi.</p>
+                          <p>Date d’exécution, objet et observations.</p>
                         </div>
                       </header>
                       <div className="site-form__section-body">
                         <div className="reglement-form__virement">
-                          <div className="site-form__field reglement-form__virement-montant">
-                            <label className="site-form__label" htmlFor="montant">
-                              Montant du virement, en {societeChoisie.devise} <i>*</i>
-                            </label>
-                            <input
-                              id="montant" type="number" min={0} step={1000}
-                              value={entete.montant}
-                              onChange={(evenement) => setEntete((e) => ({ ...e, montant: evenement.target.value }))}
-                              placeholder="0"
-                            />
-                            <small>
-                              {montantSaisi > 0
-                                ? montantEnLettres(montantSaisi)
-                                : 'Le montant s’écrira en toutes lettres sur l’ordre de virement.'}
-                            </small>
+                          <div className="reglement-form__total">
+                            <span>Montant du virement, somme des imputations ({societeChoisie.devise})</span>
+                            <output>{montantVirement > 0 ? formaterMontant(montantVirement) : '0'}</output>
+                            {montantVirement > 0 && <em>{montantEnLettres(montantVirement)}</em>}
                           </div>
 
                           <div className="site-form__field">
@@ -529,20 +494,7 @@ export function ReglementForm() {
                         </div>
 
                         <div className="reglement-form__virement-suivi">
-                          <div className="site-form__field">
-                            <label className="site-form__label" htmlFor="reference">
-                              Référence interne
-                            </label>
-                            <input
-                              id="reference" value={entete.reference_interne}
-                              onChange={(evenement) => setEntete((e) => ({
-                                ...e, reference_interne: evenement.target.value,
-                              }))}
-                              placeholder="OV-2026-000"
-                            />
-                          </div>
-
-                          <div className="site-form__field">
+                          <div className="site-form__field is-wide">
                             <label className="site-form__label" htmlFor="objet">Objet du virement</label>
                             <input
                               id="objet" value={entete.objet}
@@ -570,35 +522,24 @@ export function ReglementForm() {
                         <span className="site-form__section-icon"><FileText aria-hidden="true" /></span>
                         <div>
                           <h3>Imputation sur les factures</h3>
-                          <p>
-                            Le virement se répartit sur les factures ouvertes de la société : une
-                            facture peut recevoir plusieurs virements, un virement en couvrir
-                            plusieurs.
-                          </p>
+                          <p>Le montant porté sur chaque facture forme le total du virement.</p>
                         </div>
                       </header>
                       <div className="site-form__section-body">
                         <dl className="reglement-form__synthese">
                           <div>
                             <dt>Montant du virement</dt>
-                            <dd>{formaterFcfa(montantSaisi)}</dd>
-                          </div>
-                          <div>
-                            <dt>Total imputé</dt>
-                            <dd>{formaterFcfa(totaux.affecte)}</dd>
-                          </div>
-                          <div>
-                            <dt>Reste à imputer</dt>
-                            <dd className={
-                              totaux.reste < 0 ? 'est-excedent'
-                                : totaux.reste === 0 && totaux.affecte > 0 ? 'est-complet' : 'est-restant'
-                            }>
-                              {formaterFcfa(totaux.reste)}
+                            <dd className={montantVirement > 0 ? 'est-complet' : undefined}>
+                              {formaterFcfa(montantVirement)}
                             </dd>
                           </div>
                           <div>
                             <dt>Factures retenues</dt>
-                            <dd>{totaux.nbRetenues}</dd>
+                            <dd>{totaux.nbRetenues} sur {factures.length}</dd>
+                          </div>
+                          <div>
+                            <dt>Dette avant virement</dt>
+                            <dd>{formaterFcfa(societeChoisie.reste_du)}</dd>
                           </div>
                           <div>
                             <dt>Dette après virement</dt>
@@ -607,8 +548,8 @@ export function ReglementForm() {
                         </dl>
 
                         <div className="reglement-form__outils">
-                          <button type="button" className="reglement-form__voir" onClick={imputerFifo}>
-                            <ShieldCheck aria-hidden="true" /> Affecter aux factures les plus anciennes
+                          <button type="button" className="reglement-form__voir" onClick={toutSolder}>
+                            <ShieldCheck aria-hidden="true" /> Solder toutes les factures
                           </button>
                           <button
                             type="button" className="reglement-form__voir"
@@ -662,12 +603,10 @@ export function ReglementForm() {
                                 <dd>{formaterFcfa(ligneActive.facture.reste_du)}</dd>
                               </div>
                               <div className="est-imputable">
-                                <dt>Imputable</dt>
+                                <dt title="Reste dû, diminué de ce que retiennent les règlements déjà préparés.">
+                                  Imputable
+                                </dt>
                                 <dd>{formaterFcfa(ligneActive.plafond)}</dd>
-                                <small>
-                                  Le reste dû, diminué de ce que des règlements déjà préparés
-                                  retiennent sur cette facture sans l’avoir encore payée.
-                                </small>
                               </div>
                             </dl>
 
@@ -687,15 +626,10 @@ export function ReglementForm() {
                                   }))}
                                   placeholder="0"
                                 />
-                                {ligneActive.excede ? (
+                                {ligneActive.excede && (
                                   <small className="is-warning">
                                     Dépasse de {formaterFcfa(ligneActive.impute - ligneActive.plafond)}
                                     {' '}ce que cette facture peut recevoir.
-                                  </small>
-                                ) : (
-                                  <small>
-                                    Reste du virement à répartir :{' '}
-                                    {formaterFcfa(Math.max(0, totaux.reste))}
                                   </small>
                                 )}
                               </div>
@@ -801,8 +735,8 @@ export function ReglementForm() {
                 </header>
                 <div className="site-form__section-body">
                   <div className="reglement-form__verif-montant">
-                    <strong>{formaterFcfa(montantSaisi)}</strong>
-                    <em>{montantEnLettres(montantSaisi)}</em>
+                    <strong>{formaterFcfa(montantVirement)}</strong>
+                    <em>{montantEnLettres(montantVirement)}</em>
                   </div>
 
                   <dl className="reglement-form__recap">
@@ -814,7 +748,6 @@ export function ReglementForm() {
                     <div><dt>Mode</dt><dd>Virement bancaire</dd></div>
                     <div><dt>Devise</dt><dd>{societeChoisie?.devise}</dd></div>
                     <div><dt>Exécution prévue</dt><dd>{formaterDate(entete.date_execution_prevue)}</dd></div>
-                    <div><dt>Référence interne</dt><dd>{entete.reference_interne || '—'}</dd></div>
                     <div><dt>Objet</dt><dd>{entete.objet || '—'}</dd></div>
                   </dl>
 
@@ -860,14 +793,6 @@ export function ReglementForm() {
                       </tfoot>
                     </table>
                   </div>
-
-                  {totaux.reste > 0 && (
-                    <div className="site-form__coordinates" style={{ borderColor: '#fbeccc', color: '#96690a', background: '#fdf6e7' }}>
-                      <AlertTriangle aria-hidden="true" />
-                      {formaterFcfa(totaux.reste)} resteront sans imputation. Le montant sera
-                      conservé au crédit de la société et pourra être imputé plus tard.
-                    </div>
-                  )}
 
                   <div className="site-form__note">
                     <ShieldCheck aria-hidden="true" />

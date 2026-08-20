@@ -2416,3 +2416,53 @@ pas une note de développement.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
 - Console du navigateur : aucune erreur
+
+---
+
+## Itération — 20 août 2026 — Le virement vaut ce qu'on porte sur les factures
+
+### Un ordre à 0 franc portant 1,7 milliard d'imputations
+
+La capture le montrait sans ambiguïté : montant du virement à 0, total imputé à
+1 700 000 000, reste à imputer à −1 700 000 000. Deux saisies pour une seule vérité, et un
+écart que rien n'obligeait à combler avant la dernière porte de validation.
+
+Le montant ne se saisit plus. **Il est la somme des imputations**, calculé à chaque frappe et
+lu comme un total, sur fond sombre, à côté de la date d'exécution. Restent saisis la date
+d'exécution, l'objet et les observations.
+
+Ce qui suit de ce seul changement :
+
+- « Reste à imputer » et « Total imputé » disparaissent de la synthèse : le premier vaut
+  toujours zéro, le second est le montant lui-même. À leur place, la dette **avant** et
+  **après** virement, qui se lisent ensemble ;
+- « Affecter aux factures les plus anciennes » n'a plus d'enveloppe à répartir : le bouton
+  devient **« Solder toutes les factures »** et porte sur chacune ce qu'elle peut recevoir ;
+- « Solder cette facture » porte le plafond de la facture ouverte, sans plus se demander ce
+  qui reste ailleurs ;
+- la règle de validation « le total imputé dépasse le montant du virement » n'a plus d'objet
+  et disparaît ; reste le dépassement du plafond d'une facture ;
+- le champ **Référence interne** est retiré : la référence du règlement est produite par la
+  base, et l'écran ne demande plus que les trois informations qui lui manquent (A189).
+
+### La facture tient dans la fenêtre
+
+Elle s'ouvrait sur les deux tiers de sa hauteur, le pied de certification hors champ.
+
+La fenêtre mesure désormais la hauteur réelle de la pièce et en déduit un facteur d'échelle,
+plafonné à 1 et planché à 0,4. `offsetHeight` donne la boîte de mise en page, que le `scale`
+ne modifie pas : la mesure ne dérive pas d'un ajustement à l'autre. La place que la
+transformation ne rend pas est reprise en marge négative, sinon la fenêtre défilerait sur du
+vide. Un `ResizeObserver` suit la composition de la facture, le redimensionnement de la
+fenêtre suit aussi. À l'impression, l'échelle revient à 1 : le papier a sa propre largeur.
+
+### « Imputable » : la valeur, pas la glose
+
+La phrase de deux lignes sous la valeur est retirée. L'explication passe en attribut `title`
+sur le libellé — elle est là pour qui la cherche, elle n'encombre plus pour les autres.
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

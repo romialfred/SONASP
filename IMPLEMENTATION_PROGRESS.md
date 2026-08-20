@@ -638,6 +638,8 @@ estimée.
 | A186 | Descriptions de section décrivant où la donnée se saisit ailleurs (« Défini sur la fiche de la société. Il ne se saisit pas ici. ») : le balayage précédent ne couvrait que les chaînes passées en propriété, pas le texte JSX | Socle | Quatre mentions retirées ; critère posé : une description nomme un contenu ou une règle de gestion, jamais un parcours de saisie |
 | A187 | Section « Informations du virement » : six champs de même largeur dans une grille flottante, dont un champ « Devise » verrouillé sur XOF | Règlements | Deux rangées, montant en tête et sur deux tiers de largeur, devise portée par son libellé |
 | A188 | Grille d'imputation à onze colonnes : défilement horizontal, colonne « Achat » inutile, « FCFA » répété dans chaque cellule | Règlements | La facture se choisit dans le volet droit et s'ouvre à gauche ; le tableau ne garde que les factures retenues, en cinq colonnes, unité en en-tête |
+| A189 | Montant du virement saisi d'un côté et réparti de l'autre : un ordre à 0 franc pouvait porter 1,7 milliard d'imputations | Règlements | Le montant est la somme des imputations, calculé et non saisi ; seuls la date d'exécution, l'objet et les observations restent à renseigner |
+| A190 | La fenêtre de facture n'en montrait que les deux tiers, pied de certification hors champ | Règlements | Mise à l'échelle calculée sur la hauteur réelle de la pièce et la place disponible ; échelle 1 à l'impression |
 
 ---
 

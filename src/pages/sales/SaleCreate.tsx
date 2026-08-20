@@ -22,6 +22,7 @@ import {
   type AuthorizedCustomer
 } from '@/services/goldSalesSettingsService';
 import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
+import { composer, tracabiliteVenteService, validerComposition } from '@/services/tracabiliteVenteService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
 import { createSaleInventoryTransactions } from '@/services/inventoryTransactionService';
@@ -332,49 +333,15 @@ export function SaleCreate() {
     try {
       const requestedQuantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
 
-      // CRITICAL: Validate stock availability before creating sale
-      // Get available stock for the selected mining company
-      const { data: availableStock, error: stockError } = await supabase
-        .from('daily_production')
-        .select('quantity_grams')
-        .eq('mining_company_id', formData.miningCompanyId)
-        .eq('status', 'in_safe');
-
-      if (stockError) {
-        console.error('Error checking stock:', stockError);
-        alert.error('Unable to verify stock availability. Please try again.');
-        throw stockError;
-      }
-
-      const totalAvailableGrams = (availableStock || []).reduce((sum, item) => sum + (item.quantity_grams || 0), 0);
-      const totalAvailableOz = totalAvailableGrams / 31.1034768;
-
-      // Get already sold quantity for this mining company
-      const { data: existingSales, error: salesError } = await supabase
-        .from('sales')
-        .select('quantity_oz')
-        .eq('seller_id', formData.miningCompanyId);
-
-      if (salesError) {
-        console.error('Error checking existing sales:', salesError);
-        alert.error('Unable to verify existing sales. Please try again.');
-        throw salesError;
-      }
-
-      const totalSoldOz = (existingSales || []).reduce((sum, sale) => sum + (sale.quantity_oz || 0), 0);
-      const remainingAvailableOz = totalAvailableOz - totalSoldOz;
-
-      // Validate: requested quantity must not exceed remaining available stock
-      if (requestedQuantityOz > remainingAvailableOz) {
-        const deficitOz = requestedQuantityOz - remainingAvailableOz;
-        const deficitGrams = deficitOz * 31.1034768;
-
-        alert.error(
-          `Stock insuffisant! Vous essayez de vendre ${requestedQuantityOz.toFixed(2)} oz ` +
-          `mais seulement ${remainingAvailableOz.toFixed(2)} oz sont disponibles. ` +
-          `Déficit: ${deficitOz.toFixed(2)} oz (${deficitGrams.toFixed(2)}g)`
-        );
-
+      // Contrôle de couverture : la vente doit être servie par des achats
+      // réellement enregistrés. Le stock de la SONASP n'est pas un inventaire
+      // physique à son nom mais la somme de ce qu'elle a acheté aux mines et
+      // aux artisans, diminuée de ce qu'elle a déjà vendu.
+      const lots = await tracabiliteVenteService.lotsDisponibles();
+      const composition = composer(lots, requestedQuantityOz);
+      const refus = validerComposition(composition, requestedQuantityOz);
+      if (refus) {
+        alert.error(refus);
         setSubmitting(false);
         return;
       }
@@ -433,8 +400,18 @@ export function SaleCreate() {
 
       if (error) {
         console.error('Database error:', error);
-        alert.error('Failed to create sale. Please try again.');
+        alert.error("Échec de l’enregistrement de la vente.");
         throw error;
+      }
+
+      // Composition de la vente : quels achats la servent, et pour quelle part.
+      // Une vente sans origine tracée vaut un stock non justifié : l'échec se
+      // signale plutôt que de rester muet.
+      try {
+        await tracabiliteVenteService.affecter(data.id, composition.affectations);
+      } catch (raisonLots) {
+        console.error('Erreur d’affectation des lots :', raisonLots);
+        alert.error("Vente enregistrée, mais son origine n’a pas pu être tracée. Signalez-le à l’administrateur.");
       }
 
       // Create inventory transactions (exit for seller, entry for buyer)

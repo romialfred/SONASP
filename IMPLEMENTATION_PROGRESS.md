@@ -596,6 +596,8 @@ estimée.
 | A144 | `sales` inscrivait la mine comme vendeur des ventes hors du Burkina : l'or passait au raffineur sans appartenir à la SONASP | Ventes d'or | Vendeur figé à la SONASP ; stock opposable = achats aux mines + aux artisans − ventes déjà conclues |
 | A145 | `gold_sales_settings` n'habilitait que les mines : la liste des clients serait restée vide pour la SONASP vendeuse | Ventes d'or | Une habilitation par client actif ouverte à la SONASP |
 | A146 | « Acheter tout le stock » conditionné à une quantité déjà saisie, donc invisible quand il sert | Mines industrielles | Affiché dès la société choisie |
+| A147 | Contrôle de stock de la vente interrogeant `daily_production` au nom du vendeur : la SONASP ne déclarant aucune production, toutes les ventes auraient été bloquées | Ventes d'or | Remplacé par le contrôle de couverture sur les lots d'achat |
+| A148 | Aucune écriture ne reliait une vente à l'export aux achats qui l'approvisionnent : origine de l'or invérifiable | Traçabilité | Table `snp_ventes_lots`, répartition au plus ancien d'abord, composition affichée sur la fiche de vente |
 
 ---
 
@@ -625,15 +627,17 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 - Les migrations `20260819_007_achats_mines` (table `snp_achats_mines`) et
   `20260819_008_sonasp_vendeuse_export` (habilitations commerciales de la SONASP) **sont
   appliquées** sur `SONASP_OPS` ; additives, retour arrière documenté en tête de fichier.
+- La migration `20260820_001_tracabilite_lots_vente` (table `snp_ventes_lots`) **est
+  appliquée** sur `SONASP_OPS` ; additive, retour arrière documenté en tête de fichier.
 
 ---
 
 ## 9. Prochaine action exacte
 
-**Rattacher les ventes à l'export au stock acheté, pièce par pièce** : `sales` porte
-désormais la SONASP comme vendeuse et son stock exportable est calculé, mais aucune écriture
-ne relie encore une vente aux achats qui l'approvisionnent (allocation lot par lot). C'est la
-condition d'une traçabilité complète de la mine au raffineur.
+**Écrire le contrôle de cohérence entre le stock en masse et la somme des lots affectés.**
+Les deux mesures ne coïncident que si toute vente écrit sa composition ; une vente créée hors
+du formulaire creuserait l'écart sans que rien ne le signale. Un écran d'administration doit
+comparer les deux et nommer les ventes sans origine.
 
 Ensuite, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
 charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564

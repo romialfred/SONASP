@@ -1556,3 +1556,59 @@ Wahgnion 10 853,12 oz ; 4 clients internationaux.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
 - Modules servis sans erreur par Vite sur le port 5180
+
+---
+
+## Itération — 20 août 2026 — De la mine au raffineur : le chaînage achat → vente
+
+### Ce qui a été trouvé
+
+L'itération précédente avait fait de la SONASP la vendeuse des ventes à l'export et calculé
+son stock exportable. Ce stock ne se vérifiait qu'**en masse** — total acheté moins total
+vendu — de sorte qu'aucun écran ne pouvait dire de quelle mine ou de quel artisan venait
+l'or d'une expédition. Pour une plateforme de traçabilité nationale, c'est le cœur du sujet.
+
+Deux constats en examinant l'existant :
+
+- `sales_allocations` rattache une vente à un enregistrement d'**affinage**
+  (`refining_record_id`) : elle décrit la chaîne d'affinage, pas la chaîne d'acquisition.
+  Vide, lue par aucun écran. Elle est laissée en place plutôt que détournée de son sens.
+- Le contrôle de stock du formulaire de vente interrogeait `daily_production` pour
+  `mining_company_id = <vendeur>` au statut `in_safe`. Le vendeur étant devenu la SONASP,
+  qui ne déclare aucune production, **ce contrôle aurait bloqué toutes les ventes** (A147).
+
+### Ce qui a été décidé
+
+- **Table `snp_ventes_lots`** : une ligne = une fraction d'un lot d'achat affectée à une
+  vente. Une vente se compose de plusieurs lots, un lot peut servir plusieurs ventes. La
+  contrainte garantit qu'une ligne porte une source et une seule, cohérente avec son type.
+- **Répartition au plus ancien d'abord.** L'or entré le premier sort le premier : cela
+  limite l'immobilisation et rend la composition reproductible. Deux lots du même jour sont
+  départagés par leur référence, pour que deux exécutions donnent le même résultat.
+- **Un reste non couvert se signale, il ne se comble pas.** Si les achats enregistrés ne
+  couvrent pas la quantité vendue, la vente est refusée en nommant les onces sans origine —
+  plutôt que d'accepter une vente d'or qui n'est entré nulle part.
+- **Le contrôle de couverture remplace le contrôle d'inventaire.** Le stock de la SONASP
+  n'est pas un inventaire physique à son nom : c'est la somme de ce qu'elle a acheté aux
+  mines et aux artisans, moins ce qu'elle a déjà vendu.
+- **L'échec du traçage ne se tait pas.** Si les lots ne peuvent pas être écrits après la
+  création de la vente, l'utilisateur en est averti : une vente sans origine tracée est un
+  stock non justifié.
+- **La fiche de vente affiche l'origine de l'or** : chaque lot, son vendeur d'origine, sa
+  référence et sa part, avec le total tracé. Les ventes antérieures au chaînage l'annoncent
+  au lieu d'afficher un tableau vide.
+
+### Ce qui reste à surveiller
+
+Le stock exportable (masse) et la somme des lots affectés ne coïncident que si **toute**
+vente écrit sa composition. C'est le cas des ventes créées désormais ; aucune vente de la
+SONASP n'existait avant cette itération, l'écart de départ est donc nul. Une vente créée
+hors du formulaire — par script ou en base — creuserait l'écart sans que rien ne le signale :
+un contrôle de cohérence entre les deux mesures reste à écrire.
+
+### Contrôles
+
+- `npx vitest run` : **580/580 verts** (66 fichiers, 17 ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
+- Modules servis sans erreur par Vite sur le port 5180

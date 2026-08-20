@@ -42,6 +42,7 @@ import { approveSale, rejectSale } from '@/services/salesService';
 import { useAuth } from '@/contexts/AuthContext';
 import { SalesWorkflowProgressPanel } from '@/components/sales/SalesWorkflowProgressPanel';
 import { getSaleDocuments, downloadSaleDocument, type SaleDocument } from '@/services/saleDocumentsService';
+import { tracabiliteVenteService, type Affectation } from '@/services/tracabiliteVenteService';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -160,6 +161,7 @@ export function SaleDetails() {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [sale, setSale] = useState<SaleDetailsView | null>(null);
   const [documents, setDocuments] = useState<SaleDocument[]>([]);
+  const [origine, setOrigine] = useState<Affectation[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
@@ -298,6 +300,15 @@ export function SaleDetails() {
         if (mountedRef.current) {
           setDocuments([]);
         }
+      }
+      // Origine de l'or vendu. Un échec ici ne doit pas emporter la fiche :
+      // la composition s'affiche alors comme non disponible, sans invention.
+      try {
+        const lots = await tracabiliteVenteService.lotsDeVente(id as string);
+        if (mountedRef.current) setOrigine(lots);
+      } catch (raison) {
+        console.warn('Composition de la vente indisponible :', raison);
+        if (mountedRef.current) setOrigine(null);
       }
     } catch (error) {
       console.error('Error fetching sale details:', error);
@@ -570,6 +581,54 @@ export function SaleDetails() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Origine de l'or vendu : quels achats servent cette vente */}
+            <Card className="border-2 border-amber-200">
+              <CardHeader className="bg-amber-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-amber-700" />
+                  Origine de l’or vendu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {origine === null && (
+                  <p className="text-sm text-gray-600">
+                    Composition indisponible : la source « lots de vente » n’a pas pu être lue.
+                  </p>
+                )}
+
+                {origine !== null && origine.length === 0 && (
+                  <p className="text-sm text-gray-600">
+                    Aucune origine enregistrée. Cette vente est antérieure au chaînage achat → vente.
+                  </p>
+                )}
+
+                {origine !== null && origine.length > 0 && (
+                  <div className="space-y-2">
+                    {origine.map((part) => (
+                      <div
+                        key={`${part.source_type}-${part.source_id}`}
+                        className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                      >
+                        <div>
+                          <p className="text-sm text-gray-900">{part.origine}</p>
+                          <p className="text-xs text-gray-500">
+                            {part.source_type === 'achat_mine' ? 'Mine industrielle' : 'Artisan minier'} · {part.reference}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-900">{part.quantite_oz.toFixed(3)} oz</p>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between pt-2 text-sm">
+                      <span className="text-gray-600">Total tracé</span>
+                      <span className="text-gray-900">
+                        {origine.reduce((total, part) => total + part.quantite_oz, 0).toFixed(3)} oz
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="border-2 border-blue-200">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <CardTitle className="flex items-center gap-2">

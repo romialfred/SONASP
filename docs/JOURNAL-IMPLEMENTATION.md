@@ -2013,3 +2013,55 @@ L'écran du coffre distingue désormais **136 barres détenues (94 954 oz)** des
 - `npx vitest run` : **646/646 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Marché artisanal, et des libellés qui ne s'annoncent plus
+
+Deux demandes : ajouter des ventes pour la présentation, et **éviter les termes de démonstration
+dans les données**.
+
+### Les libellés d'abord
+
+Les lignes posées à l'itération précédente portaient « Jeu de présentation — … » dans leurs
+observations, et les cours la source « SIMULATION_PRESENTATION_2026 ». Ces champs s'affichent :
+la fiche de production montre ses observations, le panneau des cours montre sa source. En pleine
+présentation officielle, la plateforme avait l'air d'une maquette.
+
+Les libellés sont devenus ceux d'une écriture ordinaire — « Coulée hebdomadaire »,
+« Achat mensuel de la production déclarée », « Règlement de vente à l'export ». La source des
+cours devient « Référence interne » : ce n'est pas un fixing LBMA et l'écran ne doit pas le
+laisser croire, mais ce n'est pas non plus une pancarte au milieu d'une démonstration.
+
+**La traçabilité ne disparaît pas** : toutes ces lignes ont été créées le 20 août 2026, ce qui
+suffit à les retrouver. Les requêtes de suppression, mises à jour, sont en tête de
+`20260820_008_libelles_metier.sql`.
+
+### Le marché artisanal
+
+Le module était presque vide : soixante-trois artisans inscrits, deux ventes, **aucun** moyen de
+paiement, **aucune** facture définitive, **aucun** règlement. L'écran « Historique des
+paiements » affichait quatre compteurs à zéro.
+
+| Objet | Volume |
+|---|---|
+| Moyens de règlement | **30** — Orange Money, Moov Money, Wave, virement |
+| Ventes d'or | **36**, 31,5 kg, 2,7 milliards FCFA, janvier → août |
+| Factures définitives | **30** |
+| Règlements | **24**, 1,57 milliard FCFA versé aux artisans |
+| Taxes retenues | 72 lignes, 414 millions FCFA (TVA 18 %, retenue 5 %, TDC 1 %) |
+
+Le prix au kilogramme se déduit du cours du jour, du taux du jour et du titre du lot — de 18 à
+23 carats. Les six dernières ventes attendent leur validation, six autres leur règlement : les
+écrans de suivi ont ainsi quelque chose à montrer à chaque étape.
+
+**Un défaut de données corrigé au passage (A174)** : la vente VE-OR-2025-00001 portait un prix
+de 2 740 000 000 FCFA le kilogramme — trente-quatre fois le cours réel. 125 g y valaient
+342 millions. Le prix est recalculé au cours de la période, ajusté du titre, et l'ancienne
+valeur reste mentionnée en observation.
+
+### Contrôles
+
+- `npx vitest run` : **646/646 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

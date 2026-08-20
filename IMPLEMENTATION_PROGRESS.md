@@ -623,6 +623,8 @@ estimée.
 | A171 | `sales_seller_type_check` limité à 'mining_company' et 'mansa_ressources' : la SONASP ne pouvait pas se désigner vendeur | Ventes | Valeur 'sonasp' ajoutée |
 | A172 | 57 clés étrangères vers `auth.users` en NO ACTION : toute ligne référençant un compte supprimé était immodifiable (généralisation de A156) | Socle | Conversion en ON DELETE SET NULL, table par table |
 | A173 | Référentiel résiduel : abréviations KGM/DGB/MAN, SONASP nommée « Substances Naturelles », expéditions préfixées HUM-SMK | Référentiels | Corrigés ; expéditions renumérotées EXP-BF-AAAA-NNN |
+| A174 | Vente artisanale VE-OR-2025-00001 à 2 740 000 000 FCFA le kilogramme, trente-quatre fois le cours : 125 g valorisés 342 millions | Marché artisanal | Prix recalculé au cours de la période, ajusté du titre ; ancienne valeur mentionnée en observation |
+| A175 | Module artisanal sans moyen de paiement, sans facture définitive et sans règlement : les écrans de suivi affichaient des compteurs à zéro | Marché artisanal | 30 moyens, 36 ventes, 30 factures, 24 règlements et leurs taxes |
 
 ---
 
@@ -665,9 +667,11 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 
 ## 9. Prochaine action exacte
 
-**Retirer le jeu de présentation avant toute mise en service réelle.** Les requêtes de
-suppression figurent en tête de `supabase/migrations/20260820_007_jeu_presentation_2026.sql` :
-tout est marqué « Jeu de présentation » ou `SIMULATION_PRESENTATION_2026`.
+**Retirer le jeu de présentation avant toute mise en service réelle.** Les libellés ne
+l'annoncent plus à l'écran : le repère est désormais la **date de création, 20 août 2026**. Les
+requêtes de suppression, à jour, figurent en tête de
+`supabase/migrations/20260820_008_libelles_metier.sql` et
+`20260820_009_marche_or_artisanal_2026.sql`.
 
 Puis **raccorder le module d'analyses aux données réelles** (A164) : six onglets, 157 lignes
 écrites en dur, aujourd'hui signalées par une bannière mais toujours affichées. Puis le moteur

@@ -4,11 +4,28 @@ export const GRAMMES_PAR_ONCE = 31.1034768;
 
 export const ozVersKg = (onces: number) => (onces * GRAMMES_PAR_ONCE) / 1000;
 
-/** Étapes où l'or a quitté le site mais n'est pas encore revenu en stock raffiné. */
-export const STATUTS_TRANSIT = ['shipped_to_refinery', 'received_at_refinery', 'processing', 'processed'] as const;
+/** Étapes où l'or est chez la raffinerie, ou en route : rien à faire ici. */
+export const STATUTS_EN_ROUTE = ['shipped_to_refinery', 'received_at_refinery', 'processing'] as const;
 
-/** Étapes où le lot est constitué mais pas encore embarqué. */
-export const STATUTS_AEROPORT = ['waiting_customs_approval', 'approved_by_customs', 'ready_for_expedition'] as const;
+/**
+ * Raffinage terminé : l'or n'attend qu'une saisie d'entrée pour revenir en
+ * stock. C'est un travail en attente, non un simple état de transport.
+ */
+export const STATUT_A_REINTEGRER = 'processed';
+
+/** Étapes où l'or a quitté le site mais n'est pas encore revenu en stock raffiné. */
+export const STATUTS_TRANSIT = [...STATUTS_EN_ROUTE, STATUT_A_REINTEGRER] as const;
+
+/**
+ * Étapes où le lot est constitué mais pas encore embarqué.
+ * Les libellés sont ceux de l'énumération `shipping_preparation_status` : un
+ * seul caractère de trop ou de moins fait échouer la requête entière, et la
+ * source entière passe en « indisponible » (A197).
+ */
+export const STATUTS_AEROPORT = ['waiting_for_customs_approval', 'approved_by_customs', 'ready_for_expedition'] as const;
+
+/** Ventes d'or artisanal dont la matière est bien entrée chez la SONASP. */
+export const STATUT_ARTISANAL_ACQUIS = 'validee';
 
 /** Statuts de paiement qui laissent une vente non réglée. */
 export const STATUTS_NON_PAYE = ['pending', 'rejected'] as const;
@@ -39,12 +56,26 @@ export interface StockNational {
   venduOz: number;
   /** Or expédié, pas encore réintégré au stock raffiné. */
   transitOz: number;
+  /** Parti chez la raffinerie ou en cours de traitement. */
+  enRouteOz: number;
+  /** Raffinage terminé : n'attend qu'une saisie d'entrée en stock. */
+  aReintegrerOz: number;
+  aReintegrerLots: number;
   /** Lots constitués, en attente d'embarquement. */
   aeroportOz: number;
   /** Or vendu dont le règlement n'est pas encaissé. */
   venduNonPayeOz: number;
   venduNonPayeMontant: number;
   venduNonPayeDevise: string | null;
+  /**
+   * Or acheté aux artisans, détenu en l'état — poudre, pépites, petits lingots.
+   * Il n'est pas dans `gold_inventory` : cette table ne porte que de l'or
+   * raffiné rattaché à une mine industrielle. Il est donc compté à part, et
+   * n'entre pas dans le socle national tant qu'il n'a pas été fondu.
+   */
+  artisanalGrammes: number;
+  artisanalFinGrammes: number;
+  artisanalLots: number;
   parMine: StockParMine[];
   transit: LigneTransit[];
   /** Sources qui n'ont pas répondu ; leur indicateur reste à zéro. */
@@ -57,10 +88,16 @@ export const STOCK_VIDE: StockNational = {
   allloueOz: 0,
   venduOz: 0,
   transitOz: 0,
+  enRouteOz: 0,
+  aReintegrerOz: 0,
+  aReintegrerLots: 0,
   aeroportOz: 0,
   venduNonPayeOz: 0,
   venduNonPayeMontant: 0,
   venduNonPayeDevise: null,
+  artisanalGrammes: 0,
+  artisanalFinGrammes: 0,
+  artisanalLots: 0,
   parMine: [],
   transit: [],
   indisponibles: [],
@@ -78,6 +115,17 @@ export function lireLignes<T>(resultat: Resultat): T[] | null {
 
 export const somme = <T,>(lignes: T[], champ: (ligne: T) => number) =>
   lignes.reduce((total, ligne) => total + (Number(champ(ligne)) || 0), 0);
+
+/**
+ * Or fin contenu dans un lot artisanal. Un carat vaut un vingt-quatrième de
+ * métal fin ; sans pureté déclarée, le lot ne contribue pas au fin plutôt que
+ * de le supposer pur.
+ */
+export const orFin = (lot: { quantite_grammes?: number | null; purete_karat?: number | null }) => {
+  const masse = Number(lot.quantite_grammes || 0);
+  const karat = Number(lot.purete_karat || 0);
+  return karat > 0 ? (masse * karat) / 24 : 0;
+};
 
 /**
  * Regroupe le stock détenu par société minière.
@@ -154,7 +202,7 @@ export function venduNonPaye(
  * l'écran, elle est nommée dans `indisponibles` et son indicateur reste à zéro.
  */
 export async function chargerStockNational(): Promise<StockNational> {
-  const [inventaire, societes, fret, preparations, ventes, paiements] = await Promise.allSettled([
+  const [inventaire, societes, fret, preparations, ventes, paiements, artisanal] = await Promise.allSettled([
     supabase
       .from('gold_inventory')
       .select('final_fine_oz, quantity_available_oz, quantity_allocated_oz, quantity_sold_oz, mining_company_id'),
@@ -169,6 +217,10 @@ export async function chargerStockNational(): Promise<StockNational> {
       .in('status', [...STATUTS_AEROPORT]),
     supabase.from('sales').select('id, quantity_oz, total_amount, currency'),
     supabase.from('payments').select('sale_id, status'),
+    supabase
+      .from('snp_artisan_ventes_or')
+      .select('quantite_grammes, purete_karat, type_or')
+      .eq('statut', STATUT_ARTISANAL_ACQUIS),
   ]);
 
   const lignesInventaire = lireLignes<{
@@ -189,12 +241,18 @@ export async function chargerStockNational(): Promise<StockNational> {
   const lignesPreparations = lireLignes<{ total_weight_oz: number | null }>(preparations);
   const lignesVentes = lireLignes<{ id: string; quantity_oz: number | null; total_amount: number | null; currency: string | null }>(ventes);
   const lignesPaiements = lireLignes<{ sale_id: string | null; status: string | null }>(paiements);
+  const lignesArtisanal = lireLignes<{
+    quantite_grammes: number | null;
+    purete_karat: number | null;
+    type_or: string | null;
+  }>(artisanal);
 
   const indisponibles: string[] = [];
   if (lignesInventaire === null) indisponibles.push('le stock raffiné');
   if (lignesFret === null) indisponibles.push('les expéditions');
   if (lignesPreparations === null) indisponibles.push('les préparations');
   if (lignesVentes === null || lignesPaiements === null) indisponibles.push('les ventes et règlements');
+  if (lignesArtisanal === null) indisponibles.push('la collecte artisanale');
 
   const detenu = lignesInventaire || [];
   const impayes =
@@ -205,16 +263,26 @@ export async function chargerStockNational(): Promise<StockNational> {
   const nomRaffinerie = (destination: { name?: string } | Array<{ name?: string }> | null | undefined) =>
     (Array.isArray(destination) ? destination[0]?.name : destination?.name) || 'Destination non renseignée';
 
+  const artisanalDetenu = lignesArtisanal || [];
+  const enRoute = (lignesFret || []).filter((ligne) => ligne.status !== STATUT_A_REINTEGRER);
+  const aReintegrer = (lignesFret || []).filter((ligne) => ligne.status === STATUT_A_REINTEGRER);
+
   return {
     totalOz: somme(detenu, (ligne) => Number(ligne.final_fine_oz || 0)),
     disponibleOz: somme(detenu, (ligne) => Number(ligne.quantity_available_oz || 0)),
     allloueOz: somme(detenu, (ligne) => Number(ligne.quantity_allocated_oz || 0)),
     venduOz: somme(detenu, (ligne) => Number(ligne.quantity_sold_oz || 0)),
     transitOz: somme(lignesFret || [], (ligne) => Number(ligne.total_pure_gold_oz || 0)),
+    enRouteOz: somme(enRoute, (ligne) => Number(ligne.total_pure_gold_oz || 0)),
+    aReintegrerOz: somme(aReintegrer, (ligne) => Number(ligne.total_pure_gold_oz || 0)),
+    aReintegrerLots: aReintegrer.length,
     aeroportOz: somme(lignesPreparations || [], (ligne) => Number(ligne.total_weight_oz || 0)),
     venduNonPayeOz: impayes.quantiteOz,
     venduNonPayeMontant: impayes.montant,
     venduNonPayeDevise: impayes.devise,
+    artisanalGrammes: somme(artisanalDetenu, (ligne) => Number(ligne.quantite_grammes || 0)),
+    artisanalFinGrammes: somme(artisanalDetenu, (ligne) => orFin(ligne)),
+    artisanalLots: artisanalDetenu.length,
     parMine: grouperParMine(detenu, lignesSocietes || []),
     transit: (lignesFret || []).map((ligne) => ({
       reference: ligne.reference_number,

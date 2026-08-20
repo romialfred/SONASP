@@ -580,6 +580,18 @@ button.sn-stat:focus-visible {
 .sn-table tbody tr.is-clickable { cursor: pointer; }
 .sn-table__num { text-align: right; font-variant-numeric: tabular-nums; }
 
+/* L'en-tete suit sa colonne : sans cette regle, `.sn-table th` l'emporte par
+   specificite et le titre reste a gauche au-dessus de chiffres a droite. */
+.sn-table th.sn-table__num { text-align: right; }
+
+.sn-table tfoot td {
+  height: 44px;
+  border-top: 2px solid var(--sn-line);
+  background: var(--sn-surface-alt);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ============================ Badges & états ============================ */
 
 .sn-badge {

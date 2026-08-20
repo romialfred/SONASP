@@ -1,9 +1,11 @@
 /**
  * Suivi des stocks : vue nationale puis detail.
  *
- * Une seule famille chromatique — l'or de la charte sur fond navy pour le socle,
- * l'encre pour les chiffres. Les quatre tuiles vives d'origine (vert, vert, bleu,
- * vert) donnaient le meme poids visuel a des postes de nature differente.
+ * Le socle etait un bandeau navy qui pesait le tiers de l'ecran et enfermait le
+ * chiffre le plus important dans une boite n'appartenant a aucune autre page.
+ * Il devient une carte claire de la charte : fond ivoire, filet dore en tete,
+ * chiffre a l'encre. La couleur ne porte plus l'importance — la taille du
+ * chiffre et la place s'en chargent.
  */
 
 .stocks__chargement {
@@ -32,14 +34,27 @@
 /* ---------- Socle national ---------- */
 
 .stocks__socle {
+  position: relative;
   display: grid;
-  padding: 18px 20px;
+  overflow: hidden;
+  padding: 20px 22px;
   gap: 16px;
-  border: 1px solid #24384f;
-  background: linear-gradient(135deg, #12253c 0%, #1b3350 100%);
+  border: 1px solid var(--sn-line);
+  background: linear-gradient(180deg, #fff 0%, #fbfaf6 100%);
   border-radius: var(--sn-radius-lg);
-  color: #f2f6fa;
-  box-shadow: 0 10px 26px rgb(12 24 38 / 16%);
+  color: var(--sn-ink, #10243e);
+  box-shadow: var(--sn-shadow-card);
+}
+
+/* Un filet dore en tete : la charte s'annonce sans occuper la surface. */
+.stocks__socle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--sn-gold, #d99a00) 0%, #f0c14b 55%, rgb(217 154 0 / 20%) 100%);
 }
 
 .stocks__socle > header { display: flex; align-items: center; gap: 14px; }
@@ -50,17 +65,17 @@
   height: 46px;
   flex: 0 0 46px;
   place-items: center;
-  border: 1px solid rgb(217 154 0 / 45%);
-  background: rgb(217 154 0 / 16%);
+  border: 1px solid #f0dcab;
+  background: var(--sn-gold-soft, #fdf6e7);
   border-radius: 14px;
-  color: var(--sn-gold);
+  color: var(--sn-gold-dark, #b97f00);
 }
 
 .stocks__socle-icone svg { width: 22px; height: 22px; }
 
 .stocks__socle > header p {
   margin: 0;
-  color: rgb(242 246 250 / 62%);
+  color: var(--sn-muted, #60738c);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -70,8 +85,8 @@
 .stocks__socle > header strong {
   display: block;
   margin-top: 4px;
-  color: var(--sn-gold);
-  font-size: 30px;
+  color: var(--sn-ink, #10243e);
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
@@ -80,21 +95,23 @@
 .stocks__socle > header small {
   display: block;
   margin-top: 3px;
-  color: rgb(242 246 250 / 55%);
+  color: var(--sn-muted, #60738c);
   font-size: 11px;
 }
 
 .stocks__socle-detail {
   display: grid;
   margin: 0;
-  padding-top: 14px;
+  padding-top: 15px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  border-top: 1px solid rgb(242 246 250 / 12%);
+  gap: 12px 20px;
+  border-top: 1px solid var(--sn-line-soft, #eef2f6);
 }
 
+.stocks__socle-detail > div { min-width: 0; }
+
 .stocks__socle-detail dt {
-  color: rgb(242 246 250 / 58%);
+  color: var(--sn-muted, #60738c);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -103,8 +120,17 @@
 
 .stocks__socle-detail dd {
   margin: 4px 0 0;
-  font-size: 15px;
+  color: var(--sn-ink, #10243e);
+  font-size: 16px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stocks__socle-detail span {
+  display: block;
+  margin-top: 1px;
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -112,8 +138,15 @@
 
 .stocks__postes {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(184px, 1fr));
   gap: 10px;
+}
+
+/* Un poste qui attend un geste se signale : le lot raffine ne revient pas au
+   stock tout seul. */
+.stocks__poste.est-en-attente {
+  border-color: #f0dcab;
+  background: linear-gradient(180deg, #fffdf7 0%, var(--sn-surface) 100%);
 }
 
 .stocks__poste {
@@ -269,3 +302,73 @@
   .stocks__postes,
   .stocks__socle-detail { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* ---------------------------------------------------------------------------
+   Origine de la matiere
+
+   `gold_inventory` ne porte que de l'or raffine rattache a une mine
+   industrielle : l'or achete aux artisans n'y a pas de place. Il se compte donc
+   a part, pour ce qu'il est — une matiere detenue, en attente de fonte.
+   --------------------------------------------------------------------------- */
+.stocks__origines {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+}
+
+.stocks__origines article {
+  display: grid;
+  min-width: 0;
+  padding: 14px 15px;
+  gap: 5px;
+  align-content: start;
+  border: 1px solid var(--sn-line);
+  border-radius: var(--sn-radius-lg);
+  background: var(--sn-surface);
+}
+
+.stocks__origines article.est-en-attente {
+  border-color: #f0dcab;
+  background: linear-gradient(180deg, #fffdf7 0%, var(--sn-surface) 100%);
+}
+
+.stocks__origines header { display: flex; align-items: center; gap: 8px; }
+
+.stocks__origines header span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  place-items: center;
+  border: 1px solid var(--sn-line);
+  border-radius: 8px;
+  background: var(--sn-surface-alt);
+  color: var(--sn-muted);
+}
+
+.stocks__origines header span svg { width: 14px; height: 14px; }
+.stocks__origines h4 { margin: 0; color: var(--sn-ink, #10243e); font-size: 12px; font-weight: 700; }
+
+.stocks__origines strong {
+  color: var(--sn-ink, #10243e);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stocks__origines article > p {
+  margin: 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stocks__origines small {
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.stocks__origines .sn-btn { justify-self: start; margin-top: 4px; height: 28px; font-size: 11px; }

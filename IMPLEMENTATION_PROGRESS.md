@@ -646,6 +646,10 @@ estimée.
 | A194 | Grille de répartition : une cellule sur deux portait deux lignes, et « FCFA » répété dans chaque cellule repassait à la ligne | Achats industriels | Onze colonnes, une donnée par cellule, unité en en-tête ; `COLONNES_DEFINIES` porte les définitions une seule fois, en-tête et lexique |
 | A195 | « Titre » désignait à la fois la pureté de l'or et un document (« titre d'identité », « titre d'exercice »), et l'entrée en stock disait « Titre en or » à côté de « Teneur en argent » | Socle | « Teneur en or » partout sur l'or industriel, « Pureté » sur l'or artisanal gradué en carats ; 24 libellés, 3 tests. Colonnes de base inchangées |
 | A196 | Demandes d'achat : écran ouvert sur le filtre « Transmise », vide car toutes les demandes sont approuvées ; compteurs calculés sur la liste filtrée, donc à zéro | Achats industriels | Ouverture sur tous les états, compteurs sur l'ensemble, tuile « en attente » cliquable, état vide explicite |
+| A197 | `STATUTS_AEROPORT` employait `waiting_customs_approval` au lieu de `waiting_for_customs_approval` : PostgREST refusait la requête, l'aéroport affichait 0 oz alors que 3 712,65 oz y attendent | Stocks | Libellé corrigé, test de contrat sur les trois valeurs de l'énumération |
+| A198 | « En transit » confondait l'or chez la raffinerie (18 147,50 oz) et l'or raffiné attendant sa saisie d'entrée (24 904,07 oz, 3 lots) | Stocks | Deux postes distincts ; celui qui attend un geste se signale et porte le bouton de saisie |
+| A199 | L'or acheté aux artisans (26 409,30 g, 31 lots) est absent de la vue nationale : `gold_inventory` n'offre aucun rattachement hors mine industrielle | Stocks | Compté à part dans « Origine de la matière », en brut et en or fin. **Reste à faire** : la table de fonte qui réunit N lots artisanaux en un lingot |
+| A200 | En-têtes de colonnes chiffrées alignés à gauche au-dessus de valeurs alignées à droite, sur tous les tableaux `sn-table` | Socle | `.sn-table th.sn-table__num` ; style commun des pieds de tableau |
 
 ---
 

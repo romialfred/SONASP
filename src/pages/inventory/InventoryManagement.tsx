@@ -5,8 +5,11 @@ import {
   Boxes,
   Building2,
   Coins,
+  FlaskConical,
   Landmark,
   Loader2,
+  PackageCheck,
+  Pickaxe,
   Plane,
   Plus,
   RefreshCw,
@@ -18,6 +21,7 @@ import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn
 import { errorMessage } from '@/lib/errorMessage';
 import {
   chargerStockNational,
+  GRAMMES_PAR_ONCE,
   ozVersKg,
   STOCK_VIDE,
   type StockNational,
@@ -29,6 +33,8 @@ const entier = new Intl.NumberFormat('fr-FR');
 
 export const formatOz = (valeur: number) => `${onces.format(valeur || 0)} oz`;
 export const formatKg = (valeur: number) => `${onces.format(ozVersKg(valeur || 0))} kg`;
+export const formatG = (valeur: number) => `${onces.format(valeur || 0)} g`;
+export const grammesEnOz = (grammes: number) => (grammes || 0) / GRAMMES_PAR_ONCE;
 
 /** Libellés français des étapes d'expédition affichées dans le suivi. */
 export const LIBELLES_TRANSIT: Record<string, string> = {
@@ -91,11 +97,21 @@ export function InventoryManagement() {
         detail: 'Réservé sur des ventes en cours',
       },
       {
-        cle: 'transit',
-        libelle: 'En transit',
+        cle: 'raffinerie',
+        libelle: 'Chez la raffinerie',
         icone: Truck,
-        valeur: stock.transitOz,
-        detail: 'Expédié, pas encore réintégré au stock',
+        valeur: stock.enRouteOz,
+        detail: 'Expédié ou en cours de traitement',
+      },
+      {
+        cle: 'reintegrer',
+        libelle: 'Raffiné, à réintégrer',
+        icone: PackageCheck,
+        valeur: stock.aReintegrerOz,
+        detail: stock.aReintegrerLots > 0
+          ? `${stock.aReintegrerLots} lot(s) traités, en attente de saisie`
+          : 'Aucun lot en attente de saisie',
+        alerte: stock.aReintegrerOz > 0,
       },
       {
         cle: 'aeroport',
@@ -136,7 +152,7 @@ export function InventoryManagement() {
 
         {stock.indisponibles.length > 0 && (
           <Note tone="warning" icon={AlertTriangle}>
-            Vue partielle : {stock.indisponibles.join(', ')} n’ont pas pu être chargés.
+            Vue partielle : impossible de charger {stock.indisponibles.join(', ')}.
           </Note>
         )}
 
@@ -164,14 +180,17 @@ export function InventoryManagement() {
                   <div>
                     <dt>En coffre</dt>
                     <dd>{formatOz(stock.totalOz)}</dd>
+                    <span>{formatKg(stock.totalOz)}</span>
                   </div>
                   <div>
                     <dt>Hors coffre</dt>
                     <dd>{formatOz(horsCoffre)}</dd>
+                    <span>{formatKg(horsCoffre)}</span>
                   </div>
                   <div>
                     <dt>Déjà vendu</dt>
                     <dd>{formatOz(stock.venduOz)}</dd>
+                    <span>{formatKg(stock.venduOz)}</span>
                   </div>
                 </dl>
               </section>
@@ -182,7 +201,10 @@ export function InventoryManagement() {
                   const Icone = poste.icone;
                   const pourcentage = part(poste.valeur, socle);
                   return (
-                    <article key={poste.cle} className="stocks__poste">
+                    <article
+                      key={poste.cle}
+                      className={`stocks__poste${'alerte' in poste && poste.alerte ? ' est-en-attente' : ''}`}
+                    >
                       <header>
                         <span aria-hidden="true">
                           <Icone />
@@ -211,6 +233,73 @@ export function InventoryManagement() {
                 })}
               </section>
 
+              {/* --- Origine de la matière ---
+                  Le socle national ne compte que de l'or raffiné rattaché à une
+                  mine industrielle : `gold_inventory` n'offre aucun autre
+                  rattachement. L'or acheté aux artisans se compte donc à part,
+                  pour ce qu'il est — une matière détenue, en attente de fonte. */}
+              <Section
+                id="origines"
+                icon={FlaskConical}
+                tone="blue"
+                title="Origine de la matière"
+                description="D’où vient l’or que la SONASP détient."
+              >
+                <div className="stocks__origines">
+                  <article>
+                    <header>
+                      <span aria-hidden="true"><Building2 /></span>
+                      <h4>Mines industrielles</h4>
+                    </header>
+                    <strong>{formatOz(stock.totalOz)}</strong>
+                    <p>{formatKg(stock.totalOz)}</p>
+                    <small>
+                      Or raffiné revenu de la raffinerie et porté au stock national,
+                      sur {entier.format(stock.parMine.length)} société(s).
+                    </small>
+                  </article>
+
+                  <article className={stock.artisanalGrammes > 0 ? 'est-en-attente' : undefined}>
+                    <header>
+                      <span aria-hidden="true"><Pickaxe /></span>
+                      <h4>Collecte artisanale</h4>
+                    </header>
+                    <strong>{formatG(stock.artisanalGrammes)}</strong>
+                    <p>
+                      {formatG(stock.artisanalFinGrammes)} d’or fin ·{' '}
+                      {formatOz(grammesEnOz(stock.artisanalFinGrammes))}
+                    </p>
+                    <small>
+                      {entier.format(stock.artisanalLots)} lot(s) achetés aux artisans, détenus en
+                      l’état. Cette matière n’entre au stock national qu’une fois fondue et
+                      raffinée : la fonte n’est pas encore outillée.
+                    </small>
+                    <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/ventes-or')}>
+                      Voir la collecte
+                    </button>
+                  </article>
+
+                  <article>
+                    <header>
+                      <span aria-hidden="true"><PackageCheck /></span>
+                      <h4>Retours de raffinage</h4>
+                    </header>
+                    <strong>{formatOz(stock.aReintegrerOz)}</strong>
+                    <p>{formatKg(stock.aReintegrerOz)}</p>
+                    <small>
+                      {stock.aReintegrerLots > 0
+                        ? `${entier.format(stock.aReintegrerLots)} lot(s) raffinés attendent leur saisie d’entrée en stock.`
+                        : 'Aucun lot raffiné n’attend de saisie.'}
+                    </small>
+                    {stock.aReintegrerLots > 0 && (
+                      <button type="button" className="sn-btn" onClick={() => navigate('/inventory/add')}>
+                        Saisir une entrée
+                      </button>
+                    )}
+                  </article>
+                </div>
+              </Section>
+
               {/* --- Stock par mine --- */}
               <Section
                 id="par-mine"
@@ -229,10 +318,11 @@ export function InventoryManagement() {
                       <thead>
                         <tr>
                           <th>Société minière</th>
-                          <th className="sn-table__num">Total</th>
-                          <th className="sn-table__num">Disponible</th>
-                          <th className="sn-table__num">Alloué</th>
-                          <th className="sn-table__num">Vendu</th>
+                          <th className="sn-table__num">Entrées</th>
+                          <th className="sn-table__num">Total (oz)</th>
+                          <th className="sn-table__num">Disponible (oz)</th>
+                          <th className="sn-table__num">Alloué (oz)</th>
+                          <th className="sn-table__num">Vendu (oz)</th>
                           <th className="sn-table__num">Part</th>
                         </tr>
                       </thead>
@@ -241,14 +331,12 @@ export function InventoryManagement() {
                           const pourcentage = part(mine.totalOz, stock.totalOz);
                           return (
                             <tr key={mine.id}>
-                              <td>
-                                <strong>{mine.nom}</strong>
-                                <small className="stocks__lignes">{entier.format(mine.lignes)} entrée(s)</small>
-                              </td>
-                              <td className="sn-table__num">{formatOz(mine.totalOz)}</td>
-                              <td className="sn-table__num">{formatOz(mine.disponibleOz)}</td>
-                              <td className="sn-table__num">{formatOz(mine.allloueOz)}</td>
-                              <td className="sn-table__num">{formatOz(mine.venduOz)}</td>
+                              <td><strong>{mine.nom}</strong></td>
+                              <td className="sn-table__num">{entier.format(mine.lignes)}</td>
+                              <td className="sn-table__num">{onces.format(mine.totalOz)}</td>
+                              <td className="sn-table__num">{onces.format(mine.disponibleOz)}</td>
+                              <td className="sn-table__num">{onces.format(mine.allloueOz)}</td>
+                              <td className="sn-table__num">{onces.format(mine.venduOz)}</td>
                               <td className="sn-table__num">
                                 {pourcentage === null ? '—' : `${entier.format(Math.round(pourcentage))} %`}
                               </td>
@@ -256,6 +344,19 @@ export function InventoryManagement() {
                           );
                         })}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td>Total</td>
+                          <td className="sn-table__num">
+                            {entier.format(stock.parMine.reduce((somme, mine) => somme + mine.lignes, 0))}
+                          </td>
+                          <td className="sn-table__num">{onces.format(stock.totalOz)}</td>
+                          <td className="sn-table__num">{onces.format(stock.disponibleOz)}</td>
+                          <td className="sn-table__num">{onces.format(stock.allloueOz)}</td>
+                          <td className="sn-table__num">{onces.format(stock.venduOz)}</td>
+                          <td className="sn-table__num">100 %</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 )}

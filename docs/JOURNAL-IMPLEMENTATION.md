@@ -2669,3 +2669,72 @@ soumission d'un plan mensuel.
 - `npx vitest run` : **730/730 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Le stock national : ce qu'il montrait, ce qu'il cachait
+
+### Un caractère qui effaçait 3 712 onces
+
+`STATUTS_AEROPORT` demandait `waiting_customs_approval`. L'énumération
+`shipping_preparation_status` connaît `waiting_for_customs_approval`. PostgREST refusait la
+requête entière : la source passait en « indisponible », l'écran affichait le bandeau « Vue
+partielle » et **0,00 oz à l'aéroport** — alors que 3 712,65 oz y attendent l'embarquement,
+sur six préparations.
+
+Un test de contrat fige désormais les trois libellés. Une valeur d'énumération fausse ne
+dégrade pas un chiffre : elle supprime toute la source (A197).
+
+### « En transit » recouvrait deux situations
+
+43 051,57 oz, 82 % du national, dans un seul poste. Or il y a deux choses là-dedans :
+
+- **18 147,50 oz chez la raffinerie** ou en route. Rien à faire, c'est le cycle normal ;
+- **24 904,07 oz raffinées**, sur trois lots, qui n'attendent qu'une **saisie d'entrée en
+  stock** pour revenir au coffre. C'est un travail en attente, pas un état de transport.
+
+Les deux postes se séparent, et le second se signale — bordure dorée, bouton « Saisir une
+entrée ». Le circuit existe et fonctionne : le formulaire d'entrée crée la ligne de stock et
+bascule l'expédition en `in_stock`. Personne ne l'avait déclenché, et rien ne le disait
+(A198).
+
+### L'or artisanal n'existait pas dans la vue nationale
+
+`gold_inventory` ne porte qu'un rattachement : `mining_company_id`. Pas de colonne d'origine,
+aucun lien possible vers une vente artisanale. **26 409,30 g achetés aux artisans**, sur 31
+lots validés, sont donc invisibles de la vue nationale.
+
+Ils y apparaissent maintenant pour ce qu'ils sont, dans une section « Origine de la matière » :
+une matière détenue, comptée en grammes bruts **et en or fin** (le carat vaut un
+vingt-quatrième), qui n'entre pas au socle national tant qu'elle n'a pas été fondue. L'écran
+le dit sans détour : la fonte n'est pas encore outillée.
+
+**C'est le chantier suivant**, et il demande une table : une fonte réunit N lots artisanaux,
+part à la raffinerie nationale, et rend un lingot dont la masse fine diffère de la somme des
+apports. Sans cet objet, aucun rattachement n'est possible et la traçabilité se rompt entre
+l'artisan et le lingot (A199).
+
+### Les tableaux étaient décalés, partout
+
+`.sn-table th { text-align: left }` l'emportait sur `.sn-table__num` par spécificité : les
+valeurs s'alignaient à droite, leurs en-têtes restaient à gauche. Une règle d'une ligne corrige
+**tous les tableaux de la plateforme**. Les pieds de tableau reçoivent au passage leur style
+commun.
+
+Le tableau par société applique la règle posée sur le plan d'achat — une donnée, une colonne :
+« 2 entrée(s) » quitte la cellule du nom pour devenir une colonne, l'unité monte dans
+l'en-tête, et un total clôt le tableau.
+
+### Le socle sort du sombre
+
+Le bandeau navy pesait le tiers de l'écran et enfermait le chiffre le plus important dans une
+boîte n'appartenant à aucune autre page. Il devient une carte claire de la charte : fond
+ivoire, filet doré en tête, chiffre à l'encre, et chaque poste doublé de son équivalent en
+kilogrammes. La couleur ne porte plus l'importance — la taille du chiffre et la place s'en
+chargent.
+
+### Contrôles
+
+- `npx vitest run` : **734/734 verts** (4 tests ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

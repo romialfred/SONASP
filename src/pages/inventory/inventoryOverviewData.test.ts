@@ -3,8 +3,13 @@ import {
   GRAMMES_PAR_ONCE,
   grouperParMine,
   lireLignes,
+  orFin,
   ozVersKg,
   somme,
+  STATUT_A_REINTEGRER,
+  STATUTS_AEROPORT,
+  STATUTS_EN_ROUTE,
+  STATUTS_TRANSIT,
   venduNonPaye,
 } from './inventoryOverviewData';
 
@@ -105,5 +110,37 @@ describe('venduNonPaye', () => {
       []
     );
     expect(resultat.devise).toBeNull();
+  });
+});
+
+
+describe('libellés d’énumération', () => {
+  it('emploie exactement les valeurs de `shipping_preparation_status`', () => {
+    // Un seul caractère de trop ou de moins fait échouer la requête entière :
+    // PostgREST refuse la valeur, la source passe en « indisponible », et
+    // l’aéroport affiche 0 oz alors que des lots y attendent (A197).
+    expect([...STATUTS_AEROPORT]).toEqual([
+      'waiting_for_customs_approval',
+      'approved_by_customs',
+      'ready_for_expedition',
+    ]);
+  });
+
+  it('sépare l’or en route de l’or raffiné à réintégrer', () => {
+    // Le premier n’appelle aucun geste ; le second attend une saisie d’entrée.
+    expect([...STATUTS_EN_ROUTE]).not.toContain(STATUT_A_REINTEGRER);
+    expect([...STATUTS_TRANSIT]).toEqual([...STATUTS_EN_ROUTE, STATUT_A_REINTEGRER]);
+  });
+});
+
+describe('or fin d’un lot artisanal', () => {
+  it('applique le carat comme vingt-quatrième de métal fin', () => {
+    expect(orFin({ quantite_grammes: 240, purete_karat: 18 })).toBeCloseTo(180, 6);
+    expect(orFin({ quantite_grammes: 100, purete_karat: 24 })).toBeCloseTo(100, 6);
+  });
+
+  it('ne suppose pas un lot pur faute de pureté déclarée', () => {
+    expect(orFin({ quantite_grammes: 500, purete_karat: null })).toBe(0);
+    expect(orFin({ quantite_grammes: 500 })).toBe(0);
   });
 });

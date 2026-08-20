@@ -18,7 +18,7 @@ import {
   validerLigne,
   valoriserLigne,
 } from '@/services/achatsIndustrielsCalculs';
-import { francs, onces, TONS_STATUT } from './PlansAchatPage';
+import { francs, montant, onces, TONS_STATUT } from './PlansAchatPage';
 import './achats.css';
 
 /**
@@ -35,6 +35,56 @@ import './achats.css';
  */
 
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Le lexique de la grille. Chaque colonne porte sa définition : en infobulle sur
+ * son en-tête, et rassemblées dans le bandeau de la section.
+ *
+ * Trois notions se confondent facilement, et l'écart entre elles décide de ce
+ * que la SONASP peut acheter :
+ *
+ *   déclarée  ce que la mine dit avoir produit ce mois-ci ;
+ *   engagée   ce que d'autres achats retiennent déjà sur ce même mois ;
+ *   assiette  la différence : ce qui reste achetable.
+ */
+const COLONNES_DEFINIES = [
+  {
+    titre: 'Déclarée (oz)',
+    definition: 'Production que la mine a déclarée sur le mois, déclarations annulées exclues.',
+  },
+  {
+    titre: 'Validée (oz)',
+    definition: 'Part de cette déclaration dont le contrôle est achevé. C’est un sous-ensemble de la déclarée.',
+  },
+  {
+    titre: 'Titre (%)',
+    definition: 'Titre moyen du doré déclaré sur le mois, en pourcentage de métal fin.',
+  },
+  {
+    titre: 'Engagée (oz)',
+    definition: 'Quantité que d’autres achats retiennent déjà sur la production de ce mois.',
+  },
+  {
+    titre: 'Assiette (oz)',
+    definition: 'Déclarée moins engagée : ce que la SONASP peut encore acheter. Une once ne s’achète pas deux fois.',
+  },
+  {
+    titre: 'À acheter (oz)',
+    definition: 'Quantité que le plan propose d’acheter à cette mine.',
+  },
+  {
+    titre: 'Part (%)',
+    definition: 'Ce que la quantité à acheter représente dans l’assiette de la mine.',
+  },
+  {
+    titre: 'Prix / oz (FCFA)',
+    definition: 'Prix négocié de l’once pour cette mine sur ce mois.',
+  },
+  {
+    titre: 'Montant (FCFA)',
+    definition: 'Quantité à acheter multipliée par le prix de l’once.',
+  },
+] as const;
 
 /** Avril, août et octobre commencent par une voyelle : « de » s'élide. */
 const MOIS_A_VOYELLE = new Set([4, 8, 10]);
@@ -120,12 +170,12 @@ export function PlanAchatDetails() {
 
   const totaux = useMemo(() => {
     const quantite = apercu.reduce((somme, item) => somme + item.quantite, 0);
-    const montant = apercu.reduce((somme, item) => somme + item.montant, 0);
+    const total = apercu.reduce((somme, item) => somme + item.montant, 0);
     const eligible = apercu.reduce((somme, item) => somme + item.eligible, 0);
     const cible = Number(plan?.quantite_cible_oz || 0);
     return {
       quantite: arrondirQuantite(quantite),
-      montant,
+      montant: total,
       eligible: arrondirQuantite(eligible),
       part: eligible > 0 ? (quantite * 100) / eligible : 0,
       ecart: plan?.mode_repartition === 'quantite_cible' ? arrondirQuantite(quantite - cible) : null,
@@ -280,6 +330,12 @@ export function PlanAchatDetails() {
    * Une cible nationale ne s'impose pas aux mines : si elle dépasse ce que le
    * mois a produit, la répartition s'arrête à l'assiette et l'écart reste.
    */
+  const totauxColonnes = useMemo(() => ({
+    declaree: apercu.reduce((somme, item) => somme + Number(item.ligne.production_declaree_oz || 0), 0),
+    validee: apercu.reduce((somme, item) => somme + Number(item.ligne.production_validee_oz || 0), 0),
+    engagee: apercu.reduce((somme, item) => somme + Number(item.ligne.deja_engage_oz || 0), 0),
+  }), [apercu]);
+
   const cible = Number(plan?.quantite_cible_oz || 0);
   const cibleHorsAssiette =
     plan?.mode_repartition === 'quantite_cible' && lignes.length > 0 && cible > totaux.eligible
@@ -490,7 +546,20 @@ export function PlanAchatDetails() {
           id="repartition"
           icon={Target}
           title="Répartition par société minière"
-          description="Production du mois, part proposée et montant. Les lignes marquées ont été ajustées à la main."
+          description="Une ligne par mine. Les lignes marquées ont été ajustées à la main."
+          info={{
+            titre: 'Ce que dit chaque colonne',
+            contenu: (
+              <dl className="plan-lexique">
+                {COLONNES_DEFINIES.map((colonne) => (
+                  <div key={colonne.titre}>
+                    <dt>{colonne.titre}</dt>
+                    <dd>{colonne.definition}</dd>
+                  </div>
+                ))}
+              </dl>
+            ),
+          }}
         >
           {chargement ? (
             <p className="production-page__loading">Chargement de la répartition…</p>
@@ -504,34 +573,29 @@ export function PlanAchatDetails() {
               <table>
                 <thead>
                   <tr>
+                    <th scope="col">Code</th>
                     <th scope="col">Société minière</th>
-                    <th scope="col" className="is-right">Déclarée (oz)</th>
-                    <th scope="col" className="is-right">Engagée (oz)</th>
-                    <th scope="col" className="is-right">Assiette (oz)</th>
-                    <th scope="col" className="is-right">À acheter (oz)</th>
-                    <th scope="col" className="is-right">Prix / oz (FCFA)</th>
-                    <th scope="col" className="is-right">Montant (FCFA)</th>
+                    {COLONNES_DEFINIES.map((colonne) => (
+                      <th key={colonne.titre} scope="col" className="is-right" title={colonne.definition}>
+                        {colonne.titre}
+                      </th>
+                    ))}
                     <th scope="col">Statut</th>
                   </tr>
                 </thead>
                 <tbody>
                   {apercu.map((item) => (
                     <tr key={item.ligne.id} className={item.ligne.ajustee_manuellement ? 'est-ajustee' : undefined}>
-                      <td>
-                        <strong>{item.ligne.mining_company?.code || '—'}</strong>
-                        <span className="plan-grille__sous">
-                          {item.ligne.mining_company?.name || 'Société inconnue'}
-                        </span>
+                      <td><strong>{item.ligne.mining_company?.code || '—'}</strong></td>
+                      <td className="plan-grille__nom">
+                        {item.ligne.mining_company?.name || 'Société inconnue'}
                       </td>
+                      <td className="is-right">{decimal.format(Number(item.ligne.production_declaree_oz || 0))}</td>
+                      <td className="is-right">{decimal.format(Number(item.ligne.production_validee_oz || 0))}</td>
                       <td className="is-right">
-                        {decimal.format(Number(item.ligne.production_declaree_oz || 0))}
-                        <span className="plan-grille__sous">
-                          {Number(item.ligne.production_validee_oz || 0) > 0
-                            ? `dont ${decimal.format(Number(item.ligne.production_validee_oz))} validée`
-                            : 'aucune validée'}
-                          {item.ligne.titre_moyen_pct !== null
-                            && ` · titre ${decimal.format(Number(item.ligne.titre_moyen_pct))} %`}
-                        </span>
+                        {item.ligne.titre_moyen_pct === null
+                          ? '—'
+                          : decimal.format(Number(item.ligne.titre_moyen_pct))}
                       </td>
                       <td className="is-right">{decimal.format(Number(item.ligne.deja_engage_oz || 0))}</td>
                       <td className="is-right"><strong>{decimal.format(item.eligible)}</strong></td>
@@ -551,22 +615,14 @@ export function PlanAchatDetails() {
                                 },
                               }))}
                             />
-                            {item.probleme
-                              ? <span className="achats-erreur-ligne">{item.probleme}</span>
-                              : (
-                                <span className="plan-grille__sous">
-                                  {item.part === null ? '—' : `${decimal.format(item.part)} % de l’assiette`}
-                                </span>
-                              )}
+                            {item.probleme && <span className="achats-erreur-ligne">{item.probleme}</span>}
                           </>
                         ) : (
-                          <>
-                            {decimal.format(item.quantite)}
-                            <span className="plan-grille__sous">
-                              {item.part === null ? '—' : `${decimal.format(item.part)} % de l’assiette`}
-                            </span>
-                          </>
+                          decimal.format(item.quantite)
                         )}
+                      </td>
+                      <td className="is-right">
+                        {item.part === null ? '—' : decimal.format(item.part)}
                       </td>
                       <td className="is-right">
                         {modifiable ? (
@@ -583,10 +639,10 @@ export function PlanAchatDetails() {
                             }))}
                           />
                         ) : (
-                          decimal.format(item.prix)
+                          montant(item.prix)
                         )}
                       </td>
-                      <td className="is-right">{francs(item.montant)}</td>
+                      <td className="is-right">{montant(item.montant)}</td>
                       <td>
                         {item.ligne.statut === 'approuvee' && <Badge tone="success">Approuvée</Badge>}
                         {item.ligne.statut === 'rejetee' && <Badge tone="danger">Rejetée</Badge>}
@@ -602,21 +658,16 @@ export function PlanAchatDetails() {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td>Total</td>
-                    <td className="is-right">
-                      {decimal.format(apercu.reduce(
-                        (somme, item) => somme + Number(item.ligne.production_declaree_oz || 0), 0
-                      ))}
-                    </td>
-                    <td className="is-right">
-                      {decimal.format(apercu.reduce(
-                        (somme, item) => somme + Number(item.ligne.deja_engage_oz || 0), 0
-                      ))}
-                    </td>
+                    <td colSpan={2}>Total</td>
+                    <td className="is-right">{decimal.format(totauxColonnes.declaree)}</td>
+                    <td className="is-right">{decimal.format(totauxColonnes.validee)}</td>
+                    <td />
+                    <td className="is-right">{decimal.format(totauxColonnes.engagee)}</td>
                     <td className="is-right">{decimal.format(totaux.eligible)}</td>
                     <td className="is-right">{decimal.format(totaux.quantite)}</td>
+                    <td className="is-right">{decimal.format(totaux.part)}</td>
                     <td />
-                    <td className="is-right">{francs(totaux.montant)}</td>
+                    <td className="is-right">{montant(totaux.montant)}</td>
                     <td />
                   </tr>
                 </tfoot>

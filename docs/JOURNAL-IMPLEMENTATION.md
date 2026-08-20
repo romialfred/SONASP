@@ -2540,3 +2540,42 @@ aucune donnée qu'il n'a pas produite.
 - `npx vitest run` : **730/730 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Une donnée, une colonne, une ligne
+
+J'avais empilé « dont validée », « titre » et « part » sous la valeur qu'elles qualifient pour
+tenir en huit colonnes. Une cellule sur deux portait alors deux lignes, et le tableau se
+lisait moins bien qu'avec ses colonnes. « FCFA », répété dans chaque cellule de montant,
+repassait à la ligne et cassait l'alignement des chiffres.
+
+Chaque donnée retrouve sa colonne — onze au total, dont **Validée**, **Titre** et **Part**
+rétablies, et le code séparé du nom. L'unité monte dans l'en-tête. Sous 1 360 px, la grille
+défile ; au-dessus, elle tient.
+
+### Le lexique, écrit une fois
+
+Trois notions se confondent, et l'écart entre elles décide de ce que la SONASP peut acheter :
+
+| Colonne | Définition |
+|---|---|
+| **Déclarée** | Production que la mine a déclarée sur le mois, déclarations annulées exclues. |
+| **Validée** | Part de cette déclaration dont le contrôle est achevé. Sous-ensemble de la déclarée. |
+| **Titre** | Titre moyen du doré déclaré, en pourcentage de métal fin. |
+| **Engagée** | Quantité que d'autres achats retiennent déjà sur la production de ce mois. |
+| **Assiette** | Déclarée moins engagée : ce qui reste achetable. Une once ne s'achète pas deux fois. |
+| **À acheter** | Quantité que le plan propose d'acheter à cette mine. |
+| **Part** | Ce que la quantité à acheter représente dans l'assiette de la mine. |
+| **Prix / oz** | Prix négocié de l'once pour cette mine sur ce mois. |
+| **Montant** | Quantité à acheter multipliée par le prix de l'once. |
+
+`COLONNES_DEFINIES` porte ces définitions une seule fois : elles composent les en-têtes, leur
+infobulle, et le bandeau de la section. Une définition qui change ne peut plus diverger de la
+colonne qu'elle décrit (A194).
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

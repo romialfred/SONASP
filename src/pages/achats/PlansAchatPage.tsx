@@ -30,6 +30,14 @@ export const onces = (valeur: number | null | undefined) =>
 export const francs = (valeur: number | null | undefined) =>
   valeur === null || valeur === undefined ? '—' : `${entier.format(Number(valeur))} FCFA`;
 
+/**
+ * Le même montant, sans sa devise. Dans un tableau dont l'en-tête porte déjà
+ * « (FCFA) », l'unité répétée dans chaque cellule repasse à la ligne et casse
+ * l'alignement des chiffres.
+ */
+export const montant = (valeur: number | null | undefined) =>
+  valeur === null || valeur === undefined ? '—' : entier.format(Number(valeur));
+
 export const TONS_STATUT: Record<StatutPlan, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
   brouillon: 'neutral',
   pret_soumission: 'info',

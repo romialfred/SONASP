@@ -390,28 +390,42 @@
   font-size: 11.5px;
 }
 
-/* ---------- Grille de répartition ----------
-   Huit colonnes au lieu de onze : « validée », « titre » et « part » passent
-   sous la valeur qu'elles qualifient, et la grille tient dans la largeur. */
-.plan-grille { overflow-x: visible; }
-.plan-grille table { table-layout: fixed; }
-.plan-grille th:first-child, .plan-grille td:first-child { width: 19%; }
-.plan-grille th:last-child, .plan-grille td:last-child { width: 10%; }
-.plan-grille td { vertical-align: top; padding-top: 10px; padding-bottom: 10px; }
+/* ---------- Grille de repartition ----------
+   Une donnee, une colonne, une ligne. Empiler « dont validee » et « titre »
+   sous la production faisait porter deux lignes a une cellule sur deux : chaque
+   donnee retrouve sa colonne, et l'unite monte dans l'en-tete. */
+.plan-grille table { table-layout: fixed; font-size: 12px; }
+.plan-grille th, .plan-grille td { padding-right: 10px; padding-left: 10px; }
+.plan-grille td { white-space: nowrap; vertical-align: middle; }
 
-.plan-grille__sous {
-  display: block;
-  margin-top: 2px;
+.plan-grille th:nth-child(1), .plan-grille td:nth-child(1) { width: 62px; }
+.plan-grille th:nth-child(2), .plan-grille td:nth-child(2) { width: 17%; }
+.plan-grille th:nth-child(5), .plan-grille td:nth-child(5) { width: 62px; }
+.plan-grille th:nth-child(10), .plan-grille td:nth-child(10) { width: 70px; }
+.plan-grille th:last-child, .plan-grille td:last-child { width: 96px; }
+
+/* Le nom complet est la seule cellule qui peut manquer de place : il se coupe
+   proprement plutot que d'elargir la colonne. */
+.plan-grille__nom {
+  overflow: hidden;
   color: var(--sn-muted, #60738c);
-  font-size: 10.5px;
-  font-weight: 400;
-  line-height: 1.35;
+  text-overflow: ellipsis;
 }
 
+.plan-grille input[type='number'] { min-width: 0; }
 .plan-grille tfoot td { vertical-align: middle; }
+
+/* ---------- Lexique des colonnes ---------- */
+.plan-lexique { display: grid; margin: 0; gap: 8px 18px; }
+.plan-lexique > div { display: grid; gap: 1px; }
+.plan-lexique dt { color: var(--sn-ink, #10243e); font-size: 11.5px; font-weight: 700; }
+.plan-lexique dd { margin: 0; color: var(--sn-muted, #60738c); font-size: 11px; line-height: 1.45; }
+
+@media (max-width: 1360px) {
+  .plan-grille { overflow-x: auto; }
+  .plan-grille table { table-layout: auto; min-width: 1180px; }
+}
 
 @media (max-width: 1080px) {
   .plan-politique { grid-template-columns: minmax(0, 1fr); }
-  .plan-grille { overflow-x: auto; }
-  .plan-grille table { table-layout: auto; min-width: 860px; }
 }

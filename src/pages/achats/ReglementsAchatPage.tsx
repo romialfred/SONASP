@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, Banknote, CheckCircle2, Link2, Plus, RefreshCw, Undo2, Wallet, X,
 } from 'lucide-react';
@@ -16,6 +17,13 @@ import {
   type Societe,
 } from '@/services/achatsIndustrielsService';
 import { simulerAffectationFifo } from '@/services/achatsIndustrielsCalculs';
+import {
+  formaterFcfa,
+  LIBELLES_CYCLE,
+
+  TONS_CYCLE,
+  type StatutReglementCycle,
+} from '@/services/reglementsAchatService';
 import { francs } from './PlansAchatPage';
 import { formaterDate } from './DemandesAchatPage';
 import './achats.css';
@@ -37,6 +45,7 @@ import './achats.css';
 const entier = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 export function ReglementsAchatPage() {
+  const navigate = useNavigate();
   const [reglements, setReglements] = useState<ReglementAchat[]>([]);
   const [factures, setFactures] = useState<FactureAchat[]>([]);
   const [societes, setSocietes] = useState<Societe[]>([]);
@@ -222,8 +231,13 @@ export function ReglementsAchatPage() {
           }}
           actions={
             <>
-              <button type="button" className="sn-btn sn-btn--primary" onClick={() => setFormulaireOuvert(true)}>
-                <Plus aria-hidden="true" /> Enregistrer un règlement
+              {/* La préparation d'un virement de plusieurs milliards a son
+                  écran : un tiroir de six champs n'y suffisait pas. */}
+              <button
+                type="button" className="sn-btn sn-btn--primary"
+                onClick={() => navigate('/achats/reglements/nouveau')}
+              >
+                <Plus aria-hidden="true" /> Préparer un règlement
               </button>
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>
                 <RefreshCw className={chargement ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
@@ -279,7 +293,7 @@ export function ReglementsAchatPage() {
                     <th scope="col">Référence</th>
                     <th scope="col">Date</th>
                     <th scope="col">Société</th>
-                    <th scope="col">Mode</th>
+                    <th scope="col">Banque bénéficiaire</th>
                     <th scope="col" className="is-right">Montant</th>
                     <th scope="col" className="is-right">Imputé</th>
                     <th scope="col" className="is-right">Sans affectation</th>
@@ -296,18 +310,25 @@ export function ReglementsAchatPage() {
                         <td>{formaterDate(reglement.date_reglement)}</td>
                         <td>{reglement.mining_company?.name || '—'}</td>
                         <td>
-                          {MODES_REGLEMENT.find((mode) => mode.valeur === reglement.mode_reglement)?.libelle
-                            || reglement.mode_reglement}
+                          {reglement.banque || '—'}
+                          {reglement.reference_bancaire && (
+                            <>
+                              <br />
+                              <span style={{ fontSize: 10.5, color: 'var(--sn-muted)' }}>
+                                {reglement.reference_bancaire}
+                              </span>
+                            </>
+                          )}
                         </td>
-                        <td className="is-right">{francs(reglement.montant_fcfa)}</td>
-                        <td className="is-right">{francs(reglement.montant_affecte_fcfa)}</td>
+                        <td className="is-right">{formaterFcfa(reglement.montant_fcfa)}</td>
+                        <td className="is-right">{formaterFcfa(reglement.montant_affecte_fcfa)}</td>
                         <td className="is-right">
                           {solde > 0.005 ? <strong>{francs(solde)}</strong> : '—'}
                         </td>
                         <td>
-                          <Badge tone={reglement.statut === 'valide' ? 'success'
-                            : reglement.statut === 'rejete' || reglement.statut === 'annule' ? 'danger' : 'info'}>
-                            {LIBELLES_STATUT_REGLEMENT[reglement.statut]}
+                          <Badge tone={TONS_CYCLE[reglement.statut as StatutReglementCycle] ?? 'neutral'}>
+                            {LIBELLES_CYCLE[reglement.statut as StatutReglementCycle]
+                              ?? LIBELLES_STATUT_REGLEMENT[reglement.statut]}
                           </Badge>
                         </td>
                         <td>

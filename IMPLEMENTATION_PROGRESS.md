@@ -628,6 +628,9 @@ estimée.
 | A176 | `user_profiles` sans rattachement à une société minière : l'isolation « une mine ne voit que ses demandes » était inapplicable | Socle | Colonne `mining_company_id` + politiques RLS sur les sept tables du module |
 | A177 | Éligibilité calculée sur la production validée mais engagements déduits de la production déclarée : éligible nul partout | Achats industriels | Assiette unifiée sur la production déclarée non annulée |
 | A178 | Paramètre de sortie `demande_id` en conflit avec la colonne homonyme : toute approbation échouait sur « column reference is ambiguous » | Achats industriels | Sorties préfixées `r_`, tables aliasées |
+| A179 | Le montant payé d'une facture comptait toute affectation active : un règlement en brouillon soldait la dette avant toute exécution bancaire | Règlements | Distinction engagé / payé ; la dette ne baisse qu'à l'exécution confirmée |
+| A180 | Cycle de règlement à quatre états, confondant validation interne, émission de l'ordre, exécution bancaire et rapprochement | Règlements | Huit états, transitions contrôlées, preuve exigée avant exécution |
+| A181 | Deux profils sur trois sans compte `auth.users` : actifs à l'écran, aucune connexion possible — et la séparation des fonctions les comptait comme validateurs | Socle | Décompte joint à `auth.users` ; les profils orphelins restent à rattacher ou désactiver |
 
 ---
 

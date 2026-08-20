@@ -1,0 +1,455 @@
+/**
+ * Formulaire de règlement — complément au socle `site-form`.
+ *
+ * Le formulaire réutilise l'habillage du formulaire de création d'un site
+ * artisanal : `site-form`, ses sections, sa grille, son volet droit et sa barre
+ * d'actions collante. Rien de tout cela n'est redéfini ici — le dupliquer
+ * ferait diverger les deux écrans à la première retouche.
+ *
+ * Ce fichier ne porte que ce qu'un ordre de virement a de propre : la grille
+ * d'imputation des factures, la synthèse des montants, l'étape de vérification
+ * et le fil du cycle.
+ */
+
+/* ---------------------------------------------------------------------------
+   Le formulaire d'un virement de plusieurs milliards a besoin de largeur :
+   la grille des factures porte onze colonnes de chiffres.
+   --------------------------------------------------------------------------- */
+.reglement-form .site-form__layout { grid-template-columns: minmax(0, 1fr) 348px; }
+
+/* ---------------------------------------------------------------------------
+   Étapes
+   --------------------------------------------------------------------------- */
+.reglement-form__etapes {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+  padding: 0;
+  gap: 8px;
+  list-style: none;
+}
+
+.reglement-form__etapes li {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  gap: 8px;
+  border: 1px solid #e0e7ee;
+  border-radius: 999px;
+  background: #fff;
+  color: #60738c;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.reglement-form__etapes li b {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef2f6;
+  color: #60738c;
+  font-size: 10px;
+}
+
+.reglement-form__etapes li.est-courante {
+  border-color: #0f7a56;
+  background: #eefaf4;
+  color: #0d5c41;
+}
+.reglement-form__etapes li.est-courante b { background: #0f7a56; color: #fff; }
+.reglement-form__etapes li.est-faite { border-color: #cfe8dc; color: #14614a; }
+.reglement-form__etapes li.est-faite b { background: #14956a; color: #fff; }
+
+/* ---------------------------------------------------------------------------
+   Bénéficiaires éligibles
+   --------------------------------------------------------------------------- */
+.reglement-form__beneficiaires {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+  gap: 12px;
+}
+
+.reglement-form__beneficiaire {
+  display: block;
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #e0e7ee;
+  border-radius: 11px;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.reglement-form__beneficiaire:hover { border-color: #c3d0dc; background: #f9fbfc; }
+
+.reglement-form__beneficiaire.est-choisi {
+  border-color: #0f7a56;
+  background: #f4fbf8;
+  box-shadow: 0 0 0 3px rgb(52 163 122 / 12%);
+}
+
+.reglement-form__beneficiaire strong {
+  display: block;
+  color: #10243e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reglement-form__beneficiaire em {
+  display: block;
+  margin-top: 2px;
+  color: #7a8ca0;
+  font-size: 10.5px;
+  font-style: normal;
+}
+
+.reglement-form__beneficiaire dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 10px 0 0;
+  gap: 6px 10px;
+}
+
+.reglement-form__beneficiaire dt { color: #7a8ca0; font-size: 10px; }
+.reglement-form__beneficiaire dd {
+  margin: 0;
+  color: #10243e;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.reglement-form__beneficiaire dd.est-echu { color: #b4442b; }
+
+/* Une société sans compte bancaire ne peut pas être réglée : on le dit sur la
+   carte plutôt que d'échouer à la validation. */
+.reglement-form__beneficiaire.est-bloquee { opacity: 0.72; }
+.reglement-form__beneficiaire .est-alerte {
+  display: block;
+  margin-top: 8px;
+  color: #b4442b;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Coordonnées bancaires — lecture seule, jamais saisies ici
+   --------------------------------------------------------------------------- */
+.reglement-form__banque {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  margin: 0;
+  padding: 14px 16px;
+  gap: 12px 18px;
+  border: 1px solid #cfe4fb;
+  border-radius: 11px;
+  background: #f6f9ff;
+}
+
+.reglement-form__banque > div { min-width: 0; }
+.reglement-form__banque dt { color: #5a7396; font-size: 10.5px; }
+.reglement-form__banque dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  color: #10243e;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__banque-vide {
+  padding: 16px;
+  border: 1px solid #f3c8c3;
+  border-radius: 11px;
+  background: #fff2f0;
+  color: #b3261e;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
+   Grille d'imputation
+   --------------------------------------------------------------------------- */
+.reglement-form__factures { overflow-x: auto; }
+.reglement-form__factures table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+.reglement-form__factures th {
+  height: 36px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e0e7ee;
+  background: #f7f9fb;
+  color: #60738c;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.reglement-form__factures td {
+  height: 50px;
+  padding: 0 10px;
+  border-top: 1px solid #eef2f6;
+  color: #10243e;
+  vertical-align: middle;
+}
+
+.reglement-form__factures .est-nombre { text-align: right; font-variant-numeric: tabular-nums; }
+.reglement-form__factures tbody tr:hover { background: #f9fbfc; }
+.reglement-form__factures tr.est-retenue { background: #f4fbf8; }
+.reglement-form__factures tr.est-retenue td:first-child { box-shadow: inset 3px 0 0 #0f7a56; }
+
+.reglement-form__factures input[type='number'] {
+  width: 100%;
+  min-width: 132px;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid #d9e2ea;
+  border-radius: 8px;
+  background: #fff;
+  color: #10243e;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__factures input[type='number']:focus {
+  border-color: #34a37a;
+  box-shadow: 0 0 0 3px rgb(52 163 122 / 14%);
+  outline: none;
+}
+
+.reglement-form__factures input[aria-invalid='true'] {
+  border-color: #f3c8c3;
+  background: #fff2f0;
+}
+
+.reglement-form__factures tfoot td {
+  height: 46px;
+  border-top: 2px solid #e0e7ee;
+  background: #f7f9fb;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__age {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reglement-form__age.est-non_echu { background: #eef2f6; color: #60738c; }
+.reglement-form__age.est-j1_30 { background: #fdf6e7; color: #96690a; }
+.reglement-form__age.est-j31_60 { background: #fbeccc; color: #96690a; }
+.reglement-form__age.est-j61_90 { background: #fde8e4; color: #b4442b; }
+.reglement-form__age.est-j91_180,
+.reglement-form__age.est-plus_180 { background: #fbd9d3; color: #97281a; }
+
+.reglement-form__voir {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  gap: 5px;
+  border: 1px solid #d9e2ea;
+  border-radius: 8px;
+  background: #fff;
+  color: #10243e;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reglement-form__voir:hover { border-color: #c3d0dc; background: #f7f9fb; }
+.reglement-form__voir svg { width: 13px; height: 13px; }
+
+/* ---------------------------------------------------------------------------
+   Synthèse des montants — visible pendant toute l'imputation
+   --------------------------------------------------------------------------- */
+.reglement-form__synthese {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  gap: 12px 18px;
+  border: 1px solid #e0e7ee;
+  border-radius: 11px;
+  background: #fbfcfd;
+}
+
+.reglement-form__synthese dt { color: #7a8ca0; font-size: 10.5px; }
+.reglement-form__synthese dd {
+  margin: 3px 0 0;
+  color: #10243e;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__synthese dd.est-restant { color: #b97f00; }
+.reglement-form__synthese dd.est-complet { color: #0f7a56; }
+.reglement-form__synthese dd.est-excedent { color: #b3261e; }
+
+/* ---------------------------------------------------------------------------
+   Étape de vérification
+   --------------------------------------------------------------------------- */
+.reglement-form__verif-montant {
+  padding: 18px 20px;
+  border: 1px solid #cfe8dc;
+  border-radius: 12px;
+  background: #eefaf4;
+  text-align: center;
+}
+
+.reglement-form__verif-montant strong {
+  display: block;
+  color: #0d5c41;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.reglement-form__verif-montant em {
+  display: block;
+  margin-top: 6px;
+  color: #14614a;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.reglement-form__recap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  margin: 16px 0 0;
+  gap: 14px 20px;
+}
+
+.reglement-form__recap dt { color: #7a8ca0; font-size: 10.5px; }
+.reglement-form__recap dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  color: #10243e;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Volet droit
+   --------------------------------------------------------------------------- */
+.reglement-form__liste { margin: 0; padding: 0 14px 14px; list-style: none; }
+.reglement-form__liste.est-defilante { max-height: 268px; overflow-y: auto; }
+
+.reglement-form__liste li {
+  padding: 10px 0;
+  border-top: 1px solid #eef2f6;
+  font-size: 11.5px;
+}
+
+.reglement-form__liste li:first-child { border-top: 0; }
+
+.reglement-form__liste-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reglement-form__liste-tete strong { color: #10243e; font-size: 12px; }
+.reglement-form__liste-tete span { color: #10243e; font-weight: 700; font-variant-numeric: tabular-nums; }
+.reglement-form__liste-meta { display: block; margin-top: 3px; color: #7a8ca0; font-size: 10.5px; }
+
+.reglement-form__etat {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.reglement-form__etat.est-success { background: #e9f7f1; color: #0c8a5f; }
+.reglement-form__etat.est-info { background: #eef3fe; color: #1f4fae; }
+.reglement-form__etat.est-warning { background: #fdf6e7; color: #96690a; }
+.reglement-form__etat.est-danger { background: #fdeceb; color: #b3261e; }
+.reglement-form__etat.est-neutral { background: #eef2f6; color: #60738c; }
+
+.reglement-form__vide {
+  padding: 14px 16px 18px;
+  color: #7a8ca0;
+  font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------------------
+   Fenêtre de consultation d'une facture
+   --------------------------------------------------------------------------- */
+.reglement-form__modale {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  padding: 24px;
+  place-items: center;
+  background: rgb(16 36 62 / 44%);
+}
+
+.reglement-form__modale-panneau {
+  width: min(760px, 100%);
+  max-height: 86vh;
+  overflow: auto;
+  border: 1px solid #e0e7ee;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgb(16 36 62 / 22%);
+}
+
+.reglement-form__modale-panneau > header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  gap: 12px;
+  border-bottom: 1px solid #e0e7ee;
+  background: #fff;
+}
+
+.reglement-form__modale-panneau > header h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.reglement-form__modale-panneau > header p { margin: 3px 0 0; color: #60738c; font-size: 11.5px; }
+
+.reglement-form__modale-panneau > header button {
+  margin-left: auto;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #e0e7ee;
+  border-radius: 9px;
+  background: #fff;
+  color: #60738c;
+  cursor: pointer;
+}
+
+.reglement-form__modale-corps { padding: 20px; }
+.reglement-form__modale-corps h4 { margin: 20px 0 10px; font-size: 12.5px; font-weight: 700; }
+.reglement-form__modale-corps h4:first-child { margin-top: 0; }
+
+.reglement-form__modale-corps table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.reglement-form__modale-corps th,
+.reglement-form__modale-corps td { padding: 8px 10px; border-top: 1px solid #eef2f6; text-align: left; }
+.reglement-form__modale-corps th { color: #60738c; font-size: 10.5px; font-weight: 600; }
+.reglement-form__modale-corps .est-nombre { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1180px) {
+  .reglement-form .site-form__layout { grid-template-columns: minmax(0, 1fr); }
+  .reglement-form .site-form__aside { position: static; }
+}

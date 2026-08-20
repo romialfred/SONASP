@@ -115,6 +115,7 @@ const PlansAchatPage = lazy(() => import('./pages/achats/PlansAchatPage'));
 const PlanAchatDetails = lazy(() => import('./pages/achats/PlanAchatDetails'));
 const DemandesAchatPage = lazy(() => import('./pages/achats/DemandesAchatPage'));
 const ReglementsAchatPage = lazy(() => import('./pages/achats/ReglementsAchatPage'));
+const ReglementForm = lazy(() => import('./pages/achats/ReglementForm'));
 const ComptesMinesPage = lazy(() => import('./pages/achats/ComptesMinesPage'));
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
@@ -490,6 +491,10 @@ function AppRoutes() {
             <Route
               path="/achats/reglements"
               element={<ProtectedRoute><ReglementsAchatPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/achats/reglements/nouveau"
+              element={<ProtectedRoute><ReglementForm /></ProtectedRoute>}
             />
             <Route
               path="/achats/comptes"

@@ -2159,3 +2159,82 @@ refusées par la base.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé — aucune erreur ajoutée
 - Console du navigateur au démarrage : aucune erreur
+
+---
+
+## Itération — 20 août 2026 — Le paiement devient un ordre de virement
+
+Le module d'achat existait ; son formulaire de paiement, non. Six champs alignés dans un tiroir
+latéral pour un virement de plusieurs milliards de francs CFA.
+
+### Le défaut comptable, trouvé avant de dessiner
+
+En relisant le code de règlement, un défaut de fond est apparu : **`snp_facture_paye` comptait
+toute affectation active, quel que soit l'état du règlement**. Un simple brouillon soldait donc
+une facture — la balance âgée s'allégeait, le relevé montrait une dette éteinte, alors que la
+banque n'avait rien exécuté (A179).
+
+D'où la distinction posée en base :
+
+| Notion | Ce qu'elle compte | À quoi elle sert |
+|---|---|---|
+| **engagé** | affectations d'un règlement non rejeté ni annulé | plafonne toute nouvelle imputation |
+| **payé** | affectations d'un règlement **exécuté** ou **rapproché** | éteint la dette, alimente la balance âgée |
+
+Un brouillon **retient** donc une facture sans l'éteindre. Sans ce plafond sur l'engagé, deux
+paiements en préparation pourraient chacun couvrir la même facture en entier et la solder deux
+fois à l'exécution.
+
+### Le cycle, qui n'existait pas
+
+Quatre états confondaient la validation interne, l'émission de l'ordre, l'exécution par la
+banque et le rapprochement (A180). Le cycle en compte huit :
+
+```
+brouillon -> soumis -> valide -> en execution -> execute -> rapproche
+                    -> rejete / annule
+```
+
+Trois règles s'y attachent : **on ne valide pas son propre ordre** ; **on ne déclare pas une
+exécution sans pièce bancaire** ; **un ordre exécuté ne se réimpute ni ne s'annule** — il se
+contrepasse.
+
+### Le formulaire
+
+Il reprend l'habillage du formulaire de création d'un site artisanal — sections, grille, volet
+droit, barre d'actions collante — **par import de sa feuille de style**, non par recopie : la
+dupliquer ferait diverger les deux écrans à la première retouche.
+
+Deux étapes : imputation, puis vérification. L'écran de vérification affiche le montant en
+chiffres **et en toutes lettres** — la protection usuelle contre le chiffre mal lu sur un ordre
+de virement. Écrire ces lettres a d'ailleurs révélé un bogue de ma propre conversion :
+« soixante-onze » au lieu de « soixante-et-onze ».
+
+Trois garanties tenues par l'écran :
+- seules les sociétés portant une dette exigible sont proposées — Sanbrado, soldé, n'apparaît
+  pas ;
+- le compte bénéficiaire vient de la fiche de la société, sans aucun moyen de le contourner ;
+  sans compte actif, la préparation est bloquée et l'écran renvoie à la fiche ;
+- consulter une facture n'efface pas la saisie : la fenêtre ne remonte jamais dans l'état du
+  formulaire.
+
+### Un défaut de sécurité trouvé en recette
+
+La séparation des fonctions comptait les validateurs dans `user_profiles`. Or **deux des trois
+profils n'ont aucun compte `auth.users`** : actifs à l'écran, personne ne peut s'y connecter. La
+règle croyait à trois validateurs là où il n'y en a qu'un, et bloquait le seul administrateur
+réel (A181). Le décompte joint désormais `auth.users`.
+
+### Recette
+
+Seize contrôles exécutés en base, tous verts : éligibilité, société soldée écartée, compte
+d'une autre société refusé, référence interne en doublon, saut d'étape refusé, exécution sans
+preuve refusée, dette qui ne baisse qu'à l'exécution, réimputation et annulation refusées après
+exécution. Les données d'essai ont été supprimées ; le jeu de démonstration reste.
+
+### Contrôles
+
+- `npx vitest run` : **728/728 verts** (+26 : formatage, montant en lettres, pièces, contrat)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+- Console du navigateur : aucune erreur

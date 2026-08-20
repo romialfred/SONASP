@@ -30,7 +30,7 @@ export const onces = (valeur: number | null | undefined) =>
 export const francs = (valeur: number | null | undefined) =>
   valeur === null || valeur === undefined ? '—' : `${entier.format(Number(valeur))} FCFA`;
 
-const TONS_STATUT: Record<StatutPlan, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+export const TONS_STATUT: Record<StatutPlan, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
   brouillon: 'neutral',
   pret_soumission: 'info',
   soumis: 'warning',

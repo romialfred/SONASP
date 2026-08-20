@@ -42,7 +42,6 @@
 }
 .achats-synthese__poste dd.est-ecart { color: var(--sn-gold-dark, #b97f00); }
 .achats-synthese__poste dd.est-conforme { color: var(--sn-success, #0c8a5f); }
-.achats-synthese__actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------------------
    Grille de répartition
@@ -180,7 +179,6 @@
 
 @media (max-width: 780px) {
   .achats-synthese { gap: 8px 16px; }
-  .achats-synthese__actions { margin-left: 0; width: 100%; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -297,4 +295,123 @@
 @media (max-width: 720px) {
   .achats-fenetre { padding: 0; }
   .achats-fenetre__panneau { width: 100%; max-height: 100vh; border-radius: 0; }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Plan mensuel d'achat
+
+   L'écran se lit de haut en bas : ce que le plan est, ce qu'il pèse, ce qu'on
+   peut lui faire, puis la répartition mine par mine. Les actions vivaient au
+   milieu des chiffres, et « Répartir » au milieu d'une phrase : chacun retrouve
+   sa place.
+   --------------------------------------------------------------------------- */
+.plan-barre {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px 16px;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: 1px solid var(--sn-border, #e0e7ee);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff 0%, var(--sn-surface-alt, #f7f9fb) 100%);
+}
+
+.plan-barre__etat {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+  flex: 1 1 260px;
+}
+
+.plan-barre__etat span {
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+}
+
+.plan-barre__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.plan-barre__fige {
+  margin: 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+  font-style: italic;
+}
+
+/* ---------- Application globale ---------- */
+.plan-politique {
+  display: grid;
+  align-items: end;
+  gap: 14px 20px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.plan-politique__champs {
+  display: grid;
+  gap: 14px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.plan-politique__gestes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.plan-politique__note {
+  color: var(--sn-muted, #60738c);
+  font-size: 11px;
+}
+
+.plan-politique__base {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 14px;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  border-top: 1px dashed var(--sn-border, #e0e7ee);
+}
+
+.plan-politique__base strong {
+  display: block;
+  color: var(--sn-ink, #10243e);
+  font-size: 12.5px;
+}
+
+.plan-politique__base span {
+  display: block;
+  margin-top: 2px;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+}
+
+/* ---------- Grille de répartition ----------
+   Huit colonnes au lieu de onze : « validée », « titre » et « part » passent
+   sous la valeur qu'elles qualifient, et la grille tient dans la largeur. */
+.plan-grille { overflow-x: visible; }
+.plan-grille table { table-layout: fixed; }
+.plan-grille th:first-child, .plan-grille td:first-child { width: 19%; }
+.plan-grille th:last-child, .plan-grille td:last-child { width: 10%; }
+.plan-grille td { vertical-align: top; padding-top: 10px; padding-bottom: 10px; }
+
+.plan-grille__sous {
+  display: block;
+  margin-top: 2px;
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.plan-grille tfoot td { vertical-align: middle; }
+
+@media (max-width: 1080px) {
+  .plan-politique { grid-template-columns: minmax(0, 1fr); }
+  .plan-grille { overflow-x: auto; }
+  .plan-grille table { table-layout: auto; min-width: 860px; }
 }

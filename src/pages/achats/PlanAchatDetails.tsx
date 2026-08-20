@@ -18,7 +18,7 @@ import {
   validerLigne,
   valoriserLigne,
 } from '@/services/achatsIndustrielsCalculs';
-import { francs, onces } from './PlansAchatPage';
+import { francs, onces, TONS_STATUT } from './PlansAchatPage';
 import './achats.css';
 
 /**
@@ -35,6 +35,11 @@ import './achats.css';
  */
 
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Avril, août et octobre commencent par une voyelle : « de » s'élide. */
+const MOIS_A_VOYELLE = new Set([4, 8, 10]);
+const duMois = (mois: number, annee: number) =>
+  `${MOIS_A_VOYELLE.has(mois) ? 'd’' : 'de '}${libelleMois(mois).toLowerCase()} ${annee}`;
 
 interface Brouillon {
   quantite: string;
@@ -271,16 +276,26 @@ export function PlanAchatDetails() {
     );
   }
 
+  /**
+   * Une cible nationale ne s'impose pas aux mines : si elle dépasse ce que le
+   * mois a produit, la répartition s'arrête à l'assiette et l'écart reste.
+   */
+  const cible = Number(plan?.quantite_cible_oz || 0);
+  const cibleHorsAssiette =
+    plan?.mode_repartition === 'quantite_cible' && lignes.length > 0 && cible > totaux.eligible
+      ? arrondirQuantite(cible - totaux.eligible)
+      : null;
+
   return (
     <NationalDashboardLayout>
-      <div className="sn-page achats-page">
+      <div className="sn-page achats-page plan-page">
         <PageHeader
           icon={CalendarRange}
-          title={plan ? `${plan.numero_plan} — ${libelleMois(plan.mois)} ${plan.annee}` : 'Plan d’achat'}
+          title={plan ? `Plan d’achat ${duMois(plan.mois, plan.annee)}` : 'Plan d’achat'}
           subtitle={
             plan?.mode_repartition === 'pourcentage'
-              ? `Politique : ${decimal.format(Number(plan.pourcentage_global || 0))} % de la production éligible.`
-              : `Politique : ${onces(plan?.quantite_cible_oz)} visées à l’échelle nationale.`
+              ? `${plan.numero_plan} · ${decimal.format(Number(plan.pourcentage_global || 0))} % de la production éligible.`
+              : `${plan?.numero_plan ?? ''} · ${onces(plan?.quantite_cible_oz)} visées à l’échelle nationale.`
           }
           breadcrumb={[
             { label: 'Achats industriels' },
@@ -288,7 +303,7 @@ export function PlanAchatDetails() {
             { label: plan?.numero_plan || '…' },
           ]}
           info={{
-            titre: 'Production éligible',
+            titre: 'Assiette achetable',
             contenu:
               'C’est la production déclarée du mois, non annulée, diminuée de ce que d’autres achats retiennent déjà. On ne peut pas acheter deux fois la même once.',
           }}
@@ -307,15 +322,55 @@ export function PlanAchatDetails() {
         {erreur && <Note tone="danger" icon={AlertTriangle}>{erreur}</Note>}
         {message && !erreur && <Note icon={Sparkles}>{message}</Note>}
 
-        {plan && !modifiable && (
-          <Note tone="info" icon={AlertTriangle}>
-            Ce plan est {LIBELLES_STATUT_PLAN[plan.statut].toLowerCase()} : sa répartition ne se modifie plus.
-          </Note>
+        {/* Ce que le plan est, et ce qu'on peut lui faire : une seule barre,
+            séparée des chiffres qu'elle commande. */}
+        {plan && (
+          <div className="plan-barre">
+            <div className="plan-barre__etat">
+              <Badge tone={TONS_STATUT[plan.statut]}>{LIBELLES_STATUT_PLAN[plan.statut]}</Badge>
+              <span>
+                {libelleMois(plan.mois)} {plan.annee}
+                {' · '}
+                {lignes.length > 0 ? `${lignes.length} mine(s)` : 'aucune ligne'}
+                {totaux.modifiees > 0 && ` · ${totaux.modifiees} ligne(s) non enregistrée(s)`}
+              </span>
+            </div>
+
+            {modifiable ? (
+              <div className="plan-barre__actions">
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void repartir(false)} disabled={action !== null}
+                >
+                  <Target aria-hidden="true" />
+                  {action === 'repartir' ? 'Répartition…' : 'Répartir'}
+                </button>
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void enregistrerModifications()}
+                  disabled={action !== null || totaux.modifiees === 0}
+                >
+                  {action === 'enregistrer' ? 'Enregistrement…' : 'Enregistrer'}
+                </button>
+                <button
+                  type="button" className="sn-btn sn-btn--primary"
+                  onClick={() => void soumettre()}
+                  disabled={action !== null || totaux.quantite <= 0 || totaux.enErreur > 0}
+                >
+                  <Send aria-hidden="true" /> {action === 'soumettre' ? 'Transmission…' : 'Soumettre aux mines'}
+                </button>
+              </div>
+            ) : (
+              <p className="plan-barre__fige">
+                Plan {LIBELLES_STATUT_PLAN[plan.statut].toLowerCase()} : sa répartition ne se modifie plus.
+              </p>
+            )}
+          </div>
         )}
 
         <dl className="achats-synthese">
           <div className="achats-synthese__poste">
-            <dt>Production éligible</dt>
+            <dt>Assiette achetable</dt>
             <dd>{onces(totaux.eligible)}</dd>
           </div>
           <div className="achats-synthese__poste">
@@ -323,7 +378,7 @@ export function PlanAchatDetails() {
             <dd>{onces(totaux.quantite)}</dd>
           </div>
           <div className="achats-synthese__poste">
-            <dt>Part de l’éligible</dt>
+            <dt>Part de l’assiette</dt>
             <dd>{decimal.format(totaux.part)} %</dd>
           </div>
           <div className="achats-synthese__poste">
@@ -338,38 +393,21 @@ export function PlanAchatDetails() {
               </dd>
             </div>
           )}
-          {totaux.modifiees > 0 && (
+          {totaux.enErreur > 0 && (
             <div className="achats-synthese__poste">
-              <dt>Non enregistré</dt>
-              <dd className="est-ecart">{totaux.modifiees} ligne(s)</dd>
-            </div>
-          )}
-
-          {modifiable && (
-            <div className="achats-synthese__actions">
-              <button
-                type="button" className="sn-btn"
-                onClick={() => void repartir(false)} disabled={action !== null}
-              >
-                <Target aria-hidden="true" /> Répartir
-              </button>
-              <button
-                type="button" className="sn-btn sn-btn--primary"
-                onClick={() => void enregistrerModifications()}
-                disabled={action !== null || totaux.modifiees === 0}
-              >
-                {action === 'enregistrer' ? 'Enregistrement…' : 'Enregistrer'}
-              </button>
-              <button
-                type="button" className="sn-btn sn-btn--primary"
-                onClick={() => void soumettre()}
-                disabled={action !== null || totaux.quantite <= 0 || totaux.enErreur > 0}
-              >
-                <Send aria-hidden="true" /> {action === 'soumettre' ? 'Transmission…' : 'Soumettre aux mines'}
-              </button>
+              <dt>Lignes en erreur</dt>
+              <dd className="est-ecart">{totaux.enErreur}</dd>
             </div>
           )}
         </dl>
+
+        {cibleHorsAssiette !== null && (
+          <Note tone="warning" icon={AlertTriangle}>
+            La cible de {onces(cible)} dépasse de {decimal.format(cibleHorsAssiette)} oz ce que les
+            mines ont déclaré ce mois-ci. La répartition s’arrête à l’assiette : révisez la cible,
+            ou attendez les déclarations manquantes.
+          </Note>
+        )}
 
         {modifiable && (
           <Section
@@ -377,61 +415,74 @@ export function PlanAchatDetails() {
             icon={Sparkles}
             tone="blue"
             title="Application globale"
-            description="Appliquez un taux ou un prix à toutes les lignes, puis ajustez celles qui le demandent."
+            description="Un taux ou un prix posé sur toutes les lignes, à ajuster ensuite ligne à ligne."
           >
-            <div className="sn-grid sn-grid--3">
-              {plan?.mode_repartition === 'quantite_cible' ? (
-                <div className="sn-field">
-                  <span className="sn-field__label">Quantité nationale visée</span>
-                  <p className="sn-readonly">{onces(plan.quantite_cible_oz)}</p>
-                </div>
-              ) : (
+            <div className="plan-politique">
+              <div className="plan-politique__champs">
+                {plan?.mode_repartition === 'quantite_cible' ? (
+                  <div className="sn-field">
+                    <span className="sn-field__label">Quantité nationale visée</span>
+                    <p className="sn-readonly">{onces(plan.quantite_cible_oz)}</p>
+                  </div>
+                ) : (
+                  <label className="sn-field">
+                    <span className="sn-field__label">Pourcentage à appliquer</span>
+                    <input
+                      type="number" min={0} max={100} step={0.5} value={politique.pourcentage}
+                      onChange={(evenement) => setPolitique((p) => ({ ...p, pourcentage: evenement.target.value }))}
+                    />
+                  </label>
+                )}
                 <label className="sn-field">
-                  <span className="sn-field__label">Pourcentage à appliquer</span>
+                  <span className="sn-field__label">Prix à l’once (FCFA)</span>
                   <input
-                    type="number" min={0} max={100} step={0.5} value={politique.pourcentage}
-                    onChange={(evenement) => setPolitique((p) => ({ ...p, pourcentage: evenement.target.value }))}
+                    type="number" min={0} step={1000} value={politique.prix}
+                    onChange={(evenement) => setPolitique((p) => ({ ...p, prix: evenement.target.value }))}
                   />
                 </label>
-              )}
-              <label className="sn-field">
-                <span className="sn-field__label">Prix à l’once (FCFA)</span>
-                <input
-                  type="number" min={0} step={1000} value={politique.prix}
-                  onChange={(evenement) => setPolitique((p) => ({ ...p, prix: evenement.target.value }))}
-                />
-              </label>
-              <div className="sn-field">
-                <span className="sn-field__label">Appliquer</span>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {plan?.mode_repartition === 'quantite_cible' ? (
-                    <button type="button" className="sn-btn" onClick={appliquerCible}>
-                      La quantité visée
-                    </button>
-                  ) : (
-                    <button type="button" className="sn-btn" onClick={appliquerPourcentage}>
-                      Le pourcentage
-                    </button>
-                  )}
-                  <button type="button" className="sn-btn" onClick={appliquerPrix}>
-                    Le prix
+              </div>
+
+              <div className="plan-politique__gestes">
+                {plan?.mode_repartition === 'quantite_cible' ? (
+                  <button type="button" className="sn-btn" onClick={appliquerCible}>
+                    Répartir la quantité visée
                   </button>
-                </div>
+                ) : (
+                  <button type="button" className="sn-btn" onClick={appliquerPourcentage}>
+                    Appliquer le pourcentage
+                  </button>
+                )}
+                <button type="button" className="sn-btn" onClick={appliquerPrix}>
+                  Appliquer le prix
+                </button>
+                <span className="plan-politique__note">
+                  À l’écran seulement : enregistrez pour rendre effectif.
+                </span>
               </div>
             </div>
 
-            <p style={{ margin: '10px 0 0', fontSize: 11.5, color: 'var(--sn-muted)' }}>
-              « Répartir » relit la production en base et recalcule les parts ; les lignes déjà ajustées à la
-              main sont préservées.{' '}
-              <button
-                type="button" className="sn-btn"
-                style={{ height: 26, fontSize: 11 }}
-                onClick={() => void repartir(true)}
-                disabled={action !== null}
-              >
-                Répartir en écrasant les ajustements
-              </button>
-            </p>
+            <div className="plan-politique__base">
+              <div>
+                <strong>Reprendre la répartition depuis la production</strong>
+                <span>
+                  La base relit les déclarations du mois et recalcule les parts.
+                </span>
+              </div>
+              <div className="plan-politique__gestes">
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void repartir(false)} disabled={action !== null}
+                >
+                  <Target aria-hidden="true" /> En préservant les ajustements
+                </button>
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void repartir(true)} disabled={action !== null}
+                >
+                  <RefreshCw aria-hidden="true" /> En les écrasant
+                </button>
+              </div>
+            </div>
           </Section>
         )}
 
@@ -449,20 +500,17 @@ export function PlanAchatDetails() {
               description="Lancez la répartition pour constituer une ligne par mine à partir de la production du mois."
             />
           ) : (
-            <div className="achats-grille">
+            <div className="achats-grille plan-grille">
               <table>
                 <thead>
                   <tr>
                     <th scope="col">Société minière</th>
-                    <th scope="col" className="is-right">Déclarée</th>
-                    <th scope="col" className="is-right">Validée</th>
-                    <th scope="col" className="is-right">Engagée</th>
-                    <th scope="col" className="is-right">Éligible</th>
-                    <th scope="col" className="is-right">Titre</th>
-                    <th scope="col" className="is-right">Quantité à acheter</th>
-                    <th scope="col" className="is-right">Part</th>
-                    <th scope="col" className="is-right">Prix / oz</th>
-                    <th scope="col" className="is-right">Montant</th>
+                    <th scope="col" className="is-right">Déclarée (oz)</th>
+                    <th scope="col" className="is-right">Engagée (oz)</th>
+                    <th scope="col" className="is-right">Assiette (oz)</th>
+                    <th scope="col" className="is-right">À acheter (oz)</th>
+                    <th scope="col" className="is-right">Prix / oz (FCFA)</th>
+                    <th scope="col" className="is-right">Montant (FCFA)</th>
                     <th scope="col">Statut</th>
                   </tr>
                 </thead>
@@ -471,20 +519,22 @@ export function PlanAchatDetails() {
                     <tr key={item.ligne.id} className={item.ligne.ajustee_manuellement ? 'est-ajustee' : undefined}>
                       <td>
                         <strong>{item.ligne.mining_company?.code || '—'}</strong>
-                        <br />
-                        <span style={{ fontSize: 11, color: 'var(--sn-muted)' }}>
+                        <span className="plan-grille__sous">
                           {item.ligne.mining_company?.name || 'Société inconnue'}
                         </span>
                       </td>
-                      <td className="is-right">{decimal.format(Number(item.ligne.production_declaree_oz || 0))}</td>
-                      <td className="is-right">{decimal.format(Number(item.ligne.production_validee_oz || 0))}</td>
+                      <td className="is-right">
+                        {decimal.format(Number(item.ligne.production_declaree_oz || 0))}
+                        <span className="plan-grille__sous">
+                          {Number(item.ligne.production_validee_oz || 0) > 0
+                            ? `dont ${decimal.format(Number(item.ligne.production_validee_oz))} validée`
+                            : 'aucune validée'}
+                          {item.ligne.titre_moyen_pct !== null
+                            && ` · titre ${decimal.format(Number(item.ligne.titre_moyen_pct))} %`}
+                        </span>
+                      </td>
                       <td className="is-right">{decimal.format(Number(item.ligne.deja_engage_oz || 0))}</td>
                       <td className="is-right"><strong>{decimal.format(item.eligible)}</strong></td>
-                      <td className="is-right">
-                        {item.ligne.titre_moyen_pct === null
-                          ? '—'
-                          : `${decimal.format(Number(item.ligne.titre_moyen_pct))} %`}
-                      </td>
                       <td className="is-right">
                         {modifiable ? (
                           <>
@@ -501,14 +551,22 @@ export function PlanAchatDetails() {
                                 },
                               }))}
                             />
-                            {item.probleme && <span className="achats-erreur-ligne">{item.probleme}</span>}
+                            {item.probleme
+                              ? <span className="achats-erreur-ligne">{item.probleme}</span>
+                              : (
+                                <span className="plan-grille__sous">
+                                  {item.part === null ? '—' : `${decimal.format(item.part)} % de l’assiette`}
+                                </span>
+                              )}
                           </>
                         ) : (
-                          decimal.format(item.quantite)
+                          <>
+                            {decimal.format(item.quantite)}
+                            <span className="plan-grille__sous">
+                              {item.part === null ? '—' : `${decimal.format(item.part)} % de l’assiette`}
+                            </span>
+                          </>
                         )}
-                      </td>
-                      <td className="is-right">
-                        {item.part === null ? '—' : `${decimal.format(item.part)} %`}
                       </td>
                       <td className="is-right">
                         {modifiable ? (
@@ -544,11 +602,19 @@ export function PlanAchatDetails() {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4}><strong>Total</strong></td>
+                    <td>Total</td>
+                    <td className="is-right">
+                      {decimal.format(apercu.reduce(
+                        (somme, item) => somme + Number(item.ligne.production_declaree_oz || 0), 0
+                      ))}
+                    </td>
+                    <td className="is-right">
+                      {decimal.format(apercu.reduce(
+                        (somme, item) => somme + Number(item.ligne.deja_engage_oz || 0), 0
+                      ))}
+                    </td>
                     <td className="is-right">{decimal.format(totaux.eligible)}</td>
-                    <td />
                     <td className="is-right">{decimal.format(totaux.quantite)}</td>
-                    <td className="is-right">{decimal.format(totaux.part)} %</td>
                     <td />
                     <td className="is-right">{francs(totaux.montant)}</td>
                     <td />

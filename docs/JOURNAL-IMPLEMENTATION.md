@@ -2466,3 +2466,77 @@ sur le libellé — elle est là pour qui la cherche, elle n'encombre plus pour 
 - `npx vitest run` : **730/730 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Le plan mensuel : l'erreur, l'ordre, et les mois écoulés
+
+### « DELETE requires a WHERE clause »
+
+`snp_repartir_plan` constituait son assiette dans une table temporaire et la vidait par
+`DELETE FROM eligible_tmp;`. Supabase pose sur le rôle applicatif un garde-fou qui refuse
+toute suppression sans clause `WHERE` — protection contre l'effacement d'une table entière
+par mégarde. Le `SECURITY DEFINER` n'y change rien : le garde-fou tient à la session, pas au
+propriétaire de la fonction. Le bouton « Répartir » renvoyait donc systématiquement une
+erreur en anglais, sur un écran entièrement français (A191).
+
+La table temporaire disparaît. L'assiette devient une fonction, `snp_assiette_achat(debut,
+fin)`, qui se lit deux fois — une pour le total, une pour la boucle — sans état intermédiaire
+à nettoyer. Elle sert aussi à consulter l'assiette d'un mois sans toucher au plan.
+
+Deux garde-fous s'ajoutent au passage :
+
+- **une part ne dépasse plus l'assiette de sa mine.** Une cible nationale supérieure à la
+  production du mois répartissait des onces qui n'existaient pas ;
+- **le reliquat d'arrondi** ne se pose que sur une ligne qui peut l'absorber.
+
+Vérifié en base, transaction annulée : 6 lignes calculées sur le plan d'août, aucune erreur.
+
+### L'écran remis dans l'ordre
+
+Trois désordres se cumulaient. Les boutons d'action vivaient **à l'intérieur** de la liste de
+chiffres : on lisait « Écart à la cible » et « Soumettre aux mines » sur la même ligne.
+« Répartir » était noyé dans un paragraphe, et « Répartir en écrasant les ajustements »
+enchâssé au milieu d'une phrase. La grille portait onze colonnes et débordait.
+
+L'écran se lit maintenant de haut en bas :
+
+1. **ce que le plan est** — titre sans tiret cadratin, « Plan d'achat d'août 2026 », numéro et
+   politique en sous-titre ;
+2. **une barre d'état** qui porte le statut, la période, le nombre de mines, et les trois
+   actions qui engagent : Répartir, Enregistrer, Soumettre ;
+3. **ce qu'il pèse** — assiette, quantité répartie, part, montant, écart. Rien d'autre ;
+4. **ce qu'on peut lui faire** — application globale, puis la reprise depuis la production, en
+   deux boutons nommés au lieu d'une phrase ;
+5. **la répartition**, en huit colonnes au lieu de onze : « validée », « titre » et « part »
+   passent sous la valeur qu'elles qualifient (A192).
+
+Quand la cible nationale dépasse l'assiette, l'écran le dit en toutes lettres au lieu
+d'afficher un écart négatif sans explication — c'était le cas du plan d'août, dont la cible de
+45 000 oz excède de 36 396 oz ce que les mines ont déclaré.
+
+### Les sept mois écoulés
+
+Les achats de janvier à juillet 2026 existaient sans le plan qui les avait décidés : l'écran
+ne montrait qu'un brouillon d'août, et le module ne pouvait se valider sur aucun mois complet.
+
+Chaque mois reçoit son plan, reconstitué depuis ce qui a réellement été acheté : cible
+nationale égale au total du mois, une ligne par mine à la quantité effectivement traitée, prix
+moyen pondéré. Les demandes adressées aux mines suivent, approuvées, et les achats de la
+campagne leur sont rattachés. Janvier à juin sont clos ; juillet reste en exécution, ses
+achats étant validés mais non réglés.
+
+| Plan | Cible | Répartie | Montant | Mines |
+|---|---|---|---|---|
+| PA-2026-01 | 18 166,54 oz | 18 166,54 oz | 55,44 Md | 6 |
+| PA-2026-05 | 23 173,35 oz | 23 173,35 oz | 72,25 Md | 6 |
+| PA-2026-07 | 20 653,78 oz | 20 653,78 oz | 65,34 Md | 6 |
+
+Le seed est rejouable : il efface ses propres écritures avant de les reposer, et ne touche à
+aucune donnée qu'il n'a pas produite.
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

@@ -640,6 +640,9 @@ estimée.
 | A188 | Grille d'imputation à onze colonnes : défilement horizontal, colonne « Achat » inutile, « FCFA » répété dans chaque cellule | Règlements | La facture se choisit dans le volet droit et s'ouvre à gauche ; le tableau ne garde que les factures retenues, en cinq colonnes, unité en en-tête |
 | A189 | Montant du virement saisi d'un côté et réparti de l'autre : un ordre à 0 franc pouvait porter 1,7 milliard d'imputations | Règlements | Le montant est la somme des imputations, calculé et non saisi ; seuls la date d'exécution, l'objet et les observations restent à renseigner |
 | A190 | La fenêtre de facture n'en montrait que les deux tiers, pied de certification hors champ | Règlements | Mise à l'échelle calculée sur la hauteur réelle de la pièce et la place disponible ; échelle 1 à l'impression |
+| A191 | « DELETE requires a WHERE clause » : `snp_repartir_plan` vidait une table temporaire sans clause `WHERE`, que le garde-fou Supabase refuse. Le bouton « Répartir » échouait toujours | Achats industriels | Table temporaire remplacée par `snp_assiette_achat(date, date)` ; part plafonnée à l'assiette de la mine |
+| A192 | Écran d'un plan mensuel : boutons d'action mêlés aux chiffres, « Répartir » noyé dans un paragraphe, grille de onze colonnes en débordement | Achats industriels | Barre d'état séparée, gestes nommés, grille à huit colonnes ; la cible hors assiette est expliquée |
+| A193 | Aucun plan mensuel pour les mois écoulés : les achats de janvier à juillet 2026 existaient sans la campagne qui les avait décidés | Achats industriels | Sept plans reconstitués avec leurs lignes et leurs demandes ; janvier à juin clos, juillet en exécution |
 
 ---
 

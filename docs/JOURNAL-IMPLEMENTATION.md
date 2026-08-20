@@ -2633,3 +2633,39 @@ l'écran ; il fallait y lire « teneur calculée ».
 - `npx vitest run` : **730/730 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Une page vide qui ne l'était pas
+
+### Pourquoi elle paraissait vide
+
+L'écran des demandes d'achat ouvrait sur un filtre d'état positionné sur **« Transmise »** —
+l'état d'une demande partie chez la mine et qui attend sa réponse. Or aucune demande ne s'y
+trouve : les 42 demandes de la base sont toutes approuvées, puisque les mines ont répondu et
+que les achats ont suivi.
+
+Le tableau était donc vide à raison. Mais deux défauts le faisaient passer pour une panne :
+
+- **les quatre compteurs se calculaient sur la liste filtrée.** Ils affichaient zéro alors que
+  42 demandes existaient. Un total qui change avec le filtre n'est pas un total ;
+- **l'état vide ne disait rien** : « Aucune demande ne correspond aux critères retenus »,
+  sans dire quels critères, ni combien de demandes attendaient ailleurs (A196).
+
+### Ce qui change
+
+L'écran s'ouvre sur **tous les états** : c'est un écran de suivi, pas une file d'attente. Les
+compteurs portent sur l'ensemble et gagnent « Approuvées ». Celui des demandes en attente de
+réponse devient **cliquable** : c'est le geste qu'on venait faire, et il remplace le filtre par
+défaut qu'on subissait. `StatItem` accepte désormais un `onClick` — une tuile qui annonce un
+travail à faire gagne à mener à ce travail.
+
+Vide, l'écran dit pourquoi : « 42 demande(s) existent dans d'autres états », avec un bouton
+pour retirer les filtres. Et sans aucune demande du tout, il dit d'où elles viennent : la
+soumission d'un plan mensuel.
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

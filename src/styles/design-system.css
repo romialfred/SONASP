@@ -485,6 +485,26 @@
   box-shadow: var(--sn-shadow-card);
 }
 
+/* Une tuile qui mene a un travail se comporte comme un bouton : meme boite,
+   plus un relief au survol et un anneau de focus. */
+button.sn-stat {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+button.sn-stat:hover {
+  border-color: var(--sn-green, #0f7a56);
+  box-shadow: 0 6px 18px rgb(16 36 62 / 10%);
+  transform: translateY(-1px);
+}
+
+button.sn-stat:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(52 163 122 / 22%);
+}
+
 .sn-stat__icon { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border-radius: 12px; }
 .sn-stat__icon svg { width: 21px; height: 21px; }
 .sn-stat > div { min-width: 0; }

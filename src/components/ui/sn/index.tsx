@@ -337,6 +337,12 @@ export interface StatItem {
   hint?: string;
   icon: LucideIcon;
   tone?: StatTone;
+  /**
+   * Rend la tuile actionnable. Un indicateur qui annonce un travail a faire
+   * gagne a mener a ce travail : « 6 en attente de reponse » filtre la liste
+   * sur ces six-la, plutot que de laisser chercher le filtre.
+   */
+  onClick?: () => void;
 }
 
 /**
@@ -348,18 +354,31 @@ export interface StatItem {
 export function StatGrid({ items, ariaLabel, sober }: { items: StatItem[]; ariaLabel: string; sober?: boolean }) {
   return (
     <section className={`sn-stats${sober ? ' sn-stats--sober' : ''}`} aria-label={ariaLabel}>
-      {items.map(({ label, value, hint, icon: Icon, tone = 'green' }) => (
-        <article key={label} className={`sn-stat sn-stat--${tone}`}>
-          <span className="sn-stat__icon">
-            <Icon aria-hidden="true" />
-          </span>
-          <div>
-            <h3>{label}</h3>
-            <strong>{value}</strong>
-            {hint && <small>{hint}</small>}
-          </div>
-        </article>
-      ))}
+      {items.map(({ label, value, hint, icon: Icon, tone = 'green', onClick }) => {
+        const contenu = (
+          <>
+            <span className="sn-stat__icon">
+              <Icon aria-hidden="true" />
+            </span>
+            <div>
+              <h3>{label}</h3>
+              <strong>{value}</strong>
+              {hint && <small>{hint}</small>}
+            </div>
+          </>
+        );
+        return onClick ? (
+          <button
+            key={label} type="button"
+            className={`sn-stat sn-stat--${tone} sn-stat--cliquable`}
+            onClick={onClick}
+          >
+            {contenu}
+          </button>
+        ) : (
+          <article key={label} className={`sn-stat sn-stat--${tone}`}>{contenu}</article>
+        );
+      })}
     </section>
   );
 }

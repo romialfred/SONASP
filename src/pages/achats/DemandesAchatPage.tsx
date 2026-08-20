@@ -52,13 +52,14 @@ export const formaterDate = (iso: string | null | undefined) => {
 
 export function DemandesAchatPage() {
   const [demandes, setDemandes] = useState<DemandeAchat[]>([]);
+  const [toutesDemandes, setToutesDemandes] = useState<DemandeAchat[]>([]);
   const [societes, setSocietes] = useState<Societe[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>(null);
 
-  const [filtreStatut, setFiltreStatut] = useState('soumise');
+  const [filtreStatut, setFiltreStatut] = useState('all');
   const [filtreSociete, setFiltreSociete] = useState('all');
 
   const [reponse, setReponse] = useState<{
@@ -71,15 +72,18 @@ export function DemandesAchatPage() {
     setChargement(true);
     setErreur(null);
     try {
-      const [liste, societesChargees] = await Promise.all([
+      const [liste, toutes, societesChargees] = await Promise.all([
         achatsIndustrielsService.listerDemandes({ statut: filtreStatut, societe: filtreSociete }),
+        achatsIndustrielsService.listerDemandes(),
         achatsIndustrielsService.societesProductrices(),
       ]);
       setDemandes(liste);
+      setToutesDemandes(toutes);
       setSocietes(societesChargees);
     } catch (raison) {
       setErreur(errorMessage(raison, 'Impossible de charger les demandes d’achat.'));
       setDemandes([]);
+      setToutesDemandes([]);
     } finally {
       setChargement(false);
     }
@@ -90,11 +94,14 @@ export function DemandesAchatPage() {
   }, [charger]);
 
   const cumuls = useMemo(() => ({
-    total: demandes.length,
-    quantite: demandes.reduce((somme, demande) => somme + Number(demande.quantite_demandee_oz || 0), 0),
-    montant: demandes.reduce((somme, demande) => somme + Number(demande.montant_estime_fcfa || 0), 0),
-    enAttente: demandes.filter((demande) => demande.statut === 'soumise').length,
-  }), [demandes]);
+    total: toutesDemandes.length,
+    quantite: toutesDemandes.reduce((somme, demande) => somme + Number(demande.quantite_demandee_oz || 0), 0),
+    montant: toutesDemandes.reduce((somme, demande) => somme + Number(demande.montant_estime_fcfa || 0), 0),
+    enAttente: toutesDemandes.filter((demande) => demande.statut === 'soumise').length,
+    approuvees: toutesDemandes.filter((demande) => demande.statut === 'approuvee').length,
+  }), [toutesDemandes]);
+
+  const filtre = filtreStatut !== 'all' || filtreSociete !== 'all';
 
   const repondre = async (
     demande: DemandeAchat,
@@ -154,9 +161,16 @@ export function DemandesAchatPage() {
           sober
           ariaLabel="Cumuls des demandes"
           items={[
-            { label: 'Demandes', value: entier.format(cumuls.total), icon: FileSignature, tone: 'neutral' },
-            { label: 'En attente de réponse', value: entier.format(cumuls.enAttente), icon: Send, tone: 'gold' },
-            { label: 'Quantité demandée', value: onces(cumuls.quantite), icon: FileSignature, tone: 'gold' },
+            { label: 'Demandes émises', value: entier.format(cumuls.total), icon: FileSignature, tone: 'neutral' },
+            {
+              label: 'En attente de réponse',
+              value: entier.format(cumuls.enAttente),
+              icon: Send,
+              tone: cumuls.enAttente > 0 ? 'gold' : 'neutral',
+              onClick: cumuls.enAttente > 0 ? () => setFiltreStatut('soumise') : undefined,
+            },
+            { label: 'Approuvées', value: entier.format(cumuls.approuvees), icon: CheckCircle2, tone: 'green' },
+            { label: 'Quantité demandée', value: onces(cumuls.quantite), icon: FileSignature, tone: 'neutral' },
             { label: 'Montant estimé', value: francs(cumuls.montant), icon: FileSignature, tone: 'neutral' },
           ]}
         />
@@ -192,8 +206,20 @@ export function DemandesAchatPage() {
             <p className="production-page__loading">Chargement des demandes…</p>
           ) : demandes.length === 0 ? (
             <EmptyState
-              title="Aucune demande"
-              description="Aucune demande ne correspond aux critères retenus."
+              title={filtre ? 'Aucune demande dans cet état' : 'Aucune demande émise'}
+              description={
+                filtre && cumuls.total > 0
+                  ? `${cumuls.total} demande(s) existent dans d’autres états ou pour d’autres sociétés.`
+                  : 'Les demandes naissent de la soumission d’un plan mensuel : chaque ligne du plan devient une demande adressée à sa mine.'
+              }
+              action={filtre ? (
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => { setFiltreStatut('all'); setFiltreSociete('all'); }}
+                >
+                  Retirer les filtres
+                </button>
+              ) : undefined}
             />
           ) : (
             <div className="sn-table-wrap">

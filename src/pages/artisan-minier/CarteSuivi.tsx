@@ -243,8 +243,7 @@ export default function CarteSuivi() {
 
         <div style={{ marginTop: 12 }}>
           <Note icon={Coins}>
-            Les montants proviennent des statistiques mensuelles de carte : ils reflètent les
-            ventes déclarées, pas les paiements encaissés.
+            Ventes déclarées, non paiements encaissés.
           </Note>
         </div>
       </div>

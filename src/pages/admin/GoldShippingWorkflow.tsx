@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
-import { ArrowRight, Flag, Info, Play, Workflow, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, Flag, Play, Workflow, ZoomIn, ZoomOut } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { Badge, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { Badge, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { construireGraphe, type NoeudWorkflow } from './workflowGraph';
 import './admin.css';
 
@@ -67,12 +67,6 @@ export default function GoldShippingWorkflow() {
 
         {/* Le diagramme décrivait un processus « Batch Management » absent de la
             plateforme : ni module de lots, ni route correspondante. */}
-        <Note tone="info" icon={Info}>
-          Ce diagramme est <strong>calculé à partir des transitions réellement appliquées</strong>
-          par le moteur de contrôle des statuts : il ne peut pas diverger du comportement de
-          la plateforme.
-        </Note>
-
         <StatGrid
           ariaLabel="Portée du circuit"
           items={[
@@ -94,7 +88,12 @@ export default function GoldShippingWorkflow() {
             icon={Workflow}
             tone="emerald"
             title="Diagramme du circuit"
-            description="Chaque couloir correspond au module responsable de l’étape. Sélectionnez une étape pour la détailler."
+            description="Chaque couloir correspond au module responsable de l’étape."
+          info={{
+            titre: 'Origine du diagramme',
+            contenu:
+              'Il est calculé à partir des transitions réellement appliquées par le moteur de contrôle des statuts : il ne peut pas diverger du comportement de la plateforme.',
+          }}
           >
             <div className="workflow__toile">
               <svg

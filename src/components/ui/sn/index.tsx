@@ -5,9 +5,10 @@
  * page refondue se compose d'éléments identiques : même en-tête, mêmes sections de
  * formulaire, mêmes tableaux, mêmes états vides. Aucune page ne redéfinit ces styles.
  */
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronDown, Inbox, Loader2, Search } from 'lucide-react';
+import { ChevronDown, Inbox, Info, Loader2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import '@/styles/design-system.css';
 
@@ -35,6 +36,67 @@ export function Breadcrumb({ entries }: { entries: BreadcrumbEntry[] }) {
   );
 }
 
+/* ------------------------------------------------------------------ Infobulle */
+
+/**
+ * Précision consultable, repliée derrière une icône « i ».
+ *
+ * Les définitions et les règles de gestion méritent d'être écrites, mais elles
+ * n'ont pas à occuper le haut de chaque écran : un pavé de quatre lignes que
+ * l'utilisateur a lu une fois devient du bruit à chaque visite suivante. Elle
+ * s'ouvre au survol comme au clic — le survol seul exclut le tactile — et se
+ * ferme à Échap ou au clic au-dehors.
+ */
+export function Infobulle({ titre, children }: { titre: string; children: ReactNode }) {
+  const [ouverte, setOuverte] = useState(false);
+  const identifiant = useId();
+  const conteneur = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!ouverte) return;
+
+    const surTouche = (evenement: KeyboardEvent) => {
+      if (evenement.key === 'Escape') setOuverte(false);
+    };
+    const surClic = (evenement: MouseEvent) => {
+      if (!conteneur.current?.contains(evenement.target as Node)) setOuverte(false);
+    };
+
+    document.addEventListener('keydown', surTouche);
+    document.addEventListener('mousedown', surClic);
+    return () => {
+      document.removeEventListener('keydown', surTouche);
+      document.removeEventListener('mousedown', surClic);
+    };
+  }, [ouverte]);
+
+  return (
+    <span
+      className="sn-infobulle"
+      ref={conteneur}
+      onMouseEnter={() => setOuverte(true)}
+      onMouseLeave={() => setOuverte(false)}
+    >
+      <button
+        type="button"
+        className="sn-infobulle__declencheur"
+        aria-label={titre}
+        aria-expanded={ouverte}
+        aria-controls={identifiant}
+        onClick={() => setOuverte((etat) => !etat)}
+        onFocus={() => setOuverte(true)}
+        onBlur={() => setOuverte(false)}
+      >
+        <Info aria-hidden="true" />
+      </button>
+      <span id={identifiant} role="tooltip" className="sn-infobulle__bulle" hidden={!ouverte}>
+        <strong>{titre}</strong>
+        {children}
+      </span>
+    </span>
+  );
+}
+
 export interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -43,9 +105,11 @@ export interface PageHeaderProps {
   actions?: ReactNode;
   /** Tuiles de contexte affichées à droite (code généré, complétude, indicateur…). */
   aside?: ReactNode;
+  /** Précision repliée derrière une icône « i », à côté du titre. */
+  info?: { titre: string; contenu: ReactNode };
 }
 
-export function PageHeader({ title, subtitle, icon: Icon, breadcrumb, actions, aside }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, icon: Icon, breadcrumb, actions, aside, info }: PageHeaderProps) {
   return (
     <>
       {breadcrumb && <Breadcrumb entries={breadcrumb} />}
@@ -56,7 +120,10 @@ export function PageHeader({ title, subtitle, icon: Icon, breadcrumb, actions, a
           </span>
         )}
         <div>
-          <h2>{title}</h2>
+          <h2>
+            {title}
+            {info && <Infobulle titre={info.titre}>{info.contenu}</Infobulle>}
+          </h2>
           {subtitle && <p className="sn-page__subtitle">{subtitle}</p>}
         </div>
         {aside}
@@ -75,9 +142,11 @@ export interface SectionProps {
   icon: LucideIcon;
   tone?: Tone;
   children: ReactNode;
+  /** Précision repliée derrière une icône « i », à côté du titre de section. */
+  info?: { titre: string; contenu: ReactNode };
 }
 
-export function Section({ id, title, description, icon: Icon, tone = 'emerald', children }: SectionProps) {
+export function Section({ id, title, description, icon: Icon, tone = 'emerald', info, children }: SectionProps) {
   return (
     <section className={`sn-section sn-section--${tone}`} aria-labelledby={`${id}-title`}>
       <header className="sn-section__head">
@@ -85,7 +154,10 @@ export function Section({ id, title, description, icon: Icon, tone = 'emerald', 
           <Icon aria-hidden="true" />
         </span>
         <div>
-          <h3 id={`${id}-title`}>{title}</h3>
+          <h3 id={`${id}-title`}>
+            {title}
+            {info && <Infobulle titre={info.titre}>{info.contenu}</Infobulle>}
+          </h3>
           {description && <p>{description}</p>}
         </div>
       </header>

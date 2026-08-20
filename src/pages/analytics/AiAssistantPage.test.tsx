@@ -52,7 +52,7 @@ describe('AiAssistantPage', () => {
   it('annonce que le moteur n’est pas raccordé', () => {
     render(<AiAssistantPage />);
     expect(screen.getByText('Moteur non raccordé')).toBeInTheDocument();
-    expect(screen.getByText(/n’est pas encore/)).toBeInTheDocument();
+    expect(screen.getByText(/Moteur d’analyse non raccordé/)).toBeInTheDocument();
   });
 
   it('propose des amorces à l’ouverture', () => {

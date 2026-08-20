@@ -73,8 +73,7 @@ export function RoleDashboardShell({
 
         {data.unavailable.length > 0 && (
           <Note tone="warning" icon={AlertTriangle}>
-            Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées. Les
-            indicateurs concernés restent vides plutôt que d’afficher une estimation.
+            Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées.
           </Note>
         )}
 

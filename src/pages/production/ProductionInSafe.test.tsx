@@ -101,7 +101,7 @@ describe('ProductionInSafe', () => {
     await screen.findByText('BAR-001');
 
     expect(screen.queryByText('BAR-002')).not.toBeInTheDocument();
-    expect(screen.getByText(/1 barre de la période a quitté le coffre/)).toBeInTheDocument();
+    expect(screen.getByText(/1 barre expédiée, écartée du coffre/)).toBeInTheDocument();
   });
 
   it('garde au coffre une barre dont l’expédition n’est pas partie', async () => {
@@ -125,10 +125,16 @@ describe('ProductionInSafe', () => {
     expect(screen.getByText(/cumuls sont probablement surestimés/)).toBeInTheDocument();
   });
 
-  it('définit le coffre à l’écran', async () => {
+  it('replie la définition derrière une icône plutôt que de la déployer', async () => {
     render(<ProductionInSafe />);
     await screen.findByText('BAR-001');
-    expect(screen.getByText(/Ce que contient le coffre/)).toBeInTheDocument();
+
+    const declencheur = screen.getByRole('button', { name: 'Ce que contient le coffre' });
+    expect(declencheur).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(declencheur);
+    expect(declencheur).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/en sort au départ de son expédition/);
   });
 
   it('ne répète plus les filtres actifs sous le titre', async () => {
@@ -143,8 +149,10 @@ describe('ProductionInSafe', () => {
     render(<ProductionInSafe />);
     await screen.findByText('BAR-001');
     // Sans ligne de budget, l'écran doit dire que le budget n'est pas voté.
-    expect(screen.getAllByText(/Budget non voté pour/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Prévision absente pour/).length).toBeGreaterThan(0);
+    // Le message reste court : nommer chaque mois manquant tenait de la copie
+    // d'écran de formation, pas d'un outil de pilotage.
+    expect(screen.getAllByText('Budget non voté').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Prévision non saisie').length).toBeGreaterThan(0);
   });
 
   it('compare le réalisé au budget voté quand il existe', async () => {
@@ -175,7 +183,7 @@ describe('ProductionInSafe', () => {
     mocks.reponses.monthly_budgets = { data: null, error: { message: 'table absente' } };
     render(<ProductionInSafe />);
     await screen.findByText('BAR-001');
-    expect(screen.getAllByText(/Source « budgets mensuels » non lue/).length).toBe(3);
+    expect(screen.getAllByText('Source illisible').length).toBe(3);
   });
 
   it('remonte l’erreur quand les déclarations ne se chargent pas', async () => {

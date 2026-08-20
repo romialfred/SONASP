@@ -11,7 +11,6 @@ import {
   Shield,
   SlidersHorizontal,
   Target,
-  Vault,
   X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -25,7 +24,6 @@ import {
   cumulerObjectif,
   dernieresRevisions,
   ecartAuBut,
-  libelleMois,
   realiseSur,
   type Ecart,
   type LigneObjectif,
@@ -306,6 +304,11 @@ export function ProductionInSafe() {
           title="Or en coffre"
           subtitle="L’or déclaré par les mines et encore détenu par la SONASP : entré au coffre, pas encore expédié."
           breadcrumb={[{ label: 'Mines industrielles' }, { label: 'Or en coffre' }]}
+          info={{
+            titre: 'Ce que contient le coffre',
+            contenu:
+              'Une barre entre à sa déclaration de production et en sort au départ de son expédition vers le raffineur. Les déclarations annulées n’y entrent jamais.',
+          }}
           actions={
             <>
               <button
@@ -335,21 +338,13 @@ export function ProductionInSafe() {
             manquait. */}
         {periodeInvalide && (
           <Note tone="danger" icon={AlertTriangle}>
-            La date de début est postérieure à la date de fin : aucune période n’est lisible.
+            La date de début est postérieure à la date de fin.
           </Note>
         )}
 
-        <Note tone="info" icon={Vault}>
-          <strong>Ce que contient le coffre.</strong> Une barre y entre à sa déclaration de
-          production et en sort au départ de son expédition vers le raffineur ; les déclarations
-          annulées n’y entrent jamais. Les cumuls ci-dessous ne portent donc que sur l’or
-          effectivement détenu.
-        </Note>
-
         {!sortiesLues && (
           <Note tone="warning" icon={AlertTriangle}>
-            Les expéditions n’ont pas pu être lues : les barres déjà parties ne peuvent pas être
-            écartées et les cumuls sont probablement surestimés.
+            Expéditions illisibles : les cumuls sont probablement surestimés.
           </Note>
         )}
 
@@ -445,7 +440,7 @@ export function ProductionInSafe() {
           id="objectifs"
           icon={Target}
           title="Production réalisée par rapport aux objectifs"
-          description="Budget voté et prévision révisée, cumulés au prorata des jours écoulés. L’or déjà expédié y compte : il a bien été produit."
+          description="Budget voté et prévision révisée, au prorata des jours écoulés."
         >
           <div className="production-page__objectifs">
             {[
@@ -521,22 +516,14 @@ export function ProductionInSafe() {
                       'Budget voté',
                       budget,
                       ecartBudget,
-                      budgets === null
-                        ? 'Source « budgets mensuels » non lue'
-                        : budget && budget.moisManquants.length
-                          ? `Budget non voté pour ${budget.moisManquants.map(libelleMois).join(', ')}`
-                          : 'Budget non renseigné'
+                      budgets === null ? 'Source illisible' : 'Budget non voté'
                     )}
                     {cible(
                       'prevision',
                       'Prévision révisée',
                       prevision,
                       ecartPrevision,
-                      previsions === null
-                        ? 'Source « prévisions trimestrielles » non lue'
-                        : prevision && prevision.moisManquants.length
-                          ? `Prévision absente pour ${prevision.moisManquants.map(libelleMois).join(', ')}`
-                          : 'Prévision non renseignée'
+                      previsions === null ? 'Source illisible' : 'Prévision non saisie'
                     )}
                   </dl>
                 </article>
@@ -551,8 +538,8 @@ export function ProductionInSafe() {
           title="Barres au coffre"
           description={
             nombreSorties > 0
-              ? `${nombreSorties} barre${nombreSorties > 1 ? 's' : ''} de la période ${nombreSorties > 1 ? 'ont' : 'a'} quitté le coffre avec une expédition et ${nombreSorties > 1 ? 'ne figurent' : 'ne figure'} plus ici.`
-              : 'Chaque barre listée est encore détenue : aucune n’a quitté le coffre sur la période.'
+              ? `${nombreSorties} barre${nombreSorties > 1 ? 's' : ''} expédiée${nombreSorties > 1 ? 's' : ''}, écartée${nombreSorties > 1 ? 's' : ''} du coffre.`
+              : 'Toutes les barres listées sont encore détenues.'
           }
         >
           {chargement ? (
@@ -560,7 +547,7 @@ export function ProductionInSafe() {
           ) : auCoffre.length === 0 ? (
             <EmptyState
               title="Aucune barre au coffre"
-              description="Aucune déclaration ne répond aux critères retenus sur cette période."
+              description="Aucune déclaration sur cette période."
             />
           ) : (
             <div className="sn-table-wrap production-page__table-wrap">

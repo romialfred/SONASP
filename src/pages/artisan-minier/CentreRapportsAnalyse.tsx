@@ -143,8 +143,7 @@ export default function CentreRapportsAnalyse() {
 
         {indisponibles.length > 0 && (
           <Note tone="warning" icon={AlertCircle}>
-            Données partielles : {indisponibles.join(', ')} n’ont pas pu être chargées. Le reste de
-            l’écran reste exploitable.
+            Données partielles : {indisponibles.join(', ')} n’ont pas pu être chargées.
           </Note>
         )}
 

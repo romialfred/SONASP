@@ -108,7 +108,7 @@ describe('StatusManagerPage', () => {
     render(<StatusManagerPage />);
 
     expect(screen.getByRole('heading', { name: 'Référentiel des statuts' })).toBeInTheDocument();
-    expect(screen.getByText(/en lecture seule/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Référentiel en lecture seule' })).toBeInTheDocument();
 
     // « Éditer » n'écrivait rien et annonçait « une prochaine version » ;
     // « Voir les détails » n'avait aucune action.
@@ -122,7 +122,7 @@ describe('StatusManagerPage', () => {
 
     expect(screen.getAllByText('État final').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: /Circuit de traçabilité/ })).toBeInTheDocument();
-    expect(screen.getByText(/aucune\s+carte de transitions n’est déclarée/)).toBeInTheDocument();
+    expect(screen.getByText(/Circuit porté par le moteur de validation/)).toBeInTheDocument();
   });
 
   it('filtre le circuit sur la recherche', () => {

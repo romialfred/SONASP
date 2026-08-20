@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { AlertTriangle, ArrowLeft, Loader2, Printer, ShieldAlert } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { Note, PageHeader } from '@/components/ui/sn';
+import { Infobulle, Note, PageHeader } from '@/components/ui/sn';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService } from '@/services/artisanMinierService';
 import { artisanFullName } from '@/utils/artisanIdentity';
@@ -126,12 +126,18 @@ export function FactureVente() {
 
         {/* Avertissement en tête, hors impression : la pièce elle-même porte son
             propre filigrane et son propre bandeau. */}
+        {/* L'avertissement reste entier sur sa première phrase : remettre cette
+            pièce à un client ou à l'administration exposerait à une sanction. Le
+            détail technique, lui, se replie derrière l'icône. */}
         <Note tone="danger" icon={AlertTriangle}>
-          <strong>Spécimen sans valeur fiscale ni comptable.</strong> Les éléments de certification
-          (code SECeF, NIM MCF, ISF, compteurs, QR code) sont produits par le Module de Contrôle de
-          Facturation, que la plateforme n’interroge pas encore ; la plateforme elle-même doit être
-          homologuée comme système de facturation d’entreprise. Cette pièce ne peut être ni remise à
-          un client, ni présentée à l’administration.
+          <strong>Spécimen sans valeur fiscale.</strong> Ni remise à un client, ni présentée à
+          l’administration.
+          <Infobulle titre="Pourquoi ce spécimen n’est pas une facture">
+            Les éléments de certification (code SECeF, NIM MCF, ISF, compteurs, QR code) sont
+            produits par le Module de Contrôle de Facturation, que la plateforme n’interroge pas
+            encore ; la plateforme doit elle-même être homologuée comme système de facturation
+            d’entreprise.
+          </Infobulle>
         </Note>
 
         {erreur && (

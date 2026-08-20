@@ -110,7 +110,7 @@ describe('ModulesManagement', () => {
     await waitFor(() => expect(screen.getByText('Artisans miniers')).toBeInTheDocument());
 
     expect(screen.getByText('Cartes professionnelles')).toBeInTheDocument();
-    expect(screen.getByText('Désactivé')).toBeInTheDocument();
+    expect(screen.getAllByText('Désactivé').length).toBeGreaterThan(0);
     expect(screen.getByText('Masqué du menu')).toBeInTheDocument();
 
     const indicateurs = within(screen.getByRole('region', { name: 'État des modules' }));

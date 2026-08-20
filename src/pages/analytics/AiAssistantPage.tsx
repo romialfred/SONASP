@@ -162,9 +162,8 @@ export default function AiAssistantPage() {
         />
 
         <Note tone="info" icon={Info}>
-          Cette interface est <strong>prête, mais le moteur d’analyse n’est pas encore
-          raccordé</strong> à la base de données. Les questions posées sont conservées dans la
-          conversation ; aucune réponse n’est calculée pour l’instant.
+          <strong>Moteur d’analyse non raccordé</strong> : les questions sont conservées, aucune
+          réponse n’est calculée.
         </Note>
 
         <div className="assistant__layout">

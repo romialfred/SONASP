@@ -902,8 +902,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
           )}
 
           <Note tone="info" icon={AlertCircle}>
-            La photo et la copie de pièce ne sont envoyées qu’après l’enregistrement de la
-            fiche : un échec d’envoi vous sera signalé explicitement.
+            Photo et pièce envoyées après l’enregistrement de la fiche.
           </Note>
         </aside>
       </div>

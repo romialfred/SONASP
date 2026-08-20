@@ -616,6 +616,8 @@ estimée.
 | A164 | Six onglets d'analyses reposant sur 157 lignes de données écrites en dur | Analyses | Bannière annonçant que les chiffres ne viennent pas de la base ; raccordement à faire |
 | A165 | « Or en coffre » comptait les barres déjà parties : 4 sur 10 étaient rattachées à une expédition partie, dont 2 chez le raffineur | Production | Sortie du coffre au départ de l'expédition ; décompte des barres retirées affiché |
 | A166 | Filtre de statut proposant « Expédié » et « Affiné », absents de `production_status_v2` : la table se vidait sans explication | Production | Entrées retirées |
+| A167 | Définitions et règles de gestion affichées en pavés permanents en haut des écrans (14 notes de plus de 115 caractères) | Socle | Primitive `Infobulle` ; `PageHeader` et `Section` acceptent une propriété `info` |
+| A168 | Messages énumérant chaque mois manquant (« Prévision absente pour avril 2026, mai 2026… ») | Production | Messages ramenés à « Prévision non saisie », « Source illisible » |
 
 ---
 

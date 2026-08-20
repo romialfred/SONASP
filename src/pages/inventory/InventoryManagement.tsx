@@ -136,8 +136,7 @@ export function InventoryManagement() {
 
         {stock.indisponibles.length > 0 && (
           <Note tone="warning" icon={AlertTriangle}>
-            Vue partielle : {stock.indisponibles.join(', ')} n’ont pas pu être chargés. Les postes
-            concernés restent à zéro plutôt que d’afficher une estimation.
+            Vue partielle : {stock.indisponibles.join(', ')} n’ont pas pu être chargés.
           </Note>
         )}
 

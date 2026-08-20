@@ -203,7 +203,7 @@ describe('UserPermissionsPage', () => {
     // Un écran vide issu d'une lecture en échec aurait révoqué tous les droits.
     await waitFor(() => expect(screen.getByText('lecture refusée')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: /Appliquer les habilitations/ })).toBeDisabled();
-    expect(screen.getByText(/l’enregistrement est\s+désactivé/)).toBeInTheDocument();
+    expect(screen.getByText(/enregistrement désactivé par sécurité/)).toBeInTheDocument();
   });
 
   it('n’enregistre rien tant que rien n’a changé', async () => {

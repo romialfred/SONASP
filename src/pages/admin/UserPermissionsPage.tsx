@@ -217,8 +217,7 @@ export function UserPermissionsPage() {
 
         {!loading && !chargementFiable && (
           <Note tone="warning" icon={AlertTriangle}>
-            L’état actuel des habilitations n’a pas pu être établi : l’enregistrement est
-            désactivé pour ne pas révoquer des droits par inadvertance.
+            Habilitations illisibles : enregistrement désactivé par sécurité.
           </Note>
         )}
 

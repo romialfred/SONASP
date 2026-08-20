@@ -376,9 +376,7 @@ export function ParametersPage() {
                 {/* Devise et unité de poids n'avaient aucun stockage : les proposer
                     revenait à promettre un réglage qui n'existait pas. */}
                 <Note tone="info" icon={Settings}>
-                  La devise de référence est le franc CFA et les masses sont exprimées en
-                  grammes et en onces troy sur l’ensemble de la plateforme ; ces unités ne
-                  sont pas paramétrables.
+                  Franc CFA, grammes et onces troy : unités non paramétrables.
                 </Note>
 
                 <div className="sn-form-actions">

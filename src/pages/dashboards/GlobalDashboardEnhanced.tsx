@@ -163,8 +163,7 @@ export function GlobalDashboardEnhanced() {
         {data.unavailable.length > 0 && (
           <p className="national-dashboard__unavailable" role="status">
             <AlertTriangle aria-hidden="true" />
-            Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées. Les
-            indicateurs concernés restent à zéro plutôt que d’afficher une estimation.
+            Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées.
           </p>
         )}
 

@@ -1899,3 +1899,44 @@ valeurs vidait la table sans rien expliquer (A166). Les deux entrées sont retir
 
 Vérification visuelle non faite : la session du navigateur d'aperçu s'est déconnectée et je
 n'ai pas à saisir d'identifiants.
+
+---
+
+## Itération — 20 août 2026 — La précision se consulte, elle ne s'impose pas
+
+Retour sur l'écran du coffre : le pavé de définition surcharge la page, et les messages du
+genre « Prévision absente pour avril 2026, mai 2026, juin 2026, juillet 2026, août 2026 » ne
+sont pas professionnels. Consigne : la plateforme doit être raffinée, ce n'est ni un support
+de cours ni un outil de formation. Balayer l'ensemble des écrans.
+
+### Ce qui a été fait
+
+**Une primitive `Infobulle`** (`src/components/ui/sn`) : une icône « i » qui ouvre sa précision
+au survol comme au clic — le survol seul exclurait le tactile — et se ferme à Échap ou au clic
+au-dehors. `PageHeader` et `Section` acceptent désormais une propriété `info`, si bien qu'une
+définition se replie sans que la page perde l'information.
+
+**Les messages d'absence sont ramenés à leur substance.** « Prévision absente pour avril 2026,
+mai 2026… » devient « Prévision non saisie » ; « Source « budgets mensuels » non lue » devient
+« Source illisible ». L'énumération des mois manquants n'apprenait rien à qui pilote : le mois
+concerné est déjà le titre de la tuile.
+
+**Balayage complet** : 14 notes de plus de 115 caractères recensées sur l'ensemble des écrans,
+toutes traitées. Trois destins selon la nature du texte :
+
+| Nature | Traitement | Écrans |
+|---|---|---|
+| Définition ou règle permanente | Repliée en infobulle | Coffre, approbateurs, référentiel des statuts, circuit d'expédition |
+| Explication du principe de conception | Supprimée | Tableaux de bord (« restent vides plutôt que d'afficher une estimation »), stocks, centre de rapports |
+| État ou avertissement | Resserré, conservé visible | Assistant IA, habilitations, fiche artisan, paramètres, modules, suivi de carte |
+
+**Un cas traité à part** : l'avertissement de la facture artisanale (387 caractères). Remettre
+cette pièce à un client ou à l'administration exposerait à une sanction : la mise en garde
+reste entière et visible — « Spécimen sans valeur fiscale. Ni remise à un client, ni présentée
+à l'administration. » — et seul le détail technique (SECeF, NIM MCF, ISF) passe en infobulle.
+
+### Contrôles
+
+- `npx vitest run` : **646/646 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

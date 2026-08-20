@@ -153,7 +153,7 @@ describe('ParametersPage', () => {
 
     expect(screen.queryByLabelText(/Devise/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Unité de poids/)).not.toBeInTheDocument();
-    expect(screen.getByText(/ne\s+sont pas paramétrables/)).toBeInTheDocument();
+    expect(screen.getByText(/unités non paramétrables/)).toBeInTheDocument();
   });
 
   it('reflète et persiste les préférences de notification', async () => {

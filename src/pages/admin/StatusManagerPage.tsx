@@ -77,17 +77,16 @@ export default function StatusManagerPage() {
           icon={Workflow}
           title="Référentiel des statuts"
           subtitle="Circuit de traçabilité de l’or, module responsable de chaque étape et transitions autorisées."
+          info={{
+            titre: 'Référentiel en lecture seule',
+            contenu:
+              'Les statuts et leurs transitions sont définis dans le code, non en base : toute évolution passe par une mise à jour applicative.',
+          }}
           breadcrumb={[{ label: 'Administration' }, { label: 'Statuts' }]}
         />
 
         {/* L'écran proposait « Éditer » et « Voir les détails » : le premier n'écrivait
             rien et annonçait « une prochaine version », le second n'avait aucune action. */}
-        <Note tone="info" icon={Info}>
-          Ce référentiel est <strong>en lecture seule</strong> : les statuts et leurs
-          transitions sont définis dans le code du circuit de traçabilité, et non en base.
-          Toute évolution passe par une mise à jour applicative.
-        </Note>
-
         <StatGrid
           ariaLabel="Portée du référentiel"
           items={[
@@ -181,8 +180,7 @@ export default function StatusManagerPage() {
           {/* Aucune carte de transitions n'est définie pour les ventes : l'écran en
               affichait une, vide, laissant croire qu'aucune transition n'existe. */}
           <Note tone="info" icon={Info}>
-            Le circuit d’approbation des ventes est porté par le moteur de validation ; aucune
-            carte de transitions n’est déclarée dans le référentiel des statuts.
+            Circuit porté par le moteur de validation, hors référentiel.
           </Note>
           <ul className="statuts__liste">
             {statutsVente.map((statut) => (

@@ -168,7 +168,12 @@ export default function ApprobateursPage() {
     <NationalDashboardLayout>
       <PageHeader
         title="Approbateurs"
-        subtitle="Utilisateurs habilités à approuver les ventes d’or (artisanales et internationales) avant facturation et paiement."
+        subtitle="Habilités à approuver les ventes d’or avant facturation et paiement."
+        info={{
+          titre: 'Rôle de l’approbateur',
+          contenu:
+            'La facture n’est générée et le paiement émis qu’après son approbation. La direction dispose du droit d’office, non retirable ici.',
+        }}
         icon={BadgeCheck}
         breadcrumb={[
           { label: 'Parties prenantes' },
@@ -198,10 +203,6 @@ export default function ApprobateursPage() {
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <Note tone="info" icon={ShieldCheck}>
-          Un approbateur peut valider une vente artisanale : la facture n’est générée et le paiement n’est émis
-          qu’après cette approbation. La direction dispose du droit d’office ; il n’est pas retirable ici.
-        </Note>
       </div>
 
       {!canManage && (

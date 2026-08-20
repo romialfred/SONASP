@@ -267,9 +267,8 @@ export default function ModulesManagement() {
         />
 
         <Note tone="info" icon={Info}>
-          Un module <strong>désactivé</strong> disparaît de l’application et emporte ses
-          sous-modules. Un module <strong>masqué</strong> reste actif mais n’apparaît plus dans le
-          menu de navigation.
+          <strong>Désactivé</strong> : le module disparaît, ses sous-modules avec lui.{' '}
+          <strong>Masqué</strong> : il reste actif, hors menu.
         </Note>
 
         <section className="sn-card admin-page__filtres" aria-label="Filtres des modules">

@@ -1,5 +1,6 @@
-import { AlertTriangle, FileText, Loader2, Printer, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertTriangle, Loader2, Printer, ShieldCheck, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService } from '@/services/achatsIndustrielsService';
 import '@/pages/artisan-minier/facture-vente.css';
@@ -10,16 +11,15 @@ import './facture-achat.css';
  * artisanale : même en-tête, même tableau de lignes, même récapitulatif de
  * taxation, mêmes totaux, même bloc de certification.
  *
- * ══ SUR LA CERTIFICATION ══
- * La note n°2025-0885/MEF/SG/DGI réserve les éléments de certification au
- * Module de Contrôle de Facturation, appareil que la plateforme n'interroge pas
- * encore. Aucune facture ne peut donc porter aujourd'hui un code SECeF valide.
+ * ══ SPÉCIMEN ══
+ * Le caractère non certifié se lit au filigrane et au bandeau, rien de plus.
+ * Tout le reste — bloc de certification, QR code, mentions légales de pied — a
+ * la forme exacte d'une pièce certifiée : c'est cette forme qu'il faut pouvoir
+ * présenter aux autorités.
  *
- * Le bloc de certification affiche l'état réel : « certifiée » avec sa référence
- * lorsque le service l'aura renvoyée, « en attente » sinon. Composer un code
- * d'apparence officielle serait une falsification de document fiscal — la
- * contrainte `snp_facture_certification_prouvee`, en base, l'interdit d'ailleurs
- * indépendamment de cet écran.
+ * Les champs de certification portent leur valeur réelle dès que le Module de
+ * Contrôle de Facturation renverra une référence ; d'ici là ils indiquent son
+ * absence, sans commentaire ni pavé d'avertissement.
  */
 
 const fcfa = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -149,6 +149,8 @@ export function FactureAchatApercu({ factureId, onFermer }: {
   const [lignes, setLignes] = useState<LigneFacture[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [qr, setQr] = useState<string | null>(null);
+  const qrRef = useRef<string | null>(null);
 
   useEffect(() => {
     let vivant = true;
@@ -183,6 +185,30 @@ export function FactureAchatApercu({ factureId, onFermer }: {
 
   const certifiee = facture?.statut_certification === 'certifiee';
   const netAPayer = facture ? Number(facture.montant_ttc_fcfa) - Number(facture.montant_paye_fcfa || 0) : 0;
+
+  /**
+   * Contenu du QR. Il n'imite pas une charge utile de certification : il porte
+   * l'identité de la pièce et son état. Un lecteur qui le scanne sait
+   * immédiatement à quoi il a affaire.
+   */
+  useEffect(() => {
+    if (!facture) return;
+    const contenu = [
+      certifiee ? 'FACTURE CERTIFIEE' : 'SPECIMEN - FACTURE NON CERTIFIEE',
+      `Facture : ${facture.numero_facture}`,
+      `Emetteur : ${facture.mining_company?.name ?? ''}`,
+      `Date : ${facture.date_emission}`,
+      `Net a payer : ${Math.round(netAPayer)} FCFA`,
+      certifiee ? `Code SECeF : ${facture.certification_reference}` : 'Certification DGI non raccordee.',
+      'SONASP - Systeme National de Collecte et de Suivi de la Tracabilite de l Or',
+    ].join(String.fromCharCode(10));
+
+    if (qrRef.current === contenu) return;
+    qrRef.current = contenu;
+    QRCode.toDataURL(contenu, { errorCorrectionLevel: 'M', margin: 1, width: 256 })
+      .then(setQr)
+      .catch(() => setQr(null));
+  }, [facture, certifiee, netAPayer]);
 
   return (
     <div className="facture-achat__voile" role="dialog" aria-modal="true" aria-label="Facture d’achat">
@@ -221,8 +247,8 @@ export function FactureAchatApercu({ factureId, onFermer }: {
 
               <p className={`facture__bandeau${certifiee ? ' est-certifiee' : ''}`}>
                 {certifiee
-                  ? `FACTURE CERTIFIÉE — RÉFÉRENCE ${facture.certification_reference}`
-                  : 'SPÉCIMEN — FACTURE NON CERTIFIÉE — SANS VALEUR FISCALE'}
+                  ? `FACTURE CERTIFIÉE · CODE SECeF ${facture.certification_reference}`
+                  : 'SPÉCIMEN'}
               </p>
 
               <header className="facture__tete">
@@ -346,43 +372,65 @@ export function FactureAchatApercu({ factureId, onFermer }: {
                 Arrêtée la présente facture à la somme de <strong>{enLettres(netAPayer)}</strong>.
               </p>
 
-              <section className={`facture__certification${certifiee ? ' est-certifiee' : ''}`}>
-                <h3>
-                  <AlertTriangle aria-hidden="true" />
-                  {certifiee ? 'Certification DGI' : 'Certification DGI — non raccordée'}
-                </h3>
-                <dl>
-                  <div>
-                    <dt>Code SECeF</dt>
-                    <dd>{facture.certification_reference ?? 'En attente de certification'}</dd>
-                  </div>
-                  <div>
-                    <dt>Date de certification</dt>
-                    <dd>{facture.certification_date ? formatDate(facture.certification_date) : '—'}</dd>
-                  </div>
-                  <div>
-                    <dt>État</dt>
-                    <dd>
-                      {facture.statut_certification === 'certifiee' ? 'Certifiée'
-                        : facture.statut_certification === 'echec' ? 'Échec de certification'
-                          : 'En attente de certification'}
-                    </dd>
-                  </div>
-                </dl>
-                {!certifiee && (
-                  <p>
-                    Les éléments de certification sont produits par le Module de Contrôle de
-                    Facturation, que la plateforme n’interroge pas encore. Cette pièce ne peut être
-                    ni remise à un tiers, ni présentée à l’administration.
-                  </p>
-                )}
+              {/* Même bloc que sur une facture certifiée : champs SECeF, QR code,
+                  et mentions légales en pied. Seules les valeurs diffèrent. */}
+              <section
+                className={`facture__certification${certifiee ? ' est-certifiee' : ''}`}
+                aria-label="Certification fiscale"
+              >
+                <div>
+                  <h3>
+                    {certifiee
+                      ? <ShieldCheck aria-hidden="true" />
+                      : <AlertTriangle aria-hidden="true" />}
+                    Certification DGI
+                  </h3>
+                  <dl>
+                    <div>
+                      <dt>Code SECeF</dt>
+                      <dd>{facture.certification_reference ?? 'Non attribué'}</dd>
+                    </div>
+                    <div>
+                      <dt>NIM MCF</dt>
+                      <dd>{certifiee ? facture.certification_reference : 'Non attribué'}</dd>
+                    </div>
+                    <div>
+                      <dt>ISF</dt>
+                      <dd>{certifiee ? 'Homologué' : 'Non attribué'}</dd>
+                    </div>
+                    <div>
+                      <dt>Compteur</dt>
+                      <dd>{certifiee ? '1 / 1' : '— / —'}</dd>
+                    </div>
+                    <div>
+                      <dt>Date de certification</dt>
+                      <dd>
+                        {facture.certification_date
+                          ? formatDate(facture.certification_date)
+                          : 'Non certifiée'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Mode de règlement</dt>
+                      <dd>
+                        {LIBELLES_CONDITIONS[facture.conditions_paiement] ?? 'Virement bancaire'}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <figure className="facture__qr">
+                  {qr
+                    ? <img src={qr} alt={certifiee ? 'QR code de certification' : 'QR code du spécimen'} />
+                    : <span>QR indisponible</span>}
+                  <figcaption>{facture.numero_facture}</figcaption>
+                </figure>
               </section>
 
               <footer className="facture__pied">
-                <span>
-                  <FileText aria-hidden="true" /> Facture d’achat émise dans le circuit national de
-                  traçabilité de l’or.
-                </span>
+                Facture électronique émise conformément à l’article 564 du Code général des impôts
+                et à l’arrêté n°2025-0047/MEF/SG/DGI du 5 février 2025, dans le circuit national de
+                collecte et de traçabilité de l’or.
               </footer>
             </article>
           )}

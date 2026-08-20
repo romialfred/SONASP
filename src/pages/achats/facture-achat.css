@@ -132,3 +132,73 @@
   .facture-achat__barre { display: none; }
   .facture-achat__corps { max-height: none; overflow: visible; padding: 0; }
 }
+
+/* ---------------------------------------------------------------------------
+   Bloc de certification
+
+   Deux corrections. La grille à deux colonnes faisait chevaucher les libellés
+   et leurs valeurs dès que celles-ci dépassaient un mot — « En attente de
+   certification » écrasait « Date de certification ». Les couples passent en
+   colonne unique sur les largeurs contraintes, et chaque valeur peut aller à la
+   ligne.
+
+   La couleur d'alerte disparaît : une facture, certifiée ou non, n'est pas une
+   erreur. Le caractère de spécimen se lit au filigrane et au bandeau.
+   --------------------------------------------------------------------------- */
+.facture-achat__corps .facture__certification {
+  border-color: #d9e2ea;
+  background: linear-gradient(180deg, #fbfcfd 0%, #f5f8fa 100%);
+  grid-template-columns: minmax(0, 1fr) 148px;
+}
+
+.facture-achat__corps .facture__certification h3 { color: #33485f; }
+.facture-achat__corps .facture__certification h3 svg { color: #7a8ca0; }
+
+.facture-achat__corps .facture__certification dl {
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  gap: 8px 20px;
+}
+
+/* Le libellé et sa valeur ne se disputent plus la même ligne : la valeur passe
+   dessous dès qu'elle ne tient pas. */
+.facture-achat__corps .facture__certification dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.facture-achat__corps .facture__certification dt {
+  color: #7a8ca0;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.facture-achat__corps .facture__certification dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #10243e;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.facture-achat__corps .facture__certification.est-certifiee {
+  border-color: #bde5d4;
+  background: linear-gradient(180deg, #f3fbf7 0%, #eefaf4 100%);
+}
+
+.facture-achat__corps .facture__certification.est-certifiee h3,
+.facture-achat__corps .facture__certification.est-certifiee dd { color: #0d5c41; }
+.facture-achat__corps .facture__certification.est-certifiee h3 svg { color: #14956a; }
+
+.facture-achat__corps .facture__qr img { border-color: #d9e2ea; }
+.facture-achat__corps .facture__certification.est-certifiee .facture__qr img { border-color: #bde5d4; }
+
+/* Le bandeau du spécimen reste sobre : un mot suffit. */
+.facture-achat__corps .facture__bandeau { letter-spacing: 0.22em; }
+
+@media (max-width: 640px) {
+  .facture-achat__corps .facture__certification { grid-template-columns: minmax(0, 1fr); }
+  .facture-achat__corps .facture__qr { justify-items: start; }
+}

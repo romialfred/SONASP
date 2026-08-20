@@ -295,7 +295,7 @@ export function ProductionDetails() {
                     id="identification"
                     icon={Calendar}
                     title="Identification"
-                    description="Ce qui n’est pas renseigné s’affiche « — » : aucune valeur n’est suppléée."
+                   
                   >
                     <dl className="production-page__fiche">
                       <div>

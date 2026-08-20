@@ -2302,3 +2302,61 @@ Synthèses et coordonnées passent en fonds translucides.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
 - Console du navigateur : aucune erreur
+
+---
+
+## Itération — 20 août 2026 — Imputation réparée, spécimen au format certifié
+
+### L'imputation, corrigée pour de bon
+
+J'avais déplacé l'interdiction, sans la placer au bon endroit. Le blocage portait sur l'état du
+règlement : aucune imputation possible sur un règlement exécuté ou rapproché. Or REG-DEMO-0003,
+rapproché, porte 450 304 000 FCFA jamais imputés. L'écran proposait le bouton, la base refusait
+(A184).
+
+La règle juste distingue deux gestes que je confondais :
+
+| Geste | Règle |
+|---|---|
+| Imputer le **reliquat** non affecté | Toujours permis, sauf règlement rejeté ou annulé |
+| **Défaire** une imputation existante | Interdit dès que le règlement est exécuté |
+
+L'argent est parti de la trésorerie ; le reliquat est un avoir chez la mine, et l'imputer sur
+une facture qui arrive est l'opération comptable normale. Ce qu'on ne peut pas faire, c'est
+contredire une répartition dont la banque a exécuté la contrepartie.
+
+Trois cas vérifiés en base : reliquat d'un règlement rapproché imputé (450 304 000 FCFA),
+acompte validé imputé (500 000 000 FCFA), et règlement déjà soldé qui le dit au lieu d'échouer
+en silence.
+
+### La facture spécimen prend la forme de la certifiée
+
+Elle affichait un pavé rouge d'avertissement, et son bloc de certification se chevauchait :
+« En attente de certification » écrasait « Date de certification ».
+
+Le spécimen se signale désormais par **son filigrane et un bandeau d'un mot**. Tout le reste a
+la forme d'une pièce certifiée : bloc SECeF complet (code, NIM MCF, ISF, compteur, date), QR
+code, et mentions légales de pied citant l'article 564 du CGI et l'arrêté
+n°2025-0047/MEF/SG/DGI. La couleur d'alerte disparaît — une facture n'est pas une erreur — et
+les couples libellé/valeur passent en grille souple, qui ne se chevauche plus.
+
+Le composant bascule seul en présentation certifiée dès que le service fiscal renvoie une
+référence : bandeau vert, pas de filigrane, valeurs réelles.
+
+### Règle de rédaction, appliquée à toute la plateforme
+
+Balayage complet de `src` sur deux critères :
+
+- **tirets cadratins dans les libellés** : 9 trouvés, 9 traités. Un tiret cadratin sépare deux
+  propositions dans une phrase ; dans un titre, il colle deux idées qui devraient être deux
+  lignes ;
+- **notes décrivant le fonctionnement interne** : « appliquée par la base, non par l'écran »,
+  « elle ne se saisit pas depuis cet écran ». Retirées. Une note qui explique comment la
+  plateforme est faite s'adresse à celui qui la construit (A185).
+
+### Contrôles
+
+- `npx vitest run` : **728/728 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+- Console du navigateur : aucune erreur

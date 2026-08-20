@@ -633,6 +633,8 @@ estimée.
 | A181 | Deux profils sur trois sans compte `auth.users` : actifs à l'écran, aucune connexion possible — et la séparation des fonctions les comptait comme validateurs | Socle | Décompte joint à `auth.users` ; les profils orphelins restent à rattacher ou désactiver |
 | A182 | `snp_affecter_fifo` refusait tout règlement hors brouillon : le bouton « Imputer » d'un acompte validé renvoyait 400 sans rien afficher | Règlements | Imputation possible jusqu'à l'exécution ; messages d'échec explicites |
 | A183 | Formulaires portant des mentions du carnet de développement (« c'est la protection contre le double ordre », « seul mode admis ») | Socle | Six mentions retirées ; un formulaire applique ses règles, il ne les récite pas |
+| A184 | Aucune imputation possible sur un règlement exécuté ou rapproché : les 450 M non imputés de REG-DEMO-0003 restaient inaccessibles | Règlements | Le reliquat s'impute toujours ; seule la modification d'une imputation exécutée est interdite |
+| A185 | Tirets cadratins dans les libellés et notes décrivant le fonctionnement interne, sur l'ensemble de la plateforme | Socle | 9 tirets et 3 notes traités ; règle posée pour les écrans à venir |
 
 ---
 

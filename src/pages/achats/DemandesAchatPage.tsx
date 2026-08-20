@@ -138,7 +138,7 @@ export function DemandesAchatPage() {
           info={{
             titre: 'Ce que voit chaque partie',
             contenu:
-              'Une société minière ne reçoit que les demandes qui la concernent, et jamais celles restées en brouillon. Cette séparation est appliquée par la base, non par l’écran.',
+              'Une société minière ne reçoit que les demandes qui la concernent, et jamais celles restées en brouillon.',
           }}
           actions={
             <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>

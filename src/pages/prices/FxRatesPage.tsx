@@ -71,9 +71,9 @@ interface CustomerRate {
 
 // Le franc guinéen n'a pas cours au Burkina.
 const CURRENCY_PAIRS = [
-  { value: 'USD/XOF', label: 'USD/XOF — Dollar américain vers franc CFA' },
-  { value: 'EUR/XOF', label: 'EUR/XOF — Euro vers franc CFA' },
-  { value: 'EUR/USD', label: 'EUR/USD — Euro vers dollar américain' },
+  { value: 'USD/XOF', label: 'USD/XOF : dollar américain vers franc CFA' },
+  { value: 'EUR/XOF', label: 'EUR/XOF : euro vers franc CFA' },
+  { value: 'EUR/USD', label: 'EUR/USD : euro vers dollar américain' },
 ];
 
 export function FxRatesPage() {

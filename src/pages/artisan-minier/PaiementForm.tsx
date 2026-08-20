@@ -494,7 +494,7 @@ export default function PaiementForm() {
               {moyens.length === 0 ? (
                 <EmptyState
                   title="Aucun moyen de paiement enregistré"
-                  description="Cet artisan n’a pas de coordonnée de règlement sur sa fiche. Ajoutez-en une avant de payer : elle ne se saisit pas depuis cet écran."
+                  description="Cet artisan n’a pas de coordonnée de règlement sur sa fiche. Ajoutez-en une avant de payer."
                   action={
                     <button
                       type="button"

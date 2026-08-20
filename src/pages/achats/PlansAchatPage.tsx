@@ -150,7 +150,7 @@ export function PlansAchatPage() {
           info={{
             titre: 'À quoi sert un plan',
             contenu:
-              'Il porte la politique d’achat du mois — un pourcentage de la production ou une quantité nationale — puis sa répartition entre les mines. Une fois soumis, chaque ligne devient une demande adressée à sa mine.',
+              'Le plan fixe la politique d’achat du mois, pourcentage de la production ou quantité nationale, puis sa répartition entre les mines. Une fois soumis, chaque ligne devient une demande adressée à sa mine.',
           }}
           actions={
             <>

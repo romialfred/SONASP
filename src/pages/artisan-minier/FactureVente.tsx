@@ -102,7 +102,7 @@ export function FactureVente() {
       <div className="sn-page facture-page">
         <PageHeader
           icon={ShieldAlert}
-          title="Facture de vente — spécimen"
+          title="Facture de vente"
           subtitle="Pièce de démonstration : la certification DGI n’est pas raccordée."
           breadcrumb={[
             { label: 'Ventes d’or', to: '/artisan-minier/ventes-or' },

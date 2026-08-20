@@ -21,7 +21,7 @@ import {
   checkSaleAuthorization,
   type AuthorizedCustomer
 } from '@/services/goldSalesSettingsService';
-import { getInventoryBySeller } from '@/services/inventoryService';
+import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
 import { createSaleInventoryTransactions } from '@/services/inventoryTransactionService';
@@ -42,14 +42,11 @@ export function SaleCreate() {
   // Extract data from navigation state (from Gold Trade Space simulation or Inventory)
   const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
   const initialQuantity = (location.state as any)?.quantityOz || 0;
-  const availableFromState = (location.state as any)?.availableStockOz;
-  const preselectedSellerId = (location.state as any)?.preselectedSellerId; // New: preselected seller from inventory
-  const isSellerLocked = (location.state as any)?.lockSeller || false; // New: lock seller field
   const preselectedCustomerId = (location.state as any)?.preselectedCustomerId; // New: preselected customer
 
   const [formData, setFormData] = useState({
     customerId: preselectedCustomerId || '',
-    miningCompanyId: preselectedSellerId || '',
+    miningCompanyId: '', // Renseigné au chargement : la SONASP est toujours la vendeuse.
     quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '',
     freightCost: '',
@@ -61,12 +58,12 @@ export function SaleCreate() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCalculations, setShowCalculations] = useState(false);
   const [authorizedCustomers, setAuthorizedCustomers] = useState<AuthorizedCustomer[]>([]);
-  const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [selectedMiningCompany, setSelectedMiningCompany] = useState<MiningCompany | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<AuthorizedCustomer | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [availableInventory, setAvailableInventory] = useState({ availableOz: 0, availableGrams: 0 });
+  const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
@@ -108,33 +105,31 @@ export function SaleCreate() {
     return () => clearTimeout(timer);
   }, [formData.miningCompanyId, formData.customerId, formData.quantityOz, formData.londonAMRate, formData.freightCost, formData.otherCosts]);
 
+  /**
+   * Le vendeur d'une vente hors du Burkina est la SONASP, jamais la mine.
+   * La mine vend sa production à la SONASP (module « Achats aux mines ») ; la
+   * SONASP revend ensuite aux raffineurs internationaux l'or qu'elle détient.
+   */
   const fetchMiningCompanies = async () => {
     try {
       const { data, error } = await supabase
         .from('mining_companies')
-        .select('id, name, abbreviation, country')
+        .select('id, name, abbreviation, country, code')
         .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
 
-      setMiningCompanies(data || []);
-
-      // If preselectedSellerId is provided, set that seller
-      if (preselectedSellerId && data) {
-        const selectedCompany = data.find(c => c.id === preselectedSellerId);
-        if (selectedCompany) {
-          setSelectedMiningCompany(selectedCompany);
-        }
+      const sonasp = (data || []).find(c => (c as any).code?.toUpperCase() === 'SONASP');
+      if (!sonasp) {
+        alert.error("La SONASP n'est pas enregistrée comme société : la vente à l'export est impossible.");
+        return;
       }
-      // Auto-select first mining company if only one exists
-      else if (data && data.length === 1) {
-        setFormData(prev => ({ ...prev, miningCompanyId: data[0].id }));
-        setSelectedMiningCompany(data[0]);
-      }
+      setSelectedMiningCompany(sonasp);
+      setFormData(prev => ({ ...prev, miningCompanyId: sonasp.id }));
     } catch (error) {
       console.error('Error fetching mining companies:', error);
-      alert.error('Failed to load sellers');
+      alert.error("Échec du chargement du vendeur.");
     } finally {
       setLoading(false);
     }
@@ -164,40 +159,29 @@ export function SaleCreate() {
 
     try {
       setLoadingInventory(true);
-      const result = await getInventoryBySeller(formData.miningCompanyId, 'mining_company');
-      if (result.success) {
-        setAvailableInventory({
-          availableOz: result.availableOz,
-          availableGrams: result.availableGrams
-        });
-      } else {
-        setAvailableInventory({ availableOz: 0, availableGrams: 0 });
-      }
+      const stock = await stockSonaspService.stock(formData.miningCompanyId);
+      setStockExport(stock);
+      setAvailableInventory({ availableOz: stock.disponibleOz, availableGrams: stock.disponibleGrammes });
     } catch (error) {
       console.error('Error fetching inventory:', error);
+      setStockExport(null);
       setAvailableInventory({ availableOz: 0, availableGrams: 0 });
     } finally {
       setLoadingInventory(false);
     }
   };
 
-  const availableInventoryOz = availableFromState || availableInventory.availableOz;
+  // Le stock opposable est celui de la SONASP, calculé ici : une valeur reçue
+  // par la navigation décrirait le stock d'une mine, pas le sien.
+  const availableInventoryOz = availableInventory.availableOz;
 
   const handleInputChange = (field: string, value: string) => {
-    // Prevent changing seller if locked
-    if (field === 'miningCompanyId' && isSellerLocked) {
+    // Le vendeur est la SONASP : aucune saisie ne le change.
+    if (field === 'miningCompanyId') {
       return;
     }
 
-    if (field === 'miningCompanyId') {
-      const company = miningCompanies.find(c => c.id === value);
-      setSelectedMiningCompany(company || null);
-      setFormData(prev => ({
-        ...prev,
-        miningCompanyId: value,
-        customerId: '' // Reset customer when mining company changes
-      }));
-    } else {
+    {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
 
@@ -597,57 +581,59 @@ export function SaleCreate() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Seller & Customer Information
+              Vendeur et client
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Seller (Mining Company) - READ ONLY DISPLAY */}
+              {/* Vendeur : la SONASP, seule exportatrice */}
               <div>
                 <div className="mb-2">
                   <label className="block text-sm font-medium text-gray-900 mb-1">
-                    Seller (Mining Company)
+                    Vendeur
                     <span className="text-red-500 ml-1">*</span>
                   </label>
-                  <p className="text-xs text-gray-600">Seller is determined by stock ownership from inventory</p>
+                  <p className="text-xs text-gray-600">
+                    Les ventes hors du Burkina sont conclues par la SONASP, avec l’or qu’elle a acheté aux mines
+                    industrielles et aux artisans miniers.
+                  </p>
                 </div>
 
-                {!selectedMiningCompany && formData.miningCompanyId === '' && (
+                {!selectedMiningCompany && (
                   <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
                     <Building2 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">No seller selected</p>
+                    <p className="text-sm text-gray-600">Vendeur indisponible</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Please start from Inventory Management or Gold Trade Space to select stock
+                      La SONASP n’est pas enregistrée dans le référentiel des sociétés.
                     </p>
                   </div>
                 )}
 
                 {selectedMiningCompany && (
                   <div>
-                    <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                    <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 ml-2">
+                        <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Building2 className="h-4 w-4 text-blue-600" />
+                            <Building2 className="h-4 w-4 text-amber-700" />
                             <h3 className="text-base text-gray-900">{selectedMiningCompany.name}</h3>
                           </div>
-
                           <div className="space-y-1 text-sm ml-6">
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600">Code:</span>
-                              <span className="text-gray-900">{selectedMiningCompany.abbreviation}</span>
+                              <span className="text-gray-600">Sigle :</span>
+                              <span className="text-gray-900">{selectedMiningCompany.abbreviation || 'SONASP'}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600">Country:</span>
-                              <span className="text-gray-900">{selectedMiningCompany.country}</span>
+                              <span className="text-gray-600">Pays :</span>
+                              <span className="text-gray-900">{selectedMiningCompany.country || 'Burkina Faso'}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-right ml-4 bg-white rounded-lg px-3 py-2 border border-blue-200 shadow-sm">
-                          <p className="text-xs text-gray-600 mb-0.5">Available Inventory</p>
-                          <p className={`text-xl ${availableInventoryOz > 0 ? 'text-blue-700' : 'text-red-600'}`}>
-                            {loadingInventory ? '...' : `${availableInventoryOz.toFixed(3)} oz`}
+                        <div className="text-right ml-4 bg-white rounded-lg px-3 py-2 border border-amber-200">
+                          <p className="text-xs text-gray-600 mb-0.5">Stock exportable</p>
+                          <p className={`text-xl ${availableInventoryOz > 0 ? 'text-amber-700' : 'text-red-600'}`}>
+                            {loadingInventory ? '…' : `${availableInventoryOz.toFixed(3)} oz`}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {loadingInventory ? '' : `${availableInventory.availableGrams.toFixed(2)} g`}
@@ -655,18 +641,42 @@ export function SaleCreate() {
                         </div>
                       </div>
 
-                      <div className="mt-2 pt-2 border-t border-blue-200">
-                        <div className="flex items-center gap-2 text-xs text-blue-800">
+                      {stockExport && !loadingInventory && (
+                        <div className="mt-3 pt-3 border-t border-amber-200 grid grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-gray-600">Acheté aux mines</p>
+                            <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Acheté aux artisans</p>
+                            <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Déjà vendu à l’export</p>
+                            <p className="text-gray-900">{stockExport.venduOz.toFixed(3)} oz</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-2 pt-2 border-t border-amber-200">
+                        <div className="flex items-center gap-2 text-xs text-amber-800">
                           <Lock className="h-3 w-3" />
-                          <span>Seller information is based on stock ownership and cannot be changed</span>
+                          <span>Le vendeur est la SONASP et ne peut pas être modifié.</span>
                         </div>
                       </div>
                     </div>
 
-                    {!loadingInventory && availableInventoryOz === 0 && (
-                      <Alert type="warning" title="No Inventory Available" className="mt-3">
-                        This mining company currently has no gold available in inventory.
-                        Gold must be refined and added to inventory before creating a sale.
+                    {stockExport?.decouvert && (
+                      <Alert type="error" title="Stock à découvert" className="mt-3">
+                        Les ventes enregistrées dépassent les achats : {stockExport.venduOz.toFixed(3)} oz vendues pour{' '}
+                        {stockExport.entreesOz.toFixed(3)} oz acquises. Régularisez les achats avant toute nouvelle vente.
+                      </Alert>
+                    )}
+
+                    {!loadingInventory && availableInventoryOz === 0 && !stockExport?.decouvert && (
+                      <Alert type="warning" title="Aucun stock disponible" className="mt-3">
+                        La SONASP ne détient aucune once mobilisable. Enregistrez un achat auprès d’une mine
+                        industrielle ou d’un artisan minier avant de créer une vente.
                       </Alert>
                     )}
                   </div>

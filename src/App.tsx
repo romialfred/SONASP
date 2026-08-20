@@ -29,9 +29,6 @@ import { SaleCreate } from './pages/sales/SaleCreate';
 import { SaleDetails } from './pages/sales/SaleDetails';
 import { GoldTradeSpace } from './pages/sales/GoldTradeSpace';
 import { CustomerSaleApproval } from './pages/sales/CustomerSaleApproval';
-import PreSalesDashboard from './pages/presales/PreSalesDashboard';
-import PreSaleCreate from './pages/presales/PreSaleCreate';
-import PreSaleDetails from './pages/presales/PreSaleDetails';
 import HelpCenter from './pages/HelpCenter';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
@@ -114,6 +111,7 @@ import { RouteFallback } from './components/common/RouteFallback';
 import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
 
 const AiAssistantPage = lazy(() => import('./pages/analytics/AiAssistantPage'));
+const AchatsMines = lazy(() => import('./pages/production/AchatsMines'));
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
@@ -457,6 +455,15 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ArtisanalSiteProduction />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/production/achats-mines"
+              element={
+                <ProtectedRoute>
+                  <AchatsMines />
                 </ProtectedRoute>
               }
             />
@@ -841,32 +848,8 @@ function AppRoutes() {
               }
             />
 
-            <Route
-              path="/presales"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <PreSalesDashboard />
-                </ProtectedRoute>
-              }
-            />
 
-            <Route
-              path="/presales/new"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
-                  <PreSaleCreate />
-                </ProtectedRoute>
-              }
-            />
 
-            <Route
-              path="/presales/:id"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_VIEW}>
-                  <PreSaleDetails />
-                </ProtectedRoute>
-              }
-            />
 
             <Route
               path="/sales"

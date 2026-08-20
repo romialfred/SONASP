@@ -101,6 +101,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         color: '#10976b',
         children: [
           { label: 'Production journalière', path: '/production/daily', icon: Building2, color: '#10976b' },
+          { label: 'Achats aux mines', path: '/production/achats-mines', icon: CircleDollarSign, color: '#d79a00' },
           { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
           { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
           { label: 'Budgets', path: '/performance/budgets', icon: BarChart3, color: '#8b5cf6' },
@@ -163,7 +164,6 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         color: '#ec4899',
         children: [
           { label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
-          { label: 'Pré-ventes', path: '/presales', icon: Layers, color: '#8b5cf6' },
           { label: 'Clients', path: '/customers', icon: Users, color: '#14b8a6' },
           { label: 'Paiements', path: '/payments', icon: CircleDollarSign, color: '#16a363' },
         ],

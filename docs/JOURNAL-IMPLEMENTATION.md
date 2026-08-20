@@ -1495,3 +1495,64 @@ et `/settings`, cette dernière n'étant qu'une redirection vers `/parameters`.
 - `npx vitest run` : **529/529 verts** (62 fichiers)
 - `npm run typecheck` : **141**, inchangé
 - Plateforme démarrée en local sur le port 5180, aucune erreur de console
+
+---
+
+## Itération — 20 août 2026 — Deux ventes distinctes : l'achat aux mines, l'export SONASP
+
+### Ce qui a été trouvé
+
+La plateforme ne connaissait qu'**une seule** vente d'or industriel : `sales`, avec la mine
+comme vendeur (`seller_type = 'mining_company'`) et un raffineur international comme client.
+Le circuit réel en compte deux :
+
+1. **La mine vend à la SONASP.** Elle déclare sa production journalière, qui constitue son
+   stock ; en fin de mois, la SONASP lui achète tout ou partie de ce stock. C'est le pendant
+   industriel de l'achat aux artisans miniers — et il n'existait nulle part.
+2. **La SONASP vend hors du Burkina.** Avec l'or ainsi acquis, aux mines comme aux artisans.
+
+En confondant les deux, la base faisait passer l'or de la mine au raffineur **sans qu'il
+appartienne jamais à la SONASP** : aucune écriture ne reliait ce qu'elle achetait à ce
+qu'elle revendait, et son stock exportable n'était calculable par aucun écran.
+
+Relevé en base avant intervention : 5 ventes, toutes au nom d'une mine ; **0 pré-vente**
+(le module était donc supprimable sans perte) ; production déclarée SEMAFO 3 543,94 oz,
+Wahgnion 10 853,12 oz ; 4 clients internationaux.
+
+### Ce qui a été décidé
+
+- **Suppression du module de pré-ventes** (A142). Les tables restent en base :
+  `customer_accounts_receivable.pre_sale_id` référence `pre_sales`, et détruire la table
+  casserait cette contrainte pour rien. `CustomerAccountsWidget`, qui n'en dépendait que
+  par les pré-ventes, disparaît avec le module.
+- **Nouvelle table `snp_achats_mines`** (A143), numérotée `AC-MI-AAAA-NNNNN` par déclencheur,
+  sur le modèle des ventes artisanales. Le stock d'une mine se calcule et ne se stocke pas :
+  production déclarée sur la période moins achats déjà engagés. Un achat annulé libère sa
+  quantité ; un achat en attente la retient, car elle est déjà promise.
+- **Le disponible ne descend pas sous zéro.** Un sur-achat se lit dans l'écart entre produit
+  et acheté, pas dans un stock négatif qui masquerait l'anomalie.
+- **La SONASP devient la vendeuse de `sales`** (A144). Le champ vendeur n'est plus saisissable :
+  il vaut la SONASP, identifiée par son code, jamais par un libellé. Le stock opposable à la
+  vente devient son stock exportable — achats aux mines + achats aux artisans − ventes déjà
+  conclues — et non plus l'inventaire d'une mine.
+- **Habilitations commerciales de la SONASP** : `gold_sales_settings` n'ouvrait des clients
+  qu'aux mines. Sans ligne pour la SONASP, la liste déroulante des clients serait restée vide
+  au moment même où elle devient vendeuse (A145). Une ligne par client actif lui est ouverte,
+  aux conditions déjà en vigueur.
+- **L'espace de négoce cesse de choisir une mine.** La sélection par tuiles décrivait un
+  stock qui n'est plus celui du vendeur ; elle cède la place à la fiche du vendeur SONASP et
+  à la décomposition de son stock exportable.
+
+### Ce qui a été corrigé en chemin
+
+- Le raccourci « Acheter tout le stock » ne s'affichait qu'une fois une quantité déjà saisie —
+  c'est-à-dire jamais quand il sert. Il apparaît désormais dès la société choisie.
+- Le stock reçu par la navigation (`availableStockOz`) décrivait l'inventaire d'une mine et
+  aurait continué de s'imposer au formulaire de vente : il est ignoré au profit du calcul.
+
+### Contrôles
+
+- `npx vitest run` : **563/563 verts** (65 fichiers, 34 ajoutés cette itération)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
+- Modules servis sans erreur par Vite sur le port 5180

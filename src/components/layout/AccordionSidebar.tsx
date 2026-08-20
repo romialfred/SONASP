@@ -152,7 +152,6 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-pink-600',
       groupIcon: ShoppingCart,
       items: [
-        { label: t('nav.preSales'), path: '/presales', icon: PackagePlus, iconColor: 'text-purple-600' },
         { label: t('nav.sales'), path: '/sales', icon: ShoppingCart, iconColor: 'text-pink-600' },
         { label: t('nav.payments'), path: '/payments', icon: CreditCard, iconColor: 'text-green-600' },
       ],

@@ -591,6 +591,11 @@ estimée.
 | A138 | Doublons dans la barre latérale : « Transporteurs » et « Raffineries » présents sous *Parties prenantes* **et** *Administration* | Navigation | Entrées retirées d'Administration |
 | A139 | Entrée « Déposants » pointant une entité distincte, alors que le métier attend des « Approbateurs » habilités à valider les ventes | Navigation | Renommée « Approbateurs », pointée sur `/stakeholders/approvers` |
 | A140 | Action « Approuver la vente » ouverte à tout utilisateur : la porte facture/paiement n'était pas gardée par un rôle | Ventes d'or | Restreinte à `is_sales_approver` + direction ; page Approbateurs pour accorder/retirer le droit |
+| A142 | Module de pré-ventes sans usage : 0 enregistrement en base, aucun lien avec le circuit réel | Ventes d'or | Écrans, service, routes et entrée de menu supprimés ; tables conservées pour la contrainte `customer_accounts_receivable` |
+| A143 | Achat de la SONASP aux mines industrielles inexistant : la production déclarée ne débouchait sur aucune acquisition | Mines industrielles | Table `snp_achats_mines`, service, écran `/production/achats-mines` |
+| A144 | `sales` inscrivait la mine comme vendeur des ventes hors du Burkina : l'or passait au raffineur sans appartenir à la SONASP | Ventes d'or | Vendeur figé à la SONASP ; stock opposable = achats aux mines + aux artisans − ventes déjà conclues |
+| A145 | `gold_sales_settings` n'habilitait que les mines : la liste des clients serait restée vide pour la SONASP vendeuse | Ventes d'or | Une habilitation par client actif ouverte à la SONASP |
+| A146 | « Acheter tout le stock » conditionné à une quantité déjà saisie, donc invisible quand il sert | Mines industrielles | Affiché dès la société choisie |
 
 ---
 
@@ -617,12 +622,20 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
   (projet `yyverzuhkdonjjuficor`), vérifiées après coup.
 - La migration `20260819_006_add_sales_approver_flag` (colonne `user_profiles.is_sales_approver`)
   **est appliquée** sur `SONASP_OPS` ; additive et non destructive.
+- Les migrations `20260819_007_achats_mines` (table `snp_achats_mines`) et
+  `20260819_008_sonasp_vendeuse_export` (habilitations commerciales de la SONASP) **sont
+  appliquées** sur `SONASP_OPS` ; additives, retour arrière documenté en tête de fichier.
 
 ---
 
 ## 9. Prochaine action exacte
 
-**Obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
+**Rattacher les ventes à l'export au stock acheté, pièce par pièce** : `sales` porte
+désormais la SONASP comme vendeuse et son stock exportable est calculé, mais aucune écriture
+ne relie encore une vente aux achats qui l'approvisionnent (allocation lot par lot). C'est la
+condition d'une traçabilité complète de la mine au raffineur.
+
+Ensuite, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
 charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564
 §2 du CGI ; en parallèle, engager l'acquisition du MCF auprès de la CCI-BF et le dossier
 d'homologation. Le spécimen de facture est en place et sert la démonstration.

@@ -16,9 +16,6 @@ import {
   AlertCircle,
   CheckCircle,
   Lightbulb,
-  Building2,
-  MapPin,
-  ArrowRight,
 } from 'lucide-react';
 import {
   getQuantityRecommendation,
@@ -26,7 +23,7 @@ import {
   type PricingMechanism,
   type QuantityRecommendation,
 } from '@/services/goldTradeSpaceService';
-import { getInventoryBySeller } from '@/services/inventoryService';
+import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
 
@@ -44,11 +41,6 @@ interface MiningCompany {
   country: string;
 }
 
-interface MiningCompanyWithStock extends MiningCompany {
-  availableStock: number;
-  loading: boolean;
-}
-
 export function GoldTradeSpace() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -56,8 +48,8 @@ export function GoldTradeSpace() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
-  const [miningCompaniesWithStock, setMiningCompaniesWithStock] = useState<MiningCompanyWithStock[]>([]);
-  const [, setTotalStock] = useState(0);
+  const [vendeur, setVendeur] = useState<MiningCompany | null>(null);
+  const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
 
   const [selectedMiningCompany, setSelectedMiningCompany] = useState('');
   const [availableStock, setAvailableStock] = useState(0);
@@ -90,7 +82,7 @@ export function GoldTradeSpace() {
       const [customersRes, refineriesRes, miningCompaniesRes] = await Promise.all([
         supabase.from('customers').select('id, name, email, country').order('name'),
         getApprovedRefineries(),
-        supabase.from('mining_companies').select('id, name, abbreviation, country').eq('is_active', true).order('name'),
+        supabase.from('mining_companies').select('id, name, abbreviation, country, code').eq('is_active', true).order('name'),
       ]);
 
       if (customersRes.data) {
@@ -111,15 +103,16 @@ export function GoldTradeSpace() {
         setRefineries(refineriesRes.data);
       }
 
-      if (miningCompaniesRes.data) {
-        const companiesWithStock: MiningCompanyWithStock[] = miningCompaniesRes.data.map(company => ({
-          ...company,
-          availableStock: 0,
-          loading: true,
-        }));
-        setMiningCompaniesWithStock(companiesWithStock);
-
-        await fetchAllMiningCompaniesStock(miningCompaniesRes.data);
+      // L'espace de négoce est celui de la SONASP : c'est elle qui vend hors du
+      // Burkina, avec l'or acheté aux mines industrielles et aux artisans.
+      const sonasp = (miningCompaniesRes.data || []).find(
+        (c: any) => c.code?.toUpperCase() === 'SONASP'
+      );
+      if (sonasp) {
+        setVendeur(sonasp);
+        setSelectedMiningCompany(sonasp.id);
+      } else {
+        alert.error("La SONASP n'est pas enregistrée dans le référentiel des sociétés.");
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -127,48 +120,6 @@ export function GoldTradeSpace() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchAllMiningCompaniesStock = async (companies: MiningCompany[]) => {
-    let total = 0;
-
-    for (const company of companies) {
-      try {
-        const result = await getInventoryBySeller(company.id, 'mining_company');
-
-        if (result.success) {
-          const stockOz = result.availableOz || 0;
-          total += stockOz;
-
-          setMiningCompaniesWithStock(prev =>
-            prev.map(c =>
-              c.id === company.id
-                ? { ...c, availableStock: stockOz, loading: false }
-                : c
-            )
-          );
-        } else {
-          setMiningCompaniesWithStock(prev =>
-            prev.map(c =>
-              c.id === company.id
-                ? { ...c, availableStock: 0, loading: false }
-                : c
-            )
-          );
-        }
-      } catch (error) {
-        console.error(`Error fetching stock for ${company.name}:`, error);
-        setMiningCompaniesWithStock(prev =>
-          prev.map(c =>
-            c.id === company.id
-              ? { ...c, availableStock: 0, loading: false }
-              : c
-          )
-        );
-      }
-    }
-
-    setTotalStock(total);
   };
 
   const fetchInventoryByMiningCompany = async () => {
@@ -179,9 +130,11 @@ export function GoldTradeSpace() {
     }
 
     try {
-      // Use the proper service to get inventory by seller
-      // This follows the chain: production -> freight_shipments -> gold_inventory
-      const result = await getInventoryBySeller(selectedMiningCompany, 'mining_company');
+      // Stock exportable de la SONASP : achats aux mines et aux artisans,
+      // diminués des ventes déjà conclues à l'international.
+      const stock = await stockSonaspService.stock(selectedMiningCompany);
+      setStockExport(stock);
+      const result = { success: true, availableOz: stock.disponibleOz, error: null };
 
       if (result.success) {
         const totalStock = result.availableOz || 0;
@@ -262,174 +215,61 @@ export function GoldTradeSpace() {
 
         {/* Main Content Area - Adjusts based on panel state */}
         <div className="space-y-6 max-w-full">
-          {/* Mining Company Selection with Elegant Tiles */}
-          {!selectedMiningCompany ? (
-            <div className="space-y-4">
-              {/* Section Header */}
+          {/* Vendeur : la SONASP et son stock exportable */}
+          <Card className="bg-amber-50 border-amber-200">
+            <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <Building2 className="w-6 h-6 text-amber-600 flex-shrink-0" />
+                <Store className="w-6 h-6 text-amber-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">{t('tradeSpace.selectMine')}</h2>
-                  <p className="text-gray-600 text-sm">{t('tradeSpace.clickTilePrompt')}</p>
+                  <h3 className="text-lg font-semibold text-gray-900">Vendeur : {vendeur?.name || 'SONASP'}</h3>
+                  <p className="text-sm text-gray-600">
+                    Ventes hors du Burkina, avec l’or acheté aux mines industrielles et aux artisans miniers.
+                  </p>
                 </div>
               </div>
 
-              {/* Individual Mining Company Cards - Compact & Sorted */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {miningCompaniesWithStock
-                  .sort((a, b) => b.availableStock - a.availableStock)
-                  .map((company) => (
-                  <button
-                    key={company.id}
-                    onClick={() => {
-                      setSelectedMiningCompany(company.id);
-                      setAvailableStock(company.availableStock);
-                    }}
-                    disabled={company.loading || company.availableStock === 0}
-                    className={`group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
-                      company.availableStock > 0
-                        ? 'bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 hover:border-blue-400 hover:shadow-xl hover:scale-105 cursor-pointer'
-                        : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 cursor-not-allowed opacity-60'
-                    }`}
-                  >
-                    {/* Background decoration */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    {/* Content */}
-                    <div className="relative z-10 space-y-3">
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg ${
-                              company.availableStock > 0
-                                ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                                : 'bg-gradient-to-br from-gray-400 to-gray-500'
-                            }`}>
-                              {company.abbreviation}
-                            </div>
-                          </div>
-                          <h3 className="text-sm font-bold text-gray-900 leading-tight mb-1">
-                            {company.name}
-                          </h3>
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <MapPin className="w-3 h-3" />
-                            <span>{company.country}</span>
-                          </div>
-                        </div>
-                        {company.availableStock > 0 && (
-                          <div className="bg-green-100 text-green-700 rounded-full p-1.5 group-hover:scale-110 transition-transform">
-                            <CheckCircle className="w-4 h-4" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Divider */}
-                      <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-
-                      {/* Stock Information */}
-                      <div className="space-y-1">
-                        {company.loading ? (
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-                            <span className="text-xs">{t('tradeSpace.loading')}</span>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-xs text-gray-600 font-medium">{t('tradeSpace.stockAvailable')}</span>
-                            </div>
-                            <div className="space-y-0.5">
-                              <p className={`text-2xl font-bold ${
-                                company.availableStock > 0 ? 'text-blue-700' : 'text-gray-400'
-                              }`}>
-                                {company.availableStock.toFixed(3)}
-                                <span className="text-base text-gray-500 ml-1">{t('tradeSpace.oz')}</span>
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {(company.availableStock * 31.1034768).toFixed(2)} {t('tradeSpace.grams')}
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Action hint */}
-                      {company.availableStock > 0 && (
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="text-xs text-blue-600 font-medium group-hover:text-blue-700">
-                            {t('tradeSpace.viewSimulation')}
-                          </span>
-                          <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      )}
-
-                      {company.availableStock === 0 && !company.loading && (
-                        <div className="flex items-center gap-1 text-gray-500 text-xs pt-1">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{t('tradeSpace.noStockAvailable')}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Hover glow effect */}
-                    {company.availableStock > 0 && (
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/20 rounded-full blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-400/20 rounded-full blur-3xl"></div>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <div className="p-6 space-y-4">
+              <div className="bg-white rounded-lg p-4 border border-amber-200">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Store className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{t('tradeSpace.selectedMine')}</h3>
-                      <p className="text-sm text-gray-600">
-                        {miningCompaniesWithStock.find(c => c.id === selectedMiningCompany)?.name}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Stock exportable</p>
+                    <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
+                      {availableStock.toFixed(3)} oz
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{(availableStock * 31.1034768).toFixed(2)} g</p>
                   </div>
-                  <Button
-                    onClick={() => {
-                      setSelectedMiningCompany('');
-                      setAvailableStock(0);
-                      setQuantityRecommendation(null);
-                      setSelectedMechanism(null);
-                      setComparisonData(null);
-                    }}
-                    variant="secondary"
-                    size="sm"
-                  >
-                    {t('tradeSpace.changeMine')}
-                  </Button>
+                  {availableStock > 0 && <CheckCircle className="w-8 h-8 text-green-500" />}
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center justify-between">
+                {stockExport && (
+                  <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-3 gap-4 text-xs">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">{t('tradeSpace.availableStock')}</p>
-                      <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {availableStock.toFixed(3)} {t('tradeSpace.oz')}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {(availableStock * 31.1034768).toFixed(2)} g
-                      </p>
+                      <p className="text-gray-600">Acheté aux mines</p>
+                      <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
                     </div>
-                    {availableStock > 0 && (
-                      <CheckCircle className="w-8 h-8 text-green-500" />
-                    )}
+                    <div>
+                      <p className="text-gray-600">Acheté aux artisans</p>
+                      <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Déjà vendu à l’export</p>
+                      <p className="text-gray-900">{stockExport.venduOz.toFixed(3)} oz</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            </Card>
-          )}
+
+              {stockExport?.decouvert && (
+                <p className="text-sm text-red-700">
+                  Ventes enregistrées supérieures aux achats : régularisez les achats avant toute nouvelle vente.
+                </p>
+              )}
+
+              {!stockExport && !loading && (
+                <p className="text-sm text-gray-600">Stock indisponible : source « achats et ventes » non lue.</p>
+              )}
+            </div>
+          </Card>
+
 
           {quantityRecommendation && selectedMiningCompany && (
             <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">

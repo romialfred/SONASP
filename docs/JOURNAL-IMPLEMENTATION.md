@@ -1642,3 +1642,54 @@ le stock paraîtrait entamé sans qu'on sache par quel or.
 - `npx vitest run` : **588/588 verts** (67 fichiers, 8 ajoutés)
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Or en coffre : des objectifs votés, non inventés
+
+### Ce qui a été trouvé
+
+`ProductionInSafe` comparait le réalisé à des objectifs **codés en dur** :
+
+```ts
+wtd: { actual: 0, budget: 850, forecast: 780 },
+mtd: { actual: 0, budget: 2800, forecast: 2500 },
+ytd: { actual: 0, budget: 5500, forecast: 5000 }
+```
+
+Ces trois paires ne venaient d'aucune source. Elles étaient pourtant affichées avec feux
+tricolores, pourcentages d'écart et mentions « Excellent / Attention / Critique » — soit le
+vocabulaire du pilotage appliqué à des nombres inventés. Un directeur y aurait lu une
+performance nationale.
+
+Or les objectifs réels existent en base : `monthly_budgets` porte 48 lignes de budget mensuel
+par société, `quarterly_forecasts` 15 lignes de prévision révisée. Elles n'étaient simplement
+pas lues (A150).
+
+### Ce qui a été décidé
+
+- **Cumul au prorata des jours.** Chaque mois porte un rythme journalier ; une période à
+  cheval sur deux mois additionne les deux rythmes. La semaine en cours commence le lundi,
+  non le dimanche comme le faisait l'ancien calcul.
+- **Un mois sans objectif est nommé, pas compté pour zéro.** Sans cela, un objectif partiel
+  se lirait comme un objectif atteint. L'écran écrit « Budget non voté pour juillet 2026 »
+  et n'affiche aucun écart tant que la période n'est pas entièrement couverte.
+- **Aucun écart sur un objectif inconnu.** Un pourcentage calculé sur un objectif partiel
+  accuse à tort ; il vaut mieux ne rien dire.
+- **La société filtrée restreint aussi les objectifs.** Comparer la production d'une mine au
+  budget national dirait n'importe quoi.
+- **Une prévision révisée remplace la précédente**, elle ne s'y ajoute pas : seule la
+  dernière révision de chaque mois est retenue.
+- **Une source en échec se tait pour son compte** — « Source « budgets mensuels » non lue » —
+  sans vider la page ni les déclarations.
+
+L'écran passe au socle : `NationalDashboardLayout`, `PageHeader`, `StatGrid`, volet latéral
+de filtres, tableau `sn-table`, libellés en français. Il quitte `MainLayout` et les
+traductions `t('production.*')` qui coexistaient avec du texte anglais en dur.
+
+### Contrôles
+
+- `npx vitest run` : **618/618 verts** (69 fichiers, 30 ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
+- Audit d'habillage : 120 routes, aucune hors habillage

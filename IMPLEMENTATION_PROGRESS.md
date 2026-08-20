@@ -599,6 +599,8 @@ estimée.
 | A147 | Contrôle de stock de la vente interrogeant `daily_production` au nom du vendeur : la SONASP ne déclarant aucune production, toutes les ventes auraient été bloquées | Ventes d'or | Remplacé par le contrôle de couverture sur les lots d'achat |
 | A148 | Aucune écriture ne reliait une vente à l'export aux achats qui l'approvisionnent : origine de l'or invérifiable | Traçabilité | Table `snp_ventes_lots`, répartition au plus ancien d'abord, composition affichée sur la fiche de vente |
 | A149 | Rien ne détectait une vente créée hors du formulaire, qui entamerait le stock sans origine tracée | Traçabilité | Contrôle de cohérence masse/lots, bannière nommant les ventes concernées sur le tableau de bord des ventes |
+| A150 | `ProductionInSafe` comparait le réalisé à des objectifs codés en dur (850/2 800/5 500 oz), affichés avec feux tricolores comme s'ils venaient d'une source | Production | Budget et prévision lus dans `monthly_budgets` et `quarterly_forecasts`, cumulés au prorata des jours ; mois non couvert nommé |
+| A151 | Semaine de suivi ouverte le dimanche, contre l'usage burkinabè et le découpage des déclarations | Production | Semaine ouverte le lundi |
 
 ---
 
@@ -635,10 +637,8 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 
 ## 9. Prochaine action exacte
 
-**Poursuivre le lot 7 — Production.** Le circuit de l'or est désormais complet et contrôlé
-de la mine au raffineur ; restent les écrans de production non encore refondus :
-`ProductionDetails` (643), `ProductionInSafe` (657), `ExportLicenseForm` (836),
-`ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
+**Poursuivre le lot 7 — Production (3/7 traités).** Restent : `ProductionDetails` (643),
+`ExportLicenseForm` (836), `ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
 
 En parallèle, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
 charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564

@@ -1,0 +1,134 @@
+/**
+ * Fenêtre de consultation d'une facture d'achat.
+ *
+ * La facture elle-même reprend `facture-vente.css` : même papier, même en-tête,
+ * mêmes totaux, même bloc de certification. Ce fichier ne porte que le cadre qui
+ * la présente — la fenêtre intégrée, sa barre et son voile.
+ *
+ * Aucun tiroir latéral : une pièce comptable se lit en entier, centrée, comme on
+ * la poserait sur un bureau.
+ */
+
+.facture-achat__voile {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  padding: 28px 20px;
+  place-items: start center;
+  overflow-y: auto;
+  background: rgb(16 36 62 / 46%);
+  backdrop-filter: blur(3px);
+  animation: facture-achat-voile 160ms ease;
+}
+
+@keyframes facture-achat-voile {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.facture-achat__cadre {
+  width: min(980px, 100%);
+  overflow: hidden;
+  border: 1px solid #e0e7ee;
+  border-radius: 16px;
+  background: #f6f8fa;
+  box-shadow: 0 24px 60px rgb(16 36 62 / 26%);
+  animation: facture-achat-entree 180ms ease;
+}
+
+@keyframes facture-achat-entree {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.facture-achat__barre {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  gap: 16px;
+  border-bottom: 1px solid #e0e7ee;
+  background: #fff;
+}
+
+.facture-achat__barre h3 {
+  margin: 0;
+  color: #10243e;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.facture-achat__barre p {
+  margin: 3px 0 0;
+  color: #60738c;
+  font-size: 11.5px;
+}
+
+.facture-achat__barre-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.facture-achat__fermer {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #e0e7ee;
+  border-radius: 10px;
+  background: #fff;
+  color: #60738c;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.facture-achat__fermer:hover { border-color: #c3d0dc; color: #10243e; background: #f7f9fb; }
+.facture-achat__fermer svg { width: 17px; height: 17px; }
+
+.facture-achat__corps {
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.facture-achat__corps .facture { margin: 0 auto; }
+
+.facture-achat__erreur {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 14px 16px;
+  gap: 9px;
+  border: 1px solid #f3c8c3;
+  border-radius: 10px;
+  background: #fff2f0;
+  color: #b3261e;
+  font-size: 12.5px;
+}
+
+.facture-achat__erreur svg { width: 16px; height: 16px; flex: none; }
+
+/* Une facture réellement certifiée n'est pas un spécimen : ni filigrane, ni
+   bandeau rouge. Le bandeau devient une attestation. */
+.facture__bandeau.est-certifiee {
+  border-color: #bde5d4;
+  color: #0c6b4c;
+  background: linear-gradient(90deg, #0f7a56 0%, #14956a 100%);
+}
+
+.facture__certification.est-certifiee {
+  border-color: #bde5d4;
+  background: #eefaf4;
+}
+
+.facture__certification.est-certifiee h3 { color: #0d5c41; }
+
+@media print {
+  .facture-achat__voile { position: static; padding: 0; background: none; backdrop-filter: none; }
+  .facture-achat__cadre { width: 100%; border: 0; border-radius: 0; box-shadow: none; background: #fff; }
+  .facture-achat__barre { display: none; }
+  .facture-achat__corps { max-height: none; overflow: visible; padding: 0; }
+}

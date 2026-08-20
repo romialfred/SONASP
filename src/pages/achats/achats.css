@@ -182,3 +182,119 @@
   .achats-synthese { gap: 8px 16px; }
   .achats-synthese__actions { margin-left: 0; width: 100%; }
 }
+
+/* ---------------------------------------------------------------------------
+   Fenêtres intégrées
+
+   Les tiroirs latéraux ont été retirés des écrans d'achat. Un panneau de
+   380 px convient à trois filtres ; il ne convient pas à l'imputation d'un
+   virement, qui demande de lire un tableau de factures, des soldes et un
+   historique. La fenêtre s'ouvre au centre, prend la largeur qu'il faut, et
+   présente le dossier en entier.
+   --------------------------------------------------------------------------- */
+.achats-fenetre {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  padding: 26px 20px;
+  place-items: start center;
+  overflow-y: auto;
+}
+
+.achats-fenetre__voile {
+  position: fixed;
+  inset: 0;
+  background: rgb(16 36 62 / 44%);
+  backdrop-filter: blur(3px);
+  animation: achats-voile 150ms ease;
+}
+
+@keyframes achats-voile { from { opacity: 0; } to { opacity: 1; } }
+
+.achats-fenetre__panneau {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(880px, 100%);
+  max-height: calc(100vh - 52px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--sn-line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgb(16 36 62 / 24%);
+  animation: achats-fenetre-entree 180ms ease;
+}
+
+@keyframes achats-fenetre-entree {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+.achats-fenetre__panneau > header {
+  display: flex;
+  align-items: center;
+  padding: 16px 22px;
+  gap: 12px;
+  border-bottom: 1px solid var(--sn-line);
+  background: linear-gradient(180deg, #fbfcfd 0%, #fff 100%);
+}
+
+.achats-fenetre__panneau > header h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  gap: 9px;
+  color: var(--sn-navy);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.achats-fenetre__panneau > header h3 svg { width: 18px; height: 18px; color: var(--sn-green); }
+
+.achats-fenetre__panneau > header button {
+  margin-left: auto;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--sn-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sn-muted);
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.achats-fenetre__panneau > header button:hover {
+  border-color: #c3d0dc;
+  color: var(--sn-navy);
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+.achats-fenetre__panneau > header button svg { width: 17px; height: 17px; }
+
+.achats-fenetre__corps {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.achats-fenetre__corps > .sn-field + .sn-field,
+.achats-fenetre__corps > .sn-note + * { margin-top: 14px; }
+
+.achats-fenetre__panneau > footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 22px;
+  gap: 10px;
+  border-top: 1px solid var(--sn-line);
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+@media (max-width: 720px) {
+  .achats-fenetre { padding: 0; }
+  .achats-fenetre__panneau { width: 100%; max-height: 100vh; border-radius: 0; }
+}

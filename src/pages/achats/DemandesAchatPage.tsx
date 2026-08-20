@@ -283,9 +283,9 @@ export function DemandesAchatPage() {
         </Section>
 
         {reponse && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Motiver la réponse">
-            <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setReponse(null)} />
-            <div className="sn-drawer__panel">
+          <div className="achats-fenetre" role="dialog" aria-modal="true" aria-label="Motiver la réponse">
+            <div className="achats-fenetre__voile" aria-hidden="true" onClick={() => setReponse(null)} />
+            <div className="achats-fenetre__panneau">
               <header>
                 <h3><XCircle aria-hidden="true" /> Rejeter la demande {reponse.demande.numero_demande}</h3>
                 <button type="button" aria-label="Fermer" onClick={() => setReponse(null)}>
@@ -293,7 +293,7 @@ export function DemandesAchatPage() {
                 </button>
               </header>
 
-              <div className="sn-drawer__body">
+              <div className="achats-fenetre__corps">
                 <Note tone="info" icon={AlertTriangle}>
                   Un rejet sans motif ne se discute pas : il se refuse. Le motif est transmis à la SONASP et
                   conservé à l’historique.

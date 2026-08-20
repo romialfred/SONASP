@@ -182,9 +182,9 @@ export function PlansAchatPage() {
         />
 
         {formulaireOuvert && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Nouveau plan d’achat">
-            <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFormulaireOuvert(false)} />
-            <div className="sn-drawer__panel">
+          <div className="achats-fenetre" role="dialog" aria-modal="true" aria-label="Nouveau plan d’achat">
+            <div className="achats-fenetre__voile" aria-hidden="true" onClick={() => setFormulaireOuvert(false)} />
+            <div className="achats-fenetre__panneau">
               <header>
                 <h3><Plus aria-hidden="true" /> Nouveau plan d’achat</h3>
                 <button type="button" aria-label="Fermer" onClick={() => setFormulaireOuvert(false)}>
@@ -192,7 +192,7 @@ export function PlansAchatPage() {
                 </button>
               </header>
 
-              <div className="sn-drawer__body">
+              <div className="achats-fenetre__corps">
                 <Field label="Année" required htmlFor="annee">
                   <input
                     id="annee" type="number" className="sn-input"
@@ -225,7 +225,7 @@ export function PlansAchatPage() {
                 </Field>
 
                 {saisie.mode_repartition === 'pourcentage' ? (
-                  <Field label="Pourcentage à acheter" required hint="Part de la production éligible de chaque mine." htmlFor="pct">
+                  <Field label="Pourcentage de la production éligible" required htmlFor="pct">
                     <input
                       id="pct" type="number" className="sn-input" min={0} max={100} step={0.5}
                       value={saisie.pourcentage_global}
@@ -233,7 +233,7 @@ export function PlansAchatPage() {
                     />
                   </Field>
                 ) : (
-                  <Field label="Quantité nationale visée (oz)" required hint="Répartie au prorata de la production éligible." htmlFor="cible">
+                  <Field label="Quantité nationale visée (oz)" required htmlFor="cible">
                     <input
                       id="cible" type="number" className="sn-input" min={0} step={0.01}
                       value={saisie.quantite_cible_oz}

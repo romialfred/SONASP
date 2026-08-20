@@ -2238,3 +2238,67 @@ exécution. Les données d'essai ont été supprimées ; le jeu de démonstratio
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
 - Console du navigateur : aucune erreur
+
+---
+
+## Itération — 20 août 2026 — Raffinage des écrans de règlement
+
+Retour d'usage : le bouton « Imputer » ne faisait rien, les fenêtres s'ouvraient sur le côté,
+les tuiles étaient plates, la facture consultée n'était qu'un tableau de chiffres, et les
+formulaires expliquaient leurs propres règles champ par champ.
+
+### Le bouton qui ne faisait rien
+
+`snp_affecter_fifo` n'acceptait qu'un règlement en brouillon ou soumis. L'acompte
+REG-DEMO-0002, **validé** et non imputé, ne pouvait donc pas l'être : l'écran proposait
+« Imputer sur les plus anciennes », la base répondait 400, rien ne se passait (A182).
+
+Ma règle était mal placée. Ce qui se fige à l'exécution, c'est la répartition d'un ordre **déjà
+parti à la banque** — la corriger supposerait de la rappeler. Tant que le virement n'est pas
+exécuté, son imputation reste un arbitrage comptable interne. Sont donc imputables : brouillon,
+soumis, validé, en exécution.
+
+Trois messages d'échec silencieux sont devenus explicites : règlement déjà imputé, imputation
+arrêtée, aucune facture ouverte.
+
+### Les tiroirs latéraux disparaissent
+
+Un panneau de 380 px convient à trois filtres. Il ne convient pas à l'imputation d'un virement,
+qui demande de lire un tableau de factures, des soldes et un historique. Les quatre tiroirs des
+écrans d'achat deviennent des **fenêtres centrées** de 880 px, avec en-tête, corps défilant et
+pied d'actions.
+
+### La facture prend sa forme comptable
+
+La fenêtre de consultation affichait deux tableaux de chiffres. Elle affiche désormais la
+facture dans **la forme exacte de la facture de vente artisanale** — en-tête émetteur,
+destinataire, lignes, récapitulatif de taxation, totaux, montant en toutes lettres, bloc de
+certification, impression — par réutilisation de `facture-vente.css`.
+
+**Sur la certification : la demande ne peut pas être satisfaite aujourd'hui.** La note
+n°2025-0885/MEF/SG/DGI réserve les éléments de certification au Module de Contrôle de
+Facturation, que la plateforme n'interroge pas. Exiger une facture certifiée avant tout
+règlement bloquerait donc **tous** les paiements. La facture affiche son état réel — « en
+attente de certification » — et le composant bascule seul en présentation certifiée le jour où
+le service renverra une référence.
+
+### Une règle de rédaction
+
+Les formulaires portaient des mentions du carnet de développement : « Le montant s'écrit en
+francs entiers », « Une référence ne se réutilise pas : c'est la protection contre le double
+ordre », « Seul mode admis pour les mines ». Un formulaire **applique** ses règles, il ne les
+récite pas. Six mentions retirées ; la règle vaut pour les écrans à venir (A183).
+
+### Raffinement visuel
+
+Tuiles de bénéficiaire : fond en dégradé très pâle, liseré haut qui se révèle au survol, carte
+soulevée de deux pixels, ombre portée. La carte retenue se marque d'un liseré plein plutôt que
+d'un aplat. Une société sans compte bancaire ne se soulève pas et son liseré vire à l'alerte.
+Synthèses et coordonnées passent en fonds translucides.
+
+### Contrôles
+
+- `npx vitest run` : **728/728 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+- Console du navigateur : aucune erreur

@@ -364,9 +364,9 @@ export function ReglementsAchatPage() {
 
         {/* ------------------------------------------------ Enregistrement -- */}
         {formulaireOuvert && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Enregistrer un règlement">
-            <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFormulaireOuvert(false)} />
-            <div className="sn-drawer__panel">
+          <div className="achats-fenetre" role="dialog" aria-modal="true" aria-label="Enregistrer un règlement">
+            <div className="achats-fenetre__voile" aria-hidden="true" onClick={() => setFormulaireOuvert(false)} />
+            <div className="achats-fenetre__panneau">
               <header>
                 <h3><Banknote aria-hidden="true" /> Enregistrer un règlement</h3>
                 <button type="button" aria-label="Fermer" onClick={() => setFormulaireOuvert(false)}>
@@ -374,7 +374,7 @@ export function ReglementsAchatPage() {
                 </button>
               </header>
 
-              <div className="sn-drawer__body">
+              <div className="achats-fenetre__corps">
                 <Field label="Société minière bénéficiaire" required htmlFor="societe">
                   <select
                     id="societe" className="sn-select" value={saisie.mining_company_id}
@@ -420,11 +420,7 @@ export function ReglementsAchatPage() {
                   />
                 </Field>
 
-                <Field
-                  label="Référence bancaire"
-                  hint="Une même référence ne s’enregistre pas deux fois : c’est la protection contre le double paiement."
-                  htmlFor="ref"
-                >
+                <Field label="Référence bancaire" htmlFor="ref">
                   <input
                     id="ref" className="sn-input" value={saisie.reference_bancaire}
                     onChange={(evenement) => setSaisie((s) => ({ ...s, reference_bancaire: evenement.target.value }))}
@@ -464,9 +460,9 @@ export function ReglementsAchatPage() {
 
         {/* ----------------------------------------------------- Imputation -- */}
         {reglementOuvert && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Imputer le règlement">
-            <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setReglementOuvert(null)} />
-            <div className="sn-drawer__panel" style={{ maxWidth: 720 }}>
+          <div className="achats-fenetre" role="dialog" aria-modal="true" aria-label="Imputer le règlement">
+            <div className="achats-fenetre__voile" aria-hidden="true" onClick={() => setReglementOuvert(null)} />
+            <div className="achats-fenetre__panneau">
               <header>
                 <h3><Link2 aria-hidden="true" /> {reglementOuvert.reference_reglement}</h3>
                 <button type="button" aria-label="Fermer" onClick={() => setReglementOuvert(null)}>
@@ -474,7 +470,7 @@ export function ReglementsAchatPage() {
                 </button>
               </header>
 
-              <div className="sn-drawer__body">
+              <div className="achats-fenetre__corps">
                 <dl className="achats-synthese" style={{ position: 'static' }}>
                   <div className="achats-synthese__poste">
                     <dt>Montant versé</dt>

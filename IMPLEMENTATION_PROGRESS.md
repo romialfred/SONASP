@@ -631,6 +631,8 @@ estimée.
 | A179 | Le montant payé d'une facture comptait toute affectation active : un règlement en brouillon soldait la dette avant toute exécution bancaire | Règlements | Distinction engagé / payé ; la dette ne baisse qu'à l'exécution confirmée |
 | A180 | Cycle de règlement à quatre états, confondant validation interne, émission de l'ordre, exécution bancaire et rapprochement | Règlements | Huit états, transitions contrôlées, preuve exigée avant exécution |
 | A181 | Deux profils sur trois sans compte `auth.users` : actifs à l'écran, aucune connexion possible — et la séparation des fonctions les comptait comme validateurs | Socle | Décompte joint à `auth.users` ; les profils orphelins restent à rattacher ou désactiver |
+| A182 | `snp_affecter_fifo` refusait tout règlement hors brouillon : le bouton « Imputer » d'un acompte validé renvoyait 400 sans rien afficher | Règlements | Imputation possible jusqu'à l'exécution ; messages d'échec explicites |
+| A183 | Formulaires portant des mentions du carnet de développement (« c'est la protection contre le double ordre », « seul mode admis ») | Socle | Six mentions retirées ; un formulaire applique ses règles, il ne les récite pas |
 
 ---
 

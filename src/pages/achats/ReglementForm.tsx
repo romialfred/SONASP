@@ -19,8 +19,12 @@ import {
   type SocieteEligible,
   type StatutReglementCycle,
 } from '@/services/reglementsAchatService';
-import { LIBELLES_TRANCHE, type TrancheAge } from '@/services/achatsIndustrielsCalculs';
-import { simulerAffectationFifo } from '@/services/achatsIndustrielsCalculs';
+import {
+  LIBELLES_TRANCHE,
+  simulerAffectationFifo,
+  type TrancheAge,
+} from '@/services/achatsIndustrielsCalculs';
+import { FactureAchatApercu } from './FactureAchatApercu';
 import '@/pages/artisanal-sites/artisanal-site-form.css';
 import './reglement-form.css';
 
@@ -268,12 +272,11 @@ export function ReglementForm() {
             <div className="site-form__meta-tile is-code">
               <p><Lock aria-hidden="true" /> Mode de règlement</p>
               <output>Virement bancaire</output>
-              <small>Seul mode admis pour les mines</small>
             </div>
             <div className="site-form__meta-tile">
               <p>Montant du virement</p>
               <output>{montantSaisi > 0 ? formaterFcfa(montantSaisi) : '—'}</output>
-              <small>{montantSaisi > 0 ? montantEnLettres(montantSaisi) : 'À saisir'}</small>
+              {montantSaisi > 0 && <small>{montantEnLettres(montantSaisi)}</small>}
             </div>
           </div>
         </header>
@@ -476,17 +479,14 @@ export function ReglementForm() {
                               onChange={(evenement) => setEntete((e) => ({ ...e, montant: evenement.target.value }))}
                               placeholder="0"
                             />
-                            <small>
-                              {montantSaisi > 0
-                                ? `${formaterFcfa(montantSaisi)} — ${montantEnLettres(montantSaisi)}`
-                                : 'Le montant s’écrit en francs entiers.'}
-                            </small>
+                            {montantSaisi > 0 && (
+                              <small>{montantEnLettres(montantSaisi)}</small>
+                            )}
                           </div>
 
                           <div className="site-form__field">
                             <label className="site-form__label" htmlFor="devise">Devise</label>
                             <input id="devise" value={societeChoisie.devise} disabled />
-                            <small>Celle des factures et du compte bénéficiaire.</small>
                           </div>
 
                           <div className="site-form__field">
@@ -512,7 +512,6 @@ export function ReglementForm() {
                               }))}
                               placeholder="OV-2026-000"
                             />
-                            <small>Une référence ne se réutilise pas : c’est la protection contre le double ordre.</small>
                           </div>
 
                           <div className="site-form__field is-wide">
@@ -942,93 +941,14 @@ export function ReglementForm() {
           </aside>
         </div>
 
-        {/* ------------------------------------ Consultation d'une facture -- */}
+        {/* La facture se consulte en entier, dans sa forme comptable. Fermer ne
+            touche pas à la saisie : elle vit dans l'état du formulaire, que
+            cette fenêtre ne remonte jamais. */}
         {factureOuverte && (
-          <div
-            className="reglement-form__modale"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Facture ${factureOuverte.numero_facture}`}
-          >
-            <div className="reglement-form__modale-panneau">
-              <header>
-                <div>
-                  <h3>{factureOuverte.numero_facture}</h3>
-                  <p>
-                    Achat {factureOuverte.achat_numero || '—'} · période du{' '}
-                    {formaterDate(factureOuverte.periode_debut)} au{' '}
-                    {formaterDate(factureOuverte.periode_fin)}
-                  </p>
-                </div>
-                {/* Fermer ne touche pas à la saisie : elle vit dans l'état du
-                    formulaire, que cette fenêtre ne remonte jamais. */}
-                <button
-                  type="button" aria-label="Fermer la facture"
-                  onClick={() => setFactureOuverte(null)}
-                >
-                  <X aria-hidden="true" />
-                </button>
-              </header>
-
-              <div className="reglement-form__modale-corps">
-                <h4>Informations</h4>
-                <table>
-                  <tbody>
-                    <tr><th>Date d’émission</th><td>{formaterDate(factureOuverte.date_emission)}</td></tr>
-                    <tr><th>Échéance</th><td>{formaterDate(factureOuverte.date_echeance)}</td></tr>
-                    <tr><th>Ancienneté</th><td>{factureOuverte.anciennete_jours} jour(s)</td></tr>
-                    <tr><th>Statut</th><td>{factureOuverte.statut}</td></tr>
-                    <tr>
-                      <th>Certification fiscale</th>
-                      <td>
-                        {factureOuverte.statut_certification === 'certifiee'
-                          ? 'Certifiée par le service fiscal'
-                          : factureOuverte.statut_certification === 'echec'
-                            ? 'Échec de certification'
-                            : 'En attente de certification'}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <h4>Montants</h4>
-                <table>
-                  <tbody>
-                    <tr>
-                      <th>Montant TTC</th>
-                      <td className="est-nombre">{formaterFcfa(factureOuverte.montant_ttc)}</td>
-                    </tr>
-                    <tr>
-                      <th>Déjà payé</th>
-                      <td className="est-nombre">{formaterFcfa(factureOuverte.montant_paye)}</td>
-                    </tr>
-                    <tr>
-                      <th>Retenu par un règlement en cours</th>
-                      <td className="est-nombre">
-                        {formaterFcfa(factureOuverte.montant_engage - factureOuverte.montant_paye)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>Reste dû</th>
-                      <td className="est-nombre"><strong>{formaterFcfa(factureOuverte.reste_du)}</strong></td>
-                    </tr>
-                    <tr>
-                      <th>Encore imputable</th>
-                      <td className="est-nombre">{formaterFcfa(factureOuverte.reste_a_affecter)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                {/* Aucun document n'est présenté comme disponible s'il ne l'est
-                    pas : les données structurées tiennent lieu de pièce. */}
-                <div className="site-form__coordinates" style={{ marginTop: 18 }}>
-                  <FileText aria-hidden="true" />
-                  Le document PDF de cette facture n’est pas encore déposé sur la plateforme. Les
-                  informations ci-dessus proviennent directement de la facture enregistrée.
-                </div>
-              </div>
-            </div>
-          </div>
+          <FactureAchatApercu
+            factureId={factureOuverte.facture_id}
+            onFermer={() => setFactureOuverte(null)}
+          />
         )}
       </div>
     </NationalDashboardLayout>

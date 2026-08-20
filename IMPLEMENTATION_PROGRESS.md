@@ -618,6 +618,11 @@ estimée.
 | A166 | Filtre de statut proposant « Expédié » et « Affiné », absents de `production_status_v2` : la table se vidait sans explication | Production | Entrées retirées |
 | A167 | Définitions et règles de gestion affichées en pavés permanents en haut des écrans (14 notes de plus de 115 caractères) | Socle | Primitive `Infobulle` ; `PageHeader` et `Section` acceptent une propriété `info` |
 | A168 | Messages énumérant chaque mois manquant (« Prévision absente pour avril 2026, mai 2026… ») | Production | Messages ramenés à « Prévision non saisie », « Source illisible » |
+| A169 | `sites_country_check` limité à 'GN', 'CI', 'ML' : le schéma interdisait d'enregistrer un site burkinabè | Socle | Liste élargie à BF et aux pays voisins ; sites remplacés |
+| A170 | `fx_rates_daily_currency_pair_check` sans EUR/XOF, paire pourtant suivie par les écrans de marché | Marché | Paire autorisée |
+| A171 | `sales_seller_type_check` limité à 'mining_company' et 'mansa_ressources' : la SONASP ne pouvait pas se désigner vendeur | Ventes | Valeur 'sonasp' ajoutée |
+| A172 | 57 clés étrangères vers `auth.users` en NO ACTION : toute ligne référençant un compte supprimé était immodifiable (généralisation de A156) | Socle | Conversion en ON DELETE SET NULL, table par table |
+| A173 | Référentiel résiduel : abréviations KGM/DGB/MAN, SONASP nommée « Substances Naturelles », expéditions préfixées HUM-SMK | Référentiels | Corrigés ; expéditions renumérotées EXP-BF-AAAA-NNN |
 
 ---
 
@@ -649,6 +654,9 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
   appliquées** sur `SONASP_OPS` ; additives, retour arrière documenté en tête de fichier.
 - La migration `20260820_001_tracabilite_lots_vente` (table `snp_ventes_lots`) **est
   appliquée** sur `SONASP_OPS` ; additive, retour arrière documenté en tête de fichier.
+- Les migrations `20260820_005` (référentiel burkinabè), `20260820_006` (clés d'auteur,
+  généralisation) et `20260820_007` (jeu de présentation 2026) **sont appliquées** sur
+  `SONASP_OPS`. La 007 dépend des deux précédentes.
 - Les migrations `20260820_002` (site national), `20260820_003` (auteurs supprimés) et
   `20260820_004` (références de barres) **sont appliquées** sur `SONASP_OPS`. La 004 exige la
   003 : sans elle, toute mise à jour de `daily_production` échoue sur une clé orpheline.
@@ -657,7 +665,11 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 
 ## 9. Prochaine action exacte
 
-**Raccorder le module d'analyses aux données réelles** (A164) : six onglets, 157 lignes
+**Retirer le jeu de présentation avant toute mise en service réelle.** Les requêtes de
+suppression figurent en tête de `supabase/migrations/20260820_007_jeu_presentation_2026.sql` :
+tout est marqué « Jeu de présentation » ou `SIMULATION_PRESENTATION_2026`.
+
+Puis **raccorder le module d'analyses aux données réelles** (A164) : six onglets, 157 lignes
 écrites en dur, aujourd'hui signalées par une bannière mais toujours affichées. Puis le moteur
 de rapports (A163), dont les exports sont refusés faute de source.
 

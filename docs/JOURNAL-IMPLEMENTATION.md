@@ -1940,3 +1940,76 @@ reste entière et visible — « Spécimen sans valeur fiscale. Ni remise à un 
 - `npx vitest run` : **646/646 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Un jeu de données pour présenter la plateforme
+
+Demande : analyser la structure de la base et y ajouter de quoi présenter la plateforme —
+production, exportations, paiements, licences, prévisions budgétaires de quelques mines, et des
+ventes aux prix de 2026.
+
+**Réserve exprimée puis levée.** La consigne permanente du projet interdit les jeux de
+démonstration en production. La demande étant explicite, le jeu a été posé — mais **tout est
+marqué et supprimable** : chaque ligne porte « Jeu de présentation » dans ses observations, les
+cours et taux simulés portent la source `SIMULATION_PRESENTATION_2026`, et les requêtes de
+suppression figurent en tête de `supabase/migrations/20260820_007_jeu_presentation_2026.sql`.
+
+### Ce que l'analyse de la base a révélé
+
+Quatre défauts structurels bloquaient l'écriture de données burkinabè, tous invisibles depuis
+les écrans déjà corrigés :
+
+| Contrainte | Ce qu'elle interdisait |
+|---|---|
+| `sites_country_check` | `country IN ('GN','CI','ML')` — **le Burkina Faso était interdit** (A169) |
+| `fx_rates_daily_currency_pair_check` | pas d'EUR/XOF, alors que les écrans de marché la suivent depuis le lot précédent (A170) |
+| `sales_seller_type_check` | `'mining_company'` ou `'mansa_ressources'` — la SONASP n'avait pas de valeur pour se désigner (A171) |
+| 57 clés étrangères vers `auth.users` en NO ACTION | toute ligne référençant un compte supprimé était **immodifiable** (A172) |
+
+Le quatrième s'est révélé en tentant de renuméroter les expéditions : la mise à jour a échoué
+sur un `created_by` disparu. C'est le même défaut que A156, mais généralisé à toute la base —
+production, ventes, paiements, expéditions, artisans, cartes professionnelles.
+
+S'y ajoutaient les résidus de référentiel : dix sites tous guinéens, maliens ou ivoiriens, les
+abréviations KGM / DGB / MAN, et la SONASP nommée « Substances **Naturelles** ».
+
+### Une erreur commise et réparée
+
+La première rédaction de la correction des clés étrangères relisait `pg_constraint` pour savoir
+lesquelles reposer — **après** les avoir supprimées. La lecture ne renvoyait plus rien : les
+cinquante-sept clés ont été retirées et non reposées, laissant les colonnes d'auteur sans
+contrainte d'intégrité. Détecté au contrôle qui a suivi, réparé par une migration de
+rétablissement, puis fusionné dans un script correct qui relève la liste **avant** de supprimer.
+
+### Le jeu de données
+
+| Domaine | Volume |
+|---|---|
+| Mines industrielles | 2 → **6** (Essakane, Houndé, Sanbrado, Bomboré ajoutées) |
+| Sites | 10 guinéens/maliens → **9 burkinabè** |
+| Raffineurs habilités | 1 → **4** (Metalor, Valcambi, Argor-Heraeus) |
+| Budgets 2026 | 6 mines, **213 274 oz**, mensualisés avec saisonnalité |
+| Prévisions révisées | 72 lignes, une par mois et par mine |
+| Production journalière | **196 coulées**, 135 522 oz, du 9 janvier au 14 août |
+| Licences d'exportation | 4 nouvelles ; consommation recalculée sur la production réelle |
+| Expéditions | **5**, 60 barres, vers les quatre affineurs |
+| Achats aux mines | **42**, 126 918 oz, ~393 milliards FCFA (TVA 18 %, TDC 1 %) |
+| Ventes à l'export | **12**, 8 400 oz, ~34 M$, du 6 février au 14 août |
+| Règlements | 4, dont 2 approuvés |
+| Cours de l'or | 4 297 → 4 534 $/oz sur 2026, jours ouvrés |
+
+**Rien n'est posé indépendamment.** Le doré se déduit de l'or fin et du titre ; l'achat mensuel
+de la production réellement déclarée ; la vente du cours du jour lu dans `gold_prices_daily` ;
+la licence du budget de la mine ; les totaux d'expédition des barres embarquées. Les six mines
+suivent des trajectoires distinctes — Bomboré dépasse son objectif, Boungou décroche — pour que
+la comparaison au budget montre autre chose qu'une ligne plate.
+
+L'écran du coffre distingue désormais **136 barres détenues (94 954 oz)** des **60 parties
+(40 568 oz)** : la définition posée au lot précédent produit enfin un effet visible.
+
+### Contrôles
+
+- `npx vitest run` : **646/646 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

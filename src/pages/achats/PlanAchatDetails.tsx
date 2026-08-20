@@ -50,7 +50,7 @@ const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maxim
 const COLONNES_DEFINIES = [
   {
     titre: 'Déclarée (oz)',
-    definition: 'Production que la mine a déclarée sur le mois, déclarations annulées exclues.',
+    definition: 'Production que la mine a déclarée sur le mois, en onces d’or fin, déclarations annulées exclues.',
   },
   {
     titre: 'Validée (oz)',
@@ -58,7 +58,7 @@ const COLONNES_DEFINIES = [
   },
   {
     titre: 'Titre (%)',
-    definition: 'Titre moyen du doré déclaré sur le mois, en pourcentage de métal fin.',
+    definition: 'Part d’or fin dans le doré, en pourcentage de sa masse ; le reste est de l’argent et des impuretés. Les onces des autres colonnes sont déjà exprimées en or fin : le titre ne s’y applique pas une seconde fois.',
   },
   {
     titre: 'Engagée (oz)',
@@ -66,7 +66,7 @@ const COLONNES_DEFINIES = [
   },
   {
     titre: 'Assiette (oz)',
-    definition: 'Déclarée moins engagée : ce que la SONASP peut encore acheter. Une once ne s’achète pas deux fois.',
+    definition: 'Déclarée moins engagée : les onces d’or fin que la SONASP peut encore acheter. Une once ne s’achète pas deux fois.',
   },
   {
     titre: 'À acheter (oz)',

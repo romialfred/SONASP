@@ -140,14 +140,14 @@ describe('ProductionDashboardModern', () => {
     expect(screen.getByText('Production mensuelle — Bissa Gold')).toBeInTheDocument();
   });
 
-  it('n’affiche pas de titre moyen sans déclaration', async () => {
+  it('n’affiche pas de teneur moyenne sans déclaration', async () => {
     mocks.reponses.daily_production = [];
     render(<ProductionDashboardModern />);
     await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
 
     expect(screen.getByText('Aucune production déclarée')).toBeInTheDocument();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
-    expect(screen.getByText('Aucun titre déclaré')).toBeInTheDocument();
+    expect(screen.getByText('Aucune teneur déclarée')).toBeInTheDocument();
   });
 
   it('annonce une source indisponible', async () => {

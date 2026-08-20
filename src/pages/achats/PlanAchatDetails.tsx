@@ -57,8 +57,8 @@ const COLONNES_DEFINIES = [
     definition: 'Part de cette déclaration dont le contrôle est achevé. C’est un sous-ensemble de la déclarée.',
   },
   {
-    titre: 'Titre (%)',
-    definition: 'Part d’or fin dans le doré, en pourcentage de sa masse ; le reste est de l’argent et des impuretés. Les onces des autres colonnes sont déjà exprimées en or fin : le titre ne s’y applique pas une seconde fois.',
+    titre: 'Teneur en or (%)',
+    definition: 'Part d’or fin dans le doré, en pourcentage de sa masse ; le reste est de l’argent et des impuretés. Les onces des autres colonnes sont déjà exprimées en or fin : la teneur ne s’y applique pas une seconde fois.',
   },
   {
     titre: 'Engagée (oz)',

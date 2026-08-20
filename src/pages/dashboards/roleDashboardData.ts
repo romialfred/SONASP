@@ -313,7 +313,7 @@ export async function loadRefineryDashboard(): Promise<RoleDashboardData> {
       { label: 'Lots traités', value: entier(traites.length), hint: 'Sur les douze derniers mois' },
       {
         // Le rendement moyen était annoncé à 95,2 % sans aucun calcul derrière.
-        label: 'Titre moyen constaté',
+        label: 'Teneur moyenne constatée',
         value: bullionTotal > 0 ? `${nombre((orFinTotal / bullionTotal) * 100)} %` : '—',
         hint: bullionTotal > 0 ? 'Or fin rapporté au doré' : 'Aucun lot pesé',
       },

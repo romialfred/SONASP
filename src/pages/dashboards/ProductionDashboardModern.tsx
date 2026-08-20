@@ -120,7 +120,7 @@ export function ProductionDashboardModern() {
                 {
                   label: 'Compagnies suivies',
                   value: data.compagnies.length,
-                  hint: titre === null ? 'Aucun titre déclaré' : `Titre moyen ${nombre(titre)} %`,
+                  hint: titre === null ? 'Aucune teneur déclarée' : `Teneur moyenne ${nombre(titre)} %`,
                   icon: Factory,
                   tone: 'gold',
                 },
@@ -133,7 +133,7 @@ export function ProductionDashboardModern() {
                 icon={BarChart3}
                 tone="emerald"
                 title={`Production mensuelle — ${libelleSelection(data, selection)}`}
-                description="Onces produites et titre moyen constaté sur les douze derniers mois."
+                description="Onces produites et teneur moyenne constatée sur les douze derniers mois."
               >
                 {totalOnces(serie) === 0 ? (
                   <EmptyState
@@ -170,7 +170,7 @@ export function ProductionDashboardModern() {
                         dataKey="titreMoyen"
                         stroke="#0f7a56"
                         strokeWidth={2}
-                        name="Titre moyen (%)"
+                        name="Teneur moyenne en or (%)"
                         connectNulls
                         dot={{ r: 3 }}
                       />
@@ -222,7 +222,7 @@ export function ProductionDashboardModern() {
               icon={Factory}
               tone="blue"
               title="Production par compagnie"
-              description="Cumul sur douze mois et titre moyen constaté ; sélectionnez une ligne pour filtrer le graphique."
+              description="Cumul sur douze mois et teneur moyenne constatée ; sélectionnez une ligne pour filtrer le graphique."
             >
               {data.compagnies.length === 0 ? (
                 <EmptyState title="Aucune compagnie minière enregistrée" />
@@ -236,7 +236,7 @@ export function ProductionDashboardModern() {
                         <th scope="col">Sigle</th>
                         <th scope="col" className="is-num">Production 12 mois</th>
                         <th scope="col" className="is-num">Déclarations</th>
-                        <th scope="col" className="is-num">Titre moyen</th>
+                        <th scope="col" className="is-num">Teneur moyenne</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -2579,3 +2579,57 @@ colonne qu'elle décrit (A194).
 - `npx vitest run` : **730/730 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — « Titre » cède la place à « Teneur en or »
+
+### Le point de vocabulaire
+
+« Titre » n'est pas faux en métallurgie : titre légal, titre en millièmes, poinçon de
+garantie. Mais son domaine est le métal **affiné et poinçonné**, pas le doré qui sort de la
+mine. Trois constats l'ont emporté :
+
+1. **Le mot portait déjà deux sens sur la plateforme.** « Titre d'identité présenté et copie
+   versée au dossier », « Titre d'exercice délivré à l'artisan ». Et le code minier burkinabè
+   dit « titre minier » pour un permis. Un même mot pour un document et pour une pureté, dans
+   un outil qui gère les deux.
+2. **L'écran d'entrée en stock se contredisait lui-même** : « Titre en or (%) » et, la case
+   suivante, « Teneur en argent (%) ». Même grandeur physique, deux mots, sur la même ligne.
+3. **« Teneur en or » est le mot du reporting de production.** Qualifiée par « en or » et par
+   son unité en pourcentage, elle ne se confond pas avec la teneur du minerai en g/t.
+
+Chez l'artisan, où l'or se gradue en carats, le mot retenu est **« Pureté »** : c'est celui de
+l'acheteur, et la colonne s'appelle déjà `purete_karat`.
+
+### Ce qui a changé
+
+| Avant | Après | Où |
+|---|---|---|
+| Titre (%) · Titre or % | **Teneur en or (%)** | Plan d'achat, déclaration journalière, entrée en stock, guide des champs |
+| Titre moyen · Titre moyen constaté | **Teneur moyenne** · **Teneur moyenne constatée** | Tableaux de bord, production, coffre |
+| Titre (colonne) | **Teneur** | Facture d'achat, production en coffre |
+| Titre courant · Titre en carats | **Pureté courante** · **Pureté en carats** | Vente d'or artisanal |
+| Titre et restitution | **Teneurs et restitution** | Entrée en stock |
+| « Auto: Bullion × Finesse ÷ 100 » | « Calculé : masse de doré × teneur ÷ 100 » | Guide des champs |
+
+**Vingt-quatre libellés** traités, trois tests alignés. « Finesse » disparaît au passage :
+c'était un calque de *fineness* qui ne veut rien dire en français.
+
+**Ce qui ne bouge pas** : « Titre d'identité », « Titre d'exercice », « Titre du document » —
+ce sont des documents, et c'est le bon mot. Les colonnes de base non plus :
+`estimated_fineness_pct`, `titre_pct`, `titre_moyen_pct` restent. Renommer une colonne pour un
+libellé, c'est payer une migration au prix d'un mot (A195).
+
+### « Rapport »
+
+Vérifié : dans la plateforme, « Rapport » ne désigne jamais qu'un document — rapport chiffre
+d'affaires, rapport quantités, rapport taxes et royalties. C'est le bon mot, il reste. Le
+« Rapport » qui avait attiré l'œil se trouvait dans une réponse de conversation, pas à
+l'écran ; il fallait y lire « teneur calculée ».
+
+### Contrôles
+
+- `npx vitest run` : **730/730 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé

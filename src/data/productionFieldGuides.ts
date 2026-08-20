@@ -24,14 +24,14 @@ export const dailyProductionFieldGuides = {
     required: true
   },
   estimated_fineness_pct: {
-    title: 'Estimated Fineness (%)',
-    description: 'Pureté estimée (0-100%)',
+    title: 'Teneur en or (%)',
+    description: 'Part d’or fin dans le doré, de 0 à 100 %',
     example: '92.1%',
     required: true
   },
   pure_gold_grams: {
     title: 'Pure Gold (g)',
-    description: 'Auto: Bullion × Finesse ÷ 100',
+    description: 'Calculé : masse de doré × teneur ÷ 100',
     example: '10377.67 g',
     readOnly: true
   },

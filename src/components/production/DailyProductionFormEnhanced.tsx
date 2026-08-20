@@ -509,7 +509,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Gold Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Titre or % <span className="text-xs italic text-gray-500 font-normal">(estimé)</span> *
+                  Teneur en or (%) <span className="text-xs italic text-gray-500 font-normal">(estimé)</span> *
                 </label>
                 <Input
                   type="number"
@@ -528,7 +528,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Silver Assay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Titre argent % <span className="text-xs italic text-gray-500 font-normal">(estimé)</span>
+                  Teneur en argent (%) <span className="text-xs italic text-gray-500 font-normal">(estimé)</span>
                 </label>
                 <Input
                   type="number"

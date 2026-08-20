@@ -163,7 +163,7 @@ describe('tableaux de bord métier', () => {
 
     // Le rendement était annoncé « 95,2 % » en dur, sans calcul.
     const indicateurs = within(screen.getByRole('region', { name: 'Indicateurs du poste' }));
-    expect(indicateurs.getByText('Titre moyen constaté')).toBeInTheDocument();
+    expect(indicateurs.getByText('Teneur moyenne constatée')).toBeInTheDocument();
     expect(indicateurs.getByText('94,00 %')).toBeInTheDocument();
     expect(indicateurs.getByText('25,00 oz')).toBeInTheDocument();
   });

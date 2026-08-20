@@ -127,7 +127,7 @@ export function valider(saisie: SaisieEntree): string | null {
   if (titre <= 0 || titre > 100) return 'Le titre en or doit être compris entre 0 et 100 %.';
   const argent = nombre(saisie.silver_percentage);
   if (argent < 0 || argent > 100) return 'La teneur en argent doit être comprise entre 0 et 100 %.';
-  if (titre + argent > 100) return 'La somme du titre en or et de la teneur en argent dépasse 100 %.';
+  if (titre + argent > 100) return 'La somme des teneurs en or et en argent dépasse 100 %.';
   const retenu = nombre(saisie.metal_retained_percentage);
   if (retenu <= 0 || retenu > 100) return 'Le métal restitué doit être compris entre 0 et 100 %.';
   return null;
@@ -371,11 +371,11 @@ export function AddInventoryEntry() {
               <Section
                 id="titre"
                 icon={FlaskConical}
-                title="Titre et restitution"
+                title="Teneurs et restitution"
                 description="Résultats d’essai de la raffinerie et part de métal restituée."
               >
                 <div className="entree-stock__ligne is-quatre">
-                  <Field label="Titre en or (%)" required>
+                  <Field label="Teneur en or (%)" required>
                     <input
                       type="number"
                       min="0"

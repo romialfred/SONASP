@@ -11,7 +11,7 @@ export interface MoisProduction {
   mois: string;
   onces: number;
   grammesDore: number;
-  /** Titre moyen pondéré par le nombre de déclarations du mois. */
+  /** Teneur moyenne en or, pondérée par le nombre de déclarations du mois. */
   titreMoyen: number | null;
   declarations: number;
 }
@@ -121,7 +121,7 @@ export function agregerParMois(productions: LigneProduction[], reference = new D
   return serie;
 }
 
-/** Titre moyen d'une série, pondéré par les déclarations ; `null` si aucune. */
+/** Teneur moyenne d'une série, pondérée par les déclarations ; `null` si aucune. */
 export function titreMoyenSerie(serie: MoisProduction[]): number | null {
   const declarations = serie.reduce((somme, mois) => somme + mois.declarations, 0);
   if (declarations === 0) return null;

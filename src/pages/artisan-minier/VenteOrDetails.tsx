@@ -307,7 +307,7 @@ export default function VenteOrDetails() {
               icon={Scale}
               tone="amber"
               title="Caractéristiques de la collecte"
-              description="Nature, titre et volume de l’or déclaré."
+              description="Nature, pureté et volume de l’or déclaré."
             >
               <dl className="vente-detail__facts">
                 <div>
@@ -315,7 +315,7 @@ export default function VenteOrDetails() {
                   <dd>{TYPE_OR_LABELS[vente.type_or] || vente.type_or}</dd>
                 </div>
                 <div>
-                  <dt>Titre</dt>
+                  <dt>Pureté</dt>
                   <dd>{vente.purete_karat} carats ({decimal.format((vente.purete_karat / 24) * 100)} %)</dd>
                 </div>
                 <div>

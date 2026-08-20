@@ -78,7 +78,7 @@ const STATUT_OPTIONS: Array<{ value: Statut; label: string }> = [
   { value: 'validee', label: 'Validée' },
 ];
 
-/** Titres légaux courants ; la saisie libre en pourcentage reste possible. */
+/** Puretés courantes du négoce ; la saisie libre en pourcentage reste possible. */
 const KARAT_PRESETS = [18, 20, 21, 22, 24];
 
 /** Statuts verrouillant la modification d'une vente. */
@@ -404,8 +404,8 @@ export default function VenteOrForm() {
               <Section
                 id="or"
                 icon={Scale}
-                title="Nature et titre de l’or"
-                description="Forme collectée, quantité pesée et titre du métal."
+                title="Nature et pureté de l’or"
+                description="Forme collectée, quantité pesée et pureté du métal."
               >
                 <fieldset className="vente-form__types">
                   <legend className="sn-field__label">Type d’or <i aria-hidden="true">*</i></legend>
@@ -455,9 +455,9 @@ export default function VenteOrForm() {
                     />
                   </Field>
                   <div className="sn-field">
-                    <span className="sn-field__label">Titre courant</span>
-                    <div className="vente-form__karats" role="group" aria-label="Titre en carats">
-                      {/* Chaque titre porte sa jauge de purete, 24 K valant 100 %. */}
+                    <span className="sn-field__label">Pureté courante</span>
+                    <div className="vente-form__karats" role="group" aria-label="Pureté en carats">
+                      {/* Chaque bouton porte sa jauge de purete, 24 K valant 100 %. */}
                       {KARAT_PRESETS.map((karat) => (
                         <button
                           key={karat}

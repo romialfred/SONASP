@@ -7,7 +7,7 @@ export function RefineryDashboard() {
     <RoleDashboardShell
       icon={Beaker}
       title="Tableau de bord raffinerie"
-      subtitle="Lots reçus à traiter, titre constaté et stock affiné disponible."
+      subtitle="Lots reçus à traiter, teneur constatée et stock affiné disponible."
       load={loadRefineryDashboard}
       serieTitle="Or fin reçu sur douze mois"
       serieDescription="Volume d’or fin porté par les lots réceptionnés."

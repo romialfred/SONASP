@@ -331,7 +331,7 @@ export function FactureAchatApercu({ factureId, onFermer }: {
                     <th>Référence</th>
                     <th>Désignation</th>
                     <th className="is-num">Qté</th>
-                    <th className="is-num">Titre</th>
+                    <th className="is-num">Teneur</th>
                     <th className="is-num">P.U.</th>
                     <th className="is-num">Montant HT</th>
                     <th className="is-centre">Groupe</th>

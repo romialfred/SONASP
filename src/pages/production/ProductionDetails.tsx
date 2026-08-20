@@ -262,7 +262,7 @@ export function ProductionDetails() {
               icon: Package,
               tone: 'gold',
             },
-            { label: 'Titre', value: pourcent(production.estimated_fineness_pct), icon: Scale, tone: 'gold' },
+            { label: 'Teneur en or', value: pourcent(production.estimated_fineness_pct), icon: Scale, tone: 'gold' },
             {
               label: 'Compagnie',
               value: compagnie?.name || '—',
@@ -321,7 +321,7 @@ export function ProductionDetails() {
                     id="composition"
                     icon={Scale}
                     title="Poids et composition"
-                    description="Les impuretés sont le complément à 100 % du titre déclaré."
+                    description="Les impuretés sont le complément à 100 % de la teneur déclarée."
                   >
                     <div className="production-page__composition">
                       <article>

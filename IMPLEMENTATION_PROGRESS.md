@@ -644,6 +644,7 @@ estimée.
 | A192 | Écran d'un plan mensuel : boutons d'action mêlés aux chiffres, « Répartir » noyé dans un paragraphe, grille de onze colonnes en débordement | Achats industriels | Barre d'état séparée, gestes nommés, grille à huit colonnes ; la cible hors assiette est expliquée |
 | A193 | Aucun plan mensuel pour les mois écoulés : les achats de janvier à juillet 2026 existaient sans la campagne qui les avait décidés | Achats industriels | Sept plans reconstitués avec leurs lignes et leurs demandes ; janvier à juin clos, juillet en exécution |
 | A194 | Grille de répartition : une cellule sur deux portait deux lignes, et « FCFA » répété dans chaque cellule repassait à la ligne | Achats industriels | Onze colonnes, une donnée par cellule, unité en en-tête ; `COLONNES_DEFINIES` porte les définitions une seule fois, en-tête et lexique |
+| A195 | « Titre » désignait à la fois la pureté de l'or et un document (« titre d'identité », « titre d'exercice »), et l'entrée en stock disait « Titre en or » à côté de « Teneur en argent » | Socle | « Teneur en or » partout sur l'or industriel, « Pureté » sur l'or artisanal gradué en carats ; 24 libellés, 3 tests. Colonnes de base inchangées |
 
 ---
 

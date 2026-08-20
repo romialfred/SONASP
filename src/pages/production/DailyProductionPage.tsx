@@ -56,7 +56,7 @@ export function cumulsProduction(productions: DailyProduction[]) {
   );
 }
 
-/** Titre moyen pondéré par la masse de doré ; `null` sans doré pesé. */
+/** Teneur moyenne en or, pondérée par la masse de doré ; `null` sans doré pesé. */
 export function titreMoyen(productions: DailyProduction[]): number | null {
   const dore = productions.reduce((somme, production) => somme + Number(production.bullion_grams || 0), 0);
   if (dore <= 0) return null;
@@ -78,7 +78,7 @@ export function lignesExport(
     'Date',
     'Compagnie minière',
     'Doré (g)',
-    'Titre (%)',
+    'Teneur en or (%)',
     'Or fin (g)',
     'Onces troy',
     'Référence de barre',
@@ -397,7 +397,7 @@ export function DailyProductionPage() {
               tone: 'green',
             },
             {
-              label: 'Titre moyen',
+              label: 'Teneur moyenne',
               value: titre === null ? '—' : `${nombre(titre)} %`,
               hint: titre === null ? 'Aucun doré pesé' : 'Pondéré par la masse de doré',
               icon: Scale,

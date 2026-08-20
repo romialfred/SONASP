@@ -91,7 +91,7 @@ const fillSale = () => {
   fireEvent.change(screen.getByLabelText(/Prix au gramme/), { target: { value: '40000' } });
 };
 
-describe('conversions de titre', () => {
+describe('conversions de pureté', () => {
   it('convertit carats et pourcentage dans les deux sens', () => {
     expect(karatToPercentage(24)).toBe(100);
     expect(karatToPercentage(22)).toBe(91.67);
@@ -191,7 +191,7 @@ describe('VenteOrForm', () => {
     render(<VenteOrForm />);
     await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
 
-    expect(screen.getByText('Nature et titre de l’or')).toBeInTheDocument();
+    expect(screen.getByText('Nature et pureté de l’or')).toBeInTheDocument();
     expect(screen.getByText('Valorisation')).toBeInTheDocument();
     // « Observations » nomme la section et son champ : on vise le titre de section.
     expect(screen.getByRole('heading', { name: 'Observations' })).toBeInTheDocument();
@@ -235,14 +235,16 @@ describe('VenteOrForm', () => {
     expect(submit).not.toBeDisabled();
   });
 
-  it('lie le titre en carats et le pourcentage', async () => {
+  it('lie la pureté en carats et le pourcentage', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Nature et titre de l’or')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Nature et pureté de l’or')).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: /^24 carats/ }));
-    expect(screen.getByLabelText(/Pureté/)).toHaveValue(100);
+    // Le champ en pourcentage, non le groupe de boutons en carats : depuis que
+    // les deux disent « pureté », le libellé doit porter son unité.
+    expect(screen.getByLabelText(/Pureté \(%\)/)).toHaveValue(100);
 
-    fireEvent.change(screen.getByLabelText(/Pureté/), { target: { value: '75' } });
+    fireEvent.change(screen.getByLabelText(/Pureté \(%\)/), { target: { value: '75' } });
     expect(screen.getByText(/18,00 carats/)).toBeInTheDocument();
   });
 

@@ -427,7 +427,7 @@ export function ProductionInSafe() {
             { label: 'Or fin', value: grammes(cumuls.fin), icon: Shield, tone: 'gold' },
             { label: 'Équivalent', value: onces(cumuls.oz), icon: Target, tone: 'gold' },
             {
-              label: 'Titre moyen',
+              label: 'Teneur moyenne',
               value: cumuls.titreMoyen === null ? '—' : `${decimal.format(cumuls.titreMoyen)} %`,
               hint: cumuls.titreMoyen === null ? 'Aucun titre estimé renseigné' : undefined,
               icon: Target,
@@ -557,7 +557,7 @@ export function ProductionInSafe() {
                     <th scope="col">Date</th>
                     <th scope="col">Compagnie</th>
                     <th scope="col" className="is-right">Doré</th>
-                    <th scope="col" className="is-right">Titre</th>
+                    <th scope="col" className="is-right">Teneur</th>
                     <th scope="col" className="is-right">Or fin</th>
                     <th scope="col" className="is-right">Équivalent</th>
                     <th scope="col">Référence</th>

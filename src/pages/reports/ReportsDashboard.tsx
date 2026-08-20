@@ -14,8 +14,6 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import { generatePDF } from '@/services/pdfGenerationService';
 import { reportSchedulingService, type ScheduledReport, type ReportHistory } from '@/services/reportSchedulingService';
 import { useDialog } from '@/contexts/DialogContext';
 
@@ -35,7 +33,7 @@ export function ReportsDashboard() {
   const [selectedReport, setSelectedReport] = useState('');
   const [selectedReportId, setSelectedReportId] = useState('');
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
-  const [reportHistory, setReportHistory] = useState<ReportHistory[]>([]);
+  const [, setReportHistory] = useState<ReportHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -115,33 +113,23 @@ export function ReportsDashboard() {
     }
   ];
 
-  const handleExportExcel = (reportId: string) => {
-    const sampleData = [
-      ['Mansa Resources - ' + reportTypes.find(r => r.id === reportId)?.title],
-      ['Generated:', new Date().toLocaleDateString()],
-      [''],
-      ['Metric', 'Value', 'Change', 'Status'],
-      ['Total Revenue', '$9,945,000', '+24%', 'Good'],
-      ['Active Customers', '18', '+20%', 'Good'],
-      ['Batches Processed', '337', '+18%', 'Good'],
-      ['Avg Processing Time', '4.3 days', '-12%', 'Good'],
-      ['Customer Retention', '94%', '+2%', 'Excellent'],
-      ['Profit Margin', '18.5%', '+2.3%', 'Good'],
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(sampleData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Report');
-
-    ws['!cols'] = [
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 10 },
-      { wch: 12 }
-    ];
-
-    XLSX.writeFile(wb, `${reportId}_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  /**
+   * Les six rapports produisaient un classeur et un PDF entièrement inventés :
+   * 9 945 000 $ de recettes, 337 lots traités, 18 clients, des usines au Mali et
+   * en Guinée, assortis de « recommandations stratégiques ». Rien de tout cela
+   * ne venait de la base. Un rapport signé de la SONASP ne peut pas être un
+   * échantillon : tant que le moteur n'est pas branché sur les sources réelles,
+   * l'export refuse et le dit.
+   */
+  const refuserExport = (format: 'PDF' | 'Excel') => {
+    showError(
+      `Export ${format} indisponible`,
+      "Le moteur de rapports n'est pas encore raccordé aux données de la plateforme. " +
+        'Les chiffres des ventes, des achats et de la production se consultent sur leurs écrans respectifs.'
+    );
   };
+
+  const handleExportExcel = () => refuserExport('Excel');
 
   const handleSchedule = (reportId: string, reportTitle: string) => {
     setSelectedReportId(reportId);
@@ -149,26 +137,7 @@ export function ReportsDashboard() {
     setSchedulerOpen(true);
   };
 
-  const handleGeneratePDF = async (reportId: string) => {
-    try {
-      generatePDF(reportId);
-
-      const reportType = reportTypes.find(r => r.id === reportId);
-      if (reportType) {
-        await reportSchedulingService.createReportHistory({
-          report_type: reportId,
-          report_name: `${reportType.title} - ${new Date().toLocaleDateString()}`,
-          format: 'pdf',
-          file_size: '2.4 MB'
-        });
-
-        await loadData();
-      }
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      showError('Erreur de génération PDF', 'Une erreur s\'est produite lors de la génération du PDF. Veuillez réessayer.');
-    }
-  };
+  const handleGeneratePDF = async () => refuserExport('PDF');
 
   return (
     <MainLayout>
@@ -185,17 +154,21 @@ export function ReportsDashboard() {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        {/* Les rapports produisaient des documents entièrement inventés. Le dire
+            vaut mieux que de laisser signer un faux. */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <FileText className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-blue-900 mb-1">
-                Professional Report Generation
+              <p className="text-sm font-medium text-amber-900 mb-1">
+                Moteur de rapports non raccordé
               </p>
-              <p className="text-xs text-blue-700">
-                Each report includes: Executive summary, detailed analytics with charts,
-                traffic light indicators, insights, and strategic recommendations.
-                Reports are 3-5 pages in professional format, ready for Direction Générale.
+              <p className="text-xs text-amber-800">
+                Les rapports de cette page ne sont pas encore alimentés par les données de la
+                plateforme. Ils restent donc indisponibles au téléchargement : un document signé de
+                la SONASP ne peut pas reposer sur des chiffres d’exemple. Les ventes, les achats aux
+                mines, la production et les stocks se consultent sur leurs écrans respectifs, où les
+                chiffres sont réels.
               </p>
             </div>
           </div>
@@ -220,20 +193,20 @@ export function ReportsDashboard() {
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <Button
-                      onClick={() => handleGeneratePDF(report.id)}
+                      onClick={() => void handleGeneratePDF()}
                       className="w-full bg-primary-600 hover:bg-primary-700 flex items-center justify-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Generate PDF Report
+                      Rapport PDF
                     </Button>
 
                     <Button
                       variant="outline"
-                      onClick={() => handleExportExcel(report.id)}
+                      onClick={() => handleExportExcel()}
                       className="w-full flex items-center justify-center gap-2"
                     >
                       <FileText className="h-4 w-4" />
-                      Export to Excel
+                      Export Excel
                     </Button>
 
                     <Button

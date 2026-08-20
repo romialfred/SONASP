@@ -192,7 +192,7 @@ export function ExportLicenseForm() {
   const loadMiningCompanies = async () => {
     const { data, error } = await supabase
       .from('mining_companies')
-      .select('id, name, code')
+      .select('id, name, code, company_type')
       .eq('is_active', true)
       .order('name');
 

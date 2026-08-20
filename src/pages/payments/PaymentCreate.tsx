@@ -173,11 +173,10 @@ export function PaymentCreate() {
         const banks = JSON.parse(companyBanksData.parameter_value);
         setCompanyBanks(banks);
       } else {
-        setCompanyBanks([
-          { id: '1', name: 'Mansa Resources USD Account', currency: 'USD', country: 'USA' },
-          { id: '2', name: 'Mansa Resources EUR Account', currency: 'EUR', country: 'France' },
-          { id: '3', name: 'Mansa Resources CFA Account', currency: 'XOF', country: 'Guinea' },
-        ]);
+        // Trois comptes d'une société tierce étaient proposés au règlement
+        // faute de paramétrage. Un compte bancaire ne s'invente pas : la liste
+        // reste vide et l'écran nomme le paramètre manquant.
+        setCompanyBanks([]);
       }
 
     } catch (error: any) {
@@ -534,7 +533,6 @@ export function PaymentCreate() {
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                         <option value="XOF">XOF (CFA)</option>
-                        <option value="GNF">GNF</option>
                       </Select>
                     </FormField>
                   </div>
@@ -547,13 +545,23 @@ export function PaymentCreate() {
                         onChange={(e) => setFormData({ ...formData, companyBankId: e.target.value })}
                         disabled={!selectedSale}
                       >
-                        <option value="">Select company bank...</option>
+                        <option value="">
+                          {companyBanks.length === 0
+                            ? 'Aucun compte paramétré'
+                            : 'Choisir le compte de la SONASP…'}
+                        </option>
                         {companyBanks.map((bank) => (
                           <option key={bank.id} value={bank.id}>
                             {bank.name} ({bank.currency})
                           </option>
                         ))}
                       </Select>
+                      {companyBanks.length === 0 && (
+                        <p className="mt-1 text-xs text-amber-700">
+                          Les comptes de règlement ne sont pas renseignés : paramètre
+                          « company_banks » à définir dans les paramètres du système.
+                        </p>
+                      )}
                     </FormField>
 
                     <FormField label="Received Currency" htmlFor="receivedCurrency">
@@ -567,7 +575,6 @@ export function PaymentCreate() {
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                         <option value="XOF">XOF (CFA)</option>
-                        <option value="GNF">GNF</option>
                       </Select>
                     </FormField>
                   </div>

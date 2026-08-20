@@ -8,13 +8,13 @@ export const dailyProductionFieldGuides = {
   mining_company_id: {
     title: 'Mining Company',
     description: 'Source du bullion',
-    example: 'SMK',
+    example: 'SBM',
     required: true
   },
   bar_reference: {
     title: 'Bar Reference',
-    description: 'Référence auto (HUM[CODE]-NNNN)',
-    example: 'HUMSMK-0001',
+    description: 'Référence automatique : code de la société puis compteur',
+    example: 'SBM-0001',
     readOnly: true
   },
   bullion_grams: {

@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { roundUpToFixed } from '@/utils/numberUtils';
+import { SITE_NATIONAL } from '@/constants/site';
 
 interface DailyProductionFormProps {
   production?: DailyProduction | null;
@@ -27,6 +28,9 @@ interface DailyProductionFormProps {
 interface MiningCompany {
   id: string;
   name: string;
+  /** Code au référentiel, source du préfixe des références de barres. */
+  code?: string | null;
+  abbreviation?: string | null;
 }
 
 export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }: DailyProductionFormProps) {
@@ -114,7 +118,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     try {
       const { data, error } = await supabase
         .from('mining_companies')
-        .select('id, name')
+        .select('id, name, code, abbreviation, company_type')
         .eq('is_active', true)
         .order('name');
 
@@ -162,29 +166,28 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     ? roundUpToFixed(parseFloat(pureGoldGrams) / 31.1034768, 2)
     : '0.00';
 
-  // Fonction pour obtenir le préfixe de la société
-  const getCompanyPrefix = (companyName: string): string => {
-    const name = companyName.toLowerCase();
+  /**
+   * Préfixe de référence d'une barre.
+   *
+   * Les préfixes étaient ceux d'un autre exploitant — `HUMSMK` pour Komana au
+   * Mali, `HUMKGM` pour Kourousa en Guinée, `HUMDUG` pour Dugbe au Liberia — et
+   * le défaut préfixait `HUM` à n'importe quel nom. Une barre burkinabè sortait
+   * donc sous le code d'une société étrangère. Le préfixe vient désormais du
+   * code de la société tel qu'inscrit au référentiel.
+   */
+  const getCompanyPrefix = (company: { name: string; code?: string | null; abbreviation?: string | null }): string => {
+    const code = (company.code || company.abbreviation || '').trim().toUpperCase();
+    if (code) return code.replace(/[^A-Z0-9]/g, '').slice(0, 6);
 
-    // Société des Mines de Komana (SMK) -> HUMSMK
-    if (name.includes('komana') || name.includes('smk')) {
-      return 'HUMSMK';
-    }
-    // Kourousa -> HUMSMK
-    if (name.includes('kourousa') || name.includes('kgm')) {
-      return 'HUMSMK';
-    }
-    // Dugbe -> HUMDUG
-    if (name.includes('dugbe') || name.includes('dug')) {
-      return 'HUMDUG';
-    }
-    // Mansa Resource -> HUMMRL
-    if (name.includes('mansa') || name.includes('mrl')) {
-      return 'HUMMRL';
-    }
-
-    // Par défaut, utiliser les 3 premières lettres après HUM
-    return 'HUM' + companyName.substring(0, 3).toUpperCase();
+    // Sans code au référentiel, les initiales du nom valent mieux qu'un préfixe
+    // emprunté : la barre reste rattachable à sa société.
+    const initiales = company.name
+      .split(/\s+/)
+      .map((mot) => mot[0])
+      .filter((lettre) => /[A-Za-zÀ-ÿ]/.test(lettre || ''))
+      .join('')
+      .toUpperCase();
+    return (initiales || company.name.slice(0, 3)).replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'MINE';
   };
 
   const generateBarReference = async (companyId: string, _productionDate: string) => {
@@ -192,7 +195,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       const company = miningCompanies.find(c => c.id === companyId);
       if (!company) return '';
 
-      const prefix = getCompanyPrefix(company.name);
+      const prefix = getCompanyPrefix(company);
 
       // Obtenir le dernier numéro pour ce préfixe
       const { data, error } = await supabase
@@ -213,7 +216,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         }
       }
 
-      // Format: HUMSMK-0001, HUMKGM-0002, etc.
+      // Format : SBM-0001, WGM-0002 — le code de la société, puis un compteur.
       return `${prefix}-${nextNumber.toString().padStart(4, '0')}`;
     } catch (error) {
       console.error('Error generating bar reference:', error);
@@ -268,7 +271,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       : parseFloat(formData.bullion_grams);
 
     // Récupérer le site_id de l'utilisateur connecté
-    const userSiteId = user?.site_ids?.[0] || 'guinea';
+    const userSiteId = user?.site_ids?.[0] || SITE_NATIONAL;
 
     // Trouver le nom de la société
 

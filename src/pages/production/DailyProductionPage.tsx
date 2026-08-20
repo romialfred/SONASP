@@ -126,7 +126,7 @@ export function DailyProductionPage() {
   const chargerCompagnies = useCallback(async () => {
     const { data, error } = await supabase
       .from('mining_companies')
-      .select('id, name')
+      .select('id, name, company_type')
       .eq('is_active', true)
       .order('name');
     if (error) {

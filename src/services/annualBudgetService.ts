@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { SITE_NATIONAL } from '@/constants/site';
 
 export interface AnnualBudget {
   id: string;
@@ -61,7 +62,7 @@ export interface DailyTarget {
 class AnnualBudgetService {
   async getAnnualBudget(
     year: number,
-    siteId: string = 'guinea',
+    siteId: string = SITE_NATIONAL,
     miningCompanyId?: string | null
   ): Promise<AnnualBudget | null> {
     let query = supabase
@@ -86,7 +87,7 @@ class AnnualBudgetService {
 
   async createAnnualBudget(
     year: number,
-    siteId: string = 'guinea',
+    siteId: string = SITE_NATIONAL,
     miningCompanyId?: string | null
   ): Promise<AnnualBudget> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -112,7 +113,7 @@ class AnnualBudgetService {
 
   async getOrCreateAnnualBudget(
     year: number,
-    siteId: string = 'guinea',
+    siteId: string = SITE_NATIONAL,
     miningCompanyId?: string | null
   ): Promise<AnnualBudget> {
     let budget = await this.getAnnualBudget(year, siteId, miningCompanyId);
@@ -225,7 +226,7 @@ class AnnualBudgetService {
     return data || [];
   }
 
-  async getDailyTarget(date: Date, siteId: string = 'guinea'): Promise<DailyTarget> {
+  async getDailyTarget(date: Date, siteId: string = SITE_NATIONAL): Promise<DailyTarget> {
     const dateString = date.toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -251,7 +252,7 @@ class AnnualBudgetService {
 
   async getMonthlyBudgetWithForecasts(
     year: number,
-    siteId: string = 'guinea',
+    siteId: string = SITE_NATIONAL,
     miningCompanyId?: string | null
   ): Promise<{
     budget: AnnualBudget | null;
@@ -287,7 +288,7 @@ class AnnualBudgetService {
   async getMonthlyActualProduction(
     year: number,
     miningCompanyId: string | null,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<Record<number, number>> {
     try {
       console.log('📊 [ACTUAL] Parametres:', { year, miningCompanyId, siteId });
@@ -391,7 +392,7 @@ class AnnualBudgetService {
 
   async getAllCompaniesTotals(
     year: number,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<{
     companies: Array<{
       id: string;

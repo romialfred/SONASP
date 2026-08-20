@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { annualBudgetService, MonthlyBudget, QuarterlyForecast } from './annualBudgetService';
+import { SITE_NATIONAL } from '@/constants/site';
 
 export interface PerformanceData {
   wtd: {
@@ -21,7 +22,7 @@ export interface PerformanceData {
 
 class PerformanceService {
   async getPerformanceData(
-    siteId: string = 'guinea',
+    siteId: string = SITE_NATIONAL,
     startDate?: string,
     endDate?: string
   ): Promise<PerformanceData> {

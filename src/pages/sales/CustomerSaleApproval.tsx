@@ -321,7 +321,7 @@ export function CustomerSaleApproval() {
               </div>
 
               <div className="text-center text-xs text-gray-500 pt-4">
-                <p>Thank you for your business with Mansa Resources</p>
+                <p>Merci de la confiance accordée à la SONASP.</p>
               </div>
             </CardContent>
           </Card>

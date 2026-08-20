@@ -14,12 +14,12 @@ import {
   type LiveFxRate,
 } from '@/services/fxRateAggregationService';
 
+// Le franc guinéen n'a pas cours au Burkina : les paires suivies sont celles qui
+// servent réellement aux ventes à l'export et au règlement des achats.
 const CURRENCY_PAIRS = [
-  { pair: 'EUR/USD', label: 'Euro / US Dollar', flag: '🇪🇺🇺🇸' },
-  { pair: 'USD/XOF', label: 'US Dollar / West African CFA', flag: '🇺🇸' },
-  { pair: 'USD/GNF', label: 'US Dollar / Guinean Franc', flag: '🇺🇸🇬🇳' },
-  { pair: 'EUR/GNF', label: 'Euro / Guinean Franc', flag: '🇪🇺🇬🇳' },
-  { pair: 'XOF/GNF', label: 'West African CFA / Guinean Franc', flag: '🇬🇳' },
+  { pair: 'USD/XOF', label: 'Dollar américain / Franc CFA', flag: '🇺🇸🇧🇫' },
+  { pair: 'EUR/XOF', label: 'Euro / Franc CFA', flag: '🇪🇺🇧🇫' },
+  { pair: 'EUR/USD', label: 'Euro / Dollar américain', flag: '🇪🇺🇺🇸' },
 ];
 
 export function LiveFxRatePanel() {
@@ -176,7 +176,7 @@ export function LiveFxRatePanel() {
                 <div className="mt-2">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xl font-bold text-gray-900">
-                      {formatFxRate(rate.rate, currencyInfo.pair.includes('GNF') ? 2 : 6)}
+                      {formatFxRate(rate.rate, currencyInfo.pair.includes('XOF') ? 2 : 6)}
                     </span>
                     <span className="text-[10px] text-gray-400 uppercase font-medium">{currencyInfo.pair.split('/')[0]}</span>
                   </div>
@@ -202,7 +202,7 @@ export function LiveFxRatePanel() {
                     <div className="flex justify-between text-[10px] text-gray-500">
                       <span>Live Rate</span>
                       <span className="font-medium text-gray-700">
-                        {formatFxRate(rate.rate, currencyInfo.pair.includes('GNF') ? 2 : 6)}
+                        {formatFxRate(rate.rate, currencyInfo.pair.includes('XOF') ? 2 : 6)}
                       </span>
                     </div>
                   </div>

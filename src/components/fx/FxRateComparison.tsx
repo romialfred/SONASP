@@ -29,12 +29,11 @@ interface FxRateComparison {
   notes: string | null;
 }
 
+// Le franc guinéen n'a pas cours au Burkina.
 const CURRENCY_PAIRS = [
-  { value: 'EUR/USD', label: 'EUR/USD - Euro to US Dollar' },
-  { value: 'USD/XOF', label: 'USD/XOF - US Dollar to West African CFA' },
-  { value: 'USD/GNF', label: 'USD/GNF - US Dollar to Guinean Franc' },
-  { value: 'EUR/GNF', label: 'EUR/GNF - Euro to Guinean Franc' },
-  { value: 'XOF/GNF', label: 'XOF/GNF - West African CFA to Guinean Franc' },
+  { value: 'USD/XOF', label: 'USD/XOF — Dollar américain vers franc CFA' },
+  { value: 'EUR/XOF', label: 'EUR/XOF — Euro vers franc CFA' },
+  { value: 'EUR/USD', label: 'EUR/USD — Euro vers dollar américain' },
 ];
 
 export function FxRateComparison() {
@@ -67,7 +66,7 @@ export function FxRateComparison() {
   };
 
   const formatRate = (rate: number, pair: string) => {
-    if (pair === 'XOF/GNF') return rate.toFixed(4);
+    if (pair === 'EUR/USD') return rate.toFixed(4);
     if (pair === 'EUR/USD') return rate.toFixed(5);
     return rate.toFixed(2);
   };

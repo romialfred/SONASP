@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { roundUpToFixed } from '@/utils/numberUtils';
+import { PAYS_NATIONAL } from '@/constants/site';
 
 interface DynamicPackingListProps {
   expeditionLotNumber: string;
@@ -65,16 +66,18 @@ export function DynamicPackingList({
         </div>
 
         <div className="text-right">
+          {/* L'expéditeur était une société malienne d'un autre exploitant :
+              « Hummingbird Resources », Bamako. L'or part du Burkina, sous le
+              nom de la SONASP et de la mine d'origine. */}
           <div className="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-600">
             <div className="text-yellow-900 font-bold text-base">{miningCompany}</div>
-            <div className="text-xs text-yellow-800">HUMMINGBIRD RESOURCES</div>
+            <div className="text-xs text-yellow-800">MINE D’ORIGINE</div>
           </div>
           <div className="mt-3 text-xs">
-            <div><strong>From:</strong></div>
-            <div>Societe des Mines de Komana SA</div>
-            <div>Magnambougou Faso Kanu</div>
-            <div>Commune VI</div>
-            <div>Bamako, Mali</div>
+            <div><strong>Expéditeur :</strong></div>
+            <div>SONASP</div>
+            <div>Société Nationale des Substances Précieuses</div>
+            <div>Ouagadougou, {PAYS_NATIONAL}</div>
           </div>
         </div>
       </div>

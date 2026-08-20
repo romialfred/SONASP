@@ -27,6 +27,7 @@ import { Card } from '../../components/ui/Card';
 import { BudgetMatrixTable } from '../../components/budget/BudgetMatrixTable';
 import { filterOperationalMiningCompanies } from '../../utils/miningCompanyFilters';
 import { formatNumberWithSpaces, formatPercentage } from '../../utils/numberUtils';
+import { SITE_NATIONAL } from '@/constants/site';
 import {
   annualBudgetService,
   AnnualBudget,
@@ -308,7 +309,7 @@ export function BudgetManagementPage() {
     try {
       const { data, error } = await supabase
         .from('mining_companies')
-        .select('id, name')
+        .select('id, name, company_type')
         .eq('is_active', true)
         .order('name');
 
@@ -348,7 +349,7 @@ export function BudgetManagementPage() {
         for (const company of miningCompanies) {
           const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
             selectedYear,
-            'guinea',
+            SITE_NATIONAL,
             company.id
           );
 
@@ -358,7 +359,7 @@ export function BudgetManagementPage() {
           const actuals = await annualBudgetService.getMonthlyActualProduction(
             selectedYear,
             company.id,
-            'guinea'
+            SITE_NATIONAL
           );
 
           // Agréger les actuals par mois
@@ -404,7 +405,7 @@ export function BudgetManagementPage() {
         // Charger les données pour une mine spécifique
         const data = await annualBudgetService.getMonthlyBudgetWithForecasts(
           selectedYear,
-          'guinea',
+          SITE_NATIONAL,
           selectedCompanyId
         );
 
@@ -416,7 +417,7 @@ export function BudgetManagementPage() {
         const actuals = await annualBudgetService.getMonthlyActualProduction(
           selectedYear,
           selectedCompanyId,
-          'guinea'
+          SITE_NATIONAL
         );
         setMonthlyActuals(actuals);
       }
@@ -458,7 +459,7 @@ export function BudgetManagementPage() {
       // Use getOrCreateAnnualBudget to avoid duplicate creation (409 conflict)
       let budget = await annualBudgetService.getOrCreateAnnualBudget(
         selectedYear,
-        'guinea',
+        SITE_NATIONAL,
         selectedCompanyId
       );
       setAnnualBudget(budget);
@@ -510,7 +511,7 @@ export function BudgetManagementPage() {
       if (!budget) {
         budget = await annualBudgetService.getOrCreateAnnualBudget(
           selectedYear,
-          'guinea',
+          SITE_NATIONAL,
           selectedCompanyId
         );
         setAnnualBudget(budget);

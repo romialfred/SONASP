@@ -43,7 +43,6 @@ const CURRENCIES = [
   { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
   { code: 'CHF', name: 'Swiss Franc', flag: '🇨🇭' },
   { code: 'XOF', name: 'West African CFA', flag: '🌍' },
-  { code: 'GNF', name: 'Guinean Franc', flag: '🇬🇳' },
 ];
 
 export function PaymentRecordPage() {

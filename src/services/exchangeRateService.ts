@@ -49,7 +49,7 @@ export async function updateExchangeRates(): Promise<{ success: boolean; updated
     }
 
     const { rates, date } = result.data;
-    const targetCurrencies = ['XOF', 'GNF', 'EUR', 'GBP', 'CHF'];
+    const targetCurrencies = ['XOF', 'EUR', 'GBP', 'CHF'];
     let updatedCount = 0;
 
     for (const currency of targetCurrencies) {
@@ -297,7 +297,7 @@ export function formatCurrency(
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: currency === 'XOF' || currency === 'GNF' ? 'USD' : currency,
+    currency: currency === 'XOF' ? 'USD' : currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
@@ -316,7 +316,7 @@ export async function getRateAlerts(
   error?: string;
 }> {
   try {
-    const currencies = ['XOF', 'GNF', 'EUR'];
+    const currencies = ['XOF', 'EUR'];
     const alerts = [];
 
     for (const currency of currencies) {

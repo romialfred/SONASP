@@ -604,6 +604,16 @@ estimée.
 | A152 | `ProductionDetails` comblait les données absentes par « Kourousa », « KOURO-2511-1000 » et le pays « Guinée » — vestiges d'un autre projet affichés comme réels | Production | Aucune valeur suppléée ; le pays vient de `mining_companies.country` |
 | A153 | Bouton « Modifier » pointant `/production/daily-production`, route inexistante : la modification n'aboutissait jamais | Production | Renvoi vers `/production/daily` avec ouverture du formulaire sur la déclaration |
 | A154 | Historique des statuts résolvant les auteurs dans la table `profiles`, absente du schéma : toute modification attribuée à « Système » | Production | Résolution sur `user_profiles`, en une requête, avec distinction système / auteur inconnu |
+| A155 | Site national identifié `guinea` dans la base (`daily_production`, `annual_budgets`, `production_forecasts`) et en défaut de paramètre dans dix services | Socle | Constante `SITE_NATIONAL` unique + migration vers `burkina_faso` |
+| A156 | Lignes de production référençant un compte supprimé : la clé en NO ACTION faisait échouer **toute** mise à jour, changement de statut compris | Production | Références orphelines mises à NULL, clés passées en ON DELETE SET NULL sur cinq tables |
+| A157 | Références de barres préfixées `HUM…` — codes de mines maliennes, guinéennes et libériennes — parfois sans rapport avec la société de la ligne | Production | Préfixe issu du code de la société ; renumérotation `SBM-0001`, `WGM-0001` |
+| A158 | Bordereau de colisage expédiant au nom de « HUMMINGBIRD RESOURCES » depuis Bamako, Mali | Expéditions | Expéditeur : SONASP, Ouagadougou |
+| A159 | `/customers/:id/payments` affichait une vente inventée et n'enregistrait rien : le bouton revenait en arrière | Paiements | Écran supprimé, route renvoyée vers l'écran qui enregistre |
+| A160 | Trois comptes bancaires inventés proposés au règlement faute de paramétrage | Paiements | Liste vide et paramètre manquant nommé à l'écran |
+| A161 | Filtre des sociétés productrices comparant à « Mansa Resources S.A. », absente du référentiel : la SOPAMIB et la SONASP figuraient parmi les mines | Référentiels | Tri sur `company_type` |
+| A162 | Trois des cinq paires de change suivies libellées en franc guinéen, sans cours au Burkina | Marché | Paires ramenées à USD/XOF, EUR/XOF, EUR/USD |
+| A163 | Six rapports PDF et un export Excel entièrement inventés, signés SONASP | Rapports | Exports refusés en nommant la source manquante ; générateur de 602 lignes supprimé |
+| A164 | Six onglets d'analyses reposant sur 157 lignes de données écrites en dur | Analyses | Bannière annonçant que les chiffres ne viennent pas de la base ; raccordement à faire |
 
 ---
 
@@ -635,12 +645,19 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
   appliquées** sur `SONASP_OPS` ; additives, retour arrière documenté en tête de fichier.
 - La migration `20260820_001_tracabilite_lots_vente` (table `snp_ventes_lots`) **est
   appliquée** sur `SONASP_OPS` ; additive, retour arrière documenté en tête de fichier.
+- Les migrations `20260820_002` (site national), `20260820_003` (auteurs supprimés) et
+  `20260820_004` (références de barres) **sont appliquées** sur `SONASP_OPS`. La 004 exige la
+  003 : sans elle, toute mise à jour de `daily_production` échoue sur une clé orpheline.
 
 ---
 
 ## 9. Prochaine action exacte
 
-**Poursuivre le lot 7 — Production (4/7 traités).** Restent : `ExportLicenseForm` (836),
+**Raccorder le module d'analyses aux données réelles** (A164) : six onglets, 157 lignes
+écrites en dur, aujourd'hui signalées par une bannière mais toujours affichées. Puis le moteur
+de rapports (A163), dont les exports sont refusés faute de source.
+
+Ensuite, **poursuivre le lot 7 — Production (4/7 traités)** : `ExportLicenseForm` (836),
 `ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
 
 En parallèle, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des

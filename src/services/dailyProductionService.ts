@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { SITE_NATIONAL } from '@/constants/site';
 
 export interface DailyProduction {
   id: string;
@@ -135,7 +136,7 @@ class DailyProductionService {
     }
   }
 
-  async getProductionByDate(date: string, siteId: string = 'guinea') {
+  async getProductionByDate(date: string, siteId: string = SITE_NATIONAL) {
     const { data, error } = await supabase
       .from('daily_production')
       .select('*')
@@ -288,7 +289,7 @@ class DailyProductionService {
   async getProductionSummary(
     startDate: string,
     endDate: string,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_production_summary', {
       start_date: startDate,
@@ -303,7 +304,7 @@ class DailyProductionService {
   async getProductionVariance(
     checkDate: string,
     period: 'daily' | 'weekly' | 'monthly' = 'daily',
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<ProductionVariance> {
     const { data, error } = await supabase.rpc('get_production_variance', {
       check_date: checkDate,
@@ -316,7 +317,7 @@ class DailyProductionService {
   }
 
   // Helper function to calculate totals manually if RPC not available
-  async calculateWeeklyTotal(weekStartDate: string, siteId: string = 'guinea') {
+  async calculateWeeklyTotal(weekStartDate: string, siteId: string = SITE_NATIONAL) {
     const weekEnd = new Date(weekStartDate);
     weekEnd.setDate(weekEnd.getDate() + 6);
     
@@ -333,7 +334,7 @@ class DailyProductionService {
     };
   }
 
-  async calculateMonthlyTotal(year: number, month: number, siteId: string = 'guinea') {
+  async calculateMonthlyTotal(year: number, month: number, siteId: string = SITE_NATIONAL) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
@@ -357,7 +358,7 @@ class DailyProductionService {
   async getWTDSummary(
     referenceDate: string = new Date().toISOString().split('T')[0],
     miningCompanyId?: string,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_wtd_summary', {
       reference_date: referenceDate,
@@ -372,7 +373,7 @@ class DailyProductionService {
   async getMTDSummary(
     referenceDate: string = new Date().toISOString().split('T')[0],
     miningCompanyId?: string,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_mtd_summary', {
       reference_date: referenceDate,
@@ -387,7 +388,7 @@ class DailyProductionService {
   async getYTDSummary(
     referenceDate: string = new Date().toISOString().split('T')[0],
     miningCompanyId?: string,
-    siteId: string = 'guinea'
+    siteId: string = SITE_NATIONAL
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_ytd_summary', {
       reference_date: referenceDate,

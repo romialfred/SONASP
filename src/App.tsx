@@ -33,7 +33,6 @@ import HelpCenter from './pages/HelpCenter';
 import { CustomerListing } from './pages/customers/CustomerListing';
 import { CustomerProfile } from './pages/customers/CustomerProfile';
 import { CustomerForm } from './pages/customers/CustomerForm';
-import { PaymentProcessing } from './pages/customers/PaymentProcessing';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { PaymentCreate } from './pages/payments/PaymentCreate';
 import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
@@ -938,16 +937,10 @@ function AppRoutes() {
               }
             />
 
-            <Route
-              path="/customers/:id/payments"
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.CUSTOMERS_VIEW}>
-                  <ProfileGuard>
-                    <PaymentProcessing />
-                  </ProfileGuard>
-                </ProtectedRoute>
-              }
-            />
+            {/* L'écran de saisie qui vivait ici affichait une vente inventée et
+                n'enregistrait rien : son bouton se contentait de revenir en
+                arrière. Le règlement se saisit sur l'écran qui l'enregistre. */}
+            <Route path="/customers/:id/payments" element={<Navigate to="/payments/create" replace />} />
 
             <Route
               path="/payments/create"

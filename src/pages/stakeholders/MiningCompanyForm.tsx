@@ -19,8 +19,10 @@ import {
 } from '@/services/miningCompanyDocumentService';
 import { MiningCompanyFormGuide } from '@/components/stakeholders/MiningCompanyFormGuide';
 
-const COUNTRIES = ['Burkina Faso', 'Guinea', 'Mali', "Côte d'Ivoire", 'Liberia', 'Senegal', 'Ghana', 'France', 'UAE', 'South Africa'];
-const CURRENCIES = ['XOF', 'USD', 'EUR', 'GNF', 'AED', 'ZAR', 'GHS'];
+// Les sociétés minières inscrites exploitent au Burkina Faso ; les pays
+// voisins ne servent qu'aux sociétés mères et aux partenaires.
+const COUNTRIES = ['Burkina Faso', 'Mali', 'Niger', "Côte d'Ivoire", 'Ghana', 'Sénégal', 'France', 'Canada', 'Australie'];
+const CURRENCIES = ['XOF', 'USD', 'EUR', 'GHS', 'AED', 'ZAR'];
 
 const COMPANY_TYPES = [
   { value: 'production_mine', label: 'Mine de production' },

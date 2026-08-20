@@ -1752,3 +1752,91 @@ Reference », « Bullion Total » subsistaient en anglais au milieu du texte fra
 - `npx vitest run` : **639/639 verts** (71 fichiers, 21 ajoutés)
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **140**, une erreur héritée de moins
+
+---
+
+## Itération — 20 août 2026 — Extirper l'identité de l'autre exploitant
+
+Question posée : « les données figées comme le pays "Guinée" sont-elles toutes corrigées ? Les
+mines doivent toutes être au Burkina Faso. » La réponse était non, et le balayage a montré que
+le mal dépassait de loin la constante repérée sur la fiche de production.
+
+### Ce que le balayage a trouvé
+
+**1. L'identité du site, jusque dans la base.** `daily_production`, `annual_budgets` et
+`production_forecasts` portaient `site_id = 'guinea'` sur toutes leurs lignes, et une dizaine
+de services prenaient `'guinea'` en valeur par défaut de paramètre. Le filtre et la donnée
+concordaient, si bien que rien ne paraissait anormal — mais toute la production nationale
+était rangée sous un site guinéen (A155).
+
+**2. Les lignes de production étaient gelées.** Les dix déclarations référençaient un compte
+`auth.users` supprimé. La clé étrangère étant en NO ACTION, PostgreSQL la revalide à chaque
+mise à jour : **toute** modification échouait, changement de statut compris. La production
+était immobilisée sans qu'aucun écran ne l'explique (A156). Découvert en tentant la
+renumérotation des barres — la migration a d'abord échoué sur cette contrainte.
+
+**3. Les références de barres portaient les codes d'un autre exploitant.** HUMSMK (Komana,
+Mali), HUMDUG (Dugbe, Liberia), HUMSEM, HUMWAH — et le générateur préfixait « HUM » à
+n'importe quel nom. Pire, le préfixe ne correspondait pas toujours à la société de la ligne :
+des barres de SEMAFO portaient le code d'une mine malienne (A157).
+
+**4. Le bordereau de colisage expédiait depuis Bamako.** Le document portait « HUMMINGBIRD
+RESOURCES » et l'adresse de la Société des Mines de Komana, Bamako, Mali (A158). Sur un
+document d'expédition d'or burkinabè.
+
+**5. Un écran de paiement entièrement fictif.** `/customers/:id/payments` affichait une vente
+inventée — SL-2024-042, Premium Gold Ltd., 156 450 $ — des taux de change codés en dur, et son
+bouton « Enregistrer » se contentait de revenir en arrière : **rien n'était enregistré**
+(A159).
+
+**6. Trois comptes bancaires inventés** étaient proposés au règlement quand le paramètre
+n'était pas défini : « Mansa Resources USD/EUR/CFA Account » (A160).
+
+**7. Le filtre des sociétés productrices ne filtrait rien.** Il écartait la société nommée
+exactement « Mansa Resources S.A. », absente de ce référentiel : la SOPAMIB et la SONASP
+elle-même figuraient parmi les mines dans tous les sélecteurs, et recevaient des budgets de
+production nuls (A161).
+
+**8. Le franc guinéen tenait lieu de monnaie suivie.** Trois des cinq paires de change
+surveillées étaient en GNF, monnaie sans cours au Burkina (A162).
+
+**9. Les rapports et les analyses étaient inventés de bout en bout.** Six rapports PDF et un
+export Excel produisaient des documents signés SONASP avec 9 945 000 $ de recettes, 337 lots,
+18 clients, des usines au Mali et en Guinée, et des « recommandations stratégiques » (A163).
+Les six onglets d'analyses reposent sur 157 lignes de données écrites en dur (A164).
+
+**10. Le schéma du circuit de l'or** décrivait la chaîne de Hummingbird Resources — Kourousa
+Guinea Mining, Komana, Mansa Management Middle East — avec des parts chiffrées sans source.
+
+### Ce qui a été décidé
+
+- **Une seule constante pour l'identité nationale** (`src/constants/site.ts`) plutôt qu'un
+  défaut répété en vingt-trois endroits : un défaut dispersé se corrige à moitié.
+- **La base et le code changent ensemble.** Renommer la clé d'un côté seulement aurait vidé
+  les écrans ; les deux migrations et le code partent dans le même lot.
+- **Un compte supprimé ne gèle plus rien** : références orphelines mises à NULL, clés passées
+  en ON DELETE SET NULL sur les cinq tables de production.
+- **Les références de barres viennent du code de la société** au référentiel — SBM-0001,
+  WGM-0001 — et les anciennes sont conservées dans les observations.
+- **Un document signé de la SONASP ne repose pas sur des chiffres d'exemple.** Les six
+  rapports et l'export Excel refusent désormais, en nommant ce qui manque, plutôt que
+  d'émettre un faux. Le générateur inventé (602 lignes) est supprimé.
+- **Les analyses annoncent leur nature** tant que le module n'est pas raccordé : un chiffre
+  inventé qui se présente comme national nuit plus qu'un écran vide.
+- **L'écran de paiement fictif est retiré**, sa route renvoyant vers l'écran qui enregistre
+  réellement.
+- **Le schéma du circuit montre le circuit réel et aucun chiffre** : les volumes se lisent sur
+  les écrans qui les tiennent.
+
+### Ce qui est resté, à dessein
+
+Les listes de référence — pays du monde, villes et aéroports africains, banques par pays,
+pays du Sahel pour la nationalité des artisans — conservent la Guinée : ce sont des
+référentiels, pas l'identité de la plateforme.
+
+### Contrôles
+
+- `npx vitest run` : **639/639 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, neuf erreurs héritées de moins
+- Audit d'habillage : 120 routes, aucune hors habillage

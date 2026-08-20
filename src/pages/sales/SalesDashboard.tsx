@@ -18,6 +18,8 @@ import {
   SaleStatus,
 } from '@/lib/schemas/sales';
 import { SALES_STATUSES } from '@/constants/salesStatuses';
+import { coherenceStockService, type Coherence } from '@/services/coherenceStockService';
+import { stockSonaspService } from '@/services/stockSonaspService';
 
 interface Sale {
   id: string;
@@ -38,6 +40,7 @@ type StatusDisplay = {
 
 export function SalesDashboard() {
   const { t, i18n } = useTranslation();
+  const [coherence, setCoherence] = useState<Coherence | null>(null);
 
   const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
     pending: StatusDisplay;
@@ -421,15 +424,33 @@ export function SalesDashboard() {
     }
   }, [loadMetrics]);
 
+  /**
+   * Contrôle de cohérence : les onces vendues doivent toutes être rattachées à
+   * un lot d'achat. Un écart signale une vente créée hors du formulaire, donc
+   * un stock entamé sans origine connue.
+   */
+  const controlerCoherence = useCallback(async () => {
+    try {
+      const sonasp = await stockSonaspService.identifiant();
+      if (!sonasp) return;
+      const resultat = await coherenceStockService.controler(sonasp.id);
+      if (mountedRef.current) setCoherence(resultat);
+    } catch (raison) {
+      console.warn('Contrôle de cohérence indisponible :', raison);
+      if (mountedRef.current) setCoherence(null);
+    }
+  }, []);
+
   useEffect(() => {
     mountedRef.current = true;
     void loadSales();
     void loadChartData();
+    void controlerCoherence();
 
     return () => {
       mountedRef.current = false;
     };
-  }, [loadSales, loadChartData]);
+  }, [loadSales, loadChartData, controlerCoherence]);
 
   const handleRetry = () => {
       if (!mountedRef.current) {
@@ -495,6 +516,37 @@ export function SalesDashboard() {
             <p className="text-gray-600 text-lg">{t('pages.sales.subtitle')}</p>
           </div>
         </div>
+
+        {coherence && !coherence.coherent && (
+          <Alert variant="warning" title="Ventes sans origine tracée">
+            <div className="space-y-2">
+              <p>
+                {coherence.ecartOz.toFixed(3)} oz vendues ne sont rattachées à aucun achat.
+                Le stock apparaît entamé sans qu’on sache par quel or : régularisez la
+                composition de ces ventes.
+              </p>
+              <ul className="text-sm space-y-1">
+                {coherence.ventesSansOrigine.slice(0, 5).map((vente) => (
+                  <li key={vente.id}>
+                    <button
+                      type="button"
+                      className="underline"
+                      onClick={() => navigate(`/sales/${vente.id}`)}
+                    >
+                      {vente.numero}
+                    </button>{' '}
+                    — {vente.manquantOz.toFixed(3)} oz sans origine sur {vente.quantiteOz.toFixed(3)} oz
+                  </li>
+                ))}
+              </ul>
+              {coherence.ventesSansOrigine.length > 5 && (
+                <p className="text-sm">
+                  et {coherence.ventesSansOrigine.length - 5} autre(s) vente(s).
+                </p>
+              )}
+            </div>
+          </Alert>
+        )}
 
         {pageError && (
           <Alert

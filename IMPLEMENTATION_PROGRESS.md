@@ -598,6 +598,7 @@ estimée.
 | A146 | « Acheter tout le stock » conditionné à une quantité déjà saisie, donc invisible quand il sert | Mines industrielles | Affiché dès la société choisie |
 | A147 | Contrôle de stock de la vente interrogeant `daily_production` au nom du vendeur : la SONASP ne déclarant aucune production, toutes les ventes auraient été bloquées | Ventes d'or | Remplacé par le contrôle de couverture sur les lots d'achat |
 | A148 | Aucune écriture ne reliait une vente à l'export aux achats qui l'approvisionnent : origine de l'or invérifiable | Traçabilité | Table `snp_ventes_lots`, répartition au plus ancien d'abord, composition affichée sur la fiche de vente |
+| A149 | Rien ne détectait une vente créée hors du formulaire, qui entamerait le stock sans origine tracée | Traçabilité | Contrôle de cohérence masse/lots, bannière nommant les ventes concernées sur le tableau de bord des ventes |
 
 ---
 
@@ -634,14 +635,14 @@ l'autre à exactement 5 s (plafond par défaut) sous charge — aucune régressi
 
 ## 9. Prochaine action exacte
 
-**Écrire le contrôle de cohérence entre le stock en masse et la somme des lots affectés.**
-Les deux mesures ne coïncident que si toute vente écrit sa composition ; une vente créée hors
-du formulaire creuserait l'écart sans que rien ne le signale. Un écran d'administration doit
-comparer les deux et nommer les ventes sans origine.
+**Poursuivre le lot 7 — Production.** Le circuit de l'or est désormais complet et contrôlé
+de la mine au raffineur ; restent les écrans de production non encore refondus :
+`ProductionDetails` (643), `ProductionInSafe` (657), `ExportLicenseForm` (836),
+`ExportLicenseDetails` (332) et `BudgetManagementPage` (1477).
 
-Ensuite, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
+En parallèle, **obtenir de la DGI les éléments qui débloquent la facturation certifiée** : cahier des
 charges du SFE, protocole SFE ↔ MCF, spécification du QR, arrêté 2025-0047 et article 564
-§2 du CGI ; en parallèle, engager l'acquisition du MCF auprès de la CCI-BF et le dossier
+§2 du CGI ; engager l'acquisition du MCF auprès de la CCI-BF et le dossier
 d'homologation. Le spécimen de facture est en place et sert la démonstration.
 Ensuite, **raccorder le moteur d'analyse de `/analytics/assistant`**, puis poursuivre le
 **lot 7 — Production (1/7 traité).** Restent : `ProductionDetails` (643),

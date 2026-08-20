@@ -1612,3 +1612,33 @@ un contrôle de cohérence entre les deux mesures reste à écrire.
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé
 - Modules servis sans erreur par Vite sur le port 5180
+
+---
+
+## Itération — 20 août 2026 — Le contrôle qui empêche l'écart de se dissoudre
+
+Le chaînage achat → vente ne vaut que s'il est **complet**. Le stock exportable se mesure de
+deux façons qui doivent coïncider : en masse (total acheté − total vendu) et pièce à pièce
+(somme des lots affectés aux ventes). Elles ne coïncident que si toute vente écrit sa
+composition ; une vente créée par script, par import ou directement en base y échapperait, et
+le stock paraîtrait entamé sans qu'on sache par quel or.
+
+### Ce qui a été décidé
+
+- **Le contrôle nomme les ventes, il ne rend pas un total.** Un écart global n'est pas
+  actionnable ; la liste des ventes concernées, avec ce qui manque à chacune, l'est. Chaque
+  ligne renvoie à la fiche de la vente.
+- **Un excès de lots ne compense pas un manque ailleurs.** Si une vente porte plus de lots
+  que sa quantité, le surplus n'est pas compté comme une traçabilité en avance : c'est une
+  anomalie distincte, et la masquer laisserait passer une seconde vente non tracée.
+- **Les ventes annulées n'entament rien** et sortent du contrôle.
+- **La bannière ne s'affiche que si l'écart existe.** Un contrôle qui parle en permanence
+  n'est plus lu.
+- **L'échec du contrôle n'emporte pas la page.** Le tableau de bord des ventes reste
+  utilisable ; c'est la bannière qui disparaît, jamais les ventes.
+
+### Contrôles
+
+- `npx vitest run` : **588/588 verts** (67 fichiers, 8 ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **141**, inchangé

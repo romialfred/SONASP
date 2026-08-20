@@ -440,7 +440,7 @@ export function ProductionInSafe() {
           id="objectifs"
           icon={Target}
           title="Production réalisée par rapport aux objectifs"
-          description="Budget voté et prévision révisée, au prorata des jours écoulés."
+          description="Budget et prévision révisée, au prorata des jours écoulés."
         >
           <div className="production-page__objectifs">
             {[
@@ -513,10 +513,10 @@ export function ProductionInSafe() {
                   <dl>
                     {cible(
                       'budget',
-                      'Budget voté',
+                      'Budget',
                       budget,
                       ecartBudget,
-                      budgets === null ? 'Source illisible' : 'Budget non voté'
+                      budgets === null ? 'Source illisible' : 'Budget non renseigné'
                     )}
                     {cible(
                       'prevision',

@@ -151,7 +151,7 @@ describe('ProductionInSafe', () => {
     // Sans ligne de budget, l'écran doit dire que le budget n'est pas voté.
     // Le message reste court : nommer chaque mois manquant tenait de la copie
     // d'écran de formation, pas d'un outil de pilotage.
-    expect(screen.getAllByText('Budget non voté').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Budget non renseigné').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Prévision non saisie').length).toBeGreaterThan(0);
   });
 

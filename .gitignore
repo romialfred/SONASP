@@ -24,3 +24,6 @@ dist-ssr
 
 # Vitest coverage output
 coverage
+
+# Cache du client Supabase (version du CLI, jetons de session)
+supabase/.temp/

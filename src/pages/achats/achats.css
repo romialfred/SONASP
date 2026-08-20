@@ -1,0 +1,184 @@
+/**
+ * Achats d'or industriel — habillage propre au module.
+ *
+ * Rien ici ne redéfinit le design system : ces règles ne servent que les deux
+ * objets que le socle ne connaît pas — la grille de répartition éditable et la
+ * barre de synthèse qui l'accompagne.
+ */
+
+.achats-page .sn-section { margin-top: 12px; }
+.achats-page .sn-note { margin-top: 12px; }
+.achats-page .sn-stats { margin-top: 12px; }
+
+/* ---------------------------------------------------------------------------
+   Barre de synthèse
+   Elle reste sous les yeux pendant la saisie : répartir sans voir le total,
+   c'est arbitrer à l'aveugle.
+   --------------------------------------------------------------------------- */
+.achats-synthese {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 26px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--sn-line);
+  border-radius: var(--sn-radius, 10px);
+  background: var(--sn-surface, #fff);
+  box-shadow: 0 1px 2px rgb(16 36 62 / 5%);
+}
+
+.achats-synthese__poste { display: flex; flex-direction: column; gap: 2px; }
+.achats-synthese__poste dt { font-size: 11px; color: var(--sn-muted); }
+.achats-synthese__poste dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sn-navy);
+  font-variant-numeric: tabular-nums;
+}
+.achats-synthese__poste dd.est-ecart { color: var(--sn-gold-dark, #b97f00); }
+.achats-synthese__poste dd.est-conforme { color: var(--sn-success, #0c8a5f); }
+.achats-synthese__actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------------------
+   Grille de répartition
+   --------------------------------------------------------------------------- */
+.achats-grille { overflow-x: auto; }
+
+.achats-grille table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+
+.achats-grille th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 38px;
+  padding: 0 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sn-muted);
+  background: var(--sn-surface-alt, #f7f9fb);
+  border-bottom: 1px solid var(--sn-line);
+  white-space: nowrap;
+}
+
+.achats-grille td {
+  height: 46px;
+  padding: 0 10px;
+  border-top: 1px solid var(--sn-line-soft);
+  color: var(--sn-navy);
+  vertical-align: middle;
+}
+
+.achats-grille .is-right { text-align: right; font-variant-numeric: tabular-nums; }
+.achats-grille tbody tr:hover { background: var(--sn-surface-alt, #f7f9fb); }
+
+/* Une ligne écartée manuellement se signale : sans repère, une application
+   globale qui la préserve passerait pour un défaut. */
+.achats-grille tr.est-ajustee td:first-child { box-shadow: inset 3px 0 0 var(--sn-gold, #d99a00); }
+
+.achats-grille input[type='number'] {
+  width: 100%;
+  min-width: 92px;
+  height: 32px;
+  padding: 0 8px;
+  text-align: right;
+  border: 1px solid var(--sn-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--sn-navy);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.achats-grille input[type='number']:focus-visible {
+  outline: 2px solid var(--sn-green, #0c8a5f);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.achats-grille input[aria-invalid='true'] {
+  border-color: var(--sn-danger-line, #f0b7b2);
+  background: var(--sn-danger-soft, #fdeceb);
+}
+
+.achats-grille tfoot td {
+  height: 44px;
+  border-top: 2px solid var(--sn-line);
+  background: var(--sn-surface-alt, #f7f9fb);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.achats-erreur-ligne {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--sn-danger, #d43a2e);
+}
+
+/* ---------------------------------------------------------------------------
+   Fil du circuit d'une demande
+   --------------------------------------------------------------------------- */
+.achats-fil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.achats-fil li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--sn-line-soft);
+  border-radius: var(--sn-radius-pill, 999px);
+  background: var(--sn-surface, #fff);
+  font-size: 11.5px;
+  color: var(--sn-muted);
+}
+
+.achats-fil li.est-faite {
+  border-color: #bde5d4;
+  background: var(--sn-success-soft, #e9f7f1);
+  color: var(--sn-success, #0c8a5f);
+}
+
+.achats-fil li.est-courante {
+  border-color: var(--sn-navy);
+  background: var(--sn-navy);
+  color: #fff;
+  font-weight: 600;
+}
+
+.achats-fil li.est-bloquee {
+  border-color: #f6c6c2;
+  background: var(--sn-danger-soft, #fdeceb);
+  color: #d43a2e;
+}
+
+/* ---------------------------------------------------------------------------
+   Balance âgée : les colonnes se lisent de gauche à droite du plus récent au
+   plus ancien, et la dernière tranche s'assombrit pour attirer l'œil.
+   --------------------------------------------------------------------------- */
+.achats-balance td.est-critique { color: #b4442b; font-weight: 700; }
+.achats-balance td.est-vide { color: var(--sn-muted); }
+
+/* ---------------------------------------------------------------------------
+   Relevé de compte
+   --------------------------------------------------------------------------- */
+.achats-releve td.est-debit { color: var(--sn-success, #0c8a5f); }
+.achats-releve td.est-credit { color: var(--sn-navy); }
+.achats-releve tr.est-solde td { font-weight: 700; }
+
+@media (max-width: 780px) {
+  .achats-synthese { gap: 8px 16px; }
+  .achats-synthese__actions { margin-left: 0; width: 100%; }
+}

@@ -111,6 +111,11 @@ import { NationalDashboardChrome } from './components/layout/NationalDashboardLa
 
 const AiAssistantPage = lazy(() => import('./pages/analytics/AiAssistantPage'));
 const AchatsMines = lazy(() => import('./pages/production/AchatsMines'));
+const PlansAchatPage = lazy(() => import('./pages/achats/PlansAchatPage'));
+const PlanAchatDetails = lazy(() => import('./pages/achats/PlanAchatDetails'));
+const DemandesAchatPage = lazy(() => import('./pages/achats/DemandesAchatPage'));
+const ReglementsAchatPage = lazy(() => import('./pages/achats/ReglementsAchatPage'));
+const ComptesMinesPage = lazy(() => import('./pages/achats/ComptesMinesPage'));
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
@@ -465,6 +470,30 @@ function AppRoutes() {
                   <AchatsMines />
                 </ProtectedRoute>
               }
+            />
+
+            {/* Achats d'or industriel : planification, demandes, règlements et
+                comptes des mines. L'isolation entre sociétés minières est posée
+                en RLS, non par ces routes. */}
+            <Route
+              path="/achats/plans"
+              element={<ProtectedRoute><PlansAchatPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/achats/plans/:id"
+              element={<ProtectedRoute><PlanAchatDetails /></ProtectedRoute>}
+            />
+            <Route
+              path="/achats/demandes"
+              element={<ProtectedRoute><DemandesAchatPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/achats/reglements"
+              element={<ProtectedRoute><ReglementsAchatPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/achats/comptes"
+              element={<ProtectedRoute><ComptesMinesPage /></ProtectedRoute>}
             />
 
             <Route

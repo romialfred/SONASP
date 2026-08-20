@@ -625,6 +625,9 @@ estimée.
 | A173 | Référentiel résiduel : abréviations KGM/DGB/MAN, SONASP nommée « Substances Naturelles », expéditions préfixées HUM-SMK | Référentiels | Corrigés ; expéditions renumérotées EXP-BF-AAAA-NNN |
 | A174 | Vente artisanale VE-OR-2025-00001 à 2 740 000 000 FCFA le kilogramme, trente-quatre fois le cours : 125 g valorisés 342 millions | Marché artisanal | Prix recalculé au cours de la période, ajusté du titre ; ancienne valeur mentionnée en observation |
 | A175 | Module artisanal sans moyen de paiement, sans facture définitive et sans règlement : les écrans de suivi affichaient des compteurs à zéro | Marché artisanal | 30 moyens, 36 ventes, 30 factures, 24 règlements et leurs taxes |
+| A176 | `user_profiles` sans rattachement à une société minière : l'isolation « une mine ne voit que ses demandes » était inapplicable | Socle | Colonne `mining_company_id` + politiques RLS sur les sept tables du module |
+| A177 | Éligibilité calculée sur la production validée mais engagements déduits de la production déclarée : éligible nul partout | Achats industriels | Assiette unifiée sur la production déclarée non annulée |
+| A178 | Paramètre de sortie `demande_id` en conflit avec la colonne homonyme : toute approbation échouait sur « column reference is ambiguous » | Achats industriels | Sorties préfixées `r_`, tables aliasées |
 
 ---
 

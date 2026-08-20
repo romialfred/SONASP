@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   BarChart3,
+  CalendarRange,
   Building2,
   CheckCircle2,
   CircleDollarSign,
@@ -106,6 +107,22 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
           { label: 'Budgets', path: '/performance/budgets', icon: BarChart3, color: '#8b5cf6' },
           { label: 'Prévisions', path: '/performance/forecasts', icon: TrendingUp, color: '#14b8a6' },
+        ],
+      },
+      {
+        // Achat d'or industriel : de la planification mensuelle au règlement des
+        // mines. Le groupe suit « Collecte de l'or », dont il consomme la
+        // production déclarée.
+        id: 'achats-industriels',
+        label: 'Achats d’or',
+        path: '/achats/plans',
+        icon: CircleDollarSign,
+        color: '#d79a00',
+        children: [
+          { label: 'Plans mensuels', path: '/achats/plans', icon: CalendarRange, color: '#d79a00' },
+          { label: 'Demandes aux mines', path: '/achats/demandes', icon: FileText, color: '#2f6fec' },
+          { label: 'Règlements', path: '/achats/reglements', icon: CircleDollarSign, color: '#10976b' },
+          { label: 'Comptes des mines', path: '/achats/comptes', icon: BarChart3, color: '#8b5cf6' },
         ],
       },
       {

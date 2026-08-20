@@ -2065,3 +2065,97 @@ valeur reste mentionnée en observation.
 - `npx vitest run` : **646/646 verts**
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 20 août 2026 — Module d'achat d'or industriel
+
+Mission : concevoir et implémenter le module complet d'achat d'or par la SONASP auprès des
+sociétés minières industrielles — planification mensuelle, demandes, facturation, règlements,
+dettes, balance âgée.
+
+### Ce que l'analyse de l'existant a établi
+
+Cinq constats ont commandé toute l'architecture :
+
+1. **Il n'y a pas de serveur applicatif.** Le navigateur parle directement à PostgREST. « Le
+   backend fait autorité » signifie donc ici : PostgreSQL. Un contrôle écrit en TypeScript
+   s'obtient en ouvrant la console du navigateur ; toute la logique financière sensible est
+   donc en PL/pgSQL `SECURITY DEFINER`.
+2. **Un module d'achat existait déjà** (`snp_achats_mines`, 474 lignes d'écran, 42 lignes de
+   données) : achat direct, sans workflow. Il n'a pas été remplacé — il devient la transaction
+   commerciale issue de l'approbation, et garde son écran et ses données.
+3. **`user_profiles` ne rattachait aucun utilisateur à une société minière.** Sans ce lien,
+   « une mine ne voit que ses demandes » était impossible à appliquer (A176).
+4. **Les politiques RLS existantes sont permissives** (`USING (true)` sur les achats). Les
+   nouvelles tables portent de vraies politiques.
+5. **L'audit applicatif est écrit par le client**, donc contournable. Le module tient son
+   propre journal, alimenté par déclencheur.
+
+### La décision qui structure le module
+
+Un règlement **n'est pas** une transaction. La SONASP achète chaque mois et ne règle pas
+nécessairement chaque mois : elle verse un acompte, laisse courir plusieurs factures, puis
+verse une somme qui ne correspond au montant d'aucune facture prise isolément.
+
+D'où la chaîne :
+
+```
+transaction → facture → échéance
+                  ↑
+     affectation ─┘
+          ↑
+     règlement (appartient à la SOCIÉTÉ, pas à une facture)
+```
+
+Le solde d'une facture n'est jamais saisi : il est recalculé depuis ses affectations et ses
+avoirs par déclencheur. Deux garde-fous sous verrou interdisent d'affecter au-delà du solde
+d'un règlement ou au-delà du reste dû d'une facture.
+
+### Défauts trouvés et corrigés en cours de route
+
+- **Assiette d'éligibilité incohérente** : la première rédaction retenait la production
+  *validée* comme base, tout en déduisant des engagements calculés sur la production
+  *déclarée*. L'éligible ressortait à zéro partout — Essakane affichait 3 862 oz validées
+  contre 4 889 oz engagées. Règle retenue et documentée : **éligible = déclarée non annulée
+  − déjà engagé** (A177).
+- **Ambiguïté de nommage** : le paramètre de sortie `demande_id` entrait en conflit avec
+  `snp_achats_mines.demande_id` ; PL/pgSQL refusait la requête d'idempotence et toute
+  approbation échouait. Les sorties sont préfixées `r_` (A178).
+- **Comptage faux** : `INSERT ... ON CONFLICT DO UPDATE` laisse toujours `FOUND` à vrai ;
+  toute ligne était comptée « mise à jour », jamais « créée ».
+
+### Certification DGI — limitation réelle, non contournée
+
+La note n°2025-0885/MEF/SG/DGI réserve les éléments de certification au Module de Contrôle de
+Facturation, et exige l'homologation de la plateforme comme système de facturation
+d'entreprise. Ni l'appareil ni l'ISF ne sont disponibles ici.
+
+Le service `certificationDgiService` **ne certifie donc rien**. Il compose la requête, la
+soumet au point d'accès configuré, journalise chaque tentative et son empreinte, et inscrit un
+échec motivé faute de raccordement. Une contrainte de base
+(`snp_facture_certification_prouvee`) interdit qu'une facture se dise certifiée sans porter la
+référence et la date renvoyées par le service : **même une erreur de programmation ne pourrait
+pas produire une fausse certification**.
+
+Reste à configurer : `VITE_DGI_SECEF_URL`, `VITE_DGI_SECEF_NIM`, `VITE_DGI_SECEF_ISF`.
+
+### Recette
+
+Les seize scénarios d'acceptation ont été exécutés en base, puis les données d'essai
+supprimées. Treize sont passés du premier coup ; les trois « échecs » venaient d'attentes
+fausses de ma part — les règlements avaient soldé la facture, donc reste dû nul et balance âgée
+vide étaient les résultats **corrects**. Vérifiés à nouveau sur une société non réglée : dette
+de 1 970 370 584 FCFA, tranche « non échu », trop-perçu de 156 566 000 FCFA conservé.
+
+**Isolation éprouvée** : un représentant d'Essakane voit 1 demande sur 12, 1 facture, **0 plan**
+et **0 ligne d'audit**. Ses quatre tentatives d'intrusion — répondre pour une autre mine,
+enregistrer un règlement, créer un plan national, modifier une facture — ont toutes été
+refusées par la base.
+
+### Contrôles
+
+- `npx vitest run` : **702/702 verts** (+56 : calculs, service, certification)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé — aucune erreur ajoutée
+- Console du navigateur au démarrage : aucune erreur

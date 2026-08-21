@@ -4,11 +4,11 @@ import {
   BarChart3,
   Check,
   ChevronDown,
+  ClipboardList,
   Eye,
   EyeOff,
   Globe,
   LockKeyhole,
-  Route,
   ShieldCheck,
   UserRound,
 } from 'lucide-react';
@@ -38,6 +38,33 @@ import './Login.css';
  * seul d'un point qui engage tous les comptes — mais l'écart est signalé dans
  * le registre des anomalies.
  */
+
+/**
+ * Bouclier au cadenas.
+ *
+ * La maquette pose cet emblème au sommet de la carte. La bibliothèque d'icônes
+ * n'a que le bouclier à la coche — un autre signe, qui dit « vérifié » là où
+ * celui-ci dit « fermé ». On le compose donc, au même gabarit et à la même
+ * épaisseur de trait que le reste, pour qu'il ne détonne pas.
+ */
+function BouclierCadenas(proprietes: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...proprietes}
+    >
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      <rect x="9.4" y="11.3" width="5.2" height="4.4" rx="0.8" />
+      <path d="M10.6 11.3v-1.35a1.4 1.4 0 0 1 2.8 0v1.35" />
+    </svg>
+  );
+}
 
 type LoginErrors = Partial<Record<'username' | 'password' | 'general', string>>;
 
@@ -132,7 +159,7 @@ export function Login() {
 
   const piliers = [
     { Icon: ShieldCheck, label: t('login.pillar1', 'Transactions sécurisées') },
-    { Icon: Route, label: t('login.pillar2', 'Suivi des opérations') },
+    { Icon: ClipboardList, label: t('login.pillar2', 'Suivi des opérations') },
     { Icon: BarChart3, label: t('login.pillar3', 'Données fiables') },
   ];
 
@@ -153,8 +180,8 @@ export function Login() {
             className="login-presentation__logo"
             src="/sonasp-logo-clair.png"
             alt="SONASP"
-            width={599}
-            height={170}
+            width={620}
+            height={237}
           />
 
           <p className="login-presentation__eyebrow">
@@ -229,7 +256,7 @@ export function Login() {
           <div className="login-column">
             <form className="login-card" onSubmit={handleSubmit} noValidate>
               <span className="login-card__emblem" aria-hidden="true">
-                <ShieldCheck />
+                <BouclierCadenas />
               </span>
 
               <p className="login-card__eyebrow">

@@ -671,6 +671,9 @@ estimée.
 | A219 | GoTrue répond en anglais : « Invalid login credentials » s'affichait tel quel à un agent de la SONASP | Connexion | `messageConnexion()` traduit les cinq refus courants et conserve le message d'origine quand il n'est pas reconnu, plutôt que d'en inventer un |
 | A220 | Le champ est intitulé « Nom d'utilisateur » mais `AuthContext.signIn` transmet la valeur à `signInWithPassword({ email })` : c'est l'adresse de courriel qui est attendue | Connexion | **Non corrigé** — trancher entre renommer le libellé et introduire une résolution identifiant → adresse engage tous les comptes existants ; à arbitrer |
 | A221 | Les deux liens d'assistance de la page de connexion pointent vers `admin@sonasp.ml` — domaine malien, alors que la plateforme est burkinabè | Connexion | **Non corrigé** — l'adresse réelle n'est pas connue ; la remplacer au jugé produirait un contact inexistant |
+| A222 | La refonte de la connexion s'écartait de la maquette : titre sur trois lignes au lieu de deux, carte trop étroite de 190 px, panneau vert uni là où la maquette découvre une photographie | Connexion | Proportions relevées sur la maquette et exprimées en fractions de la largeur ; écart maximal ramené à **14 px sur 1750**, soit moins de 1 % |
+| A223 | Le bloc-marque affiché était celui à six lettres, tiré d'un fichier de 621 px, alors que la maquette emploie le verrouillage « sonap ». `logo_transparent_sonasp.png`, écarté comme opaque, est en réalité transparent à 84 % — ce qu'on prenait pour un fond dégradé est la couche RVB sous l'alpha | Connexion | Variante en réserve dérivée de ce fichier : bloc-marque blanc, drapeau et or intacts, séparés par composante connexe |
+| A224 | Un commentaire XML contenant `-` doublé rendait le fond du panneau indécodable — sans la moindre erreur en console, l'image ne s'affichait simplement pas | Connexion | Commentaire reformulé ; contrôle de bonne formation ajouté au script de génération |
 
 ---
 

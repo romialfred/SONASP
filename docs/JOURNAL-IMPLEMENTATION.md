@@ -3240,3 +3240,83 @@ rouge du drapeau intacts. **33 Ko.** L'original n'est pas touché.
 - `npx vitest run` : **803/803 verts** (5 tests ajoutés sur la traduction des refus)
 - `npm run build` : **vert**
 - `npx tsc --noEmit` : **131**, inchangé
+
+---
+
+## Itération — 21 août 2026 — La connexion, recalée sur la maquette
+
+La refonte précédente reprenait la structure de la maquette mais pas ses proportions. Mise
+côte à côte avec elle, l'écart sautait aux yeux : titre sur trois lignes au lieu de deux, carte
+trop étroite de 190 px, panneau vert uni là où la maquette découvre une photographie.
+
+### La méthode
+
+Plutôt que d'ajuster à l'œil, les positions ont été **relevées sur la maquette** (1750 × 898),
+converties en fractions de la largeur, puis **mesurées dans le navigateur** à chaque itération.
+
+| | maquette | obtenu | écart |
+|---|---|---|---|
+| Panneau vert | 55,5 % | 55,5 % | 0 |
+| Carte | 620 × 726 | 620 × 727 | 1 px |
+| Champs | 550 × 52 | 550 × 53 | 1 px |
+| Pastille de langue | 169 × 46 | 169 × 46 | 0 |
+| Marque | 270 × 100 | 270 × 103 | 3 px |
+| Chapeau (position la plus fautive) | y 280 | y 294 | **14 px** |
+
+Écart maximal : **14 px sur 1750**, soit moins de 1 %.
+
+Deux réglages ont demandé un aller-retour. Le rythme vertical du panneau était calé sur la
+hauteur (`vh`) quand tout le reste suit la largeur : sur un écran court les intervalles se
+tassaient et le bloc remontait de 60 px. Et la largeur du titre, ramenée aux 10,2 em qu'occupe
+la ligne dans la maquette, le faisait repasser à trois lignes — la fonte d'ici est plus large
+que celle du modèle. Elle est restée à 11,4 em : le blanc en fin de cadre ne se voit pas, une
+ligne de plus, si.
+
+### Le bloc-marque
+
+La maquette emploie le verrouillage **« sonap »**, que j'avais écarté : `logo_transparent_sonasp.png`
+paraissait posé sur un fond dégradé vert et rouge. Il ne l'est pas. **84 % de ses pixels sont à
+alpha nul** — ce qu'on prend pour un fond est la couche RVB sous la transparence, que les
+visionneuses qui ignorent l'alpha affichent quand même.
+
+Reste que le bloc-marque y est vert, invisible sur le panneau. Il fallait donc le passer en
+réserve — mais le drapeau burkinabè porte **le même vert**, et doit le garder. Aucun seuil de
+couleur ne les sépare, aucune ligne horizontale non plus : la courbe du drapeau descend à droite
+jusqu'à la hauteur des lettres.
+
+Ce qui les sépare est la forme. Le drapeau est une pièce d'un seul tenant, et c'est la seule qui
+contienne du rouge. Un étiquetage en composantes connexes suffit : neuf composantes, une seule
+porte du rouge. Bloc-marque en blanc, or et drapeau intacts. **67 Ko.**
+
+### Le fond du panneau
+
+La maquette montre un cliché d'orpaillage — une main gantée, une batée d'or brut. **Le projet
+n'en contient aucun**, et aucun outil de cette session ne produit d'image. Je n'en ai donc pas
+inventé.
+
+Ce qui a été fait à la place : la **composition** est en place, prête à le recevoir. Le voile
+n'est pas uniforme — c'est tout le partage de la maquette. Opaque à gauche, où le texte doit
+rester lisible sur n'importe quel cliché ; presque transparent à droite, où l'image se découvre.
+Un voile égal donnerait soit un panneau plat, soit un titre illisible.
+
+Un dessin tient la place en attendant, aux mêmes valeurs et à la même composition, pour que la
+mise en page soit jugée telle qu'elle sera. Une seule ligne à changer — `--login-photo` — quand
+la photographie sera fournie.
+
+### Le défaut qui ne disait rien
+
+Le fond ne s'affichait pas, et **rien ne le signalait** : ni erreur de console, ni requête en
+échec — le fichier partait avec un code 200. Un commentaire XML y contenait `-` doublé, ce que
+la norme interdit. Le SVG était mal formé, et le navigateur l'abandonnait en silence (A224). Un
+contrôle de bonne formation a été ajouté au script qui l'écrit.
+
+### Contrôles
+
+- Géométrie mesurée à 1750×898, 1440×900, 900×820 et 375×812 : aucun débordement horizontal,
+  titre sur deux lignes partout, et la page tient sans défilement sur les deux formats de bureau.
+- Contraste recomposé sur toile, à partir de l'image et du voile réels, aux seuils propres à
+  chaque taille de texte : **titre 7,96 : 1** (seuil 3 : 1 pour 58 px gras), **petits textes
+  14,16 : 1** (seuil 4,5 : 1).
+- `npx vitest run` : **803/803 verts**
+- `npm run build` : **vert**
+- `npx tsc --noEmit` : **131**, inchangé

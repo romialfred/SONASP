@@ -118,6 +118,7 @@ const ReglementsAchatPage = lazy(() => import('./pages/achats/ReglementsAchatPag
 const ReglementForm = lazy(() => import('./pages/achats/ReglementForm'));
 const ComptesMinesPage = lazy(() => import('./pages/achats/ComptesMinesPage'));
 const ContratsPage = lazy(() => import('./pages/contrats/ContratsPage'));
+const PilotageContrats = lazy(() => import('./pages/contrats/PilotageContrats'));
 const ContratForm = lazy(() => import('./pages/contrats/ContratForm'));
 const ContratDetails = lazy(() => import('./pages/contrats/ContratDetails'));
 const RequisitionsPage = lazy(() => import('./pages/requisitions/RequisitionsPage'));
@@ -512,6 +513,10 @@ function AppRoutes() {
             <Route
               path="/contrats"
               element={<ProtectedRoute><ContratsPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/contrats/pilotage"
+              element={<ProtectedRoute><PilotageContrats /></ProtectedRoute>}
             />
             <Route
               path="/contrats/nouveau"

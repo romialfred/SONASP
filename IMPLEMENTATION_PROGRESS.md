@@ -654,6 +654,9 @@ estimée.
 | A202 | Aucun cadre pour les réquisitions de production, ni pour la distinction entre accusé de réception, observations, contestation et accord de la mine | Réquisitions | Module complet : 5 tables, 7 fonctions, 3 écrans ; le régime juridique est déclaré et applique par la base |
 | A203 | `v_manques || 'texte'` sur un `text[]` : PostgreSQL lisait la chaîne comme un littéral de tableau et renvoyait « malformed array literal » à l'utilisateur | Réquisitions | `array_append` ; message français nommant ce qui manque |
 | A204 | L'imputation partielle sans motif renvoyait le message brut de la contrainte | Réquisitions | Vérification en français avant écriture ; la contrainte reste en dernier recours |
+| A205 | L'immuabilité des résultats d'analyse bloquait aussi la cascade : une instruction ouverte par erreur devenait indestructible | Analyses | Le déclencheur laisse passer la cascade, reconnaissable à la disparition de la ligne mère, et refuse toujours la suppression directe |
+| A206 | Aucune conservation séparée des analyses successives : la teneur retenue écrasait les résultats intermédiaires | Analyses | `snp_analyses_resultats` en écriture seule ; les quatre valeurs et leurs écarts restent lisibles après arbitrage |
+| A207 | Aucune alerte contractuelle, aucun versement de pièce, aucun traçage des consultations sensibles | Contrats | Douze alertes à seuils administrables calculées à la lecture ; dépôt privé versionné ; journal d'accès en écriture seule |
 
 ---
 

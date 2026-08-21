@@ -4,6 +4,8 @@ import {
   AlertTriangle, ArrowLeft, CheckCircle2, CircleDollarSign, Gavel, History,
   Pencil, RefreshCw, Scale, Send, Truck,
 } from 'lucide-react';
+import { AnalysesTeneur } from '@/components/contrats/AnalysesTeneur';
+import { PiecesContractuelles } from '@/components/contrats/PiecesContractuelles';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
@@ -714,6 +716,25 @@ export function RequisitionDetails() {
             </div>
           )}
         </Section>
+
+        {/* ---------------------------------------------------- Analyses -- */}
+        {requisition && (
+          <AnalysesTeneur
+            requisitionId={requisition.id}
+            miningCompanyId={requisition.mining_company_id}
+            teneurDeclareeProposee={requisition.teneur_estimee_pct}
+          />
+        )}
+
+        {/* ----------------------------------------------------- Pièces -- */}
+        {requisition && (
+          <PiecesContractuelles
+            domaine="requisition"
+            objetId={requisition.id}
+            categorieAttendue="acte_juridique"
+            modifiable={!['cloturee', 'annulee'].includes(requisition.statut)}
+          />
+        )}
 
         {/* -------------------------------------------------- Imputation -- */}
         <Section

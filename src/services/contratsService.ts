@@ -170,6 +170,12 @@ export const LIBELLES_STATUT_DEFAUT: Record<StatutDefaut, string> = {
   annule: 'Annulé',
 };
 
+export const LIBELLES_GRAVITE_DEFAUT: Record<'mineure' | 'majeure' | 'critique', string> = {
+  mineure: 'Mineure',
+  majeure: 'Majeure',
+  critique: 'Critique',
+};
+
 export const TONS_STATUT_DEFAUT: Record<StatutDefaut, Ton> = {
   detecte: 'warning',
   a_qualifier: 'warning',

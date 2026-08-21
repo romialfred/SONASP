@@ -230,3 +230,52 @@
   font-size: 11.5px;
   line-height: 1.5;
 }
+
+/* ---------------------------------------------------------------------------
+   Ouverture d'un manquement
+
+   Un manquement se defend devant le partenaire : la description est exigee, et
+   le formulaire le dit avant la saisie plutot qu'apres le refus.
+   --------------------------------------------------------------------------- */
+.contrat-manquement {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 1px solid #fbeccc;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fffdf7 0%, #fdf6e7 100%);
+}
+
+.contrat-manquement h4 {
+  margin: 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contrat-manquement > p {
+  margin: 4px 0 12px;
+  color: #96690a;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.contrat-manquement__champs {
+  display: grid;
+  gap: 13px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+}
+
+.contrat-manquement__champs .sn-field.is-large { grid-column: 1 / -1; }
+
+.contrat-manquement__champs textarea {
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid #f0dcab;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sn-ink, #10243e);
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}

@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   BarChart3,
+  BellRing,
   CalendarRange,
   Building2,
   CheckCircle2,
@@ -124,6 +125,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           // Le contrat precede le plan : c'est lui qui fixe les quantites que le
           // plan mensuel reprend comme besoins prioritaires.
           { label: 'Contrats de fourniture', path: '/contrats', icon: FileSignature, color: '#0f7a56' },
+          { label: 'Pilotage des engagements', path: '/contrats/pilotage', icon: BellRing, color: '#b97f00' },
           { label: 'Plans mensuels', path: '/achats/plans', icon: CalendarRange, color: '#d79a00' },
           { label: 'Demandes aux mines', path: '/achats/demandes', icon: FileText, color: '#2f6fec' },
           { label: 'Réquisitions', path: '/requisitions', icon: Gavel, color: '#b3261e' },

@@ -1,0 +1,94 @@
+/**
+ * Pieces d'un dossier contractuel.
+ *
+ * Le tableau porte les actions a droite, en icones : consulter, telecharger,
+ * retirer. Trois gestes courts sur une ligne dense valent mieux qu'un menu.
+ */
+
+.pieces__gestes { display: flex; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+
+.pieces__formulaire {
+  margin: 12px 0;
+  padding: 15px 17px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+.pieces__formulaire.is-retrait {
+  border-color: #f3c8c3;
+  background: linear-gradient(180deg, #fffaf9 0%, #fff2f0 100%);
+}
+
+.pieces__formulaire h4 {
+  margin: 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pieces__formulaire.is-retrait p {
+  margin: 4px 0 10px;
+  color: #b3261e;
+  font-size: 11.5px;
+}
+
+.pieces__formulaire textarea {
+  width: 100%;
+  min-height: 74px;
+  padding: 10px 12px;
+  border: 1px solid #f0dcab;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sn-ink, #10243e);
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+
+.pieces__champs {
+  display: grid;
+  gap: 13px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.pieces__champs .sn-field.is-large { grid-column: 1 / -1; }
+
+.pieces__champs input[type='file'] {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px dashed #c3d0dc;
+  border-radius: 9px;
+  background: #fff;
+  color: #33485f;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pieces__champs input[type='file']:hover { border-color: #0f7a56; }
+
+.pieces__champs small {
+  display: block;
+  margin-top: 5px;
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.pieces__boutons { display: flex; margin-top: 12px; gap: 8px; justify-content: flex-end; }
+
+/* ---------------------------------------------------------------- Tableau -- */
+
+.pieces__table th:last-child, .pieces__table td:last-child { width: 132px; }
+
+.pieces__actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+.pieces__actions .sn-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+}
+
+.pieces__actions .sn-btn svg { width: 14px; height: 14px; margin: 0; }

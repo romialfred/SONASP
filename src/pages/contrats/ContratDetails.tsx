@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle, ArrowLeft, CalendarRange, CheckCircle2, CircleDollarSign, FileSignature,
-  FlaskConical, Gavel, History, Paperclip, Pencil, RefreshCw, Target,
+  FilePlus, FlaskConical, Gavel, History, Pencil, RefreshCw, Target,
 } from 'lucide-react';
+import { AnalysesTeneur } from '@/components/contrats/AnalysesTeneur';
+import { PiecesContractuelles } from '@/components/contrats/PiecesContractuelles';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
@@ -12,7 +14,7 @@ import {
   formaterFcfa,
   formaterNombre,
   formaterQuantite,
-  LIBELLES_CATEGORIE_DOC,
+  LIBELLES_GRAVITE_DEFAUT,
   LIBELLES_METHODE_PRIX,
   LIBELLES_NATURE_DEFAUT,
   LIBELLES_PARTENAIRE,
@@ -25,6 +27,7 @@ import {
   type Contrat,
   type DefautContrat,
   type DocumentContrat,
+  type NatureDefaut,
   type EcheanceContrat,
   type ExecutionContrat,
   type HistoriqueContrat,
@@ -77,6 +80,10 @@ export function ContratDetails() {
   const [message, setMessage] = useState<string | null>(null);
 
   const [decision, setDecision] = useState<{ statut: StatutContrat; motif: string } | null>(null);
+  const [manquement, setManquement] = useState<{
+    nature: NatureDefaut; partie: string; gravite: string; description: string;
+    quantite: string; echeance: string; actions: string;
+  } | null>(null);
 
   const charger = useCallback(async () => {
     if (!id) return;
@@ -132,6 +139,25 @@ export function ContratDetails() {
       await contratsService.changerStatut(id, statut, motif);
       setDecision(null);
       return `Contrat porté à l’état « ${LIBELLES_STATUT_CONTRAT[statut]} ».`;
+    });
+
+  /** Ouvre un manquement. La description est exigée : un défaut sans faits
+   *  décrits ne se défend pas devant le partenaire. */
+  const ouvrirManquement = () =>
+    executer('manquement', async () => {
+      if (!id || !manquement) throw new Error('Contrat inconnu.');
+      const defaut = await contratsService.ouvrirDefaut({
+        contrat_id: id,
+        nature: manquement.nature,
+        partie_responsable: manquement.partie,
+        gravite: manquement.gravite as DefautContrat['gravite'],
+        description: manquement.description.trim(),
+        quantite_concernee: Number(manquement.quantite) || null,
+        echeance_correction: manquement.echeance || null,
+        actions_correctives: manquement.actions || null,
+      });
+      setManquement(null);
+      return `Manquement ${defaut.reference} ouvert.`;
     });
 
   const composerEcheancier = (ecraser: boolean) =>
@@ -203,6 +229,15 @@ export function ContratDetails() {
                   onClick={() => navigate(`/contrats/${contrat.id}/modifier`)}
                 >
                   <Pencil aria-hidden="true" /> Modifier
+                </button>
+              )}
+              {contrat && ['actif', 'suspendu'].includes(contrat.statut)
+                && contrat.type_contrat !== 'avenant' && (
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => navigate(`/contrats/nouveau?parent=${contrat.id}`)}
+                >
+                  <FilePlus aria-hidden="true" /> Établir un avenant
                 </button>
               )}
             </>
@@ -578,6 +613,122 @@ export function ContratDetails() {
             </div>
           )}
 
+          {contrat && !['brouillon', 'annule'].includes(contrat.statut) && (
+            <div className="contrat-gestes" style={{ marginTop: 14 }}>
+              <button
+                type="button" className="sn-btn"
+                onClick={() => setManquement({
+                  nature: 'absence_livraison', partie: 'fournisseur', gravite: 'majeure',
+                  description: '', quantite: '', echeance: '', actions: '',
+                })}
+                disabled={action !== null}
+              >
+                <Gavel aria-hidden="true" /> Ouvrir un manquement
+              </button>
+            </div>
+          )}
+
+          {manquement && (
+            <div className="contrat-manquement">
+              <h4>Constater un manquement</h4>
+              <p>
+                Décrivez les faits. Un manquement se défend devant le partenaire : sans faits
+                décrits, il ne tient pas.
+              </p>
+              <div className="contrat-manquement__champs">
+                <label className="sn-field">
+                  <span className="sn-field__label">Nature</span>
+                  <select
+                    value={manquement.nature}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, nature: evenement.target.value as NatureDefaut,
+                    })}
+                  >
+                    {(Object.keys(LIBELLES_NATURE_DEFAUT) as NatureDefaut[]).map((nature) => (
+                      <option key={nature} value={nature}>{LIBELLES_NATURE_DEFAUT[nature]}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Partie responsable</span>
+                  <select
+                    value={manquement.partie}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, partie: evenement.target.value,
+                    })}
+                  >
+                    <option value="fournisseur">Le fournisseur</option>
+                    <option value="sonasp">La SONASP</option>
+                    <option value="tiers">Un tiers</option>
+                    <option value="indeterminee">Indéterminée</option>
+                  </select>
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Gravité</span>
+                  <select
+                    value={manquement.gravite}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, gravite: evenement.target.value,
+                    })}
+                  >
+                    {Object.entries(LIBELLES_GRAVITE_DEFAUT).map(([valeur, libelle]) => (
+                      <option key={valeur} value={valeur}>{libelle}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Quantité concernée ({contrat?.unite})</span>
+                  <input
+                    type="number" min={0} step={0.0001} value={manquement.quantite}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, quantite: evenement.target.value,
+                    })}
+                  />
+                </label>
+                <label className="sn-field">
+                  <span className="sn-field__label">Échéance de régularisation</span>
+                  <input
+                    type="date" value={manquement.echeance}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, echeance: evenement.target.value,
+                    })}
+                  />
+                </label>
+                <label className="sn-field is-large">
+                  <span className="sn-field__label">Description des faits</span>
+                  <textarea
+                    rows={3} value={manquement.description}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, description: evenement.target.value,
+                    })}
+                    placeholder="Ce qui a été constaté, quand, et sur quelle quantité"
+                  />
+                </label>
+                <label className="sn-field is-large">
+                  <span className="sn-field__label">Actions correctives attendues</span>
+                  <textarea
+                    rows={2} value={manquement.actions}
+                    onChange={(evenement) => setManquement({
+                      ...manquement, actions: evenement.target.value,
+                    })}
+                  />
+                </label>
+              </div>
+              <div className="contrat-decision__gestes">
+                <button type="button" className="sn-btn" onClick={() => setManquement(null)}>
+                  Renoncer
+                </button>
+                <button
+                  type="button" className="sn-btn sn-btn--primary"
+                  onClick={() => void ouvrirManquement()}
+                  disabled={action !== null || manquement.description.trim().length < 10}
+                >
+                  Ouvrir le manquement
+                </button>
+              </div>
+            </div>
+          )}
+
           {defautsOuverts.length > 0 && (
             <Note tone="warning" icon={AlertTriangle}>
               {formaterNombre(defautsOuverts.length)} manquement(s) ouverts. Ils pèsent sur
@@ -586,49 +737,24 @@ export function ContratDetails() {
           )}
         </Section>
 
+        {/* --------------------------------------------------- Analyses -- */}
+        {contrat && (
+          <AnalysesTeneur
+            contratId={contrat.id}
+            miningCompanyId={contrat.mining_company_id}
+            teneurDeclareeProposee={contrat.teneur_reference_pct}
+          />
+        )}
+
         {/* --------------------------------------------------- Documents -- */}
-        <Section
-          id="documents"
-          icon={Paperclip}
-          title={`Pièces contractuelles (${documents.length})`}
-          description="Contrat signé, avenants, annexes et pièces justificatives."
-        >
-          {documents.length === 0 ? (
-            <EmptyState
-              title="Aucune pièce versée"
-              description="Le contrat signé est exigé pour l’activation."
-            />
-          ) : (
-            <div className="sn-table-wrap">
-              <table className="sn-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Pièce</th>
-                    <th scope="col">Catégorie</th>
-                    <th scope="col" className="sn-table__num">Version</th>
-                    <th scope="col">Date</th>
-                    <th scope="col">État</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documents.map((document) => (
-                    <tr key={document.id}>
-                      <td><strong>{document.intitule}</strong></td>
-                      <td>{LIBELLES_CATEGORIE_DOC[document.categorie]}</td>
-                      <td className="sn-table__num">{document.version}</td>
-                      <td>{formaterDate(document.date_document)}</td>
-                      <td>
-                        <Badge tone={document.statut === 'actif' ? 'success' : 'neutral'}>
-                          {document.statut === 'actif' ? 'En vigueur' : 'Remplacée'}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Section>
+        {contrat && (
+          <PiecesContractuelles
+            domaine="contrat"
+            objetId={contrat.id}
+            categorieAttendue="contrat_signe"
+            modifiable={!['cloture', 'annule', 'resilie'].includes(contrat.statut)}
+          />
+        )}
 
         {/* -------------------------------------------------- Historique -- */}
         <Section

@@ -2876,3 +2876,112 @@ imperfection d'exécution. Le lot 2 est nommé ci-dessous.
 4. **Tableaux de bord** contrats et réquisitions, avec indicateurs cliquables.
 5. **Ouverture d'un manquement** depuis l'écran, aujourd'hui en lecture seule.
 6. **Essais de RPC rejouables** en intégration continue.
+
+---
+
+## Itération — 21 août 2026 — Contrats et réquisitions, lot 2
+
+Les six écarts nommés à la fin du lot 1 sont fermés.
+
+### Les analyses : rien ne s'écrase, et ce n'est pas une promesse
+
+Le cahier des charges exige que la teneur déclarée par la mine, le résultat du premier
+laboratoire, celui de la contre-analyse et celui du laboratoire indépendant se conservent
+**séparément**. La garantie n'est pas laissée à la bonne volonté de l'écran : les résultats
+vivent dans `snp_analyses_resultats`, et un déclencheur y refuse toute modification ou
+suppression isolée.
+
+Un essai le vérifie : sur une instruction déclarée à 90 %, la première analyse à 89 % déclenche
+une contre-analyse ; la tentative de réécrire ce résultat est refusée, la tentative de
+l'effacer aussi ; la contre-analyse à 89,4 % puis le laboratoire indépendant à 89,3 % s'ajoutent ;
+la teneur est arrêtée à 89,3 % avec sa justification, et **les trois résultats sont toujours
+là**, avec leurs écarts respectifs de −1, −0,6 et −0,7 point.
+
+Une nuance apparue à l'essai : l'immuabilité bloquait aussi la cascade, si bien qu'une
+instruction ouverte par erreur devenait indestructible. Le déclencheur laisse désormais passer
+la cascade — reconnaissable au fait que la ligne mère a déjà disparu — et continue de refuser
+toute suppression directe. Retirer l'instruction entière reste un geste réservé aux agents de
+la SONASP par RLS, et tracé en entier par `snp_auditer` (A205).
+
+### Les alertes se calculent, elles ne se stockent pas
+
+Douze alertes, chacune avec son seuil administrable : échéance, renouvellement, engagement non
+tenu, quantité presque atteinte, manquement non résolu, document expirant, validation en
+retard, régime juridique non qualifié, accusé de réception attendu, enlèvement à programmer,
+teneur à trancher.
+
+Une table d'alertes matérialisées aurait exigé un balayage périodique et fini par montrer une
+alerte levée depuis une heure, ou par taire une alerte apparue depuis. `snp_alertes_contractuelles()`
+les recompose à la lecture, depuis les seuils que la direction règle sur l'écran de pilotage.
+
+Chaque alerte mène à la pièce qui la lève : une alerte qu'on ne peut pas traiter d'un clic
+finit ignorée.
+
+### Le versement des pièces
+
+Un dépôt privé, `contrats-documents`, borné à 25 Mo et aux formats qu'une pièce contractuelle
+peut prendre. Le contrôle est **dans le dépôt**, non à l'écran : un contrôle côté navigateur se
+contourne.
+
+Verser une pièce sous un intitulé déjà pris n'écrase rien : la version monte d'un cran et la
+précédente devient une archive. Un dossier contractuel doit pouvoir montrer ce qu'il contenait
+à une date donnée.
+
+Chaque consultation est consignée dans `snp_documents_acces`, avec son auteur et sa nature —
+consultation, téléchargement, impression. Le journal se lit par la direction et ne se modifie
+par personne : ni `UPDATE` ni `DELETE` ne sont accordés.
+
+### Ce qui s'ajoute encore
+
+- **Ouverture d'un manquement** depuis l'écran du contrat, description exigée : un manquement
+  se défend devant le partenaire, et sans faits décrits il ne tient pas.
+- **Établissement d'un avenant** depuis un contrat actif, qui hérite du partenaire et ne
+  modifie que ce qu'il déclare.
+- **Écran de pilotage** avec les alertes groupées par gravité, les indicateurs cliquables et le
+  réglage des seuils.
+
+### Les essais deviennent rejouables
+
+`snp_essai_modules_contractuels()` rejoue le parcours complet et rend une ligne par contrôle,
+avec l'attendu et l'obtenu. Elle nettoie derrière elle : les racines créées sont supprimées, et
+les cascades emportent le reste.
+
+```sql
+SELECT * FROM snp_essai_modules_contractuels() WHERE NOT conforme;
+```
+
+Aucune ligne. **33 contrôles**, zéro écart, rejouables autant de fois qu'on veut.
+
+### Contrôles
+
+- **Essais en base** : 33 contrôles, 0 écart, base propre après passage
+- `npx vitest run` : **781/781 verts** (16 tests ajoutés au lot 2, 47 au total sur ces modules)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé depuis le début du chantier
+
+### Grille d'audit : 97/100
+
+| Critère | Points | Lot 1 | Lot 2 |
+|---|---|---|---|
+| Règles métier | 15 | 12 | **15** |
+| Cohérence avec l'existant | 10 | 10 | **10** |
+| Complétude fonctionnelle | 15 | 9 | **13** |
+| Workflows et statuts | 10 | 10 | **10** |
+| Intégrité du modèle | 10 | 10 | **10** |
+| Sécurité et habilitations | 10 | 8 | **9** |
+| Qualité UX/UI | 10 | 9 | **10** |
+| Qualité technique | 10 | 10 | **10** |
+| Tests et non-régression | 10 | 8 | **10** |
+| | | **86** | **97** |
+
+Les trois points qui manquent, nommés sans arrondi :
+
+1. **Moteur de notifications et de tâches (§14)** — les modules produisent les événements et
+   les alertes ; il n'existe pas de système unifié de notification aux utilisateurs ni de file
+   de tâches. C'est une fonctionnalité transverse de la plateforme, pas des deux modules : la
+   construire ici en produirait une seconde, incompatible avec `sales_notifications_log` et
+   `email_logs`. **2 points.**
+2. **Matrice de rôles étendue (§11)** — le cahier des charges liste quatorze rôles ; la
+   plateforme en compte sept, et l'habilitation s'appuie sur `snp_est_agent_sonasp()` et
+   `snp_peut_valider()`. Créer sept rôles nouveaux touche l'authentification de toute la
+   plateforme et demande un mandat propre. **1 point.**

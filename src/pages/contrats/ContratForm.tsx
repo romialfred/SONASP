@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle, ArrowLeft, Building2, CalendarRange, CircleDollarSign, FileSignature,
   FlaskConical, Gavel, Loader2, Save, Scale, Truck,
@@ -212,8 +212,14 @@ export function nombrePeriodes(debut: string, fin: string, periodicite: Periodic
 
 export function ContratForm() {
   const { id } = useParams<{ id: string }>();
+  const [parametres] = useSearchParams();
   const navigate = useNavigate();
   const modeEdition = Boolean(id);
+
+  /* Un avenant se rattache a son parent des l'ouverture : il en herite le
+     partenaire, et ne modifie que ce qu'il declare. */
+  const parentId = parametres.get('parent');
+  const [parent, setParent] = useState<Contrat | null>(null);
 
   const [saisie, setSaisie] = useState<Saisie>(SAISIE_VIDE);
   const [contrat, setContrat] = useState<Contrat | null>(null);
@@ -230,6 +236,32 @@ export function ContratForm() {
     try {
       const societesChargees = await achatsIndustrielsService.societesProductrices();
       setSocietes(societesChargees);
+
+      if (parentId && !id) {
+        const contratParent = await contratsService.contrat(parentId);
+        if (!contratParent) throw new Error('Le contrat a amender est introuvable.');
+        setParent(contratParent);
+        setSaisie((actuelle) => ({
+          ...actuelle,
+          intitule: `Avenant au contrat ${contratParent.numero_contrat}`,
+          partenaire_type: contratParent.partenaire_type,
+          mining_company_id: contratParent.mining_company_id ?? '',
+          partenaire_libelle: contratParent.partenaire_libelle ?? '',
+          representant_partenaire: contratParent.representant_partenaire ?? '',
+          type_contrat: 'avenant',
+          date_debut: contratParent.date_debut,
+          date_fin: contratParent.date_fin,
+          unite: contratParent.unite,
+          periodicite: contratParent.periodicite,
+          methode_prix: contratParent.methode_prix,
+          devise_cours: contratParent.devise_cours,
+          conditions_paiement: contratParent.conditions_paiement,
+          delai_paiement_jours: contratParent.delai_paiement_jours?.toString() ?? '30',
+          teneur_reference_pct: contratParent.teneur_reference_pct?.toString() ?? '',
+          teneur_minimale_pct: contratParent.teneur_minimale_pct?.toString() ?? '',
+          teneur_tolerance_pct: contratParent.teneur_tolerance_pct?.toString() ?? '0.5',
+        }));
+      }
 
       if (id) {
         const existant = await contratsService.contrat(id);
@@ -297,7 +329,7 @@ export function ContratForm() {
     } finally {
       setChargement(false);
     }
-  }, [id]);
+  }, [id, parentId]);
 
   useEffect(() => {
     void charger();
@@ -345,6 +377,7 @@ export function ContratForm() {
     representant_partenaire: texteOuNull(saisie.representant_partenaire),
     representant_contact: texteOuNull(saisie.representant_contact),
     type_contrat: saisie.type_contrat,
+    contrat_parent_id: parent?.id ?? null,
     direction_responsable: texteOuNull(saisie.direction_responsable),
     date_signature: saisie.date_signature || null,
     date_debut: saisie.date_debut,
@@ -445,9 +478,15 @@ export function ContratForm() {
         <header className="site-form__intro">
           <span className="site-form__intro-icon"><FileSignature aria-hidden="true" /></span>
           <div>
-            <h2>{modeEdition ? 'Modifier le contrat' : 'Établir un contrat de fourniture'}</h2>
+            <h2>
+              {modeEdition ? 'Modifier le contrat'
+                : parent ? `Avenant au contrat ${parent.numero_contrat}`
+                  : 'Établir un contrat de fourniture'}
+            </h2>
             <p className="site-form__subtitle">
-              Engagement de livraison d’or entre la SONASP et son fournisseur.
+              {parent
+                ? 'L’avenant hérite du partenaire et ne modifie que ce qu’il déclare.'
+                : 'Engagement de livraison d’or entre la SONASP et son fournisseur.'}
             </p>
           </div>
 

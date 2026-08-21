@@ -650,6 +650,10 @@ estimée.
 | A198 | « En transit » confondait l'or chez la raffinerie (18 147,50 oz) et l'or raffiné attendant sa saisie d'entrée (24 904,07 oz, 3 lots) | Stocks | Deux postes distincts ; celui qui attend un geste se signale et porte le bouton de saisie |
 | A199 | L'or acheté aux artisans (26 409,30 g, 31 lots) est absent de la vue nationale : `gold_inventory` n'offre aucun rattachement hors mine industrielle | Stocks | Compté à part dans « Origine de la matière », en brut et en or fin. **Reste à faire** : la table de fonte qui réunit N lots artisanaux en un lingot |
 | A200 | En-têtes de colonnes chiffrées alignés à gauche au-dessus de valeurs alignées à droite, sur tous les tableaux `sn-table` | Socle | `.sn-table th.sn-table__num` ; style commun des pieds de tableau |
+| A201 | Aucun module ne couvrait l'amont contractuel : `customer_contracts` lie la SONASP à ses clients acheteurs, rien n'engageait un fournisseur à livrer | Contrats | Module complet : 5 tables, 8 fonctions, 3 écrans, intégré au plan d'achat |
+| A202 | Aucun cadre pour les réquisitions de production, ni pour la distinction entre accusé de réception, observations, contestation et accord de la mine | Réquisitions | Module complet : 5 tables, 7 fonctions, 3 écrans ; le régime juridique est déclaré et applique par la base |
+| A203 | `v_manques || 'texte'` sur un `text[]` : PostgreSQL lisait la chaîne comme un littéral de tableau et renvoyait « malformed array literal » à l'utilisateur | Réquisitions | `array_append` ; message français nommant ce qui manque |
+| A204 | L'imputation partielle sans motif renvoyait le message brut de la contrainte | Réquisitions | Vérification en français avant écriture ; la contrainte reste en dernier recours |
 
 ---
 

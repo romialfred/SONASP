@@ -1,0 +1,210 @@
+/**
+ * Requisitions de production d'or.
+ *
+ * Le registre et le dossier reprennent la charte des contrats. Ce fichier ne
+ * porte que ce qui est propre a la requisition : le rappel du regime juridique,
+ * les notifications, et la separation des quatre reponses possibles de la mine.
+ */
+
+.requisitions-table { table-layout: fixed; }
+.requisitions-table th:first-child, .requisitions-table td:first-child { width: 21%; }
+.requisitions-table td { vertical-align: middle; }
+
+/* ------------------------------------------------------ Portee du regime -- */
+
+/* Le regime decide de ce que la mine peut faire : il se rappelle en toutes
+   lettres, et sa couleur dit s'il autorise d'avancer. */
+.requisition-portee {
+  margin-top: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: var(--sn-surface-alt, #f7f9fb);
+  color: #33485f;
+  font-size: 12px;
+  line-height: 1.55;
+  grid-column: 1 / -1;
+}
+
+.requisition-portee strong { color: var(--sn-ink, #10243e); }
+
+.requisition-portee.is-executoire_sans_accord {
+  border-color: #cfe0f8;
+  border-left-color: #2f6fec;
+  background: #f5f8fe;
+}
+
+.requisition-portee.is-accord_requis {
+  border-color: #fbeccc;
+  border-left-color: #d99a00;
+  background: #fdf9f0;
+}
+
+.requisition-portee.is-a_qualifier {
+  border-color: #f3c8c3;
+  border-left-color: #b3261e;
+  background: #fff5f4;
+  color: #8f2b23;
+}
+
+.requisition-piece {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 11px 14px;
+  gap: 9px;
+  border: 1px dashed var(--sn-line, #e0e7ee);
+  border-radius: 10px;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.requisition-piece svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+
+/* ------------------------------------------------------- Formulaires en ligne */
+
+.requisition-formulaire {
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+.requisition-formulaire .site-form__grid {
+  display: grid;
+  gap: 14px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(216px, 1fr));
+}
+
+/* ---------------------------------------------------------- Notifications -- */
+
+.requisition-notifications { margin: 0; padding: 0; list-style: none; }
+
+.requisition-notifications li {
+  padding: 14px 0;
+  border-top: 1px solid var(--sn-line-soft, #eef2f6);
+}
+
+.requisition-notifications li:first-child { border-top: 0; }
+
+.requisition-notifications__tete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.requisition-notifications__tete strong {
+  color: var(--sn-ink, #10243e);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.requisition-notifications__meta {
+  margin: 4px 0 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 11px;
+}
+
+.requisition-notifications .sn-btn { margin-top: 8px; height: 28px; font-size: 11px; }
+
+.requisition-notifications__contenu { margin-top: 8px; }
+
+.requisition-notifications__contenu summary {
+  color: var(--sn-muted, #60738c);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.requisition-notifications__contenu pre {
+  margin: 8px 0 0;
+  padding: 11px 13px;
+  overflow-x: auto;
+  border: 1px solid var(--sn-line-soft, #eef2f6);
+  border-radius: 9px;
+  background: #fff;
+  color: #33485f;
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------- Imputation -- */
+
+.requisition-imputation {
+  display: grid;
+  padding: 14px 16px;
+  gap: 12px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(188px, 1fr));
+  border: 1px solid #d7ebe2;
+  border-radius: 12px;
+  background: rgb(238 250 244 / 60%);
+}
+
+.requisition-imputation span {
+  display: block;
+  color: #4a7d68;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.requisition-imputation strong {
+  display: block;
+  margin-top: 3px;
+  color: #0d5c41;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.requisition-imputation__motif {
+  margin: 0;
+  color: #4a7d68;
+  font-size: 11.5px;
+  line-height: 1.5;
+  grid-column: 1 / -1;
+}
+
+/* --------------------------------------------------- Reponses de la mine -- */
+
+.requisition-reponse {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(216px, 1fr));
+}
+
+.requisition-reponse article {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface, #fff);
+}
+
+.requisition-reponse article.est-alerte { border-color: #f3c8c3; background: #fff8f7; }
+
+.requisition-reponse h4 {
+  margin: 0 0 6px;
+  color: var(--sn-ink, #10243e);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.requisition-reponse p {
+  margin: 0;
+  color: #33485f;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.requisition-reponse small {
+  display: block;
+  margin-top: 8px;
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
+  line-height: 1.45;
+}

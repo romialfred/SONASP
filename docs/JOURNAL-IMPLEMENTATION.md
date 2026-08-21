@@ -2738,3 +2738,141 @@ chargent.
 - `npx vitest run` : **734/734 verts** (4 tests ajoutés)
 - `npm run build` : **vert**
 - `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+---
+
+## Itération — 21 août 2026 — Contrats de fourniture et réquisitions, lot 1
+
+### Ce que l'audit a établi
+
+129 tables, dont `customer_contracts` — mais côté **vente** : elle lie la SONASP à ses clients
+acheteurs. Rien ne couvrait l'amont, c'est-à-dire l'engagement d'un fournisseur à livrer. Les
+deux modules se construisent donc, sans rien remplacer.
+
+Trois référentiels de fournisseurs coexistent — `mining_companies`, `snp_artisans_miniers`,
+`sites` — et aucun ne les réunit. Les conventions du socle sont solides et réutilisables :
+`snp_auditer()`, `snp_est_agent_sonasp()`, `snp_peut_valider()`, `snp_numero_suivant()`,
+`snp_touch_updated_at()`, et un patron RLS constant.
+
+### Cinq décisions d'architecture
+
+**D1. Partenaire typé, non dupliqué.** Créer une table de partenaires aurait dupliqué trois
+référentiels et les aurait fait diverger. Le contrat porte un `partenaire_type` et
+**exactement une** clé étrangère, contrainte par `snp_contrat_partenaire_unique` et
+`snp_contrat_partenaire_coherent`.
+
+**D2. Aucun total d'exécution stocké.** Quantités livrées, imputées, facturées et payées se
+recalculent par `snp_contrat_execution()` depuis les achats et les factures. Un total stocké
+diverge le jour où une écriture passe à côté du déclencheur ; un total calculé ne le peut pas.
+
+**D3. Quatorze états, non dix-sept.** « En préparation » ne se distingue pas de « Brouillon »,
+« En attente de signature » est exactement « Approuvé » avant signature, et « Renouvelé » est
+un lien (`contrat_precedent_id`) porté par un contrat clôturé, non un état.
+
+**D4. Les règles de teneur et de prix vivent sur le contrat**, pas dans un moteur séparé :
+juridiquement, c'est le contrat qui les porte, et deux contrats du même mois peuvent poser des
+tolérances différentes.
+
+**D5. Un avenant est un contrat rattaché à son parent**, non une table à part.
+
+### Le double comptage, empêché par construction
+
+C'est le point le plus délicat de la mission (§8 et §16.2). La règle retenue tient en une
+phrase : **l'achat est la seule source physique d'or acheté**. C'est lui, et lui seul, qui
+porte son origine — `contrat`, `requisition` ou `hors_contrat` — et la part imputée à
+l'engagement, plafonnée par `snp_achat_imputee_plafonnee`.
+
+Une réquisition ne compte donc jamais deux fois : `snp_convertir_requisition_en_achat` refuse
+un second achat sur la même pièce, et l'exécution du contrat lit les achats, pas les
+réquisitions. Vérifié : sur une réquisition de 500 oz imputée partiellement à hauteur de 300,
+le contrat affiche livrée 500, imputée 300, réquisitionnée 500, hors contrat 200. La somme est
+juste, sans recouvrement.
+
+### La prudence juridique, écrite dans la base
+
+Le régime d'une réquisition n'est pas supposé : il est déclaré sur la pièce. Trois valeurs qui
+ne se confondent pas — `executoire_sans_accord`, `accord_requis`, `a_qualifier` — et quatre
+champs distincts pour la réponse de la mine : accusé de réception, observations, contestation,
+accord.
+
+`snp_changer_statut_requisition` refuse le passage à « exécutoire » sous un régime non
+qualifié, et exige l'accord **seulement** lorsque le régime le demande. Une contrainte
+interdit même de renseigner `accord_mine` sous un régime qui ne l'exige pas : le système ne
+peut pas laisser croire qu'une mine a consenti quand elle n'a fait qu'accuser réception.
+
+### Le moteur de teneur
+
+Les seuils viennent du contrat. `snp_evaluer_teneur(contrat, déclarée, analysée)` rend l'écart,
+la décision et son explication. Vérifié sur un contrat à 90 % de référence, 85 % de minimum,
+0,5 point de tolérance :
+
+| Teneur analysée | Écart | Décision |
+|---|---|---|
+| 89,6 % | 0,4 | acceptée |
+| 89,0 % | 1,0 | contre-analyse |
+| 88,0 % | 2,0 | laboratoire indépendant |
+| 84,0 % | — | non-conformité, sous le minimum |
+
+### Le plan mensuel reprend les engagements
+
+`snp_appliquer_contrats_au_plan` se pose **par dessus** la répartition existante, sans la
+remplacer : elle ne touche qu'aux lignes des mines sous contrat actif, y porte la quantité du
+mois et le reliquat reportable, et plafonne à l'assiette réellement déclarée. Une ligne
+ajustée à la main est préservée, mais rattachée quand même à son contrat : elle doit savoir
+d'où elle vient.
+
+L'écran du plan gagne une section « Engagements contractuels du mois » qui montre, contrat par
+contrat, l'engagé, le reliquat antérieur, le déjà livré et le reste à collecter.
+
+### Deux défauts trouvés par les essais, et corrigés
+
+Les essais de bout en bout, joués en base dans des transactions annulées, ont révélé deux
+messages techniques présentés à l'utilisateur — ce que le cahier des charges interdit
+explicitement (§18) :
+
+- `v_manques || 'texte'` sur un `text[]` : PostgreSQL tentait de lire la chaîne comme un
+  littéral de tableau et renvoyait « malformed array literal ». `array_append` lève
+  l'ambiguïté ;
+- l'imputation partielle sans motif renvoyait le message brut de la contrainte. La fonction
+  vérifie désormais avant d'écrire, et nomme ce qui manque.
+
+Les deux contraintes restent en place : elles protègent la donnée en dernier recours.
+
+### Contrôles
+
+- **Essais en base**, transactions annulées : 13 contrôles sur les contrats, 13 sur les
+  réquisitions, tous verts après correction
+- `npx vitest run` : **765/765 verts** (31 tests ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit -p tsconfig.app.json` : **132**, inchangé
+
+### Grille d'audit : 86/100
+
+| Critère | Points | Obtenu | Ce qui manque |
+|---|---|---|---|
+| Règles métier | 15 | **12** | Les analyses successives ne sont pas conservées séparément (§5.5) |
+| Cohérence avec l'existant | 10 | **10** | — |
+| Complétude fonctionnelle | 15 | **9** | Analyses, versement des pièces, alertes, tableaux de bord dédiés |
+| Workflows et statuts | 10 | **10** | — |
+| Intégrité du modèle | 10 | **10** | — |
+| Sécurité et habilitations | 10 | **8** | Matrice de rôles limitée à agent/validateur ; traçage des téléchargements |
+| Qualité UX/UI | 10 | **9** | Pas d'écran de versement de pièce |
+| Qualité technique | 10 | **10** | — |
+| Tests et non-régression | 10 | **8** | Les essais de RPC ne sont pas rejouables en intégration continue |
+
+**86/100.** La note n'est pas arrondie vers le haut : chaque point retiré correspond à une
+fonctionnalité décrite au cahier des charges qui n'est pas encore implémentée, et non à une
+imperfection d'exécution. Le lot 2 est nommé ci-dessous.
+
+### Lot 2, à enchaîner
+
+1. **Table des analyses** : `snp_analyses_teneur` conservant séparément la teneur déclarée, le
+   premier laboratoire, la contre-analyse, le laboratoire indépendant, la teneur finale et sa
+   justification — aucun résultat initial ne doit être écrasé.
+2. **Versement des pièces** : écran de dépôt sur Supabase Storage, prévisualisation,
+   versionnage, traçage des téléchargements sensibles.
+3. **Alertes contractuelles** : échéance, engagement non respecté, dépassement, teneur hors
+   tolérance, document expirant, défaut non résolu.
+4. **Tableaux de bord** contrats et réquisitions, avec indicateurs cliquables.
+5. **Ouverture d'un manquement** depuis l'écran, aujourd'hui en lecture seule.
+6. **Essais de RPC rejouables** en intégration continue.

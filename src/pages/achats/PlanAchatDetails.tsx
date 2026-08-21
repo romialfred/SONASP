@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CalendarRange, RefreshCw, Send, Sparkles, Target } from 'lucide-react';
+import {
+  AlertTriangle, ArrowLeft, CalendarRange, FileSignature, RefreshCw, Send, Sparkles, Target,
+} from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
@@ -18,6 +20,11 @@ import {
   validerLigne,
   valoriserLigne,
 } from '@/services/achatsIndustrielsCalculs';
+import {
+  contratsService,
+  formaterQuantite,
+  type ContratActifPeriode,
+} from '@/services/contratsService';
 import { francs, montant, onces, TONS_STATUT } from './PlansAchatPage';
 import './achats.css';
 
@@ -109,6 +116,7 @@ export function PlanAchatDetails() {
   const [message, setMessage] = useState<string | null>(null);
 
   const [politique, setPolitique] = useState({ pourcentage: '', prix: '' });
+  const [engagements, setEngagements] = useState<ContratActifPeriode[]>([]);
 
   const charger = useCallback(async () => {
     if (!id) return;
@@ -121,6 +129,16 @@ export function PlanAchatDetails() {
       ]);
       setPlan(planCharge);
       setLignes(lignesChargees);
+
+      // Les contrats actifs du mois : ce que la SONASP a deja promis d'acheter.
+      if (planCharge) {
+        const debut = new Date(Date.UTC(planCharge.annee, planCharge.mois - 1, 1));
+        const fin = new Date(Date.UTC(planCharge.annee, planCharge.mois, 0));
+        setEngagements(await contratsService.actifsSurPeriode(
+          debut.toISOString().slice(0, 10),
+          fin.toISOString().slice(0, 10)
+        ));
+      }
       setBrouillons(Object.fromEntries(lignesChargees.map((ligne) => [
         ligne.id,
         { quantite: String(ligne.quantite_proposee_oz ?? 0), prix: String(ligne.prix_once_fcfa ?? 0) },
@@ -197,6 +215,22 @@ export function PlanAchatDetails() {
       setAction(null);
     }
   };
+
+  /** Porte les engagements contractuels du mois sur les lignes du plan. */
+  const appliquerContrats = (ecraser: boolean) =>
+    executer('contrats', async () => {
+      if (!id) throw new Error('Plan inconnu.');
+      const bilan = await contratsService.appliquerAuPlan(id, ecraser);
+      if (!bilan) return 'Aucun contrat actif sur ce mois.';
+      const morceaux = [
+        bilan.lignes_creees > 0 ? `${bilan.lignes_creees} ligne(s) créée(s)` : null,
+        bilan.lignes_rattachees > 0 ? `${bilan.lignes_rattachees} ligne(s) rattachée(s)` : null,
+        bilan.lignes_preservees > 0 ? `${bilan.lignes_preservees} ajustement(s) préservé(s)` : null,
+      ].filter(Boolean);
+      return morceaux.length
+        ? `Engagements appliqués : ${morceaux.join(', ')}.`
+        : 'Aucun contrat actif sur ce mois.';
+    });
 
   /** Répartition : la base relit la production et recalcule les parts. */
   const repartir = (ecraser: boolean) =>
@@ -463,6 +497,120 @@ export function PlanAchatDetails() {
             mines ont déclaré ce mois-ci. La répartition s’arrête à l’assiette : révisez la cible,
             ou attendez les déclarations manquantes.
           </Note>
+        )}
+
+        {/* --- Engagements contractuels du mois ---
+            Le contrat precede le plan : ce que la SONASP a deja promis
+            d'acheter entre ici comme besoin prioritaire, reliquat compris. */}
+        {engagements.length > 0 && (
+          <Section
+            id="engagements"
+            icon={FileSignature}
+            tone="blue"
+            title={`Engagements contractuels du mois (${engagements.length})`}
+            description="Quantites promises par contrat, reliquat des periodes precedentes et reste a collecter."
+            info={{
+              titre: 'Ce que le report recouvre',
+              contenu:
+                'Le reliquat est ce qui manque sur les periodes deja closes d’un contrat. Il ne se reporte que si le contrat l’autorise : une clause de non-report interdit de rattraper un mois manque.',
+            }}
+          >
+            {modifiable && (
+              <div className="plan-politique__gestes" style={{ marginBottom: 14 }}>
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void appliquerContrats(false)} disabled={action !== null}
+                >
+                  <FileSignature aria-hidden="true" /> Reprendre les engagements dans le plan
+                </button>
+                <button
+                  type="button" className="sn-btn"
+                  onClick={() => void appliquerContrats(true)} disabled={action !== null}
+                >
+                  <RefreshCw aria-hidden="true" /> En ecrasant les ajustements
+                </button>
+              </div>
+            )}
+
+            <div className="achats-grille">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Contrat</th>
+                    <th scope="col">Partenaire</th>
+                    <th scope="col" className="is-right">Engage du mois (oz)</th>
+                    <th scope="col" className="is-right">Reliquat anterieur (oz)</th>
+                    <th scope="col" className="is-right">Deja livre (oz)</th>
+                    <th scope="col" className="is-right">Reste a collecter (oz)</th>
+                    <th scope="col">Report</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {engagements.map((engagement) => (
+                    <tr key={engagement.contrat_id}>
+                      <td><strong>{engagement.numero_contrat}</strong></td>
+                      <td>{engagement.partenaire}</td>
+                      <td className="is-right">{decimal.format(Number(engagement.quantite_periode) || 0)}</td>
+                      <td className="is-right">
+                        {decimal.format(Number(engagement.reliquat_anterieur) || 0)}
+                      </td>
+                      <td className="is-right">
+                        {decimal.format(Number(engagement.deja_livre_periode) || 0)}
+                      </td>
+                      <td className="is-right">
+                        <strong>{decimal.format(Number(engagement.restant_a_collecter) || 0)}</strong>
+                      </td>
+                      <td>
+                        <Badge tone={engagement.report_reliquat === 'interdit' ? 'danger'
+                          : engagement.report_reliquat === 'sur_accord' ? 'warning' : 'success'}>
+                          {engagement.report_reliquat === 'interdit' ? 'Interdit'
+                            : engagement.report_reliquat === 'sur_accord' ? 'Sur accord' : 'Autorise'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={2}>Total contractuel</td>
+                    <td className="is-right">
+                      {decimal.format(engagements.reduce(
+                        (somme, engagement) => somme + (Number(engagement.quantite_periode) || 0), 0
+                      ))}
+                    </td>
+                    <td className="is-right">
+                      {decimal.format(engagements.reduce(
+                        (somme, engagement) => somme + (Number(engagement.reliquat_anterieur) || 0), 0
+                      ))}
+                    </td>
+                    <td className="is-right">
+                      {decimal.format(engagements.reduce(
+                        (somme, engagement) => somme + (Number(engagement.deja_livre_periode) || 0), 0
+                      ))}
+                    </td>
+                    <td className="is-right">
+                      {decimal.format(engagements.reduce(
+                        (somme, engagement) => somme + (Number(engagement.restant_a_collecter) || 0), 0
+                      ))}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {engagements.reduce(
+              (somme, engagement) => somme + (Number(engagement.restant_a_collecter) || 0), 0
+            ) > totaux.eligible && lignes.length > 0 && (
+              <Note tone="warning" icon={AlertTriangle}>
+                Les engagements du mois depassent l’assiette achetable de{' '}
+                {formaterQuantite(engagements.reduce(
+                  (somme, engagement) => somme + (Number(engagement.restant_a_collecter) || 0), 0
+                ) - totaux.eligible)}. Les mines ne peuvent pas livrer ce qu’elles n’ont pas
+                declare produire : un manquement s’ouvrira si le retard n’est pas justifie.
+              </Note>
+            )}
+          </Section>
         )}
 
         {modifiable && (

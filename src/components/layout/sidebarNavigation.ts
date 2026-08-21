@@ -5,8 +5,10 @@ import {
   Building2,
   CheckCircle2,
   CircleDollarSign,
+  FileSignature,
   FileText,
   FlaskConical,
+  Gavel,
   Grid2X2,
   Layers,
   Mountain,
@@ -119,8 +121,12 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         icon: CircleDollarSign,
         color: '#d79a00',
         children: [
+          // Le contrat precede le plan : c'est lui qui fixe les quantites que le
+          // plan mensuel reprend comme besoins prioritaires.
+          { label: 'Contrats de fourniture', path: '/contrats', icon: FileSignature, color: '#0f7a56' },
           { label: 'Plans mensuels', path: '/achats/plans', icon: CalendarRange, color: '#d79a00' },
           { label: 'Demandes aux mines', path: '/achats/demandes', icon: FileText, color: '#2f6fec' },
+          { label: 'Réquisitions', path: '/requisitions', icon: Gavel, color: '#b3261e' },
           { label: 'Règlements', path: '/achats/reglements', icon: CircleDollarSign, color: '#10976b' },
           { label: 'Comptes des mines', path: '/achats/comptes', icon: BarChart3, color: '#8b5cf6' },
         ],

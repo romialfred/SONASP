@@ -117,6 +117,12 @@ const DemandesAchatPage = lazy(() => import('./pages/achats/DemandesAchatPage'))
 const ReglementsAchatPage = lazy(() => import('./pages/achats/ReglementsAchatPage'));
 const ReglementForm = lazy(() => import('./pages/achats/ReglementForm'));
 const ComptesMinesPage = lazy(() => import('./pages/achats/ComptesMinesPage'));
+const ContratsPage = lazy(() => import('./pages/contrats/ContratsPage'));
+const ContratForm = lazy(() => import('./pages/contrats/ContratForm'));
+const ContratDetails = lazy(() => import('./pages/contrats/ContratDetails'));
+const RequisitionsPage = lazy(() => import('./pages/requisitions/RequisitionsPage'));
+const RequisitionForm = lazy(() => import('./pages/requisitions/RequisitionForm'));
+const RequisitionDetails = lazy(() => import('./pages/requisitions/RequisitionDetails'));
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
@@ -499,6 +505,42 @@ function AppRoutes() {
             <Route
               path="/achats/comptes"
               element={<ProtectedRoute><ComptesMinesPage /></ProtectedRoute>}
+            />
+
+            {/* Contrats de fourniture : le formulaire s'ouvre en page pleine, jamais
+                en tiroir. « nouveau » precede « :id » pour ne pas etre capte par lui. */}
+            <Route
+              path="/contrats"
+              element={<ProtectedRoute><ContratsPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/contrats/nouveau"
+              element={<ProtectedRoute><ContratForm /></ProtectedRoute>}
+            />
+            <Route
+              path="/contrats/:id"
+              element={<ProtectedRoute><ContratDetails /></ProtectedRoute>}
+            />
+            <Route
+              path="/contrats/:id/modifier"
+              element={<ProtectedRoute><ContratForm /></ProtectedRoute>}
+            />
+
+            <Route
+              path="/requisitions"
+              element={<ProtectedRoute><RequisitionsPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/requisitions/nouvelle"
+              element={<ProtectedRoute><RequisitionForm /></ProtectedRoute>}
+            />
+            <Route
+              path="/requisitions/:id"
+              element={<ProtectedRoute><RequisitionDetails /></ProtectedRoute>}
+            />
+            <Route
+              path="/requisitions/:id/modifier"
+              element={<ProtectedRoute><RequisitionForm /></ProtectedRoute>}
             />
 
             <Route

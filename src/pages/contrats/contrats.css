@@ -1,0 +1,232 @@
+/**
+ * Contrats de fourniture d'or.
+ *
+ * Le registre et le dossier partagent la charte des ecrans d'achat : tuiles
+ * sobres, tableaux a en-tetes alignes, une seule famille chromatique. La
+ * couleur ne porte pas l'importance ; la taille du chiffre et la place s'en
+ * chargent.
+ */
+
+.contrats-page .sn-section { margin-top: 12px; }
+.contrats-page .sn-note { margin-top: 12px; }
+
+.contrats-lexique { margin: 0; padding-left: 18px; }
+.contrats-lexique li { margin-bottom: 4px; font-size: 11.5px; line-height: 1.5; }
+.contrats-lexique li:last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------- Filtres */
+
+.contrats-filtres {
+  display: grid;
+  margin-bottom: 14px;
+  gap: 12px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+/* --------------------------------------------------------------- Registre */
+
+.contrats-table { table-layout: fixed; }
+.contrats-table th:first-child, .contrats-table td:first-child { width: 20%; }
+.contrats-table td { vertical-align: middle; }
+
+.contrats-table__sous {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--sn-muted, #60738c);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contrats-table__alerte {
+  display: block;
+  margin-top: 2px;
+  color: var(--sn-gold-dark, #b97f00);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------ Barre d'etat du dossier */
+
+.contrat-barre {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px 16px;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff 0%, var(--sn-surface-alt, #f7f9fb) 100%);
+}
+
+.contrat-barre__etat {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+  flex: 1 1 280px;
+}
+
+.contrat-barre__etat span { color: var(--sn-muted, #60738c); font-size: 11.5px; }
+.contrat-barre__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ------------------------------------------------- Motiver une decision -- */
+
+.contrat-decision {
+  margin-top: 12px;
+  padding: 16px 18px;
+  border: 1px solid #fbeccc;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fffdf7 0%, #fdf6e7 100%);
+}
+
+.contrat-decision h3 {
+  margin: 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contrat-decision p {
+  margin: 3px 0 10px;
+  color: #96690a;
+  font-size: 11.5px;
+}
+
+.contrat-decision textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid #f0dcab;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sn-ink, #10243e);
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+
+.contrat-decision__gestes { display: flex; margin-top: 10px; gap: 8px; justify-content: flex-end; }
+
+/* ------------------------------------------------------------- Execution */
+
+.contrat-execution {
+  display: grid;
+  margin: 12px 0 0;
+  padding: 16px 18px;
+  gap: 14px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface, #fff);
+  box-shadow: var(--sn-shadow-card);
+}
+
+.contrat-execution > div { min-width: 0; }
+.contrat-execution dt { color: var(--sn-muted, #60738c); font-size: 10.5px; font-weight: 600; }
+
+.contrat-execution dd {
+  margin: 4px 0 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.contrat-execution dd.est-complet { color: var(--sn-success, #0c8a5f); }
+.contrat-execution dd.est-partiel { color: var(--sn-gold-dark, #b97f00); }
+
+/* ------------------------------------------------------------- Echeancier */
+
+.contrat-gestes { display: flex; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- Termes */
+
+.contrat-termes {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+}
+
+.contrat-termes article {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface, #fff);
+}
+
+.contrat-termes h4 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  gap: 7px;
+  color: var(--sn-ink, #10243e);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.contrat-termes h4 svg { width: 14px; height: 14px; color: var(--sn-muted, #60738c); }
+.contrat-termes dl { display: grid; margin: 0; gap: 7px; }
+
+.contrat-termes dl > div {
+  display: grid;
+  align-items: baseline;
+  gap: 4px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.contrat-termes dt { color: var(--sn-muted, #60738c); font-size: 11px; }
+
+.contrat-termes dd {
+  margin: 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------ Historique */
+
+.contrat-historique { margin: 0; padding: 0; list-style: none; counter-reset: trace; }
+
+.contrat-historique li {
+  position: relative;
+  padding: 10px 0 10px 18px;
+  border-top: 1px solid var(--sn-line-soft, #eef2f6);
+}
+
+.contrat-historique li:first-child { border-top: 0; }
+
+.contrat-historique li::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sn-line, #e0e7ee);
+}
+
+.contrat-historique li:first-child::before { background: var(--sn-green, #0f7a56); }
+
+.contrat-historique li > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.contrat-historique strong { color: var(--sn-ink, #10243e); font-size: 12px; }
+.contrat-historique small { color: var(--sn-muted, #60738c); font-size: 10.5px; }
+
+.contrat-historique p {
+  margin: 4px 0 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+  line-height: 1.5;
+}

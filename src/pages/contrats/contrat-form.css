@@ -1,0 +1,136 @@
+/**
+ * Formulaire d'un contrat de fourniture.
+ *
+ * L'habillage est celui du formulaire de creation d'un site artisanal — meme
+ * grille, memes sections, meme volet droit — repris par import de sa feuille de
+ * style plutot que recopie. Ce fichier ne porte que la navigation entre
+ * sections et le contenu du volet.
+ */
+
+.contrat-form__sections {
+  display: flex;
+  margin: 14px 0 0;
+  padding: 6px;
+  gap: 4px;
+  flex-wrap: wrap;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+.contrat-form__sections button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #4d647d;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.contrat-form__sections button:hover { background: rgb(255 255 255 / 70%); color: #10243e; }
+
+.contrat-form__sections button.est-courante {
+  border-color: #d7ebe2;
+  background: #fff;
+  color: #0d5c41;
+  box-shadow: 0 1px 3px rgb(16 36 62 / 8%);
+}
+
+.contrat-form__sections button svg { width: 14px; height: 14px; }
+
+.contrat-form__sections b {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(16 36 62 / 8%);
+  color: #4d647d;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.contrat-form__sections button.est-courante b { background: #0f7a56; color: #fff; }
+
+/* ---------------------------------------------------------------- Etats -- */
+
+.contrat-form__message {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid #bde5d4;
+  border-radius: 10px;
+  background: #eefaf4;
+  color: #0d5c41;
+  font-size: 12px;
+}
+
+.contrat-form__fige {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 10px;
+  background: var(--sn-surface-alt, #f7f9fb);
+  color: #4d647d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------- Bascule -- */
+
+.contrat-form__bascule {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #33485f;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.contrat-form__bascule input { width: 16px; height: 16px; accent-color: #0f7a56; }
+
+/* ----------------------------------------------------------- Volet droit -- */
+
+.contrat-form__resume { margin: 0; padding: 0 14px 14px; list-style: none; }
+
+.contrat-form__resume li {
+  display: flex;
+  align-items: baseline;
+  padding: 9px 0;
+  gap: 12px;
+  justify-content: space-between;
+  border-top: 1px solid var(--sn-line-soft, #eef2f6);
+  font-size: 11.5px;
+}
+
+.contrat-form__resume li:first-child { border-top: 0; }
+.contrat-form__resume span { color: var(--sn-muted, #60738c); }
+
+.contrat-form__resume b {
+  color: var(--sn-ink, #10243e);
+  font-weight: 700;
+  text-align: right;
+}
+
+.contrat-form__manques { margin: 0; padding: 0 14px 14px 32px; }
+
+.contrat-form__manques li {
+  margin-bottom: 5px;
+  color: #96690a;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.contrat-form__vide {
+  margin: 0;
+  padding: 0 14px 16px;
+  color: var(--sn-muted, #60738c);
+  font-size: 11.5px;
+  line-height: 1.5;
+}

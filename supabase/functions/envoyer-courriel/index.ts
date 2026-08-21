@@ -36,6 +36,7 @@ const enTetesCors = {
 const URL_APPLICATION = Deno.env.get('SONASP_APP_URL') ?? 'https://sonasp.bf';
 
 interface ConfigurationCourriel {
+  uid: string | null;
   hote: string;
   port: number;
   securise: boolean;
@@ -46,26 +47,27 @@ interface ConfigurationCourriel {
 }
 
 /**
- * Configuration effective : la table d'abord, les variables d'environnement en
- * repli. La table permet de corriger un serveur depuis l'écran d'administration
- * sans redéployer ; les variables permettent de démarrer sans écran.
+ * Configuration effective : le jeu ACTIF de la table d'abord, les variables
+ * d'environnement en repli.
+ *
+ * La table permet de corriger un serveur depuis l'écran d'administration sans
+ * redéployer, et d'en préparer un second sans couper le premier. Les variables
+ * d'environnement permettent de démarrer avant qu'aucun jeu ne soit saisi.
+ *
+ * `snp_configuration_courriel_active` ne rend que des jeux complets : un jeu
+ * sans mot de passe ne remonte pas, et l'on retombe alors sur l'environnement
+ * plutôt que d'échouer à la connexion.
  */
 async function chargerConfiguration(
   admin: ReturnType<typeof createClient>,
 ): Promise<ConfigurationCourriel | null> {
   let ligne: Record<string, unknown> | null = null;
   try {
-    const { data } = await admin
-      .from('snp_configuration_courriel')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle();
-    ligne = data as Record<string, unknown> | null;
+    const { data } = await admin.rpc('snp_configuration_courriel_active');
+    ligne = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
   } catch {
-    // Table absente : on retombe sur l'environnement.
+    // Fonction absente : on retombe sur l'environnement.
   }
-
-  if (ligne && ligne.actif === false) return null;
 
   const hote = (ligne?.hote as string) || Deno.env.get('SONASP_SMTP_HOST') || '';
   const identifiant = (ligne?.identifiant as string) || Deno.env.get('SONASP_SMTP_USER') || '';
@@ -80,6 +82,7 @@ async function chargerConfiguration(
 
   if (!hote || !identifiant || !motDePasse) return null;
   return {
+    uid: (ligne?.uid as string) ?? null,
     hote, port, securise: Boolean(securise), identifiant, motDePasse,
     expediteurCourriel, expediteurNom,
   };
@@ -216,16 +219,20 @@ Deno.serve(async (req: Request) => {
           content: texte, html,
         });
         await client.close();
-        await admin.from('snp_configuration_courriel')
-          .update({ derniere_verification: new Date().toISOString(), derniere_erreur: null })
-          .eq('id', 1);
+        if (cfg.uid) {
+          await admin.rpc('snp_consigner_verification_courriel', {
+            p_uid: cfg.uid, p_reussi: true, p_erreur: null,
+          });
+        }
         return json({ envoye: true, destinataire });
       } catch (erreur) {
         await client.close().catch(() => {});
         const message = erreur instanceof Error ? erreur.message : 'échec SMTP';
-        await admin.from('snp_configuration_courriel')
-          .update({ derniere_verification: new Date().toISOString(), derniere_erreur: message })
-          .eq('id', 1);
+        if (cfg.uid) {
+          await admin.rpc('snp_consigner_verification_courriel', {
+            p_uid: cfg.uid, p_reussi: false, p_erreur: message,
+          });
+        }
         return json({ envoye: false, erreur: message }, 502);
       }
     }

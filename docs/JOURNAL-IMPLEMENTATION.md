@@ -3080,3 +3080,86 @@ suivi du déploiement de la fonction.
 
 Tant qu'il manque, la fonction rend « La messagerie n'est pas configurée » — un refus net, pas
 un faux succès. C'est exactement la différence avec ce qui existait.
+
+---
+
+## Itération — 21 août 2026 — Les paramètres SMTP deviennent administrables
+
+### Le problème que posait le réglage unique
+
+La migration 027 avait posé un réglage de messagerie unique : une ligne, `id = 1`, un serveur.
+Cela tient tant que rien ne change. Mais un serveur se remplace, et la seule manœuvre possible
+était d'écraser le réglage en place — donc de couper les envois pendant la saisie, sans
+possibilité de revenir en arrière si le nouveau serveur refusait la connexion.
+
+Le mot de passe, lui, ne pouvait être posé que par `supabase secrets set` : une commande, un
+accès au projet Supabase, et personne à la SONASP pour la lancer un dimanche.
+
+### Ce qui a été fait
+
+Le réglage unique devient un **référentiel de jeux**. Plusieurs serveurs coexistent, un seul
+sert. Ce n'est pas une convention d'écran : un **index unique partiel** sur `actif` interdit
+deux jeux actifs, quel que soit le chemin d'écriture. Les fonctions d'activation libèrent donc
+la place dans la même transaction.
+
+L'écran `/admin/messagerie` en découle : liste des jeux, bouton « Ajouter un paramètre SMTP »,
+modification, mise en service, mise hors service, retrait, et un essai d'envoi qui rend le
+motif du serveur SMTP tel quel — « authentication failed » se corrige, « échec d'envoi » ne dit
+rien.
+
+Le formulaire est **une page**, pas un tiroir : c'est le formulaire principal du module.
+
+### Où vit le secret, et pourquoi il n'est nulle part ailleurs
+
+La consigne était explicite : *« le système doit déployer ces valeurs pour pouvoir les utiliser
+sans les exposer dans le code ou le dépôt »*. Le montage tient en trois points.
+
+1. **La table est illisible depuis l'application.** Tous les droits sont retirés à `anon` et
+   `authenticated`. Un appel direct à PostgREST avec une session d'administrateur ne rend rien.
+2. **Ce que l'écran lit ne comporte pas la colonne.** `snp_configurations_courriel()` rend
+   `mot_de_passe_defini` — un booléen — et `mot_de_passe_modifie_le`. Le secret n'est pas masqué
+   à l'affichage : il n'est pas transmis. Un contrôle de l'essai rejouable le vérifie sur le
+   schéma, pas sur le rendu.
+3. **Deux fonctions seulement l'approchent**, toutes deux réservées à `service_role` :
+   `snp_configuration_courriel_active()`, que la fonction de bord appelle pour ouvrir la
+   connexion SMTP, et `snp_consigner_verification_courriel()`, qui y consigne le résultat.
+
+Vérifié en base :
+
+| | `anon` | `authenticated` | `service_role` |
+|---|---|---|---|
+| Lecture de la table | non | non | — |
+| `snp_configuration_courriel_active()` | non | non | **oui** |
+| `snp_configurations_courriel()` (sans secret) | non | oui | — |
+
+Le mot de passe du serveur `mail.data-univers.com` a été posé **directement en base**, sans
+transiter par un fichier. Recherche dans l'arborescence complète — fichiers ignorés par git
+compris — et dans `dist/` : aucune occurrence.
+
+### Deux défauts trouvés avant qu'ils ne servent
+
+- **La colonne `id` héritée bloquait le second jeu** (A214). `id smallint NOT NULL CHECK
+  (id = 1)` subsistait après le passage de la clé à `uid`. Le premier jeu, migré, passait ;
+  l'ajout du deuxième aurait échoué sur la contrainte. C'est précisément la manœuvre pour
+  laquelle le référentiel a été fait. Retirée, et un contrôle « second jeu accepté » ajouté à
+  l'essai.
+- **La date de pose du secret était `updated_at`** (A215). Renommer un jeu la faisait bouger.
+  Sur une plateforme dont la règle est qu'aucun indicateur n'est inventé, afficher « posé le
+  21 août » parce qu'on venait de corriger un port n'était pas tenable. Colonne portée à part,
+  écrite seulement quand le secret change.
+
+### Contrôles
+
+- **`snp_essai_messagerie()`** : 14 contrôles, tous verts. L'essai crée ses propres jeux, les
+  éprouve, les retire, et **remet en service celui qui servait avant** : il se lance en
+  production sans couper les envois.
+- `npx vitest run` : **798/798 verts** (5 tests ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit` : **131**, inchangé
+- Fonction de bord `envoyer-courriel` **redéployée** : elle lit désormais le jeu actif au lieu
+  du réglage `id = 1` disparu.
+
+### Ce qui reste
+
+Le mot de passe a circulé dans une conversation pour être posé. **Il doit être changé** : c'est
+maintenant faisable depuis l'écran, en trois champs, sans redéploiement.

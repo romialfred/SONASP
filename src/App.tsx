@@ -55,6 +55,8 @@ import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
 import GoldSalesSettingsPage from './pages/admin/GoldSalesSettingsPage';
 import StatusManagerPage from './pages/admin/StatusManagerPage';
 import ModulesManagement from './pages/admin/ModulesManagement';
+import MessageriePage from './pages/admin/MessageriePage';
+import MessagerieForm from './pages/admin/MessagerieForm';
 import { InventoryManagement } from './pages/inventory/InventoryManagement';
 import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
 import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
@@ -733,6 +735,36 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <ModulesManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* La messagerie porte le secret SMTP : réservée à la direction, comme
+                les autres écrans d'administration. Le contrôle qui compte reste en
+                base — la table est illisible depuis un compte d'application. */}
+            <Route
+              path="/admin/messagerie"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <MessageriePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/messagerie/nouveau"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <MessagerieForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/messagerie/:uid"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <MessagerieForm />
                 </ProtectedRoute>
               }
             />

@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   ageRelatif,
   BADGE_MAXIMUM,
+  etatVerification,
   formaterBadge,
   LIBELLES_GRAVITE_NOTIFICATION,
   LIBELLES_TYPE_NOTIFICATION,
+  MODES_CHIFFREMENT,
+  modeChiffrement,
   TONS_GRAVITE_NOTIFICATION,
+  type ConfigurationCourriel,
   type GraviteNotification,
   type TypeNotification,
 } from './notificationsService';
@@ -98,5 +102,64 @@ describe('second facteur', () => {
   it('nomme les quatre étapes du parcours', () => {
     const etapes: EtapeSuivante[] = ['mot_de_passe', 'enrolement', 'verification', 'pret'];
     etapes.forEach((etape) => expect(LIBELLES_ETAPE[etape]).toBeTruthy());
+  });
+});
+
+describe('paramètres de messagerie', () => {
+  const jeu = (surcharge: Partial<ConfigurationCourriel> = {}): ConfigurationCourriel => ({
+    uid: 'u1',
+    libelle: 'Serveur principal',
+    hote: 'mail.exemple.bf',
+    port: 465,
+    securise: true,
+    identifiant: 'no-reply@exemple.bf',
+    expediteur_courriel: 'no-reply@exemple.bf',
+    expediteur_nom: 'Administration SONASP',
+    actif: true,
+    mot_de_passe_defini: true,
+    mot_de_passe_modifie_le: null,
+    derniere_verification: null,
+    derniere_erreur: null,
+    created_at: '2026-08-21T08:00:00Z',
+    ...surcharge,
+  });
+
+  it('retrouve le mode de chiffrement à partir des deux valeurs enregistrées', () => {
+    expect(modeChiffrement(465, true)).toBe('ssl');
+    expect(modeChiffrement(587, false)).toBe('starttls');
+    expect(modeChiffrement(25, false)).toBe('aucun');
+    // Un port inhabituel sans TLS reste du STARTTLS : c'est le cas ordinaire.
+    expect(modeChiffrement(2525, false)).toBe('starttls');
+  });
+
+  it('propose les trois modes avec leur port d’usage', () => {
+    expect(MODES_CHIFFREMENT.map((mode) => mode.port)).toEqual([465, 587, 25]);
+    MODES_CHIFFREMENT.forEach((mode) => {
+      expect(mode.libelle).toBeTruthy();
+      expect(mode.aide).toBeTruthy();
+      // Le mode retrouvé depuis le couple (port, TLS) doit être celui de départ.
+      expect(modeChiffrement(mode.port, mode.securise)).toBe(mode.cle);
+    });
+  });
+
+  it('signale d’abord le secret manquant : rien d’autre ne peut fonctionner sans lui', () => {
+    const etat = etatVerification(jeu({
+      mot_de_passe_defini: false,
+      derniere_verification: '2026-08-20T10:00:00Z',
+    }));
+    expect(etat.ton).toBe('alerte');
+    expect(etat.texte).toMatch(/[Mm]ot de passe/);
+  });
+
+  it('rend le motif du serveur tel quel : « échec » ne se corrige pas', () => {
+    const etat = etatVerification(jeu({ derniere_erreur: 'authentication failed' }));
+    expect(etat).toEqual({ ton: 'alerte', texte: 'authentication failed' });
+  });
+
+  it('distingue « jamais vérifié » d’une vérification réussie', () => {
+    expect(etatVerification(jeu()).ton).toBe('neutre');
+    expect(etatVerification(jeu()).texte).toBe('Jamais vérifié');
+    expect(etatVerification(jeu({ derniere_verification: '2026-08-20T10:00:00Z' })).ton)
+      .toBe('succes');
   });
 });

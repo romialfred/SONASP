@@ -1,0 +1,236 @@
+/* Paramètres de messagerie — liste des jeux SMTP et saisie d'un jeu. */
+
+/* ------------------------------------------------------------------- Liste */
+
+.messagerie__liste {
+  display: grid;
+  gap: 12px;
+}
+
+.messagerie__jeu {
+  border: 1px solid var(--sn-line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px 16px 12px;
+}
+
+/* Le jeu en service se distingue d'un trait, pas d'un fond : il reste lisible
+   quand la liste s'allonge. */
+.messagerie__jeu.is-actif {
+  border-color: #bde5d4;
+  box-shadow: inset 3px 0 0 #0f7a56;
+}
+
+.messagerie__jeu > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.messagerie__jeu-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.messagerie__jeu-titre h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.messagerie__faits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 18px;
+  margin: 12px 0 0;
+}
+
+.messagerie__faits > div { min-width: 0; }
+
+.messagerie__faits dt {
+  color: var(--sn-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.messagerie__faits dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.messagerie__faits dd small {
+  display: block;
+  margin-top: 1px;
+  color: var(--sn-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.messagerie__etat {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--sn-line);
+  font-size: 11.5px;
+}
+
+.messagerie__etat.is-neutre { color: var(--sn-muted); }
+.messagerie__etat.is-succes { color: #0c8a5f; font-weight: 600; }
+.messagerie__etat.is-alerte { color: #d43a2e; font-weight: 600; }
+
+/* -------------------------------------------------------------------- Essai */
+
+.messagerie__essai {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.messagerie__essai .sn-field { flex: 1 1 280px; margin: 0; }
+.messagerie__essai .sn-btn { height: var(--sn-control-h); }
+
+.messagerie__resultat { margin-top: 12px; }
+
+/* ---------------------------------------------------------------- Chiffrement */
+
+.messagerie__modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.messagerie__mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 12px;
+  border: 1px solid #dde5ec;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.messagerie__mode:hover { border-color: #a8d7c4; background: #f6fbf9; }
+
+.messagerie__mode.is-checked {
+  border-color: #34a37a;
+  background: #eefaf4;
+}
+
+.messagerie__mode input { width: 15px; height: 15px; margin-top: 2px; accent-color: #0f7a56; }
+.messagerie__mode span { display: block; min-width: 0; }
+
+.messagerie__mode strong { display: block; font-size: 12.5px; font-weight: 700; }
+.messagerie__mode.is-checked strong { color: #0d5c41; }
+
+.messagerie__mode em {
+  display: block;
+  margin-top: 1px;
+  color: #7a8ca0;
+  font-size: 10.5px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.messagerie__mode small {
+  display: block;
+  margin-top: 4px;
+  color: #7a8ca0;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------------- Secret */
+
+.messagerie__secret { position: relative; display: block; }
+
+.messagerie__secret input { padding-right: 38px; }
+
+.messagerie__secret button {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #7f92a5;
+  cursor: pointer;
+}
+
+.messagerie__secret button:hover { background: #f1f5f8; color: #33485f; }
+.messagerie__secret button svg { width: 16px; height: 16px; }
+
+/* ------------------------------------------------------------------- Aperçu */
+
+.messagerie__apercu {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid #e3eaf0;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.messagerie__apercu span {
+  color: #7a8ca0;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.messagerie__apercu strong { font-size: 12.5px; font-weight: 700; }
+
+/* --------------------------------------------------------------- Colonne d'aide */
+
+.messagerie__aide { padding: 13px 15px 15px; }
+
+.messagerie__aide p {
+  margin: 0 0 9px;
+  color: #55697e;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.messagerie__aide p:last-child { margin-bottom: 0; }
+
+.messagerie__bascule {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.messagerie__bascule input {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  accent-color: #0f7a56;
+}
+
+.messagerie__manques {
+  margin: 0;
+  padding: 13px 15px 15px 30px;
+  color: #55697e;
+  font-size: 11.5px;
+  line-height: 1.6;
+}

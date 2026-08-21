@@ -89,18 +89,84 @@ export interface LivraisonNotification {
   envoye_le: string | null;
 }
 
+/**
+ * Un jeu de paramètres de messagerie.
+ *
+ * Il y en a plusieurs — un serveur de secours, un serveur d'essai — mais un
+ * seul actif à la fois : c'est celui-là que la fonction de bord emploie. La
+ * base le garantit par un index unique partiel, non par une convention.
+ *
+ * Le mot de passe ne figure pas ici, et n'y figurera jamais : la fonction de
+ * lecture ne le rend pas. On sait seulement s'il est posé et quand il a changé.
+ */
 export interface ConfigurationCourriel {
-  hote: string | null;
+  uid: string;
+  libelle: string;
+  hote: string;
   port: number;
   securise: boolean;
-  identifiant: string | null;
-  expediteur_courriel: string | null;
+  identifiant: string;
+  expediteur_courriel: string;
   expediteur_nom: string;
   actif: boolean;
   /** Le secret ne remonte jamais : on sait seulement s'il est posé. */
   mot_de_passe_defini: boolean;
+  mot_de_passe_modifie_le: string | null;
   derniere_verification: string | null;
   derniere_erreur: string | null;
+  created_at: string;
+}
+
+/** Ce qu'un écran de saisie transmet. Le mot de passe est à part : voir plus bas. */
+export interface SaisieConfigurationCourriel {
+  libelle: string;
+  hote: string;
+  port: number;
+  securise: boolean;
+  identifiant: string;
+  expediteurCourriel: string;
+  expediteurNom: string;
+  /** Vide à la modification : le secret en place est conservé. */
+  motDePasse?: string;
+}
+
+/**
+ * Modes de chiffrement, avec le port d'usage.
+ *
+ * Le port n'est pas déduit du mode — un serveur peut écouter ailleurs — mais il
+ * est proposé, car neuf saisies sur dix reprennent la valeur d'usage.
+ */
+export const MODES_CHIFFREMENT = [
+  { cle: 'ssl', libelle: 'SSL/TLS', port: 465, securise: true,
+    aide: 'Chiffré dès la connexion. Le plus courant.' },
+  { cle: 'starttls', libelle: 'STARTTLS', port: 587, securise: false,
+    aide: 'Connexion en clair, puis passage au chiffrement.' },
+  { cle: 'aucun', libelle: 'Aucun chiffrement', port: 25, securise: false,
+    aide: 'À réserver à un serveur interne. Le mot de passe circule en clair.' },
+] as const;
+
+export type ModeChiffrement = (typeof MODES_CHIFFREMENT)[number]['cle'];
+
+/** Retrouve le mode à partir des deux valeurs enregistrées. */
+export function modeChiffrement(port: number, securise: boolean): ModeChiffrement {
+  if (securise) return 'ssl';
+  return port === 25 ? 'aucun' : 'starttls';
+}
+
+/** Ce qu'on dit d'un jeu qui n'a jamais servi, ou qui a échoué. */
+export function etatVerification(config: ConfigurationCourriel): {
+  ton: 'neutre' | 'succes' | 'alerte'; texte: string;
+} {
+  if (!config.mot_de_passe_defini) {
+    return { ton: 'alerte', texte: 'Mot de passe non renseigné : ce jeu ne peut pas être activé.' };
+  }
+  if (config.derniere_erreur) {
+    return { ton: 'alerte', texte: config.derniere_erreur };
+  }
+  if (config.derniere_verification) {
+    return { ton: 'succes', texte: `Vérifié le ${new Date(config.derniere_verification).toLocaleString('fr-FR')}` };
+  }
+  return { ton: 'neutre', texte: 'Jamais vérifié' };
 }
 
 /** Ce que la cloche affiche : au-delà de 99, le compte exact n'aide plus. */
@@ -264,37 +330,67 @@ export const notificationsService = {
     return data as { envoye: boolean; erreur?: string };
   },
 
-  async configuration(): Promise<ConfigurationCourriel | null> {
-    const reponse = await supabase.rpc('snp_configuration_courriel_lisible');
-    const lignes = (lancerSiErreur(reponse) || []) as ConfigurationCourriel[];
-    return lignes[0] ?? null;
+  /* ═════════════════════════ Paramètres de messagerie ═════════════════════ */
+
+  /** Les jeux enregistrés, du plus récent au plus ancien, sans les secrets. */
+  async configurations(): Promise<ConfigurationCourriel[]> {
+    const reponse = await supabase.rpc('snp_configurations_courriel');
+    return (lancerSiErreur(reponse) || []) as ConfigurationCourriel[];
   },
 
   /**
-   * Enregistre les paramètres. Un mot de passe vide laisse l'existant en place :
-   * on peut corriger le serveur sans avoir à ressaisir le secret.
+   * Ajoute un jeu. Le mot de passe est obligatoire à la création : un jeu sans
+   * secret ne peut pas être activé, et l'écran l'annoncerait trop tard.
    */
-  async reglerConfiguration(entree: {
-    hote: string;
-    port: number;
-    securise: boolean;
-    identifiant: string;
-    expediteurCourriel: string;
-    expediteurNom: string;
-    actif: boolean;
-    motDePasse?: string;
-  }): Promise<void> {
-    const reponse = await supabase.rpc('snp_regler_configuration_courriel', {
+  async creerConfiguration(
+    entree: SaisieConfigurationCourriel & { activer?: boolean },
+  ): Promise<string> {
+    const reponse = await supabase.rpc('snp_creer_configuration_courriel', {
+      p_libelle: entree.libelle,
       p_hote: entree.hote,
       p_port: entree.port,
       p_securise: entree.securise,
       p_identifiant: entree.identifiant,
       p_expediteur_courriel: entree.expediteurCourriel,
       p_expediteur_nom: entree.expediteurNom,
-      p_actif: entree.actif,
+      p_mot_de_passe: entree.motDePasse ?? '',
+      p_activer: entree.activer ?? false,
+    });
+    return lancerSiErreur(reponse) as unknown as string;
+  },
+
+  /**
+   * Modifie un jeu. Un mot de passe vide laisse l'existant en place : on corrige
+   * un serveur ou un expéditeur sans avoir à ressaisir le secret.
+   */
+  async modifierConfiguration(uid: string, entree: SaisieConfigurationCourriel): Promise<void> {
+    const reponse = await supabase.rpc('snp_modifier_configuration_courriel', {
+      p_uid: uid,
+      p_libelle: entree.libelle,
+      p_hote: entree.hote,
+      p_port: entree.port,
+      p_securise: entree.securise,
+      p_identifiant: entree.identifiant,
+      p_expediteur_courriel: entree.expediteurCourriel,
+      p_expediteur_nom: entree.expediteurNom,
       p_mot_de_passe: entree.motDePasse || null,
     });
     lancerSiErreur(reponse);
+  },
+
+  /** Rend ce jeu actif, et désactive l'autre dans la même transaction. */
+  async activerConfiguration(uid: string): Promise<void> {
+    lancerSiErreur(await supabase.rpc('snp_activer_configuration_courriel', { p_uid: uid }));
+  },
+
+  /** Coupe la messagerie : plus aucun courriel ne part tant qu'aucun jeu n'est actif. */
+  async desactiverConfiguration(uid: string): Promise<void> {
+    lancerSiErreur(await supabase.rpc('snp_desactiver_configuration_courriel', { p_uid: uid }));
+  },
+
+  /** Retire un jeu. La base refuse de retirer celui qui sert. */
+  async supprimerConfiguration(uid: string): Promise<void> {
+    lancerSiErreur(await supabase.rpc('snp_supprimer_configuration_courriel', { p_uid: uid }));
   },
 };
 

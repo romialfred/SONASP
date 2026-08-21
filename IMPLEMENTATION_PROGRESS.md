@@ -662,6 +662,10 @@ estimée.
 | A210 | Le second facteur n'en était pas un : secret issu de `Math.random()`, stocké en clair, transmis à `api.qrserver.com`, et code jamais vérifié — six chiffres quelconques activaient la protection. Même défaut dans `ActivateAccount` | Sécurité | Secret confié à GoTrue, code réellement vérifié, application en base via `snp_est_agent_sonasp()` ; colonnes `two_factor_secret` et `backup_codes` supprimées |
 | A211 | `supabase/functions/send-email` contenait `const emailSent = true;` : elle journalisait et rendait un succès sans rien envoyer | Notifications | Fonction de bord `envoyer-courriel` en Deno et denomailer ; un défaut de configuration donne un refus net |
 | A212 | La cloche affichait un badge « 3 » en dur et trois notifications inventées, sur chaque écran | Notifications | Reliée à `snp_notifications` ; muette plutôt que menteuse en cas d'échec de lecture |
+| A213 | Le serveur d'envoi tenait dans un réglage unique (`id = 1`) : le remplacer imposait d'écraser le seul jeu en place, donc de couper les envois pendant la saisie, sans retour en arrière possible | Messagerie | Référentiel de jeux SMTP, un seul actif — garanti par un index unique partiel, non par une règle d'écran |
+| A214 | La colonne `id smallint NOT NULL CHECK (id = 1)` subsistait après le passage à `uid` : l'ajout d'un **second** jeu aurait échoué sur la contrainte, avec un message illisible | Messagerie | Colonne retirée ; contrôle « second jeu accepté » ajouté à l'essai rejouable |
+| A215 | La date affichée comme « pose du mot de passe » était `updated_at` : renommer un jeu la faisait bouger, ce qui était faux | Messagerie | Colonne `mot_de_passe_modifie_le` portée à part, écrite seulement quand le secret change |
+| A216 | Aucun écran ne permettait de régler la messagerie : les paramètres n'existaient qu'en base, et le mot de passe ne pouvait être posé que par `supabase secrets set` | Messagerie | Écran d'administration `/admin/messagerie` : ajout, modification, mise en service, retrait et essai d'envoi |
 
 ---
 

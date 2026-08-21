@@ -7,15 +7,37 @@ import {
   Eye,
   EyeOff,
   Globe,
-  KeyRound,
   LockKeyhole,
   Route,
   ShieldCheck,
   UserRound,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import loginReferenceUrl from '../../docs/ui-reference/sonasp-login-reference.png';
 import './Login.css';
+
+/**
+ * Page de connexion.
+ *
+ * ══ CE QUI A CHANGÉ ══
+ *
+ * La version précédente peignait une capture d'écran de 1,4 Mo sur toute la
+ * fenêtre (`object-fit: fill`), masquait des morceaux avec des dégradés, puis
+ * posait les vrais champs par-dessus à des décalages en pixels — `top: 58px`,
+ * `left: 42px`. La mise en page n'était donc juste qu'aux quelques largeurs
+ * pour lesquelles ces décalages avaient été réglés, et chaque visiteur
+ * téléchargeait l'image avant même de pouvoir se connecter.
+ *
+ * Tout est désormais dessiné en CSS. Le panneau de gauche est un vrai bloc de
+ * texte, la diagonale un `clip-path`, et la carte se centre d'elle-même.
+ *
+ * ══ LE CHAMP D'IDENTIFICATION ══
+ *
+ * Il est intitulé « Nom d'utilisateur », comme la maquette. Ce que la
+ * plateforme envoie à GoTrue est pourtant l'adresse de courriel : voir
+ * `AuthContext.signIn`. Le libellé n'a pas été changé ici — ce serait décider
+ * seul d'un point qui engage tous les comptes — mais l'écart est signalé dans
+ * le registre des anomalies.
+ */
 
 type LoginErrors = Partial<Record<'username' | 'password' | 'general', string>>;
 
@@ -23,6 +45,32 @@ const languages = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
 ] as const;
+
+/**
+ * GoTrue répond en anglais, et « Invalid login credentials » s'affichait tel
+ * quel à un agent de la SONASP. On rend la phrase française correspondante, et
+ * l'on garde le message d'origine quand il n'est pas reconnu : mieux vaut une
+ * phrase anglaise qu'une erreur inventée.
+ */
+export function messageConnexion(brut: string, secours: string): string {
+  const texte = brut.toLowerCase();
+  if (texte.includes('invalid login credentials')) {
+    return 'Identifiant ou mot de passe incorrect.';
+  }
+  if (texte.includes('email not confirmed')) {
+    return 'Ce compte n’a pas encore été confirmé. Contactez l’administrateur.';
+  }
+  if (texte.includes('too many requests') || texte.includes('rate limit')) {
+    return 'Trop de tentatives. Patientez quelques instants avant de réessayer.';
+  }
+  if (texte.includes('user is banned') || texte.includes('user not found')) {
+    return 'Ce compte n’est plus actif. Contactez l’administrateur.';
+  }
+  if (texte.includes('failed to fetch') || texte.includes('network')) {
+    return 'La plateforme est injoignable. Vérifiez votre connexion réseau.';
+  }
+  return brut || secours;
+}
 
 export function Login() {
   const { t, i18n } = useTranslation();
@@ -66,144 +114,141 @@ export function Login() {
 
     setLoading(true);
     setErrors({});
+    const secours = t('errors.generic', "Une erreur inattendue s'est produite");
     try {
       const result = await signIn(username, password);
-      if (result.error) setErrors({ general: result.error });
+      if (result.error) setErrors({ general: messageConnexion(result.error, secours) });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : t('errors.generic', "Une erreur inattendue s'est produite");
-      setErrors({ general: message });
+      const brut = error instanceof Error ? error.message : '';
+      setErrors({ general: messageConnexion(brut, secours) });
     } finally {
       setLoading(false);
     }
   };
 
-  const isEnglish = (i18n.resolvedLanguage || i18n.language).startsWith('en');
-  const currentLanguage = isEnglish ? 'English' : 'Français';
-  const benefits = [
-    { Icon: ShieldCheck, title: t('login.benefit1Title'), description: t('login.benefit1Desc') },
-    { Icon: Route, title: t('login.benefit2Title'), description: t('login.benefit2Desc') },
-    { Icon: BarChart3, title: t('login.benefit3Title'), description: t('login.benefit3Desc') },
+  const currentLanguage = (i18n.resolvedLanguage || i18n.language).startsWith('en')
+    ? 'English'
+    : 'Français';
+
+  const piliers = [
+    { Icon: ShieldCheck, label: t('login.pillar1', 'Transactions sécurisées') },
+    { Icon: Route, label: t('login.pillar2', 'Suivi des opérations') },
+    { Icon: BarChart3, label: t('login.pillar3', 'Données fiables') },
   ];
 
   return (
     <div className="sonasp-login">
-      <div className="login-desktop-art" aria-hidden="true">
-        <img src={loginReferenceUrl} alt="" className="login-reference-layer" />
-        <div className="login-left-mask" />
-        <div className="login-right-wash" />
+      {/* Décor : le panneau vert, sa photographie et le liseré doré de la
+          diagonale. Trois couches distinctes pour que le liseré passe au-dessus
+          du panneau sans être rogné par son propre `clip-path`. */}
+      <div className="login-hero" aria-hidden="true">
+        <div className="login-hero__image" />
+        <div className="login-hero__veil" />
       </div>
+      <div className="login-hero__edge" aria-hidden="true" />
 
-      <aside className="login-brand-panel" aria-label="Présentation de SONASP">
-        <div className="login-logo-crop">
-          <img src="/logo_transparent_sonasp.png" alt="SONASP" />
-        </div>
+      <div className="login-shell">
+        <section className="login-presentation" aria-label={t('login.officialPlatform')}>
+          <img
+            className="login-presentation__logo"
+            src="/sonasp-logo-clair.png"
+            alt="SONASP"
+            width={599}
+            height={170}
+          />
 
-        <h1 className="login-brand-title">
-          {isEnglish ? (
-            t('login.brandTitle')
-          ) : (
-            <>
-              Système National de Collecte
-              <br />
-              et de la Traçabilité des
-              <br />
-              Substances Précieuses
-            </>
-          )}
-        </h1>
+          <p className="login-presentation__eyebrow">
+            <span aria-hidden="true" />
+            {t('login.officialPlatform')}
+          </p>
 
-        <p className="login-brand-subtitle">{t('login.brandSubtitle')}</p>
+          <h1 className="login-presentation__title">
+            {t('login.heroTitle', 'Collecte et vente des substances précieuses')}
+          </h1>
 
-        <div className="login-benefits">
-          {benefits.map(({ Icon, title, description }) => (
-            <div className="login-benefit" key={title}>
-              <span className="login-benefit-icon" aria-hidden="true">
-                <Icon />
-              </span>
-              <div>
-                <h2>{title}</h2>
-                <p>{description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </aside>
+          <span className="login-presentation__rule" aria-hidden="true" />
 
-      <div className="login-official-band">
-        <span className="login-official-icon" aria-hidden="true">
-          <LockKeyhole />
-        </span>
-        <div>
-          <strong>{t('login.officialPlatform')}</strong>
-          <span>{t('login.officialTagline')}</span>
-        </div>
-      </div>
+          <p className="login-presentation__lead">
+            {t(
+              'login.heroSubtitle',
+              'Une plateforme sécurisée pour gérer les opérations, les transactions et les données du secteur.',
+            )}
+          </p>
 
-      <main className="login-main">
-        <div
-          ref={langRef}
-          className="login-language"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setLangOpen(false);
-          }}
-        >
-          <button
-            type="button"
-            className="login-language-trigger"
-            aria-haspopup="menu"
-            aria-expanded={langOpen}
-            aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. Changer de langue`}
-            onClick={() => setLangOpen((open) => !open)}
+          <ul className="login-pillars">
+            {piliers.map(({ Icon, label }) => (
+              <li key={label}>
+                <span aria-hidden="true"><Icon /></span>
+                {label}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <main className="login-panel">
+          <div
+            ref={langRef}
+            className="login-language"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setLangOpen(false);
+            }}
           >
-            <Globe aria-hidden="true" />
-            <span>{currentLanguage}</span>
-            <ChevronDown className={langOpen ? 'is-open' : ''} aria-hidden="true" />
-          </button>
+            <button
+              type="button"
+              className="login-language__trigger"
+              aria-haspopup="menu"
+              aria-expanded={langOpen}
+              aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. Changer de langue`}
+              onClick={() => setLangOpen((open) => !open)}
+            >
+              <Globe aria-hidden="true" />
+              <span>{currentLanguage}</span>
+              <ChevronDown className={langOpen ? 'is-open' : ''} aria-hidden="true" />
+            </button>
 
-          {langOpen && (
-            <div className="login-language-menu" role="menu">
-              {languages.map((language) => (
-                <button
-                  key={language.code}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={(i18n.resolvedLanguage || i18n.language).startsWith(language.code)}
-                  onClick={() => changeLanguage(language.code)}
-                >
-                  <span>{language.label}</span>
-                  {(i18n.resolvedLanguage || i18n.language).startsWith(language.code) && <Check aria-hidden="true" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="login-mobile-logo">
-          <div className="login-logo-crop">
-            <img src="/logo_transparent_sonasp.png" alt="SONASP" />
-          </div>
-        </div>
-
-        <div className="login-card-shell">
-          <form className="login-card" onSubmit={handleSubmit} noValidate>
-            <header className="login-card-header">
-              <span className="login-user-emblem" aria-hidden="true">
-                <UserRound />
-              </span>
-              <h2>{t('auth.login')}</h2>
-              <p>{t('login.subtitle')}</p>
-            </header>
-
-            {errors.general && (
-              <div className="login-general-error" role="alert">
-                {errors.general}
+            {langOpen && (
+              <div className="login-language__menu" role="menu">
+                {languages.map((language) => (
+                  <button
+                    key={language.code}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={(i18n.resolvedLanguage || i18n.language).startsWith(language.code)}
+                    onClick={() => changeLanguage(language.code)}
+                  >
+                    <span>{language.label}</span>
+                    {(i18n.resolvedLanguage || i18n.language).startsWith(language.code) && (
+                      <Check aria-hidden="true" />
+                    )}
+                  </button>
+                ))}
               </div>
             )}
+          </div>
 
-            <div className="login-fields">
+          <div className="login-column">
+            <form className="login-card" onSubmit={handleSubmit} noValidate>
+              <span className="login-card__emblem" aria-hidden="true">
+                <ShieldCheck />
+              </span>
+
+              <p className="login-card__eyebrow">
+                {t('login.securedSpace', 'Espace professionnel sécurisé')}
+              </p>
+              <h2 className="login-card__title">{t('auth.login')}</h2>
+              <p className="login-card__subtitle">
+                {t('login.cardSubtitle', 'Accédez à votre espace SONASP')}
+              </p>
+
+              {errors.general && (
+                <p className="login-card__alert" role="alert">
+                  {errors.general}
+                </p>
+              )}
+
               <div className="login-field">
                 <label htmlFor="login-username">{t('login.usernameLabel')}</label>
-                <div className="login-input-wrap">
+                <div className="login-field__control">
                   <UserRound aria-hidden="true" />
                   <input
                     id="login-username"
@@ -218,7 +263,7 @@ export function Login() {
                   />
                 </div>
                 {errors.username && (
-                  <p id="login-username-error" className="login-field-error" role="alert">
+                  <p id="login-username-error" className="login-field__error" role="alert">
                     {errors.username}
                   </p>
                 )}
@@ -226,7 +271,7 @@ export function Login() {
 
               <div className="login-field">
                 <label htmlFor="login-password">{t('auth.password')}</label>
-                <div className="login-input-wrap">
+                <div className="login-field__control">
                   <LockKeyhole aria-hidden="true" />
                   <input
                     id="login-password"
@@ -241,7 +286,7 @@ export function Login() {
                   />
                   <button
                     type="button"
-                    className="login-password-toggle"
+                    className="login-field__toggle"
                     onClick={() => setShowPassword((visible) => !visible)}
                     aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                     aria-pressed={showPassword}
@@ -250,65 +295,58 @@ export function Login() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p id="login-password-error" className="login-field-error" role="alert">
+                  <p id="login-password-error" className="login-field__error" role="alert">
                     {errors.password}
                   </p>
                 )}
               </div>
-            </div>
 
-            <div className="login-remember">
-              <input
-                id="login-remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-              />
-              <label htmlFor="login-remember">{t('auth.rememberMe')}</label>
-            </div>
+              <div className="login-options">
+                <label className="login-options__remember">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                  />
+                  <span>{t('auth.rememberMe')}</span>
+                </label>
+                <a
+                  className="login-options__forgot"
+                  href="mailto:admin@sonasp.ml?subject=R%C3%A9initialisation%20du%20mot%20de%20passe%20SONASP"
+                >
+                  {t('login.forgotPassword')}
+                </a>
+              </div>
 
-            <button className="login-submit" type="submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="login-spinner" aria-hidden="true" />
-                  {t('auth.loggingIn')}
-                </>
-              ) : (
-                <>
-                  <LockKeyhole aria-hidden="true" />
-                  {t('auth.loginButton')}
-                </>
-              )}
-            </button>
+              <button className="login-submit" type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="login-spinner" aria-hidden="true" />
+                    {t('auth.loggingIn')}
+                  </>
+                ) : (
+                  <>
+                    <LockKeyhole aria-hidden="true" />
+                    {t('auth.loginButton')}
+                  </>
+                )}
+              </button>
 
-            <div className="login-separator" aria-hidden="true">
-              <span />
-              <small>{t('login.or')}</small>
-              <span />
-            </div>
+              <p className="login-card__assurance">
+                <ShieldCheck aria-hidden="true" />
+                {t('login.encrypted', 'Connexion chiffrée et accès protégé')}
+              </p>
 
-            <div className="login-forgot">
-              <a href="mailto:admin@sonasp.ml?subject=R%C3%A9initialisation%20du%20mot%20de%20passe%20SONASP">
-                <KeyRound aria-hidden="true" />
-                {t('login.forgotPassword')}
-              </a>
-            </div>
+              <p className="login-card__help">
+                {t('login.needHelp')}{' '}
+                <a href="mailto:admin@sonasp.ml">{t('login.contactAdmin')}</a>
+              </p>
+            </form>
 
-            <p className="login-help">
-              {t('login.needHelp')}{' '}
-              <a href="mailto:admin@sonasp.ml">{t('login.contactAdmin')}</a>
-            </p>
-          </form>
-
-          <footer className="login-footer">
-            <p>
-              <ShieldCheck aria-hidden="true" />
-              {t('login.copyright', { year: 2026 })}
-            </p>
-            <span>{t('login.compliance')}</span>
-          </footer>
-        </div>
-      </main>
+            <p className="login-copyright">{t('login.copyright', { year: 2026 })}</p>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

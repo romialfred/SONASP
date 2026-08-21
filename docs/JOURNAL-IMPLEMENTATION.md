@@ -3163,3 +3163,80 @@ compris — et dans `dist/` : aucune occurrence.
 
 Le mot de passe a circulé dans une conversation pour être posé. **Il doit être changé** : c'est
 maintenant faisable depuis l'écran, en trois champs, sans redéploiement.
+
+---
+
+## Itération — 21 août 2026 — La page de connexion, redessinée
+
+### Ce que l'audit a trouvé
+
+La page ne dessinait presque rien. Elle importait
+`docs/ui-reference/sonasp-login-reference.png` — **1,4 Mo** — l'étirait sur toute la fenêtre en
+`object-fit: fill`, masquait des morceaux avec trois dégradés, puis posait les vrais champs
+par-dessus à des décalages en pixels :
+
+```css
+.login-brand-panel   { top: 58px; left: 42px; width: 445px; }
+.login-logo-crop img { top: -37px; left: -9px; width: 215px; }
+```
+
+Deux conséquences. La mise en page n'était juste qu'aux quelques largeurs pour lesquelles ces
+décalages avaient été réglés — d'où les cinq points de rupture de l'ancienne feuille, chacun
+rejouant les mêmes offsets. Et chaque visiteur téléchargeait 1,4 Mo de capture **plus** 2,2 Mo
+de logo avant de pouvoir taper son mot de passe.
+
+Le logo, précisément, méritait un mot. `logo_transparent_sonasp.png` ne l'est pas : c'est un
+aplat de 2,2 Mo avec un fond dégradé vert et rouge cuit dans l'image. L'ancienne feuille le
+recadrait au pixel pour n'en montrer qu'une fenêtre.
+
+### Ce qui a été fait
+
+Tout est désormais dessiné. Le décor tient en trois couches : le panneau vert (`clip-path`
+polygonal pour la diagonale), sa photographie, et le liseré doré. Ce liseré est une couche à
+part, et c'est délibéré : posé dans le panneau, il serait rogné par le `clip-path` de
+celui-ci — exactement là où on veut le voir.
+
+La photographie se change en **une ligne**, `--login-photo`, en tête de la feuille. Un voile
+quasi opaque garantit la lisibilité du titre blanc quel que soit le cliché déposé.
+
+Le logo a été traité : `public/sonasp-logo-clair.png` est dérivé du logo officiel net
+(`sonasp_logo.png`), fond blanc rendu transparent, vert institutionnel passé en réserve, or et
+rouge du drapeau intacts. **33 Ko.** L'original n'est pas touché.
+
+| | Avant | Après |
+|---|---|---|
+| Images chargées avant connexion | 3 534 Ko | **35 Ko** |
+| Feuille de style | 1 024 lignes | **646 lignes** |
+| Précache PWA | 18 624 Ko | 17 291 Ko |
+
+### Deux défauts trouvés à la vérification
+
+- **Le titre était illisible** (A218). Contraste mesuré : **1,19 : 1**. Une règle globale sur
+  `h1` imposait une encre sombre, qui écrasait la couleur héritée du panneau. Posée
+  explicitement, le contraste passe à 14,95 : 1. Dans la foulée, les treize textes de l'écran
+  ont été mesurés : tous au-dessus du seuil AA, minimum 4,76 : 1.
+- **La version empilée laissait le texte déborder.** Sous 1080 px, le bandeau vert avait une
+  hauteur fixe de 342 px tandis que son contenu en réclamait 416 : le bas du texte tombait en
+  blanc sur crème. Le sélecteur de langue, stylé pour le vert, atterrissait lui aussi sur le
+  crème. Corrigé en confiant le fond au panneau lui-même — il suit alors la hauteur de son
+  contenu, quelle que soit la langue.
+
+### Ce qui n'a pas été corrigé, et pourquoi
+
+- **Le champ dit « Nom d'utilisateur » ; c'est l'adresse de courriel qui est attendue** (A220).
+  `AuthContext.signIn` transmet la valeur à `signInWithPassword({ email })`. La maquette reprend
+  ce libellé. Trancher — renommer le champ, ou introduire une résolution identifiant → adresse —
+  engage tous les comptes existants : cela s'arbitre, cela ne se décide pas au passage.
+- **Les liens d'assistance pointent vers `admin@sonasp.ml`** (A221), domaine malien pour une
+  plateforme burkinabè. L'adresse réelle n'est pas connue : la remplacer au jugé produirait un
+  contact inexistant, ce qui est pire qu'un contact douteux.
+
+### Contrôles
+
+- Géométrie relevée à 1440×900, 1280×720, 900×820 et 375×812 : **aucun débordement
+  horizontal**, et la carte tient sans défilement sur les deux formats de bureau.
+- Contraste : treize textes mesurés, minimum **4,76 : 1**.
+- Sélecteur de langue et bascule d'affichage du mot de passe éprouvés dans le navigateur.
+- `npx vitest run` : **803/803 verts** (5 tests ajoutés sur la traduction des refus)
+- `npm run build` : **vert**
+- `npx tsc --noEmit` : **131**, inchangé

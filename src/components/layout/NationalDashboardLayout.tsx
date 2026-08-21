@@ -11,6 +11,13 @@ import {
   useState,
 } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ageRelatif,
+  formaterBadge,
+  notificationsService,
+  type Notification,
+  type ResumeNotifications,
+} from '@/services/notificationsService';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
@@ -144,6 +151,30 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  /* La cloche ne dit que ce que la base contient. Un compteur inventé, affiché
+     sur chaque écran, est le plus visible des indicateurs faux. */
+  const chargerNotifications = useCallback(async () => {
+    try {
+      const [liste, resume] = await Promise.all([
+        notificationsService.lister({ limite: 8 }),
+        notificationsService.resume(),
+      ]);
+      setNotifications(liste);
+      setResumeNotifications(resume);
+    } catch {
+      // Une cloche muette vaut mieux qu'une cloche qui ment.
+      setNotifications([]);
+      setResumeNotifications({ non_lues: 0, urgentes: 0, hautes: 0, plus_ancienne: null });
+    }
+  }, []);
+
+  useEffect(() => {
+    void chargerNotifications();
+  }, [chargerNotifications]);
+  const [resumeNotifications, setResumeNotifications] = useState<ResumeNotifications>({
+    non_lues: 0, urgentes: 0, hautes: 0, plus_ancienne: null,
+  });
   const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
@@ -427,19 +458,70 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 aria-label="Afficher les notifications"
                 onClick={() => {
                   closeMenus();
-                  setNotificationsOpen((open) => !open);
+                  setNotificationsOpen((open) => {
+                    if (!open) void chargerNotifications();
+                    return !open;
+                  });
                 }}
                 aria-expanded={notificationsOpen}
               >
                 <Bell aria-hidden="true" />
-                <span className="national-header__badge">3</span>
+                {resumeNotifications.non_lues > 0 && (
+                  <span
+                    className={`national-header__badge${
+                      resumeNotifications.urgentes > 0 ? ' est-urgent' : ''}`}
+                  >
+                    {formaterBadge(resumeNotifications.non_lues)}
+                  </span>
+                )}
               </button>
               {notificationsOpen && (
                 <div className="national-header__menu national-header__notifications">
-                  <strong>Points d’attention</strong>
-                  <button type="button" onClick={() => navigate('/sales')}>12 transactions à valider</button>
-                  <button type="button" onClick={() => navigate('/artisan-minier/cartes/expirations')}>3 agréments expirent sous 30 jours</button>
-                  <button type="button" onClick={() => navigate('/inventory')}>Écart de stock à investiguer</button>
+                  <header>
+                    <strong>Notifications</strong>
+                    {resumeNotifications.non_lues > 0 && (
+                      <button
+                        type="button"
+                        className="national-header__tout-lu"
+                        onClick={async () => {
+                          await notificationsService.marquerLues();
+                          await chargerNotifications();
+                        }}
+                      >
+                        Tout marquer comme lu
+                      </button>
+                    )}
+                  </header>
+
+                  {notifications.length === 0 ? (
+                    <p className="national-header__vide">
+                      Rien à signaler pour le moment.
+                    </p>
+                  ) : (
+                    notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        type="button"
+                        className={`national-header__notification${notification.lue ? '' : ' est-non-lue'} is-${notification.gravite}`}
+                        onClick={async () => {
+                          await notificationsService.marquerLues([notification.id]);
+                          setNotificationsOpen(false);
+                          if (notification.chemin) navigate(notification.chemin);
+                          else await chargerNotifications();
+                        }}
+                      >
+                        <span className="national-header__notification-titre">
+                          {notification.titre}
+                        </span>
+                        <span className="national-header__notification-corps">
+                          {notification.message}
+                        </span>
+                        <span className="national-header__notification-age">
+                          {ageRelatif(notification.created_at)}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </div>
               )}
             </div>

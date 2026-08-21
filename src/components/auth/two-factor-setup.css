@@ -1,0 +1,232 @@
+/**
+ * Activation du second facteur.
+ *
+ * Trois etapes numerotees, dans l'ordre ou on les fait : ouvrir l'application,
+ * scanner, saisir. Un ecran de securite qui se lit de travers se contourne.
+ */
+
+.mfa-setup {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 26px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 14px;
+  background: var(--sn-surface, #fff);
+  box-shadow: var(--sn-shadow-card);
+}
+
+.mfa-setup__tete { display: flex; align-items: flex-start; gap: 14px; }
+
+.mfa-setup__icone {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid #d7ebe2;
+  border-radius: 12px;
+  background: #eefaf4;
+  color: #0f7a56;
+}
+
+.mfa-setup__icone svg { width: 20px; height: 20px; }
+
+.mfa-setup__tete h2 {
+  margin: 0;
+  color: var(--sn-ink, #10243e);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.mfa-setup__tete p {
+  margin: 5px 0 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.mfa-setup__erreur {
+  display: flex;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  padding: 11px 14px;
+  gap: 9px;
+  border: 1px solid #f3c8c3;
+  border-radius: 10px;
+  background: #fff2f0;
+  color: #b3261e;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.mfa-setup__erreur svg { width: 16px; height: 16px; flex: none; margin-top: 1px; }
+
+.mfa-setup__chargement {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  gap: 9px;
+  justify-content: center;
+  color: var(--sn-muted, #60738c);
+  font-size: 12.5px;
+}
+
+.mfa-setup__chargement svg { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------- Etapes -- */
+
+.mfa-setup__etapes {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+}
+
+.mfa-setup__etapes li {
+  position: relative;
+  padding: 0 0 22px 34px;
+  counter-increment: etape;
+}
+
+.mfa-setup__etapes li::before {
+  content: counter(etape);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sn-ink, #10243e);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mfa-setup__etapes h3 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 5px;
+  gap: 7px;
+  color: var(--sn-ink, #10243e);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mfa-setup__etapes h3 svg { width: 15px; height: 15px; color: var(--sn-muted, #60738c); }
+
+.mfa-setup__etapes p {
+  margin: 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------- QR et cle -- */
+
+.mfa-setup__qr {
+  display: grid;
+  margin: 12px 0;
+  padding: 14px;
+  place-items: center;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.mfa-setup__qr img { display: block; width: 196px; height: 196px; }
+
+.mfa-setup__lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0f7a56;
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mfa-setup__secret {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px 12px;
+  gap: 10px;
+  justify-content: space-between;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 10px;
+  background: var(--sn-surface-alt, #f7f9fb);
+}
+
+.mfa-setup__secret code {
+  font-family: Consolas, Menlo, 'Courier New', monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sn-ink, #10243e);
+  word-break: break-all;
+}
+
+.mfa-setup__secret button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sn-muted, #60738c);
+  cursor: pointer;
+}
+
+.mfa-setup__secret button:hover { border-color: #0f7a56; color: #0f7a56; }
+.mfa-setup__secret button svg { width: 14px; height: 14px; }
+
+/* ------------------------------------------------------------------ Code -- */
+
+.mfa-setup__code {
+  width: 100%;
+  height: 56px;
+  margin: 10px 0 8px;
+  padding: 0 16px;
+  border: 1px solid var(--sn-line, #e0e7ee);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--sn-ink, #10243e);
+  font: inherit;
+  font-family: Consolas, Menlo, 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-align: center;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.mfa-setup__code:focus { border-color: #34a37a; box-shadow: 0 0 0 3px rgb(52 163 122 / 14%); }
+.mfa-setup__code::placeholder { color: #c3d0dc; }
+
+.mfa-setup__aide {
+  margin: 0;
+  color: var(--sn-muted, #60738c);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------- Gestes -- */
+
+.mfa-setup__gestes { display: flex; gap: 9px; justify-content: flex-end; }
+
+.mfa-setup__note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--sn-line-soft, #eef2f6);
+  color: var(--sn-muted, #60738c);
+  font-size: 11px;
+  line-height: 1.55;
+}

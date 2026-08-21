@@ -2985,3 +2985,98 @@ Les trois points qui manquent, nommés sans arrondi :
    plateforme en compte sept, et l'habilitation s'appuie sur `snp_est_agent_sonasp()` et
    `snp_peut_valider()`. Créer sept rôles nouveaux touche l'authentification de toute la
    plateforme et demande un mandat propre. **1 point.**
+
+---
+
+## Itération — 21 août 2026 — Notifications et second facteur, d'après MediCore
+
+### Ce que l'analyse de MediCore a donné
+
+**Notifications.** `lib/email.ts` (333 lignes) : nodemailer, transport mutualisé et borné dans
+le temps, configuration lue dans `app_email_setting` avec repli sur les variables
+d'environnement, logo joint en CID plutôt qu'en image distante, mise en page en `<table>` pour
+Outlook. Deux tables : `notification` et `notification_delivery`. Cinq routes d'API et une
+cloche de 417 lignes.
+
+**2FA.** MediCore ne détient pas le secret : `supabase.auth.mfa.enroll/challenge/verify`
+dialoguent directement avec GoTrue, qui le chiffre au repos. La plateforme ne conserve que
+`mfa_enrolled_at` et `must_change_password`. L'application se fait côté serveur, sur le claim
+`aal` du JWT, lu **après** validation de signature. Pas de codes de secours : seul un
+administrateur réinitialise, et l'opération est tracée.
+
+### Ce que l'audit de SONASP a trouvé
+
+Trois défauts, dont deux graves.
+
+**Le second facteur n'en était pas un.** `TwoFactorSetup.tsx` composait le secret avec
+`Math.random()`, l'enregistrait en clair dans `user_profiles.two_factor_secret`, l'envoyait à
+`api.qrserver.com` pour fabriquer le QR code — et **ne vérifiait jamais le code saisi** :
+`handleVerify` contrôlait `length !== 6`, puis activait la protection. Six chiffres
+quelconques passaient. `ActivateAccount.tsx` portait le même défaut, avec un commentaire qui
+l'avouait : « In production, use a proper TOTP library ».
+
+**La fonction d'envoi de courriels n'envoyait rien.** `supabase/functions/send-email/index.ts`
+contenait `const emailSent = true;` : elle journalisait et rendait un succès. Chaque « courriel
+envoyé » de la plateforme était faux.
+
+**La cloche annonçait trois notifications inventées.** Badge « 3 » en dur, et trois lignes
+fabriquées. Sur une plateforme dont la règle est qu'aucun indicateur n'est inventé, c'était le
+plus visible des manquements : il s'affichait sur chaque écran.
+
+### La différence d'architecture, et ce qu'elle impose
+
+MediCore est un Next.js : nodemailer tourne dans ses routes serveur. SONASP est une
+application de navigateur qui parle directement à PostgREST. Un mot de passe SMTP placé dans
+son paquet serait lisible par n'importe quel visiteur, et nodemailer ne fonctionne pas dans un
+navigateur — il lui faut une socket TCP.
+
+Le principe se transpose donc en **fonction de bord Deno** (`envoyer-courriel`), avec
+`denomailer` pour le SMTP. Une seule connexion sert toute la file : une poignée de main TLS
+par message ferait expirer la fonction dès la vingtième notification.
+
+Deuxième conséquence, plus intéressante : **l'application du second facteur descend dans la
+base**. Faute d'intergiciel, elle vit dans `snp_est_agent_sonasp()`, que toutes les politiques
+sensibles traversent déjà. Un compte enrôlé dont la session n'a pas validé le second facteur
+perd l'accès aux données, quel que soit l'écran ouvert. C'est plus fort qu'un contrôle
+d'intergiciel : aucun appel direct à l'API ne le contourne.
+
+### Ce qui a été posé
+
+| | |
+|---|---|
+| Tables | `snp_notifications`, `snp_notifications_livraisons`, `snp_configuration_courriel` |
+| Fonctions | `snp_notifier`, `snp_notifier_roles`, `snp_marquer_notifications_lues`, `snp_notifications_resume`, `snp_courriels_a_envoyer`, `snp_consigner_envoi_courriel`, `snp_configuration_courriel_lisible`, `snp_regler_configuration_courriel` |
+| 2FA | `snp_aal`, `snp_mfa_satisfaite`, `snp_etat_mfa`, `snp_confirmer_enrolement_mfa`, `snp_compter_facteurs_verifies`, `snp_reinitialiser_mfa`, `snp_conformite_mfa` |
+| Fonction de bord | `envoyer-courriel` et son gabarit HTML compatible Outlook |
+| Services | `notificationsService.ts`, `mfaService.ts` |
+| Écrans | `TwoFactorSetup` réécrit, cloche reliée aux vraies données |
+
+L'expéditeur affiché est **Administration SONASP**, posé par défaut sur la table de
+configuration et repris par la fonction de bord.
+
+### Deux défauts trouvés à l'essai
+
+- **`ON CONFLICT` sur un index partiel.** L'index de déduplication porte
+  `WHERE cle_dedoublonnage IS NOT NULL` ; PostgreSQL ne le retient que si la clause reprend son
+  prédicat. Sans lui, toute émission échouait sur « no unique or exclusion constraint
+  matching » (A208).
+- **`ROW IS NOT NULL` n'est vrai que si TOUS les champs le sont.** Une notification a pourtant
+  des champs vides par nature. `snp_notifier_roles` comptait donc zéro destinataire alors que
+  les notifications partaient bien (A209).
+
+### Contrôles
+
+- **Essais en base** : 8 contrôles sur les notifications, 9 sur le second facteur, tous verts.
+  Le contrôle décisif : compte enrôlé et session `aal1` — `snp_est_agent_sonasp()` rend `false`.
+- `npx vitest run` : **793/793 verts** (12 tests ajoutés)
+- `npm run build` : **vert**
+- `npx tsc --noEmit` : **131**, un de moins que la ligne de base
+
+### Ce qui reste, et qui n'est pas de mon ressort
+
+Le **mot de passe SMTP**. Je ne l'ai pas, et je ne demanderai pas qu'il soit collé dans une
+conversation. Il se pose sans passer par moi, avec `supabase secrets set SONASP_SMTP_PASS`,
+suivi du déploiement de la fonction.
+
+Tant qu'il manque, la fonction rend « La messagerie n'est pas configurée » — un refus net, pas
+un faux succès. C'est exactement la différence avec ce qui existait.

@@ -54,37 +54,17 @@ export function Profile() {
     }
   }, [user]);
 
-  const handleDisable2FA = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          two_factor_enabled: false,
-          two_factor_secret: null,
-          backup_codes: null,
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      await supabase.rpc('log_security_event', {
-        p_user_id: user.id,
-        p_event_type: '2fa_disabled',
-        p_ip_address: null,
-        p_user_agent: navigator.userAgent,
-        p_details: null,
-      });
-
-      await refreshProfile();
-      addToast('Two-factor authentication disabled', 'success');
-    } catch (error: any) {
-      addToast(error.message || 'Failed to disable 2FA', 'error');
-    } finally {
-      setLoading(false);
-    }
+  /**
+   * Desactiver soi-meme son second facteur annulerait la protection d'un simple
+   * clic, y compris depuis une session volee. La levee passe par un
+   * administrateur, qui la motive et la trace.
+   */
+  const handleDisable2FA = () => {
+    addToast(
+      'Le second facteur ne se desactive pas depuis votre profil. '
+      + 'En cas de perte de votre appareil, un administrateur le reinitialise.',
+      'error'
+    );
   };
 
   const activityLogs: ActivityLog[] = [

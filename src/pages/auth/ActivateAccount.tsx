@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
@@ -43,10 +44,6 @@ export default function ActivateAccount() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 2FA state
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [secret, setSecret] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
   // Policies state
   const [acceptedGDPR, setAcceptedGDPR] = useState(false);
@@ -161,80 +158,32 @@ export default function ActivateAccount() {
     }
   };
 
-  const setup2FA = async () => {
-    try {
-      // Generate TOTP secret
-      const generatedSecret = generateTOTPSecret();
-      setSecret(generatedSecret);
-
-      // Generate QR code for Microsoft Authenticator
-      const issuer = 'Gold Shipper';
-      const accountName = userId || 'user@goldshipper.com';
-      const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(
-        accountName
-      )}?secret=${generatedSecret}&issuer=${encodeURIComponent(issuer)}`;
-
-      // Generate QR code URL
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-        otpauthUrl
-      )}`;
-      setQrCodeUrl(qrUrl);
-
-      // Generate backup codes
-      const codes = generateBackupCodes(8);
-      setBackupCodes(codes);
-
-      setStep('2fa');
-      setLoading(false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to setup 2FA');
-      setLoading(false);
-    }
+  /**
+   * Le pas du second facteur ne prepare plus rien : le secret est produit et
+   * detenu par GoTrue, et le composant d'enrolement s'en charge.
+   */
+  const setup2FA = () => {
+    setStep('2fa');
+    setLoading(false);
   };
 
-  const handle2FAVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * Appele une fois l'enrolement confirme par la base — laquelle a exige deux
+   * preuves : un facteur reellement verifie, et une session elevee a `aal2`.
+   */
+  const apres2FA = async () => {
     setError(null);
-
-    if (verificationCode.length !== 6) {
-      setError('Please enter a 6-digit verification code');
-      return;
-    }
-
     try {
-      setLoading(true);
-
-      // Verify the code (in production, use proper TOTP verification)
-      const isValid = verifyTOTPCode(secret, verificationCode);
-
-      if (!isValid) {
-        setError('Invalid verification code. Please try again.');
-        setLoading(false);
-        return;
+      if (userId) {
+        await supabase.from('user_2fa_setup').insert({
+          user_id: userId,
+          verified_at: new Date().toISOString(),
+          authenticator_app: 'microsoft_authenticator',
+        });
       }
-
-      // Save 2FA setup
-      const { error: setupError } = await supabase.from('user_2fa_setup').insert({
-        user_id: userId,
-        secret: secret,
-        backup_codes: backupCodes,
-        verified_at: new Date().toISOString(),
-        authenticator_app: 'microsoft_authenticator',
-      });
-
-      if (setupError) throw setupError;
-
-      // Update user profile
-      await supabase
-        .from('user_profiles')
-        .update({ two_factor_enabled: true })
-        .eq('id', userId);
-
       setStep('policies');
-      setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to verify 2FA code');
-      setLoading(false);
+      setError(err.message || 'L’activation du second facteur n’a pas pu être consignée.');
     }
   };
 
@@ -283,32 +232,6 @@ export default function ActivateAccount() {
   };
 
   // Helper functions
-  const generateTOTPSecret = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    let secret = '';
-    for (let i = 0; i < 32; i++) {
-      secret += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return secret;
-  };
-
-  const generateBackupCodes = (count: number) => {
-    const codes: string[] = [];
-    for (let i = 0; i < count; i++) {
-      const code = Math.floor(Math.random() * 100000000)
-        .toString()
-        .padStart(8, '0');
-      codes.push(code.match(/.{1,4}/g)!.join('-'));
-    }
-    return codes;
-  };
-
-  const verifyTOTPCode = (secret: string, code: string) => {
-    // In production, use a proper TOTP library like 'otpauth'
-    // This is a simplified version for demonstration
-    return code.length === 6 && /^\d{6}$/.test(code);
-  };
-
   const passwordStrength = () => {
     const metCount = requirements.filter((req) => req.met).length;
     if (metCount === 0) return { label: '', color: '' };
@@ -486,84 +409,9 @@ export default function ActivateAccount() {
 
         {/* Step 2: 2FA Setup */}
         {step === '2fa' && (
-          <form onSubmit={handle2FAVerification} className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Important:</strong> Only Microsoft Authenticator is authorized for this system.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                Scan this QR code with Microsoft Authenticator app:
-              </p>
-              <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
-                <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Manual Setup Code
-              </label>
-              <div className="bg-gray-50 p-3 rounded border border-gray-300">
-                <code className="text-sm font-mono break-all">{secret}</code>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Use this code if you can't scan the QR code
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Verification Code
-              </label>
-              <Input
-                type="text"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="Enter 6-digit code"
-                maxLength={6}
-                required
-              />
-            </div>
-
-            {/* Backup Codes */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-yellow-900 mb-2">
-                Save these backup codes:
-              </p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                {backupCodes.map((code, index) => (
-                  <code key={index} className="text-xs bg-white p-2 rounded border border-yellow-300">
-                    {code}
-                  </code>
-                ))}
-              </div>
-              <p className="text-xs text-yellow-800">
-                Store these codes safely. They can be used to access your account if you lose your device.
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading || verificationCode.length !== 6}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader className="animate-spin h-5 w-5 mr-2" />
-                  Verifying...
-                </>
-              ) : (
-                'Verify and Continue'
-              )}
-            </Button>
-          </form>
+          <TwoFactorSetup obligatoire onComplete={() => void apres2FA()} />
         )}
 
-        {/* Step 3: Policies Acceptance */}
         {step === 'policies' && (
           <form onSubmit={handlePoliciesAcceptance} className="space-y-6">
             <p className="text-sm text-gray-600">

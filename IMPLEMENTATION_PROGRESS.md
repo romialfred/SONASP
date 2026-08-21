@@ -657,6 +657,11 @@ estimée.
 | A205 | L'immuabilité des résultats d'analyse bloquait aussi la cascade : une instruction ouverte par erreur devenait indestructible | Analyses | Le déclencheur laisse passer la cascade, reconnaissable à la disparition de la ligne mère, et refuse toujours la suppression directe |
 | A206 | Aucune conservation séparée des analyses successives : la teneur retenue écrasait les résultats intermédiaires | Analyses | `snp_analyses_resultats` en écriture seule ; les quatre valeurs et leurs écarts restent lisibles après arbitrage |
 | A207 | Aucune alerte contractuelle, aucun versement de pièce, aucun traçage des consultations sensibles | Contrats | Douze alertes à seuils administrables calculées à la lecture ; dépôt privé versionné ; journal d'accès en écriture seule |
+| A208 | `ON CONFLICT` sur un index partiel sans reprendre son prédicat : toute émission de notification échouait sur « no unique or exclusion constraint matching » | Notifications | Clause `WHERE cle_dedoublonnage IS NOT NULL` reprise dans le ON CONFLICT |
+| A209 | `ROW IS NOT NULL` n'est vrai que si tous les champs le sont : `snp_notifier_roles` comptait zéro destinataire alors que les notifications partaient | Notifications | Test porté sur l'identifiant, seul champ toujours présent |
+| A210 | Le second facteur n'en était pas un : secret issu de `Math.random()`, stocké en clair, transmis à `api.qrserver.com`, et code jamais vérifié — six chiffres quelconques activaient la protection. Même défaut dans `ActivateAccount` | Sécurité | Secret confié à GoTrue, code réellement vérifié, application en base via `snp_est_agent_sonasp()` ; colonnes `two_factor_secret` et `backup_codes` supprimées |
+| A211 | `supabase/functions/send-email` contenait `const emailSent = true;` : elle journalisait et rendait un succès sans rien envoyer | Notifications | Fonction de bord `envoyer-courriel` en Deno et denomailer ; un défaut de configuration donne un refus net |
+| A212 | La cloche affichait un badge « 3 » en dur et trois notifications inventées, sur chaque écran | Notifications | Reliée à `snp_notifications` ; muette plutôt que menteuse en cas d'échec de lecture |
 
 ---
 

@@ -6,7 +6,6 @@ import {
   DESCRIPTIONS_ROLE,
   EMPTY_USER_FORM,
   appliquerGabarit,
-  genererMotDePasse,
   validateIdentite,
 } from './UserManagementModern';
 import { EMPTY_PERMISSION } from '@/services/userPermissionsService';
@@ -87,7 +86,6 @@ const formValide = {
   email: 'awa@sonasp.bf',
   role: 'admin' as const,
   miningCompanyIds: ['c1'],
-  password: 'MotDePasse!234',
 };
 
 describe('validation du compte', () => {
@@ -102,27 +100,14 @@ describe('validation du compte', () => {
       'Rattachez le compte Société minière à une compagnie unique.'
     );
     expect(validateIdentite({ ...formValide, role: 'mine', miningCompanyIds: ['c1'] }, false)).toBeNull();
-    expect(validateIdentite({ ...formValide, password: 'court' }, false)).toBe(
-      'Le mot de passe doit compter au moins 12 caractères.'
-    );
     expect(validateIdentite(formValide, false)).toBeNull();
     expect(validateIdentite({ ...formValide, role: 'manager', miningCompanyIds: [] }, false)).toBeNull();
-    // En modification, le mot de passe n'est pas redemandé.
-    expect(validateIdentite({ ...formValide, password: '' }, true)).toBeNull();
+    expect(validateIdentite(formValide, true)).toBeNull();
   });
 
   it('décrit chaque rôle sans référence à un module inexistant', () => {
     expect(DESCRIPTIONS_ROLE.owner).toContain('Accès complet');
     expect(Object.values(DESCRIPTIONS_ROLE).join(' ')).not.toMatch(/batch/i);
-  });
-
-  it('génère un mot de passe conforme', () => {
-    const motDePasse = genererMotDePasse();
-    expect(motDePasse.length).toBeGreaterThanOrEqual(12);
-    expect(motDePasse).toMatch(/[A-Z]/);
-    expect(motDePasse).toMatch(/[a-z]/);
-    expect(motDePasse).toMatch(/[0-9]/);
-    expect(motDePasse).toMatch(/[!@#$%*?]/);
   });
 
   it('applique un gabarit d’habilitations', () => {
@@ -156,7 +141,6 @@ describe('UserManagementModern', () => {
     fireEvent.change(screen.getByLabelText(/Nom complet/), { target: { value: 'Awa KABORE' } });
     fireEvent.change(screen.getByLabelText(/Adresse e-mail/), { target: { value: 'awa@sonasp.bf' } });
     fireEvent.click(screen.getByRole('radio', { name: /Administrateur/ }));
-    fireEvent.change(screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }), { target: { value: 'MotDePasse!234' } });
   };
 
   it('propose les rôles de portail, propriétaire et administrateur compris', async () => {
@@ -182,12 +166,12 @@ describe('UserManagementModern', () => {
     expect(screen.getByRole('button', { name: /Habilitations/ })).not.toBeDisabled();
   });
 
-  it('génère un mot de passe à la demande', async () => {
+  it('annonce le parcours sécurisé sans exposer de mot de passe provisoire', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Activation sécurisée')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Générer un mot de passe/ }));
-    expect((screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }) as HTMLInputElement).value.length).toBeGreaterThanOrEqual(12);
+    expect(screen.getByText(/lien à usage unique/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Mot de passe/)).not.toBeInTheDocument();
   });
 
   it('crée un compte interne sans lui attribuer un faux site minier', async () => {
@@ -206,7 +190,8 @@ describe('UserManagementModern', () => {
     expect(mocks.createUser.mock.calls[0][0]).toMatchObject({ email: 'awa@sonasp.bf', role: 'admin' });
     expect(mocks.createUser.mock.calls[0][0]).toMatchObject({ mining_company_id: null });
     expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
-    await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    expect(mocks.createUser.mock.calls[0][0].permissions.m1).toMatchObject({ can_view: true });
+    expect(mocks.save).not.toHaveBeenCalled();
     expect(mocks.navigate).toHaveBeenCalledWith('/users');
   });
 
@@ -233,7 +218,6 @@ describe('UserManagementModern', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Société minière/ }));
     await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('radio', { name: /Essakane SA/ }));
-    fireEvent.change(screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }), { target: { value: 'MotDePasse!234' } });
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
     fireEvent.click(screen.getByRole('button', { name: /Créer le compte/ }));
 
@@ -270,7 +254,7 @@ describe('UserManagementModern', () => {
 
     expect(screen.getByLabelText(/Adresse e-mail/)).toBeDisabled();
     expect(screen.getByRole('radio', { name: /Usine/ })).toBeChecked();
-    expect(screen.queryByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Activation sécurisée')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
     expect(screen.getByLabelText('Consulter — Ventes')).toBeChecked();

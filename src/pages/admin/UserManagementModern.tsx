@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Building2,
   Contact,
-  KeyRound,
   Loader2,
   Save,
   ShieldCheck,
@@ -37,7 +36,6 @@ export interface UserFormData {
   phone: string;
   role: UserRole | '';
   miningCompanyIds: string[];
-  password: string;
   isActive: boolean;
 }
 
@@ -47,7 +45,6 @@ export const EMPTY_USER_FORM: UserFormData = {
   phone: '',
   role: '',
   miningCompanyIds: [],
-  password: '',
   isActive: true,
 };
 
@@ -75,13 +72,12 @@ export const DROITS: Array<{ clef: DroitClef; label: string }> = [
 ];
 
 /** Première obligation non satisfaite de l'étape « identité », ou `null`. */
-export function validateIdentite(form: UserFormData, isEditMode: boolean): string | null {
+export function validateIdentite(form: UserFormData, _isEditMode: boolean): string | null {
   if (!form.fullName.trim()) return 'Le nom complet est obligatoire.';
   if (!form.email.trim()) return 'L’adresse e-mail est obligatoire.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'L’adresse e-mail est invalide.';
   if (!form.role) return 'Sélectionnez un rôle.';
   if (form.role === 'mine' && form.miningCompanyIds.length !== 1) return 'Rattachez le compte Société minière à une compagnie unique.';
-  if (!isEditMode && form.password.length < 12) return 'Le mot de passe doit compter au moins 12 caractères.';
   return null;
 }
 
@@ -102,21 +98,6 @@ export function appliquerGabarit(
     };
   });
   return resultat;
-}
-
-/** Mot de passe conforme : majuscule, minuscule, chiffre et caractère spécial. */
-export function genererMotDePasse(longueur = 14): string {
-  const majuscules = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const minuscules = 'abcdefghijkmnopqrstuvwxyz';
-  const chiffres = '23456789';
-  const speciaux = '!@#$%*?';
-  const tout = majuscules + minuscules + chiffres + speciaux;
-
-  const tirer = (source: string) => source[Math.floor(Math.random() * source.length)];
-  const base = [tirer(majuscules), tirer(minuscules), tirer(chiffres), tirer(speciaux)];
-  while (base.length < longueur) base.push(tirer(tout));
-
-  return base.sort(() => Math.random() - 0.5).join('');
 }
 
 interface MiningCompany {
@@ -181,7 +162,6 @@ export function UserManagementModern() {
           phone: profil?.phone || '',
           role: (profil?.role as UserRole) || '',
           miningCompanyIds: profil?.mining_company_id ? [profil.mining_company_id] : [],
-          password: '',
           isActive: profil?.is_active !== false,
         });
 
@@ -244,16 +224,19 @@ export function UserManagementModern() {
     setErreur(null);
     try {
       let identifiant = userId;
+      const permissionsEnregistrees = form.role === 'manager'
+        ? appliquerGabarit(permissions, 'consultation')
+        : permissions;
 
       if (!isEditMode) {
         const resultat = await createUser({
           email: form.email,
-          password: form.password,
           full_name: form.fullName,
           phone: form.phone,
           role: form.role as UserRole,
           is_active: form.isActive,
           mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
+          permissions: permissionsEnregistrees,
         });
         if (!resultat.success || !resultat.user) {
           throw new Error(resultat.error || 'La création du compte a échoué.');
@@ -271,10 +254,10 @@ export function UserManagementModern() {
         if (error) throw error;
       }
 
-      if (identifiant) {
-        const permissionsEnregistrees = form.role === 'manager'
-          ? appliquerGabarit(permissions, 'consultation')
-          : permissions;
+      // Pour une création, le serveur enregistre profil et habilitations dans
+      // la même opération et annule l'ensemble si le courriel échoue. En
+      // modification seulement, les droits sont mis à jour séparément.
+      if (identifiant && isEditMode) {
         const resultat = await userPermissionsService.save(
           identifiant,
           permissionsEnBase,
@@ -284,7 +267,10 @@ export function UserManagementModern() {
         if (!resultat.success) throw new Error(resultat.error);
       }
 
-      addToast(isEditMode ? 'Compte mis à jour' : 'Compte créé', 'success');
+      addToast(
+        isEditMode ? 'Compte mis à jour' : 'Compte créé — courriel de bienvenue envoyé',
+        'success'
+      );
       navigate('/users');
     } catch (reason) {
       const message = errorMessage(reason, 'Enregistrement impossible.');
@@ -505,31 +491,16 @@ export function UserManagementModern() {
             {!isEditMode && (
               <Section
                 id="acces"
-                icon={KeyRound}
+                icon={ShieldCheck}
                 tone="amber"
-                title="Mot de passe initial"
-                description="À communiquer au titulaire, qui devra le changer à la première connexion."
+                title="Activation sécurisée"
+                description="Le titulaire définit lui-même ses accès ; aucun mot de passe ne vous est communiqué."
               >
-                <div className="admin-form__row is-deux">
-                  <Field label="Mot de passe" required htmlFor="mot-de-passe" hint="12 caractères minimum">
-                    <input
-                      id="mot-de-passe"
-                      type="text"
-                      value={form.password}
-                      onChange={(event) => setValue('password', event.target.value)}
-                    />
-                  </Field>
-                  <div className="sn-field">
-                    <span className="sn-field__label">&nbsp;</span>
-                    <button
-                      type="button"
-                      className="sn-btn"
-                      onClick={() => setValue('password', genererMotDePasse())}
-                    >
-                      <KeyRound aria-hidden="true" /> Générer un mot de passe
-                    </button>
-                  </div>
-                </div>
+                <Note tone="info" icon={ShieldCheck}>
+                  Après la création, un courriel individuel sera envoyé à <strong>{form.email || 'l’adresse renseignée'}</strong>.
+                  Son lien à usage unique permettra de définir un mot de passe personnel. L’enrôlement à
+                  l’authentification à deux facteurs sera ensuite obligatoire avant l’ouverture des données.
+                </Note>
               </Section>
             )}
 

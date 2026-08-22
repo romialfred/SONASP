@@ -1,14 +1,14 @@
 import { supabase } from '@/lib/supabase';
+import type { PermissionMap } from '@/services/userPermissionsService';
 
 export interface CreateUserRequest {
   email: string;
   full_name: string;
   phone?: string;
   role: string;
-  password?: string;
   is_active?: boolean;
   mining_company_id?: string | null;
-  permissions?: Record<string, any>;
+  permissions?: PermissionMap;
 }
 
 export interface CreateUserResponse {
@@ -19,8 +19,9 @@ export interface CreateUserResponse {
     full_name: string;
     role: string;
   };
-  activation_token?: string;
-  temporary_password?: string;
+  email_sent?: boolean;
+  requires_password_change?: boolean;
+  requires_mfa_enrollment?: boolean;
   message?: string;
   error?: string;
 }
@@ -29,6 +30,8 @@ export interface CreateUserResponse {
  * Create a new user via Edge Function
  */
 export async function createUser(data: CreateUserRequest): Promise<CreateUserResponse> {
+  const controleur = new AbortController();
+  const delai = window.setTimeout(() => controleur.abort(), 25_000);
   try {
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -37,12 +40,11 @@ export async function createUser(data: CreateUserRequest): Promise<CreateUserRes
     }
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl) {
-      throw new Error('Supabase URL not configured');
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('La connexion au service d’administration n’est pas configurée.');
     }
-
-    console.log('[userManagementService] Creating user:', { email: data.email, role: data.role });
 
     const response = await fetch(
       `${supabaseUrl}/functions/v1/create-user`,
@@ -50,27 +52,38 @@ export async function createUser(data: CreateUserRequest): Promise<CreateUserRes
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
+          'apikey': anonKey,
           'Content-Type': 'application/json',
+          'X-Client-Info': 'sonasp-account-administration',
         },
         body: JSON.stringify(data),
+        signal: controleur.signal,
       }
     );
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({})) as CreateUserResponse;
 
     if (!response.ok) {
-      console.error('[userManagementService] Error response:', result);
-      throw new Error(result.error || 'Failed to create user');
+      if (response.status === 404) {
+        throw new Error('Le service de création de compte n’est pas déployé. Contactez l’administrateur technique.');
+      }
+      throw new Error(result.error || 'La création du compte a échoué. Réessayez dans un instant.');
     }
 
-    console.log('[userManagementService] User created successfully:', result);
     return result;
   } catch (error: any) {
-    console.error('[userManagementService] Error creating user:', error);
+    const estDelai = error?.name === 'AbortError';
+    const estReseau = error instanceof TypeError;
     return {
       success: false,
-      error: error.message || 'An unexpected error occurred',
+      error: estDelai
+        ? 'Le service de création ne répond pas. Aucun compte n’a été validé.'
+        : estReseau
+          ? 'Le service de création de compte est momentanément inaccessible.'
+          : error.message || 'Une erreur inattendue est survenue.',
     };
+  } finally {
+    window.clearTimeout(delai);
   }
 }
 

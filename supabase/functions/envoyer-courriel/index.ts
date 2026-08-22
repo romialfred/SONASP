@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { coquille, echapper, faits as bloqueFaits, bouton, paragraphe } from './gabarit.ts';
+import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 
 /**
  * Envoi des courriels de la plateforme SONASP.
@@ -26,12 +27,6 @@ import { coquille, echapper, faits as bloqueFaits, bouton, paragraphe } from './
  * avant tout envoi. Sans cela, n'importe qui pourrait faire partir des courriels
  * au nom de l'Administration SONASP.
  */
-
-const enTetesCors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
 
 const URL_APPLICATION = Deno.env.get('SONASP_APP_URL') ?? 'https://sonasp.bf';
 
@@ -151,15 +146,10 @@ function composer(courriel: Courriel): { html: string; texte: string } {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: enTetesCors });
-  }
+  if (req.method === 'OPTIONS') return reponsePrevol(req);
+  if (req.method !== 'POST') return reponseJson(req, { erreur: 'Méthode non autorisée.' }, 405);
 
-  const json = (corps: unknown, statut = 200) =>
-    new Response(JSON.stringify(corps), {
-      status: statut,
-      headers: { ...enTetesCors, 'Content-Type': 'application/json' },
-    });
+  const json = (corps: unknown, statut = 200) => reponseJson(req, corps, statut);
 
   try {
     const urlSupabase = Deno.env.get('SUPABASE_URL')!;
@@ -195,6 +185,64 @@ Deno.serve(async (req: Request) => {
 
     const requete = await req.json().catch(() => ({}));
     const action = requete?.action ?? 'file';
+
+    /* --------------------------------------------------------- Bienvenue -- */
+    if (action === 'bienvenue') {
+      const destinataire = String(requete?.to ?? '').trim().toLowerCase();
+      const nomComplet = String(requete?.nom_complet ?? '').trim().slice(0, 160);
+      const lienActivation = String(requete?.lien_activation ?? '').trim();
+      const role = String(requete?.role ?? '').trim().slice(0, 40);
+      if (!destinataire || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destinataire)) {
+        return json({ erreur: 'Adresse de destination invalide.' }, 400);
+      }
+
+      // Le bouton d'activation doit toujours revenir du serveur Auth SONASP.
+      // Un administrateur ne peut ainsi transformer cette fonction en relais
+      // de hameçonnage vers une adresse arbitraire.
+      try {
+        const actionUrl = new URL(lienActivation);
+        const supabaseUrl = new URL(urlSupabase);
+        if (actionUrl.origin !== supabaseUrl.origin || actionUrl.pathname !== '/auth/v1/verify') {
+          return json({ erreur: 'Lien d’activation non reconnu.' }, 400);
+        }
+      } catch {
+        return json({ erreur: 'Lien d’activation invalide.' }, 400);
+      }
+
+      const libellesRole: Record<string, string> = {
+        owner: 'Propriétaire', admin: 'Administrateur', management: 'Direction',
+        manager: 'Responsable', mine: 'Société minière', factory: 'Usine',
+        airport: 'Aéroport', refinery: 'Raffinerie', customer: 'Client',
+      };
+      const client = await ouvrirClient(cfg);
+      try {
+        const { html, texte } = composer({
+          destinataire,
+          objet: 'Votre accès à la plateforme SONASP',
+          titre: 'Bienvenue sur la plateforme SONASP',
+          corps: `Bonjour ${nomComplet || destinataire}, votre compte a été préparé. Définissez maintenant votre mot de passe personnel à l’aide du lien sécurisé ci-dessous. L’enrôlement du second facteur sera ensuite obligatoire avant tout accès aux données.`,
+          faits: [
+            { label: 'Identifiant', valeur: destinataire },
+            { label: 'Profil', valeur: libellesRole[role] ?? role },
+            { label: 'Sécurité', valeur: 'Mot de passe personnel puis authentification à deux facteurs' },
+          ],
+          cheminAction: lienActivation,
+          libelleAction: 'Définir mon mot de passe',
+        });
+        await client.send({
+          from: adresseExpediteur(cfg), to: destinataire,
+          subject: 'Votre accès à la plateforme SONASP',
+          content: texte, html,
+        });
+        await client.close();
+        return json({ envoye: true, destinataire });
+      } catch (erreur) {
+        await client.close().catch(() => {});
+        const message = erreur instanceof Error ? erreur.message : 'échec SMTP';
+        console.error('[envoyer-courriel] Bienvenue non envoyée.', message);
+        return json({ envoye: false, erreur: 'Le courriel de bienvenue n’a pas pu être envoyé.' }, 502);
+      }
+    }
 
     /* ------------------------------------------------------------- Essai -- */
     if (action === 'test') {

@@ -1,346 +1,300 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*', // audit V11
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
+const ROLES = new Set([
+  'owner', 'admin', 'management', 'manager', 'mine',
+  'factory', 'airport', 'refinery', 'customer',
+]);
+const ROLES_CREATEURS = new Set(['owner', 'admin', 'management']);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-interface ModulePermission {
-  module_name: string;
-  can_view: boolean;
-  can_create: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_approve: boolean;
-  field_permissions?: Array<{
-    field_name: string;
-    can_view: boolean;
-    can_edit: boolean;
-  }>;
+interface PermissionModule {
+  module_id: string;
+  can_view?: boolean;
+  can_create?: boolean;
+  can_edit?: boolean;
+  can_delete?: boolean;
+  can_approve?: boolean;
+  field_permissions?: Record<string, { can_view?: boolean; can_edit?: boolean }>;
 }
 
-interface CreateUserRequest {
-  email: string;
-  password?: string;
-  full_name: string;
-  phone?: string;
-  role: string;
-  is_active?: boolean;
-  mining_company_id?: string | null;
-  permissions?: Record<string, ModulePermission>;
+interface RequeteCreation {
+  email?: unknown;
+  full_name?: unknown;
+  phone?: unknown;
+  role?: unknown;
+  is_active?: unknown;
+  mining_company_id?: unknown;
+  permissions?: unknown;
+}
+
+class ErreurPublique extends Error {
+  constructor(public statut: number, message: string) {
+    super(message);
+  }
+}
+
+const texte = (valeur: unknown, longueur: number) =>
+  typeof valeur === 'string' ? valeur.trim().slice(0, longueur) : '';
+
+function motDePasseProvisoire(longueur = 24): string {
+  const familles = [
+    'ABCDEFGHJKLMNPQRSTUVWXYZ',
+    'abcdefghijkmnopqrstuvwxyz',
+    '23456789',
+    '!@#$%*?',
+  ];
+  const tout = familles.join('');
+  const choisir = (source: string) => {
+    const valeur = new Uint32Array(1);
+    crypto.getRandomValues(valeur);
+    return source[valeur[0] % source.length];
+  };
+  const caracteres = familles.map(choisir);
+  while (caracteres.length < longueur) caracteres.push(choisir(tout));
+
+  for (let i = caracteres.length - 1; i > 0; i -= 1) {
+    const valeur = new Uint32Array(1);
+    crypto.getRandomValues(valeur);
+    const j = valeur[0] % (i + 1);
+    [caracteres[i], caracteres[j]] = [caracteres[j], caracteres[i]];
+  }
+  return caracteres.join('');
+}
+
+function normaliserPermissions(brut: unknown, role: string): PermissionModule[] {
+  if (!brut || typeof brut !== 'object' || Array.isArray(brut)) return [];
+
+  return Object.values(brut as Record<string, unknown>)
+    .filter((valeur): valeur is PermissionModule => Boolean(valeur && typeof valeur === 'object'))
+    .map((permission) => {
+      const moduleId = texte(permission.module_id, 64);
+      if (!UUID.test(moduleId)) throw new ErreurPublique(400, 'Une habilitation référence un module invalide.');
+
+      const consultation = Boolean(permission.can_view);
+      const lectureSeule = role === 'manager';
+      return {
+        module_id: moduleId,
+        can_view: consultation,
+        can_create: lectureSeule ? false : Boolean(permission.can_create),
+        can_edit: lectureSeule ? false : Boolean(permission.can_edit),
+        can_delete: lectureSeule ? false : Boolean(permission.can_delete),
+        can_approve: lectureSeule ? false : Boolean(permission.can_approve),
+        field_permissions: Object.fromEntries(
+          Object.entries(permission.field_permissions ?? {})
+            .slice(0, 100)
+            .map(([champ, droits]) => [champ.slice(0, 100), {
+              can_view: Boolean(droits?.can_view),
+              can_edit: lectureSeule ? false : Boolean(droits?.can_edit),
+            }]),
+        ),
+      };
+    })
+    .filter((permission) =>
+      permission.can_view || permission.can_create || permission.can_edit
+      || permission.can_delete || permission.can_approve
+      || Object.values(permission.field_permissions ?? {}).some((droits) => droits.can_view || droits.can_edit)
+    );
+}
+
+async function annulerCreation(admin: SupabaseClient, utilisateurId: string): Promise<void> {
+  await admin.from('user_permissions').delete().eq('user_id', utilisateurId);
+  await admin.from('user_profiles').delete().eq('id', utilisateurId);
+  await admin.auth.admin.deleteUser(utilisateurId);
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') return reponsePrevol(req);
+  if (req.method !== 'POST') return reponseJson(req, { success: false, error: 'Méthode non autorisée.' }, 405);
+
+  const urlSupabase = Deno.env.get('SUPABASE_URL');
+  const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const cleAnonyme = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!urlSupabase || !cleService || !cleAnonyme) {
+    console.error('[create-user] Configuration Supabase incomplète.');
+    return reponseJson(req, { success: false, error: 'Le service de création de compte est indisponible.' }, 503);
   }
 
+  const admin = createClient(urlSupabase, cleService, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  let utilisateurCree: string | null = null;
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const autorisation = req.headers.get('Authorization') ?? '';
+    const jeton = autorisation.replace(/^Bearer\s+/i, '');
+    if (!jeton) throw new ErreurPublique(401, 'Votre session a expiré. Reconnectez-vous.');
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    const { data: donneesAuth, error: erreurAuth } = await admin.auth.getUser(jeton);
+    if (erreurAuth || !donneesAuth.user) {
+      throw new ErreurPublique(401, 'Votre session n’est plus valide. Reconnectez-vous.');
     }
+    const acteur = donneesAuth.user;
 
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-    });
-
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
-
-    if (userError || !currentUser) {
-      console.error('[create-user] Auth error:', userError);
-      throw new Error('Unauthorized');
-    }
-
-    console.log('[create-user] Current user:', currentUser.id);
-
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profilActeur, error: erreurProfilActeur } = await admin
       .from('user_profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .single();
-
-    if (profileError) {
-      console.error('[create-user] Error fetching user profile:', profileError);
-      throw new Error('Unable to verify user permissions');
+      .select('role, is_active, mining_company_id')
+      .eq('id', acteur.id)
+      .maybeSingle();
+    if (erreurProfilActeur || !profilActeur?.is_active) {
+      throw new ErreurPublique(403, 'Ce compte n’est pas autorisé à administrer les utilisateurs.');
     }
 
-    console.log('[create-user] User profile:', profile);
-
-    if (!profile || !['owner', 'admin', 'management'].includes(profile.role)) {
-      console.warn('[create-user] Unauthorized user attempt:', { userId: currentUser.id, role: profile?.role });
-      throw new Error('Only management users can create accounts');
+    const roleTechnique = texte(acteur.app_metadata?.role, 40).toLowerCase();
+    const roleActeur = roleTechnique === 'owner'
+      ? 'owner'
+      : texte(profilActeur.role, 40).toLowerCase();
+    if (!ROLES_CREATEURS.has(roleActeur) || (roleActeur !== 'owner' && profilActeur.mining_company_id)) {
+      throw new ErreurPublique(403, 'Vous ne disposez pas du droit de créer un compte.');
     }
 
-    const requestData: CreateUserRequest = await req.json();
-    const { email, password, full_name, phone, role, is_active, mining_company_id, permissions } = requestData;
+    const corps = await req.json().catch(() => null) as RequeteCreation | null;
+    if (!corps) throw new ErreurPublique(400, 'Les informations du compte sont illisibles.');
 
-    console.log('[create-user] Request received:', {
+    const email = texte(corps.email, 254).toLowerCase();
+    const nomComplet = texte(corps.full_name, 160);
+    const telephone = texte(corps.phone, 40) || null;
+    const role = texte(corps.role, 40).toLowerCase();
+    const societeMiniere = texte(corps.mining_company_id, 64) || null;
+    const actif = corps.is_active !== false;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ErreurPublique(400, 'Renseignez une adresse e-mail valide.');
+    }
+    if (!nomComplet) throw new ErreurPublique(400, 'Le nom complet est obligatoire.');
+    if (!ROLES.has(role)) throw new ErreurPublique(400, 'Le rôle sélectionné n’est pas reconnu.');
+    if (role === 'owner' && roleActeur !== 'owner') {
+      throw new ErreurPublique(403, 'Seul un propriétaire peut créer un autre compte propriétaire.');
+    }
+    if (role === 'mine' && (!societeMiniere || !UUID.test(societeMiniere))) {
+      throw new ErreurPublique(400, 'Rattachez le compte à une société minière.');
+    }
+    if (role !== 'mine' && societeMiniere) {
+      throw new ErreurPublique(400, 'Ce rôle ne peut pas recevoir un périmètre de société minière.');
+    }
+
+    if (societeMiniere) {
+      const { data: societe } = await admin
+        .from('mining_companies').select('id').eq('id', societeMiniere).maybeSingle();
+      if (!societe) throw new ErreurPublique(400, 'La société minière sélectionnée est introuvable.');
+    }
+
+    const { data: profilExistant } = await admin
+      .from('user_profiles').select('id').eq('email', email).maybeSingle();
+    if (profilExistant) throw new ErreurPublique(409, 'Un compte utilise déjà cette adresse e-mail.');
+
+    const permissions = normaliserPermissions(corps.permissions, role);
+    if (permissions.length > 0) {
+      const ids = [...new Set(permissions.map((permission) => permission.module_id))];
+      const { data: modules, error: erreurModules } = await admin.from('modules').select('id').in('id', ids);
+      if (erreurModules || (modules?.length ?? 0) !== ids.length) {
+        throw new ErreurPublique(400, 'Une ou plusieurs habilitations ne correspondent plus au référentiel courant.');
+      }
+    }
+
+    const { data: creationAuth, error: erreurCreationAuth } = await admin.auth.admin.createUser({
       email,
-      full_name,
-      role,
-      hasPhone: !!phone,
-      hasPassword: !!password,
-      isActive: is_active,
-      hasPermissions: !!permissions,
+      password: motDePasseProvisoire(),
+      email_confirm: true,
+      user_metadata: { full_name: nomComplet, phone: telephone ?? '' },
+      app_metadata: { role, mining_company_id: role === 'mine' ? societeMiniere : null },
     });
-
-    if (!email || !full_name || !role) {
-      console.error('[create-user] Missing required fields:', { email: !!email, full_name: !!full_name, role: !!role });
-      throw new Error('Missing required fields: email, full_name, and role are required');
-    }
-
-    const allowedRoles = ['owner', 'admin', 'management', 'manager', 'mine', 'factory', 'airport', 'refinery', 'customer'];
-    if (!allowedRoles.includes(role)) {
-      throw new Error('Invalid account role');
-    }
-    if (role === 'mine' && !mining_company_id) {
-      throw new Error('A mining company account requires one company');
-    }
-    if (role !== 'mine' && mining_company_id) {
-      throw new Error('Only a mining company account can receive this company scope');
-    }
-
-    // SÉCURITÉ (audit V12) : générateur cryptographiquement sûr (CSPRNG), pas Math.random.
-    const generateRandomPassword = () => {
-      const length = 16;
-      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-      const bytes = new Uint32Array(length);
-      crypto.getRandomValues(bytes);
-      let pwd = '';
-      for (let i = 0; i < length; i++) {
-        pwd += charset.charAt(bytes[i] % charset.length);
-      }
-      return pwd;
-    };
-
-    const userPassword = password || generateRandomPassword();
-
-    console.log('[create-user] Creating auth user...');
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
-      password: userPassword,
-      email_confirm: true, // Auto-confirm email for now
-      user_metadata: {
-        full_name: full_name,
-        phone: phone || '',
-      },
-      app_metadata: {
-        role: role,
-        mining_company_id: role === 'mine' ? mining_company_id : null,
-      },
-    });
-
-    if (authError) {
-      console.error('[create-user] Auth creation error:', authError);
-      throw authError;
-    }
-
-    if (!authData.user) {
-      console.error('[create-user] No user returned from auth.admin.createUser');
-      throw new Error('User creation failed');
-    }
-
-    console.log('[create-user] Auth user created:', authData.user.id);
-
-    const { error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        full_name: full_name,
-        phone: phone || null,
-        role: role,
-        mining_company_id: role === 'mine' ? mining_company_id : null,
-        is_active: is_active !== undefined ? is_active : true, // Default to active
-        two_factor_enabled: false,
-      });
-
-    if (profileError) {
-      console.error('[create-user] Profile creation error:', profileError);
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      throw profileError;
-    }
-
-    console.log('[create-user] User profile created');
-
-    // Save user permissions if provided
-    if (permissions && Object.keys(permissions).length > 0) {
-      console.log('[create-user] Saving permissions...');
-
-      const { data: modules, error: modulesError } = await supabaseAdmin
-        .from('modules')
-        .select('id, name')
-        .in('name', Object.keys(permissions));
-
-      if (modulesError) {
-        console.error('[create-user] Error fetching modules:', modulesError);
-      } else if (modules && modules.length > 0) {
-        const permissionsToInsert = modules.map((module) => {
-          const perm = permissions[module.name];
-          return {
-            user_id: authData.user.id,
-            module_id: module.id,
-            can_read: perm.can_view || false,
-            can_write: perm.can_edit || false,
-            can_delete: perm.can_delete || false,
-            field_permissions: perm.field_permissions
-              ? JSON.stringify(
-                  Object.fromEntries(
-                    perm.field_permissions.map((fp) => [
-                      fp.field_name,
-                      { can_view: fp.can_view, can_edit: fp.can_edit }
-                    ])
-                  )
-                )
-              : '{}',
-            granted_by: currentUser.id,
-          };
-        });
-
-        const { error: permError } = await supabaseAdmin
-          .from('user_permissions')
-          .insert(permissionsToInsert);
-
-        if (permError) {
-          console.error('[create-user] Error saving permissions:', permError);
-        } else {
-          console.log('[create-user] Permissions saved successfully');
-        }
-      }
-    }
-
-    // Try to generate activation token (may not exist if migration not applied)
-    let activationToken = null;
-    let hasActivationSystem = false;
-
-    try {
-      console.log('[create-user] Attempting to generate activation token...');
-
-      const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc(
-        'generate_activation_token',
-        {
-          p_user_id: authData.user.id,
-          p_token_type: 'activation',
-          p_temporary_password: userPassword,
-          p_created_by: currentUser.id,
-        }
+    if (erreurCreationAuth || !creationAuth.user) {
+      const conflit = /already|registered|exist/i.test(erreurCreationAuth?.message ?? '');
+      throw new ErreurPublique(
+        conflit ? 409 : 400,
+        conflit ? 'Un compte utilise déjà cette adresse e-mail.' : 'Le compte d’authentification n’a pas pu être créé.',
       );
+    }
+    utilisateurCree = creationAuth.user.id;
 
-      if (tokenError) {
-        console.warn('[create-user] Activation token generation error:', tokenError.message, tokenError.code);
-        // If function doesn't exist, user is already active
-        if (tokenError.message?.includes('function') || tokenError.code === '42883' || tokenError.code === 'PGRST202') {
-          console.log('[create-user] Activation system not available - user already activated');
-        } else {
-          // Other errors should not fail user creation
-          console.error('[create-user] Unexpected token generation error:', tokenError);
-        }
-      } else {
-        activationToken = tokenData;
-        hasActivationSystem = true;
-        console.log('[create-user] Activation token generated successfully');
-      }
-    } catch (error: any) {
-      console.warn('[create-user] Activation system error (caught):', error.message);
-      // Continue without activation system
+    const { error: erreurProfil } = await admin.from('user_profiles').insert({
+      id: utilisateurCree,
+      email,
+      full_name: nomComplet,
+      phone: telephone,
+      role,
+      mining_company_id: role === 'mine' ? societeMiniere : null,
+      is_active: actif,
+      two_factor_enabled: false,
+      mfa_enrolled_at: null,
+      must_change_password: true,
+      password_changed_at: null,
+    });
+    if (erreurProfil) throw new Error(`profil: ${erreurProfil.message}`);
+
+    if (permissions.length > 0) {
+      const { error: erreurPermissions } = await admin.from('user_permissions').insert(
+        permissions.map((permission) => ({
+          user_id: utilisateurCree,
+          module_id: permission.module_id,
+          can_view: permission.can_view,
+          can_create: permission.can_create,
+          can_edit: permission.can_edit,
+          can_delete: permission.can_delete,
+          can_approve: permission.can_approve,
+          can_read: permission.can_view,
+          can_write: permission.can_edit,
+          field_permissions: permission.field_permissions ?? {},
+          granted_by: acteur.id,
+        })),
+      );
+      if (erreurPermissions) throw new Error(`habilitations: ${erreurPermissions.message}`);
     }
 
-    // Send activation email only if activation system is available
-    if (hasActivationSystem && activationToken) {
-      try {
-        console.log('[create-user] Sending activation email...');
+    const origineApplication = (Deno.env.get('SONASP_APP_URL') ?? 'https://sonasp.vercel.app').replace(/\/$/, '');
+    const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: `${origineApplication}/modifier-mot-de-passe` },
+    });
+    const lienActivation = lien?.properties?.action_link;
+    if (erreurLien || !lienActivation) throw new Error(`lien d’activation: ${erreurLien?.message ?? 'absent'}`);
 
-        const emailResponse = await fetch(
-          `${supabaseUrl}/functions/v1/send-email`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-            },
-            body: JSON.stringify({
-              user_id: authData.user.id,
-              email: email,
-              full_name: full_name,
-              token: activationToken,
-              temporary_password: userPassword,
-              token_type: 'activation',
-            }),
-          }
-        );
-
-        const emailResult = await emailResponse.json();
-
-        if (!emailResult.success) {
-          console.error('[create-user] Failed to send activation email:', emailResult.error);
-        } else {
-          console.log('[create-user] Activation email sent successfully');
-        }
-      } catch (emailError: any) {
-        console.error('[create-user] Error sending activation email:', emailError.message);
-      }
+    const reponseCourriel = await fetch(`${urlSupabase}/functions/v1/envoyer-courriel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': autorisation,
+        'apikey': cleAnonyme,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'bienvenue',
+        to: email,
+        nom_complet: nomComplet,
+        role,
+        lien_activation: lienActivation,
+      }),
+    });
+    const resultatCourriel = await reponseCourriel.json().catch(() => ({}));
+    if (!reponseCourriel.ok || !resultatCourriel?.envoye) {
+      throw new Error(`courriel: ${resultatCourriel?.erreur ?? `HTTP ${reponseCourriel.status}`}`);
     }
 
-    console.log('[create-user] User creation completed successfully');
+    const reponse = reponseJson(req, {
+      success: true,
+      user: { id: utilisateurCree, email, full_name: nomComplet, role },
+      email_sent: true,
+      requires_password_change: true,
+      requires_mfa_enrollment: true,
+      message: 'Compte créé. Le courriel de bienvenue a été envoyé.',
+    }, 201);
+    utilisateurCree = null;
+    return reponse;
+  } catch (erreur) {
+    if (utilisateurCree) {
+      await annulerCreation(admin, utilisateurCree).catch((raison) =>
+        console.error('[create-user] Retour arrière incomplet.', raison)
+      );
+    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: {
-          id: authData.user.id,
-          email: email,
-          full_name: full_name,
-          role: role,
-        },
-        activation_token: activationToken,
-        temporary_password: userPassword,
-        message: hasActivationSystem
-          ? 'User created successfully. Activation email sent.'
-          : 'User created successfully and activated immediately.',
-      }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-  } catch (error: any) {
-    // SÉCURITÉ (audit V15) : logguer le détail côté serveur, ne jamais l'exposer au client.
-    console.error('[create-user] Error creating user:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'An unexpected error occurred',
-      }),
-      {
-        status: 400,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    if (erreur instanceof ErreurPublique) {
+      return reponseJson(req, { success: false, error: erreur.message }, erreur.statut);
+    }
+    console.error('[create-user] Échec de création.', erreur);
+    return reponseJson(req, {
+      success: false,
+      error: 'La création n’a pas pu être finalisée. Aucun compte incomplet n’a été conservé.',
+    }, 500);
   }
 });

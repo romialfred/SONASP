@@ -1,0 +1,13 @@
+project_id = "yyverzuhkdonjjuficor"
+
+# Ces fonctions vérifient explicitement le jeton utilisateur dans leur code.
+# La vérification à la passerelle reste désactivée afin que les requêtes CORS
+# OPTIONS et les jetons JWT asymétriques atteignent correctement les handlers.
+[functions.create-user]
+verify_jwt = false
+
+[functions.get-users]
+verify_jwt = false
+
+[functions.envoyer-courriel]
+verify_jwt = false

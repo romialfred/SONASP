@@ -1,17 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*', // audit V11
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
+import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') return reponsePrevol(req);
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return reponseJson(req, { success: false, error: 'Méthode non autorisée.' }, 405);
   }
 
   try {
@@ -23,49 +16,30 @@ Deno.serve(async (req: Request) => {
     // Verify the requesting user is authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return reponseJson(req, { success: false, error: 'Votre session a expiré. Reconnectez-vous.' }, 401);
     }
 
     // Verify user has management role
     const token = authHeader.replace('Bearer ', '');
-    const supabaseClient = createClient(
-      supabaseUrl,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return reponseJson(req, { success: false, error: 'Votre session n’est plus valide. Reconnectez-vous.' }, 401);
     }
 
     // Check if user has management role
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .select('role')
+      .select('role, is_active, mining_company_id')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== 'management') {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Management role required' }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    const roleTechnique = String(user.app_metadata?.role ?? '').toLowerCase();
+    const roleEffectif = roleTechnique === 'owner' ? 'owner' : String(profile?.role ?? '').toLowerCase();
+    const habilite = profile?.is_active
+      && ['owner', 'admin', 'management'].includes(roleEffectif)
+      && (roleEffectif === 'owner' || profile?.mining_company_id === null);
+    if (profileError || !habilite) {
+      return reponseJson(req, { success: false, error: 'Vous ne disposez pas du droit de consulter les comptes.' }, 403);
     }
 
     // Fetch all users using service role (bypasses RLS)
@@ -96,25 +70,9 @@ Deno.serve(async (req: Request) => {
       updated_at: user.updated_at,
     }));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        users: validUsers,
-        count: validUsers.length
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return reponseJson(req, { success: true, users: validUsers, count: validUsers.length });
   } catch (error: any) {
     console.error('Error fetching users:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return reponseJson(req, { success: false, error: 'La liste des comptes n’a pas pu être chargée.' }, 500);
   }
 });

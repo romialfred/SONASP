@@ -2,6 +2,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { coquille, echapper, faits as bloqueFaits, bouton, paragraphe } from './gabarit.ts';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
+import { niveauAssurance } from '../_shared/assurance.ts';
+import { origineApplication } from '../_shared/application-url.ts';
 
 /**
  * Envoi des courriels de la plateforme SONASP.
@@ -28,7 +30,7 @@ import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
  * au nom de l'Administration SONASP.
  */
 
-const URL_APPLICATION = Deno.env.get('SONASP_APP_URL') ?? 'https://sonasp.bf';
+const URL_APPLICATION = origineApplication(Deno.env.get('SONASP_APP_URL'));
 
 interface ConfigurationCourriel {
   uid: string | null;
@@ -98,12 +100,25 @@ async function ouvrirClient(cfg: ConfigurationCourriel): Promise<SMTPClient> {
       tls: cfg.securise,
       auth: { username: cfg.identifiant, password: cfg.motDePasse },
     },
+    debug: { encodeLB: true },
   });
   return client;
 }
 
 function adresseExpediteur(cfg: ConfigurationCourriel): string {
   return `${cfg.expediteurNom} <${cfg.expediteurCourriel}>`;
+}
+
+function lienRecuperationValide(valeur: string): boolean {
+  try {
+    const url = new URL(valeur);
+    return url.origin === URL_APPLICATION
+      && url.pathname === '/modifier-mot-de-passe'
+      && url.searchParams.get('type') === 'recovery'
+      && Boolean(url.searchParams.get('token_hash'));
+  } catch {
+    return false;
+  }
 }
 
 interface Courriel {
@@ -142,7 +157,14 @@ function composer(courriel: Courriel): { html: string; texte: string } {
     url ? bouton(url, courriel.libelleAction ?? 'Ouvrir dans la plateforme') : '',
   ].filter(Boolean).join('');
 
-  return { html: coquille({ titre: echapper(courriel.titre), corps: corpsHtml }), texte };
+  return {
+    html: coquille({
+      titre: echapper(courriel.titre),
+      corps: corpsHtml,
+      origineApplication: URL_APPLICATION,
+    }),
+    texte,
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -167,13 +189,15 @@ Deno.serve(async (req: Request) => {
 
     const { data: profil } = await admin
       .from('user_profiles')
-      .select('role, is_active, mining_company_id')
+      .select('role, is_active, mining_company_id, mfa_enrolled_at')
       .eq('id', utilisateur.user.id)
       .maybeSingle();
 
     const habilite = profil?.is_active
       && profil?.mining_company_id === null
-      && ['owner', 'admin', 'management'].includes(String(profil?.role));
+      && ['owner', 'admin', 'management'].includes(String(profil?.role))
+      && Boolean(profil?.mfa_enrolled_at)
+      && niveauAssurance(jeton) === 'aal2';
     if (!habilite) return json({ erreur: 'Habilitation insuffisante.' }, 403);
 
     const cfg = await chargerConfiguration(admin);
@@ -199,14 +223,8 @@ Deno.serve(async (req: Request) => {
       // Le bouton d'activation doit toujours revenir du serveur Auth SONASP.
       // Un administrateur ne peut ainsi transformer cette fonction en relais
       // de hameçonnage vers une adresse arbitraire.
-      try {
-        const actionUrl = new URL(lienActivation);
-        const supabaseUrl = new URL(urlSupabase);
-        if (actionUrl.origin !== supabaseUrl.origin || actionUrl.pathname !== '/auth/v1/verify') {
-          return json({ erreur: 'Lien d’activation non reconnu.' }, 400);
-        }
-      } catch {
-        return json({ erreur: 'Lien d’activation invalide.' }, 400);
+      if (!lienRecuperationValide(lienActivation)) {
+        return json({ erreur: 'Lien d’activation non reconnu.' }, 400);
       }
 
       const libellesRole: Record<string, string> = {
@@ -241,6 +259,47 @@ Deno.serve(async (req: Request) => {
         const message = erreur instanceof Error ? erreur.message : 'échec SMTP';
         console.error('[envoyer-courriel] Bienvenue non envoyée.', message);
         return json({ envoye: false, erreur: 'Le courriel de bienvenue n’a pas pu être envoyé.' }, 502);
+      }
+    }
+
+    /* ----------------------------------------------- Réinitialisation -- */
+    if (action === 'reinitialisation') {
+      const destinataire = String(requete?.to ?? '').trim().toLowerCase();
+      const nomComplet = String(requete?.nom_complet ?? '').trim().slice(0, 160);
+      const lienActivation = String(requete?.lien_activation ?? '').trim();
+      if (!destinataire || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destinataire)) {
+        return json({ erreur: 'Adresse de destination invalide.' }, 400);
+      }
+      if (!lienRecuperationValide(lienActivation)) {
+        return json({ erreur: 'Lien de récupération non reconnu.' }, 400);
+      }
+
+      const client = await ouvrirClient(cfg);
+      try {
+        const { html, texte } = composer({
+          destinataire,
+          objet: 'Réinitialisation de votre accès SONASP',
+          titre: 'Définissez un nouveau mot de passe',
+          corps: `Bonjour ${nomComplet || destinataire}, un administrateur a ouvert une procédure de récupération pour votre compte. Utilisez le lien sécurisé ci-dessous. Si vous n’attendiez pas ce message, contactez immédiatement l’administration SONASP.`,
+          faits: [
+            { label: 'Compte', valeur: destinataire },
+            { label: 'Protection', valeur: 'Lien temporaire à usage limité' },
+            { label: 'Étape suivante', valeur: 'Vérification du second facteur obligatoire' },
+          ],
+          cheminAction: lienActivation,
+          libelleAction: 'Choisir un nouveau mot de passe',
+        });
+        await client.send({
+          from: adresseExpediteur(cfg), to: destinataire,
+          subject: 'Réinitialisation de votre accès SONASP',
+          content: texte, html,
+        });
+        await client.close();
+        return json({ envoye: true, destinataire });
+      } catch (erreur) {
+        await client.close().catch(() => {});
+        console.error('[envoyer-courriel] Récupération non envoyée.', erreur instanceof Error ? erreur.message : erreur);
+        return json({ envoye: false, erreur: 'Le courriel de récupération n’a pas pu être envoyé.' }, 502);
       }
     }
 

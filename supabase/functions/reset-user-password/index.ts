@@ -1,237 +1,149 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { niveauAssurance } from '../_shared/assurance.ts';
+import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
+import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*', // audit V11
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ROLES_ADMINISTRATION = new Set(['owner', 'admin', 'management']);
 
-interface ResetPasswordRequest {
-  user_id: string;
+class ErreurPublique extends Error {
+  constructor(public statut: number, message: string) {
+    super(message);
+  }
 }
 
+/**
+ * Ouvre un parcours de récupération sans jamais fabriquer, journaliser ou
+ * retourner un mot de passe provisoire. Le destinataire choisit lui-même son
+ * nouveau secret depuis un lien GoTrue à usage limité.
+ */
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') return reponsePrevol(req);
+  if (req.method !== 'POST') {
+    return reponseJson(req, { success: false, error: 'Méthode non autorisée.' }, 405);
   }
 
+  const urlSupabase = Deno.env.get('SUPABASE_URL');
+  const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!urlSupabase || !cleService) {
+    return reponseJson(req, { success: false, error: 'Le service de récupération est indisponible.' }, 503);
+  }
+
+  const admin = createClient(urlSupabase, cleService, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const autorisation = req.headers.get('Authorization') ?? '';
+    const jeton = autorisation.replace(/^Bearer\s+/i, '');
+    if (!jeton) throw new ErreurPublique(401, 'Votre session a expiré. Reconnectez-vous.');
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error('[reset-password] No authorization header');
-      throw new Error('No authorization header');
+    const { data: donneesAuth, error: erreurAuth } = await admin.auth.getUser(jeton);
+    const acteur = donneesAuth.user;
+    if (erreurAuth || !acteur) {
+      throw new ErreurPublique(401, 'Votre session n’est plus valide. Reconnectez-vous.');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-    });
-
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
-
-    if (userError || !currentUser) {
-      console.error('[reset-password] Auth error:', userError);
-      throw new Error('Unauthorized');
-    }
-
-    console.log('[reset-password] Current user:', currentUser.id);
-
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profilActeur, error: erreurProfil } = await admin
       .from('user_profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .single();
-
-    if (profileError) {
-      console.error('[reset-password] Error fetching profile:', profileError);
-      throw new Error('Unable to verify user permissions');
+      .select('role, is_active, mining_company_id, mfa_enrolled_at')
+      .eq('id', acteur.id)
+      .maybeSingle();
+    const habilite = !erreurProfil
+      && profilActeur?.is_active
+      && profilActeur.mining_company_id === null
+      && ROLES_ADMINISTRATION.has(String(profilActeur.role).toLowerCase())
+      && Boolean(profilActeur.mfa_enrolled_at)
+      && niveauAssurance(jeton) === 'aal2';
+    if (!habilite) {
+      throw new ErreurPublique(403, 'Vous ne disposez pas du droit de réinitialiser ce compte.');
     }
 
-    if (!profile || profile.role !== 'management') {
-      console.warn('[reset-password] Unauthorized attempt:', { userId: currentUser.id, role: profile?.role });
-      throw new Error('Only management users can reset passwords');
+    const corps = await req.json().catch(() => ({}));
+    const utilisateurId = String(corps?.user_id ?? '').trim();
+    if (!UUID.test(utilisateurId)) {
+      throw new ErreurPublique(400, 'Le compte demandé est invalide.');
+    }
+    if (utilisateurId === acteur.id) {
+      throw new ErreurPublique(400, 'Utilisez la procédure « Mot de passe oublié » pour votre propre compte.');
     }
 
-    const requestData: ResetPasswordRequest = await req.json();
-    const { user_id } = requestData;
-
-    console.log('[reset-password] Request to reset password for user:', user_id);
-
-    if (!user_id) {
-      throw new Error('Missing required field: user_id');
-    }
-
-    // Get user details
-    const { data: userData, error: userDataError } = await supabaseAdmin
+    const { data: cible, error: erreurCible } = await admin
       .from('user_profiles')
-      .select('email, full_name')
-      .eq('id', user_id)
-      .single();
-
-    if (userDataError || !userData) {
-      console.error('[reset-password] User not found:', user_id);
-      throw new Error('User not found');
+      .select('id, email, full_name, is_active')
+      .eq('id', utilisateurId)
+      .maybeSingle();
+    if (erreurCible || !cible?.email) {
+      throw new ErreurPublique(404, 'Ce compte n’existe plus.');
+    }
+    if (!cible.is_active) {
+      throw new ErreurPublique(409, 'Réactivez le compte avant d’ouvrir une récupération de mot de passe.');
     }
 
-    console.log('[reset-password] Resetting password for:', userData.email);
-
-    // SÉCURITÉ (audit V12) : générateur cryptographiquement sûr (CSPRNG), pas Math.random.
-    const generateRandomPassword = () => {
-      const length = 16;
-      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-      const bytes = new Uint32Array(length);
-      crypto.getRandomValues(bytes);
-      let pwd = '';
-      for (let i = 0; i < length; i++) {
-        pwd += charset.charAt(bytes[i] % charset.length);
-      }
-      return pwd;
-    };
-
-    const temporaryPassword = generateRandomPassword();
-
-    // Update user password
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      password: temporaryPassword,
-      email_confirm: true, // Auto-confirm email
+    const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email: cible.email,
+      options: { redirectTo: urlModificationMotDePasse(Deno.env.get('SONASP_APP_URL')) },
     });
-
-    if (updateError) {
-      console.error('[reset-password] Error updating password:', updateError);
-      throw updateError;
+    const jetonHache = lien?.properties?.hashed_token;
+    if (erreurLien || !jetonHache) {
+      console.error('[reset-user-password] Génération du lien impossible.', erreurLien?.message);
+      throw new ErreurPublique(502, 'Le lien sécurisé n’a pas pu être généré. Réessayez.');
     }
+    const lienAction = urlRecuperationCompte(jetonHache, Deno.env.get('SONASP_APP_URL'));
 
-    console.log('[reset-password] Password updated successfully');
-
-    // Try to generate password reset token (optional - may not exist)
-    let resetToken = null;
-    let hasResetSystem = false;
-
-    try {
-      const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc(
-        'generate_activation_token',
-        {
-          p_user_id: user_id,
-          p_token_type: 'password_reset',
-          p_temporary_password: temporaryPassword,
-          p_created_by: currentUser.id,
-        }
-      );
-
-      if (tokenError) {
-        console.warn('[reset-password] Token generation error:', tokenError.message, tokenError.code);
-        if (tokenError.message?.includes('function') || tokenError.code === '42883' || tokenError.code === 'PGRST202') {
-          console.log('[reset-password] Reset token system not available');
-        }
-      } else {
-        resetToken = tokenData;
-        hasResetSystem = true;
-        console.log('[reset-password] Reset token generated');
-      }
-    } catch (error: any) {
-      console.warn('[reset-password] Reset token system error:', error.message);
-    }
-
-    // Send password reset email if system available
-    if (hasResetSystem && resetToken) {
-      try {
-        const emailResponse = await fetch(
-          `${supabaseUrl}/functions/v1/send-activation-email`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-            },
-            body: JSON.stringify({
-              user_id: user_id,
-              email: userData.email,
-              full_name: userData.full_name,
-              token: resetToken,
-              temporary_password: temporaryPassword,
-              token_type: 'password_reset',
-            }),
-          }
-        );
-
-        const emailResult = await emailResponse.json();
-
-        if (!emailResult.success) {
-          console.error('[reset-password] Failed to send reset email:', emailResult.error);
-        } else {
-          console.log('[reset-password] Reset email sent successfully');
-        }
-      } catch (emailError: any) {
-        console.error('[reset-password] Error sending reset email:', emailError.message);
-      }
-    }
-
-    // Try to log the password reset action (optional - table may not exist)
-    try {
-      await supabaseAdmin.from('audit_trail').insert({
-        user_id: user_id,
-        action: 'password_reset_by_admin',
-        details: {
-          reset_by: currentUser.id,
-          reset_by_email: currentUser.email,
-        },
-        performed_by: currentUser.id,
-      });
-      console.log('[reset-password] Audit log created');
-    } catch (auditError: any) {
-      console.warn('[reset-password] Could not create audit log:', auditError.message);
-    }
-
-    console.log('[reset-password] Password reset completed successfully');
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: hasResetSystem
-          ? 'Password reset successfully. User will receive an email with instructions.'
-          : 'Password reset successfully. User can now log in with the new password.',
-        reset_token: resetToken,
-        temporary_password: temporaryPassword,
+    const reponseCourriel = await fetch(`${urlSupabase}/functions/v1/envoyer-courriel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: autorisation,
+        apikey: cleService,
+      },
+      body: JSON.stringify({
+        action: 'reinitialisation',
+        to: cible.email,
+        nom_complet: cible.full_name,
+        lien_activation: lienAction,
       }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-  } catch (error: any) {
-    // SÉCURITÉ (audit V15) : détail loggué côté serveur, jamais exposé au client.
-    console.error('[reset-password] Error resetting password:', error);
+    });
+    const resultatCourriel = await reponseCourriel.json().catch(() => ({}));
+    if (!reponseCourriel.ok || resultatCourriel?.envoye !== true) {
+      console.error('[reset-user-password] Courriel non envoyé.', resultatCourriel?.erreur);
+      throw new ErreurPublique(503, 'Le courriel de récupération n’a pas pu être envoyé. Aucun mot de passe n’a été modifié.');
+    }
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'An unexpected error occurred',
-      }),
-      {
-        status: 400,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const { error: erreurMarquage } = await admin
+      .from('user_profiles')
+      .update({ must_change_password: true, updated_at: new Date().toISOString() })
+      .eq('id', utilisateurId);
+    if (erreurMarquage) {
+      console.error('[reset-user-password] Marquage du compte impossible.', erreurMarquage.message);
+      throw new ErreurPublique(500, 'Le courriel est parti, mais le compte n’a pas pu être verrouillé. Contactez l’administrateur technique.');
+    }
+
+    const { error: erreurAudit } = await admin.rpc('log_security_event', {
+      p_user_id: utilisateurId,
+      p_event_type: 'password_reset_requested_by_admin',
+      p_ip_address: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
+      p_user_agent: req.headers.get('user-agent'),
+      p_details: { reset_by: acteur.id },
+    });
+    if (erreurAudit) {
+      console.warn('[reset-user-password] Journal de sécurité non écrit.', erreurAudit.message);
+    }
+
+    return reponseJson(req, {
+      success: true,
+      email_sent: true,
+      requires_password_change: true,
+      message: 'Un lien sécurisé a été envoyé au titulaire du compte.',
+    });
+  } catch (erreur) {
+    const statut = erreur instanceof ErreurPublique ? erreur.statut : 500;
+    const message = erreur instanceof ErreurPublique
+      ? erreur.message
+      : 'La récupération du compte n’a pas pu être lancée.';
+    console.error('[reset-user-password]', erreur instanceof Error ? erreur.message : erreur);
+    return reponseJson(req, { success: false, error: message }, statut);
   }
 });

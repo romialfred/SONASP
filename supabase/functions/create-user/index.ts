@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
+import { niveauAssurance } from '../_shared/assurance.ts';
+import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
 
 const ROLES = new Set([
   'owner', 'admin', 'management', 'manager', 'mine',
@@ -109,8 +111,7 @@ Deno.serve(async (req: Request) => {
 
   const urlSupabase = Deno.env.get('SUPABASE_URL');
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const cleAnonyme = Deno.env.get('SUPABASE_ANON_KEY');
-  if (!urlSupabase || !cleService || !cleAnonyme) {
+  if (!urlSupabase || !cleService) {
     console.error('[create-user] Configuration Supabase incomplète.');
     return reponseJson(req, { success: false, error: 'Le service de création de compte est indisponible.' }, 503);
   }
@@ -133,19 +134,25 @@ Deno.serve(async (req: Request) => {
 
     const { data: profilActeur, error: erreurProfilActeur } = await admin
       .from('user_profiles')
-      .select('role, is_active, mining_company_id')
+      .select('role, is_active, mining_company_id, mfa_enrolled_at')
       .eq('id', acteur.id)
       .maybeSingle();
     if (erreurProfilActeur || !profilActeur?.is_active) {
       throw new ErreurPublique(403, 'Ce compte n’est pas autorisé à administrer les utilisateurs.');
     }
 
-    const roleTechnique = texte(acteur.app_metadata?.role, 40).toLowerCase();
-    const roleActeur = roleTechnique === 'owner'
-      ? 'owner'
-      : texte(profilActeur.role, 40).toLowerCase();
+    // Le profil protégé en base est l'autorité d'habilitation. Les métadonnées
+    // Auth accompagnent le jeton, mais ne doivent pas corriger silencieusement
+    // un profil incohérent ou promouvoir un compte.
+    const roleActeur = texte(profilActeur.role, 40).toLowerCase();
     if (!ROLES_CREATEURS.has(roleActeur) || (roleActeur !== 'owner' && profilActeur.mining_company_id)) {
       throw new ErreurPublique(403, 'Vous ne disposez pas du droit de créer un compte.');
+    }
+    if (!profilActeur.mfa_enrolled_at || niveauAssurance(jeton) !== 'aal2') {
+      throw new ErreurPublique(
+        403,
+        'Validez votre second facteur avant d’administrer les comptes utilisateurs.',
+      );
     }
 
     const corps = await req.json().catch(() => null) as RequeteCreation | null;
@@ -242,20 +249,23 @@ Deno.serve(async (req: Request) => {
       if (erreurPermissions) throw new Error(`habilitations: ${erreurPermissions.message}`);
     }
 
-    const origineApplication = (Deno.env.get('SONASP_APP_URL') ?? 'https://sonasp.vercel.app').replace(/\/$/, '');
     const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${origineApplication}/modifier-mot-de-passe` },
+      options: { redirectTo: urlModificationMotDePasse(Deno.env.get('SONASP_APP_URL')) },
     });
-    const lienActivation = lien?.properties?.action_link;
-    if (erreurLien || !lienActivation) throw new Error(`lien d’activation: ${erreurLien?.message ?? 'absent'}`);
+    const jetonHache = lien?.properties?.hashed_token;
+    if (erreurLien || !jetonHache) throw new Error(`lien d’activation: ${erreurLien?.message ?? 'absent'}`);
+    const lienActivation = urlRecuperationCompte(jetonHache, Deno.env.get('SONASP_APP_URL'));
 
     const reponseCourriel = await fetch(`${urlSupabase}/functions/v1/envoyer-courriel`, {
       method: 'POST',
       headers: {
         'Authorization': autorisation,
-        'apikey': cleAnonyme,
+        // Appel serveur-à-serveur : la clé de service franchit la passerelle,
+        // tandis que le jeton utilisateur reste l'identité vérifiée par la
+        // fonction destinataire. La clé ne quitte jamais l'environnement Deno.
+        'apikey': cleService,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -268,7 +278,14 @@ Deno.serve(async (req: Request) => {
     });
     const resultatCourriel = await reponseCourriel.json().catch(() => ({}));
     if (!reponseCourriel.ok || !resultatCourriel?.envoye) {
-      throw new Error(`courriel: ${resultatCourriel?.erreur ?? `HTTP ${reponseCourriel.status}`}`);
+      console.error('[create-user] Courriel de bienvenue indisponible.', {
+        statut: reponseCourriel.status,
+        erreur: resultatCourriel?.erreur ?? 'réponse sans confirmation',
+      });
+      throw new ErreurPublique(
+        503,
+        'La messagerie n’a pas confirmé l’envoi du courriel de bienvenue. Aucun compte incomplet n’a été conservé.',
+      );
     }
 
     const reponse = reponseJson(req, {

@@ -1,5 +1,13 @@
 project_id = "yyverzuhkdonjjuficor"
 
+[auth]
+site_url = "https://sonasp.data-univers.com"
+additional_redirect_urls = [
+  "https://sonasp.data-univers.com/modifier-mot-de-passe",
+  "https://sonasp.vercel.app/modifier-mot-de-passe",
+  "http://localhost:5173/modifier-mot-de-passe",
+]
+
 # Ces fonctions vérifient explicitement le jeton utilisateur dans leur code.
 # La vérification à la passerelle reste désactivée afin que les requêtes CORS
 # OPTIONS et les jetons JWT asymétriques atteignent correctement les handlers.
@@ -7,7 +15,10 @@ project_id = "yyverzuhkdonjjuficor"
 verify_jwt = false
 
 [functions.get-users]
-verify_jwt = false
+  verify_jwt = false
+
+[functions.reset-user-password]
+  verify_jwt = false
 
 [functions.envoyer-courriel]
 verify_jwt = false

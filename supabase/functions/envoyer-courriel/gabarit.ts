@@ -9,7 +9,7 @@
  * des attributs en ligne. C'est laid à écrire, et c'est la seule façon qu'un
  * message arrive présentable partout.
  *
- * La palette reprend celle de la plateforme : encre navy, vert SONASP, or.
+ * La palette reprend l'identite officielle : vert SONASP, rouge et or.
  */
 
 export const POLICE =
@@ -19,6 +19,7 @@ const ENCRE = '#10243e';
 const TEXTE = '#33485f';
 const DISCRET = '#60738c';
 const VERT = '#0f7a56';
+const ROUGE = '#d71920';
 const FILET = '#e0e7ee';
 const FOND = '#f4f7f9';
 
@@ -90,7 +91,14 @@ export function encart(contenu: string): string {
  * La signature nomme l'expéditeur en toutes lettres — un message de la
  * plateforme doit se reconnaître même quand les images ne s'affichent pas.
  */
-export function coquille(params: { titre: string; corps: string; mention?: string }): string {
+export function coquille(params: {
+  titre: string;
+  corps: string;
+  mention?: string;
+  origineApplication?: string;
+}): string {
+  const origine = (params.origineApplication ?? 'https://sonasp.data-univers.com').replace(/\/$/, '');
+  const logo = `${origine}/sonasp_logo.png`;
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -106,9 +114,10 @@ export function coquille(params: { titre: string; corps: string; mention?: strin
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
       style="border-collapse:collapse;width:600px;max-width:100%;background-color:#ffffff;border:1px solid ${FILET};border-radius:14px;overflow:hidden">
 
-      <tr><td bgcolor="${ENCRE}" style="background-color:${ENCRE};padding:20px 30px">
-        <p style="margin:0;font-family:${POLICE};font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#d99a00">SONASP</p>
-        <p style="margin:4px 0 0;font-family:${POLICE};font-size:12.5px;color:rgba(255,255,255,0.72);line-height:18px">Système national de collecte et du suivi de la traçabilité de l’or</p>
+      <tr><td bgcolor="${ROUGE}" style="height:7px;background-color:${ROUGE};font-size:0;line-height:7px">&nbsp;</td></tr>
+      <tr><td bgcolor="${VERT}" align="center" style="background-color:${VERT};padding:20px 30px 18px">
+        <img src="${echapper(logo)}" width="250" alt="SONASP — Société Nationale des Substances Précieuses" style="display:block;width:250px;max-width:100%;height:auto;border:0;background-color:#ffffff;border-radius:8px" />
+        <p style="margin:12px 0 0;font-family:${POLICE};font-size:12.5px;font-weight:600;color:#ffffff;line-height:18px">Plateforme nationale de collecte et du suivi de la traçabilité de l’or</p>
       </td></tr>
 
       <tr><td style="padding:28px 30px 8px">

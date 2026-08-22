@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   currentUser: { id: 'moi' } as { id: string } | null,
   reponses: {} as Record<string, unknown[] | null>,
   updates: [] as Array<Record<string, unknown>>,
+  selects: [] as Array<{ table: string; value: string }>,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -59,8 +60,12 @@ function stub(table: string) {
   const resultat = rows === null ? { data: null, error: { message: 'offline' } } : { data: rows || [], error: null };
   const unique = Array.isArray(rows) ? rows[0] ?? null : null;
   const builder: Record<string, unknown> = {};
-  ['select', 'eq', 'order', 'gte', 'lte', 'in'].forEach((methode) => {
+  ['eq', 'order', 'gte', 'lte', 'in'].forEach((methode) => {
     builder[methode] = vi.fn(() => builder);
+  });
+  builder.select = vi.fn((value: string) => {
+    mocks.selects.push({ table, value });
+    return builder;
   });
   builder.update = vi.fn((valeurs: Record<string, unknown>) => {
     mocks.updates.push(valeurs);
@@ -130,16 +135,18 @@ describe('UsersListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.updates = [];
+    mocks.selects = [];
     mocks.currentUser = { id: 'moi' };
     mocks.confirmer.mockResolvedValue(true);
     mocks.getSession.mockResolvedValue({ data: { session: null } });
     mocks.safeFetch.mockResolvedValue({ ok: false });
     mocks.reponses = {
       user_profiles: [
-        { id: 'u1', full_name: 'Awa KABORE', email: 'awa@sonasp.bf', role: 'admin', phone: '+226 70 00 00 01', is_active: true, last_login_at: '2026-08-10T09:00:00Z', created_at: '2026-01-01' },
+        { id: 'u1', full_name: 'Awa KABORE', email: 'awa@sonasp.bf', role: 'admin', phone: '+226 70 00 00 01', mining_company_id: 'c1', is_active: true, last_login_at: '2026-08-10T09:00:00Z', created_at: '2026-01-01' },
         { id: 'u2', full_name: 'Moussa OUEDRAOGO', email: 'moussa@sonasp.bf', role: 'factory', phone: null, is_active: false, last_login_at: null, created_at: '2026-02-01' },
       ],
-      user_site_assignments: [{ user_id: 'u1', site_id: 's1', mining_companies: { name: 'Essakane SA', abbreviation: 'ESK' } }],
+      mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
+      user_site_assignments: [{ user_id: 'u1', site_id: 's1', sites: { name: 'Site Essakane' } }],
     };
     mocks.from.mockImplementation((table: string) => stub(table));
   });
@@ -153,6 +160,12 @@ describe('UsersListPage', () => {
     expect(tableau.getByText('Usine')).toBeInTheDocument();
     expect(screen.getByText('Jamais connecté')).toBeInTheDocument();
     expect(screen.getByText('ESK')).toBeInTheDocument();
+    expect(screen.getByText('Site Essakane')).toBeInTheDocument();
+    expect(mocks.selects).toContainEqual({
+      table: 'user_site_assignments',
+      value: 'user_id, site_id, sites:site_id(name)',
+    });
+    expect(mocks.selects.some(({ value }) => value.includes('mining_companies:site_id'))).toBe(false);
     expect(screen.queryByText('Users Management')).not.toBeInTheDocument();
   });
 

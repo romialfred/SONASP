@@ -110,14 +110,36 @@ export function UsersListPage() {
         comptes = data || [];
       }
 
-      const { data: affectations } = await supabase
-        .from('user_site_assignments')
-        .select('user_id, site_id, mining_companies:site_id(name, abbreviation)');
+      const companyIds = Array.from(new Set(
+        comptes
+          .map((compte) => compte.mining_company_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      ));
+
+      const [compagniesResult, affectationsResult] = await Promise.all([
+        companyIds.length > 0
+          ? supabase
+              .from('mining_companies')
+              .select('id, name, abbreviation')
+              .in('id', companyIds)
+          : Promise.resolve({ data: [], error: null }),
+        supabase
+          .from('user_site_assignments')
+          .select('user_id, site_id, sites:site_id(name)'),
+      ]);
+
+      if (compagniesResult.error) throw compagniesResult.error;
+
+      const compagnieParId = new Map<string, string>();
+      (compagniesResult.data || []).forEach((compagnie: Record<string, unknown>) => {
+        const nom = String(compagnie.abbreviation || compagnie.name || '').trim();
+        if (nom) compagnieParId.set(String(compagnie.id), nom);
+      });
 
       const parUtilisateur = new Map<string, string[]>();
-      (affectations || []).forEach((affectation: Record<string, unknown>) => {
-        const compagnie = affectation.mining_companies as { name?: string; abbreviation?: string } | null;
-        const nom = compagnie?.abbreviation || compagnie?.name;
+      (affectationsResult.data || []).forEach((affectation: Record<string, unknown>) => {
+        const site = affectation.sites as { name?: string } | null;
+        const nom = site?.name;
         if (!nom) return;
         const identifiant = String(affectation.user_id);
         parUtilisateur.set(identifiant, [...(parUtilisateur.get(identifiant) || []), nom]);
@@ -132,7 +154,12 @@ export function UsersListPage() {
             email: String(compte.email),
             role: compte.role as UserRole,
             phone: (compte.phone as string) || null,
-            mining_company_names: parUtilisateur.get(String(compte.id)) || [],
+            mining_company_names: Array.from(new Set([
+              ...(typeof compte.mining_company_id === 'string'
+                ? [compagnieParId.get(compte.mining_company_id)]
+                : []),
+              ...(parUtilisateur.get(String(compte.id)) || []),
+            ].filter((nom): nom is string => Boolean(nom)))),
             is_active: compte.is_active !== false,
             last_login_at: (compte.last_login_at as string) || null,
             created_at: (compte.created_at as string) || '',

@@ -62,6 +62,7 @@ Deno.serve(async (req: Request) => {
       full_name: user.full_name,
       phone: user.phone,
       role: user.role,
+      mining_company_id: user.mining_company_id ?? null,
       site_ids: user.site_ids || [],
       is_active: user.is_active !== false,
       two_factor_enabled: user.two_factor_enabled || false,

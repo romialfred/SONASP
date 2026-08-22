@@ -27,3 +27,6 @@ coverage
 
 # Cache du client Supabase (version du CLI, jetons de session)
 supabase/.temp/
+
+.vercel
+.env*

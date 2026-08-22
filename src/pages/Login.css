@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    PAGE DE CONNEXION
 
-   Proportions relevées sur la maquette de référence (1750 × 898) et exprimées
+   Proportions relevées sur la maquette de référence (1752 × 898) et exprimées
    en fractions de la largeur, pour qu'elles tiennent à toute taille d'écran :
 
      panneau vert   55,5 % de la largeur, biais de 5,4 %
@@ -9,8 +9,7 @@
      carte          35,4 %        champs        52 px de haut
      marque         15,4 %        pastille      5,3 vw
 
-   POUR POSER LA PHOTOGRAPHIE DU PANNEAU : une seule ligne, `--login-photo`
-   ci-dessous. Déposez le fichier dans `public/` et nommez-le ici. Le voile est
+   La photographie optimisée est chargée en AVIF avec repli WebP. Le voile est
    composé pour qu'elle se découvre à droite et reste couverte à gauche, sous
    le texte — c'est le partage de la maquette.
    ══════════════════════════════════════════════════════════════════════════ */
@@ -23,26 +22,40 @@
   --login-vert-clair: #0f7a56;
   --login-or: #c8a03c;
   --login-or-clair: #e2bc03;
-  --login-creme: #fbf6ea;
+  --login-creme: #fcf8ef;
   --login-encre: #17242f;
   --login-muet: #5d7080;
   --login-ligne: #e6ded0;
 
-  --login-photo: url('/login-fond.svg');
+  --login-photo: image-set(
+    url('/login-gold-background.avif') type('image/avif'),
+    url('/login-gold-background.webp') type('image/webp')
+  );
 
   /* Recul de la diagonale entre le haut et le bas du panneau. */
-  --login-biais: 5.4vw;
-  --login-largeur: 55.5%;
+  --login-largeur: 55.8%;
   /* Marge du texte, alignée sur celle de la maquette. */
   --login-marge: clamp(24px, 4vw, 78px);
 
   position: relative;
+  height: 100vh;
+  height: 100svh;
   min-height: 100vh;
   min-height: 100svh;
   overflow: hidden;
   background: var(--login-creme);
   color: var(--login-encre);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sonasp-login::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 var(--login-largeur);
+  background: url('/login-pattern.svg') right center / auto 100% no-repeat;
+  content: '';
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────────── Le décor ──── */
@@ -60,15 +73,15 @@
 .login-hero {
   z-index: 1;
   overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, calc(100% - var(--login-biais)) 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 88.7% 52%, 100% 100%, 0 100%);
   background: var(--login-vert-profond);
 }
 
 .login-hero__image {
   position: absolute;
   inset: 0;
-  background: var(--login-photo) center / cover no-repeat;
-  filter: saturate(1.06);
+  background: var(--login-photo) 50% center / cover no-repeat;
+  filter: saturate(1.14) brightness(1.03);
 }
 
 /* Le voile n'est pas uniforme, et c'est tout le partage de la maquette : opaque
@@ -80,11 +93,11 @@
   inset: 0;
   background:
     linear-gradient(97deg,
-      rgba(4, 34, 22, 0.95) 0%,
-      rgba(4, 34, 22, 0.91) 42%,
-      rgba(5, 40, 26, 0.62) 60%,
-      rgba(6, 44, 28, 0.24) 78%,
-      rgba(6, 46, 29, 0.08) 100%);
+      rgba(0, 62, 40, 0.94) 0%,
+      rgba(0, 55, 35, 0.88) 42%,
+      rgba(2, 48, 31, 0.46) 60%,
+      rgba(4, 44, 28, 0.15) 78%,
+      rgba(6, 46, 29, 0.06) 100%);
 }
 
 /* Le liseré doré est une couche distincte : posé dans `.login-hero`, il serait
@@ -92,10 +105,12 @@
 .login-hero__edge {
   z-index: 2;
   clip-path: polygon(
-    calc(100% - 3px) 0,
+    calc(100% - 4px) 0,
     100% 0,
-    calc(100% - var(--login-biais)) 100%,
-    calc(100% - var(--login-biais) - 3px) 100%
+    89.1% 52%,
+    100% 100%,
+    calc(100% - 4px) 100%,
+    88.3% 52%
   );
   background: linear-gradient(180deg, var(--login-or-clair) 0%, var(--login-or) 55%, #9a7622 100%);
 }
@@ -109,6 +124,7 @@
   grid-template-columns: var(--login-largeur) 1fr;
   min-height: 100vh;
   min-height: 100svh;
+  height: 100%;
 }
 
 /* ──────────────────────────────────────────────────── Panneau de gauche ── */
@@ -120,7 +136,7 @@
   justify-content: center;
   /* La marge droite est plus large : le texte ne doit pas venir buter contre
      la diagonale, qui se rapproche à mesure qu'on descend. */
-  padding: 48px calc(var(--login-marge) + var(--login-biais)) 88px var(--login-marge);
+  padding: 48px clamp(92px, 8vw, 142px) 88px var(--login-marge);
   color: #fff;
 }
 
@@ -135,11 +151,12 @@
   align-items: center;
   gap: 15px;
   margin: 0 0 clamp(14px, 1.77vw, 33px);
-  color: rgba(255, 255, 255, 0.9);
+  color: #e1b52f;
   font-size: clamp(11px, 0.74vw, 13.5px);
   font-weight: 600;
   letter-spacing: 0.17em;
   text-transform: uppercase;
+  transform: translateY(-12px);
 }
 
 .login-presentation__eyebrow span {
@@ -156,10 +173,7 @@
 
      La largeur est exprimée en `em` : elle suit la taille du texte, et le
      titre garde ses deux lignes de la maquette à toute taille d'écran. */
-  /* 11,4 em, et non les 10,2 em qu'occupe la ligne dans la maquette : la
-     fonte d'ici est plus large que celle du modèle, et à 10,8 em le titre
-     repassait à trois lignes. Le blanc en fin de cadre ne se voit pas ; une
-     ligne de plus, si. */
+  /* La largeur réserve les deux lignes prévues sans déformer les glyphes. */
   max-width: 11.4em;
   margin: 0;
   color: #fff;
@@ -168,6 +182,9 @@
   line-height: 1.14;
   letter-spacing: -0.021em;
 }
+
+.login-presentation__title span,
+.login-presentation__lead span { display: block; }
 
 .login-presentation__rule {
   display: block;
@@ -181,35 +198,35 @@
 .login-presentation__lead {
   max-width: 29em;
   margin: 0;
-  color: rgba(230, 242, 235, 0.86);
-  font-size: clamp(13.5px, 0.98vw, 17.5px);
+  color: rgba(239, 246, 241, 0.9);
+  font-size: clamp(14px, 1.08vw, 19px);
   line-height: 1.62;
+  transform: translateY(-6px);
 }
 
 .login-pillars {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(18px, 2.8vw, 50px);
-  margin: clamp(24px, 4vw, 74px) 0 0;
+  gap: 34px;
+  margin: clamp(24px, 3.8vw, 66px) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .login-pillars li {
   display: flex;
-  max-width: 12em;
   align-items: center;
   gap: clamp(9px, 0.9vw, 15px);
   color: #fff;
-  font-size: clamp(12.5px, 0.86vw, 15.5px);
-  font-weight: 600;
+  font-size: clamp(13px, 1vw, 17.5px);
+  font-weight: 500;
   line-height: 1.3;
 }
 
-.login-pillars span {
+.login-pillars .login-pillars__icon {
   display: grid;
-  width: clamp(42px, 3.35vw, 60px);
-  height: clamp(42px, 3.35vw, 60px);
+  width: clamp(42px, 3.7vw, 64px);
+  height: clamp(42px, 3.7vw, 64px);
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid rgba(226, 188, 3, 0.4);
@@ -232,6 +249,46 @@
   padding: clamp(20px, 3.1vh, 30px) clamp(18px, 2.2vw, 40px) clamp(22px, 3.4vh, 34px);
 }
 
+.login-pillars .login-pillars__label,
+.login-pillars .login-pillars__label span {
+  display: block;
+}
+
+.login-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-return {
+  position: absolute;
+  z-index: 20;
+  top: clamp(20px, 3.1vh, 30px);
+  left: clamp(18px, 2.2vw, 40px);
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(15, 111, 71, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0 13px;
+  color: #0f6f47;
+  font-size: clamp(13px, 0.78vw, 14px);
+  font-weight: 650;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.login-return:hover {
+  border-color: rgba(15, 111, 71, 0.42);
+  background: #fff;
+}
+
+.login-return svg {
+  width: 18px;
+  height: 18px;
+}
+
 .login-language {
   position: relative;
   z-index: 20;
@@ -243,7 +300,7 @@
   height: clamp(40px, 5.1vh, 47px);
   align-items: center;
   gap: 11px;
-  border: 1px solid #ece5d6;
+  border: 1px solid #d9dee3;
   border-radius: 13px;
   background: #fff;
   padding: 0 24px;
@@ -305,13 +362,14 @@
 
 .login-column {
   display: flex;
-  width: clamp(320px, 35.4vw, 624px);
+  width: clamp(320px, 35.6vw, 624px);
   max-width: 100%;
   flex: 1;
   flex-direction: column;
   justify-content: center;
   margin: 0 auto;
   padding: clamp(12px, 2vh, 22px) 0 0;
+  transform: translate(-7px, 5px);
 }
 
 /* ──────────────────────────────────────────────────────────── La carte ─── */
@@ -319,11 +377,13 @@
 .login-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid #cba94f;
+  border: 1px solid #e3ddd3;
+  border-top: 2px solid #c99219;
   border-radius: 18px;
-  background: #fff;
+  background: rgba(255, 254, 251, 0.98);
   padding: clamp(24px, 1.95vw, 34px);
-  box-shadow: 0 16px 40px rgba(23, 36, 47, 0.07);
+  padding-bottom: 26px;
+  box-shadow: 0 18px 42px rgba(23, 36, 47, 0.1);
   text-align: center;
 }
 
@@ -336,11 +396,12 @@
   border: 1px solid #d5e9de;
   border-radius: 50%;
   background: #eaf5ef;
+  transform: scale(0.97);
 }
 
 .login-card__emblem svg {
-  width: clamp(24px, 2.05vw, 37px);
-  height: clamp(24px, 2.05vw, 37px);
+  width: clamp(28px, 2.6vw, 46px);
+  height: clamp(28px, 2.6vw, 46px);
   color: #12703f;
 }
 
@@ -404,14 +465,14 @@
   width: 19px;
   height: 19px;
   transform: translateY(-50%);
-  color: #9aa7b3;
+  color: #6d767f;
   pointer-events: none;
 }
 
 .login-field input {
   width: 100%;
-  height: clamp(46px, 3vw, 54px);
-  border: 1px solid #e9e9e9;
+  height: clamp(48px, 3.25vw, 58px);
+  border: 1px solid #87939e;
   border-radius: 10px;
   background: #fdfdfd;
   padding: 0 50px 0 48px;
@@ -420,7 +481,7 @@
   font-size: clamp(13.5px, 0.9vw, 16px);
 }
 
-.login-field input::placeholder { color: #a7b2bc; }
+.login-field input::placeholder { color: #6f767d; }
 
 .login-field input:hover { border-color: #dcdcdc; }
 
@@ -432,6 +493,12 @@
 }
 
 .login-field input[aria-invalid='true'] { border-color: #dc3c30; }
+
+.login-field input:disabled {
+  cursor: not-allowed;
+  background: #f2f3f3;
+  color: #64707e;
+}
 
 .login-field__toggle {
   position: absolute;
@@ -445,7 +512,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #9aa7b3;
+  color: #6d767f;
   cursor: pointer;
 }
 
@@ -498,14 +565,14 @@
 
 .login-submit {
   display: flex;
-  height: clamp(46px, 3vw, 54px);
+  height: clamp(48px, 3.15vw, 56px);
   align-items: center;
   justify-content: center;
   gap: 11px;
-  margin-top: clamp(15px, 1.25vw, 21px);
+  margin-top: clamp(15px, 0.9vw, 16px);
   border: 0;
   border-radius: 10px;
-  background: #0a6b3c;
+  background: #007440;
   color: #fff;
   box-shadow: 0 6px 18px rgba(10, 107, 60, 0.2);
   font: inherit;
@@ -515,7 +582,7 @@
   transition: background 140ms ease;
 }
 
-.login-submit:hover:not(:disabled) { background: #085c33; }
+.login-submit:hover:not(:disabled) { background: #005f35; }
 
 .login-submit:disabled { cursor: progress; opacity: 0.72; box-shadow: none; }
 
@@ -564,7 +631,7 @@
 
 .login-copyright {
   margin: clamp(16px, 1.6vw, 27px) 0 0;
-  color: #78889a;
+  color: #667483;
   font-size: clamp(11.5px, 0.79vw, 14px);
   text-align: center;
 }
@@ -573,9 +640,11 @@
 
 .login-language__trigger:focus-visible,
 .login-language__menu button:focus-visible,
+.login-return:focus-visible,
 .login-field__toggle:focus-visible,
 .login-submit:focus-visible,
 .login-options__forgot:focus-visible,
+.login-options__remember input:focus-visible,
 .login-card__help a:focus-visible {
   outline: 3px solid rgba(15, 122, 86, 0.28);
   outline-offset: 2px;
@@ -590,6 +659,14 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1080px) {
+  .sonasp-login {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   /* Les couches du décor disparaissent : leur hauteur devrait être accordée à
      celle du texte, et toute valeur fixe finit par le laisser déborder sur le
      crème — en blanc sur crème. Le panneau porte donc lui-même son fond, et
@@ -597,7 +674,7 @@
   .login-hero,
   .login-hero__edge { display: none; }
 
-  .login-shell { grid-template-columns: 1fr; }
+  .login-shell { height: auto; grid-template-columns: 1fr; }
 
   .login-presentation {
     justify-content: center;
@@ -614,16 +691,26 @@
   }
 
   .login-presentation__logo { width: 190px; margin-bottom: 22px; }
+  .login-presentation__eyebrow,
+  .login-presentation__lead,
+  .login-presentation__title { transform: none; }
   .login-presentation__title { max-width: 18em; font-size: clamp(27px, 4.4vw, 40px); }
   .login-presentation__rule { margin: 18px 0 16px; }
   .login-pillars { margin-top: 26px; gap: 22px; }
   .login-pillars li { max-width: none; font-size: 13.5px; }
-  .login-pillars span { width: 46px; height: 46px; }
+  .login-pillars .login-pillars__icon { width: 46px; height: 46px; }
   .login-pillars svg { width: 19px; height: 19px; }
 
   /* Le repère du sélecteur devient la page entière, pour qu'il se pose sur le
      bandeau vert : dans le panneau, il tombait sur le crème, en blanc. */
   .login-panel { position: static; padding-top: 22px; }
+
+  .login-return {
+    position: static;
+    align-self: flex-start;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.92);
+  }
 
   .login-language { position: absolute; top: 20px; right: clamp(18px, 5vw, 40px); }
   .login-language__trigger {
@@ -636,7 +723,7 @@
   .login-language__trigger:hover { border-color: rgba(255, 255, 255, 0.55); }
   .login-language__trigger svg { color: rgba(255, 255, 255, 0.82); }
 
-  .login-column { width: min(100%, 512px); padding-top: 6px; }
+  .login-column { width: min(100%, 512px); padding-top: 6px; transform: none; }
   .login-card { padding: 30px 26px; }
   .login-card__emblem { width: 72px; height: 72px; }
   .login-card__emblem svg { width: 30px; height: 30px; }

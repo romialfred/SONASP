@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
+  ArrowLeft,
   BarChart3,
   Check,
   ChevronDown,
@@ -75,14 +77,13 @@ const languages = [
 
 /**
  * GoTrue répond en anglais, et « Invalid login credentials » s'affichait tel
- * quel à un agent de la SONASP. On rend la phrase française correspondante, et
- * l'on garde le message d'origine quand il n'est pas reconnu : mieux vaut une
- * phrase anglaise qu'une erreur inventée.
+ * quel à un agent de la SONASP. On rend une phrase professionnelle connue et
+ * on masque tout message technique non reconnu derrière le message de secours.
  */
 export function messageConnexion(brut: string, secours: string): string {
   const texte = brut.toLowerCase();
   if (texte.includes('invalid login credentials')) {
-    return 'Identifiant ou mot de passe incorrect.';
+    return 'Nom d’utilisateur ou mot de passe incorrect.';
   }
   if (texte.includes('email not confirmed')) {
     return 'Ce compte n’a pas encore été confirmé. Contactez l’administrateur.';
@@ -90,13 +91,17 @@ export function messageConnexion(brut: string, secours: string): string {
   if (texte.includes('too many requests') || texte.includes('rate limit')) {
     return 'Trop de tentatives. Patientez quelques instants avant de réessayer.';
   }
-  if (texte.includes('user is banned') || texte.includes('user not found')) {
-    return 'Ce compte n’est plus actif. Contactez l’administrateur.';
+  if (
+    texte.includes('user is banned')
+    || texte.includes('user not found')
+    || texte.includes('account_not_authorized')
+  ) {
+    return 'Votre compte n’est pas autorisé à accéder à la plateforme.';
   }
   if (texte.includes('failed to fetch') || texte.includes('network')) {
-    return 'La plateforme est injoignable. Vérifiez votre connexion réseau.';
+    return 'La connexion est momentanément indisponible. Veuillez réessayer.';
   }
-  return brut || secours;
+  return secours;
 }
 
 export function Login() {
@@ -110,6 +115,9 @@ export function Login() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const langTriggerRef = useRef<HTMLButtonElement>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const closeLanguageMenu = (event: MouseEvent) => {
@@ -122,28 +130,49 @@ export function Login() {
     return () => document.removeEventListener('mousedown', closeLanguageMenu);
   }, []);
 
+  useEffect(() => {
+    const language = i18n.resolvedLanguage || i18n.language;
+    document.documentElement.lang = language.startsWith('en') ? 'en' : 'fr-BF';
+  }, [i18n.language, i18n.resolvedLanguage]);
+
   const changeLanguage = (language: string) => {
     void i18n.changeLanguage(language);
     setLangOpen(false);
+    langTriggerRef.current?.focus();
   };
 
   const validateForm = () => {
     const nextErrors: LoginErrors = {};
-    if (!username.trim()) nextErrors.username = t('validation.required', 'Ce champ est requis');
-    if (!password) nextErrors.password = t('validation.required', 'Ce champ est requis');
+    if (!username.trim()) {
+      nextErrors.username = t(
+        'login.usernameRequired',
+        'Veuillez renseigner votre nom d’utilisateur.',
+      );
+    }
+    if (!password) {
+      nextErrors.password = t('login.passwordRequired', 'Veuillez renseigner votre mot de passe.');
+    }
     setErrors(nextErrors);
+
+    if (nextErrors.username) usernameInputRef.current?.focus();
+    else if (nextErrors.password) passwordInputRef.current?.focus();
+
     return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
     if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
-    const secours = t('errors.generic', "Une erreur inattendue s'est produite");
+    const secours = t(
+      'login.unavailable',
+      'La connexion est momentanément indisponible. Veuillez réessayer.',
+    );
     try {
-      const result = await signIn(username, password);
+      const result = await signIn(username, password, { rememberMe });
       if (result.error) setErrors({ general: messageConnexion(result.error, secours) });
     } catch (error: unknown) {
       const brut = error instanceof Error ? error.message : '';
@@ -156,11 +185,21 @@ export function Login() {
   const currentLanguage = (i18n.resolvedLanguage || i18n.language).startsWith('en')
     ? 'English'
     : 'Français';
+  const isEnglish = currentLanguage === 'English';
 
   const piliers = [
-    { Icon: ShieldCheck, label: t('login.pillar1', 'Transactions sécurisées') },
-    { Icon: ClipboardList, label: t('login.pillar2', 'Suivi des opérations') },
-    { Icon: BarChart3, label: t('login.pillar3', 'Données fiables') },
+    {
+      Icon: ShieldCheck,
+      lines: [t('login.pillar1Line1', 'Transactions'), t('login.pillar1Line2', 'sécurisées')],
+    },
+    {
+      Icon: ClipboardList,
+      lines: [t('login.pillar2Line1', 'Suivi des'), t('login.pillar2Line2', 'opérations')],
+    },
+    {
+      Icon: BarChart3,
+      lines: [t('login.pillar3Line1', 'Données'), t('login.pillar3Line2', 'fiables')],
+    },
   ];
 
   return (
@@ -190,42 +229,54 @@ export function Login() {
           </p>
 
           <h1 className="login-presentation__title">
-            {t('login.heroTitle', 'Collecte et vente des substances précieuses')}
+            <span>{t('login.heroTitleLine1', isEnglish ? 'Collection and sale of' : 'Collecte et vente des')}</span>
+            <span>{t('login.heroTitleLine2', isEnglish ? 'precious substances' : 'substances précieuses')}</span>
           </h1>
 
           <span className="login-presentation__rule" aria-hidden="true" />
 
           <p className="login-presentation__lead">
-            {t(
-              'login.heroSubtitle',
-              'Une plateforme sécurisée pour gérer les opérations, les transactions et les données du secteur.',
-            )}
+            <span>{t('login.heroSubtitleLine1', isEnglish ? 'A secure platform for managing operations,' : 'Une plateforme sécurisée pour gérer les opérations,')}</span>
+            <span>{t('login.heroSubtitleLine2', isEnglish ? 'transactions and sector data.' : 'les transactions et les données du secteur.')}</span>
           </p>
 
           <ul className="login-pillars">
-            {piliers.map(({ Icon, label }) => (
-              <li key={label}>
-                <span aria-hidden="true"><Icon /></span>
-                {label}
+            {piliers.map(({ Icon, lines }) => (
+              <li key={lines.join(' ')}>
+                <span className="login-pillars__icon" aria-hidden="true"><Icon /></span>
+                <span className="login-pillars__label">
+                  <span>{lines[0]}</span>
+                  <span>{lines[1]}</span>
+                </span>
               </li>
             ))}
           </ul>
         </section>
 
         <main className="login-panel">
+          <Link className="login-return" to="/">
+            <ArrowLeft aria-hidden="true" />
+            <span>{t('login.backToShowcase', 'Retour à la vitrine')}</span>
+          </Link>
+
           <div
             ref={langRef}
             className="login-language"
             onKeyDown={(event) => {
-              if (event.key === 'Escape') setLangOpen(false);
+              if (event.key === 'Escape') {
+                setLangOpen(false);
+                langTriggerRef.current?.focus();
+              }
             }}
           >
             <button
+              ref={langTriggerRef}
               type="button"
               className="login-language__trigger"
               aria-haspopup="menu"
               aria-expanded={langOpen}
-              aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. Changer de langue`}
+              aria-controls="login-language-menu"
+              aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. ${t('login.changeLanguage', 'Changer de langue')}`}
               onClick={() => setLangOpen((open) => !open)}
             >
               <Globe aria-hidden="true" />
@@ -234,7 +285,7 @@ export function Login() {
             </button>
 
             {langOpen && (
-              <div className="login-language__menu" role="menu">
+              <div id="login-language-menu" className="login-language__menu" role="menu">
                 {languages.map((language) => (
                   <button
                     key={language.code}
@@ -254,7 +305,14 @@ export function Login() {
           </div>
 
           <div className="login-column">
-            <form className="login-card" onSubmit={handleSubmit} noValidate>
+            <form
+              id="login-form"
+              className="login-card"
+              onSubmit={handleSubmit}
+              noValidate
+              aria-labelledby="login-card-title"
+              aria-busy={loading}
+            >
               <span className="login-card__emblem" aria-hidden="true">
                 <BouclierCadenas />
               </span>
@@ -262,7 +320,7 @@ export function Login() {
               <p className="login-card__eyebrow">
                 {t('login.securedSpace', 'Espace professionnel sécurisé')}
               </p>
-              <h2 className="login-card__title">{t('auth.login')}</h2>
+              <h2 id="login-card-title" className="login-card__title">{t('auth.login')}</h2>
               <p className="login-card__subtitle">
                 {t('login.cardSubtitle', 'Accédez à votre espace SONASP')}
               </p>
@@ -278,12 +336,20 @@ export function Login() {
                 <div className="login-field__control">
                   <UserRound aria-hidden="true" />
                   <input
+                    ref={usernameInputRef}
                     id="login-username"
                     name="username"
                     type="text"
+                    inputMode="email"
                     autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    disabled={loading}
                     value={username}
-                    onChange={(event) => setUsername(event.target.value)}
+                    onChange={(event) => {
+                      setUsername(event.target.value);
+                      if (errors.username) setErrors((current) => ({ ...current, username: undefined }));
+                    }}
                     placeholder={t('login.usernamePlaceholder')}
                     aria-invalid={Boolean(errors.username)}
                     aria-describedby={errors.username ? 'login-username-error' : undefined}
@@ -301,12 +367,17 @@ export function Login() {
                 <div className="login-field__control">
                   <LockKeyhole aria-hidden="true" />
                   <input
+                    ref={passwordInputRef}
                     id="login-password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
+                    disabled={loading}
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      if (errors.password) setErrors((current) => ({ ...current, password: undefined }));
+                    }}
                     placeholder={t('login.passwordPlaceholder')}
                     aria-invalid={Boolean(errors.password)}
                     aria-describedby={errors.password ? 'login-password-error' : undefined}
@@ -314,6 +385,7 @@ export function Login() {
                   <button
                     type="button"
                     className="login-field__toggle"
+                    disabled={loading}
                     onClick={() => setShowPassword((visible) => !visible)}
                     aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                     aria-pressed={showPassword}
@@ -332,20 +404,18 @@ export function Login() {
                 <label className="login-options__remember">
                   <input
                     type="checkbox"
+                    disabled={loading}
                     checked={rememberMe}
                     onChange={(event) => setRememberMe(event.target.checked)}
                   />
                   <span>{t('auth.rememberMe')}</span>
                 </label>
-                <a
-                  className="login-options__forgot"
-                  href="mailto:admin@sonasp.ml?subject=R%C3%A9initialisation%20du%20mot%20de%20passe%20SONASP"
-                >
+                <Link className="login-options__forgot" to="/recuperer-acces">
                   {t('login.forgotPassword')}
-                </a>
+                </Link>
               </div>
 
-              <button className="login-submit" type="submit" disabled={loading}>
+              <button className="login-submit" type="submit" disabled={loading} aria-live="polite">
                 {loading ? (
                   <>
                     <span className="login-spinner" aria-hidden="true" />
@@ -366,7 +436,7 @@ export function Login() {
 
               <p className="login-card__help">
                 {t('login.needHelp')}{' '}
-                <a href="mailto:admin@sonasp.ml">{t('login.contactAdmin')}</a>
+                <Link to="/assistance#incident">{t('login.contactAdmin')}</Link>
               </p>
             </form>
 

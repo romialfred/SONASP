@@ -1,13 +1,17 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { Session, AuthChangeEvent, User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { configureAuthPersistence, supabase } from '@/lib/supabase';
 import { UserProfile, AuthState, UserRole } from '@/types/auth';
 import { SessionManager } from '@/lib/sessionManager';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 
 interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signIn: (
+    email: string,
+    password: string,
+    options?: { rememberMe?: boolean },
+  ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
   updatePassword: (newPassword: string) => Promise<{ error?: string }>;
@@ -40,46 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profileLoading: true,
     profileError: null,
   });
+  // Supabase peut réémettre SIGNED_IN lorsqu'un onglet redevient visible.
+  // Garder une référence sur l'état courant permet de distinguer cette reprise
+  // d'une véritable nouvelle connexion, sans effacer le profil déjà affiché.
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const sessionManagerRef = useRef<SessionManager | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(30);
-
-  const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
-    const metadata = authUser.user_metadata || {};
-    const now = new Date().toISOString();
-    // Les rôles privilégiés viennent exclusivement de app_metadata, non modifiable par l'utilisateur.
-    const resolvedRole = getTrustedAuthRole(authUser) || 'customer';
-    const rawSiteIds = Array.isArray(metadata.site_ids)
-      ? (metadata.site_ids as string[])
-      : metadata.site_id
-      ? [metadata.site_id as string]
-      : [];
-
-    return {
-      id: authUser.id,
-      email: authUser.email || 'user@example.com',
-      full_name: (metadata.full_name as string | undefined) || authUser.email || 'GoldShipper User',
-      phone: (metadata.phone as string | undefined) || null,
-      role: resolvedRole,
-      site_ids: rawSiteIds,
-      is_active: metadata.is_active !== undefined ? Boolean(metadata.is_active) : true,
-      is_sales_approver:
-        metadata.is_sales_approver !== undefined ? Boolean(metadata.is_sales_approver) : false,
-      two_factor_enabled:
-        metadata.two_factor_enabled !== undefined ? Boolean(metadata.two_factor_enabled) : false,
-      language: (metadata.language as string | undefined) || null,
-      email_notifications:
-        metadata.email_notifications !== undefined ? Boolean(metadata.email_notifications) : true,
-      batch_notifications:
-        metadata.batch_notifications !== undefined ? Boolean(metadata.batch_notifications) : true,
-      approval_notifications:
-        metadata.approval_notifications !== undefined
-          ? Boolean(metadata.approval_notifications)
-          : true,
-      created_at: authUser.created_at || now,
-      updated_at: authUser.updated_at || authUser.last_sign_in_at || now,
-    };
-  };
 
   const resolveProfileResult = (
     profile: UserProfile | null,
@@ -93,18 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    if (authUser) {
-      console.warn('[Auth] Falling back to authentication metadata for user profile');
-      return {
-        profile: buildFallbackProfile(authUser),
-        // A usable fallback is a degraded data source, not an actionable user error.
-        error: null,
-      };
-    }
-
     return {
       profile: null,
-      error: 'Unable to load user profile. Please try again.',
+      error: 'Votre profil autorisé n’a pas pu être chargé. Réessayez ou contactez l’administrateur.',
     };
   };
 
@@ -132,18 +95,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error('Database configuration error');
           }
 
-          // Missing profile - try to create it
+          // Un profil d'autorisation ne se fabrique jamais depuis le navigateur.
           if (isMissingUserProfileError(profileError)) {
-            console.warn('[Profile] Not found, attempting to create minimal profile');
-            return await createMinimalProfile(userId);
+            console.error('[Profile] Missing authoritative profile');
+            return null;
           }
 
           throw profileError;
         }
 
         if (!profile) {
-          console.warn('[Profile] Empty result, creating minimal profile');
-          return await createMinimalProfile(userId);
+          console.error('[Profile] Empty authoritative profile result');
+          return null;
         }
 
         // Fetch site assignments separately (non-blocking)
@@ -168,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: profile.full_name,
           phone: profile.phone,
           role: profile.role,
+          mining_company_id: profile.mining_company_id ?? null,
           site_ids: siteIds,
           is_active: profile.is_active,
           is_sales_approver: profile.is_sales_approver ?? false,
@@ -200,59 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const createMinimalProfile = async (userId: string): Promise<UserProfile | null> => {
-    try {
-      console.log('[Profile] Creating minimal profile for user:', userId);
-
-      const { data: user } = await supabase.auth.getUser();
-      const email = user?.user?.email || 'user@example.com';
-
-      const { data: created, error: insertError } = await withTimeout(
-        supabase
-          .from('user_profiles')
-          .insert([{
-            id: userId,
-            email: email,
-            full_name: email.split('@')[0],
-            // SÉCURITÉ (audit V4) : rôle minimal par défaut, jamais 'management'.
-            role: 'customer',
-            is_active: true,
-          }])
-          .select()
-          .single(),
-        8000,
-        'Profile-Create'
-      );
-
-      if (insertError) {
-        console.error('[Profile] Failed to create profile:', insertError);
-        throw insertError;
-      }
-
-      console.log('[Profile] Minimal profile created successfully');
-      return {
-        id: created.id,
-        email: created.email,
-        full_name: created.full_name,
-        phone: null,
-        role: created.role,
-        site_ids: [],
-        is_active: created.is_active,
-        is_sales_approver: false,
-        two_factor_enabled: false,
-        language: null,
-        email_notifications: true,
-        batch_notifications: true,
-        approval_notifications: true,
-        created_at: created.created_at,
-        updated_at: created.updated_at,
-      };
-    } catch (error) {
-      console.error('[Profile] Failed to create minimal profile:', error);
-      throw error;
-    }
-  };
-
   const logSecurityEvent = async (
     userId: string | null,
     eventType: string,
@@ -271,20 +182,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const closeRejectedSession = async () => {
+    if (sessionManagerRef.current) {
+      sessionManagerRef.current.stop();
+      sessionManagerRef.current = null;
+    }
+
     try {
+      await supabase.auth.signOut();
+    } finally {
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+        initialized: true,
+        profileLoading: false,
+        profileError: null,
+      });
+    }
+  };
+
+  const signIn = async (
+    email: string,
+    password: string,
+    options: { rememberMe?: boolean } = {},
+  ) => {
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      configureAuthPersistence(options.rememberMe ?? true);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
       if (error) {
-        await logSecurityEvent(null, 'login_failed', { email, error: error.message });
+        await logSecurityEvent(null, 'login_failed', { email: normalizedEmail, error: error.message });
         return { error: error.message };
       }
 
       if (data.user) {
-        await logSecurityEvent(data.user.id, 'login_success', { email });
+        const authorizedProfile = await fetchUserProfile(data.user.id);
+
+        if (!authorizedProfile) {
+          await logSecurityEvent(data.user.id, 'login_profile_unavailable', {
+            email: normalizedEmail,
+          });
+          await closeRejectedSession();
+          return { error: 'PROFILE_AUTHORIZATION_UNAVAILABLE' };
+        }
+
+        if (!authorizedProfile.is_active) {
+          await logSecurityEvent(data.user.id, 'login_denied_inactive_account', {
+            email: normalizedEmail,
+          });
+          await closeRejectedSession();
+          return { error: 'ACCOUNT_NOT_AUTHORIZED' };
+        }
+
+        await logSecurityEvent(data.user.id, 'login_success', { email: normalizedEmail });
 
         await supabase
           .from('user_profiles')
@@ -384,6 +339,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     setState(prev => ({
       ...prev,
+      user: null,
       profileLoading: true,
       profileError: null,
     }));
@@ -440,18 +396,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           console.log('[Auth] Active session found for:', session.user.id);
 
-          // Immediately set the session with fallback profile - don't block
-          const fallbackProfile = buildFallbackProfile(session.user);
-          console.log('[Auth] Setting fallback profile immediately to unblock app');
-
           setState(prev => ({
             ...prev,
-            user: fallbackProfile,
+            user: null,
             session,
             loading: false,
             initialized: true,
-            profileLoading: false, // Don't block on profile loading
-            profileError: null, // Clear any previous errors
+            profileLoading: true,
+            profileError: null,
           }));
 
           // Start session manager immediately
@@ -470,26 +422,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current.start();
           }
 
-          // Fetch real profile in the background
-          console.log('[Auth] Fetching full profile in background...');
+          console.log('[Auth] Fetching authoritative profile...');
           void (async () => {
             try {
               const profile = await fetchUserProfile(session.user.id);
-
-              if (mounted && profile) {
-                console.log('[Auth] Background profile fetch succeeded, updating');
-                setState(prev => ({
-                  ...prev,
-                  user: getTrustedAuthRole(session.user) === 'owner'
-                    ? { ...profile, role: 'owner' }
-                    : profile,
-                  profileError: null,
-                }));
-              } else if (mounted && !profile) {
-                console.warn('[Auth] Background profile fetch failed, keeping fallback');
-              }
+              if (!mounted) return;
+              const { data: { session: currentSession } } = await supabase.auth.getSession();
+              if (currentSession?.user.id !== session.user.id) return;
+              const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+              setState(prev => ({
+                ...prev,
+                user: resolvedProfile,
+                profileLoading: false,
+                profileError: error,
+              }));
             } catch (error) {
               console.error('[Auth] Background profile fetch error:', error);
+              if (mounted) {
+                setState(prev => ({
+                  ...prev,
+                  user: null,
+                  profileLoading: false,
+                  profileError: 'Votre profil autorisé n’a pas pu être chargé.',
+                }));
+              }
             }
           })();
         } else {
@@ -528,6 +484,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           loading: false,
           initialized: true,
           profileLoading: false,
+          profileError: prev.session && !prev.user
+            ? 'Le chargement du profil autorisé a expiré. Réessayez.'
+            : prev.profileError,
         }));
       }
     }, 5000); // 5 seconds max for session check
@@ -553,17 +512,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[Auth] User signed in');
 
-          // Immediately set fallback profile - don't block
-          const fallbackProfile = buildFallbackProfile(session.user);
-          console.log('[Auth] Setting fallback profile immediately');
+          const currentState = stateRef.current;
+          const isSameInitializedUser =
+            currentState.initialized
+            && currentState.session?.user.id === session.user.id
+            && currentState.user?.id === session.user.id;
+
+          if (isSameInitializedUser) {
+            // Une reprise d'onglet ou une session rafraîchie ne doit jamais
+            // remettre l'application en écran d'attente ni relancer le profil.
+            setState(prev => ({
+              ...prev,
+              session,
+              loading: false,
+              initialized: true,
+            }));
+            return;
+          }
 
           setState(prev => ({
             ...prev,
-            user: fallbackProfile,
+            user: null,
             session,
             loading: false,
             initialized: true,
-            profileLoading: false,
+            profileLoading: true,
             profileError: null,
           }));
 
@@ -582,25 +555,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current.start();
           }
 
-          // Fetch real profile in background
-          console.log('[Auth] Fetching full profile in background...');
-          (async () => {
+          console.log('[Auth] Fetching authoritative profile...');
+          void (async () => {
             try {
               const profile = await fetchUserProfile(session.user.id);
-              if (mounted && profile) {
-                console.log('[Auth] Background profile loaded');
-                setState(prev => ({
-                  ...prev,
-                  user: getTrustedAuthRole(session.user) === 'owner'
-                    ? { ...profile, role: 'owner' }
-                    : profile,
-                  profileError: null,
-                }));
-              } else if (mounted) {
-                console.warn('[Auth] Background profile fetch failed, keeping fallback');
-              }
+              if (!mounted) return;
+              const { data: { session: currentSession } } = await supabase.auth.getSession();
+              if (currentSession?.user.id !== session.user.id) return;
+              const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+              setState(prev => ({
+                ...prev,
+                user: resolvedProfile,
+                profileLoading: false,
+                profileError: error,
+              }));
             } catch (error) {
               console.error('[Auth] Background profile fetch error:', error);
+              if (mounted) {
+                setState(prev => ({
+                  ...prev,
+                  user: null,
+                  profileLoading: false,
+                  profileError: 'Votre profil autorisé n’a pas pu être chargé.',
+                }));
+              }
             }
           })();
         } else if (event === 'SIGNED_OUT') {
@@ -628,18 +606,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log('[Auth] Token refreshed successfully, updating session');
-          // Keep existing user profile to avoid unnecessary refetch
+          // Conserver intégralement l'état du profil : un rafraîchissement de
+          // jeton est transparent pour l'écran actuellement consulté.
           setState(prev => ({
             ...prev,
             session,
             loading: false,
             initialized: true,
-            profileLoading: false,
           }));
         } else if (event === 'USER_UPDATED' && session?.user) {
           console.log('[Auth] User updated, refreshing profile');
           setState(prev => ({
             ...prev,
+            user: null,
             profileLoading: true,
             profileError: null,
           }));

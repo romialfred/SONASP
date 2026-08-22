@@ -89,7 +89,9 @@ export function canAccessSite(user: UserProfile | null, siteId: string): boolean
   return user.site_ids.includes(siteId);
 }
 
-export function getDefaultRoute(role: UserRole): string {
+export function getDefaultRoute(role: UserRole, miningCompanyId: string | null = null): string {
+  if (miningCompanyId) return '/portail-mine';
+
   switch (role) {
     case 'factory':
       return '/dashboard/factory';

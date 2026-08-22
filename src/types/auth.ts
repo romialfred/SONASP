@@ -8,6 +8,8 @@ export interface UserProfile {
   full_name: string | null;
   phone: string | null;
   role: UserRole;
+  /** Société minière représentée. `null` pour un compte interne SONASP ou un client acheteur. */
+  mining_company_id: string | null;
   site_ids: string[];
   is_active: boolean;
   /** Habilité à approuver les ventes (or artisanal & international) avant facturation/paiement. */

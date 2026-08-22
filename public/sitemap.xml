@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!--
+    Les URL absolues sont injectées au build lorsque SONASP_PUBLIC_BASE_URL
+    contient l'origine HTTPS officielle. Sans cette valeur, le sitemap reste
+    volontairement vide plutôt que de publier un domaine supposé.
+  -->
+  <!-- SONASP_SITEMAP_URLS -->
+</urlset>

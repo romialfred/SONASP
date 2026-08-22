@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessSite, hasAllPermissions, hasPermission, PERMISSIONS } from './permissions';
+import { canAccessSite, getDefaultRoute, hasAllPermissions, hasPermission, PERMISSIONS } from './permissions';
 import type { UserProfile } from '@/types/auth';
 
 const owner: UserProfile = {
@@ -8,6 +8,7 @@ const owner: UserProfile = {
   full_name: 'TIEGNAN Romuald',
   phone: null,
   role: 'owner',
+  mining_company_id: null,
   site_ids: [],
   is_active: true,
   is_sales_approver: false,
@@ -30,5 +31,11 @@ describe('permissions Owner', () => {
   it('ne contourne pas la désactivation du compte', () => {
     const inactiveOwner = { ...owner, is_active: false };
     expect(hasPermission(inactiveOwner, PERMISSIONS.USERS_MANAGE)).toBe(false);
+  });
+
+  it('dirige tout représentant de mine vers le portail dédié', () => {
+    expect(getDefaultRoute('customer', 'mine-123')).toBe('/portail-mine');
+    expect(getDefaultRoute('management', 'mine-123')).toBe('/portail-mine');
+    expect(getDefaultRoute('customer')).toBe('/dashboard/customer');
   });
 });

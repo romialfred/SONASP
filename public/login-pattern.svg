@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="898" viewBox="0 0 780 898" fill="none">
+  <g stroke="#C99B2C" stroke-linecap="round" stroke-dasharray="1 9" opacity=".2">
+    <circle cx="792" cy="326" r="82"/>
+    <circle cx="792" cy="326" r="101"/>
+    <circle cx="792" cy="326" r="120"/>
+    <circle cx="792" cy="326" r="139"/>
+    <circle cx="792" cy="326" r="158"/>
+    <circle cx="96" cy="898" r="112"/>
+    <circle cx="96" cy="898" r="136"/>
+    <circle cx="96" cy="898" r="160"/>
+    <circle cx="96" cy="898" r="184"/>
+    <circle cx="96" cy="898" r="208"/>
+  </g>
+  <g fill="#C99B2C" opacity=".11">
+    <circle cx="742" cy="44" r="1"/><circle cx="758" cy="44" r="1"/><circle cx="774" cy="44" r="1"/>
+    <circle cx="742" cy="60" r="1"/><circle cx="758" cy="60" r="1"/><circle cx="774" cy="60" r="1"/>
+    <circle cx="742" cy="76" r="1"/><circle cx="758" cy="76" r="1"/><circle cx="774" cy="76" r="1"/>
+    <circle cx="702" cy="834" r="1"/><circle cx="718" cy="834" r="1"/><circle cx="734" cy="834" r="1"/><circle cx="750" cy="834" r="1"/>
+    <circle cx="702" cy="850" r="1"/><circle cx="718" cy="850" r="1"/><circle cx="734" cy="850" r="1"/><circle cx="750" cy="850" r="1"/>
+    <circle cx="702" cy="866" r="1"/><circle cx="718" cy="866" r="1"/><circle cx="734" cy="866" r="1"/><circle cx="750" cy="866" r="1"/>
+  </g>
+</svg>

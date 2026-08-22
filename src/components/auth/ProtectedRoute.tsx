@@ -29,7 +29,7 @@ export function ProtectedRoute({
   } = useAuth();
   const location = useLocation();
 
-  if (loading || !initialized) {
+  if (loading || !initialized || (session && profileLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loading size="lg" />
@@ -41,24 +41,20 @@ export function ProtectedRoute({
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  // Don't block on profileLoading - app should proceed with fallback profile
-  // Profile errors are shown as a non-blocking banner instead
-
   if (!user) {
-    // Only block if no user at all (should not happen with fallback)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Profile not available</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Profil indisponible</h2>
           <p className="text-gray-600">
-            Unable to load user profile. Please try refreshing.
+            {profileError || 'Le profil autorisé n’a pas pu être chargé. Aucun accès privé n’est accordé.'}
           </p>
           <div className="flex justify-center">
             <button
               onClick={refreshProfile}
               className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
-              Refresh profile
+              Réessayer
             </button>
           </div>
         </div>

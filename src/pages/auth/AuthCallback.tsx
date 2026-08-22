@@ -21,24 +21,27 @@ export function AuthCallback() {
         if (session) {
           // Get user profile to determine the default route
           const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role, site_ids')
+            .from('user_profiles')
+            .select('role, is_active, mining_company_id')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
-          if (profileError) {
+          if (profileError || !profile) {
             console.error('Error loading profile:', profileError);
-            // If profile doesn't exist, redirect to dashboard
-            navigate('/dashboard');
-            return;
+            throw new Error('Votre profil autorisé est introuvable.');
+          }
+
+          if (!profile.is_active) {
+            await supabase.auth.signOut();
+            throw new Error('Ce compte est désactivé. Contactez l’administrateur.');
           }
 
           // Navigate to the default route based on role
-          const defaultRoute = getDefaultRoute(profile?.role || 'management');
-          navigate(defaultRoute);
+          const defaultRoute = getDefaultRoute(profile.role, profile.mining_company_id ?? null);
+          navigate(defaultRoute, { replace: true });
         } else {
           // No session found, redirect to login
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
       } catch (error: any) {
         console.error('Auth callback error:', error);
@@ -46,7 +49,7 @@ export function AuthCallback() {
 
         // Redirect to login after showing error
         setTimeout(() => {
-          navigate('/login');
+          navigate('/login', { replace: true });
         }, 3000);
       }
     };

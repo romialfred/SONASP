@@ -18,6 +18,7 @@ const baseUser: UserProfile = {
   full_name: 'Test User',
   phone: null,
   role: 'management',
+  mining_company_id: null,
   site_ids: [],
   is_active: true,
   is_sales_approver: false,

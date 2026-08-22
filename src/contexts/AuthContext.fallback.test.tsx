@@ -1,26 +1,39 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext';
 
 const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
-  onAuthStateChange: vi.fn(() => ({
-    data: { subscription: { unsubscribe: vi.fn() } },
-  })),
+  signInWithPassword: vi.fn(),
+  signOut: vi.fn(),
+  rpc: vi.fn(),
+  configureAuthPersistence: vi.fn(),
+  profileResult: null as Record<string, unknown> | null,
+  authStateCallback: null as ((event: string, session: unknown) => Promise<void>) | null,
+  profileFetch: vi.fn(() => Promise.resolve(null as Record<string, unknown> | null)),
+  onAuthStateChange: vi.fn((callback: (event: string, session: unknown) => Promise<void>) => {
+    authMocks.authStateCallback = callback;
+    return { data: { subscription: { unsubscribe: vi.fn() } } };
+  }),
 }));
 
 vi.mock('@/lib/supabase', () => ({
+  configureAuthPersistence: authMocks.configureAuthPersistence,
   supabase: {
     auth: {
       getSession: authMocks.getSession,
+      signInWithPassword: authMocks.signInWithPassword,
+      signOut: authMocks.signOut,
       onAuthStateChange: authMocks.onAuthStateChange,
     },
+    rpc: authMocks.rpc,
   },
 }));
 
 vi.mock('@/lib/withTimeout', () => ({
   withTimeout: vi.fn(async (value: unknown) => value),
-  withRetry: vi.fn(() => Promise.resolve(null)),
+  withRetry: vi.fn(() => authMocks.profileFetch()),
 }));
 
 vi.mock('@/lib/sessionManager', () => ({
@@ -51,15 +64,39 @@ function AuthStateProbe() {
   );
 }
 
+function SignInProbe() {
+  const { initialized, signIn } = useAuth();
+  const [result, setResult] = useState('');
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={!initialized}
+        onClick={() => void signIn(' Agent@SONASP.BF ', 'secret', { rememberMe: false })
+          .then((response) => setResult(response.error ?? 'ok'))}
+      >
+        Connexion test
+      </button>
+      <output data-testid="sign-in-result">{result}</output>
+    </>
+  );
+}
+
 describe('AuthProvider profile fallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authMocks.profileResult = null;
+    authMocks.authStateCallback = null;
+    authMocks.profileFetch.mockImplementation(() => Promise.resolve(authMocks.profileResult));
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    authMocks.signOut.mockResolvedValue({ error: null });
+    authMocks.rpc.mockResolvedValue({ error: null });
   });
 
-  it('keeps a valid authentication fallback without surfacing a profile error', async () => {
+  it('refuse tout accès privé quand le profil autoritatif est indisponible', async () => {
     authMocks.getSession.mockResolvedValue({
       data: {
         session: {
@@ -84,8 +121,8 @@ describe('AuthProvider profile fallback', () => {
 
     const state = await screen.findByTestId('auth-state');
     await waitFor(() => expect(state).toHaveAttribute('data-initialized', 'true'));
-    await waitFor(() => expect(state).toHaveAttribute('data-user-id', 'user-123'));
-    expect(state).toHaveAttribute('data-profile-error', '');
+    await waitFor(() => expect(state).toHaveAttribute('data-user-id', ''));
+    await waitFor(() => expect(state.getAttribute('data-profile-error')).toMatch(/profil autorisé/i));
   });
 
   it('still surfaces an actionable authentication initialization error', async () => {
@@ -107,6 +144,24 @@ describe('AuthProvider profile fallback', () => {
   });
 
   it('utilise le rôle Owner depuis les métadonnées Auth protégées', async () => {
+    authMocks.profileResult = {
+      id: 'owner-123',
+      email: 'romuald.tiegnan@gmail.com',
+      full_name: 'Owner',
+      phone: null,
+      role: 'management',
+      mining_company_id: null,
+      site_ids: [],
+      is_active: true,
+      is_sales_approver: true,
+      two_factor_enabled: true,
+      language: 'fr',
+      email_notifications: true,
+      batch_notifications: true,
+      approval_notifications: true,
+      created_at: '2026-08-17T00:00:00.000Z',
+      updated_at: '2026-08-17T00:00:00.000Z',
+    };
     authMocks.getSession.mockResolvedValue({
       data: {
         session: {
@@ -132,5 +187,78 @@ describe('AuthProvider profile fallback', () => {
 
     const state = await screen.findByTestId('auth-state');
     await waitFor(() => expect(state).toHaveAttribute('data-user-role', 'owner'));
+  });
+
+  it('conserve le profil affiché quand le même SIGNED_IN est réémis au retour d’onglet', async () => {
+    const session = {
+      access_token: 'token',
+      user: {
+        id: 'stable-user',
+        email: 'stable@sonasp.bf',
+        app_metadata: { role: 'customer' },
+        user_metadata: {},
+        created_at: '2026-08-17T00:00:00.000Z',
+      },
+    };
+    authMocks.profileResult = {
+      id: 'stable-user',
+      email: 'stable@sonasp.bf',
+      full_name: 'Agent stable',
+      phone: null,
+      role: 'customer',
+      mining_company_id: null,
+      site_ids: [],
+      is_active: true,
+      is_sales_approver: false,
+      two_factor_enabled: false,
+      language: 'fr',
+      email_notifications: true,
+      batch_notifications: true,
+      approval_notifications: true,
+      created_at: '2026-08-17T00:00:00.000Z',
+      updated_at: '2026-08-17T00:00:00.000Z',
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session }, error: null });
+
+    render(<AuthProvider><AuthStateProbe /></AuthProvider>);
+    const state = await screen.findByTestId('auth-state');
+    await waitFor(() => expect(state).toHaveAttribute('data-user-id', 'stable-user'));
+    expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await authMocks.authStateCallback?.('SIGNED_IN', session);
+    });
+
+    expect(state).toHaveAttribute('data-user-id', 'stable-user');
+    expect(state).toHaveAttribute('data-profile-error', '');
+    expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('ferme la session et refuse explicitement un profil désactivé', async () => {
+    authMocks.profileResult = {
+      id: 'inactive-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent inactif',
+      role: 'customer',
+      is_active: false,
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    authMocks.signInWithPassword.mockResolvedValue({
+      data: { user: { id: 'inactive-123' } },
+      error: null,
+    });
+
+    render(<AuthProvider><SignInProbe /></AuthProvider>);
+    const button = await screen.findByRole('button', { name: 'Connexion test' });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(screen.getByTestId('sign-in-result')).toHaveTextContent('ACCOUNT_NOT_AUTHORIZED'));
+    expect(authMocks.configureAuthPersistence).toHaveBeenCalledWith(false);
+    expect(authMocks.signInWithPassword).toHaveBeenCalledWith({
+      email: 'agent@sonasp.bf',
+      password: 'secret',
+    });
+    expect(authMocks.signOut).toHaveBeenCalledTimes(1);
   });
 });

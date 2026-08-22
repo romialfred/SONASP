@@ -1,5 +1,43 @@
-# Gold Shipper - Mansa Resources
-# Internal application - restrict crawling
-
+# Plateforme publique institutionnelle de la SONASP.
+# Ces règles orientent les robots ; elles ne remplacent jamais les contrôles d'accès.
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /achats/
+Disallow: /activate-account
+Disallow: /admin/
+Disallow: /analytics
+Disallow: /approvals
+Disallow: /artisan-minier
+Disallow: /artisan-sites
+Disallow: /audit
+Disallow: /auth/
+Disallow: /contrats
+Disallow: /customers
+Disallow: /dashboard
+Disallow: /documents
+Disallow: /freight
+Disallow: /freight-customs
+Disallow: /fx-rates
+Disallow: /gold-prices
+Disallow: /help
+Disallow: /inventory
+Disallow: /login
+Disallow: /parameters
+Disallow: /payments
+Disallow: /performance
+Disallow: /production
+Disallow: /profile
+Disallow: /portail-mine
+Disallow: /recuperer-acces
+Disallow: /refining
+Disallow: /reports
+Disallow: /requisitions
+Disallow: /sales
+Disallow: /settings
+Disallow: /shipping
+Disallow: /stakeholders
+Disallow: /users
+Disallow: /modifier-mot-de-passe
+
+# Injecté au build si SONASP_PUBLIC_BASE_URL contient l'origine HTTPS officielle.
+# SONASP_SITEMAP_DIRECTIVE

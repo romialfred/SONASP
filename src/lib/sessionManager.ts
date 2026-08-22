@@ -21,40 +21,50 @@ export class SessionManager {
   private onWarning: SessionWarningCallback | null = null;
   private onTimeout: SessionTimeoutCallback | null = null;
 
-  constructor() {
-    this.setupActivityListeners();
-  }
+  private readonly activityEvents = [
+    'mousedown',
+    'keydown',
+    'scroll',
+    'touchstart',
+    'click',
+    'mousemove',
+    'keypress',
+    'touchmove',
+    'touchend',
+  ];
+  private listenersAttached = false;
+  private readonly handleActivity = () => this.updateActivity();
+  private readonly handleVisibilityChange = () => {
+    if (!document.hidden) this.updateActivity();
+  };
+  private readonly handleFocus = () => this.updateActivity();
+
+  constructor() {}
 
   private setupActivityListeners() {
-    const events = [
-      'mousedown',
-      'keydown',
-      'scroll',
-      'touchstart',
-      'click',
-      'mousemove',
-      'keypress',
-      'touchmove',
-      'touchend',
-    ];
-
-    events.forEach(event => {
-      document.addEventListener(event, () => this.updateActivity(), { passive: true });
+    if (this.listenersAttached) return;
+    this.activityEvents.forEach(event => {
+      document.addEventListener(event, this.handleActivity, { passive: true });
     });
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    window.addEventListener('focus', this.handleFocus);
+    this.listenersAttached = true;
+  }
 
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        this.updateActivity();
-      }
+  private removeActivityListeners() {
+    if (!this.listenersAttached) return;
+    this.activityEvents.forEach(event => {
+      document.removeEventListener(event, this.handleActivity);
     });
-
-    window.addEventListener('focus', () => {
-      this.updateActivity();
-    });
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.removeEventListener('focus', this.handleFocus);
+    this.listenersAttached = false;
   }
 
   public start() {
     console.log('[SessionManager] Starting with 30-minute inactivity timeout');
+    this.isActive = true;
+    this.setupActivityListeners();
     this.updateActivity();
     this.startTokenRefresh();
     this.startInactivityCheck();
@@ -65,12 +75,14 @@ export class SessionManager {
     this.isActive = false;
     if (this.tokenRefreshTimer) clearInterval(this.tokenRefreshTimer);
     if (this.inactivityCheckTimer) clearInterval(this.inactivityCheckTimer);
+    this.tokenRefreshTimer = null;
+    this.inactivityCheckTimer = null;
+    this.removeActivityListeners();
   }
 
   private updateActivity() {
     if (!this.isActive) return;
 
-    const previousActivityTime = this.lastActivityTime;
     this.lastActivityTime = Date.now();
 
     // Reset warning if user becomes active again

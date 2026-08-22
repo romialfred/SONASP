@@ -10,23 +10,24 @@ describe('persistance de la session d’authentification', () => {
     window.sessionStorage.clear();
   });
 
-  it('conserve une session non mémorisée uniquement pour l’onglet courant', () => {
+  it('supprime toute ancienne session persistée au-delà de l’onglet', () => {
     window.localStorage.setItem(authKey, 'session-existante');
+    window.localStorage.setItem(preferenceKey, 'local');
 
-    configureAuthPersistence(false);
+    configureAuthPersistence();
 
-    expect(window.localStorage.getItem(preferenceKey)).toBe('session');
+    expect(window.localStorage.getItem(preferenceKey)).toBeNull();
     expect(window.localStorage.getItem(authKey)).toBeNull();
-    expect(window.sessionStorage.getItem(authKey)).toBe('session-existante');
+    expect(window.sessionStorage.getItem(authKey)).toBeNull();
   });
 
-  it('déplace la session vers le stockage persistant quand la case est cochée', () => {
+  it('conserve uniquement la session de l’onglet courant', () => {
     window.sessionStorage.setItem(authKey, 'session-courante');
 
-    configureAuthPersistence(true);
+    configureAuthPersistence();
 
-    expect(window.localStorage.getItem(preferenceKey)).toBe('local');
-    expect(window.localStorage.getItem(authKey)).toBe('session-courante');
-    expect(window.sessionStorage.getItem(authKey)).toBeNull();
+    expect(window.localStorage.getItem(preferenceKey)).toBeNull();
+    expect(window.localStorage.getItem(authKey)).toBeNull();
+    expect(window.sessionStorage.getItem(authKey)).toBe('session-courante');
   });
 });

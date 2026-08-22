@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   UserManagementModern,
@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   params: new URLSearchParams(),
   from: vi.fn(),
+  rpc: vi.fn(),
   listModules: vi.fn(),
   load: vi.fn(),
   save: vi.fn(),
@@ -49,7 +50,7 @@ vi.mock('@/services/userPermissionsService', async () => {
   };
 });
 
-vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from } }));
+vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from, rpc: mocks.rpc } }));
 
 function stub(table: string) {
   const rows = mocks.reponses[table];
@@ -94,13 +95,18 @@ describe('validation du compte', () => {
     expect(validateIdentite(EMPTY_USER_FORM, false)).toBe('Le nom complet est obligatoire.');
     expect(validateIdentite({ ...formValide, email: 'pas-un-mail' }, false)).toBe('L’adresse e-mail est invalide.');
     expect(validateIdentite({ ...formValide, role: '' }, false)).toBe('Sélectionnez un rôle.');
-    expect(validateIdentite({ ...formValide, miningCompanyIds: [] }, false)).toBe(
-      'Rattachez le compte à au moins une compagnie.'
+    expect(validateIdentite({ ...formValide, role: 'mine', miningCompanyIds: [] }, false)).toBe(
+      'Rattachez le compte Société minière à une compagnie unique.'
     );
+    expect(validateIdentite({ ...formValide, role: 'mine', miningCompanyIds: ['c1', 'c2'] }, false)).toBe(
+      'Rattachez le compte Société minière à une compagnie unique.'
+    );
+    expect(validateIdentite({ ...formValide, role: 'mine', miningCompanyIds: ['c1'] }, false)).toBeNull();
     expect(validateIdentite({ ...formValide, password: 'court' }, false)).toBe(
       'Le mot de passe doit compter au moins 12 caractères.'
     );
     expect(validateIdentite(formValide, false)).toBeNull();
+    expect(validateIdentite({ ...formValide, role: 'manager', miningCompanyIds: [] }, false)).toBeNull();
     // En modification, le mot de passe n'est pas redemandé.
     expect(validateIdentite({ ...formValide, password: '' }, true)).toBeNull();
   });
@@ -137,6 +143,7 @@ describe('UserManagementModern', () => {
     mocks.load.mockResolvedValue({ permissions: {} });
     mocks.save.mockResolvedValue({ success: true });
     mocks.createUser.mockResolvedValue({ success: true, user: { id: 'nouveau' } });
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
     mocks.reponses = {
       mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
       user_profiles: [],
@@ -149,24 +156,24 @@ describe('UserManagementModern', () => {
     fireEvent.change(screen.getByLabelText(/Nom complet/), { target: { value: 'Awa KABORE' } });
     fireEvent.change(screen.getByLabelText(/Adresse e-mail/), { target: { value: 'awa@sonasp.bf' } });
     fireEvent.click(screen.getByRole('radio', { name: /Administrateur/ }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /Essakane SA/ }));
     fireEvent.change(screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }), { target: { value: 'MotDePasse!234' } });
   };
 
-  it('propose les sept rôles, propriétaire et administrateur compris', async () => {
+  it('propose les rôles de portail, propriétaire et administrateur compris', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
     // La liste s'arrêtait à cinq rôles : impossible de créer un administrateur.
     expect(screen.getByRole('radio', { name: /Propriétaire/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Administrateur/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Direction/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Société minière/ })).toBeInTheDocument();
     expect(screen.queryByText('Add New User')).not.toBeInTheDocument();
   });
 
   it('bloque le passage aux habilitations tant que l’identité est incomplète', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
     expect(screen.getByRole('button', { name: /Habilitations/ })).toBeDisabled();
     expect(screen.getByText('Le nom complet est obligatoire.')).toBeInTheDocument();
@@ -183,9 +190,9 @@ describe('UserManagementModern', () => {
     expect((screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }) as HTMLInputElement).value.length).toBeGreaterThanOrEqual(12);
   });
 
-  it('crée le compte, ses rattachements et ses habilitations', async () => {
+  it('crée un compte interne sans lui attribuer un faux site minier', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
     remplirIdentite();
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
@@ -197,19 +204,15 @@ describe('UserManagementModern', () => {
 
     await waitFor(() => expect(mocks.createUser).toHaveBeenCalled());
     expect(mocks.createUser.mock.calls[0][0]).toMatchObject({ email: 'awa@sonasp.bf', role: 'admin' });
-    await waitFor(() =>
-      expect(mocks.inserts).toContainEqual({
-        table: 'user_site_assignments',
-        lignes: [{ user_id: 'nouveau', site_id: 'c1' }],
-      })
-    );
+    expect(mocks.createUser.mock.calls[0][0]).toMatchObject({ mining_company_id: null });
+    expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
     expect(mocks.navigate).toHaveBeenCalledWith('/users');
   });
 
   it('impose la consultation aux autres droits', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
     remplirIdentite();
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
@@ -221,24 +224,32 @@ describe('UserManagementModern', () => {
     expect(screen.getByLabelText('Supprimer — Ventes')).not.toBeChecked();
   });
 
-  it('signale l’échec d’écriture des rattachements au lieu de l’ignorer', async () => {
-    mocks.reponses.user_site_assignments = null;
+  it('crée un compte Société minière rattaché à une seule compagnie', async () => {
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
-    remplirIdentite();
+    fireEvent.change(screen.getByLabelText(/Nom complet/), { target: { value: 'Awa KABORE' } });
+    fireEvent.change(screen.getByLabelText(/Adresse e-mail/), { target: { value: 'awa@mine.bf' } });
+    fireEvent.click(screen.getByRole('radio', { name: /Société minière/ }));
+    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('radio', { name: /Essakane SA/ }));
+    fireEvent.change(screen.getByLabelText('Mot de passe', { exact: false, selector: '#mot-de-passe' }), { target: { value: 'MotDePasse!234' } });
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
     fireEvent.click(screen.getByRole('button', { name: /Créer le compte/ }));
 
-    // L'issue des écritures de rattachement n'était jamais vérifiée.
-    await waitFor(() => expect(screen.getByText('écriture refusée')).toBeInTheDocument());
-    expect(mocks.navigate).not.toHaveBeenCalledWith('/users');
+    await waitFor(() => expect(mocks.createUser).toHaveBeenCalled());
+    expect(mocks.createUser.mock.calls[0][0]).toMatchObject({
+      email: 'awa@mine.bf',
+      role: 'mine',
+      mining_company_id: 'c1',
+    });
+    expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
   });
 
   it('restitue un échec de création', async () => {
     mocks.createUser.mockResolvedValue({ success: false, error: 'adresse déjà utilisée' });
     render(<UserManagementModern />);
-    await waitFor(() => expect(screen.getByText('Essakane SA')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
     remplirIdentite();
     fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
@@ -250,9 +261,8 @@ describe('UserManagementModern', () => {
   it('charge un compte existant en modification', async () => {
     mocks.params = new URLSearchParams('userId=u1');
     mocks.reponses.user_profiles = [
-      { id: 'u1', full_name: 'Moussa OUEDRAOGO', email: 'moussa@sonasp.bf', phone: '+226 70', role: 'factory', is_active: false },
+      { id: 'u1', full_name: 'Moussa OUEDRAOGO', email: 'moussa@sonasp.bf', phone: '+226 70', role: 'factory', mining_company_id: null, is_active: false },
     ];
-    mocks.reponses.user_site_assignments = [{ site_id: 'c1' }];
     mocks.load.mockResolvedValue({ permissions: { m1: { ...EMPTY_PERMISSION('m1'), can_view: true } } });
 
     render(<UserManagementModern />);

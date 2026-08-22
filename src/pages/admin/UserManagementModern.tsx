@@ -56,10 +56,12 @@ export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
   owner: 'Accès complet, y compris l’administration de la plateforme',
   admin: 'Administration des comptes, référentiels et paramètres',
   management: 'Pilotage national et validation des opérations',
+  manager: 'Consultation consolidée sans création, modification ni validation',
   factory: 'Déclaration de la production et préparation des expéditions',
   airport: 'Réception et contrôle des expéditions au départ',
   refinery: 'Traitement des lots reçus et suivi de l’affinage',
   customer: 'Consultation de ses commandes et de ses documents',
+  mine: 'Compte principal d’une société, limité à son propre périmètre',
 };
 
 type DroitClef = 'can_view' | 'can_create' | 'can_edit' | 'can_delete' | 'can_approve';
@@ -78,7 +80,7 @@ export function validateIdentite(form: UserFormData, isEditMode: boolean): strin
   if (!form.email.trim()) return 'L’adresse e-mail est obligatoire.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'L’adresse e-mail est invalide.';
   if (!form.role) return 'Sélectionnez un rôle.';
-  if (form.miningCompanyIds.length === 0) return 'Rattachez le compte à au moins une compagnie.';
+  if (form.role === 'mine' && form.miningCompanyIds.length !== 1) return 'Rattachez le compte Société minière à une compagnie unique.';
   if (!isEditMode && form.password.length < 12) return 'Le mot de passe doit compter au moins 12 caractères.';
   return null;
 }
@@ -173,17 +175,12 @@ export function UserManagementModern() {
           .maybeSingle();
         if (erreurProfil) throw erreurProfil;
 
-        const { data: rattachements } = await supabase
-          .from('user_site_assignments')
-          .select('site_id')
-          .eq('user_id', userId);
-
         setForm({
           fullName: profil?.full_name || '',
           email: profil?.email || '',
           phone: profil?.phone || '',
           role: (profil?.role as UserRole) || '',
-          miningCompanyIds: (rattachements || []).map((ligne) => ligne.site_id),
+          miningCompanyIds: profil?.mining_company_id ? [profil.mining_company_id] : [],
           password: '',
           isActive: profil?.is_active !== false,
         });
@@ -256,45 +253,32 @@ export function UserManagementModern() {
           phone: form.phone,
           role: form.role as UserRole,
           is_active: form.isActive,
+          mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
         });
         if (!resultat.success || !resultat.user) {
           throw new Error(resultat.error || 'La création du compte a échoué.');
         }
         identifiant = resultat.user.id;
       } else {
-        const { error } = await supabase
-          .from('user_profiles')
-          .update({
-            full_name: form.fullName,
-            phone: form.phone,
-            role: form.role,
-            is_active: form.isActive,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', identifiant);
+        const { error } = await supabase.rpc('snp_configurer_compte_portail', {
+          p_user_id: identifiant,
+          p_full_name: form.fullName,
+          p_phone: form.phone || null,
+          p_role: form.role,
+          p_is_active: form.isActive,
+          p_mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
+        });
         if (error) throw error;
       }
 
       if (identifiant) {
-        // Les rattachements étaient supprimés puis réinsérés sans que l'issue de
-        // l'une ou l'autre opération ne soit jamais vérifiée.
-        const { error: erreurSuppression } = await supabase
-          .from('user_site_assignments')
-          .delete()
-          .eq('user_id', identifiant);
-        if (erreurSuppression) throw erreurSuppression;
-
-        if (form.miningCompanyIds.length > 0) {
-          const { error: erreurInsertion } = await supabase.from('user_site_assignments').insert(
-            form.miningCompanyIds.map((siteId) => ({ user_id: identifiant, site_id: siteId }))
-          );
-          if (erreurInsertion) throw erreurInsertion;
-        }
-
+        const permissionsEnregistrees = form.role === 'manager'
+          ? appliquerGabarit(permissions, 'consultation')
+          : permissions;
         const resultat = await userPermissionsService.save(
           identifiant,
           permissionsEnBase,
-          permissions,
+          permissionsEnregistrees,
           utilisateurCourant.id
         );
         if (!resultat.success) throw new Error(resultat.error);
@@ -481,12 +465,12 @@ export function UserManagementModern() {
               </ul>
             </Section>
 
-            <Section
+            {form.role === 'mine' && <Section
               id="rattachement"
               icon={Building2}
               tone="blue"
-              title="Rattachement"
-              description="Compagnies minières dont le titulaire suit les opérations."
+              title="Société représentée"
+              description="Une seule société définit le périmètre autoritatif de ce compte."
             >
               {compagnies.length === 0 ? (
                 <EmptyState
@@ -501,16 +485,10 @@ export function UserManagementModern() {
                       <li key={compagnie.id}>
                         <label className={retenue ? 'is-checked' : ''}>
                           <input
-                            type="checkbox"
-                            checked={retenue}
-                            onChange={() =>
-                              setValue(
-                                'miningCompanyIds',
-                                retenue
-                                  ? form.miningCompanyIds.filter((id) => id !== compagnie.id)
-                                  : [...form.miningCompanyIds, compagnie.id]
-                              )
-                            }
+                          type="radio"
+                          name="mining-company"
+                          checked={retenue}
+                          onChange={() => setValue('miningCompanyIds', [compagnie.id])}
                           />
                           <span>
                             <strong>{compagnie.name}</strong>
@@ -522,7 +500,7 @@ export function UserManagementModern() {
                   })}
                 </ul>
               )}
-            </Section>
+            </Section>}
 
             {!isEditMode && (
               <Section

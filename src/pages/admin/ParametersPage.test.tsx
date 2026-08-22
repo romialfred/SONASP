@@ -191,7 +191,7 @@ describe('ParametersPage', () => {
     );
   });
 
-  it('confirme avant de modifier la double authentification', async () => {
+  it('présente la double authentification comme une obligation non désactivable', async () => {
     render(<ParametersPage />);
     fireEvent.click(screen.getByRole('tab', { name: /Double authentification/ }));
     await waitFor(() => expect(screen.getByText('Moi')).toBeInTheDocument());
@@ -199,12 +199,9 @@ describe('ParametersPage', () => {
     const tableau = within(screen.getByRole('table'));
     expect(tableau.getByText('Administrateur')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('switch', { name: /Double authentification pour Moi/ }));
-
-    await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(mocks.updates).toContainEqual({ table: 'user_profiles', valeurs: { two_factor_enabled: true } })
-    );
+    expect(tableau.getByText('Enrôlement requis')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Double authentification pour Moi/ })).not.toBeInTheDocument();
+    expect(mocks.updates).not.toContainEqual({ table: 'user_profiles', valeurs: { two_factor_enabled: true } });
   });
 
   it('signale un échec de chargement des règles', async () => {

@@ -19,11 +19,10 @@ import { supabase } from '@/lib/supabase';
  *
  * ══ OÙ LA RÈGLE S'APPLIQUE ══
  *
- * SONASP n'a pas de serveur : masquer un écran ne protégerait rien. La règle
- * vit dans la base — `snp_est_agent_sonasp()` exige désormais une session
- * élevée à `aal2` dès lors que le compte est enrôlé. Un compte enrôlé dont la
- * session n'a pas validé le second facteur perd l'accès aux données, quel que
- * soit l'écran ouvert.
+ * SONASP n'a pas de serveur applicatif : masquer un écran ne protégerait rien.
+ * La règle vit donc aussi dans la base. Toute session métier doit être enrôlée
+ * puis élevée à `aal2`; sans second facteur validé, l'accès aux données reste
+ * fermé quel que soit l'écran ouvert.
  */
 
 /** Nom affiché dans Microsoft Authenticator ou Google Authenticator. */

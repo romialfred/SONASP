@@ -397,6 +397,66 @@
   position: relative;
 }
 
+.national-header__mine-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+  height: 42px;
+  padding: 0 34px 0 12px;
+  gap: 9px;
+  border: 1px solid #cfdcd6;
+  color: #123c30;
+  background: #f8fbf9;
+  border-radius: 10px;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.national-header__mine-switcher:hover {
+  border-color: #8fb4a6;
+  background: #fff;
+}
+
+.national-header__mine-switcher:focus-within {
+  border-color: #0f7a56;
+  box-shadow: 0 0 0 3px rgb(15 122 86 / 12%);
+}
+
+.national-header__mine-switcher > svg:first-child {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: #0f7a56;
+}
+
+.national-header__mine-switcher > svg:last-child {
+  position: absolute;
+  right: 11px;
+  width: 15px;
+  height: 15px;
+  color: #60738c;
+  pointer-events: none;
+}
+
+.national-header__mine-switcher select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  appearance: none;
+  cursor: pointer;
+}
+
+.national-header__mine-switcher select:disabled {
+  color: #7d8b98;
+  cursor: wait;
+}
+
 .national-header button {
   font-family: inherit;
 }
@@ -674,6 +734,29 @@
 
   .national-header__profile {
     min-width: 150px;
+  }
+
+  .national-header__mine-switcher {
+    min-width: 184px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .national-header__mine-switcher {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .national-header__mine-switcher select {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+
+  .national-header__mine-switcher > svg:last-child {
+    display: none;
   }
 }
 

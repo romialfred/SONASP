@@ -23,8 +23,8 @@ function auth(overrides: Record<string, unknown> = {}) {
 }
 
 function Probe() {
-  const { companyId } = useMinePortalAccess();
-  return <div>Mine autorisée {companyId}</div>;
+  const { companyId, canChooseCompany } = useMinePortalAccess();
+  return <div>{canChooseCompany ? 'Toutes les mines autorisées' : `Mine autorisée ${companyId}`}</div>;
 }
 
 describe('MinePortalGuard', () => {
@@ -50,6 +50,15 @@ describe('MinePortalGuard', () => {
     expect(screen.queryByText(/Mine autorisée/)).not.toBeInTheDocument();
   });
 
+  it('autorise l’Owner actif à choisir n’importe quelle société sans rattachement', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      user: { ...mineUser, role: 'owner', mining_company_id: null },
+    }));
+    render(<MemoryRouter initialEntries={['/portail-mine?mine=mine-2']}><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
+    expect(screen.getByText('Toutes les mines autorisées')).toBeInTheDocument();
+    expect(screen.queryByText('Portail Mine non attribué')).not.toBeInTheDocument();
+  });
+
   it('n’autorise jamais un profil en erreur même si un utilisateur est présent', () => {
     mockedUseAuth.mockReturnValue(auth({ profileError: 'Profil non vérifié' }));
     render(<MemoryRouter><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
@@ -59,7 +68,22 @@ describe('MinePortalGuard', () => {
 
   it('expose uniquement la société du profil autoritatif', () => {
     mockedUseAuth.mockReturnValue(auth());
-    render(<MemoryRouter><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
+    render(<MemoryRouter initialEntries={['/portail-mine?mine=mine-2']}><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
     expect(screen.getByText('Mine autorisée mine-1')).toBeInTheDocument();
+  });
+
+  it('renvoie l’Owner vers le tableau de bord lorsqu’aucune mine n’est choisie', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      user: { ...mineUser, role: 'owner', mining_company_id: null },
+    }));
+    render(
+      <MemoryRouter initialEntries={['/portail-mine']}>
+        <Routes>
+          <Route path="/dashboard" element={<div>Tableau de bord SONASP</div>} />
+          <Route path="/portail-mine" element={<MinePortalGuard><Probe /></MinePortalGuard>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Tableau de bord SONASP')).toBeInTheDocument();
   });
 });

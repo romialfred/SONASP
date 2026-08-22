@@ -7,6 +7,7 @@ export interface CreateUserRequest {
   role: string;
   password?: string;
   is_active?: boolean;
+  mining_company_id?: string | null;
   permissions?: Record<string, any>;
 }
 
@@ -128,7 +129,7 @@ export async function resetUserPassword(userId: string): Promise<CreateUserRespo
 export async function checkActivationSystemAvailable(): Promise<boolean> {
   try {
     // Check if the activation token function exists
-    const { data, error } = await supabase.rpc('validate_activation_token', {
+    const { error } = await supabase.rpc('validate_activation_token', {
       p_token: 'test_token',
     });
 
@@ -140,4 +141,3 @@ export async function checkActivationSystemAvailable(): Promise<boolean> {
     return false;
   }
 }
-

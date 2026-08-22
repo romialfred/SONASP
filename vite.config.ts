@@ -160,12 +160,34 @@ export default defineConfig(({ mode }) => {
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Large application bundle and PDF.js library
         // Les images éditoriales et les captures métier ne doivent pas toutes
         // être téléchargées lors de l'installation du service worker.
-        globPatterns: ['**/*.{js,css,html,ico,woff,woff2}'],
-        // Le back-office reste chargeable à la demande en ligne, mais son bundle
-        // de plusieurs mégaoctets n'est pas imposé aux visiteurs de la vitrine.
-        globIgnores: ['**/PrivateApp-*.js', '**/PrivateApp-*.css'],
+        // Le cache d'installation reste volontairement réduit au noyau et à la
+        // vitrine. Les dizaines d'écrans métier sont désormais chargés à la
+        // demande ; les précacher annulerait le gain et téléchargerait plusieurs
+        // mégaoctets dès la première visite.
+        globPatterns: [
+          'index.html',
+          'registerSW.js',
+          'assets/index-*.{js,css}',
+          'assets/Public*.js',
+          'assets/public-*.css',
+          '**/*.{ico,woff,woff2}',
+        ],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.(?:js|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'sonasp-route-assets',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'StaleWhileRevalidate',
@@ -211,11 +233,12 @@ export default defineConfig(({ mode }) => {
    * le 5173 par defaut. Un port dedie evite que l'apercu pointe sur une autre application.
    */
   server: {
+    // Le navigateur de travail utilise explicitement 127.0.0.1. Sans cette
+    // adresse, Node peut n'écouter que sur ::1 et laisser l'onglet en erreur
+    // malgré un serveur annoncé comme démarré.
+    host: '127.0.0.1',
     port: 5180,
     strictPort: true,
-  },
-  optimizeDeps: {
-    exclude: ['lucide-react'],
   },
   resolve: {
     alias: {

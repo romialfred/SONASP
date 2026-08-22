@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
-import { hasPermission } from '@/lib/permissions';
+import { hasGlobalPlatformAccess, hasPermission, isReadOnlyManager } from '@/lib/permissions';
 import { Loading } from '@/components/ui/Loading';
 
 interface ProtectedRouteProps {
@@ -90,7 +90,29 @@ export function ProtectedRoute({
     );
   }
 
-  if (allowedRoles && user.role !== 'owner' && !allowedRoles.includes(user.role)) {
+  // Un compte de société reste dans son portail, même si une ancienne route
+  // interne n'a pas encore de restriction de rôle explicite. Son périmètre
+  // autoritatif vient du profil, jamais de l'URL.
+  if (
+    (user.role === 'mine' || user.mining_company_id)
+    && !hasGlobalPlatformAccess(user)
+    && !location.pathname.startsWith('/portail-mine')
+    && !['/profile', '/help'].includes(location.pathname)
+  ) {
+    return <Navigate to="/portail-mine" replace />;
+  }
+
+  // Le Manager dispose d'un portail distinct et ne peut pas atteindre les
+  // formulaires historiques via une URL saisie manuellement.
+  if (
+    isReadOnlyManager(user)
+    && !location.pathname.startsWith('/portail-direction')
+    && !['/profile', '/help'].includes(location.pathname)
+  ) {
+    return <Navigate to="/portail-direction" replace />;
+  }
+
+  if (allowedRoles && !hasGlobalPlatformAccess(user) && !allowedRoles.includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">

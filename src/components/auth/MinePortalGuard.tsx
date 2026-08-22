@@ -1,11 +1,13 @@
 import { createContext, ReactNode, useContext } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { hasGlobalPlatformAccess } from '@/lib/permissions';
 import type { UserProfile } from '@/types/auth';
 import { Loading } from '@/components/ui/Loading';
 
 type MinePortalAccess = {
   companyId: string;
+  canChooseCompany: boolean;
   user: UserProfile;
 };
 
@@ -47,7 +49,28 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
     return <GuardMessage title="Compte désactivé" description="Ce compte ne peut plus accéder au Portail Mine. Contactez l’administrateur SONASP." />;
   }
 
-  if (!user.mining_company_id) {
+  const canChooseCompany = hasGlobalPlatformAccess(user);
+  const requestedCompanyId = new URLSearchParams(location.search).get('mine')?.trim() || null;
+
+  if (!user.mining_company_id && !canChooseCompany) {
+    return (
+      <GuardMessage
+        title="Portail Mine non attribué"
+        description="Votre compte n’est rattaché à aucune société minière. Aucun périmètre de données ne peut être ouvert."
+      />
+    );
+  }
+
+  // L'Owner choisit le périmètre depuis l'en-tête national. Une ouverture
+  // directe de l'ancienne page de supervision n'a plus de raison d'être.
+  if (canChooseCompany && !requestedCompanyId) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Pour un compte de mine, tout paramètre d'URL est volontairement ignoré :
+  // la société du profil autoritatif demeure son unique périmètre.
+  const companyId = canChooseCompany ? requestedCompanyId : user.mining_company_id;
+  if (!companyId) {
     return (
       <GuardMessage
         title="Portail Mine non attribué"
@@ -57,7 +80,11 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
   }
 
   return (
-    <MinePortalAccessContext.Provider value={{ companyId: user.mining_company_id, user }}>
+    <MinePortalAccessContext.Provider value={{
+      companyId,
+      canChooseCompany,
+      user,
+    }}>
       {children}
     </MinePortalAccessContext.Provider>
   );

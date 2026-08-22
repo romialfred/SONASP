@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
@@ -6,110 +6,122 @@ import { DialogProvider } from './contexts/DialogContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MinePortalGuard } from './components/auth/MinePortalGuard';
+import { MandatoryMfaGate } from './components/auth/MandatoryMfaGate';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
-import { Login } from './pages/Login';
-import { Profile } from './pages/Profile';
-import ActivateAccount from './pages/auth/ActivateAccount';
-import { AuthCallback } from './pages/auth/AuthCallback';
-import { GoldPricesPage } from './pages/prices/GoldPricesPage';
-import { FxRatesPage } from './pages/prices/FxRatesPage';
-import { AuditTrailPage } from './pages/AuditTrailPage';
-import { ManagementDashboard } from './pages/dashboards/ManagementDashboard';
-import { FactoryDashboard } from './pages/dashboards/FactoryDashboard';
-import { AirportDashboard } from './pages/dashboards/AirportDashboard';
-import { RefineryDashboard } from './pages/dashboards/RefineryDashboard';
-import { CustomerDashboard } from './pages/dashboards/CustomerDashboard';
-import { ProductionDashboardModern } from './pages/dashboards/ProductionDashboardModern';
-import { GlobalDashboardEnhanced } from './pages/dashboards/GlobalDashboardEnhanced';
-import { AssayCertificatesModern } from './pages/documents/AssayCertificatesModern';
-import { RefiningProcess } from './pages/refining/RefiningProcess';
-import { SalesDashboard } from './pages/sales/SalesDashboard';
-import { SaleCreate } from './pages/sales/SaleCreate';
-import { SaleDetails } from './pages/sales/SaleDetails';
-import { GoldTradeSpace } from './pages/sales/GoldTradeSpace';
-import { CustomerSaleApproval } from './pages/sales/CustomerSaleApproval';
-import HelpCenter from './pages/HelpCenter';
-import { CustomerListing } from './pages/customers/CustomerListing';
-import { CustomerProfile } from './pages/customers/CustomerProfile';
-import { CustomerForm } from './pages/customers/CustomerForm';
-import { PaymentsPage } from './pages/payments/PaymentsPage';
-import { PaymentCreate } from './pages/payments/PaymentCreate';
-import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage';
-import { PaymentRecordPage } from './pages/payments/PaymentRecordPage';
-import { VirtualPaymentsPage } from './pages/payments/VirtualPaymentsPage';
-import { AnalyticsDashboardEnhanced as AnalyticsDashboard } from './pages/analytics/AnalyticsDashboardEnhanced';
-import { AnalyticsIntelligenceCenter } from './pages/analytics/AnalyticsIntelligenceCenter';
-import { ReportsDashboard } from './pages/reports/ReportsDashboard';
-import { UsersListPage } from './pages/admin/UsersListPage';
-import { UserManagementModern } from './pages/admin/UserManagementModern';
-import { UserPermissionsPage } from './pages/admin/UserPermissionsPage';
-import UserDetailsPage from './pages/admin/UserDetailsPage';
-import { ApprovalsDashboard } from './pages/admin/ApprovalsDashboard';
-import { TransportCompaniesPage } from './pages/admin/TransportCompaniesPage';
-import { TransportCompanyForm } from './pages/admin/TransportCompanyForm';
-import { RefineryForm } from './pages/admin/RefineryForm';
-import { RefineriesPage } from './pages/admin/RefineriesPage';
-import { ParametersPage } from './pages/admin/ParametersPage';
-import GoldShippingWorkflow from './pages/admin/GoldShippingWorkflow';
-import GoldSalesSettingsPage from './pages/admin/GoldSalesSettingsPage';
-import StatusManagerPage from './pages/admin/StatusManagerPage';
-import ModulesManagement from './pages/admin/ModulesManagement';
-import MessageriePage from './pages/admin/MessageriePage';
-import MessagerieForm from './pages/admin/MessagerieForm';
-import { InventoryManagement } from './pages/inventory/InventoryManagement';
-import { AddInventoryEntry } from './pages/inventory/AddInventoryEntry';
-import { SilverInventoryManagement } from './pages/inventory/SilverInventoryManagement';
-import { MiningCompaniesPage } from './pages/stakeholders/MiningCompaniesPage';
-import { MiningCompanyForm } from './pages/stakeholders/MiningCompanyForm';
-import { MiningCompanyDetails } from './pages/stakeholders/MiningCompanyDetails';
-import { FreightCompaniesPage } from './pages/stakeholders/FreightCompaniesPage';
-import { RefineryPlantsPage } from './pages/stakeholders/RefineryPlantsPage';
-import { DepositorsPage } from './pages/stakeholders/DepositorsPage';
-import { DepositorFormPage } from './pages/stakeholders/DepositorFormPage';
-import { DailyProductionPage } from './pages/production/DailyProductionPage';
-import { ProductionDetails } from './pages/production/ProductionDetails';
-import { ProductionInSafe } from './pages/production/ProductionInSafe';
-import { BudgetManagementPage } from './pages/production/BudgetManagementPage';
-import { ExportLicensesPage } from './pages/production/ExportLicensesPage';
-import { ExportLicenseForm } from './pages/production/ExportLicenseForm';
-import { ExportLicenseDetails } from './pages/production/ExportLicenseDetails';
-import { ForecastManagementPage } from './pages/performance/ForecastManagementPage';
-import ShippingDashboard from './pages/shipping/ShippingDashboard';
-import ShippingPreparationNew from './pages/shipping/ShippingPreparationNew';
-import ShippingPreparationDetailsEnhanced from './pages/shipping/ShippingPreparationDetailsEnhanced';
-import ShippingPreparationEdit from './pages/shipping/ShippingPreparationEdit';
-import FreightCustomsDashboard from './pages/freight/FreightCustomsDashboard';
-import FreightCustomsDetails from './pages/freight/FreightCustomsDetails';
-import FreightCustomsCreate from './pages/freight/FreightCustomsCreate';
-import FreightShipmentDashboard from './pages/freight/FreightShipmentDashboard';
-import FreightShipmentCreate from './pages/freight/FreightShipmentCreate';
-import FreightShipmentDetails from './pages/freight/FreightShipmentDetails';
-import FreightShipmentsRefining from './pages/refining/FreightShipmentsRefining';
-import ArtisanMinierDashboard from './pages/artisan-minier/ArtisanMinierDashboard';
-import ArtisanMinierListe from './pages/artisan-minier/ArtisanMinierListe';
-import ArtisanMinierDetails from './pages/artisan-minier/ArtisanMinierDetails';
-import ArtisanMinierEdit from './pages/artisan-minier/ArtisanMinierEdit';
-import CarteSuivi from './pages/artisan-minier/CarteSuivi';
-import CarteValidation from './pages/artisan-minier/CarteValidation';
-import CarteExpirations from './pages/artisan-minier/CarteExpirations';
-import VentesOr from './pages/artisan-minier/VentesOr';
-import VenteOrForm from './pages/artisan-minier/VenteOrForm';
-import VenteOrDetails from './pages/artisan-minier/VenteOrDetails';
-import InfractionForm from './pages/artisan-minier/InfractionForm';
-import InfractionDetails from './pages/artisan-minier/InfractionDetails';
-import PaiementsVentesDashboard from './pages/artisan-minier/PaiementsVentesDashboard';
-import PaiementForm from './pages/artisan-minier/PaiementForm';
-import PaiementsHistorique from './pages/artisan-minier/PaiementsHistorique';
-import CentreRapportsAnalyse from './pages/artisan-minier/CentreRapportsAnalyse';
-import RapportChiffreAffaires from './pages/artisan-minier/RapportChiffreAffaires';
-import RapportQuantites from './pages/artisan-minier/RapportQuantites';
-import RapportTaxesRoyalties from './pages/artisan-minier/RapportTaxesRoyalties';
-import ArtisanalSiteProduction from './pages/artisanal-sites/ArtisanalSiteProduction';
 import { PERMISSIONS } from './lib/permissions';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
 import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
+
+function lazyNamed<TModule, TKey extends keyof TModule>(
+  loader: () => Promise<TModule>,
+  exportName: TKey,
+) {
+  return lazy(async () => {
+    const module = await loader();
+    return { default: module[exportName] as unknown as ComponentType };
+  });
+}
+
+const Login = lazyNamed(() => import('./pages/Login'), 'Login');
+const Profile = lazyNamed(() => import('./pages/Profile'), 'Profile');
+const ActivateAccount = lazy(() => import('./pages/auth/ActivateAccount'));
+const AuthCallback = lazyNamed(() => import('./pages/auth/AuthCallback'), 'AuthCallback');
+const GoldPricesPage = lazyNamed(() => import('./pages/prices/GoldPricesPage'), 'GoldPricesPage');
+const FxRatesPage = lazyNamed(() => import('./pages/prices/FxRatesPage'), 'FxRatesPage');
+const AuditTrailPage = lazyNamed(() => import('./pages/AuditTrailPage'), 'AuditTrailPage');
+const ManagementDashboard = lazyNamed(() => import('./pages/dashboards/ManagementDashboard'), 'ManagementDashboard');
+const FactoryDashboard = lazyNamed(() => import('./pages/dashboards/FactoryDashboard'), 'FactoryDashboard');
+const AirportDashboard = lazyNamed(() => import('./pages/dashboards/AirportDashboard'), 'AirportDashboard');
+const RefineryDashboard = lazyNamed(() => import('./pages/dashboards/RefineryDashboard'), 'RefineryDashboard');
+const CustomerDashboard = lazyNamed(() => import('./pages/dashboards/CustomerDashboard'), 'CustomerDashboard');
+const ProductionDashboardModern = lazyNamed(() => import('./pages/dashboards/ProductionDashboardModern'), 'ProductionDashboardModern');
+const GlobalDashboardEnhanced = lazyNamed(() => import('./pages/dashboards/GlobalDashboardEnhanced'), 'GlobalDashboardEnhanced');
+const AssayCertificatesModern = lazyNamed(() => import('./pages/documents/AssayCertificatesModern'), 'AssayCertificatesModern');
+const RefiningProcess = lazyNamed(() => import('./pages/refining/RefiningProcess'), 'RefiningProcess');
+const SalesDashboard = lazyNamed(() => import('./pages/sales/SalesDashboard'), 'SalesDashboard');
+const SaleCreate = lazyNamed(() => import('./pages/sales/SaleCreate'), 'SaleCreate');
+const SaleDetails = lazyNamed(() => import('./pages/sales/SaleDetails'), 'SaleDetails');
+const GoldTradeSpace = lazyNamed(() => import('./pages/sales/GoldTradeSpace'), 'GoldTradeSpace');
+const CustomerSaleApproval = lazyNamed(() => import('./pages/sales/CustomerSaleApproval'), 'CustomerSaleApproval');
+const HelpCenter = lazy(() => import('./pages/HelpCenter'));
+const CustomerListing = lazyNamed(() => import('./pages/customers/CustomerListing'), 'CustomerListing');
+const CustomerProfile = lazyNamed(() => import('./pages/customers/CustomerProfile'), 'CustomerProfile');
+const CustomerForm = lazyNamed(() => import('./pages/customers/CustomerForm'), 'CustomerForm');
+const PaymentsPage = lazyNamed(() => import('./pages/payments/PaymentsPage'), 'PaymentsPage');
+const PaymentCreate = lazyNamed(() => import('./pages/payments/PaymentCreate'), 'PaymentCreate');
+const PaymentDetailsPage = lazyNamed(() => import('./pages/payments/PaymentDetailsPage'), 'PaymentDetailsPage');
+const PaymentRecordPage = lazyNamed(() => import('./pages/payments/PaymentRecordPage'), 'PaymentRecordPage');
+const VirtualPaymentsPage = lazyNamed(() => import('./pages/payments/VirtualPaymentsPage'), 'VirtualPaymentsPage');
+const AnalyticsDashboard = lazyNamed(() => import('./pages/analytics/AnalyticsDashboardEnhanced'), 'AnalyticsDashboardEnhanced');
+const AnalyticsIntelligenceCenter = lazyNamed(() => import('./pages/analytics/AnalyticsIntelligenceCenter'), 'AnalyticsIntelligenceCenter');
+const ReportsDashboard = lazyNamed(() => import('./pages/reports/ReportsDashboard'), 'ReportsDashboard');
+const UsersListPage = lazyNamed(() => import('./pages/admin/UsersListPage'), 'UsersListPage');
+const UserManagementModern = lazyNamed(() => import('./pages/admin/UserManagementModern'), 'UserManagementModern');
+const UserPermissionsPage = lazyNamed(() => import('./pages/admin/UserPermissionsPage'), 'UserPermissionsPage');
+const UserDetailsPage = lazy(() => import('./pages/admin/UserDetailsPage'));
+const ApprovalsDashboard = lazyNamed(() => import('./pages/admin/ApprovalsDashboard'), 'ApprovalsDashboard');
+const TransportCompaniesPage = lazyNamed(() => import('./pages/admin/TransportCompaniesPage'), 'TransportCompaniesPage');
+const TransportCompanyForm = lazyNamed(() => import('./pages/admin/TransportCompanyForm'), 'TransportCompanyForm');
+const RefineryForm = lazyNamed(() => import('./pages/admin/RefineryForm'), 'RefineryForm');
+const RefineriesPage = lazyNamed(() => import('./pages/admin/RefineriesPage'), 'RefineriesPage');
+const ParametersPage = lazyNamed(() => import('./pages/admin/ParametersPage'), 'ParametersPage');
+const GoldShippingWorkflow = lazy(() => import('./pages/admin/GoldShippingWorkflow'));
+const GoldSalesSettingsPage = lazy(() => import('./pages/admin/GoldSalesSettingsPage'));
+const StatusManagerPage = lazy(() => import('./pages/admin/StatusManagerPage'));
+const ModulesManagement = lazy(() => import('./pages/admin/ModulesManagement'));
+const MessageriePage = lazy(() => import('./pages/admin/MessageriePage'));
+const MessagerieForm = lazy(() => import('./pages/admin/MessagerieForm'));
+const InventoryManagement = lazyNamed(() => import('./pages/inventory/InventoryManagement'), 'InventoryManagement');
+const AddInventoryEntry = lazyNamed(() => import('./pages/inventory/AddInventoryEntry'), 'AddInventoryEntry');
+const SilverInventoryManagement = lazyNamed(() => import('./pages/inventory/SilverInventoryManagement'), 'SilverInventoryManagement');
+const MiningCompaniesPage = lazyNamed(() => import('./pages/stakeholders/MiningCompaniesPage'), 'MiningCompaniesPage');
+const MiningCompanyForm = lazyNamed(() => import('./pages/stakeholders/MiningCompanyForm'), 'MiningCompanyForm');
+const MiningCompanyDetails = lazyNamed(() => import('./pages/stakeholders/MiningCompanyDetails'), 'MiningCompanyDetails');
+const FreightCompaniesPage = lazyNamed(() => import('./pages/stakeholders/FreightCompaniesPage'), 'FreightCompaniesPage');
+const RefineryPlantsPage = lazyNamed(() => import('./pages/stakeholders/RefineryPlantsPage'), 'RefineryPlantsPage');
+const DepositorsPage = lazyNamed(() => import('./pages/stakeholders/DepositorsPage'), 'DepositorsPage');
+const DepositorFormPage = lazyNamed(() => import('./pages/stakeholders/DepositorFormPage'), 'DepositorFormPage');
+const DailyProductionPage = lazyNamed(() => import('./pages/production/DailyProductionPage'), 'DailyProductionPage');
+const ProductionDetails = lazyNamed(() => import('./pages/production/ProductionDetails'), 'ProductionDetails');
+const ProductionInSafe = lazyNamed(() => import('./pages/production/ProductionInSafe'), 'ProductionInSafe');
+const BudgetManagementPage = lazyNamed(() => import('./pages/production/BudgetManagementPage'), 'BudgetManagementPage');
+const ExportLicensesPage = lazyNamed(() => import('./pages/production/ExportLicensesPage'), 'ExportLicensesPage');
+const ExportLicenseForm = lazyNamed(() => import('./pages/production/ExportLicenseForm'), 'ExportLicenseForm');
+const ExportLicenseDetails = lazyNamed(() => import('./pages/production/ExportLicenseDetails'), 'ExportLicenseDetails');
+const ForecastManagementPage = lazyNamed(() => import('./pages/performance/ForecastManagementPage'), 'ForecastManagementPage');
+const ShippingDashboard = lazy(() => import('./pages/shipping/ShippingDashboard'));
+const ShippingPreparationNew = lazy(() => import('./pages/shipping/ShippingPreparationNew'));
+const ShippingPreparationDetailsEnhanced = lazy(() => import('./pages/shipping/ShippingPreparationDetailsEnhanced'));
+const ShippingPreparationEdit = lazy(() => import('./pages/shipping/ShippingPreparationEdit'));
+const FreightCustomsDashboard = lazy(() => import('./pages/freight/FreightCustomsDashboard'));
+const FreightCustomsDetails = lazy(() => import('./pages/freight/FreightCustomsDetails'));
+const FreightCustomsCreate = lazy(() => import('./pages/freight/FreightCustomsCreate'));
+const FreightShipmentDashboard = lazy(() => import('./pages/freight/FreightShipmentDashboard'));
+const FreightShipmentCreate = lazy(() => import('./pages/freight/FreightShipmentCreate'));
+const FreightShipmentDetails = lazy(() => import('./pages/freight/FreightShipmentDetails'));
+const FreightShipmentsRefining = lazy(() => import('./pages/refining/FreightShipmentsRefining'));
+const ArtisanMinierDashboard = lazy(() => import('./pages/artisan-minier/ArtisanMinierDashboard'));
+const ArtisanMinierListe = lazy(() => import('./pages/artisan-minier/ArtisanMinierListe'));
+const ArtisanMinierDetails = lazy(() => import('./pages/artisan-minier/ArtisanMinierDetails'));
+const ArtisanMinierEdit = lazy(() => import('./pages/artisan-minier/ArtisanMinierEdit'));
+const CarteSuivi = lazy(() => import('./pages/artisan-minier/CarteSuivi'));
+const CarteValidation = lazy(() => import('./pages/artisan-minier/CarteValidation'));
+const CarteExpirations = lazy(() => import('./pages/artisan-minier/CarteExpirations'));
+const VentesOr = lazy(() => import('./pages/artisan-minier/VentesOr'));
+const VenteOrForm = lazy(() => import('./pages/artisan-minier/VenteOrForm'));
+const VenteOrDetails = lazy(() => import('./pages/artisan-minier/VenteOrDetails'));
+const InfractionForm = lazy(() => import('./pages/artisan-minier/InfractionForm'));
+const InfractionDetails = lazy(() => import('./pages/artisan-minier/InfractionDetails'));
+const PaiementsVentesDashboard = lazy(() => import('./pages/artisan-minier/PaiementsVentesDashboard'));
+const PaiementForm = lazy(() => import('./pages/artisan-minier/PaiementForm'));
+const PaiementsHistorique = lazy(() => import('./pages/artisan-minier/PaiementsHistorique'));
+const CentreRapportsAnalyse = lazy(() => import('./pages/artisan-minier/CentreRapportsAnalyse'));
+const RapportChiffreAffaires = lazy(() => import('./pages/artisan-minier/RapportChiffreAffaires'));
+const RapportQuantites = lazy(() => import('./pages/artisan-minier/RapportQuantites'));
+const RapportTaxesRoyalties = lazy(() => import('./pages/artisan-minier/RapportTaxesRoyalties'));
+const ArtisanalSiteProduction = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteProduction'));
 
 const AiAssistantPage = lazy(() => import('./pages/analytics/AiAssistantPage'));
 const AchatsMines = lazy(() => import('./pages/production/AchatsMines'));
@@ -131,6 +143,7 @@ const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/Artisa
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
 const ApprobateursPage = lazy(() => import('./pages/stakeholders/ApprobateursPage'));
 const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
+const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
 const PublicationsAdminPage = lazy(() => import('./pages/admin/PublicationsAdminPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
@@ -181,11 +194,20 @@ function AppRoutes() {
           <Route path="/modifier-mot-de-passe" element={<UpdatePassword />} />
 
           <Route
-            path="/portail-mine"
+            path="/portail-mine/*"
             element={
               <MinePortalGuard>
                 <MinePortalPage />
               </MinePortalGuard>
+            }
+          />
+
+          <Route
+            path="/portail-direction/*"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <ManagerPortalPage />
+              </ProtectedRoute>
             }
           />
 
@@ -1356,7 +1378,9 @@ function PrivateApp() {
         <NotificationProvider>
           <DialogProvider>
             <AppErrorBoundary>
-              <AppRoutes />
+              <MandatoryMfaGate>
+                <AppRoutes />
+              </MandatoryMfaGate>
             </AppErrorBoundary>
           </DialogProvider>
         </NotificationProvider>

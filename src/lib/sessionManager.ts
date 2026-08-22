@@ -1,22 +1,32 @@
 import { supabase } from './supabase';
 
-// Session timeout configuration
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-const WARNING_BEFORE_TIMEOUT = 2 * 60 * 1000; // Show warning 2 minutes before timeout
-const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // Refresh token every 10 minutes
+export const SESSION_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+export const SESSION_WARNING_BEFORE_TIMEOUT_MS = 60 * 1000;
+export const SESSION_LAST_ACTIVITY_KEY = 'sonasp-session-last-activity';
 
-export type SessionWarningCallback = () => void;
+export type SessionWarningCallback = (remainingSeconds: number) => void;
 export type SessionTimeoutCallback = () => void;
 
+function storedLastActivity(): number | null {
+  const raw = window.sessionStorage.getItem(SESSION_LAST_ACTIVITY_KEY);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function beginSessionActivity(now = Date.now()) {
+  window.sessionStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
+}
+
+export function clearSessionActivity() {
+  window.sessionStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
+}
+
 export class SessionManager {
-  private lastActivityTime: number = Date.now();
-  private tokenRefreshTimer: NodeJS.Timeout | null = null;
-  private inactivityCheckTimer: NodeJS.Timeout | null = null;
+  private lastActivityTime: number = storedLastActivity() ?? Date.now();
+  private inactivityCheckTimer: ReturnType<typeof setInterval> | null = null;
   private isActive: boolean = true;
-  private isRefreshing: boolean = false;
   private warningShown: boolean = false;
-  private consecutiveRefreshFailures: number = 0;
-  private maxConsecutiveFailures: number = 3;
 
   private onWarning: SessionWarningCallback | null = null;
   private onTimeout: SessionTimeoutCallback | null = null;
@@ -27,17 +37,14 @@ export class SessionManager {
     'scroll',
     'touchstart',
     'click',
-    'mousemove',
-    'keypress',
-    'touchmove',
-    'touchend',
   ];
   private listenersAttached = false;
   private readonly handleActivity = () => this.updateActivity();
   private readonly handleVisibilityChange = () => {
-    if (!document.hidden) this.updateActivity();
+    // Revenir sur l'onglet ne constitue pas une activité. On vérifie au
+    // contraire immédiatement si l'échéance est dépassée.
+    if (!document.hidden) void this.checkInactivity();
   };
-  private readonly handleFocus = () => this.updateActivity();
 
   constructor() {}
 
@@ -47,7 +54,6 @@ export class SessionManager {
       document.addEventListener(event, this.handleActivity, { passive: true });
     });
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
-    window.addEventListener('focus', this.handleFocus);
     this.listenersAttached = true;
   }
 
@@ -57,25 +63,21 @@ export class SessionManager {
       document.removeEventListener(event, this.handleActivity);
     });
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-    window.removeEventListener('focus', this.handleFocus);
     this.listenersAttached = false;
   }
 
   public start() {
-    console.log('[SessionManager] Starting with 30-minute inactivity timeout');
     this.isActive = true;
+    this.lastActivityTime = storedLastActivity() ?? Date.now();
+    beginSessionActivity(this.lastActivityTime);
     this.setupActivityListeners();
-    this.updateActivity();
-    this.startTokenRefresh();
     this.startInactivityCheck();
+    void this.checkInactivity();
   }
 
   public stop() {
-    console.log('[SessionManager] Stopping session management');
     this.isActive = false;
-    if (this.tokenRefreshTimer) clearInterval(this.tokenRefreshTimer);
     if (this.inactivityCheckTimer) clearInterval(this.inactivityCheckTimer);
-    this.tokenRefreshTimer = null;
     this.inactivityCheckTimer = null;
     this.removeActivityListeners();
   }
@@ -83,87 +85,32 @@ export class SessionManager {
   private updateActivity() {
     if (!this.isActive) return;
 
+    // Une fois l'avertissement affiché, un mouvement ou une frappe parasite ne
+    // suffit pas à prolonger la session : l'utilisateur doit choisir Continuer.
+    if (this.warningShown) return;
+
     this.lastActivityTime = Date.now();
-
-    // Reset warning if user becomes active again
-    if (this.warningShown) {
-      console.log('[SessionManager] User activity detected - hiding warning');
-      this.warningShown = false;
-    }
-
-    // Reset refresh failure counter on user activity
-    if (this.consecutiveRefreshFailures > 0) {
-      console.log('[SessionManager] Resetting refresh failure counter due to user activity');
-      this.consecutiveRefreshFailures = 0;
-    }
-  }
-
-  private startTokenRefresh() {
-    this.tokenRefreshTimer = setInterval(async () => {
-      if (!this.isActive || this.isRefreshing) return;
-
-      try {
-        this.isRefreshing = true;
-        const { data: { session }, error } = await supabase.auth.refreshSession();
-
-        if (error) {
-          this.consecutiveRefreshFailures++;
-          console.error(`[SessionManager] Token refresh failed (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures}):`, error.message);
-
-          // Only logout after multiple consecutive failures
-          if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
-            console.error('[SessionManager] Multiple token refresh failures - logging out');
-            this.handleTimeout();
-          }
-        } else if (session) {
-          // Reset failure counter on successful refresh
-          this.consecutiveRefreshFailures = 0;
-          console.log('[SessionManager] Token refreshed successfully');
-        } else {
-          // No error but no session - increment counter
-          this.consecutiveRefreshFailures++;
-          console.warn(`[SessionManager] No session after refresh (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures})`);
-
-          if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
-            console.error('[SessionManager] No valid session - logging out');
-            this.handleTimeout();
-          }
-        }
-      } catch (error) {
-        this.consecutiveRefreshFailures++;
-        console.error(`[SessionManager] Token refresh error (${this.consecutiveRefreshFailures}/${this.maxConsecutiveFailures}):`, error);
-
-        if (this.consecutiveRefreshFailures >= this.maxConsecutiveFailures) {
-          console.error('[SessionManager] Multiple token refresh errors - logging out');
-          this.handleTimeout();
-        }
-      } finally {
-        this.isRefreshing = false;
-      }
-    }, TOKEN_REFRESH_INTERVAL);
+    beginSessionActivity(this.lastActivityTime);
   }
 
   private startInactivityCheck() {
-    this.inactivityCheckTimer = setInterval(() => {
-      if (!this.isActive) return;
+    if (this.inactivityCheckTimer) clearInterval(this.inactivityCheckTimer);
+    this.inactivityCheckTimer = setInterval(() => void this.checkInactivity(), 1000);
+  }
 
-      const inactivityDuration = this.getInactivityDuration();
+  private async checkInactivity() {
+    if (!this.isActive) return;
+    const inactivityDuration = this.getInactivityDuration();
 
-      // Check if we should show warning (2 minutes before timeout)
-      if (inactivityDuration >= INACTIVITY_TIMEOUT - WARNING_BEFORE_TIMEOUT && !this.warningShown) {
-        console.log('[SessionManager] Showing inactivity warning (2 minutes before timeout)');
-        this.warningShown = true;
-        if (this.onWarning) {
-          this.onWarning();
-        }
-      }
+    if (inactivityDuration >= SESSION_INACTIVITY_TIMEOUT_MS) {
+      await this.handleTimeout();
+      return;
+    }
 
-      // Check if session should timeout (30 minutes)
-      if (inactivityDuration >= INACTIVITY_TIMEOUT) {
-        console.log('[SessionManager] Session timeout due to inactivity (30 minutes)');
-        this.handleTimeout();
-      }
-    }, 1000); // Check every second for accuracy
+    if (inactivityDuration >= SESSION_INACTIVITY_TIMEOUT_MS - SESSION_WARNING_BEFORE_TIMEOUT_MS) {
+      this.warningShown = true;
+      this.onWarning?.(Math.max(0, Math.ceil(this.getRemainingTime() / 1000)));
+    }
   }
 
   private async handleTimeout() {
@@ -176,12 +123,8 @@ export class SessionManager {
 
   private async logout() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        await invalidateSession(session.access_token);
-      }
-      await supabase.auth.signOut();
-      console.log('[SessionManager] User logged out due to timeout');
+      clearSessionActivity();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (error) {
       console.error('[SessionManager] Logout error:', error);
     }
@@ -192,20 +135,21 @@ export class SessionManager {
   }
 
   public getRemainingTime(): number {
-    const remaining = INACTIVITY_TIMEOUT - this.getInactivityDuration();
+    const remaining = SESSION_INACTIVITY_TIMEOUT_MS - this.getInactivityDuration();
     return Math.max(0, remaining);
   }
 
   public getTimeUntilWarning(): number {
-    const remaining = WARNING_BEFORE_TIMEOUT - this.getInactivityDuration();
+    const remaining = SESSION_INACTIVITY_TIMEOUT_MS
+      - SESSION_WARNING_BEFORE_TIMEOUT_MS
+      - this.getInactivityDuration();
     return Math.max(0, remaining);
   }
 
   public extendSession() {
-    console.log('[SessionManager] Session extended by user action');
-    this.updateActivity();
     this.warningShown = false;
-    this.consecutiveRefreshFailures = 0;
+    this.lastActivityTime = Date.now();
+    beginSessionActivity(this.lastActivityTime);
   }
 
   public setOnWarning(callback: SessionWarningCallback) {
@@ -219,7 +163,7 @@ export class SessionManager {
 
 export async function createSessionRecord(userId: string, sessionToken: string) {
   try {
-    const expiresAt = new Date(Date.now() + INACTIVITY_TIMEOUT);
+    const expiresAt = new Date(Date.now() + SESSION_INACTIVITY_TIMEOUT_MS);
 
     await supabase.from('user_sessions').insert({
       user_id: userId,

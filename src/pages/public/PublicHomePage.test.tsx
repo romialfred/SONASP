@@ -43,7 +43,12 @@ describe('vitrine publique SONASP', () => {
       name: 'L’or du Burkina, collecté et valorisé dans un cadre souverain.',
     })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Une plateforme unique pour toute la chaîne de valeur' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Un espace sécurisé pour chaque société minière' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Un espace sécurisé, pensé pour chaque mine' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Production & Expédition' })).toBeInTheDocument();
+    expect(screen.getByText('Gestion des prévisions de production')).toBeInTheDocument();
+    expect(screen.getByText('Analyse Labo')).toBeInTheDocument();
+    expect(screen.getByText('Enlèvement & Expédition', { selector: '.public-feature-family__item > span:last-child' })).toBeInTheDocument();
+    expect(screen.queryByText('Production et livraisons')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Une chaîne numérique continue, de la mine au paiement' })).toBeInTheDocument();
     expect(screen.getByText('Début du processus')).toBeInTheDocument();
     expect(screen.getByText('Fin du processus')).toBeInTheDocument();

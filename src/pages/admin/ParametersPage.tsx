@@ -13,7 +13,6 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section } from '@/components/ui/sn';
 import { Toggle } from '@/components/ui/Toggle';
-import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -107,7 +106,6 @@ export const valeurRegle = (editees: Record<string, number>, regle: BusinessRule
 export function ParametersPage() {
   const { user, refreshProfile } = useAuth();
   const { notification, showSuccess, showError, closeNotification } = useNotification();
-  const { open: demanderConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
   const [onglet, setOnglet] = useState<OngletId>('preferences');
   const [loading, setLoading] = useState(false);
@@ -266,46 +264,10 @@ export function ParametersPage() {
     }
   };
 
-  const basculer2FA = async (compte: UserProfile) => {
-    const confirme = await demanderConfirmation({
-      title: compte.two_factor_enabled ? 'Désactiver la double authentification ?' : 'Activer la double authentification ?',
-      message: compte.two_factor_enabled
-        ? `${compte.full_name || compte.email} pourra se connecter avec son seul mot de passe.`
-        : `${compte.full_name || compte.email} devra fournir un second facteur à la connexion.`,
-      confirmText: compte.two_factor_enabled ? 'Désactiver' : 'Activer',
-      cancelText: 'Annuler',
-      severity: compte.two_factor_enabled ? 'danger' : 'info',
-    });
-    if (!confirme) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ two_factor_enabled: !compte.two_factor_enabled })
-        .eq('id', compte.id);
-      if (error) throw error;
-      setComptes((current) =>
-        current.map((item) =>
-          item.id === compte.id ? { ...item, two_factor_enabled: !compte.two_factor_enabled } : item
-        )
-      );
-      showSuccess(
-        'Double authentification mise à jour',
-        compte.two_factor_enabled ? 'Elle est désormais désactivée.' : 'Elle est désormais exigée.'
-      );
-    } catch (reason) {
-      showError('Modification impossible', errorMessage(reason, 'Le réglage n’a pas été modifié.'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <NationalDashboardLayout>
       <div className="sn-page admin-page parametres">
         <NotificationDialog {...notification} onClose={closeNotification} />
-        <ConfirmationDialog />
 
         <PageHeader
           icon={Settings}
@@ -472,7 +434,7 @@ export function ParametersPage() {
             icon={Shield}
             tone="violet"
             title="Double authentification"
-            description="Comptes pour lesquels un second facteur est exigé à la connexion."
+            description="Le second facteur est exigé pour tous les comptes, sans exception ni désactivation libre-service."
           >
             {loading ? (
               <div className="admin-page__loading">
@@ -510,12 +472,9 @@ export function ParametersPage() {
                           </Badge>
                         </td>
                         <td>
-                          <Toggle
-                            checked={compte.two_factor_enabled}
-                            disabled={saving}
-                            ariaLabel={`Double authentification pour ${compte.full_name || compte.email}`}
-                            onChange={() => void basculer2FA(compte)}
-                          />
+                          <Badge tone={compte.two_factor_enabled ? 'success' : 'warning'} icon={ShieldCheck}>
+                            {compte.two_factor_enabled ? 'Configuré' : 'Enrôlement requis'}
+                          </Badge>
                         </td>
                       </tr>
                     ))}

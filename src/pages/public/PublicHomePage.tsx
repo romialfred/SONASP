@@ -124,8 +124,27 @@ function ValueChainSection() {
 }
 
 function MinePortalSection() {
-  const { content } = usePublicLocale();
+  const { content, locale } = usePublicLocale();
   const familyIcons = [Truck, FileKey2, Banknote, ShieldCheck];
+  const familyItemIcons = [
+    [CalendarClock, FileSignature, FlaskConical, Ship],
+    [FileSignature, CalendarClock, FileKey2, RefreshCcw],
+    [Building2, ReceiptText, Banknote, Scale],
+    [Building2, ShieldCheck, FileKey2, RefreshCcw],
+  ];
+  const familyIntroductions = locale === 'fr'
+    ? [
+        'Prévisions, contrôle et départ de la production.',
+        'Contrats et échéances réunis dans un même espace.',
+        'Achats, factures et règlements, au même endroit.',
+        'Dossiers partagés avec les interlocuteurs autorisés.',
+      ]
+    : [
+        'Prepare, check and ship production.',
+        'Mine and SONASP commitments gathered in one place.',
+        'A clear view of purchases, invoices and settlements.',
+        'Useful records shared with the right contacts.',
+      ];
   return (
     <section className="public-section public-portal-section" id="espace-mines">
       <div className="public-shell">
@@ -140,14 +159,26 @@ function MinePortalSection() {
           <div className="public-feature-families">
             {content.portal.families.map((family, index) => {
               const FamilyIcon = familyIcons[index] ?? ShieldCheck;
+              const itemIcons = familyItemIcons[index] ?? [];
               return (
               <article className={`public-feature-family public-feature-family--${index + 1}`} key={family.title}>
-                <div className="public-feature-family__icon"><FamilyIcon aria-hidden="true" /></div>
-                <div>
-                  <h3>{family.title}</h3>
-                  <ul>
-                    {family.items.map((item) => <li key={item}><span aria-hidden="true" />{item}</li>)}
-                  </ul>
+                <header className="public-feature-family__header">
+                  <div className="public-feature-family__icon"><FamilyIcon aria-hidden="true" /></div>
+                  <div>
+                    <h3>{family.title}</h3>
+                    <p>{familyIntroductions[index]}</p>
+                  </div>
+                </header>
+                <div className="public-feature-family__items" role="list">
+                  {family.items.map((item, itemIndex) => {
+                    const ItemIcon = itemIcons[itemIndex] ?? ArrowRight;
+                    return (
+                      <div className="public-feature-family__item" role="listitem" key={item}>
+                        <span className="public-feature-family__item-icon"><ItemIcon aria-hidden="true" /></span>
+                        <span>{item}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </article>
               );
@@ -176,8 +207,8 @@ function ContractsSection() {
           <SectionHeading {...content.contracts} />
           <p className="public-contracts__promise">
             {locale === 'fr'
-              ? 'Une lecture commune, du document signé jusqu’au rapprochement de chaque livraison.'
-              : 'A shared view, from the signed document through to reconciliation of every delivery.'}
+              ? 'Une lecture commune, du document signé jusqu’au rapprochement de chaque expédition.'
+              : 'A shared view, from the signed document through to reconciliation of every shipment.'}
           </p>
         </div>
 
@@ -326,7 +357,7 @@ function StakeholdersSection() {
     {
       id: 'semi-mechanized',
       title: content.ecosystem.actors[1],
-      role: locale === 'fr' ? 'Production encadrée et livraisons planifiées.' : 'Structured production and scheduled deliveries.',
+      role: locale === 'fr' ? 'Production encadrée et expéditions planifiées.' : 'Structured production and scheduled shipments.',
       movement: locale === 'fr' ? 'Vers la SONASP' : 'To SONASP',
       icon: Building2,
     },

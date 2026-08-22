@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
   responses: {} as Record<string, { data: unknown; error: unknown }>,
+  responseQueues: {} as Record<string, Array<{ data: unknown; error: unknown }>>,
 }));
 
 vi.mock('@/lib/supabase', () => ({
@@ -13,7 +14,9 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 function builder(table: string) {
-  const response = () => mocks.responses[table] || { data: [], error: null };
+  const response = () => mocks.responseQueues[table]?.shift()
+    || mocks.responses[table]
+    || { data: [], error: null };
   const query: Record<string, unknown> = {};
   query.select = vi.fn(() => query);
   query.eq = vi.fn((column: string, value: unknown) => {
@@ -31,8 +34,14 @@ describe('minePortalService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.filters = [];
+    mocks.responseQueues = {};
     mocks.responses = {
       mining_companies: { data: { id: 'mine-1', name: 'Mine A', code: 'M-A', is_active: true }, error: null },
+      annual_budgets: { data: [], error: null },
+      monthly_budgets: { data: [], error: null },
+      quarterly_forecasts: { data: [], error: null },
+      daily_production: { data: [], error: null },
+      mining_company_documents: { data: [], error: null },
       snp_contrats: { data: [{ id: 'c1', numero_contrat: 'CTR-1', intitule: 'Contrat', statut: 'actif', date_fin: '2026-12-31', quantite_totale: 100, unite: 'oz', mining_company_id: 'mine-1' }], error: null },
       snp_demandes_achat: { data: [], error: null },
       snp_factures_achat: { data: [], error: null },
@@ -45,6 +54,7 @@ describe('minePortalService', () => {
     };
     mocks.from.mockImplementation((table: string) => builder(table));
     mocks.rpc.mockImplementation(() => ({
+      error: null,
       maybeSingle: vi.fn(async () => ({ data: { reste_du: 250_000 }, error: null })),
     }));
   });
@@ -52,7 +62,11 @@ describe('minePortalService', () => {
   it('porte le filtre de société sur chaque source et élimine toute ligne inattendue', async () => {
     const snapshot = await minePortalService.load('mine-1');
 
-    const scopedTables = ['snp_contrats', 'snp_demandes_achat', 'snp_factures_achat', 'snp_reglements_achat', 'snp_analyses_teneur', 'snp_requisitions'];
+    const scopedTables = [
+      'annual_budgets', 'monthly_budgets', 'quarterly_forecasts', 'daily_production',
+      'snp_contrats', 'snp_demandes_achat', 'snp_factures_achat', 'snp_reglements_achat',
+      'snp_analyses_teneur', 'snp_requisitions', 'mining_company_documents',
+    ];
     scopedTables.forEach((table) => {
       expect(mocks.filters).toContainEqual({ table, column: 'mining_company_id', value: 'mine-1' });
     });
@@ -61,8 +75,77 @@ describe('minePortalService', () => {
     expect(snapshot.company.name).toBe('Mine A');
   });
 
+  it('fusionne deux chargements simultanés du même périmètre', async () => {
+    const [first, second] = await Promise.all([
+      minePortalService.load('mine-1'),
+      minePortalService.load('mine-1'),
+    ]);
+
+    expect(first.company.id).toBe('mine-1');
+    expect(second.company.id).toBe('mine-1');
+    expect(mocks.from.mock.calls.filter(([table]) => table === 'daily_production')).toHaveLength(1);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('liste les sociétés actives disponibles pour la vue globale Owner', async () => {
+    mocks.responses.mining_companies = {
+      data: [
+        { id: 'mine-1', name: 'Mine A', code: 'M-A' },
+        { id: 'mine-2', name: 'Mine B', code: 'M-B' },
+      ],
+      error: null,
+    };
+
+    const companies = await minePortalService.listCompanies();
+
+    expect(mocks.filters).toContainEqual({ table: 'mining_companies', column: 'is_active', value: true });
+    expect(companies.map((company) => company.id)).toEqual(['mine-1', 'mine-2']);
+  });
+
   it('échoue proprement si une source du périmètre est indisponible', async () => {
     mocks.responses.snp_factures_achat = { data: null, error: { message: 'offline' } };
     await expect(minePortalService.load('mine-1')).rejects.toThrow('Impossible de charger les factures.');
+  });
+
+  it('reste consultable si les colonnes de réception des règlements ne sont pas encore déployées', async () => {
+    mocks.responseQueues.snp_reglements_achat = [
+      { data: null, error: { code: '42703', message: 'column reception_statut does not exist' } },
+      {
+        data: [{
+          id: 'r1', reference_reglement: 'REG-1', statut: 'execute', date_reglement: '2026-08-20',
+          montant_fcfa: 1000, devise: 'XOF', mining_company_id: 'mine-1',
+        }],
+        error: null,
+      },
+    ];
+
+    const snapshot = await minePortalService.load('mine-1', { force: true });
+
+    expect(mocks.from.mock.calls.filter(([table]) => table === 'snp_reglements_achat')).toHaveLength(2);
+    expect(snapshot.payments[0]).toMatchObject({ reference_reglement: 'REG-1', reception_statut: 'non_requise' });
+  });
+
+  it('transmet les actions métier par les RPC sécurisées sans envoyer de société depuis le client', async () => {
+    await minePortalService.submitForecast({ year: 2026, month: 9, forecastOz: 432.5, notes: 'Révision terrain' });
+    await minePortalService.submitMonthlyBudget({ year: 2026, month: 9, budgetOz: 450 });
+    await minePortalService.declareProduction({ productionDate: '2026-08-22', bullionGrams: 1200, finenessPct: 91.2 });
+    await minePortalService.respondToRequest('request-1', 'rejeter', 'Volume indisponible');
+    await minePortalService.respondToPayment('payment-1', 'confirmer');
+
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_portail_mine_soumettre_prevision', {
+      p_annee: 2026, p_mois: 9, p_prevision_oz: 432.5, p_notes: 'Révision terrain',
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_portail_mine_soumettre_budget', {
+      p_annee: 2026, p_mois: 9, p_budget_oz: 450,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_portail_mine_declarer_production', expect.not.objectContaining({ mining_company_id: expect.anything() }));
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_portail_mine_repondre_demande', expect.objectContaining({ p_demande_id: 'request-1', p_decision: 'rejeter' }));
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_portail_mine_repondre_reglement', expect.objectContaining({ p_reglement_id: 'payment-1', p_decision: 'confirmer' }));
+  });
+
+  it('ne présente jamais une erreur technique brute au compte société', async () => {
+    mocks.rpc.mockReturnValueOnce({ error: { message: 'duplicate key value violates unique constraint internal_secret' } });
+    await expect(minePortalService.submitForecast({ year: 2026, month: 9, forecastOz: 50 }))
+      .rejects.toThrow('La prévision n’a pas pu être transmise.');
   });
 });

@@ -20,6 +20,7 @@ import {
   PackageCheck,
   ReceiptText,
   ShieldCheck,
+  Ship,
   Truck,
   type LucideIcon,
 } from 'lucide-react';
@@ -149,36 +150,36 @@ export function ResponsiveImage({
 
 const portalMetrics = [
   { label: 'Production', value: '18,42 t', change: '+8,4 %', icon: BarChart3, tone: 'green' },
-  { label: 'Livraisons', value: '32', change: '28 reçues', icon: Truck, tone: 'gold' },
+  { label: 'Expéditions', value: '32', change: '28 expédiées', icon: Ship, tone: 'gold' },
   { label: 'Factures', value: '96 %', change: '24 traitées', icon: ReceiptText, tone: 'blue' },
   { label: 'Paiements', value: '84 %', change: '12 rapprochés', icon: HandCoins, tone: 'red' },
 ];
 
 const portalTrend = [
-  { month: 'Mars', production: 2.4, livraisons: 1.9 },
-  { month: 'Avr.', production: 2.8, livraisons: 2.2 },
-  { month: 'Mai', production: 2.5, livraisons: 2.4 },
-  { month: 'Juin', production: 3.3, livraisons: 2.8 },
-  { month: 'Juil.', production: 3.1, livraisons: 2.9 },
-  { month: 'Août', production: 4.3, livraisons: 3.7 },
+  { month: 'Mars', production: 2.4, expeditions: 1.9 },
+  { month: 'Avr.', production: 2.8, expeditions: 2.2 },
+  { month: 'Mai', production: 2.5, expeditions: 2.4 },
+  { month: 'Juin', production: 3.3, expeditions: 2.8 },
+  { month: 'Juil.', production: 3.1, expeditions: 2.9 },
+  { month: 'Août', production: 4.3, expeditions: 3.7 },
 ];
 
 const portalOperations = [
   { label: 'Déclarées', value: 34 },
   { label: 'Planifiées', value: 28 },
-  { label: 'Reçues', value: 23 },
+  { label: 'Expédiées', value: 23 },
   { label: 'Validées', value: 19 },
 ];
 
 export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`portal-preview${compact ? ' portal-preview--section' : ' portal-preview--hero'}`} aria-label="Tableau de bord de démonstration du Portail Mine">
+    <div className={`portal-preview${compact ? ' portal-preview--section' : ' portal-preview--hero'}`} aria-label="Aperçu du tableau de bord du Portail Mine">
       <div className="portal-preview__header">
         <div className="portal-preview__brand">
           <img src="/SONASP v2.png" alt="SONASP" width="621" height="211" />
           <span><strong>Espace Mines</strong><small>Vue opérationnelle</small></span>
         </div>
-        <div className="portal-preview__tools"><span>Démonstration</span><Menu aria-hidden="true" /></div>
+        <div className="portal-preview__tools"><Menu aria-hidden="true" /></div>
       </div>
       <div className="portal-preview__titlebar">
         <div><span>Pilotage consolidé</span><h2>Tableau de bord</h2></div>
@@ -195,10 +196,10 @@ export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
       <div className="portal-preview__charts">
         <div className="portal-preview__chart-card portal-preview__chart-card--trend">
           <div className="portal-preview__chart-head">
-            <div><strong>Flux mensuels</strong><span>Tonnes déclarées et livrées</span></div>
-            <div className="portal-preview__legend"><i />Production <i />Livraisons</div>
+            <div><strong>Flux mensuels</strong><span>Tonnes déclarées et expédiées</span></div>
+            <div className="portal-preview__legend"><i />Production <i />Expéditions</div>
           </div>
-          <div className="portal-preview__chart-canvas" role="img" aria-label="Évolution mensuelle de la production et des livraisons de mars à août">
+          <div className="portal-preview__chart-canvas" role="img" aria-label="Évolution mensuelle de la production et des expéditions de mars à août">
             <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 460, height: 142 }}>
               <AreaChart data={portalTrend} margin={{ top: 8, right: 6, left: -28, bottom: 0 }}>
                 <defs>
@@ -212,7 +213,7 @@ export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#8a9691' }} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #dce5df', fontSize: 11 }} />
                 <Area type="monotone" dataKey="production" stroke="#08764b" strokeWidth={2} fill={`url(#productionFill-${compact ? 'section' : 'hero'})`} />
-                <Area type="monotone" dataKey="livraisons" stroke="#c99116" strokeWidth={2} fill="transparent" />
+                <Area type="monotone" dataKey="expeditions" stroke="#c99116" strokeWidth={2} fill="transparent" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -220,7 +221,7 @@ export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
         {compact && (
           <div className="portal-preview__chart-card portal-preview__chart-card--operations">
             <div className="portal-preview__chart-head"><div><strong>Opérations</strong><span>État du traitement</span></div></div>
-            <div className="portal-preview__chart-canvas" role="img" aria-label="34 opérations déclarées, 28 planifiées, 23 reçues et 19 validées">
+            <div className="portal-preview__chart-canvas" role="img" aria-label="34 opérations déclarées, 28 planifiées, 23 expédiées et 19 validées">
               <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 220, height: 142 }}>
                 <RechartsBarChart data={portalOperations} layout="vertical" margin={{ top: 4, right: 8, left: 2, bottom: 0 }}>
                   <CartesianGrid stroke="#edf1ee" horizontal={false} />
@@ -251,7 +252,7 @@ export function PortalContractPreview({ locale = 'fr' }: { locale?: 'fr' | 'en' 
         preview: 'Aperçu fonctionnel',
         cards: [
           { label: 'Cadre contractuel', value: 'Contrats & avenants', icon: FileSignature },
-          { label: 'Exécution', value: 'Livraisons tracées', icon: Gauge },
+          { label: 'Exécution', value: 'Expéditions suivies', icon: Gauge },
           { label: 'Échéances', value: 'Alertes partagées', icon: CalendarClock },
         ],
         flowTitle: 'Cycle de suivi d’un engagement',
@@ -264,7 +265,7 @@ export function PortalContractPreview({ locale = 'fr' }: { locale?: 'fr' | 'en' 
         preview: 'Functional preview',
         cards: [
           { label: 'Contract framework', value: 'Contracts & amendments', icon: FileSignature },
-          { label: 'Performance', value: 'Tracked deliveries', icon: Gauge },
+          { label: 'Performance', value: 'Tracked shipments', icon: Gauge },
           { label: 'Deadlines', value: 'Shared alerts', icon: CalendarClock },
         ],
         flowTitle: 'Commitment monitoring cycle',
@@ -323,10 +324,10 @@ export function PaymentPreview({ locale = 'fr' }: { locale?: 'fr' | 'en' }) {
         title: 'Une opération, toutes ses pièces reliées',
         badge: 'Aperçu fonctionnel',
         relationship: 'Dossier financier consolidé',
-        links: ['Livraison d’origine', 'Compte validé', 'Historique de validation'],
+        links: ['Expédition d’origine', 'Compte validé', 'Historique de validation'],
         note: 'Les montants et justificatifs réels restent réservés aux organisations autorisées.',
         stages: [
-          { label: 'Facture contrôlée', detail: 'Pièce reliée à la livraison', icon: ReceiptText },
+          { label: 'Facture contrôlée', detail: 'Pièce reliée à l’expédition', icon: ReceiptText },
           { label: 'Paiement rapproché', detail: 'Écriture et compte validés', icon: Banknote },
           { label: 'Preuve archivée', detail: 'Justificatif disponible', icon: FileCheck2 },
         ],
@@ -337,10 +338,10 @@ export function PaymentPreview({ locale = 'fr' }: { locale?: 'fr' | 'en' }) {
         title: 'One operation, every record connected',
         badge: 'Functional preview',
         relationship: 'Consolidated financial record',
-        links: ['Source delivery', 'Validated account', 'Approval history'],
+        links: ['Source shipment', 'Validated account', 'Approval history'],
         note: 'Actual amounts and supporting records remain restricted to authorized organizations.',
         stages: [
-          { label: 'Invoice checked', detail: 'Record linked to the delivery', icon: ReceiptText },
+          { label: 'Invoice checked', detail: 'Record linked to the shipment', icon: ReceiptText },
           { label: 'Payment reconciled', detail: 'Entry and account validated', icon: Banknote },
           { label: 'Evidence archived', detail: 'Supporting record available', icon: FileCheck2 },
         ],

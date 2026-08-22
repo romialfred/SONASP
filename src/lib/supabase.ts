@@ -7,51 +7,33 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const AUTH_STORAGE_KEY = 'gold-shipper-auth';
 const AUTH_PERSISTENCE_KEY = 'sonasp-auth-persistence';
 
-type AuthPersistence = 'local' | 'session';
-
-function persistenceTarget(): AuthPersistence {
-  return window.localStorage.getItem(AUTH_PERSISTENCE_KEY) === 'session'
-    ? 'session'
-    : 'local';
-}
-
 /**
- * Supabase accepte un adaptateur de stockage. Il permet de respecter le choix
- * « Se souvenir de moi » sans recréer une authentification parallèle : le même
- * jeton GoTrue reste utilisé, dans localStorage seulement si la case est cochée
- * et dans sessionStorage sinon.
+ * Les jetons ne doivent jamais survivre à la fermeture de l'onglet. Une
+ * ancienne version autorisait localStorage et relisait même ce stockage en
+ * secours, ce qui réouvrait une session après un redémarrage du navigateur.
  */
 const authStorage = {
   getItem(key: string) {
-    const primary = persistenceTarget() === 'local' ? window.localStorage : window.sessionStorage;
-    const secondary = primary === window.localStorage ? window.sessionStorage : window.localStorage;
-    return primary.getItem(key) ?? secondary.getItem(key);
+    return window.sessionStorage.getItem(key);
   },
   setItem(key: string, value: string) {
-    const primary = persistenceTarget() === 'local' ? window.localStorage : window.sessionStorage;
-    const secondary = primary === window.localStorage ? window.sessionStorage : window.localStorage;
-    primary.setItem(key, value);
-    secondary.removeItem(key);
+    window.sessionStorage.setItem(key, value);
+    window.localStorage.removeItem(key);
   },
   removeItem(key: string) {
-    window.localStorage.removeItem(key);
     window.sessionStorage.removeItem(key);
+    window.localStorage.removeItem(key);
   },
 };
 
-export function configureAuthPersistence(rememberMe: boolean) {
-  const target: AuthPersistence = rememberMe ? 'local' : 'session';
-  const source = target === 'local' ? window.sessionStorage : window.localStorage;
-  const destination = target === 'local' ? window.localStorage : window.sessionStorage;
-  const existingSession = source.getItem(AUTH_STORAGE_KEY);
-
-  window.localStorage.setItem(AUTH_PERSISTENCE_KEY, target);
-
-  if (existingSession !== null) {
-    destination.setItem(AUTH_STORAGE_KEY, existingSession);
-    source.removeItem(AUTH_STORAGE_KEY);
-  }
+export function configureAuthPersistence(_legacyRememberMe?: boolean) {
+  window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(AUTH_PERSISTENCE_KEY);
 }
+
+// Purge unique de la persistance héritée. La session courante de l'onglet, si
+// elle existe, reste intacte dans sessionStorage.
+if (typeof window !== 'undefined') configureAuthPersistence();
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');

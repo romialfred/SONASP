@@ -40,6 +40,7 @@ import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 import { cn } from '@/utils/cn';
 import { RouteFallback } from '@/components/common/RouteFallback';
 import { ALL_GROUPS, NAVIGATION_SECTIONS } from './sidebarNavigation';
+import { OwnerMineSwitcher } from './OwnerMineSwitcher';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -239,8 +240,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   const displayName = useMemo(() => {
     const name = user?.full_name?.trim();
     if (name && !name.includes('@')) return name;
-    return 'Romuald TIEGNAN';
-  }, [user?.full_name]);
+    return user?.email?.split('@')[0] || 'Utilisateur';
+  }, [user?.email, user?.full_name]);
 
   const closeMenus = () => {
     setLanguageOpen(false);
@@ -417,6 +418,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           </div>
 
           <div className="national-header__actions">
+            <OwnerMineSwitcher />
+
             {/* Le centre d'aide n'etait relie qu'a `Header.tsx`, composant mort
                 qu'aucun ecran n'importe : la page etait inatteignable. */}
             <button

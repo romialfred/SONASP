@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessSite, getDefaultRoute, hasAllPermissions, hasPermission, PERMISSIONS } from './permissions';
+import { canAccessSite, getDefaultRoute, hasAllPermissions, hasGlobalPlatformAccess, hasPermission, isReadOnlyManager, PERMISSIONS } from './permissions';
 import type { UserProfile } from '@/types/auth';
 
 const owner: UserProfile = {
@@ -26,16 +26,29 @@ describe('permissions Owner', () => {
     expect(hasAllPermissions(owner, Object.values(PERMISSIONS))).toBe(true);
     expect(hasPermission(owner, PERMISSIONS.SYSTEM_SETTINGS_MANAGE)).toBe(true);
     expect(canAccessSite(owner, 'nimporte-quel-site')).toBe(true);
+    expect(hasGlobalPlatformAccess(owner)).toBe(true);
   });
 
   it('ne contourne pas la désactivation du compte', () => {
     const inactiveOwner = { ...owner, is_active: false };
     expect(hasPermission(inactiveOwner, PERMISSIONS.USERS_MANAGE)).toBe(false);
+    expect(hasGlobalPlatformAccess(inactiveOwner)).toBe(false);
   });
 
   it('dirige tout représentant de mine vers le portail dédié', () => {
+    expect(getDefaultRoute('mine')).toBe('/portail-mine');
     expect(getDefaultRoute('customer', 'mine-123')).toBe('/portail-mine');
     expect(getDefaultRoute('management', 'mine-123')).toBe('/portail-mine');
     expect(getDefaultRoute('customer')).toBe('/dashboard/customer');
+  });
+
+  it('réserve au Manager un portail consultatif distinct', () => {
+    const manager = { ...owner, id: 'manager-id', email: 'direction@sonasp.bf', role: 'manager' as const };
+    expect(getDefaultRoute('manager')).toBe('/portail-direction');
+    expect(isReadOnlyManager(manager)).toBe(true);
+    expect(hasPermission(manager, PERMISSIONS.REPORTS_VIEW)).toBe(true);
+    expect(hasPermission(manager, PERMISSIONS.USERS_MANAGE)).toBe(false);
+    expect(hasPermission(manager, PERMISSIONS.SALES_APPROVE)).toBe(false);
+    expect(hasGlobalPlatformAccess(manager)).toBe(false);
   });
 });

@@ -37,6 +37,8 @@ vi.mock('@/lib/withTimeout', () => ({
 }));
 
 vi.mock('@/lib/sessionManager', () => ({
+  beginSessionActivity: vi.fn(),
+  clearSessionActivity: vi.fn(),
   SessionManager: class {
     setOnWarning() {}
     setOnTimeout() {}
@@ -254,7 +256,7 @@ describe('AuthProvider profile fallback', () => {
     fireEvent.click(button);
 
     await waitFor(() => expect(screen.getByTestId('sign-in-result')).toHaveTextContent('ACCOUNT_NOT_AUTHORIZED'));
-    expect(authMocks.configureAuthPersistence).toHaveBeenCalledWith(false);
+    expect(authMocks.configureAuthPersistence).toHaveBeenCalledWith();
     expect(authMocks.signInWithPassword).toHaveBeenCalledWith({
       email: 'agent@sonasp.bf',
       password: 'secret',

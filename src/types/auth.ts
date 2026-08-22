@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 
-export type UserRole = 'owner' | 'factory' | 'airport' | 'refinery' | 'customer' | 'management' | 'admin';
+export type UserRole = 'owner' | 'factory' | 'airport' | 'refinery' | 'customer' | 'mine' | 'manager' | 'management' | 'admin';
 
 export interface UserProfile {
   id: string;

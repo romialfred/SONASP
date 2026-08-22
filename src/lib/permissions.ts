@@ -42,6 +42,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.SALES_VIEW,
     PERMISSIONS.REPORTS_VIEW,
   ],
+  mine: [
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  manager: [
+    PERMISSIONS.SALES_VIEW,
+    PERMISSIONS.CUSTOMERS_VIEW,
+    PERMISSIONS.LICENSES_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
   management: FULL_ACCESS_PERMISSIONS,
   admin: FULL_ACCESS_PERMISSIONS,
 };
@@ -67,8 +78,22 @@ export function hasAllPermissions(user: UserProfile | null, permissions: string[
   return permissions.every(permission => rolePermissions.includes(permission));
 }
 
+/**
+ * Le rôle Owner est le seul périmètre transversal de la plateforme.
+ * Cette décision part toujours du profil autoritatif chargé par AuthContext,
+ * jamais d'une valeur fournie par une route ou par le navigateur.
+ */
+export function hasGlobalPlatformAccess(user: UserProfile | null): boolean {
+  return Boolean(user?.is_active && user.role === 'owner');
+}
+
 export function isManagement(user: UserProfile | null): boolean {
   return Boolean(user?.is_active && (user.role === 'owner' || user.role === 'management'));
+}
+
+/** Direction consultative : aucun droit de création, modification ou validation. */
+export function isReadOnlyManager(user: UserProfile | null): boolean {
+  return Boolean(user?.is_active && user.role === 'manager');
 }
 
 /**
@@ -101,6 +126,10 @@ export function getDefaultRoute(role: UserRole, miningCompanyId: string | null =
       return '/dashboard/refinery';
     case 'customer':
       return '/dashboard/customer';
+    case 'manager':
+      return '/portail-direction';
+    case 'mine':
+      return '/portail-mine';
     case 'management':
     case 'owner':
     case 'admin':

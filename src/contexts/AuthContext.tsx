@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useRef } fro
 import { Session, AuthChangeEvent, User as SupabaseUser } from '@supabase/supabase-js';
 import { configureAuthPersistence, supabase } from '@/lib/supabase';
 import { UserProfile, AuthState, UserRole } from '@/types/auth';
-import { SessionManager } from '@/lib/sessionManager';
+import { beginSessionActivity, clearSessionActivity, SessionManager } from '@/lib/sessionManager';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 
@@ -20,8 +20,9 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_ROLES: UserRole[] = ['owner', 'factory', 'airport', 'refinery', 'customer', 'management', 'admin'];
+const USER_ROLES: UserRole[] = ['owner', 'factory', 'airport', 'refinery', 'customer', 'mine', 'manager', 'management', 'admin'];
 const OWNER_ACCOUNT_EMAILS = new Set(['romuald.tiegnan@gmail.com']);
+const profileRequests = new Map<string, Promise<UserProfile | null>>();
 
 const getTrustedAuthRole = (authUser: SupabaseUser): UserRole | null => {
   if (authUser.email && OWNER_ACCOUNT_EMAILS.has(authUser.email.toLowerCase())) {
@@ -51,7 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   const sessionManagerRef = useRef<SessionManager | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(30);
+  const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(60);
+
+  const startSessionManager = () => {
+    if (sessionManagerRef.current) return;
+    const manager = new SessionManager();
+    manager.setOnWarning((remainingSeconds) => {
+      setWarningRemainingSeconds(remainingSeconds);
+      setShowTimeoutWarning(true);
+    });
+    manager.setOnTimeout(() => {
+      setShowTimeoutWarning(false);
+    });
+    manager.start();
+    sessionManagerRef.current = manager;
+  };
 
   const resolveProfileResult = (
     profile: UserProfile | null,
@@ -72,8 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+    const pendingRequest = profileRequests.get(userId);
+    if (pendingRequest) return pendingRequest;
 
-    return withRetry(
+    const request = withRetry(
       async () => {
         // Fetch the user profile with timeout
         const { data: profile, error: profileError } = await withTimeout(
@@ -82,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('*')
             .eq('id', userId)
             .single(),
-          8000,
+          5000,
           'Profile-Fetch'
         );
 
@@ -117,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .from('user_site_assignments')
               .select('site_id, is_primary')
               .eq('user_id', userId),
-            5000,
+            2500,
             'Site-Assignments'
           );
           siteIds = assignments?.map((a: any) => a.site_id) || [];
@@ -145,16 +162,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       },
       {
-        maxRetries: 2,
-        initialDelay: 1500,
+        maxRetries: 1,
+        initialDelay: 350,
         backoffMultiplier: 1.5,
         timeout: 8000,
         label: 'Profile-Fetch',
         shouldRetry: (error: any) => {
-          // Don't retry on timeout or CORS errors
+          // Les erreurs fonctionnelles/RLS ne changeront pas après une attente.
           if (error?.message?.includes('timeout')) return false;
           if (error?.message?.includes('CORS')) return false;
-          // Retry on network errors
+          if (typeof error?.code === 'string' && /^(PGRST|42|22|23)/.test(error.code)) return false;
           return true;
         },
       }
@@ -162,6 +179,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Profile] All fetch attempts failed:', error);
       return null;
     });
+
+    // React StrictMode et SIGNED_IN peuvent lancer l'initialisation presque au
+    // même instant. Une seule lecture autoritative suffit pour ce même compte.
+    profileRequests.set(userId, request);
+    try {
+      return await request;
+    } finally {
+      if (profileRequests.get(userId) === request) profileRequests.delete(userId);
+    }
   };
 
   const logSecurityEvent = async (
@@ -189,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      clearSessionActivity();
       await supabase.auth.signOut();
     } finally {
       setState({
@@ -209,14 +236,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      configureAuthPersistence(options.rememberMe ?? true);
+      // Le paramètre historique est volontairement ignoré : une session SONASP
+      // ne peut plus être persistée après la fermeture de l'onglet.
+      void options;
+      configureAuthPersistence();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       });
 
       if (error) {
-        await logSecurityEvent(null, 'login_failed', { email: normalizedEmail, error: error.message });
+        void logSecurityEvent(null, 'login_failed', { email: normalizedEmail, error: error.message });
         return { error: error.message };
       }
 
@@ -239,15 +269,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: 'ACCOUNT_NOT_AUTHORIZED' };
         }
 
-        await logSecurityEvent(data.user.id, 'login_success', { email: normalizedEmail });
-
-        await supabase
-          .from('user_profiles')
-          .update({
-            last_login_at: new Date().toISOString(),
-            failed_login_attempts: 0,
-          })
-          .eq('id', data.user.id);
+        // Ces écritures de suivi ne conditionnent pas l'autorisation. Les
+        // lancer en arrière-plan évite d'ajouter deux allers-retours réseau au
+        // délai perçu entre la validation et l'ouverture du tableau de bord.
+        void Promise.all([
+          logSecurityEvent(data.user.id, 'login_success', { email: normalizedEmail }),
+          supabase
+            .from('user_profiles')
+            .update({
+              last_login_at: new Date().toISOString(),
+              failed_login_attempts: 0,
+            })
+            .eq('id', data.user.id),
+        ]);
+        beginSessionActivity();
       }
 
       return {};
@@ -270,6 +305,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionManagerRef.current.stop();
         sessionManagerRef.current = null;
       }
+
+      clearSessionActivity();
 
       // Now call Supabase signOut
       console.log('[Auth] Calling supabase.auth.signOut()');
@@ -406,21 +443,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profileError: null,
           }));
 
-          // Start session manager immediately
-          if (!sessionManagerRef.current) {
-            console.log('[Auth] Starting session manager');
-            sessionManagerRef.current = new SessionManager();
-            sessionManagerRef.current.setOnWarning(() => {
-              console.log('[Auth] Session timeout warning triggered');
-              setShowTimeoutWarning(true);
-              setWarningRemainingSeconds(30); // 30 seconds remaining
-            });
-            sessionManagerRef.current.setOnTimeout(() => {
-              console.log('[Auth] Session timeout - forcing logout');
-              setShowTimeoutWarning(false);
-            });
-            sessionManagerRef.current.start();
-          }
+          startSessionManager();
 
           console.log('[Auth] Fetching authoritative profile...');
           void (async () => {
@@ -540,20 +563,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profileError: null,
           }));
 
-          if (!sessionManagerRef.current) {
-            console.log('[Auth] Starting session manager');
-            sessionManagerRef.current = new SessionManager();
-            sessionManagerRef.current.setOnWarning(() => {
-              console.log('[Auth] Session timeout warning triggered');
-              setShowTimeoutWarning(true);
-              setWarningRemainingSeconds(30); // 30 seconds remaining
-            });
-            sessionManagerRef.current.setOnTimeout(() => {
-              console.log('[Auth] Session timeout - forcing logout');
-              setShowTimeoutWarning(false);
-            });
-            sessionManagerRef.current.start();
-          }
+          startSessionManager();
 
           console.log('[Auth] Fetching authoritative profile...');
           void (async () => {
@@ -582,20 +592,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           })();
         } else if (event === 'SIGNED_OUT') {
-          console.log('[Auth] SIGNED_OUT event detected');
-          console.log('[Auth] SessionManager active?', !!sessionManagerRef.current);
-
-          // If session manager is active, this is likely a false SIGNED_OUT during token refresh
-          // The session manager only runs when user is logged in
           if (sessionManagerRef.current) {
-            console.log('[Auth] FALSE ALARM - SessionManager is active, ignoring spurious SIGNED_OUT event');
-            console.log('[Auth] Token refresh may be in progress, keeping session active');
-            return; // Ignore this event completely - don't check session or update state
+            sessionManagerRef.current.stop();
+            sessionManagerRef.current = null;
           }
-
-          // Only process logout if session manager is not active (real logout)
-          console.log('[Auth] Confirmed logout - no active session manager');
-
+          clearSessionActivity();
+          setShowTimeoutWarning(false);
           setState({
             user: null,
             session: null,
@@ -646,9 +648,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[Auth] Component unmounting - cleaning up');
       mounted = false;
       subscription.unsubscribe();
-      // DON'T stop session manager on unmount - it should persist
-      // Only stop on explicit logout
-      console.log('[Auth] Cleanup complete (session manager kept alive)');
+      sessionManagerRef.current?.stop();
+      sessionManagerRef.current = null;
     };
   }, []);
 

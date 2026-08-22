@@ -145,7 +145,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
         },
         {
           title: 'Collecter',
-          description: 'Planifiez les livraisons et suivez les quantités collectées avec la SONASP.',
+          description: 'Planifiez les expéditions et suivez les quantités collectées avec la SONASP.',
           icon: 'package-check',
         },
         {
@@ -162,26 +162,26 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
     },
     portal: {
       eyebrow: 'Portail Mine',
-      title: 'Un espace sécurisé pour chaque société minière',
+      title: 'Un espace sécurisé, pensé pour chaque mine',
       description:
-        'Chaque mine dispose d’un portail dédié pour gérer ses échanges avec la SONASP, suivre ses engagements et disposer d’une vision consolidée de ses opérations.',
+        'Prévisions, analyses, expéditions, contrats et paiements : chaque équipe retrouve ses dossiers et ses échanges avec la SONASP dans un espace clair, conçu pour le travail quotidien.',
       cta: 'Découvrir le Portail Mine',
       families: [
         {
-          title: 'Production et livraisons',
-          items: ['Déclaration de production', 'Programmation des livraisons', 'Suivi des enlèvements', 'Résultats d’analyse'],
+          title: 'Production & Expédition',
+          items: ['Gestion des prévisions de production', 'Déclaration de production', 'Analyse Labo', 'Enlèvement & Expédition'],
         },
         {
           title: 'Contrats et engagements',
-          items: ['Contrats et avenants', 'Engagements mensuels', 'Réquisitions', 'Anomalies et régularisation'],
+          items: ['Contrats et avenants', 'Engagements mensuels', 'Réquisitions', 'Écarts et régularisations'],
         },
         {
           title: 'Facturation et paiements',
-          items: ['Achats de la SONASP', 'Factures et acomptes', 'Suivi des paiements', 'Preuves de paiement'],
+          items: ['Achats SONASP', 'Factures et acomptes', 'Paiements et soldes', 'Justificatifs de règlement'],
         },
         {
           title: 'Documents et conformité',
-          items: ['Profil et sites miniers', 'Utilisateurs autorisés', 'Transmission documentaire', 'Notifications'],
+          items: ['Sites et contacts de la mine', 'Accès de l’équipe', 'Dossiers partagés', 'Messages et notifications'],
         },
       ],
     },
@@ -192,7 +192,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
         'Chaque étape alimente un historique contrôlable et limite les ruptures d’information.',
       steps: [
         { title: 'Déclaration', description: 'Enregistrement structuré de la production.' },
-        { title: 'Planification', description: 'Organisation de la collecte ou de la livraison.' },
+        { title: 'Planification', description: 'Organisation de la collecte ou de l’expédition.' },
         { title: 'Enlèvement', description: 'Suivi du départ et de la prise en charge.' },
         { title: 'Réception', description: 'Pesée et constat à l’arrivée.' },
         { title: 'Analyse', description: 'Contrôle de la teneur et rapprochement.' },
@@ -210,7 +210,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       items: [
         'Contrats de fourniture et avenants',
         'Quantités, teneurs et tolérances',
-        'Échéanciers et livraisons réalisées',
+        'Échéanciers et expéditions réalisées',
         'Reports, dépassements et défauts',
         'Renouvellements et réquisitions exceptionnelles',
       ],
@@ -273,7 +273,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
     },
     finalCta: {
       title: 'Accédez à votre espace et pilotez vos opérations avec la SONASP',
-      description: 'Le Portail Mine centralise vos déclarations, vos engagements, vos livraisons, vos factures, vos paiements et vos documents.',
+      description: 'Le Portail Mine centralise vos déclarations, vos engagements, vos expéditions, vos factures, vos paiements et vos documents.',
       portal: 'Accéder au Portail Mine',
       assistance: 'Contacter l’assistance',
     },
@@ -312,21 +312,21 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       description: 'Structured operations from the initial declaration to consolidated oversight.',
       items: [
         { title: 'Declare', description: 'Report production within a simple, structured and secure framework.', icon: 'file-input' },
-        { title: 'Collect', description: 'Plan deliveries and monitor quantities collected with SONASP.', icon: 'package-check' },
+        { title: 'Collect', description: 'Plan shipments and monitor quantities collected with SONASP.', icon: 'package-check' },
         { title: 'Sell', description: 'Track purchases, sales, invoices and commercial conditions.', icon: 'hand-coins' },
         { title: 'Oversee', description: 'Control commitments, payments, documents and indicators.', icon: 'chart-no-axes-combined' },
       ],
     },
     portal: {
       eyebrow: 'Mine Portal',
-      title: 'A secure workspace for every mining company',
-      description: 'Each mining company has a dedicated portal to manage exchanges with SONASP, monitor commitments and access a consolidated view of operations.',
+      title: 'A secure workspace designed for every mine',
+      description: 'Forecasts, assays, shipments, contracts and payments: every team finds its records and exchanges with SONASP in a clear workspace designed for everyday work.',
       cta: 'Discover the Mine Portal',
       families: [
-        { title: 'Production and deliveries', items: ['Production reporting', 'Delivery planning', 'Pickup monitoring', 'Assay results'] },
+        { title: 'Production & Shipment', items: ['Production forecast management', 'Production reporting', 'Laboratory assay', 'Pickup & shipment'] },
         { title: 'Contracts and commitments', items: ['Contracts and amendments', 'Monthly commitments', 'Requisitions', 'Exceptions and corrections'] },
-        { title: 'Invoicing and payments', items: ['SONASP purchases', 'Invoices and advances', 'Payment monitoring', 'Payment evidence'] },
-        { title: 'Documents and compliance', items: ['Company profile and sites', 'Authorized users', 'Document submission', 'Notifications'] },
+        { title: 'Invoicing and payments', items: ['SONASP purchases', 'Invoices and advances', 'Payments and balances', 'Settlement evidence'] },
+        { title: 'Documents and compliance', items: ['Mine sites and contacts', 'Team access', 'Shared records', 'Messages and notifications'] },
       ],
     },
     process: {
@@ -335,7 +335,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       description: 'Every step contributes to a controlled history and reduces information gaps.',
       steps: [
         { title: 'Declaration', description: 'Structured production recording.' },
-        { title: 'Planning', description: 'Collection or delivery scheduling.' },
+        { title: 'Planning', description: 'Collection or shipment scheduling.' },
         { title: 'Pickup', description: 'Departure and custody monitoring.' },
         { title: 'Reception', description: 'Weighing and receipt control.' },
         { title: 'Assay', description: 'Grade control and reconciliation.' },
@@ -349,7 +349,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       eyebrow: 'Contracts and commitments',
       title: 'Contractual commitments monitored in real time',
       description: 'Obligations, performance and deadlines are combined into a shared view for the mine and SONASP.',
-      items: ['Supply contracts and amendments', 'Quantities, grades and tolerances', 'Schedules and completed deliveries', 'Carryovers, overruns and defaults', 'Renewals and exceptional requisitions'],
+      items: ['Supply contracts and amendments', 'Quantities, grades and tolerances', 'Schedules and completed shipments', 'Carryovers, overruns and defaults', 'Renewals and exceptional requisitions'],
     },
     payments: {
       eyebrow: 'Invoices and payments',
@@ -400,7 +400,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
     },
     finalCta: {
       title: 'Access your workspace and manage operations with SONASP',
-      description: 'The Mine Portal centralizes declarations, commitments, deliveries, invoices, payments and documents.',
+      description: 'The Mine Portal centralizes declarations, commitments, shipments, invoices, payments and documents.',
       portal: 'Access the Mine Portal',
       assistance: 'Contact support',
     },

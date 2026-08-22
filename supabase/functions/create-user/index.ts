@@ -27,6 +27,7 @@ interface CreateUserRequest {
   phone?: string;
   role: string;
   is_active?: boolean;
+  mining_company_id?: string | null;
   permissions?: Record<string, ModulePermission>;
 }
 
@@ -83,13 +84,13 @@ Deno.serve(async (req: Request) => {
 
     console.log('[create-user] User profile:', profile);
 
-    if (!profile || profile.role !== 'management') {
+    if (!profile || !['owner', 'admin', 'management'].includes(profile.role)) {
       console.warn('[create-user] Unauthorized user attempt:', { userId: currentUser.id, role: profile?.role });
       throw new Error('Only management users can create accounts');
     }
 
     const requestData: CreateUserRequest = await req.json();
-    const { email, password, full_name, phone, role, is_active, permissions } = requestData;
+    const { email, password, full_name, phone, role, is_active, mining_company_id, permissions } = requestData;
 
     console.log('[create-user] Request received:', {
       email,
@@ -104,6 +105,17 @@ Deno.serve(async (req: Request) => {
     if (!email || !full_name || !role) {
       console.error('[create-user] Missing required fields:', { email: !!email, full_name: !!full_name, role: !!role });
       throw new Error('Missing required fields: email, full_name, and role are required');
+    }
+
+    const allowedRoles = ['owner', 'admin', 'management', 'manager', 'mine', 'factory', 'airport', 'refinery', 'customer'];
+    if (!allowedRoles.includes(role)) {
+      throw new Error('Invalid account role');
+    }
+    if (role === 'mine' && !mining_company_id) {
+      throw new Error('A mining company account requires one company');
+    }
+    if (role !== 'mine' && mining_company_id) {
+      throw new Error('Only a mining company account can receive this company scope');
     }
 
     // SÉCURITÉ (audit V12) : générateur cryptographiquement sûr (CSPRNG), pas Math.random.
@@ -133,6 +145,7 @@ Deno.serve(async (req: Request) => {
       },
       app_metadata: {
         role: role,
+        mining_company_id: role === 'mine' ? mining_company_id : null,
       },
     });
 
@@ -156,6 +169,7 @@ Deno.serve(async (req: Request) => {
         full_name: full_name,
         phone: phone || null,
         role: role,
+        mining_company_id: role === 'mine' ? mining_company_id : null,
         is_active: is_active !== undefined ? is_active : true, // Default to active
         two_factor_enabled: false,
       });

@@ -92,16 +92,16 @@ describe('page de connexion SONASP', () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
-  it('transmet les identifiants et le choix de persistance au vrai contexte', async () => {
+  it('transmet les identifiants sans proposer de session persistante', async () => {
     const user = userEvent.setup();
     renderLogin();
 
     await user.type(screen.getByRole('textbox', { name: 'Nom d’utilisateur' }), ' Agent@Sonasp.bf ');
     await user.type(screen.getByLabelText('Mot de passe'), 'mot-de-passe');
-    await user.click(screen.getByRole('checkbox', { name: 'Se souvenir de moi' }));
     await user.click(screen.getByRole('button', { name: 'Se connecter' }));
 
-    expect(signIn).toHaveBeenCalledWith(' Agent@Sonasp.bf ', 'mot-de-passe', { rememberMe: true });
+    expect(signIn).toHaveBeenCalledWith(' Agent@Sonasp.bf ', 'mot-de-passe');
+    expect(screen.queryByRole('checkbox', { name: 'Se souvenir de moi' })).not.toBeInTheDocument();
   });
 
   it('relie les actions secondaires aux routes existantes', () => {
@@ -125,8 +125,6 @@ describe('page de connexion SONASP', () => {
     expect(screen.getByLabelText('Mot de passe')).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'Afficher le mot de passe' })).toHaveFocus();
-    await user.tab();
-    expect(screen.getByRole('checkbox', { name: 'Se souvenir de moi' })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('link', { name: 'Mot de passe oublié ?' })).toHaveFocus();
     await user.tab();

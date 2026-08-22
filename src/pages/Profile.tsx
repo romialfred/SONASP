@@ -10,10 +10,8 @@ import Button from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { useToast } from '@/components/ui/Toast';
 import { Table, Column } from '@/components/ui/Table';
-import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
 
 interface ActivityLog {
   action: string;
@@ -32,40 +30,24 @@ export function Profile() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [language, setLanguage] = useState('en');
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [batchNotifications, setBatchNotifications] = useState(true);
   const [approvalNotifications, setApprovalNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [show2FASetup, setShow2FASetup] = useState(false);
 
   useEffect(() => {
     if (user) {
       setName(user.full_name || '');
       setEmail(user.email);
       setPhone(user.phone || '');
-      setTwoFactorEnabled(user.two_factor_enabled);
-      setLanguage(user.language);
+      setLanguage(user.language || 'fr');
       setEmailNotifications(user.email_notifications);
       setBatchNotifications(user.batch_notifications);
       setApprovalNotifications(user.approval_notifications);
     }
   }, [user]);
-
-  /**
-   * Desactiver soi-meme son second facteur annulerait la protection d'un simple
-   * clic, y compris depuis une session volee. La levee passe par un
-   * administrateur, qui la motive et la trace.
-   */
-  const handleDisable2FA = () => {
-    addToast(
-      'Le second facteur ne se desactive pas depuis votre profil. '
-      + 'En cas de perte de votre appareil, un administrateur le reinitialise.',
-      'error'
-    );
-  };
 
   const activityLogs: ActivityLog[] = [
     { action: 'Login', timestamp: '2025-10-24 10:30:00', ip: '192.168.1.1' },
@@ -271,41 +253,20 @@ export function Profile() {
                 <Lock className="h-5 w-5 text-primary-500" />
                 <CardTitle>{t('auth.twoFactorAuth')}</CardTitle>
               </div>
-              <CardDescription>Add an extra layer of security</CardDescription>
+              <CardDescription>Protection obligatoire de tous les comptes SONASP</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">2FA Status</p>
+                  <p className="font-medium text-gray-900">Statut du second facteur</p>
                   <p className="text-sm text-gray-600">
-                    {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                    {user?.two_factor_enabled ? 'Configuré et obligatoire' : 'Enrôlement obligatoire'}
                   </p>
                 </div>
-                <Button
-                  variant={twoFactorEnabled ? 'danger' : 'success'}
-                  size="sm"
-                  onClick={() => twoFactorEnabled ? handleDisable2FA() : setShow2FASetup(true)}
-                  loading={loading}
-                >
-                  {twoFactorEnabled ? t('auth.disable2FA') : t('auth.enable2FA')}
-                </Button>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800">Obligatoire</span>
               </div>
             </CardContent>
           </Card>
-
-          <Modal
-            isOpen={show2FASetup}
-            onClose={() => setShow2FASetup(false)}
-            title=""
-          >
-            <TwoFactorSetup
-              onComplete={() => {
-                setShow2FASetup(false);
-                addToast('Two-factor authentication enabled successfully', 'success');
-              }}
-              onCancel={() => setShow2FASetup(false)}
-            />
-          </Modal>
 
           <Card>
             <CardHeader>

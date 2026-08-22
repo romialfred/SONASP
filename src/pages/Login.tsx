@@ -109,7 +109,6 @@ export function Login() {
   const { signIn } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -172,7 +171,7 @@ export function Login() {
       'La connexion est momentanément indisponible. Veuillez réessayer.',
     );
     try {
-      const result = await signIn(username, password, { rememberMe });
+      const result = await signIn(username, password);
       if (result.error) setErrors({ general: messageConnexion(result.error, secours) });
     } catch (error: unknown) {
       const brut = error instanceof Error ? error.message : '';
@@ -401,15 +400,6 @@ export function Login() {
               </div>
 
               <div className="login-options">
-                <label className="login-options__remember">
-                  <input
-                    type="checkbox"
-                    disabled={loading}
-                    checked={rememberMe}
-                    onChange={(event) => setRememberMe(event.target.checked)}
-                  />
-                  <span>{t('auth.rememberMe')}</span>
-                </label>
                 <Link className="login-options__forgot" to="/recuperer-acces">
                   {t('login.forgotPassword')}
                 </Link>

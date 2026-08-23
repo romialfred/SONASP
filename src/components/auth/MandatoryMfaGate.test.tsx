@@ -11,11 +11,12 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   refreshProfile: vi.fn(),
   setupProps: vi.fn(),
+  session: { access_token: 'token-a', user: { id: 'user-1' } },
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    session: { access_token: 'token-a', user: { id: 'user-1' } },
+    session: mocks.session,
     initialized: true,
     signOut: mocks.signOut,
     refreshProfile: mocks.refreshProfile,
@@ -50,6 +51,7 @@ const etat = (etape_suivante: 'enrolement' | 'verification' | 'pret') => ({
 describe('MandatoryMfaGate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.session = { access_token: 'token-a', user: { id: 'user-1' } };
     mocks.refreshProfile.mockResolvedValue(undefined);
     mocks.verifierCode.mockResolvedValue(undefined);
     mocks.facteurVerifie.mockResolvedValue({ id: 'factor-1' });
@@ -74,5 +76,26 @@ describe('MandatoryMfaGate', () => {
 
     await waitFor(() => expect(mocks.verifierCode).toHaveBeenCalledWith('factor-1', '123456'));
     expect(await screen.findByText('Contenu privé')).toBeInTheDocument();
+  });
+
+  it('affiche le sablier sans faire apparaître la fenêtre 2FA pendant la vérification', () => {
+    mocks.etat.mockReturnValue(new Promise(() => undefined));
+    render(<MemoryRouter initialEntries={['/dashboard']}><MandatoryMfaGate><p>Privé</p></MandatoryMfaGate></MemoryRouter>);
+
+    expect(screen.getByRole('status', { name: /Vérification de la session/ })).toBeInTheDocument();
+    expect(screen.queryByText('Double authentification obligatoire')).not.toBeInTheDocument();
+  });
+
+  it('ne recharge pas la page lorsque Supabase renouvelle le jeton du même utilisateur', async () => {
+    mocks.etat.mockResolvedValue(etat('pret'));
+    const view = render(<MemoryRouter initialEntries={['/dashboard']}><MandatoryMfaGate><p>Contenu stable</p></MandatoryMfaGate></MemoryRouter>);
+
+    expect(await screen.findByText('Contenu stable')).toBeInTheDocument();
+    mocks.session = { access_token: 'token-renouvele', user: { id: 'user-1' } };
+    view.rerender(<MemoryRouter initialEntries={['/dashboard']}><MandatoryMfaGate><p>Contenu stable</p></MandatoryMfaGate></MemoryRouter>);
+
+    await waitFor(() => expect(mocks.etat).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('Contenu stable')).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: /Vérification de la session/ })).not.toBeInTheDocument();
   });
 });

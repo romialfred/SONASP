@@ -3,6 +3,7 @@ import { AlertTriangle, KeyRound, Loader2, LockKeyhole, LogOut, ShieldCheck } fr
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { mfaService, type EtatMfa } from '@/services/mfaService';
+import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { TwoFactorSetup } from './TwoFactorSetup';
 
 const EXEMPT_PATHS = new Set([
@@ -50,10 +51,22 @@ export function MandatoryMfaGate({ children }: { children: ReactNode }) {
       });
 
     return () => { active = false; };
-  }, [exempt, initialized, refreshKey, session?.access_token]);
+  }, [exempt, initialized, refreshKey, session?.user.id]);
 
-  if (!initialized || !session || exempt) return <>{children}</>;
+  if (exempt) return <>{children}</>;
+  if (!initialized) {
+    return <PlatformLoading message="Restauration de votre session sécurisée…" />;
+  }
+  if (!session) return <>{children}</>;
   if (gate.status === 'ready' && gate.etat.etape_suivante === 'pret') return <>{children}</>;
+  if (gate.status === 'loading') {
+    return (
+      <PlatformLoading
+        title="Vérification de la session"
+        message="Contrôle du second facteur et de vos autorisations…"
+      />
+    );
+  }
 
   const recheck = async () => {
     await refreshProfile();
@@ -120,12 +133,6 @@ export function MandatoryMfaGate({ children }: { children: ReactNode }) {
               <ShieldCheck aria-hidden="true" />
             </span>
           </div>}
-
-          {gate.status === 'loading' && (
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-5 text-slate-600" role="status">
-              <Loader2 className="h-5 w-5 animate-spin text-emerald-700" aria-hidden="true" /> Vérification de votre session…
-            </div>
-          )}
 
           {gate.status === 'error' && (
             <div>

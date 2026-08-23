@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import { hasGlobalPlatformAccess, hasPermission, isReadOnlyManager } from '@/lib/permissions';
-import { Loading } from '@/components/ui/Loading';
+import { PlatformLoading } from '@/components/common/PlatformLoading';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -31,9 +31,10 @@ export function ProtectedRoute({
 
   if (loading || !initialized || (session && profileLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading size="lg" />
-      </div>
+      <PlatformLoading
+        title="Chargement de votre espace"
+        message="Préparation de vos données et de vos habilitations…"
+      />
     );
   }
 

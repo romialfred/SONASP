@@ -6,6 +6,7 @@ import {
   CircleDollarSign,
   Factory,
   Plus,
+  RotateCw,
   Scale,
   Users,
 } from 'lucide-react';
@@ -30,9 +31,12 @@ export default function ArtisanalSiteProduction() {
   const [productions, setProductions] = useState<SiteProduction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
+    setError(null);
     artisanalSiteService
       .loadSiteData()
       .then(({ sites: siteData, productions: productionData }) => {
@@ -40,15 +44,15 @@ export default function ArtisanalSiteProduction() {
         setSites(siteData);
         setProductions(productionData);
       })
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : 'Impossible de charger les productions.');
+        setError('Les données de production sont momentanément indisponibles.');
       })
       .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const metrics = useMemo(() => calculateSiteMetrics(sites, productions), [productions, sites]);
   const summaries = useMemo(() => summarizeSiteProduction(sites, productions), [productions, sites]);
@@ -84,7 +88,14 @@ export default function ArtisanalSiteProduction() {
           </div>
         </header>
 
-        {error && <div className="sites-dashboard__error" role="alert">{error}</div>}
+        {error ? (
+          <div className="sites-dashboard__error" role="alert">
+            <span>{error}</span>
+            <button type="button" className="sites-button" onClick={() => setReloadKey((current) => current + 1)}>
+              <RotateCw aria-hidden="true" /> Réessayer
+            </button>
+          </div>
+        ) : <>
 
         <section className="sites-dashboard__metrics" aria-label="Indicateurs de production">
           {[
@@ -204,6 +215,7 @@ export default function ArtisanalSiteProduction() {
             {loading && <p className="sites-table__empty">Chargement des déclarations…</p>}
           </div>
         </section>
+        </>}
       </div>
     </NationalDashboardLayout>
   );

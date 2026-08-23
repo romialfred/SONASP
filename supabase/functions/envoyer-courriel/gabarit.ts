@@ -52,7 +52,7 @@ export function faits(items: { label: string; valeur: string }[]): string {
 
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
     style="border-collapse:collapse;border:1px solid ${FILET};border-radius:10px;background:#fbfcfd;margin:0 0 18px">
-    ${lignes}
+    ${lignes.trim()}
   </table>`;
 }
 
@@ -129,7 +129,7 @@ export function coquille(params: {
         <p style="margin:0;font-family:${POLICE};font-size:13.5px;font-weight:700;color:${ENCRE};line-height:19px">Administration SONASP</p>
         <p style="margin:3px 0 0;font-family:${POLICE};font-size:12px;color:${DISCRET};line-height:18px">Société nationale des substances précieuses · Ouagadougou, Burkina Faso</p>
         <p style="margin:10px 0 0;font-family:${POLICE};font-size:11px;color:${DISCRET};line-height:17px">${
-          echapper(params.mention ?? 'Ce message vous est adressé automatiquement par la plateforme. Il n’appelle pas de réponse à cette adresse.')
+          echapper(params.mention ?? 'Ce message vous est adressé automatiquement par la plateforme.')
         }</p>
       </td></tr>
 

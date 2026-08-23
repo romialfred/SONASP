@@ -18,6 +18,11 @@ export interface CoursOr {
   actualiser: () => Promise<void>;
 }
 
+interface OptionsCoursOr {
+  /** Active les sondages périodiques. Les vues de consultation ponctuelle peuvent les désactiver. */
+  actualisationAutomatique?: boolean;
+}
+
 /** Cours du gramme en FCFA. `null` si le cours ou le taux fait défaut. */
 export function prixGrammeDepuisOnce(prixOnceUsd: number | null, tauxUsdXof: number | null): number | null {
   if (prixOnceUsd === null || tauxUsdXof === null) return null;
@@ -41,7 +46,7 @@ export function ecartAuCours(prixSaisi: number, prixMarche: number | null): numb
  * Le panneau de cours et le formulaire de vente interrogeaient chacun leur côté ;
  * deux sondages, et deux valeurs susceptibles de diverger sur un même écran.
  */
-export function useCoursOr(): CoursOr {
+export function useCoursOr({ actualisationAutomatique = true }: OptionsCoursOr = {}): CoursOr {
   const [cours, setCours] = useState<LiveGoldPrice | null>(null);
   const [tauxUsdXof, setTauxUsdXof] = useState<number | null>(null);
   const [derniereMaj, setDerniereMaj] = useState<Date | null>(null);
@@ -86,13 +91,15 @@ export function useCoursOr(): CoursOr {
   useEffect(() => {
     void chargerCours();
     void chargerTaux();
+    if (!actualisationAutomatique) return undefined;
+
     const cadenceCours = setInterval(() => void chargerCours(), INTERVALLE_COURS);
     const cadenceTaux = setInterval(() => void chargerTaux(), INTERVALLE_TAUX);
     return () => {
       clearInterval(cadenceCours);
       clearInterval(cadenceTaux);
     };
-  }, [chargerCours, chargerTaux]);
+  }, [actualisationAutomatique, chargerCours, chargerTaux]);
 
   return {
     cours,

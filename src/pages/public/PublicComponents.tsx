@@ -197,7 +197,7 @@ export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
         <div className="portal-preview__chart-card portal-preview__chart-card--trend">
           <div className="portal-preview__chart-head">
             <div><strong>Flux mensuels</strong><span>Tonnes déclarées et expédiées</span></div>
-            <div className="portal-preview__legend"><i />Production <i />Expéditions</div>
+            <span className="portal-preview__chart-change">+18,6 %</span>
           </div>
           <div className="portal-preview__chart-canvas" role="img" aria-label="Évolution mensuelle de la production et des expéditions de mars à août">
             <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 460, height: 142 }}>
@@ -217,6 +217,7 @@ export function MinePortalPreview({ compact = false }: { compact?: boolean }) {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          <div className="portal-preview__legend"><i />Production <i />Expéditions</div>
         </div>
         {compact && (
           <div className="portal-preview__chart-card portal-preview__chart-card--operations">

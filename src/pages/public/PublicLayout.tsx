@@ -1,6 +1,7 @@
-import { Menu, X } from 'lucide-react';
+import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useCoursOr } from '@/hooks/useCoursOr';
 import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
 import type { PublicLocale } from './publicContent';
 import './public-site.css';
@@ -23,6 +24,9 @@ function PublicLayoutInner() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavRef = useRef<HTMLElement>(null);
+  const { cours, prixGrammeFcfa, derniereMaj, chargement: coursEnChargement } = useCoursOr({
+    actualisationAutomatique: false,
+  });
 
   useEffect(() => {
     setMenuOpen(false);
@@ -97,6 +101,14 @@ function PublicLayoutInner() {
   }, [menuOpen]);
 
   const navigationLabel = locale === 'fr' ? 'Navigation principale' : 'Main navigation';
+  const coursFormate = prixGrammeFcfa === null
+    ? '—'
+    : new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-US', { maximumFractionDigits: 0 }).format(prixGrammeFcfa);
+  const variation = cours?.changePercent24h;
+  const heureCours = derniereMaj?.toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
     <div className="public-site">
@@ -113,10 +125,36 @@ function PublicLayoutInner() {
               <small>La Patrie ou la Mort, nous Vaincrons</small>
             </span>
           </div>
+          <div className="institutional-bar__ticker" aria-label={locale === 'fr' ? 'Cours indicatif de l’or 24 carats' : 'Indicative 24-carat gold price'}>
+            <svg className="institutional-bar__gold" viewBox="0 0 44 32" aria-hidden="true">
+              <path d="M8 10 24 3l12 7-7 14H3L8 10Z" fill="currentColor" />
+              <path d="m8 10 21 14M24 3l5 21M8 10h28" fill="none" stroke="rgba(255,255,255,.38)" strokeWidth="1.25" />
+            </svg>
+            <strong>{locale === 'fr' ? 'Cours de l’or' : 'Gold price'} <span>• 24K</span></strong>
+            <data value={prixGrammeFcfa ?? undefined} className={prixGrammeFcfa === null ? 'is-unavailable' : undefined}>
+              {coursFormate} <small>FCFA / g</small>
+            </data>
+            {typeof variation === 'number' && (
+              <span className={`institutional-bar__change${variation < 0 ? ' is-negative' : ''}`}>
+                <i aria-hidden="true" />
+                {variation >= 0 ? '+' : ''}{variation.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} %
+              </span>
+            )}
+            <small className="institutional-bar__updated">
+              {coursEnChargement
+                ? (locale === 'fr' ? 'Actualisation…' : 'Updating…')
+                : prixGrammeFcfa !== null && heureCours
+                  ? `${locale === 'fr' ? 'Mis à jour à' : 'Updated at'} ${heureCours}`
+                  : (locale === 'fr' ? 'Cours indisponible' : 'Price unavailable')}
+            </small>
+          </div>
           <div className="institutional-bar__actions">
             <a href="/#apropos">{content.navigation.about}</a>
             <Link to="/assistance">{content.navigation.assistance}</Link>
-            <label>
+            <label className="institutional-bar__language">
               <span className="sr-only">{locale === 'fr' ? 'Langue' : 'Language'}</span>
               <select
                 value={locale}
@@ -126,6 +164,7 @@ function PublicLayoutInner() {
                 <option value="fr">FR</option>
                 <option value="en">EN</option>
               </select>
+              <ChevronDown aria-hidden="true" />
             </label>
           </div>
         </div>
@@ -158,6 +197,7 @@ function PublicLayoutInner() {
           <div className="public-header__actions">
             <Link className="public-button public-button--compact" to="/portail-mine" aria-label={content.navigation.portal}>
               <span>{content.navigation.portal}</span>
+              <ArrowRight aria-hidden="true" />
             </Link>
             <button
               ref={menuButtonRef}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, X, FileText, Upload } from 'lucide-react';
+import { Building2, Save, X, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
@@ -36,13 +36,14 @@ interface MiningCompany {
 
 export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }: DailyProductionFormProps) {
   const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const [formData, setFormData] = useState({
     production_date: production?.production_date || new Date().toISOString().split('T')[0],
     bullion_grams: production?.bullion_grams?.toString() || '',
     estimated_gold_pct: production?.estimated_gold_pct?.toString() || production?.estimated_fineness_pct?.toString() || '',
     estimated_silver_pct: production?.estimated_silver_pct?.toString() || '',
     bar_reference: production?.bar_reference || '',
-    mining_company_id: production?.mining_company_id || user?.mining_company_id || '',
+    mining_company_id: mineCompanyId || production?.mining_company_id || '',
     notes: production?.notes || '',
   });
 
@@ -59,6 +60,10 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   const [documents, setDocuments] = useState<ProductionDocument[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const { alertState, confirmState, showSuccess, showError, closeAlert, closeConfirm } = useCustomAlert();
+  const mineCompany = mineCompanyId
+    ? miningCompanies.find((company) => company.id === mineCompanyId) || null
+    : null;
+  const effectiveCompanyId = mineCompanyId || formData.mining_company_id;
 
   useEffect(() => {
     loadMiningCompanies();
@@ -129,8 +134,11 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
       if (error) throw error;
 
-      // Exclure la société mère des sociétés opérationnelles
-      setMiningCompanies(filterOperationalMiningCompanies(data || []));
+      // Le rattachement autoritatif prime pour un compte Mine, y compris si un
+      // ancien référentiel ne porte pas encore le bon `company_type`.
+      setMiningCompanies(
+        mineCompanyId ? (data || []) : filterOperationalMiningCompanies(data || [])
+      );
     } catch (error) {
       console.error('Error loading mining companies:', error);
     }
@@ -255,7 +263,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       newErrors.estimated_silver_pct = `La somme Or (${goldPct}%) + Argent (${silverPct}%) ne peut pas dépasser 100%`;
     }
 
-    if (!formData.mining_company_id) {
+    if (!effectiveCompanyId) {
       newErrors.mining_company_id = 'Veuillez sélectionner une mining company';
     }
 
@@ -290,14 +298,14 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         estimated_silver_pct: formData.estimated_silver_pct ? parseFloat(formData.estimated_silver_pct) : 0,
         estimated_fineness_pct: parseFloat(formData.estimated_gold_pct),
         bar_reference: formData.bar_reference || undefined,
-        mining_company_id: formData.mining_company_id || undefined,
+        mining_company_id: effectiveCompanyId || undefined,
         notes: formData.notes || undefined,
         site_id: userSiteId,
       };
 
       console.log('📊 Données de production à enregistrer:', data);
       console.log('👤 Utilisateur site_id:', userSiteId);
-      console.log('🏢 Mining company ID:', formData.mining_company_id);
+      console.log('🏢 Mining company ID:', effectiveCompanyId);
 
       if (production?.id) {
         const updated = user?.mining_company_id
@@ -404,14 +412,21 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-      {/* Production Form - 4 columns */}
-      <div className="lg:col-span-4">
+    <div className="production-form-shell">
+      <div className="production-form-shell__main">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
-              {production ? 'Modifier Production' : 'Nouvelle Production Journalière'}
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {production ? 'Modifier la production' : 'Nouvelle production journalière'}
+                {mineCompany && <span className="production-form__mine-title"> — {mineCompany.name}</span>}
+              </h2>
+              {mineCompanyId && (
+                <p className="production-form__scope">
+                  <Building2 aria-hidden="true" /> Enregistrement sécurisé dans le périmètre de {mineCompany?.name || 'votre mine'}
+                </p>
+              )}
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -426,7 +441,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
           {/* Period Summaries - Removed as per user request */}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 gap-4 ${mineCompanyId ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
               {/* Production Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -447,32 +462,32 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                 )}
               </div>
 
-              {/* Mining Company */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mining Company *
-                </label>
-                <select
-                  value={formData.mining_company_id}
-                  disabled={Boolean(user?.mining_company_id)}
-                  onChange={(e) => handleChange('mining_company_id', e.target.value)}
-                  onFocus={() => setActiveField('mining_company_id')}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
-                    errors.mining_company_id ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                >
-                  <option value="">Sélectionner...</option>
-                  {miningCompanies.map(company => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.mining_company_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.mining_company_id}</p>
-                )}
-              </div>
+              {!mineCompanyId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Société minière *
+                  </label>
+                  <select
+                    value={formData.mining_company_id}
+                    onChange={(e) => handleChange('mining_company_id', e.target.value)}
+                    onFocus={() => setActiveField('mining_company_id')}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                      errors.mining_company_id ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  >
+                    <option value="">Sélectionner…</option>
+                    {miningCompanies.map(company => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.mining_company_id && (
+                    <p className="text-red-500 text-sm mt-1">{errors.mining_company_id}</p>
+                  )}
+                </div>
+              )}
 
               {/* Bar Reference - Read Only */}
               <div>
@@ -716,13 +731,14 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         </Card>
       </div>
 
-      {/* Field Guide Panel - 1 column */}
-      <div className="lg:col-span-1">
+      <aside className="production-form-shell__guide" aria-label="Aide contextuelle">
         <FieldGuidePanel
           fields={dailyProductionFieldGuides}
           activeField={activeField}
+          contextual
+          excludeFields={mineCompanyId ? ['mining_company_id'] : []}
         />
-      </div>
+      </aside>
     </div>
 
     {/* Document Upload Modal */}

@@ -166,6 +166,10 @@ export function ExportLicenseForm() {
     comments: '',
     notes: '',
   });
+  const boundCompanyId = mineCompanyId || formData.mining_company_id;
+  const mineName = mineCompanyId
+    ? miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'Votre société minière'
+    : null;
 
   const [documents, setDocuments] = useState<DocumentEntry[]>([]);
 
@@ -212,7 +216,7 @@ export function ExportLicenseForm() {
     if (license) {
       setFormData({
         license_number: license.license_number,
-        mining_company_id: license.mining_company_id,
+        mining_company_id: mineCompanyId || license.mining_company_id,
         request_date: license.request_date,
         start_date: license.start_date,
         end_date: license.end_date,
@@ -237,14 +241,14 @@ export function ExportLicenseForm() {
   };
 
   const handleGenerateLicenseNumber = async () => {
-    if (!formData.mining_company_id) {
+    if (!boundCompanyId) {
       setErrorTitle('Compagnie requise');
       setErrorMessage('Veuillez d\'abord sélectionner une compagnie minière pour générer le numéro de licence.');
       setShowErrorDialog(true);
       return;
     }
 
-    const company = miningCompanies.find((c) => c.id === formData.mining_company_id);
+    const company = miningCompanies.find((c) => c.id === boundCompanyId);
     if (company) {
       const licenseNumber = await exportLicenseService.generateLicenseNumber(company.code);
       setFormData({ ...formData, license_number: licenseNumber });
@@ -287,7 +291,7 @@ export function ExportLicenseForm() {
     e.preventDefault();
 
     // Validation
-    if (!formData.license_number || !formData.mining_company_id) {
+    if (!formData.license_number || !boundCompanyId) {
       setErrorTitle('Champs requis');
       setErrorMessage('Veuillez remplir tous les champs obligatoires (numéro de licence et compagnie minière).');
       setShowErrorDialog(true);
@@ -310,14 +314,15 @@ export function ExportLicenseForm() {
 
     try {
       setSaving(true);
+      const securedFormData = { ...formData, mining_company_id: boundCompanyId };
 
       let licenseId: string;
 
       if (isEditMode && id) {
-        await exportLicenseService.updateLicense(id, formData);
+        await exportLicenseService.updateLicense(id, securedFormData);
         licenseId = id;
       } else {
-        const newLicense = await exportLicenseService.createLicense(formData);
+        const newLicense = await exportLicenseService.createLicense(securedFormData);
         licenseId = newLicense.id;
       }
 
@@ -404,6 +409,7 @@ export function ExportLicenseForm() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {isEditMode ? 'Modifier la Licence' : 'Nouvelle Licence d\'Exportation'}
+                  {mineName && <span className="text-emerald-700"> — {mineName}</span>}
                 </h1>
                 <p className="text-sm text-gray-600">
                   Enregistrez les informations de la licence d'exportation
@@ -449,7 +455,13 @@ export function ExportLicenseForm() {
                     </div>
                   </div>
 
-                  {/* Compagnie Minière */}
+                  {mineCompanyId ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                      <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Périmètre de la licence</span>
+                      <strong className="mt-1 block text-sm text-emerald-950">{mineName}</strong>
+                      <small className="mt-1 block text-xs text-emerald-700">Société fixée par le compte connecté</small>
+                    </div>
+                  ) : (
                   <div>
                     <label
                       className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2"
@@ -460,7 +472,6 @@ export function ExportLicenseForm() {
                     </label>
                     <select
                       value={formData.mining_company_id}
-                      disabled={Boolean(mineCompanyId)}
                       onChange={(e) =>
                         setFormData({ ...formData, mining_company_id: e.target.value })
                       }
@@ -468,7 +479,7 @@ export function ExportLicenseForm() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      {!mineCompanyId && <option value="">-- Sélectionner --</option>}
+                      <option value="">-- Sélectionner --</option>
                       {miningCompanies.map((company) => (
                         <option key={company.id} value={company.id}>
                           {company.name} ({company.code})
@@ -476,6 +487,7 @@ export function ExportLicenseForm() {
                       ))}
                     </select>
                   </div>
+                  )}
 
                   {/* Date de Demande */}
                   <div>

@@ -990,3 +990,192 @@
 }
 
 .national-header__aide svg { width: 18px; height: 18px; }
+
+/* --------------------------------------------------------------------------
+   Espace société minière
+
+   La variante ne change que le shell des comptes rattachés à une mine. Le
+   portail national conserve sa barre sombre ; l'espace Mine adopte une palette
+   ivoire/graphite plus calme, avec le vert SONASP réservé aux états actifs.
+   -------------------------------------------------------------------------- */
+.national-header__eyebrow {
+  margin: 0 0 3px;
+  color: #9a6b00;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.national-sidebar__mine-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: #24463b;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.national-shell.is-mine {
+  background: #f4f5f1;
+}
+
+.national-shell.is-mine .national-sidebar {
+  border-right-color: #d7d9d2;
+  color: #18372f;
+  background: #efefea;
+  box-shadow: 8px 0 24px rgb(35 50 44 / 8%);
+}
+
+.national-shell.is-mine .national-sidebar__brand {
+  height: 86px;
+  flex-basis: 86px;
+  flex-direction: column;
+  padding: 8px 14px 7px;
+  gap: 3px;
+  border-bottom-color: #d8dbd3;
+  background: #f5f4ef;
+}
+
+.national-shell.is-mine .national-sidebar__brand img {
+  height: 54px;
+  max-width: 168px;
+}
+
+.national-shell.is-mine .national-sidebar.is-collapsed .national-sidebar__brand {
+  height: 64px;
+  flex-basis: 64px;
+  padding: 8px 6px;
+}
+
+.national-shell.is-mine .national-sidebar__section-title {
+  color: #6c7b74;
+}
+
+.national-shell.is-mine .national-sidebar__collapse {
+  border: 1px solid #d4d8d1;
+  color: #49635a;
+  background: #fafaf7;
+}
+
+.national-shell.is-mine .national-sidebar__collapse:hover {
+  border-color: #aebdb5;
+  color: #0f6f50;
+  background: #fff;
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link,
+.national-shell.is-mine .national-sidebar__group-trigger {
+  color: #29453c;
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link:hover,
+.national-shell.is-mine .national-sidebar__group-trigger:hover,
+.national-shell.is-mine .national-sidebar__subnav a:hover {
+  color: #0c553e;
+  background: #e4e8e2;
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link.is-active,
+.national-shell.is-mine .national-sidebar__group-trigger.is-current {
+  color: #0b503a;
+  background: #dbe6df;
+  box-shadow: inset 0 0 0 1px rgb(15 122 86 / 10%);
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link.is-active::before {
+  background: #c99000;
+}
+
+.national-shell.is-mine .national-sidebar__group-trigger > svg:last-child {
+  color: #71827a;
+}
+
+.national-shell.is-mine .national-sidebar__group-trigger:hover > svg:last-child,
+.national-shell.is-mine .national-sidebar__group-trigger.is-current > svg:last-child {
+  color: #0f6f50;
+}
+
+.national-shell.is-mine .national-sidebar__subnav::before {
+  background: #aab7b0;
+}
+
+.national-shell.is-mine .national-sidebar__subnav a {
+  color: #5d6f67;
+}
+
+.national-shell.is-mine .national-sidebar__subnav a.is-current {
+  color: #0b503a;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(28 52 44 / 8%);
+}
+
+.national-shell.is-mine .national-sidebar__puce {
+  background: #9aa9a1;
+}
+
+.national-shell.is-mine .national-sidebar__subnav a.is-current .national-sidebar__puce {
+  background: #0f7a56;
+}
+
+.national-shell.is-mine .national-sidebar__section-heading {
+  color: #9a6b00;
+}
+
+.national-shell.is-mine .national-sidebar__section-heading::before {
+  background: #c99000;
+}
+
+.national-shell.is-mine .national-sidebar__section-heading::after {
+  background: #d3d6cf;
+}
+
+.national-shell.is-mine .national-header {
+  height: 76px;
+  flex-basis: 76px;
+  border-bottom-color: #dfe1da;
+  background: rgb(248 248 244 / 98%);
+}
+
+.national-shell.is-mine .national-header__identity h1 {
+  max-width: min(48vw, 720px);
+  color: #173a30;
+  font-size: 18px;
+}
+
+.national-shell.is-mine .national-shell__content {
+  background: #f5f6f3;
+}
+
+.national-shell.is-mine .national-shell__footer {
+  border-top-color: #dfe1da;
+  background: #f8f8f4;
+}
+
+@media (max-width: 1023px) {
+  .national-shell.is-mine .national-shell__mobile-sidebar .national-sidebar__brand {
+    height: 86px;
+    flex-basis: 86px;
+  }
+}
+
+@media (max-width: 767px) {
+  .national-shell.is-mine .national-header {
+    height: 66px;
+    flex-basis: 66px;
+  }
+
+  .national-shell.is-mine .national-header__eyebrow {
+    display: none;
+  }
+
+  .national-shell.is-mine .national-header__identity h1 {
+    max-width: 40vw;
+    font-size: 14px;
+  }
+}

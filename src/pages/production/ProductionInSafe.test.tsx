@@ -6,6 +6,11 @@ import { ProductionInSafe, grammes, onces } from './ProductionInSafe';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   reponses: {} as Record<string, { data: unknown; error: unknown }>,
+  authUser: null as null | { role: string; is_active: boolean; mining_company_id: string | null },
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: mocks.authUser }),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -57,6 +62,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.setSystemTime(AUJOURDHUI);
+  mocks.authUser = null;
   mocks.reponses = {
     mining_companies: { data: [{ id: 'm1', name: 'Wahgnion Gold Mine' }], error: null },
     daily_production: { data: [production({ id: 'p1' })], error: null },
@@ -83,6 +89,17 @@ describe('ProductionInSafe', () => {
     render(<ProductionInSafe />);
     expect(await screen.findByText('BAR-001')).toBeInTheDocument();
     expect(screen.getAllByText('Wahgnion Gold Mine').length).toBeGreaterThan(0);
+  });
+
+  it('n’expose aucun choix de compagnie au compte Mine', async () => {
+    mocks.authUser = { role: 'mine', is_active: true, mining_company_id: 'm1' };
+    render(<ProductionInSafe />);
+    await screen.findByText('BAR-001');
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
+    expect(screen.getByText('Périmètre du compte')).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Compagnie' })).not.toBeInTheDocument();
   });
 
   it('écarte du coffre une barre partie avec son expédition', async () => {

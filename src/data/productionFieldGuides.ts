@@ -1,43 +1,43 @@
 export const dailyProductionFieldGuides = {
   production_date: {
-    title: 'Production Date',
-    description: 'Date de production',
+    title: 'Date de production',
+    description: 'Jour auquel cette coulée est rattachée.',
     example: '15/11/2025',
     required: true
   },
   mining_company_id: {
-    title: 'Mining Company',
-    description: 'Source du bullion',
+    title: 'Société minière',
+    description: 'Mine à l’origine du doré.',
     example: 'SBM',
     required: true
   },
   bar_reference: {
-    title: 'Bar Reference',
+    title: 'Référence de barre',
     description: 'Référence automatique : code de la société puis compteur',
     example: 'SBM-0001',
     readOnly: true
   },
   bullion_grams: {
-    title: 'Bullion',
+    title: 'Doré pesé',
     description: 'Poids total (auto converti en oz)',
     example: '11270 g',
     required: true
   },
-  estimated_fineness_pct: {
+  estimated_gold_pct: {
     title: 'Teneur en or (%)',
     description: 'Part d’or fin dans le doré, de 0 à 100 %',
     example: '92.1%',
     required: true
   },
   pure_gold_grams: {
-    title: 'Pure Gold (g)',
+    title: 'Or fin (g)',
     description: 'Calculé : masse de doré × teneur ÷ 100',
     example: '10377.67 g',
     readOnly: true
   },
   estimated_oz: {
-    title: 'Estimated Oz',
-    description: 'Auto: Pure Gold ÷ 31.1034768',
+    title: 'Équivalent en onces',
+    description: 'Calcul automatique : or fin ÷ 31,1034768.',
     example: '333.57 oz',
     readOnly: true
   },

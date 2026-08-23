@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Coins, Factory, Loader2, Plus, RotateCcw, Scale, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, Building2, CalendarRange, Coins, Factory, Loader2, Plus, RotateCcw, Scale, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { CustomAlert } from '@/components/ui/CustomAlert';
@@ -139,7 +139,7 @@ export function DailyProductionPage() {
       setErreur(errorMessage(error, 'Impossible de charger les compagnies minières.'));
       return;
     }
-    setCompagnies(filterOperationalMiningCompanies(data || []));
+    setCompagnies(mineCompanyId ? (data || []) : filterOperationalMiningCompanies(data || []));
   }, [mineCompanyId]);
 
   const chargerProductions = useCallback(async () => {
@@ -195,8 +195,12 @@ export function DailyProductionPage() {
 
   const parDefaut = periodeParDefaut();
   const filtresActifs =
-    (compagnieFiltre === 'all' ? 0 : 1) +
+    (!mineCompanyId && compagnieFiltre !== 'all' ? 1 : 0) +
     (periode.debut === parDefaut.debut && periode.fin === parDefaut.fin ? 0 : 1);
+
+  const mineName = mineCompanyId
+    ? compagnies.find((compagnie) => compagnie.id === mineCompanyId)?.name || 'Votre société minière'
+    : null;
 
   const reinitialiser = () => {
     setPeriode(periodeParDefaut());
@@ -240,7 +244,11 @@ export function DailyProductionPage() {
         <PageHeader
           icon={Factory}
           title="Production journalière"
-          subtitle="Déclarations de doré et d’or fin par compagnie minière."
+          subtitle={
+            mineName
+              ? `Déclarations de doré et d’or fin de ${mineName}.`
+              : 'Déclarations de doré et d’or fin par compagnie minière.'
+          }
           breadcrumb={[{ label: 'Production' }, { label: 'Production journalière' }]}
           actions={
             <>
@@ -294,7 +302,9 @@ export function DailyProductionPage() {
             id="saisie"
             icon={Plus}
             title={selection ? 'Modifier la déclaration' : 'Nouvelle déclaration'}
-            description="Doré pesé, titre estimé et référence de barre."
+            description={mineName
+              ? `${mineName} · doré pesé, titre estimé et référence de barre.`
+              : 'Doré pesé, titre estimé et référence de barre.'}
           >
             <DailyProductionFormEnhanced
               production={selection}
@@ -313,30 +323,15 @@ export function DailyProductionPage() {
           </Section>
         )}
 
-        {/* Rappel de la sélection : le volet est fermé, les critères restent lisibles. */}
-        <p className="production-page__resume">
-          <span>
-            Période du <strong>{formatDate(periode.debut)}</strong> au <strong>{formatDate(periode.fin)}</strong>
-          </span>
-          <span>
-            {compagnieFiltre === 'all'
-              ? 'Toutes les compagnies'
-              : compagnies.find((compagnie) => compagnie.id === compagnieFiltre)?.name || 'Compagnie inconnue'}
-          </span>
-          {periodeInvalide && (
-            <span className="production-page__erreur">La date de début est postérieure à la date de fin.</span>
-          )}
-        </p>
-
         {filtresOuverts && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Filtres des déclarations">
+          <div className="sn-drawer production-filter-drawer" role="dialog" aria-modal="true" aria-label="Filtres des déclarations">
             {/* Fond non focalisable : un second « Fermer les filtres » dans l'ordre de
                 tabulation dupliquerait le nom accessible du bouton d'en-tête. */}
             <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFiltresOuverts(false)} />
             <div className="sn-drawer__panel">
               <header>
                 <h3>
-                  <SlidersHorizontal aria-hidden="true" /> Filtres
+                  <SlidersHorizontal aria-hidden="true" /> Filtres de production
                 </h3>
                 <button type="button" aria-label="Fermer les filtres" onClick={() => setFiltresOuverts(false)}>
                   <X aria-hidden="true" />
@@ -344,6 +339,13 @@ export function DailyProductionPage() {
               </header>
 
               <div className="sn-drawer__body">
+                <div className="production-filter-drawer__intro">
+                  <CalendarRange aria-hidden="true" />
+                  <div>
+                    <strong>Période d’analyse</strong>
+                    <span>Les indicateurs et la liste sont recalculés sur ces dates.</span>
+                  </div>
+                </div>
                 <label className="sn-field">
                   <span className="sn-field__label">Du</span>
                   <input
@@ -362,17 +364,28 @@ export function DailyProductionPage() {
                     onChange={(event) => setPeriode((current) => ({ ...current, fin: event.target.value }))}
                   />
                 </label>
-                <label className="sn-field">
-                  <span className="sn-field__label">Compagnie minière</span>
-                  <select value={compagnieFiltre} disabled={Boolean(mineCompanyId)} onChange={(event) => setCompagnieFiltre(event.target.value)}>
-                    {!mineCompanyId && <option value="all">Toutes les compagnies</option>}
-                    {compagnies.map((compagnie) => (
-                      <option key={compagnie.id} value={compagnie.id}>
-                        {compagnie.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {mineCompanyId ? (
+                  <div className="production-filter-drawer__scope" aria-label={`Périmètre : ${mineName}`}>
+                    <Building2 aria-hidden="true" />
+                    <div>
+                      <span>Périmètre du compte</span>
+                      <strong>{mineName}</strong>
+                      <small>Fixé par votre profil et appliqué côté base de données.</small>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="sn-field">
+                    <span className="sn-field__label">Compagnie minière</span>
+                    <select value={compagnieFiltre} onChange={(event) => setCompagnieFiltre(event.target.value)}>
+                      <option value="all">Toutes les compagnies</option>
+                      {compagnies.map((compagnie) => (
+                        <option key={compagnie.id} value={compagnie.id}>
+                          {compagnie.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 {periodeInvalide && (
                   <p className="production-page__erreur">La date de début est postérieure à la date de fin.</p>
                 )}
@@ -425,7 +438,7 @@ export function DailyProductionPage() {
             <ProductionChart
               productions={visibles}
               dateRange={{ startDate: periode.debut, endDate: periode.fin }}
-              groupByCompany={compagnieFiltre === 'all'}
+              groupByCompany={!mineCompanyId && compagnieFiltre === 'all'}
               miningCompanies={compagnies}
             />
           )}
@@ -466,7 +479,7 @@ export function DailyProductionPage() {
             <ProductionTable
               productions={visibles}
               loading={loading}
-              showMiningCompany
+              showMiningCompany={!mineCompanyId}
               miningCompanies={compagnies}
               onEdit={(production: DailyProduction) => {
                 setSelection(production);

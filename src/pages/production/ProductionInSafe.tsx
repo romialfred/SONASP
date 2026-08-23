@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  Building2,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
@@ -291,9 +292,12 @@ export function ProductionInSafe() {
   );
 
   const filtresActifs =
-    (compagnieFiltre === 'all' ? 0 : 1) +
+    (!mineCompanyId && compagnieFiltre !== 'all' ? 1 : 0) +
     (statutFiltre === 'all' ? 0 : 1) +
     (periode.debut === parDefaut.annee.debut && periode.fin === parDefaut.annee.fin ? 0 : 1);
+  const mineName = mineCompanyId
+    ? compagnies.find((compagnie) => compagnie.id === mineCompanyId)?.name || 'Votre société minière'
+    : null;
 
   const reinitialiser = () => {
     setCompagnieFiltre(mineCompanyId || 'all');
@@ -307,8 +311,10 @@ export function ProductionInSafe() {
         <PageHeader
           icon={Shield}
           title="Or en coffre"
-          subtitle="L’or déclaré par les mines et encore détenu par la SONASP : entré au coffre, pas encore expédié."
-          breadcrumb={[{ label: 'Mines industrielles' }, { label: 'Or en coffre' }]}
+          subtitle={mineName
+            ? `Stock physique issu des productions de ${mineName}, avant expédition.`
+            : 'L’or déclaré par les mines et encore détenu par la SONASP : entré au coffre, pas encore expédié.'}
+          breadcrumb={[{ label: mineName ? 'Mon espace' : 'Mines industrielles' }, { label: 'Or en coffre' }]}
           info={{
             titre: 'Ce que contient le coffre',
             contenu:
@@ -354,12 +360,12 @@ export function ProductionInSafe() {
         )}
 
         {filtresOuverts && (
-          <div className="sn-drawer" role="dialog" aria-modal="true" aria-label="Filtres du coffre">
+          <div className="sn-drawer production-filter-drawer" role="dialog" aria-modal="true" aria-label="Filtres du coffre">
             <div className="sn-drawer__backdrop" aria-hidden="true" onClick={() => setFiltresOuverts(false)} />
             <div className="sn-drawer__panel">
               <header>
                 <h3>
-                  <SlidersHorizontal aria-hidden="true" /> Filtres
+                  <SlidersHorizontal aria-hidden="true" /> Filtres du coffre
                 </h3>
                 <button type="button" aria-label="Fermer les filtres" onClick={() => setFiltresOuverts(false)}>
                   <X aria-hidden="true" />
@@ -367,6 +373,13 @@ export function ProductionInSafe() {
               </header>
 
               <div className="sn-drawer__body">
+                <div className="production-filter-drawer__intro">
+                  <CalendarRange aria-hidden="true" />
+                  <div>
+                    <strong>Période et statut</strong>
+                    <span>Affinez la situation du stock sans changer votre périmètre société.</span>
+                  </div>
+                </div>
                 <label className="sn-field">
                   <span className="sn-field__label">Du</span>
                   <input
@@ -385,17 +398,28 @@ export function ProductionInSafe() {
                     onChange={(evenement) => setPeriode((actuelle) => ({ ...actuelle, fin: evenement.target.value }))}
                   />
                 </label>
-                <label className="sn-field">
-                  <span className="sn-field__label">Compagnie minière</span>
-                  <select value={compagnieFiltre} disabled={Boolean(mineCompanyId)} onChange={(evenement) => setCompagnieFiltre(evenement.target.value)}>
-                    {!mineCompanyId && <option value="all">Toutes les compagnies</option>}
-                    {compagnies.map((compagnie) => (
-                      <option key={compagnie.id} value={compagnie.id}>
-                        {compagnie.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {mineCompanyId ? (
+                  <div className="production-filter-drawer__scope" aria-label={`Périmètre : ${mineName}`}>
+                    <Building2 aria-hidden="true" />
+                    <div>
+                      <span>Périmètre du compte</span>
+                      <strong>{mineName}</strong>
+                      <small>Ce périmètre est verrouillé par le profil connecté.</small>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="sn-field">
+                    <span className="sn-field__label">Compagnie minière</span>
+                    <select value={compagnieFiltre} onChange={(evenement) => setCompagnieFiltre(evenement.target.value)}>
+                      <option value="all">Toutes les compagnies</option>
+                      {compagnies.map((compagnie) => (
+                        <option key={compagnie.id} value={compagnie.id}>
+                          {compagnie.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label className="sn-field">
                   <span className="sn-field__label">Statut</span>
                   <select value={statutFiltre} onChange={(evenement) => setStatutFiltre(evenement.target.value)}>
@@ -428,7 +452,6 @@ export function ProductionInSafe() {
           ariaLabel="Cumuls du coffre"
           items={[
             { label: 'Déclarations', value: entier.format(cumuls.declarations), icon: Factory, tone: 'neutral' },
-            { label: 'Doré', value: grammes(cumuls.dore), icon: Shield, tone: 'neutral' },
             { label: 'Or fin', value: grammes(cumuls.fin), icon: Shield, tone: 'gold' },
             { label: 'Équivalent', value: onces(cumuls.oz), icon: Target, tone: 'gold' },
             {
@@ -560,7 +583,7 @@ export function ProductionInSafe() {
                 <thead>
                   <tr>
                     <th scope="col">Date</th>
-                    <th scope="col">Compagnie</th>
+                    {!mineCompanyId && <th scope="col">Compagnie</th>}
                     <th scope="col" className="is-right">Doré</th>
                     <th scope="col" className="is-right">Teneur</th>
                     <th scope="col" className="is-right">Or fin</th>
@@ -577,7 +600,7 @@ export function ProductionInSafe() {
                       onClick={() => navigate(`/production/${ligne.id}`)}
                     >
                       <td>{formatDate(ligne.production_date)}</td>
-                      <td>{nomCompagnie(ligne.mining_company_id)}</td>
+                      {!mineCompanyId && <td>{nomCompagnie(ligne.mining_company_id)}</td>}
                       <td className="is-right">{grammes(ligne.bullion_grams)}</td>
                       <td className="is-right">
                         {ligne.estimated_fineness_pct === null
@@ -595,7 +618,7 @@ export function ProductionInSafe() {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={2}>
+                    <td colSpan={mineCompanyId ? 1 : 2}>
                       <strong>Total</strong>
                     </td>
                     <td className="is-right">

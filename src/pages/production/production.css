@@ -10,6 +10,129 @@
   font-size: 13px;
 }
 
+.production-form-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  align-items: start;
+  gap: 20px;
+}
+
+.production-form-shell__main { min-width: 0; }
+
+.production-form-shell__guide {
+  min-width: 0;
+}
+
+.production-form__mine-title {
+  color: #0f7a56;
+}
+
+.production-form__scope {
+  display: flex;
+  align-items: center;
+  margin: 6px 0 0;
+  gap: 6px;
+  color: #527066;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.production-form__scope svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: #0f7a56;
+}
+
+/* Le volet est l'unique surface de filtrage : une identité visuelle discrète
+   permet de le distinguer d'un formulaire de création. */
+.production-filter-drawer .sn-drawer__panel {
+  border-left: 1px solid #d5dfd8;
+  background: #f8faf8;
+  box-shadow: -22px 0 50px rgb(15 50 39 / 16%);
+}
+
+.production-filter-drawer .sn-drawer__panel > header {
+  border-bottom-color: #d8e3dc;
+  background: linear-gradient(135deg, #eaf4ee 0%, #fff9eb 100%);
+}
+
+.production-filter-drawer .sn-drawer__panel > header h3 {
+  color: #143e32;
+}
+
+.production-filter-drawer .sn-drawer__panel > header h3 svg {
+  color: #0f7a56;
+}
+
+.production-filter-drawer__intro,
+.production-filter-drawer__scope {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  gap: 10px;
+  border-radius: 11px;
+}
+
+.production-filter-drawer__intro {
+  border: 1px solid #ead9a9;
+  color: #6f5310;
+  background: #fffaf0;
+}
+
+.production-filter-drawer__scope {
+  border: 1px solid #cfe2d7;
+  color: #264f42;
+  background: #eef7f1;
+}
+
+.production-filter-drawer__intro > svg,
+.production-filter-drawer__scope > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.production-filter-drawer__intro > svg { color: #b57e00; }
+.production-filter-drawer__scope > svg { color: #0f7a56; }
+
+.production-filter-drawer__intro div,
+.production-filter-drawer__scope div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.production-filter-drawer__intro strong,
+.production-filter-drawer__scope strong {
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.production-filter-drawer__intro span,
+.production-filter-drawer__scope span,
+.production-filter-drawer__scope small {
+  margin-top: 2px;
+  color: #60746d;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1120px) {
+  .production-form-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .production-form-shell__guide {
+    max-width: none;
+  }
+
+  .production-form-shell__guide > .sticky {
+    position: static;
+  }
+}
+
 /* Les filtres sont passes dans un volet lateral : la page ne porte plus qu'un
    rappel des criteres retenus. */
 /* Résumé des filtres actifs. L'écran « Or en coffre » ne s'en sert plus — ses

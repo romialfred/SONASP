@@ -19,6 +19,11 @@ const mocks = vi.hoisted(() => ({
   showConfirm: vi.fn(),
   showError: vi.fn(),
   reponses: {} as Record<string, unknown[] | null>,
+  authUser: null as null | { role: string; is_active: boolean; mining_company_id: string | null },
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: mocks.authUser }),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -180,6 +185,7 @@ describe('DailyProductionPage', () => {
     mocks.deleteProduction.mockResolvedValue(undefined);
     mocks.reponses = { mining_companies: compagnies };
     mocks.emplacement = { pathname: '/production/daily', state: null };
+    mocks.authUser = null;
     mocks.from.mockImplementation((table: string) => stub(table));
   });
 
@@ -210,6 +216,18 @@ describe('DailyProductionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Appliquer' }));
     expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
     expect(screen.getByText('BAR-002')).toBeInTheDocument();
+  });
+
+  it('verrouille silencieusement le périmètre pour un compte Mine', async () => {
+    mocks.authUser = { role: 'mine', is_active: true, mining_company_id: 'c1' };
+    render(<DailyProductionPage />);
+    await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
+
+    expect(screen.queryByText('BAR-002')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Filtres/ }));
+    expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
+    expect(screen.getByText('Périmètre du compte')).toBeInTheDocument();
+    expect(screen.getByText('Essakane SA')).toBeInTheDocument();
   });
 
   it('annonce le nombre de critères actifs et sait les remettre à zéro', async () => {

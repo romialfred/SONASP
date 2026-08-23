@@ -306,6 +306,12 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
   }, [mineCompanyId, miningCompanies, selectedCompanyId]);
 
   useEffect(() => {
+    if (mineCompanyId && selectedCompanyId !== mineCompanyId) {
+      setSelectedCompanyId(mineCompanyId);
+    }
+  }, [mineCompanyId, selectedCompanyId]);
+
+  useEffect(() => {
     if (selectedCompanyId) {
       loadBudgetData();
     }
@@ -324,7 +330,9 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
       if (error) throw error;
 
       // Ne conserver que les sociétés dont le type correspond à une mine de production.
-      const operationalCompanies = filterOperationalMiningCompanies(data || []);
+      const operationalCompanies = mineCompanyId
+        ? (data || [])
+        : filterOperationalMiningCompanies(data || []);
       setMiningCompanies(operationalCompanies);
     } catch (error) {
       console.error('Error loading mining companies:', error);
@@ -776,7 +784,9 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
             <>
           <PageHeader
             icon={Target}
-            title="Gestion budgétaire"
+            title={mineCompanyId
+              ? `Gestion budgétaire — ${miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'votre mine'}`
+              : 'Gestion budgétaire'}
             subtitle={
               mode === 'budget'
                 ? 'Configuration du budget annuel de production, en onces d’or.'
@@ -844,7 +854,14 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                   </select>
                 </div>
 
-                {/* Mining Company Selector */}
+                {mineCompanyId ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
+                    <div className="rounded-md bg-emerald-600 p-1.5 shadow-sm">
+                      <Building2 className="h-4 w-4 text-white" />
+                    </div>
+                    <span>{miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'Votre société minière'}</span>
+                  </div>
+                ) : (
                 <div className="flex items-center gap-2">
                   <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-md p-1.5 shadow-sm">
                     <Building2 className="w-4 h-4 text-white" />
@@ -852,15 +869,15 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                   <select
                     value={selectedCompanyId}
                     onChange={e => setSelectedCompanyId(e.target.value)}
-                    disabled={Boolean(mineCompanyId)}
                     className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
-                    {!mineCompanyId && <option value="ALL">Sélectionner Toutes les Mines</option>}
+                    <option value="ALL">Sélectionner Toutes les Mines</option>
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}
                   </select>
                 </div>
+                )}
 
                 {/* Mode Selector */}
                 <div className="flex items-center bg-slate-100 rounded-lg p-1 shadow-inner">

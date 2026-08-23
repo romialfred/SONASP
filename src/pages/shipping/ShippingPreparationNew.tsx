@@ -108,6 +108,10 @@ export default function ShippingPreparationNew() {
   const [selectedLicenseId, setSelectedLicenseId] = useState('');
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
+  const effectiveCompanyId = mineCompanyId || selectedMiningCompanyId;
+  const mineName = mineCompanyId
+    ? miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'Votre société minière'
+    : null;
 
   // Signatory form
   const [selectedDepositorId, setSelectedDepositorId] = useState('');
@@ -127,6 +131,12 @@ export default function ShippingPreparationNew() {
   useEffect(() => {
     if (mineCompanyId && !isEditMode) void handleMiningCompanyChange(mineCompanyId);
   }, [mineCompanyId, isEditMode]);
+
+  useEffect(() => {
+    if (mineCompanyId && selectedMiningCompanyId !== mineCompanyId) {
+      void handleMiningCompanyChange(mineCompanyId);
+    }
+  }, [mineCompanyId, selectedMiningCompanyId]);
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -603,7 +613,7 @@ export default function ShippingPreparationNew() {
   };
 
   const handleSavePreparation = async () => {
-    if (!selectedMiningCompanyId) {
+    if (!effectiveCompanyId) {
       setErrorTitle('Compagnie minière requise');
       setErrorMessage('Veuillez sélectionner une compagnie minière avant de continuer.');
       setShowErrorDialog(true);
@@ -671,7 +681,7 @@ export default function ShippingPreparationNew() {
       const prepData = {
         expedition_lot_number: expeditionLotNumber,
         seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
-        mining_company_id: selectedMiningCompanyId,
+        mining_company_id: effectiveCompanyId,
         export_license_id: selectedLicenseId,
         freight_company_id: selectedFreightCompanyId,  // ✅ CORRECTED: Use proper column
         refinery_id: selectedRefineryId,                // ✅ CORRECTED: Use proper column
@@ -831,6 +841,7 @@ export default function ShippingPreparationNew() {
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
                     {isEditMode ? 'Modifier Expédition' : 'Nouvelle Expédition'}
+                    {mineName && <span className="text-emerald-700"> — {mineName}</span>}
                   </h1>
                   <p className="text-xs text-gray-500">Préparez les barres pour l'expédition</p>
                 </div>
@@ -840,7 +851,13 @@ export default function ShippingPreparationNew() {
             {/* Mining Company & License Selection - Same Row */}
             <Card className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
               <div className="grid grid-cols-2 gap-4">
-                {/* Mining Company */}
+                {mineCompanyId ? (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Mine expéditrice</span>
+                    <strong className="mt-1 block text-sm text-emerald-950">{mineName}</strong>
+                    <small className="mt-1 block text-[11px] leading-snug text-emerald-700">Périmètre fixé par votre compte</small>
+                  </div>
+                ) : (
                 <div>
                   <label className="block text-xs font-semibold text-blue-900 mb-2 flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" />
@@ -850,9 +867,9 @@ export default function ShippingPreparationNew() {
                     value={selectedMiningCompanyId}
                     onChange={(e) => handleMiningCompanyChange(e.target.value)}
                     className="w-full px-3 py-1.5 border border-blue-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white text-xs font-medium"
-                    disabled={loading || Boolean(mineCompanyId)}
+                    disabled={loading}
                   >
-                    {!mineCompanyId && <option value="">-- Sélectionner une compagnie minière --</option>}
+                    <option value="">-- Sélectionner une compagnie minière --</option>
                     {miningCompanies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name} ({company.code})
@@ -865,6 +882,7 @@ export default function ShippingPreparationNew() {
                     </p>
                   )}
                 </div>
+                )}
 
                 {/* License Selection */}
                 <div>

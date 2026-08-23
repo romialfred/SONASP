@@ -26,21 +26,34 @@ interface FieldGuidePanelProps {
   currentField?: string;
   activeField?: string | null;
   fields?: Record<string, FieldGuideItem>;
+  /** Alias historique encore employé par quelques formulaires. */
+  fieldGuides?: Record<string, FieldGuideItem>;
+  /** N'affiche que l'aide du champ actif pour éviter un second défilement. */
+  contextual?: boolean;
+  excludeFields?: string[];
 }
 
 export function FieldGuidePanel({
   title = 'Guide de saisie',
   guides = [],
   activeField,
-  fields
+  fields,
+  fieldGuides,
+  contextual = false,
+  excludeFields = [],
 }: FieldGuidePanelProps) {
   // Convert fields object to guides array if provided
-  const guidesArray = fields
-    ? Object.entries(fields).map(([key, value]) => ({
+  const fieldsSource = fields || fieldGuides;
+  const guidesArray = fieldsSource
+    ? Object.entries(fieldsSource).map(([key, value]) => ({
         field: key,
         ...value
       }))
     : guides;
+  const availableGuides = guidesArray.filter((guide) => !guide.field || !excludeFields.includes(guide.field));
+  const visibleGuides = contextual
+    ? [availableGuides.find((guide) => guide.field === activeField) || availableGuides[0]].filter(Boolean) as FieldGuideItem[]
+    : availableGuides;
 
   return (
     <div className="sticky top-4">
@@ -53,9 +66,9 @@ export function FieldGuidePanel({
 
       {/* Content */}
       <div className="rounded-b-lg border border-gray-200 bg-white p-3 shadow-sm">
-        <div className="space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-          {guidesArray.length > 0 ? (
-            guidesArray.map((guide, index) => {
+        <div className={contextual ? 'space-y-2' : 'space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1'}>
+          {visibleGuides.length > 0 ? (
+            visibleGuides.map((guide, index) => {
               const isActive = activeField === guide.field;
               const heading = guide.title || guide.label || guide.field;
 
@@ -87,6 +100,11 @@ export function FieldGuidePanel({
                   {guide.example && (
                     <p className="mt-1 text-[11px] text-slate-400">
                       <span className="font-medium">Ex :</span> {guide.example}
+                    </p>
+                  )}
+                  {contextual && (
+                    <p className="mt-2 border-t border-slate-100 pt-2 text-[10.5px] leading-snug text-slate-400">
+                      L’aide s’adapte au champ actuellement sélectionné.
                     </p>
                   )}
                 </div>

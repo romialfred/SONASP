@@ -39,7 +39,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 import { cn } from '@/utils/cn';
 import { RouteFallback } from '@/components/common/RouteFallback';
-import { getNavigationSectionsForUser } from './sidebarNavigation';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
+import { getNavigationSectionsForUser, type NavigationSection } from './sidebarNavigation';
 import { OwnerMineSwitcher } from './OwnerMineSwitcher';
 import './national-dashboard-layout.css';
 
@@ -112,7 +113,42 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const navigationSections = useMemo(() => getNavigationSectionsForUser(user), [user]);
+  const { isMine, companyName, companyCode } = useMineWorkspace();
+  const navigationSections = useMemo(() => {
+    const sections = getNavigationSectionsForUser(user);
+    if (!isMine) return sections;
+
+    const order = [
+      'production',
+      'inventory',
+      'shipping',
+      'sales',
+      'refining',
+      'market',
+      'stakeholders',
+      'achats-industriels',
+      'documents',
+    ];
+    const labels: Record<string, string> = {
+      production: 'Gestion de la production',
+      inventory: 'Gestion des stocks',
+      shipping: 'Gestion des expéditions',
+      sales: 'Gestion des ventes',
+      refining: 'Raffinerie',
+      market: 'Marché de l’or',
+      stakeholders: 'Parties prenantes',
+      'achats-industriels': 'Relations avec la SONASP',
+      documents: 'Documents et rapports',
+    };
+
+    return sections.map((section): NavigationSection => ({
+      ...section,
+      title: 'Mon espace',
+      groups: [...section.groups]
+        .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+        .map((group) => ({ ...group, label: labels[group.id] || group.label })),
+    }));
+  }, [isMine, user]);
   const navigationGroups = useMemo(
     () => navigationSections.flatMap((section) => section.groups),
     [navigationSections]
@@ -289,9 +325,14 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   };
 
   const sidebar = (
-    <aside className={cn('national-sidebar', sidebarCollapsed && 'is-collapsed')} aria-label="Navigation principale">
+    <aside className={cn('national-sidebar', isMine && 'is-mine', sidebarCollapsed && 'is-collapsed')} aria-label="Navigation principale">
       <div className="national-sidebar__brand">
         <img src="/sonasp_logo.png" alt="SONASP" />
+        {isMine && !sidebarCollapsed && (
+          <span className="national-sidebar__mine-name" title={companyName || undefined}>
+            {companyName}
+          </span>
+        )}
       </div>
 
       <div className="national-sidebar__section-title">
@@ -394,7 +435,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
 
   return (
-    <div className="national-shell">
+    <div className={cn('national-shell', isMine && 'is-mine')}>
       <ProfileErrorBanner />
       <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
       {mobileOpen && (
@@ -422,7 +463,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
           <div className="national-header__identity">
             <div>
-              <h1>Système National de Collecte et du Suivi de la Traçabilité de l’Or</h1>
+              {isMine && <p className="national-header__eyebrow">Mon espace sécurisé{companyCode ? ` · ${companyCode}` : ''}</p>}
+              <h1>
+                {isMine
+                  ? companyName
+                  : 'Système National de Collecte et du Suivi de la Traçabilité de l’Or'}
+              </h1>
             </div>
           </div>
 

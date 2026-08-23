@@ -204,6 +204,20 @@ describe('UsersListPage', () => {
     expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument();
   });
 
+  it('organise les comptes en onglets avec leurs décomptes', async () => {
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Awa KABORE')).toBeInTheDocument());
+
+    expect(screen.getByRole('tab', { name: 'Tous (2)' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Actifs (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Désactivés (1)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Désactivés (1)' }));
+    expect(screen.queryByText('Awa KABORE')).not.toBeInTheDocument();
+    expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Désactivés (1)' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('demande confirmation avant de désactiver un compte', async () => {
     render(<UsersListPage />);
     await waitFor(() => expect(screen.getByText('Awa KABORE')).toBeInTheDocument());

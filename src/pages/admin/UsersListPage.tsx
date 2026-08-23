@@ -3,20 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   Building2,
-  CheckCircle2,
   Eye,
   Loader2,
   Lock,
   PencilLine,
-  ShieldCheck,
   Trash2,
   Unlock,
   UserPlus,
   Users,
-  XCircle,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
 import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +43,12 @@ export interface UserFilters {
 }
 
 export const EMPTY_USER_FILTERS: UserFilters = { recherche: '', role: 'all', statut: 'all' };
+
+const STATUS_TABS: Array<{ value: UserFilters['statut']; label: string }> = [
+  { value: 'all', label: 'Tous' },
+  { value: 'actif', label: 'Actifs' },
+  { value: 'inactif', label: 'Désactivés' },
+];
 
 /** Filtre la liste sur la recherche libre, le rôle et l'état du compte. */
 export function filterUsers(users: AdminUser[], filters: UserFilters): AdminUser[] {
@@ -299,21 +302,28 @@ export function UsersListPage() {
           </Note>
         )}
 
-        <StatGrid
-          ariaLabel="Répartition des comptes"
-          items={[
-            { label: 'Comptes enregistrés', value: users.length, icon: Users, tone: 'blue' },
-            { label: 'Comptes actifs', value: actifs, icon: CheckCircle2, tone: 'green' },
-            { label: 'Comptes désactivés', value: users.length - actifs, icon: XCircle, tone: 'red' },
-            {
-              label: 'Rôles représentés',
-              value: new Set(users.map((user) => user.role)).size,
-              hint: `${ALL_ROLES.length} rôles au référentiel`,
-              icon: ShieldCheck,
-              tone: 'violet',
-            },
-          ]}
-        />
+        <div className="admin-users__tabs" role="tablist" aria-label="État des comptes">
+          {STATUS_TABS.map((onglet) => {
+            const nombre = onglet.value === 'all'
+              ? users.length
+              : onglet.value === 'actif'
+                ? actifs
+                : users.length - actifs;
+            const actif = filters.statut === onglet.value;
+            return (
+              <button
+                key={onglet.value}
+                type="button"
+                role="tab"
+                aria-selected={actif}
+                className={actif ? 'is-active' : undefined}
+                onClick={() => setFilters((courants) => ({ ...courants, statut: onglet.value }))}
+              >
+                {onglet.label} <span>({nombre})</span>
+              </button>
+            );
+          })}
+        </div>
 
         <section className="sn-card admin-page__filtres" aria-label="Filtres de la liste">
           <label className="sn-field admin-page__filtre-large">
@@ -337,17 +347,6 @@ export function UsersListPage() {
                   {roleLabel(role)}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="sn-field">
-            <span className="sn-field__label">État du compte</span>
-            <select
-              value={filters.statut}
-              onChange={(event) => setFilters((current) => ({ ...current, statut: event.target.value as UserFilters['statut'] }))}
-            >
-              <option value="all">Tous les états</option>
-              <option value="actif">Actifs</option>
-              <option value="inactif">Désactivés</option>
             </select>
           </label>
           <button type="button" className="sn-btn" onClick={() => setFilters(EMPTY_USER_FILTERS)}>

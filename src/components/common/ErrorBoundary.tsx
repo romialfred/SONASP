@@ -1,5 +1,6 @@
 import { Component, ReactNode, useEffect, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { purgerVersionPwaObsolete } from '@/lib/pwaRecovery';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -83,6 +84,7 @@ const DYNAMIC_IMPORT_ERROR =
 
 function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error }) {
   const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine);
+  const [recuperation, setRecuperation] = useState(false);
   const requiresReload = DYNAMIC_IMPORT_ERROR.test(`${error?.name ?? ''} ${error?.message ?? ''}`);
 
   useEffect(() => {
@@ -101,9 +103,13 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
     };
   }, []);
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     if (!isOnline) return;
     if (requiresReload) {
+      setRecuperation(true);
+      await purgerVersionPwaObsolete().catch((raison: unknown) => {
+        console.warn('[ErrorBoundary] Nettoyage PWA incomplet.', raison);
+      });
       window.location.reload();
       return;
     }
@@ -113,14 +119,20 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
   const title = !isOnline
     ? 'Connexion Internet interrompue'
     : requiresReload
-      ? 'Rechargement du tableau de bord nécessaire'
+      ? 'Mise à jour de la plateforme nécessaire'
       : 'Une erreur est survenue';
   const description = !isOnline
     ? 'Le tableau de bord ne peut pas terminer son chargement hors ligne. Rétablissez la connexion Internet, puis rechargez la page.'
     : requiresReload
-      ? 'La connexion est rétablie. Rechargez la page pour terminer le chargement de la version actuelle.'
+      ? 'Une ancienne version est restée dans le cache du navigateur. La réparation ci-dessous la retire avant de charger la version actuelle.'
       : 'Cette page n’a pas pu être chargée. Vous pouvez réessayer ou ouvrir une autre rubrique.';
-  const actionLabel = !isOnline ? 'En attente du réseau' : requiresReload ? 'Recharger la page' : 'Réessayer';
+  const actionLabel = recuperation
+    ? 'Réparation en cours…'
+    : !isOnline
+      ? 'En attente du réseau'
+      : requiresReload
+        ? 'Réparer et recharger'
+        : 'Réessayer';
 
   return (
     <div className="min-h-[50vh] flex items-center justify-center bg-gray-50" aria-live="polite">
@@ -132,11 +144,12 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
         <p className="text-sm text-gray-600">{description}</p>
         <button
           type="button"
-          onClick={handleRetry}
-          disabled={!isOnline}
+          onClick={() => void handleRetry()}
+          disabled={!isOnline || recuperation}
+          aria-busy={recuperation}
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw className="w-4 h-4" aria-hidden="true" />
+          <RefreshCw className={`w-4 h-4 ${recuperation ? 'animate-spin' : ''}`} aria-hidden="true" />
           {actionLabel}
         </button>
       </div>

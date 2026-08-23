@@ -107,10 +107,9 @@ export default defineConfig(({ mode }) => {
     react(),
     publicSeoFilesPlugin(publicBaseUrl),
     VitePWA({
-      // `autoUpdate` rechargeait la page des qu'un nouveau service worker etait
-      // detecte : sur un deploiement frequent, l'application se rafraichissait
-      // seule, en pleine saisie, sans que rien ne l'annonce. `prompt` installe la
-      // mise a jour sans jamais recharger de lui-meme.
+      // Aucun changement de version ne recharge automatiquement un onglet actif.
+      // Le nouveau worker s'active toutefois immédiatement : au prochain
+      // rechargement manuel, le navigateur ne reste plus prisonnier de l'ancien.
       registerType: 'prompt',
       includeAssets: [
         'favicon.ico',
@@ -153,9 +152,12 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        // Une nouvelle version attend la prochaine navigation complète. Elle ne
-        // prend jamais le contrôle d'un onglet actif et ne force aucun refresh.
-        skipWaiting: false,
+        // `skipWaiting: false` laissait le nouveau worker en attente indéfiniment
+        // tant que le tableau de bord restait ouvert. L'ancien index référençait
+        // alors des chunks que Vercel ne servait plus, d'où la boucle d'erreur.
+        // L'activation est immédiate, mais `clientsClaim: false` évite toujours
+        // de reprendre ou recharger de force un onglet en cours d'utilisation.
+        skipWaiting: true,
         clientsClaim: false,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Large application bundle and PDF.js library
         // Les images éditoriales et les captures métier ne doivent pas toutes
@@ -165,18 +167,21 @@ export default defineConfig(({ mode }) => {
         // demande ; les précacher annulerait le gain et téléchargerait plusieurs
         // mégaoctets dès la première visite.
         globPatterns: [
-          'index.html',
-          'registerSW.js',
-          'assets/index-*.{js,css}',
           'assets/Public*.js',
           'assets/public-*.css',
           '**/*.{ico,woff,woff2}',
         ],
+        // Le shell authentifié et son index ne sont jamais servis depuis le
+        // précache. Chaque rechargement complet obtient donc la version Vercel
+        // actuelle, tandis que les ressources publiques statiques restent PWA.
+        navigateFallback: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /\/assets\/.*\.(?:js|css)$/i,
-            handler: 'StaleWhileRevalidate',
+            // Les noms de fichiers portent leur empreinte de contenu : un cache
+            // immuable par URL ne peut pas confondre deux versions du code.
+            handler: 'CacheFirst',
             options: {
               cacheName: 'sonasp-route-assets',
               expiration: {

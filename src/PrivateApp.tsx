@@ -142,7 +142,6 @@ const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSi
 const ApprobateursPage = lazy(() => import('./pages/stakeholders/ApprobateursPage'));
 const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
-const PublicationsAdminPage = lazy(() => import('./pages/admin/PublicationsAdminPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
 
@@ -1341,15 +1340,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'admin']}>
                   <RefineryPlantsPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/publications"
-              element={
-                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']}>
-                  <PublicationsAdminPage />
                 </ProtectedRoute>
               }
             />

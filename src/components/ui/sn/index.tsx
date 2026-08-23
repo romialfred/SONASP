@@ -148,7 +148,7 @@ export interface SectionProps {
 
 export function Section({ id, title, description, icon: Icon, tone = 'emerald', info, children }: SectionProps) {
   return (
-    <section className={`sn-section sn-section--${tone}`} aria-labelledby={`${id}-title`}>
+    <section id={id} className={`sn-section sn-section--${tone}`} aria-labelledby={`${id}-title`}>
       <header className="sn-section__head">
         <span className="sn-section__icon">
           <Icon aria-hidden="true" />
@@ -256,12 +256,13 @@ export interface SegmentedOption<T extends string> {
   icon?: LucideIcon;
 }
 
-export function Segmented<T extends string>({ name, value, options, onChange, ariaLabel }: {
+export function Segmented<T extends string>({ name, value, options, onChange, ariaLabel, disabled = false }: {
   name: string;
   value: T;
   options: SegmentedOption<T>[];
   onChange: (value: T) => void;
   ariaLabel: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="sn-segmented" role="radiogroup" aria-label={ariaLabel}>
@@ -274,6 +275,7 @@ export function Segmented<T extends string>({ name, value, options, onChange, ar
               name={name}
               value={option.value}
               checked={value === option.value}
+              disabled={disabled}
               onChange={() => onChange(option.value)}
             />
             {Icon && <Icon aria-hidden="true" />}

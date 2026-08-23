@@ -7,6 +7,7 @@ import {
   Building2,
   Contact,
   Loader2,
+  Lock,
   Save,
   ShieldCheck,
   UserRound,
@@ -27,6 +28,7 @@ import {
   type PermissionModule,
 } from '@/services/userPermissionsService';
 import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
+import { assignableRoles, canAssignRole, canManageAccount } from '@/lib/roleHierarchy';
 import type { UserRole } from '@/types/auth';
 import './admin.css';
 
@@ -120,6 +122,7 @@ export function UserManagementModern() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const [form, setForm] = useState<UserFormData>(EMPTY_USER_FORM);
+  const [roleInitial, setRoleInitial] = useState<UserRole | null>(null);
   const [modules, setModules] = useState<PermissionModule[]>([]);
   const [permissionsEnBase, setPermissionsEnBase] = useState<PermissionMap>({});
   const [permissions, setPermissions] = useState<Record<string, ModulePermission>>({});
@@ -155,6 +158,9 @@ export function UserManagementModern() {
           .eq('id', userId)
           .maybeSingle();
         if (erreurProfil) throw erreurProfil;
+        if (!profil) throw new Error('Le compte demandé est introuvable.');
+
+        setRoleInitial((profil.role as UserRole) || null);
 
         setForm({
           fullName: profil?.full_name || '',
@@ -187,6 +193,15 @@ export function UserManagementModern() {
     setForm((current) => ({ ...current, [clef]: valeur }));
 
   const erreurIdentite = validateIdentite(form, isEditMode);
+  const editionPropreCompte = Boolean(userId && utilisateurCourant?.id === userId);
+  const peutAdministrerCompte = !isEditMode || Boolean(
+    roleInitial
+    && canManageAccount(utilisateurCourant?.role, roleInitial, utilisateurCourant?.id, userId),
+  );
+  const rolesDisponibles = useMemo(
+    () => assignableRoles(utilisateurCourant?.role, ALL_ROLES),
+    [utilisateurCourant?.role],
+  );
   const modulesOuverts = useMemo(
     () => Object.values(permissions).filter((permission) => permission.can_view).length,
     [permissions]
@@ -219,6 +234,19 @@ export function UserManagementModern() {
       setErreur('Session expirée : reconnectez-vous avant d’enregistrer.');
       return;
     }
+    if (editionPropreCompte) {
+      setErreur('Vous ne pouvez pas administrer votre propre compte depuis cet écran.');
+      return;
+    }
+    if (!peutAdministrerCompte) {
+      setErreur('Votre rôle ne permet pas d’administrer ce compte.');
+      return;
+    }
+    if (!canAssignRole(utilisateurCourant.role, form.role as UserRole)) {
+      setErreur('Vous ne pouvez pas attribuer un rôle supérieur au vôtre.');
+      setEtape(1);
+      return;
+    }
 
     setSaving(true);
     setErreur(null);
@@ -243,6 +271,9 @@ export function UserManagementModern() {
         }
         identifiant = resultat.user.id;
       } else {
+        if (!identifiant) {
+          throw new Error('Le compte à modifier est introuvable.');
+        }
         const { error } = await supabase.rpc('snp_configurer_compte_portail', {
           p_user_id: identifiant,
           p_full_name: form.fullName,
@@ -319,7 +350,7 @@ export function UserManagementModern() {
                   type="button"
                   className="sn-btn sn-btn--primary"
                   onClick={() => setEtape(2)}
-                  disabled={Boolean(erreurIdentite)}
+                  disabled={Boolean(erreurIdentite) || editionPropreCompte || !peutAdministrerCompte}
                 >
                   Habilitations <ArrowRight aria-hidden="true" />
                 </button>
@@ -328,7 +359,7 @@ export function UserManagementModern() {
                   type="button"
                   className="sn-btn sn-btn--primary"
                   onClick={() => void enregistrer()}
-                  disabled={saving}
+                  disabled={saving || editionPropreCompte || !peutAdministrerCompte}
                 >
                   {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                   {isEditMode ? 'Enregistrer les modifications' : 'Créer le compte'}
@@ -341,6 +372,21 @@ export function UserManagementModern() {
         {erreur && (
           <Note tone="danger" icon={AlertTriangle}>
             {erreur}
+          </Note>
+        )}
+
+        {editionPropreCompte && (
+          <Note tone="warning" icon={Lock}>
+            Votre propre rôle, votre état et vos habilitations ne peuvent pas être modifiés depuis
+            l’administration. Cette séparation empêche toute auto‑promotion. Utilisez « Mon profil »
+            uniquement pour vos coordonnées personnelles.
+          </Note>
+        )}
+
+        {isEditMode && !editionPropreCompte && !peutAdministrerCompte && (
+          <Note tone="danger" icon={Lock}>
+            Ce compte possède un niveau supérieur au vôtre. Sa modification est réservée à un compte
+            disposant d’un niveau au moins équivalent.
           </Note>
         )}
 
@@ -415,6 +461,7 @@ export function UserManagementModern() {
                     ]}
                     onChange={(etat) => setValue('isActive', etat === 'actif')}
                     ariaLabel="État du compte"
+                    disabled={editionPropreCompte || !peutAdministrerCompte}
                   />
                 </div>
               </div>
@@ -430,7 +477,7 @@ export function UserManagementModern() {
               {/* Les rôles propriétaire et administrateur étaient absents de la liste :
                   impossible de créer un administrateur depuis cet écran. */}
               <ul className="compte__roles">
-                {ALL_ROLES.map((role) => (
+                {rolesDisponibles.map((role) => (
                   <li key={role}>
                     <label className={form.role === role ? 'is-checked' : ''}>
                       <input
@@ -438,6 +485,7 @@ export function UserManagementModern() {
                         name="role"
                         value={role}
                         checked={form.role === role}
+                        disabled={editionPropreCompte || !peutAdministrerCompte}
                         onChange={() => setValue('role', role)}
                       />
                       <span>
@@ -474,6 +522,7 @@ export function UserManagementModern() {
                           type="radio"
                           name="mining-company"
                           checked={retenue}
+                          disabled={editionPropreCompte || !peutAdministrerCompte}
                           onChange={() => setValue('miningCompanyIds', [compagnie.id])}
                           />
                           <span>
@@ -520,13 +569,13 @@ export function UserManagementModern() {
           >
             <div className="compte__gabarits">
               <span className="sn-field__label">Gabarits</span>
-              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'aucun'))}>
+              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'aucun'))}>
                 Aucun droit
               </button>
-              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'consultation'))}>
+              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'consultation'))}>
                 Consultation seule
               </button>
-              <button type="button" className="sn-btn sn-btn--sm" onClick={() => setPermissions(appliquerGabarit(permissions, 'complet'))}>
+              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'complet'))}>
                 Tous les droits
               </button>
             </div>
@@ -564,6 +613,7 @@ export function UserManagementModern() {
                               <input
                                 type="checkbox"
                                 checked={permission[droit.clef]}
+                                disabled={!peutAdministrerCompte || editionPropreCompte}
                                 aria-label={`${droit.label} — ${module.display_name || module.name}`}
                                 onChange={() => basculer(module.id, droit.clef)}
                               />

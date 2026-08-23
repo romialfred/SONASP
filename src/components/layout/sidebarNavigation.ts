@@ -248,7 +248,6 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Utilisateurs', path: '/users', icon: Users, color: '#f97316' },
           { label: 'Modules', path: '/admin/modules', icon: Layers, color: '#8b5cf6' },
           { label: 'Messagerie', path: '/admin/messagerie', icon: Mail, color: '#2f6fec' },
-          { label: 'Approbations', path: '/approvals', icon: CheckCircle2, color: '#16a363' },
         ],
       },
     ],

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
+import type { Json } from '@/types/database';
 
 /**
  * Habilitations d'un utilisateur sur les modules.
@@ -174,37 +175,30 @@ export const userPermissionsService = {
    */
   async save(
     userId: string,
-    existant: PermissionMap,
+    _existant: PermissionMap,
     souhaite: PermissionMap,
-    grantedBy?: string
+    _grantedBy?: string
   ): Promise<{ success: boolean; error?: string }> {
-    const plan = planifier(existant, souhaite);
-
     try {
-      for (const moduleId of plan.aRevoquer) {
-        const { error } = await supabase
-          .from('user_permissions')
-          .delete()
-          .eq('user_id', userId)
-          .eq('module_id', moduleId);
-        if (error) throw error;
-      }
+      const habilitations = Object.values(souhaite)
+        .filter(estAccordee)
+        .map((permission) => ({
+          module_id: permission.module_id,
+          can_view: permission.can_view,
+          can_create: permission.can_create,
+          can_edit: permission.can_edit,
+          can_delete: permission.can_delete,
+          can_approve: permission.can_approve,
+          field_permissions: permission.field_permissions as unknown as Json,
+        }));
 
-      for (const moduleId of plan.aMettreAJour) {
-        const { error } = await supabase
-          .from('user_permissions')
-          .update(versLigne(souhaite[moduleId], userId, grantedBy))
-          .eq('user_id', userId)
-          .eq('module_id', moduleId);
-        if (error) throw error;
-      }
-
-      if (plan.aCreer.length > 0) {
-        const { error } = await supabase
-          .from('user_permissions')
-          .insert(plan.aCreer.map((moduleId) => versLigne(souhaite[moduleId], userId, grantedBy)));
-        if (error) throw error;
-      }
+      // Le remplacement est effectué dans une transaction côté base. Une
+      // erreur ne peut donc plus laisser le compte sans aucune habilitation.
+      const { error } = await supabase.rpc('snp_remplacer_habilitations_compte', {
+        p_user_id: userId,
+        p_habilitations: habilitations,
+      });
+      if (error) throw error;
 
       return { success: true };
     } catch (reason) {

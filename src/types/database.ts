@@ -11827,7 +11827,31 @@ export type Database = {
         Args: { p_ids?: string[] }
         Returns: number
       }
+      snp_configurer_compte_portail: {
+        Args: {
+          p_full_name: string
+          p_is_active: boolean
+          p_mining_company_id: string | null
+          p_phone: string | null
+          p_role: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      snp_definir_approbateur_ventes: {
+        Args: { p_active: boolean; p_user_id: string }
+        Returns: undefined
+      }
       snp_mfa_satisfaite: { Args: never; Returns: boolean }
+      snp_niveau_role: { Args: { p_role: string }; Returns: number }
+      snp_peut_administrer_compte: {
+        Args: { p_target_id: string }
+        Returns: boolean
+      }
+      snp_remplacer_habilitations_compte: {
+        Args: { p_habilitations: Json; p_user_id: string }
+        Returns: undefined
+      }
       snp_modifier_configuration_courriel: {
         Args: {
           p_expediteur_courriel: string

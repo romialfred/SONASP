@@ -35,10 +35,10 @@ export const salesApproverService = {
 
   /** Accorde ou retire le droit d'approbation à un utilisateur. */
   async setApprover(userId: string, value: boolean): Promise<void> {
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ is_sales_approver: value })
-      .eq('id', userId);
+    const { error } = await supabase.rpc('snp_definir_approbateur_ventes', {
+      p_user_id: userId,
+      p_active: value,
+    });
 
     if (error) throw error;
   },

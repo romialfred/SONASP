@@ -91,6 +91,15 @@ describe('section « Rapports et analyses »', () => {
 });
 
 describe('navigation', () => {
+  it('place les Approbateurs uniquement dans Parties prenantes', () => {
+    const partiesPrenantes = ALL_GROUPS.find((group) => group.id === 'stakeholders');
+    const administration = ALL_GROUPS.find((group) => group.id === 'administration');
+
+    expect(partiesPrenantes?.children?.map((item) => item.label)).toContain('Approbateurs');
+    expect(administration?.children?.map((item) => item.label)).not.toContain('Approbations');
+    expect(administration?.children?.map((item) => item.path)).not.toContain('/approvals');
+  });
+
   it("n'expose qu'un seul intitulé « Tableau de bord »", () => {
     // Celui de la barre, hors sections, qui mène à la vue nationale.
     const doublons = ALL_GROUPS.flatMap((groupe) => [groupe, ...(groupe.children || [])]).filter(

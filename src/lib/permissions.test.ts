@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessSite, getDefaultRoute, hasAllPermissions, hasGlobalPlatformAccess, hasPermission, isReadOnlyManager, PERMISSIONS } from './permissions';
+import {
+  canAccessSite,
+  getDefaultRoute,
+  hasAdministrativePlatformAccess,
+  hasAllPermissions,
+  hasGlobalPlatformAccess,
+  hasPermission,
+  isReadOnlyManager,
+  PERMISSIONS,
+} from './permissions';
 import type { UserProfile } from '@/types/auth';
 
 const owner: UserProfile = {
@@ -33,6 +42,13 @@ describe('permissions Owner', () => {
     const inactiveOwner = { ...owner, is_active: false };
     expect(hasPermission(inactiveOwner, PERMISSIONS.USERS_MANAGE)).toBe(false);
     expect(hasGlobalPlatformAccess(inactiveOwner)).toBe(false);
+  });
+
+  it('accorde à l’administrateur l’accès fonctionnel sans le rendre propriétaire', () => {
+    const admin = { ...owner, id: 'admin-id', role: 'admin' as const };
+    expect(hasAdministrativePlatformAccess(admin)).toBe(true);
+    expect(hasGlobalPlatformAccess(admin)).toBe(false);
+    expect(hasAllPermissions(admin, Object.values(PERMISSIONS))).toBe(true);
   });
 
   it('dirige tout représentant de mine vers le portail dédié', () => {

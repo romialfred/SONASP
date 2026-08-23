@@ -2,7 +2,12 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
-import { hasGlobalPlatformAccess, hasPermission, isReadOnlyManager } from '@/lib/permissions';
+import {
+  hasAdministrativePlatformAccess,
+  hasGlobalPlatformAccess,
+  hasPermission,
+  isReadOnlyManager,
+} from '@/lib/permissions';
 import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
 
@@ -112,7 +117,15 @@ export function ProtectedRoute({
   const roleAutorise = !allowedRoles
     || allowedRoles.includes(user.role)
     || (isMineScopedUser(user) && allowedRoles.includes('mine'));
-  if (allowedRoles && !hasGlobalPlatformAccess(user) && !roleAutorise) {
+  const perimetreAdministrateurAutorise = Boolean(
+    allowedRoles?.includes('management') && hasAdministrativePlatformAccess(user),
+  );
+  if (
+    allowedRoles
+    && !hasGlobalPlatformAccess(user)
+    && !perimetreAdministrateurAutorise
+    && !roleAutorise
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">

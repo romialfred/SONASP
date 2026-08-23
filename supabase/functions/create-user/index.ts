@@ -8,6 +8,17 @@ const ROLES = new Set([
   'factory', 'airport', 'refinery', 'customer',
 ]);
 const ROLES_CREATEURS = new Set(['owner', 'admin', 'management']);
+const NIVEAUX_ROLE: Record<string, number> = {
+  owner: 100,
+  admin: 80,
+  management: 60,
+  manager: 40,
+  mine: 20,
+  factory: 20,
+  airport: 20,
+  refinery: 20,
+  customer: 20,
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface PermissionModule {
@@ -172,6 +183,9 @@ Deno.serve(async (req: Request) => {
     if (!ROLES.has(role)) throw new ErreurPublique(400, 'Le rôle sélectionné n’est pas reconnu.');
     if (role === 'owner' && roleActeur !== 'owner') {
       throw new ErreurPublique(403, 'Seul un propriétaire peut créer un autre compte propriétaire.');
+    }
+    if ((NIVEAUX_ROLE[role] ?? Number.POSITIVE_INFINITY) > (NIVEAUX_ROLE[roleActeur] ?? -1)) {
+      throw new ErreurPublique(403, 'Vous ne pouvez pas créer un compte d’un niveau supérieur au vôtre.');
     }
     if (role === 'mine' && (!societeMiniere || !UUID.test(societeMiniere))) {
       throw new ErreurPublique(400, 'Rattachez le compte à une société minière.');

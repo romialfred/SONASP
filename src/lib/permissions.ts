@@ -103,6 +103,19 @@ export function hasGlobalPlatformAccess(user: UserProfile | null): boolean {
   return Boolean(user?.is_active && user.role === 'owner');
 }
 
+/**
+ * L'administrateur peut ouvrir les modules nécessaires à l'administration et
+ * au support opérationnel, mais ne reçoit jamais les prérogatives de propriété
+ * (sélecteur global, promotion Owner, administration d'un Owner).
+ */
+export function hasAdministrativePlatformAccess(user: UserProfile | null): boolean {
+  return Boolean(
+    user?.is_active
+    && user.role === 'admin'
+    && user.mining_company_id === null,
+  );
+}
+
 export function isManagement(user: UserProfile | null): boolean {
   return Boolean(user?.is_active && (user.role === 'owner' || user.role === 'management'));
 }

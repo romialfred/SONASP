@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import {
   BadgeCheck,
   CheckCircle2,
   Loader2,
   Lock,
+  Plus,
+  Save,
   ShieldCheck,
   UserCheck,
+  UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
@@ -16,6 +21,7 @@ import {
   Note,
   PageHeader,
   SearchInput,
+  Section,
   StatGrid,
   type Column,
 } from '@/components/ui/sn';
@@ -23,9 +29,11 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { isManagement } from '@/lib/permissions';
+import { canManageAccount } from '@/lib/roleHierarchy';
 import { roleLabel, roleTone } from '@/lib/roleLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { salesApproverService, type SalesApproverUser } from '@/services/salesApproverService';
+import './approbateurs.css';
 
 /** Traduit la tonalité de rôle (roleLabels) vers la tonalité des badges sn. */
 const badgeToneForRole = (role: SalesApproverUser['role']) => {
@@ -44,6 +52,8 @@ export default function ApprobateursPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   const charger = async () => {
@@ -69,11 +79,36 @@ export default function ApprobateursPage() {
       await salesApproverService.setApprover(cible.id, valeur);
       setUsers((liste) => liste.map((u) => (u.id === cible.id ? { ...u, is_sales_approver: valeur } : u)));
       showSuccess(valeur ? 'Droit d’approbation accordé.' : 'Droit d’approbation retiré.');
+      return true;
     } catch (error) {
       showError(errorMessage(error, 'La mise à jour a échoué.'));
+      return false;
     } finally {
       setSavingId(null);
     }
+  };
+
+  const candidats = useMemo(
+    () => users.filter((cible) =>
+      cible.is_active
+      && !cible.is_sales_approver
+      && !estDirection(cible)
+      && canManageAccount(user?.role, cible.role, user?.id, cible.id)
+    ),
+    [users, user?.id, user?.role],
+  );
+
+  const designer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cible = users.find((candidate) => candidate.id === selectedUserId);
+    if (!cible) {
+      showError('Sélectionnez un utilisateur actif.');
+      return;
+    }
+    const success = await basculer(cible);
+    if (!success) return;
+    setSelectedUserId('');
+    setFormOpen(false);
   };
 
   const filtres = useMemo(() => {
@@ -147,13 +182,20 @@ export default function ApprobateursPage() {
           );
         }
         const saving = savingId === u.id;
+        const peutModifier = canManageAccount(user?.role, u.role, user?.id, u.id);
         return (
           <button
             type="button"
             className={`sn-btn sn-btn--sm ${u.is_sales_approver ? 'sn-btn--danger' : 'sn-btn--primary'}`}
-            disabled={!canManage || saving || !u.is_active}
+            disabled={!canManage || !peutModifier || saving || !u.is_active}
             onClick={() => void basculer(u)}
-            title={!u.is_active ? 'Compte inactif' : undefined}
+            title={
+              !u.is_active
+                ? 'Compte inactif'
+                : !peutModifier
+                  ? 'Vous ne pouvez pas modifier votre propre habilitation ni celle d’un niveau supérieur.'
+                  : undefined
+            }
           >
             {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <UserCheck aria-hidden="true" />}
             {u.is_sales_approver ? 'Retirer' : 'Accorder'}
@@ -165,7 +207,8 @@ export default function ApprobateursPage() {
 
   return (
     <NationalDashboardLayout>
-      <PageHeader
+      <main className="sn-page approvers-page">
+        <PageHeader
         title="Approbateurs"
         subtitle="Habilités à approuver les ventes d’or avant facturation et paiement."
         info={{
@@ -178,17 +221,31 @@ export default function ApprobateursPage() {
           { label: 'Parties prenantes' },
           { label: 'Approbateurs' },
         ]}
-        actions={
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Rechercher un utilisateur…"
-            ariaLabel="Rechercher un utilisateur"
-          />
-        }
-      />
+          actions={
+            <div className="approvers__actions">
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder="Rechercher un utilisateur…"
+                ariaLabel="Rechercher un utilisateur"
+              />
+              {canManage && (
+                <button
+                  type="button"
+                  className="sn-btn sn-btn--primary"
+                  onClick={() => setFormOpen((open) => !open)}
+                  aria-expanded={formOpen}
+                  aria-controls="designation-approbateur"
+                >
+                  {formOpen ? <X aria-hidden="true" /> : <Plus aria-hidden="true" />}
+                  {formOpen ? 'Fermer' : 'Désigner'}
+                </button>
+              )}
+            </div>
+          }
+        />
 
-      <div style={{ marginTop: 16 }}>
+      <div className="approvers__stats">
         <StatGrid
           ariaLabel="Synthèse des approbateurs"
           sober
@@ -201,18 +258,66 @@ export default function ApprobateursPage() {
         />
       </div>
 
-      <div style={{ marginTop: 16 }}>
-      </div>
+      {formOpen && canManage && (
+        <Section
+          id="designation-approbateur"
+          icon={UserPlus}
+          tone="emerald"
+          title="Désigner un approbateur"
+          description="Attribuez cette responsabilité à un compte actif de niveau autorisé."
+        >
+          <form className="approvers__form" onSubmit={(event) => void designer(event)}>
+            <label className="sn-field" htmlFor="approbateur-user">
+              <span className="sn-field__label">Utilisateur</span>
+              <select
+                id="approbateur-user"
+                value={selectedUserId}
+                onChange={(event) => setSelectedUserId(event.target.value)}
+                required
+              >
+                <option value="">Sélectionner un compte actif</option>
+                {candidats.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.full_name || candidate.email} — {roleLabel(candidate.role)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Note tone="info" icon={ShieldCheck}>
+              L’approbateur pourra valider les ventes avant facturation et paiement. Cette action est
+              journalisée et ne modifie pas son rôle principal.
+            </Note>
+            <div className="approvers__form-actions">
+              <button type="button" className="sn-btn" onClick={() => setFormOpen(false)}>
+                <X aria-hidden="true" /> Annuler
+              </button>
+              <button
+                type="submit"
+                className="sn-btn sn-btn--primary"
+                disabled={!selectedUserId || Boolean(savingId)}
+              >
+                {savingId ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                Confirmer la désignation
+              </button>
+            </div>
+          </form>
+          {candidats.length === 0 && (
+            <p className="approvers__no-candidate">
+              Aucun compte actif et autorisé ne reste à désigner.
+            </p>
+          )}
+        </Section>
+      )}
 
       {!canManage && (
-        <div style={{ marginTop: 16 }}>
+        <div className="approvers__notice">
           <Note tone="warning" icon={Lock}>
             Vous consultez la liste des approbateurs. Seule la direction peut accorder ou retirer ce droit.
           </Note>
         </div>
       )}
 
-      <div style={{ marginTop: 16 }}>
+      <section className="approvers__registry" aria-label="Registre des approbateurs">
         {!loading && users.length === 0 ? (
           <EmptyState
             title="Aucun utilisateur"
@@ -227,7 +332,7 @@ export default function ApprobateursPage() {
             caption="Liste des utilisateurs et de leur habilitation d’approbation"
           />
         )}
-      </div>
+      </section>
 
       <CustomAlert
         isOpen={alertState.isOpen}
@@ -235,6 +340,7 @@ export default function ApprobateursPage() {
         type={alertState.type}
         onClose={closeAlert}
       />
+      </main>
     </NationalDashboardLayout>
   );
 }

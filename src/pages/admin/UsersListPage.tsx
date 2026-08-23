@@ -9,6 +9,7 @@ import {
   Lock,
   PencilLine,
   ShieldCheck,
+  Trash2,
   Unlock,
   UserPlus,
   Users,
@@ -219,6 +220,62 @@ export function UsersListPage() {
     }
   };
 
+  const supprimerCompte = async (user: AdminUser) => {
+    if (utilisateurCourant?.id === user.id) {
+      addToast('Vous ne pouvez pas supprimer votre propre compte.', 'error');
+      return;
+    }
+    if (user.role === 'owner') {
+      addToast('Le compte propriétaire est protégé.', 'error');
+      return;
+    }
+
+    const decision = await demanderConfirmation({
+      title: 'Supprimer définitivement ce compte ?',
+      message:
+        `${user.full_name || user.email} sera supprimé uniquement si le serveur confirme `
+        + 'qu’aucune activité métier ne lui est rattachée. Cette action est irréversible.',
+      confirmText: 'Supprimer le compte',
+      cancelText: 'Annuler',
+      severity: 'danger',
+      requireComment: true,
+      commentPlaceholder: 'Motif de la suppression définitive…',
+    });
+    if (typeof decision !== 'string' || decision.trim().length < 5) return;
+
+    setEnCours(user.id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!session?.access_token || !anonKey) {
+        throw new Error('Votre session d’administration n’est pas disponible.');
+      }
+
+      const resultat = await safeFetch<{ success?: boolean; message?: string }>(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: anonKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: user.id, motif: decision.trim() }),
+        },
+      );
+      if (!resultat.ok) throw new Error(resultat.error.message);
+
+      setUsers((comptes) => comptes.filter((compte) => compte.id !== user.id));
+      addToast(resultat.data.message || 'Compte supprimé définitivement', 'success');
+      await charger();
+    } catch (reason) {
+      addToast(errorMessage(reason, 'Suppression impossible'), 'error');
+    } finally {
+      setEnCours(null);
+    }
+  };
+
   return (
     <NationalDashboardLayout>
       <div className="sn-page admin-page">
@@ -401,6 +458,22 @@ export function UsersListPage() {
                               <Unlock aria-hidden="true" />
                             )}
                           </button>
+                          {user.role !== 'owner' && (
+                            <button
+                              type="button"
+                              className="sn-btn sn-btn--icon sn-btn--danger"
+                              aria-label={`Supprimer ${user.full_name || user.email}`}
+                              title="Supprimer si aucune activité métier n’est rattachée au compte"
+                              disabled={enCours === user.id || utilisateurCourant?.id === user.id}
+                              onClick={() => void supprimerCompte(user)}
+                            >
+                              {enCours === user.id ? (
+                                <Loader2 className="sn-spin" aria-hidden="true" />
+                              ) : (
+                                <Trash2 aria-hidden="true" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

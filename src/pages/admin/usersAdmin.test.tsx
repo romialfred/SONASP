@@ -149,11 +149,19 @@ describe('UsersListPage', () => {
       mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
       user_site_assignments: [{ user_id: 'u1', site_id: 's1', sites: { name: 'Site Essakane' } }],
     };
-    mocks.safeFetch.mockImplementation(async () => ({
-      ok: true,
-      status: 200,
-      data: { users: mocks.reponses.user_profiles || [] },
-    }));
+    mocks.safeFetch.mockImplementation(async (input: RequestInfo | URL) =>
+      String(input).includes('/delete-user')
+        ? {
+            ok: true,
+            status: 200,
+            data: { success: true, message: 'Compte supprimé définitivement' },
+          }
+        : {
+            ok: true,
+            status: 200,
+            data: { users: mocks.reponses.user_profiles || [] },
+          }
+    );
     mocks.from.mockImplementation((table: string) => stub(table));
   });
 
@@ -229,6 +237,46 @@ describe('UsersListPage', () => {
 
     // Rien n'empêchait un administrateur de se verrouiller lui-même hors de la plateforme.
     expect(screen.getByRole('button', { name: 'Désactiver Awa KABORE' })).toBeDisabled();
+  });
+
+  it('supprime un compte seulement après confirmation motivée', async () => {
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer Moussa OUEDRAOGO' }));
+
+    await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
+    expect(mocks.confirmer.mock.calls[0][0]).toMatchObject({
+      severity: 'danger',
+      requireComment: true,
+    });
+    await waitFor(() => expect(mocks.safeFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/functions/v1/delete-user'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ user_id: 'u2', motif: 'Compte de test clôturé' }),
+      }),
+    ));
+    expect(mocks.addToast).toHaveBeenCalledWith('Compte supprimé définitivement', 'success');
+  });
+
+  it('ne propose jamais la suppression du propriétaire', async () => {
+    mocks.reponses.user_profiles = [
+      {
+        id: 'proprietaire',
+        full_name: 'Compte propriétaire',
+        email: 'owner@sonasp.bf',
+        role: 'owner',
+        phone: null,
+        is_active: true,
+        last_login_at: null,
+        created_at: '2026-01-01',
+      },
+    ];
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Compte propriétaire')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: 'Supprimer Compte propriétaire' })).not.toBeInTheDocument();
   });
 
   it('signale un échec de chargement', async () => {

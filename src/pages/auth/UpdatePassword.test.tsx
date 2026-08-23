@@ -55,7 +55,7 @@ describe('UpdatePassword', () => {
 
     await waitFor(() => expect(mocks.changerMotDePasse).toHaveBeenCalledWith('Phrase-de-passe-2026!'));
     expect(screen.getByText('Enrôlement TOTP SONASP')).toBeInTheDocument();
-    expect(screen.getByText(/Enrôlez maintenant votre second facteur/i)).toBeInTheDocument();
+    expect(screen.getByText(/Finalisez avec le second facteur/i)).toBeInTheDocument();
   });
 
   it('refuse deux valeurs différentes avant tout appel', async () => {

@@ -97,10 +97,7 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
         <span className="mfa-setup__icone"><ShieldCheck aria-hidden="true" /></span>
         <div>
           <h2>Activer le second facteur</h2>
-          <p>
-            Un code à six chiffres, renouvelé toutes les trente secondes, s’ajoutera à
-            votre mot de passe. Sans lui, un mot de passe volé ne suffit plus.
-          </p>
+          <p>Scannez le QR code puis saisissez le code à 6 chiffres.</p>
         </div>
       </header>
 
@@ -124,17 +121,17 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
         <>
           <ol className="mfa-setup__etapes">
             <li>
-              <h3><Smartphone aria-hidden="true" /> Ouvrez votre application d’authentification</h3>
+              <h3><Smartphone aria-hidden="true" /> Ouvrez votre application</h3>
               <p>
-                Microsoft Authenticator, Google Authenticator ou toute application
-                compatible TOTP. Le compte apparaîtra sous le nom « {EMETTEUR_TOTP} ».
+                Ajoutez un compte dans Microsoft ou Google Authenticator
+                (« {EMETTEUR_TOTP} »).
               </p>
             </li>
 
             <li>
-              <h3>Scannez ce code</h3>
+              <h3>Scannez le QR code</h3>
               <div className="mfa-setup__qr">
-                <img src={enrolement.qrCode} alt="QR code d’enrôlement" width={196} height={196} />
+                <img src={enrolement.qrCode} alt="QR code d’enrôlement" width={156} height={156} />
               </div>
               <button
                 type="button" className="mfa-setup__lien"
@@ -142,7 +139,7 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
               >
                 {secretVisible
                   ? 'Masquer la clé'
-                  : 'Vous ne pouvez pas scanner ? Afficher la clé à recopier'}
+                  : 'Saisie manuelle'}
               </button>
               {secretVisible && (
                 <div className="mfa-setup__secret">
@@ -155,7 +152,7 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
             </li>
 
             <li>
-              <h3>Saisissez le code affiché</h3>
+              <h3>Saisissez le code à 6 chiffres</h3>
               <input
                 className="mfa-setup__code"
                 inputMode="numeric"
@@ -171,8 +168,7 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
                 disabled={verification}
               />
               <p className="mfa-setup__aide">
-                Le code change toutes les trente secondes. S’il est refusé, attendez le
-                suivant : l’horloge de votre appareil peut avoir quelques secondes d’écart.
+                Code refusé ? Attendez le suivant puis réessayez.
               </p>
             </li>
           </ol>
@@ -195,10 +191,7 @@ export function TwoFactorSetup({ onComplete, onCancel, obligatoire = false }: Pr
           </div>
 
           <p className="mfa-setup__note">
-            Il n’y a pas de codes de secours : un code conservé quelque part
-            réintroduirait la faiblesse qu’on vient de corriger. En cas de perte de
-            votre appareil, un administrateur réinitialise votre second facteur, et
-            l’opération est tracée.
+            Appareil perdu ? Un administrateur pourra réinitialiser votre second facteur.
           </p>
         </>
       )}

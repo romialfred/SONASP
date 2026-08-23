@@ -60,6 +60,8 @@ export function MandatoryMfaGate({ children }: { children: ReactNode }) {
     setRefreshKey((current) => current + 1);
   };
 
+  const afficheEnrolement = gate.status === 'ready' && gate.etat.etape_suivante === 'enrolement';
+
   const verifyCode = async (event: FormEvent) => {
     event.preventDefault();
     if (!/^\d{6}$/.test(code.replace(/\s/g, ''))) {
@@ -102,10 +104,14 @@ export function MandatoryMfaGate({ children }: { children: ReactNode }) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f5f7f6] px-4 py-10">
-      <section className="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-xl" aria-labelledby="mfa-gate-title">
+      <section
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-xl"
+        aria-label={afficheEnrolement ? 'Activation du second facteur' : undefined}
+        aria-labelledby={afficheEnrolement ? undefined : 'mfa-gate-title'}
+      >
         <div className="h-1 bg-gradient-to-r from-emerald-700 via-amber-400 to-red-600" />
-        <div className="p-7 sm:p-10">
-          <div className="mb-6 flex items-start justify-between gap-5">
+        <div className={afficheEnrolement ? 'p-4 sm:p-5' : 'p-7 sm:p-10'}>
+          {!afficheEnrolement && <div className="mb-6 flex items-start justify-between gap-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">Protection du compte</p>
               <h1 id="mfa-gate-title" className="mt-2 text-2xl font-bold text-slate-950">Double authentification obligatoire</h1>
@@ -113,7 +119,7 @@ export function MandatoryMfaGate({ children }: { children: ReactNode }) {
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
               <ShieldCheck aria-hidden="true" />
             </span>
-          </div>
+          </div>}
 
           {gate.status === 'loading' && (
             <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-5 text-slate-600" role="status">

@@ -2,19 +2,18 @@
  * Supabase Edge Function: Fetch Daily FX Rates
  *
  * This function runs automatically daily to fetch and store foreign exchange rates
- * from multiple sources for West African operations.
+ * from ECB data for the currency pairs used by SONASP.
  *
  * Key Features:
  * - Fetches rates from ECB (European Central Bank)
- * - Fetches rates from exchangerate-api.com for GNF
- * - Handles multiple currency pairs: EUR/USD, USD/XOF, USD/GNF
+ * - Handles EUR/USD, USD/XOF and EUR/XOF
  * - Automatically calculates monthly aggregates at month-end
  * - Handles weekends (skips Saturday and Sunday)
  *
  * Currency Pairs:
  * - EUR/USD: Euro to US Dollar
  * - USD/XOF: US Dollar to West African CFA Franc (BCEAO)
- * - USD/GNF: US Dollar to Guinean Franc
+ * - EUR/XOF: fixed BCEAO parity
  *
  * Trigger Schedule:
  * - Daily at 10:00 UTC (after markets open)
@@ -77,65 +76,6 @@ async function fetchFromECB(): Promise<{ eurUsd: number | null; usdXof: number |
   return { eurUsd: null, usdXof: null };
 }
 
-/**
- * Fetch USD/GNF from exchangerate-api.com (free tier allows 1500 requests/month)
- * Alternative free sources: fixer.io, currencyapi.com
- */
-async function fetchUsdGnf(): Promise<number | null> {
-  try {
-    // Primary source: exchangerate-api.com (no API key required for basic usage)
-    const response = await fetch('https://open.er-api.com/v6/latest/USD');
-
-    if (!response.ok) {
-      console.error('ExchangeRate-API returned non-OK status:', response.status);
-      return await fetchUsdGnfFallback();
-    }
-
-    const data = await response.json();
-
-    if (data.result === 'success' && data.rates && data.rates.GNF) {
-      return parseFloat(data.rates.GNF.toFixed(2));
-    }
-
-    // Try fallback if primary fails
-    return await fetchUsdGnfFallback();
-  } catch (error) {
-    console.error('USD/GNF API error:', error);
-    return await fetchUsdGnfFallback();
-  }
-}
-
-/**
- * Fallback source for USD/GNF using Frankfurter API
- * Note: Frankfurter may not have all African currencies, so this is a secondary option
- */
-async function fetchUsdGnfFallback(): Promise<number | null> {
-  try {
-    // Try to get GNF from another free API: currencyapi
-    const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-
-    if (data.usd && data.usd.gnf) {
-      return parseFloat(data.usd.gnf.toFixed(2));
-    }
-  } catch (error) {
-    console.error('Fallback USD/GNF API error:', error);
-  }
-
-  return null;
-}
-
-/**
- * Calculate XOF/GNF cross rate from USD/XOF and USD/GNF
- */
-function calculateXofGnf(usdXof: number, usdGnf: number): number {
-  // XOF/GNF = (USD/GNF) / (USD/XOF)
-  return parseFloat((usdGnf / usdXof).toFixed(4));
-}
-
 // =============================================================================
 // Main Function
 // =============================================================================
@@ -150,6 +90,14 @@ serve(async (req: Request) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    if (req.headers.get('Authorization') !== `Bearer ${supabaseKey}`) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const today = new Date();
@@ -209,16 +157,6 @@ serve(async (req: Request) => {
       throw new Error('Unable to fetch EUR/USD or USD/XOF from ECB');
     }
 
-    // Fetch USD/GNF
-    const usdGnf = await fetchUsdGnf();
-
-    if (!usdGnf) {
-      throw new Error('Unable to fetch USD/GNF from any source');
-    }
-
-    // Calculate cross rate
-    const xofGnf = calculateXofGnf(usdXof, usdGnf);
-
     // Prepare records to insert
     const records = [
       {
@@ -238,16 +176,9 @@ serve(async (req: Request) => {
       {
         rate_date: todayStr,
         source_id: ecbSourceId,
-        currency_pair: 'USD/GNF',
-        rate: usdGnf,
-        notes: 'Automated daily import from ExchangeRate-API',
-      },
-      {
-        rate_date: todayStr,
-        source_id: ecbSourceId,
-        currency_pair: 'XOF/GNF',
-        rate: xofGnf,
-        notes: 'Cross rate calculated from USD/XOF and USD/GNF',
+        currency_pair: 'EUR/XOF',
+        rate: XOF_TO_EUR_PEG,
+        notes: 'Parité fixe BCEAO : 1 EUR = 655,957 XOF',
       },
     ];
 
@@ -276,7 +207,7 @@ serve(async (req: Request) => {
       const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
       // Get unique currency pairs
-      const currencyPairs = ['EUR/USD', 'USD/XOF', 'USD/GNF', 'XOF/GNF'];
+      const currencyPairs = ['EUR/USD', 'USD/XOF', 'EUR/XOF'];
 
       for (const pair of currencyPairs) {
         const { data: monthlyData } = await supabase
@@ -327,8 +258,7 @@ serve(async (req: Request) => {
           rates: {
             'EUR/USD': eurUsd,
             'USD/XOF': usdXof,
-            'USD/GNF': usdGnf,
-            'XOF/GNF': xofGnf,
+            'EUR/XOF': XOF_TO_EUR_PEG,
           },
           monthly_aggregates_created: monthlyAggregatesCreated,
         },

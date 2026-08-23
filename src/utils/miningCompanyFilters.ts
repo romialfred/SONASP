@@ -1,11 +1,9 @@
 /**
  * Sélection des sociétés qui produisent réellement de l'or.
  *
- * Le filtre écartait la société nommée exactement « Mansa Resources S.A. » —
- * société mère d'un autre exploitant, absente de ce référentiel. Il ne retirait
- * donc rien : la SOPAMIB (société de participation) et la SONASP elle-même
- * figuraient parmi les mines dans tous les sélecteurs, et se voyaient attribuer
- * des budgets de production nuls.
+ * Le filtre historique reposait sur une raison sociale particulière. Il ne
+ * retirait donc pas les institutions ou sociétés de participation du
+ * référentiel et leur attribuait à tort des budgets de production.
  *
  * Le tri se fait désormais sur `company_type`, qui porte l'information :
  * `production_mine` produit, `parent_company` et `institution` ne produisent pas.

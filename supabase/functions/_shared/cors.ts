@@ -1,6 +1,5 @@
 const ORIGINES_PAR_DEFAUT = [
   'https://sonasp.data-univers.com',
-  'http://sonasp.data-univers.com',
   'https://sonasp.vercel.app',
   'http://127.0.0.1:5180',
   'http://localhost:5180',

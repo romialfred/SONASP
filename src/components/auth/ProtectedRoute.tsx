@@ -81,9 +81,9 @@ export function ProtectedRoute({
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Inactive</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Compte désactivé</h2>
           <p className="text-gray-600 mb-6">
-            Your account has been deactivated. Please contact your administrator for assistance.
+            Votre compte a été désactivé. Contactez l’administrateur de la plateforme.
           </p>
         </div>
       </div>
@@ -131,15 +131,15 @@ export function ProtectedRoute({
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès refusé</h2>
           <p className="text-gray-600 mb-6">
-            You do not have permission to access this page.
+            Votre profil n’est pas autorisé à accéder à cette page.
           </p>
           <button
             onClick={() => window.history.back()}
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
-            Go Back
+            Retour
           </button>
         </div>
       </div>
@@ -165,15 +165,15 @@ export function ProtectedRoute({
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Insufficient Permissions</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Habilitations insuffisantes</h2>
           <p className="text-gray-600 mb-6">
-            You do not have the required permissions to access this resource.
+            Les habilitations requises pour accéder à cette ressource ne vous ont pas été accordées.
           </p>
           <button
             onClick={() => window.history.back()}
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
-            Go Back
+            Retour
           </button>
         </div>
       </div>

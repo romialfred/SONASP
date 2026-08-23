@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
@@ -23,14 +26,10 @@ export default defineConfig({
      * qu'il n'en existe — une perte de couverture invisible. Borner le nombre de forks
      * a 6 n'a pas suffi. Les threads evitent le cout de creation de processus, qui est
      * precisement l'etape qui echouait.
-     */
+    */
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        maxThreads: 8,
-        minThreads: 1,
-      },
-    },
+    maxWorkers: 8,
+    minWorkers: 1,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -46,7 +45,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(projectRoot, './src'),
     },
   },
 });

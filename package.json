@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:fresh": "rm -rf dist/ node_modules/.vite/ && vite",
+    "dev:fresh": "node scripts/clean-build-cache.mjs && vite",
     "build": "vite build",
-    "build:fresh": "rm -rf dist/ node_modules/.vite/ && vite build",
+    "build:fresh": "node scripts/clean-build-cache.mjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",

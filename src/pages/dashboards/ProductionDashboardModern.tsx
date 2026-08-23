@@ -63,7 +63,6 @@ export function ProductionDashboardModern() {
               <label className="sn-field production-dashboard__filtre">
                 <span className="sn-field__label">Compagnie</span>
                 <select value={selection} onChange={(event) => setSelection(event.target.value)}>
-                  {/* Le consolidé s'intitulait « Groupe Mansa Resources », sans rapport avec la SONASP. */}
                   <option value="all">Toutes les compagnies</option>
                   {data.compagnies.map((compagnie) => (
                     <option key={compagnie.id} value={compagnie.id}>

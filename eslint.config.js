@@ -10,7 +10,7 @@ import { dirname } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'coverage'] },
   // Hygiène globale : interdit les imports inutilisés sur tout le code source (audit F7/F10).
   {
     files: ['src/**/*.{ts,tsx}'],

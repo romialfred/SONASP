@@ -9,6 +9,7 @@ declare module 'jspdf' {
 }
 
 export interface BullionSummaryData {
+  issuerName: string;
   reportDate: string;
   shipmentNumber: string;
   bars: Array<{
@@ -86,13 +87,13 @@ export const freightInvoiceGenerationService = {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Logo (placeholder - vous pouvez ajouter votre vrai logo ici)
+    // L'émetteur provient du dossier d'expédition. Aucun exploitant n'est
+    // présélectionné dans un document officiel.
     doc.setFontSize(10);
-    doc.setTextColor(100, 180, 50);
-    doc.text('LA SOCIÉTÉ DES', 20, 15);
-    doc.text('MINES DE KOMANA', 20, 20);
+    doc.setTextColor(0, 101, 51);
+    doc.text('SONASP', 20, 15);
     doc.setFontSize(8);
-    doc.text('HUMMINGBIRD RESOURCES', 20, 25);
+    doc.text(data.issuerName, 20, 21);
 
     // Titre
     doc.setFontSize(18);
@@ -137,8 +138,12 @@ export const freightInvoiceGenerationService = {
       valueUSD: acc.valueUSD + bar.valueUSD
     }), { doreWeight: 0, auContent: 0, agContent: 0, auContentTroyOz: 0, agContentTroyOz: 0, valueUSD: 0 });
 
-    const avgGoldAssay = data.bars.reduce((sum, bar) => sum + bar.smkGoldAssay, 0) / data.bars.length;
-    const avgSilverAssay = data.bars.reduce((sum, bar) => sum + bar.smkSilverAssay, 0) / data.bars.length;
+    const avgGoldAssay = data.bars.length > 0
+      ? data.bars.reduce((sum, bar) => sum + bar.smkGoldAssay, 0) / data.bars.length
+      : 0;
+    const avgSilverAssay = data.bars.length > 0
+      ? data.bars.reduce((sum, bar) => sum + bar.smkSilverAssay, 0) / data.bars.length
+      : 0;
 
     autoTable(doc, {
       startY: 45,
@@ -244,13 +249,12 @@ export const freightInvoiceGenerationService = {
     doc.setFont('helvetica', 'normal');
     doc.text(data.invoiceNumber, pageWidth - 45, 45, { align: 'right' });
 
-    // Logo central (placeholder)
+    // Identité de l'émetteur issue du dossier, sans entreprise fictive.
     doc.setFontSize(9);
-    doc.setTextColor(100, 180, 50);
-    doc.text('LA SOCIÉTÉ DES', pageWidth / 2, 50, { align: 'center' });
-    doc.text('MINES DE KOMANA', pageWidth / 2, 55, { align: 'center' });
+    doc.setTextColor(0, 101, 51);
+    doc.text('SONASP', pageWidth / 2, 50, { align: 'center' });
     doc.setFontSize(7);
-    doc.text('HUMMINGBIRD RESOURCES', pageWidth / 2, 59, { align: 'center' });
+    doc.text(data.senderName, pageWidth / 2, 56, { align: 'center' });
     doc.setTextColor(0, 0, 0);
 
     // From (Sender)

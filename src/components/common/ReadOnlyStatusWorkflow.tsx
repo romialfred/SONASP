@@ -50,12 +50,12 @@ export function ReadOnlyStatusWorkflow({
 
   const getStatusColor = (status: ProductionStatus): string => {
     const config = PRODUCTION_STATUSES[status];
-    return config?.color || 'text-gray-600';
+    return config.color;
   };
 
   const getStatusBgColor = (status: ProductionStatus): string => {
     const config = PRODUCTION_STATUSES[status];
-    return config?.bgColor || 'bg-gray-100';
+    return config.bgColor;
   };
 
   return (
@@ -116,7 +116,7 @@ export function ReadOnlyStatusWorkflow({
                       ${isPast ? 'font-semibold text-gray-900' : 'text-gray-500'}
                     `}
                   >
-                    {config?.label || status}
+                    {config.label}
                   </p>
                 </div>
                 {index < allStatuses.slice(0, 6).length - 1 && (

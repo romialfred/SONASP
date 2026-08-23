@@ -60,7 +60,6 @@ export default function ApprobateursPage() {
 
   useEffect(() => {
     void charger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const basculer = async (cible: SalesApproverUser) => {

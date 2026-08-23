@@ -8,9 +8,9 @@ import {
 
 interface GoldPriceData {
   current: number;
-  previous: number;
-  change: number;
-  changePercent: number;
+  previous: number | null;
+  change: number | null;
+  changePercent: number | null;
   lastUpdate: string;
   source: string;
 }
@@ -27,9 +27,13 @@ export function GoldPriceLive() {
       if (livePrice) {
         // Calculate previous price and change from 24h data
         const current = livePrice.price;
-        const change24h = livePrice.change24h || 0;
-        const previous = current - change24h;
-        const changePercent = livePrice.changePercent24h || (change24h / previous) * 100;
+        const change24h = typeof livePrice.change24h === 'number' ? livePrice.change24h : null;
+        const previous = change24h === null ? null : current - change24h;
+        const changePercent = typeof livePrice.changePercent24h === 'number'
+          ? livePrice.changePercent24h
+          : previous && change24h !== null
+            ? (change24h / previous) * 100
+            : null;
 
         setPriceData({
           current,
@@ -86,6 +90,7 @@ export function GoldPriceLive() {
   }
 
   const getTrendIcon = () => {
+    if (priceData.change === null) return <Minus className="w-4 h-4 text-gray-600" />;
     if (priceData.change > 0) {
       return <TrendingUp className="w-4 h-4 text-green-600" />;
     } else if (priceData.change < 0) {
@@ -95,31 +100,35 @@ export function GoldPriceLive() {
   };
 
   const getTrendColor = () => {
+    if (priceData.change === null) return 'text-gray-600';
     if (priceData.change > 0) return 'text-green-600';
     if (priceData.change < 0) return 'text-red-600';
     return 'text-gray-600';
   };
 
   const getBgColor = () => {
+    if (priceData.change === null) return 'bg-gray-100';
     if (priceData.change > 0) return 'bg-green-100';
     if (priceData.change < 0) return 'bg-red-100';
     return 'bg-gray-100';
   };
 
   const getIconBgColor = () => {
+    if (priceData.change === null) return 'bg-gray-50';
     if (priceData.change > 0) return 'bg-green-50';
     if (priceData.change < 0) return 'bg-red-50';
     return 'bg-gray-50';
   };
 
   const getCardBgColor = () => {
+    if (priceData.change === null) return 'bg-gray-50/60';
     if (priceData.change > 0) return 'bg-green-50/60';
     if (priceData.change < 0) return 'bg-red-50/60';
     return 'bg-gray-50/60';
   };
 
   return (
-    <div className={`relative backdrop-blur-sm rounded-xl border p-4 hover:shadow-lg transition-all duration-200 ${getCardBgColor()} ${priceData.change > 0 ? 'border-green-200' : priceData.change < 0 ? 'border-red-200' : 'border-gray-200'}`}>
+    <div className={`relative backdrop-blur-sm rounded-xl border p-4 hover:shadow-lg transition-all duration-200 ${getCardBgColor()} ${priceData.change !== null && priceData.change > 0 ? 'border-green-200' : priceData.change !== null && priceData.change < 0 ? 'border-red-200' : 'border-gray-200'}`}>
       {/* Gold Icon in top-left corner */}
       <div className="absolute top-4 left-4 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
         <Coins className="w-6 h-6 text-amber-600" />
@@ -129,7 +138,7 @@ export function GoldPriceLive() {
       <div className="pl-14">
         <div className="flex items-center gap-2 mb-1">
           <p className="text-xs font-medium text-gray-600">
-            Gold Price (London LBMA)
+            Cours de l’or · {priceData.source}
           </p>
           <button
             onClick={handleRefresh}
@@ -149,7 +158,7 @@ export function GoldPriceLive() {
           </div>
 
           {/* Variance with Trend Icon */}
-          <div className="flex items-center gap-2">
+          {priceData.change !== null && priceData.changePercent !== null ? <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${getBgColor()}`}>
               {getTrendIcon()}
               <span className={`text-xs font-semibold ${getTrendColor()}`}>
@@ -164,11 +173,11 @@ export function GoldPriceLive() {
                 {priceData.changePercent.toFixed(2)}%
               </span>
             </div>
-          </div>
+          </div> : <p className="text-xs text-gray-500">Variation non communiquée par la source</p>}
 
           {/* Last Update */}
           <p className="text-xs text-gray-500">
-            Live • Updated: {new Date(priceData.lastUpdate).toLocaleTimeString('en-US', {
+            Reçu à {new Date(priceData.lastUpdate).toLocaleTimeString('fr-FR', {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit'
@@ -180,9 +189,9 @@ export function GoldPriceLive() {
       {/* Previous Price Reference */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-gray-500">Previous:</span>
+          <span className="text-gray-500">Cours précédent :</span>
           <span className="font-medium text-gray-700">
-            ${priceData.previous.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {priceData.previous === null ? 'Non communiqué' : `$${priceData.previous.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </span>
         </div>
       </div>

@@ -1,41 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, ArrowDown, ArrowUp, Clock, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { TrendingUp, TrendingDown, RefreshCw, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import {
+  clearPriceCache,
   fetchLiveGoldPrice,
   formatGoldPrice,
-  clearPriceCache,
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
+
+const afficherCours = (value: number | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? `$${formatGoldPrice(value)}` : 'Non communiqué';
 
 export function LiveGoldMarketWidget() {
   const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [countdown, setCountdown] = useState(60);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchGoldData = async (isManual = false) => {
-    if (isManual) {
+  const fetchGoldData = async (manual = false) => {
+    if (manual) {
       setRefreshing(true);
       clearPriceCache();
     }
 
     try {
       const priceData = await fetchLiveGoldPrice();
-
-      if (priceData) {
-        setGoldPrice(priceData);
-        setLastUpdate(new Date());
-        setCountdown(60);
-        setError(null);
-      } else {
-        setError('Unable to fetch live gold price');
-      }
-    } catch (error) {
-      console.error('Error fetching gold price:', error);
-      setError('Connection error');
+      setGoldPrice(priceData);
+      setLastUpdate(priceData ? new Date(priceData.timestamp) : null);
+      setError(priceData ? null : 'Le cours en temps réel est momentanément indisponible.');
+    } catch {
+      setGoldPrice(null);
+      setError('La source de marché ne répond pas.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -43,154 +39,111 @@ export function LiveGoldMarketWidget() {
   };
 
   useEffect(() => {
-    fetchGoldData();
-
-    const interval = setInterval(() => {
-      fetchGoldData();
-    }, 60000);
-
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 60));
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(countdownInterval);
-    };
+    void fetchGoldData();
+    const interval = window.setInterval(() => void fetchGoldData(), 60_000);
+    return () => window.clearInterval(interval);
   }, []);
 
-  if (loading || !goldPrice) {
+  if (loading) {
     return (
-      <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-        <div className="p-6 animate-pulse">
-          <div className="h-8 bg-amber-200 rounded w-1/2 mb-4"></div>
-          <div className="grid grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-20 bg-amber-200 rounded"></div>
-            ))}
+      <Card className="border-amber-200 bg-amber-50/60">
+        <div className="p-6" role="status">Chargement du cours de l’or…</div>
+      </Card>
+    );
+  }
+
+  if (!goldPrice) {
+    return (
+      <Card className="border-amber-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-6" role="status">
+          <div className="flex items-start gap-3">
+            <AlertTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 text-amber-700" />
+            <div>
+              <h2 className="font-semibold text-slate-900">Cours de l’or indisponible</h2>
+              <p className="mt-1 text-sm text-slate-600">{error}</p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => void fetchGoldData(true)}
+            disabled={refreshing}
+            className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 disabled:opacity-60"
+          >
+            <RefreshCw aria-hidden="true" className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Réessayer
+          </button>
         </div>
       </Card>
     );
   }
 
-  const mockOpenPrice = goldPrice.openPrice || goldPrice.price * 0.995;
-  const change24h = goldPrice.change24h || goldPrice.price - mockOpenPrice;
-  const changePercent = goldPrice.changePercent24h || (change24h / mockOpenPrice) * 100;
-  const isPositive = change24h >= 0;
+  const variationDisponible =
+    typeof goldPrice.change24h === 'number' && typeof goldPrice.changePercent24h === 'number';
+  const positive = (goldPrice.change24h ?? 0) >= 0;
 
-  const high24h = goldPrice.high24h || goldPrice.price * 1.008;
-  const low24h = goldPrice.low24h || goldPrice.price * 0.992;
+  const metrics = [
+    { label: 'Cours au comptant', value: afficherCours(goldPrice.price), note: 'USD / once troy' },
+    { label: 'Ouverture', value: afficherCours(goldPrice.openPrice), note: 'Valeur fournie par la source' },
+    { label: 'Plus haut 24 h', value: afficherCours(goldPrice.high24h), note: 'Valeur fournie par la source', icon: ArrowUp },
+    { label: 'Plus bas 24 h', value: afficherCours(goldPrice.low24h), note: 'Valeur fournie par la source', icon: ArrowDown },
+  ];
 
   return (
-    <>
-      {/* KPI Summary Card - Prominent at the top */}
-      <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 border-2 border-amber-300 shadow-lg mb-4">
-        <div className="p-6">
-          {/* Header with Title and Refresh */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">AU</span>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Live Gold Price</h2>
-                <p className="text-sm text-gray-600">XAU/USD Spot Price • {goldPrice.source}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-xs bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg font-medium">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                Real-time Data
-              </div>
-              <button
-                onClick={() => fetchGoldData(true)}
-                disabled={refreshing}
-                className="p-2 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50"
-                title="Refresh now"
-              >
-                <RefreshCw
-                  className={`w-5 h-5 text-gray-700 ${refreshing ? 'animate-spin' : ''}`}
-                />
-              </button>
+    <Card className="mb-4 border-amber-200 bg-gradient-to-br from-white to-amber-50/70 shadow-sm">
+      <div className="p-6">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-full bg-amber-500 font-bold text-white">Au</div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Cours de l’or</h2>
+              <p className="text-sm text-slate-600">XAU/USD · Source : {goldPrice.source}</p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => void fetchGoldData(true)}
+            disabled={refreshing}
+            aria-label="Actualiser le cours"
+            className="grid h-10 w-10 place-items-center rounded-md border border-amber-200 text-slate-700 hover:bg-amber-100 disabled:opacity-60"
+          >
+            <RefreshCw aria-hidden="true" className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+        </header>
 
-          {/* KPI Grid - 5 Key Metrics */}
-          <div className="grid grid-cols-5 gap-4">
-            {/* Current Spot Price */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
-              <p className="text-xs font-medium text-gray-500 mb-1">Spot Price</p>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                ${formatGoldPrice(goldPrice.price)}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {metrics.map(({ label, value, note, icon: Icon }) => (
+            <section key={label} className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+              <p className="mt-2 flex items-center gap-2 text-xl font-bold text-slate-900">
+                {Icon && <Icon aria-hidden="true" className="h-4 w-4 text-amber-700" />}
+                {value}
               </p>
-              <p className="text-xs text-gray-500">USD/oz</p>
-            </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
+            </section>
+          ))}
 
-            {/* Market Open Price */}
-            <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
-              <p className="text-xs font-medium text-gray-500 mb-1">Market Open</p>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                ${formatGoldPrice(mockOpenPrice)}
-              </p>
-              <p className="text-xs text-gray-500">Opening price</p>
-            </div>
-
-            {/* 24h High */}
-            <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
-              <p className="text-xs font-medium text-gray-500 mb-1">High (24h)</p>
-              <p className="text-2xl font-bold text-emerald-600 mb-1 flex items-center gap-1">
-                <ArrowUp className="w-4 h-4" />
-                ${formatGoldPrice(high24h)}
-              </p>
-              <p className="text-xs text-emerald-600">+{((high24h - mockOpenPrice) / mockOpenPrice * 100).toFixed(2)}%</p>
-            </div>
-
-            {/* 24h Low */}
-            <div className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
-              <p className="text-xs font-medium text-gray-500 mb-1">Low (24h)</p>
-              <p className="text-2xl font-bold text-red-600 mb-1 flex items-center gap-1">
-                <ArrowDown className="w-4 h-4" />
-                ${formatGoldPrice(low24h)}
-              </p>
-              <p className="text-xs text-red-600">{((low24h - mockOpenPrice) / mockOpenPrice * 100).toFixed(2)}%</p>
-            </div>
-
-            {/* Trend & Variation */}
-            <div className={`bg-white rounded-xl p-4 border-2 shadow-sm ${
-              isPositive ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'
-            }`}>
-              <p className="text-xs font-medium text-gray-500 mb-1">Trend & Var %</p>
-              <div className="flex items-center gap-2 mb-1">
-                {isPositive ? (
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-red-600" />
-                )}
-                <p className={`text-2xl font-bold ${
-                  isPositive ? 'text-emerald-600' : 'text-red-600'
-                }`}>
-                  {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
+          <section className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Variation 24 h</p>
+            {variationDisponible ? (
+              <>
+                <p className={`mt-2 text-xl font-bold ${positive ? 'text-emerald-700' : 'text-red-700'}`}>
+                  {positive ? '+' : ''}{goldPrice.changePercent24h!.toFixed(2)} %
                 </p>
-              </div>
-              <p className={`text-xs font-medium ${
-                isPositive ? 'text-emerald-600' : 'text-red-600'
-              }`}>
-                {isPositive ? '+' : ''}${change24h.toFixed(2)}
-              </p>
-            </div>
-          </div>
-
-          {/* Update Info */}
-          <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
-            </div>
-            <span className="text-gray-500">Next update in {countdown}s</span>
-          </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  {positive ? '+' : ''}${goldPrice.change24h!.toFixed(2)}
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm font-semibold text-slate-600">Non communiquée</p>
+            )}
+          </section>
         </div>
-      </Card>
-    </>
+
+        <footer className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+          <Clock aria-hidden="true" className="h-4 w-4" />
+          {lastUpdate ? `Dernière donnée reçue à ${lastUpdate.toLocaleTimeString('fr-FR')}` : 'Heure de mise à jour indisponible'}
+        </footer>
+      </div>
+    </Card>
   );
 }

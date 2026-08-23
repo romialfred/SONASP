@@ -18,7 +18,6 @@ import {
   ChevronRight,
   CreditCard,
   Warehouse,
-  PackagePlus,
   Sparkles,
   Coins,
   Factory,

@@ -2,7 +2,7 @@
  * FX Rate Aggregation Service
  *
  * Handles real-time FX rates, end-of-day persistence, and monthly aggregation
- * Supports: EUR/USD, USD/XOF, USD/GNF, EUR/GNF, XOF/GNF
+ * Supports: EUR/USD, USD/XOF and EUR/XOF.
  */
 
 import { supabase } from '@/lib/supabase';
@@ -57,22 +57,6 @@ const intradayRates: Map<string, {
   open: number;
   close: number;
 }> = new Map();
-
-// FX API configurations with fallback
-const FX_API_CONFIG = {
-  frankfurter: {
-    url: 'https://api.frankfurter.dev/v1/latest',
-    free: true,
-  },
-  exchangerate: {
-    url: 'https://api.exchangerate-api.com/v4/latest',
-    free: true,
-  },
-  currencyfreaks: {
-    url: 'https://api.currencyfreaks.com/latest',
-    apiKey: 'demo', // Free tier
-  },
-};
 
 // Cache for FX rates (1 minute)
 let fxRateCache: Map<string, { data: LiveFxRate; timestamp: number }> = new Map();
@@ -351,7 +335,7 @@ export async function generateMonthlyFxAggregate(
 export async function saveAllEndOfDaySnapshots(
   sourceId: string
 ): Promise<{ success: boolean; processed: number; errors: string[] }> {
-  const currencyPairs = ['EUR/USD', 'USD/XOF', 'USD/GNF', 'EUR/GNF', 'XOF/GNF'];
+  const currencyPairs = ['EUR/USD', 'USD/XOF', 'EUR/XOF'];
   const results = {
     success: true,
     processed: 0,

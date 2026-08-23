@@ -39,7 +39,6 @@ export default function ArtisanMinierEdit() {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const retour = id ? `/artisan-minier/${id}` : '/artisan-minier/liste';

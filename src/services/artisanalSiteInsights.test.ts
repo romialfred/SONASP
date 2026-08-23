@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/data/artisanalSitesData';
+import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/test/fixtures/artisanalSites';
 import type { ArtisanMinier } from '@/services/artisanMinierService';
 import type { ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import {

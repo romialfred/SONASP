@@ -145,7 +145,7 @@ describe('AuthProvider profile fallback', () => {
     expect(state).toHaveAttribute('data-user-id', '');
   });
 
-  it('utilise le rôle Owner depuis les métadonnées Auth protégées', async () => {
+  it('conserve le rôle autoritaire du profil même pour l’adresse historique du propriétaire', async () => {
     authMocks.profileResult = {
       id: 'owner-123',
       email: 'romuald.tiegnan@gmail.com',
@@ -171,7 +171,7 @@ describe('AuthProvider profile fallback', () => {
             id: 'owner-123',
             email: 'romuald.tiegnan@gmail.com',
             user_metadata: { role: 'customer' },
-            app_metadata: {},
+            app_metadata: { role: 'owner' },
             created_at: '2026-08-17T00:00:00.000Z',
             updated_at: '2026-08-17T00:00:00.000Z',
             last_sign_in_at: '2026-08-17T00:00:00.000Z',
@@ -188,7 +188,7 @@ describe('AuthProvider profile fallback', () => {
     );
 
     const state = await screen.findByTestId('auth-state');
-    await waitFor(() => expect(state).toHaveAttribute('data-user-role', 'owner'));
+    await waitFor(() => expect(state).toHaveAttribute('data-user-role', 'management'));
   });
 
   it('conserve le profil affiché quand le même SIGNED_IN est réémis au retour d’onglet', async () => {

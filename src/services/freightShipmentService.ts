@@ -9,6 +9,16 @@ export type FreightShipmentStatus =
   | 'processed'
   | 'in_stock';
 
+export interface FreightShipmentMiningCompany {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  localite: string | null;
+  country: string;
+  tax_id: string | null;
+}
+
 export interface FreightShipment {
   id: string;
   reference_number: string;
@@ -48,6 +58,7 @@ export interface FreightShipment {
   destination_refinery?: any;
   productions?: FreightShipmentProduction[];
   signatories?: FreightShipmentSignatory[];
+  source_mining_companies?: FreightShipmentMiningCompany[];
 }
 
 export interface FreightShipmentProduction {
@@ -134,7 +145,46 @@ export const freightShipmentService = {
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    const productionIds = (data.productions || [])
+      .map((production) => production.production_id)
+      .filter(Boolean);
+
+    if (productionIds.length === 0) {
+      return { ...data, source_mining_companies: [] } as FreightShipment;
+    }
+
+    const { data: sourceProductions, error: sourceProductionError } = await supabase
+      .from('daily_production')
+      .select('mining_company_id')
+      .in('id', productionIds);
+
+    if (sourceProductionError) {
+      return { ...data, source_mining_companies: [] } as FreightShipment;
+    }
+
+    const companyIds = Array.from(
+      new Set(
+        (sourceProductions || [])
+          .map((production) => production.mining_company_id)
+          .filter((companyId): companyId is string => Boolean(companyId)),
+      ),
+    );
+
+    if (companyIds.length === 0) {
+      return { ...data, source_mining_companies: [] } as FreightShipment;
+    }
+
+    const { data: companies, error: companiesError } = await supabase
+      .from('mining_companies')
+      .select('id, name, address, city, localite, country, tax_id')
+      .in('id', companyIds);
+
+    return {
+      ...data,
+      source_mining_companies: companiesError ? [] : companies || [],
+    } as FreightShipment;
   },
 
   async getAvailableShippingPreparations(): Promise<AvailableShippingPreparation[]> {

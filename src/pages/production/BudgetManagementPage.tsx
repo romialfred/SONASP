@@ -315,7 +315,7 @@ export function BudgetManagementPage() {
 
       if (error) throw error;
 
-      // Filtrer pour exclure la société mère "Mansa Resource"
+      // Ne conserver que les sociétés dont le type correspond à une mine de production.
       const operationalCompanies = filterOperationalMiningCompanies(data || []);
       setMiningCompanies(operationalCompanies);
     } catch (error) {

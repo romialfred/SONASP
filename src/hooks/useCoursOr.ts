@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { clearPriceCache, fetchLiveGoldPrice, type LiveGoldPrice } from '@/services/liveGoldPriceService';
-import { recordIntradayPrice } from '@/services/goldPriceAggregationService';
 import { supabase } from '@/lib/supabase';
 
 export const GRAMMES_PAR_ONCE = 31.1034768;
@@ -70,7 +69,6 @@ export function useCoursOr(): CoursOr {
         setCours(donnees);
         setDerniereMaj(new Date());
         setErreur(null);
-        recordIntradayPrice(donnees.price);
       } else {
         setErreur('Cours indisponible auprès de la source.');
       }

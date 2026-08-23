@@ -410,7 +410,7 @@ export function validateSalesStatusTransition(
 export interface SaleCreationData {
   customer_id: string;
   seller_id: string;
-  seller_type: 'mining_company' | 'mansa_ressources';
+  seller_type: 'mining_company' | 'sonasp';
   quantity_oz: number;
   london_am_rate: number;
   available_inventory_oz: number;

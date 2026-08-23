@@ -21,7 +21,10 @@ import { MiningCompanyFormGuide } from '@/components/stakeholders/MiningCompanyF
 
 // Les sociétés minières inscrites exploitent au Burkina Faso ; les pays
 // voisins ne servent qu'aux sociétés mères et aux partenaires.
-const COUNTRIES = ['Burkina Faso', 'Mali', 'Niger', "Côte d'Ivoire", 'Ghana', 'Sénégal', 'France', 'Canada', 'Australie'];
+// Le référentiel décrit les sociétés minières opérant au Burkina Faso. Les
+// pays étrangers restent disponibles dans les référentiels clients et
+// raffineurs, pas dans celui des mines nationales.
+const COUNTRIES = ['Burkina Faso'];
 const CURRENCIES = ['XOF', 'USD', 'EUR', 'GHS', 'AED', 'ZAR'];
 
 const COMPANY_TYPES = [

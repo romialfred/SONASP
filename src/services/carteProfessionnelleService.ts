@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { secureNumericCode } from '@/lib/secureRandom';
 
 export interface CarteProfessionnelle {
   id: string;
@@ -280,7 +281,7 @@ export const carteProfessionnelleService = {
 
     if (!artisan) throw new Error('Artisan not found');
 
-    const numeroSecurite = Math.floor(Math.random() * 9999999999).toString().padStart(10, '0');
+    const numeroSecurite = secureNumericCode(10);
 
     const { data, error } = await supabase
       .from('snp_cartes_professionnelles')

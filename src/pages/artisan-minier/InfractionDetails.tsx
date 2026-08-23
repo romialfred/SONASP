@@ -105,7 +105,6 @@ export default function InfractionDetails() {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artisanId, infractionId]);
 
   const retour = artisanId ? `/artisan-minier/${artisanId}` : '/artisan-minier/liste';

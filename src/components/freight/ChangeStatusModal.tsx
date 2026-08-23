@@ -174,7 +174,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
                     type="text"
                     value={formData.customs_office}
                     onChange={(e) => setFormData({ ...formData, customs_office: e.target.value })}
-                    placeholder="Ex: Bamako Central"
+                    placeholder="Ex. Bureau principal de Ouagadougou"
                   />
                 </div>
                 <div>

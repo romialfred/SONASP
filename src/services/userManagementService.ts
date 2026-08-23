@@ -91,6 +91,8 @@ export async function createUser(data: CreateUserRequest): Promise<CreateUserRes
  * Reset user password via Edge Function
  */
 export async function resetUserPassword(userId: string): Promise<CreateUserResponse> {
+  const controleur = new AbortController();
+  const delai = window.setTimeout(() => controleur.abort(), 25_000);
   try {
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -99,12 +101,11 @@ export async function resetUserPassword(userId: string): Promise<CreateUserRespo
     }
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl) {
-      throw new Error('Supabase URL not configured');
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('La connexion au service d’administration n’est pas configurée.');
     }
-
-    console.log('[userManagementService] Resetting password for user:', userId);
 
     const response = await fetch(
       `${supabaseUrl}/functions/v1/reset-user-password`,
@@ -112,45 +113,36 @@ export async function resetUserPassword(userId: string): Promise<CreateUserRespo
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
+          'apikey': anonKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ user_id: userId }),
+        signal: controleur.signal,
       }
     );
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({})) as CreateUserResponse;
 
     if (!response.ok) {
-      console.error('[userManagementService] Error response:', result);
-      throw new Error(result.error || 'Failed to reset password');
+      if (response.status === 404) {
+        throw new Error('Le service de récupération n’est pas déployé. Contactez l’administrateur technique.');
+      }
+      throw new Error(result.error || 'La récupération du compte a échoué.');
     }
 
-    console.log('[userManagementService] Password reset successfully:', result);
     return result;
   } catch (error: any) {
-    console.error('[userManagementService] Error resetting password:', error);
+    const estDelai = error?.name === 'AbortError';
+    const estReseau = error instanceof TypeError;
     return {
       success: false,
-      error: error.message || 'An unexpected error occurred',
+      error: estDelai
+        ? 'Le service de récupération ne répond pas.'
+        : estReseau
+          ? 'Le service de récupération est momentanément inaccessible.'
+          : error.message || 'Une erreur inattendue est survenue.',
     };
-  }
-}
-
-/**
- * Check if user activation system is available
- */
-export async function checkActivationSystemAvailable(): Promise<boolean> {
-  try {
-    // Check if the activation token function exists
-    const { error } = await supabase.rpc('validate_activation_token', {
-      p_token: 'test_token',
-    });
-
-    // If no error (function exists), return true
-    // Even if the token is invalid, the function exists
-    return !error || !error.message.includes('function');
-  } catch (error) {
-    console.warn('[userManagementService] Activation system not available:', error);
-    return false;
+  } finally {
+    window.clearTimeout(delai);
   }
 }

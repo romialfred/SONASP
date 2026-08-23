@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { secureRandomId } from '@/lib/secureRandom';
 
 export interface Toast {
   id: string;
@@ -26,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const addToast = useCallback(
     (message: string, type: Toast['type'], duration = 5000) => {
-      const id = Math.random().toString(36).substr(2, 9);
+      const id = secureRandomId();
       const newToast: Toast = { id, message, type, duration };
 
       setToasts((prev) => [...prev, newToast]);

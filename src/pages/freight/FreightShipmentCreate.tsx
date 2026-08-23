@@ -44,9 +44,9 @@ export default function FreightShipmentCreate() {
   const [shipmentDate, setShipmentDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Flight/Transport Information
-  const [departureCountry, setDepartureCountry] = useState('Mali');
-  const [departureCity, setDepartureCity] = useState('Bamako');
-  const [departureAirport, setDepartureAirport] = useState('Bamako-Sénou International Airport (BKO)');
+  const [departureCountry, setDepartureCountry] = useState('Burkina Faso');
+  const [departureCity, setDepartureCity] = useState('Ouagadougou');
+  const [departureAirport, setDepartureAirport] = useState('Ouagadougou Airport (OUA)');
   const [departureTime, setDepartureTime] = useState('');
   const [arrivalCountry, setArrivalCountry] = useState('South Africa');
   const [arrivalCity, setArrivalCity] = useState('Johannesburg');

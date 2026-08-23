@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/data/artisanalSitesData';
+import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/test/fixtures/artisanalSites';
 import ArtisanalSitesOverview from './ArtisanalSitesOverview';
 
 const mocks = vi.hoisted(() => ({

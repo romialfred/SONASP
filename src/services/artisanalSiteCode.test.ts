@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_ARTISANAL_SITES } from '@/data/artisanalSitesData';
+import { DEMO_ARTISANAL_SITES } from '@/test/fixtures/artisanalSites';
 import type { ArtisanalSite } from '@/types/artisanalSite';
 import { generateSiteCode, nextSiteSequence, regionTrigram } from './artisanalSiteCode';
 

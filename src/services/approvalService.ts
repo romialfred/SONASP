@@ -1,531 +1,197 @@
 import { supabase } from '@/lib/supabase';
-import { logAuditAction } from '@/lib/auditLog';
-import { sendSaleApprovalRequest, sendPaymentConfirmationRequest } from './notificationService';
+import { errorMessage } from '@/lib/errorMessage';
+import type { Tables } from '@/types/database';
 
-export interface ApprovalRequest {
-  id: string;
-  approval_type: 'sale' | 'payment' | 'batch' | 'refining';
+export type ApprovalRequest = Tables<'approval_requests'>;
+
+export interface ApprovalDecision {
+  request_id: string;
   entity_id: string;
-  entity_type: string;
-  current_level: number;
-  max_levels: number;
-  status: 'pending' | 'approved' | 'rejected' | 'escalated';
-  requested_by: string;
-  requested_at: string;
-  completed_at?: string;
+  decision: 'approve' | 'reject';
+  status: string;
 }
 
-export interface ApprovalStep {
-  id: string;
-  approval_request_id: string;
-  level: number;
-  approver_email: string;
-  approver_role: string;
-  status: 'pending' | 'approved' | 'rejected' | 'skipped';
-  approved_at?: string;
-  comments?: string;
-}
+type ServiceResult<T = undefined> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
 
-export interface ApprovalWorkflowConfig {
-  approval_type: string;
-  levels: Array<{
-    level: number;
-    role: string;
-    required: boolean;
-    timeout_hours?: number;
-  }>;
-}
-
-const DEFAULT_APPROVAL_CONFIGS: ApprovalWorkflowConfig[] = [
-  {
-    approval_type: 'sale',
-    levels: [
-      { level: 1, role: 'sales_manager', required: true, timeout_hours: 24 },
-      { level: 2, role: 'management', required: true, timeout_hours: 48 },
-    ],
-  },
-  {
-    approval_type: 'payment',
-    levels: [
-      { level: 1, role: 'finance_manager', required: true, timeout_hours: 12 },
-      { level: 2, role: 'management', required: true, timeout_hours: 24 },
-    ],
-  },
-  {
-    approval_type: 'batch',
-    levels: [
-      { level: 1, role: 'supervisor', required: true, timeout_hours: 6 },
-    ],
-  },
-  {
-    approval_type: 'refining',
-    levels: [
-      { level: 1, role: 'refinery_supervisor', required: true, timeout_hours: 12 },
-      { level: 2, role: 'management', required: false, timeout_hours: 24 },
-    ],
-  },
-];
-
-export async function createApprovalRequest(
-  approvalType: 'sale' | 'payment' | 'batch' | 'refining',
-  entityId: string,
-  entityType: string,
-  requestedBy: string,
-  entityData?: Record<string, any>
-): Promise<{ success: boolean; data?: ApprovalRequest; error?: string }> {
+/**
+ * Point de passage unique pour une décision d'approbation.
+ *
+ * Le courriel de l'utilisateur n'est volontairement pas transmis au serveur :
+ * l'identité, le rôle, le MFA, l'affectation et l'état courant sont contrôlés
+ * dans la transaction à partir de auth.uid().
+ */
+async function decide(
+  approvalRequestId: string,
+  decision: 'approve' | 'reject',
+  reason?: string
+): Promise<ServiceResult<ApprovalDecision>> {
   try {
-    const config = DEFAULT_APPROVAL_CONFIGS.find(c => c.approval_type === approvalType);
-
-    if (!config) {
-      return { success: false, error: 'Invalid approval type' };
-    }
-
-    const { data: approvalRequest, error: requestError } = await supabase
-      .from('approval_requests')
-      .insert({
-        approval_type: approvalType,
-        entity_id: entityId,
-        entity_type: entityType,
-        current_level: 1,
-        max_levels: config.levels.length,
-        status: 'pending',
-        requested_by: requestedBy,
-        requested_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (requestError) {
-      return { success: false, error: requestError.message };
-    }
-
-    for (const level of config.levels) {
-      const { data: users } = await supabase
-        .from('user_profiles')
-        .select('email')
-        .eq('role', level.role)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (!users || users.length === 0) {
-        console.warn(`No active user found for role: ${level.role}`);
-        continue;
-      }
-
-      await supabase
-        .from('approval_steps')
-        .insert({
-          approval_request_id: approvalRequest.id,
-          level: level.level,
-          approver_email: users[0].email,
-          approver_role: level.role,
-          status: level.level === 1 ? 'pending' : 'pending',
-        });
-    }
-
-    const firstLevelApprover = await getApproverForLevel(approvalRequest.id, 1);
-
-    if (firstLevelApprover && approvalType === 'sale' && entityData) {
-      await sendSaleApprovalRequest(
-        entityId,
-        entityData.saleNumber,
-        entityData.customerName,
-        entityData.quantityOz,
-        entityData.finalProceeds,
-        firstLevelApprover.approver_email
-      );
-    } else if (firstLevelApprover && approvalType === 'payment' && entityData) {
-      await sendPaymentConfirmationRequest(
-        entityData.paymentNumber,
-        entityData.saleNumber,
-        entityData.amount,
-        entityData.currency,
-        firstLevelApprover.approver_email,
-        entityId
-      );
-    }
-
-    await logAuditAction({
-      action: 'approval_request_created',
-      table_name: 'approval_requests',
-      record_id: approvalRequest.id,
-      details: {
-        approval_type: approvalType,
-        entity_id: entityId,
-        entity_type: entityType,
-      },
-      user_email: requestedBy,
+    const { data, error } = await supabase.rpc('snp_decider_approbation', {
+      p_demande_id: approvalRequestId,
+      p_decision: decision,
+      p_motif: reason?.trim() || null,
     });
 
-    return { success: true, data: approvalRequest };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    if (error) throw error;
+    return { success: true, data: data as unknown as ApprovalDecision };
+  } catch (reasonCaught) {
+    return {
+      success: false,
+      error: errorMessage(reasonCaught, "La décision n'a pas pu être enregistrée."),
+    };
   }
-}
-
-async function getApproverForLevel(
-  approvalRequestId: string,
-  level: number
-): Promise<ApprovalStep | null> {
-  const { data } = await supabase
-    .from('approval_steps')
-    .select('*')
-    .eq('approval_request_id', approvalRequestId)
-    .eq('level', level)
-    .single();
-
-  return data;
 }
 
 export async function approveRequest(
   approvalRequestId: string,
-  approverEmail: string,
+  _legacyApproverEmail?: string,
   comments?: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { data: approvalRequest } = await supabase
-      .from('approval_requests')
-      .select('*')
-      .eq('id', approvalRequestId)
-      .single();
-
-    if (!approvalRequest) {
-      return { success: false, error: 'Approval request not found' };
-    }
-
-    const { data: currentStep } = await supabase
-      .from('approval_steps')
-      .select('*')
-      .eq('approval_request_id', approvalRequestId)
-      .eq('level', approvalRequest.current_level)
-      .eq('approver_email', approverEmail)
-      .single();
-
-    if (!currentStep) {
-      return { success: false, error: 'You are not authorized to approve this request' };
-    }
-
-    await supabase
-      .from('approval_steps')
-      .update({
-        status: 'approved',
-        approved_at: new Date().toISOString(),
-        comments,
-      })
-      .eq('id', currentStep.id);
-
-    if (approvalRequest.current_level < approvalRequest.max_levels) {
-      await supabase
-        .from('approval_requests')
-        .update({
-          current_level: approvalRequest.current_level + 1,
-        })
-        .eq('id', approvalRequestId);
-
-      const nextLevelApprover = await getApproverForLevel(
-        approvalRequestId,
-        approvalRequest.current_level + 1
-      );
-
-      if (nextLevelApprover) {
-        await supabase
-          .from('approval_steps')
-          .update({
-            status: 'pending',
-          })
-          .eq('id', nextLevelApprover.id);
-      }
-    } else {
-      await supabase
-        .from('approval_requests')
-        .update({
-          status: 'approved',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', approvalRequestId);
-
-      // Update entity status based on approval type
-      if (approvalRequest.approval_type === 'sale') {
-        // For sales, after management approval, move to customer_approved
-        // This triggers customer notification to approve for payment
-        await supabase
-          .from('sales')
-          .update({
-            status: 'customer_approved',
-            management_approved_at: new Date().toISOString(),
-            management_approved_by: approverEmail
-          })
-          .eq('id', approvalRequest.entity_id);
-
-        // Send email to customer for approval
-        const { data: saleData } = await supabase
-          .from('sales')
-          .select('sale_number, customer:customers(name, email), quantity_oz, final_proceeds')
-          .eq('id', approvalRequest.entity_id)
-          .single();
-
-        if (saleData && saleData.customer) {
-          await sendSaleApprovalRequest(
-            approvalRequest.entity_id,
-            saleData.sale_number,
-            saleData.customer.name,
-            saleData.quantity_oz,
-            saleData.final_proceeds,
-            saleData.customer.email
-          );
-        }
-      } else if (approvalRequest.approval_type === 'payment') {
-        await supabase
-          .from('payments')
-          .update({ status: 'approved' })
-          .eq('id', approvalRequest.entity_id);
-      }
-    }
-
-    await logAuditAction({
-      action: 'approval_step_approved',
-      table_name: 'approval_steps',
-      record_id: currentStep.id,
-      details: {
-        approval_request_id: approvalRequestId,
-        level: approvalRequest.current_level,
-        comments,
-      },
-      user_email: approverEmail,
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+): Promise<ServiceResult<ApprovalDecision>> {
+  return decide(approvalRequestId, 'approve', comments);
 }
 
 export async function rejectRequest(
   approvalRequestId: string,
-  approverEmail: string,
+  _legacyApproverEmail: string | undefined,
   reason: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ServiceResult<ApprovalDecision>> {
+  if (reason.trim().length < 5) {
+    return { success: false, error: 'Le motif de rejet doit comporter au moins 5 caractères.' };
+  }
+  return decide(approvalRequestId, 'reject', reason);
+}
+
+async function findPendingSaleRequest(saleId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('approval_requests')
+    .select('id')
+    .eq('entity_id', saleId)
+    .in('request_type', ['sale', 'sale_approval'])
+    .in('status', ['pending', 'escalated'])
+    .order('requested_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Aucune demande d'approbation active n'est rattachée à cette vente.");
+  return data.id;
+}
+
+export async function approveSale(
+  saleId: string,
+  _legacyApproverEmail?: string,
+  comments?: string
+): Promise<ServiceResult<ApprovalDecision>> {
   try {
-    const { data: approvalRequest } = await supabase
-      .from('approval_requests')
-      .select('*')
-      .eq('id', approvalRequestId)
-      .single();
+    return decide(await findPendingSaleRequest(saleId), 'approve', comments);
+  } catch (reason) {
+    return { success: false, error: errorMessage(reason, "La vente n'a pas pu être approuvée.") };
+  }
+}
 
-    if (!approvalRequest) {
-      return { success: false, error: 'Approval request not found' };
-    }
-
-    const { data: currentStep } = await supabase
-      .from('approval_steps')
-      .select('*')
-      .eq('approval_request_id', approvalRequestId)
-      .eq('level', approvalRequest.current_level)
-      .eq('approver_email', approverEmail)
-      .single();
-
-    if (!currentStep) {
-      return { success: false, error: 'You are not authorized to reject this request' };
-    }
-
-    await supabase
-      .from('approval_steps')
-      .update({
-        status: 'rejected',
-        approved_at: new Date().toISOString(),
-        comments: reason,
-      })
-      .eq('id', currentStep.id);
-
-    await supabase
-      .from('approval_requests')
-      .update({
-        status: 'rejected',
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', approvalRequestId);
-
-    if (approvalRequest.approval_type === 'sale') {
-      // For sales, rejection means customer_rejected status
-      await supabase
-        .from('sales')
-        .update({
-          status: 'customer_rejected',
-          management_rejected_at: new Date().toISOString(),
-          management_rejected_by: approverEmail,
-          rejection_reason: reason
-        })
-        .eq('id', approvalRequest.entity_id);
-    } else if (approvalRequest.approval_type === 'payment') {
-      await supabase
-        .from('payments')
-        .update({ status: 'rejected' })
-        .eq('id', approvalRequest.entity_id);
-    }
-
-    await logAuditAction({
-      action: 'approval_step_rejected',
-      table_name: 'approval_steps',
-      record_id: currentStep.id,
-      details: {
-        approval_request_id: approvalRequestId,
-        level: approvalRequest.current_level,
-        reason,
-      },
-      user_email: approverEmail,
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+export async function rejectSale(
+  saleId: string,
+  _legacyApproverEmail: string | undefined,
+  reason: string
+): Promise<ServiceResult<ApprovalDecision>> {
+  if (reason.trim().length < 5) {
+    return { success: false, error: 'Le motif de rejet doit comporter au moins 5 caractères.' };
+  }
+  try {
+    return decide(await findPendingSaleRequest(saleId), 'reject', reason);
+  } catch (reasonCaught) {
+    return { success: false, error: errorMessage(reasonCaught, "La vente n'a pas pu être rejetée.") };
   }
 }
 
 export async function getApprovalRequestsByEntity(
   entityId: string,
   entityType: string
-): Promise<{ success: boolean; data?: ApprovalRequest[]; error?: string }> {
+): Promise<ServiceResult<ApprovalRequest[]>> {
   try {
     const { data, error } = await supabase
       .from('approval_requests')
-      .select(`
-        *,
-        approval_steps(*)
-      `)
+      .select('*')
       .eq('entity_id', entityId)
       .eq('entity_type', entityType)
       .order('requested_at', { ascending: false });
 
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
+    if (error) throw error;
     return { success: true, data: data || [] };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (reason) {
+    return {
+      success: false,
+      error: errorMessage(reason, "Impossible de charger l'historique des approbations."),
+    };
   }
 }
 
+/** Le filtrage nominatif est effectué par RLS à partir de la session courante. */
 export async function getPendingApprovals(
-  approverEmail: string
-): Promise<{ success: boolean; data?: ApprovalRequest[]; error?: string }> {
+  _legacyApproverEmail?: string
+): Promise<ServiceResult<ApprovalRequest[]>> {
   try {
-    const { data: pendingSteps } = await supabase
-      .from('approval_steps')
-      .select('approval_request_id')
-      .eq('approver_email', approverEmail)
-      .eq('status', 'pending');
-
-    if (!pendingSteps || pendingSteps.length === 0) {
-      return { success: true, data: [] };
-    }
-
-    const requestIds = pendingSteps.map(s => s.approval_request_id);
-
     const { data, error } = await supabase
       .from('approval_requests')
-      .select(`
-        *,
-        approval_steps(*)
-      `)
-      .in('id', requestIds)
-      .eq('status', 'pending')
+      .select('*')
+      .in('status', ['pending', 'escalated'])
       .order('requested_at', { ascending: true });
 
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
+    if (error) throw error;
     return { success: true, data: data || [] };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (reason) {
+    return {
+      success: false,
+      error: errorMessage(reason, "Impossible de charger les approbations en attente."),
+    };
   }
 }
 
-export async function escalateDelayedApprovals(): Promise<{ success: boolean; escalated: number; error?: string }> {
-  try {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: delayedRequests } = await supabase
-      .from('approval_requests')
-      .select('*')
-      .eq('status', 'pending')
-      .lt('requested_at', twentyFourHoursAgo);
-
-    if (!delayedRequests || delayedRequests.length === 0) {
-      return { success: true, escalated: 0 };
-    }
-
-    for (const request of delayedRequests) {
-      await supabase
-        .from('approval_requests')
-        .update({ status: 'escalated' })
-        .eq('id', request.id);
-    }
-
-    return { success: true, escalated: delayedRequests.length };
-  } catch (error: any) {
-    return { success: false, escalated: 0, error: error.message };
-  }
-}
-
-export async function getApprovalStatistics(approverEmail?: string): Promise<{
-  success: boolean;
-  data?: {
+export async function getApprovalStatistics(): Promise<
+  ServiceResult<{
     total_pending: number;
     total_approved: number;
     total_rejected: number;
     avg_approval_time_hours: number;
-  };
-  error?: string;
-}> {
+  }>
+> {
   try {
-    let query = supabase.from('approval_requests').select('*');
+    const { data, error } = await supabase
+      .from('approval_requests')
+      .select('status, requested_at, approved_at');
+    if (error) throw error;
 
-    if (approverEmail) {
-      const { data: steps } = await supabase
-        .from('approval_steps')
-        .select('approval_request_id')
-        .eq('approver_email', approverEmail);
-
-      if (steps) {
-        const requestIds = steps.map(s => s.approval_request_id);
-        query = query.in('id', requestIds);
-      }
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    const requests = data || [];
-    const totalPending = requests.filter(r => r.status === 'pending').length;
-    const totalApproved = requests.filter(r => r.status === 'approved').length;
-    const totalRejected = requests.filter(r => r.status === 'rejected').length;
-
-    const completedRequests = requests.filter(r => r.completed_at);
-    const avgApprovalTimeMs = completedRequests.length > 0
-      ? completedRequests.reduce((sum, r) => {
-          const start = new Date(r.requested_at).getTime();
-          const end = new Date(r.completed_at).getTime();
-          return sum + (end - start);
-        }, 0) / completedRequests.length
-      : 0;
-
-    const avgApprovalTimeHours = avgApprovalTimeMs / (1000 * 60 * 60);
+    const rows = data || [];
+    const durations = rows
+      .filter((row) => row.status === 'approved' && row.requested_at && row.approved_at)
+      .map(
+        (row) =>
+          (new Date(row.approved_at as string).getTime() -
+            new Date(row.requested_at as string).getTime()) /
+          3_600_000
+      )
+      .filter((duration) => Number.isFinite(duration) && duration >= 0);
 
     return {
       success: true,
       data: {
-        total_pending: totalPending,
-        total_approved: totalApproved,
-        total_rejected: totalRejected,
-        avg_approval_time_hours: avgApprovalTimeHours,
+        total_pending: rows.filter((row) => ['pending', 'escalated'].includes(row.status || '')).length,
+        total_approved: rows.filter((row) => row.status === 'approved').length,
+        total_rejected: rows.filter((row) => row.status === 'rejected').length,
+        avg_approval_time_hours:
+          durations.length > 0
+            ? durations.reduce((total, duration) => total + duration, 0) / durations.length
+            : 0,
       },
     };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (reason) {
+    return {
+      success: false,
+      error: errorMessage(reason, "Impossible de calculer les statistiques d'approbation."),
+    };
   }
 }

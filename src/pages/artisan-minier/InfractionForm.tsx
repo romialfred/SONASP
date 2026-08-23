@@ -208,7 +208,6 @@ export default function InfractionForm() {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artisanId, infractionId]);
 
   // Les aperçus locaux sont révoqués à la sortie : sans cela les blobs restaient en mémoire.

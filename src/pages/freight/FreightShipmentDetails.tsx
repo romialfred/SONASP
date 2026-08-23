@@ -16,6 +16,7 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { formatWeightGrams, formatWeightOunces, formatCurrency } from '@/utils/numberUtils';
 import { formatSignatoryName } from '@/utils/nameUtils';
+import { PAYS_NATIONAL } from '@/constants/site';
 
 export default function FreightShipmentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -101,9 +102,22 @@ export default function FreightShipmentDetails() {
 
     try {
       setGeneratingDocs(true);
+
+      const sourceCompanies = shipment.source_mining_companies || [];
+      if (sourceCompanies.length !== 1) {
+        showError(
+          'Origine à confirmer',
+          sourceCompanies.length === 0
+            ? 'La société minière d’origine ne peut pas être déterminée. Aucun document ne sera généré avec une identité supposée.'
+            : 'Cette expédition regroupe plusieurs sociétés minières. Générez des documents distincts par société d’origine.',
+        );
+        return;
+      }
+      const sourceCompany = sourceCompanies[0];
       showSuccess('Génération en cours', 'Création des documents PDF...');
 
       const bullionData: BullionSummaryData = {
+        issuerName: sourceCompany.name,
         reportDate: new Date().toLocaleDateString('en-US', {
           month: '2-digit',
           day: '2-digit',
@@ -146,20 +160,20 @@ export default function FreightShipmentDetails() {
           year: 'numeric'
         }),
         invoiceNumber: shipment.reference_number,
-        senderName: 'LA SOCIÉTÉ DES MINES DE KOMANA',
-        senderAddress: 'Komana Mine Site',
-        senderCity: 'Yanfolila',
-        senderCountry: 'Mali',
-        senderNIF: 'NIF-PLACEHOLDER',
+        senderName: sourceCompany.name,
+        senderAddress: sourceCompany.address || '',
+        senderCity: sourceCompany.city || sourceCompany.localite || '',
+        senderCountry: sourceCompany.country || PAYS_NATIONAL,
+        senderNIF: sourceCompany.tax_id || '',
         recipientName: shipment.destination_refinery?.name || 'Raffinerie',
         recipientAddress: shipment.destination_refinery?.address || '-',
         recipientCity: shipment.destination_refinery?.city || '-',
         recipientCountry: shipment.destination_refinery?.country || '-',
         recipientPhone: shipment.destination_refinery?.phone || '-',
-        countryOfOrigin: 'Mali',
-        mineName: 'Komana Gold Mine',
-        awbNumber: 'AWB-' + shipment.reference_number,
-        lotNumber: shipment.reference_number,
+        countryOfOrigin: sourceCompany.country || PAYS_NATIONAL,
+        mineName: sourceCompany.name,
+        awbNumber: '',
+        lotNumber: shipment.expedition_number || shipment.reference_number,
         numberOfBoxes: shipment.number_of_boxes,
         boxType: shipment.box_type,
         description: 'Gold Doré Bars',
@@ -176,7 +190,7 @@ export default function FreightShipmentDetails() {
         totalPriceUSD: shipment.total_value_usd
       };
 
-      const result = await freightDocumentService.generateAllDocuments(
+      await freightDocumentService.generateAllDocuments(
         id,
         bullionData,
         invoiceData

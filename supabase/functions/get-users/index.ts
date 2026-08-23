@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
+import { niveauAssurance } from '../_shared/assurance.ts';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return reponsePrevol(req);
@@ -29,15 +30,18 @@ Deno.serve(async (req: Request) => {
     // Check if user has management role
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .select('role, is_active, mining_company_id')
+      .select('role, is_active, mining_company_id, mfa_enrolled_at')
       .eq('id', user.id)
       .single();
 
-    const roleTechnique = String(user.app_metadata?.role ?? '').toLowerCase();
-    const roleEffectif = roleTechnique === 'owner' ? 'owner' : String(profile?.role ?? '').toLowerCase();
+    // Le rôle faisant autorité est celui du profil en base. Une app_metadata
+    // historique ou modifiée ne peut jamais promouvoir un compte en Owner.
+    const roleEffectif = String(profile?.role ?? '').toLowerCase();
     const habilite = profile?.is_active
       && ['owner', 'admin', 'management'].includes(roleEffectif)
-      && (roleEffectif === 'owner' || profile?.mining_company_id === null);
+      && profile?.mining_company_id === null
+      && Boolean(profile?.mfa_enrolled_at)
+      && niveauAssurance(token) === 'aal2';
     if (profileError || !habilite) {
       return reponseJson(req, { success: false, error: 'Vous ne disposez pas du droit de consulter les comptes.' }, 403);
     }
@@ -63,9 +67,8 @@ Deno.serve(async (req: Request) => {
       phone: user.phone,
       role: user.role,
       mining_company_id: user.mining_company_id ?? null,
-      site_ids: user.site_ids || [],
       is_active: user.is_active !== false,
-      two_factor_enabled: user.two_factor_enabled || false,
+      two_factor_enabled: Boolean(user.mfa_enrolled_at),
       last_login_at: user.last_login_at,
       created_at: user.created_at,
       updated_at: user.updated_at,

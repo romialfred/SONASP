@@ -106,12 +106,12 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
   const handleAddBank = () => {
     const newBank: BankAccount = {
       bankName: '',
-      country: '',
+      country: 'Burkina Faso',
       city: '',
       accountNumber: '',
       iban: '',
       swiftCode: '',
-      currency: 'USD',
+      currency: 'XOF',
       isPrimary: banks.length === 0,
       isActive: true,
     };

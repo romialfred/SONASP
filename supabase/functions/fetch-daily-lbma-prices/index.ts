@@ -2,17 +2,17 @@
  * Supabase Edge Function: Fetch Daily LBMA Gold Prices
  *
  * This function runs automatically at market close (London: 4:30 PM GMT)
- * to fetch and store the day's LBMA gold price data.
+ * to fetch and store an observed gold market price.
  *
  * Key Features:
- * - Fetches official LBMA London AM/PM Fix prices
- * - Previous day's spot price (closing) becomes today's London AM Fix
+ * - Fetches one observed XAU/USD market price from a configured provider
+ * - Never reconstructs or fabricates an official LBMA fixing
  * - Automatically calculates monthly aggregates at month-end
  * - Handles weekends and holidays (skips non-trading days)
  *
  * Table Structure:
  * - Uses spot_price as the day's closing price
- * - london_am_rate = previous trading day's spot_price
+ * - Legacy non-null price columns receive the same observed value
  * - Columns: price_date, london_am_rate, london_pm_rate, spot_price,
  *   average_price, high_price, low_price, source, currency, notes
  *
@@ -151,6 +151,14 @@ serve(async (req: Request) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    if (req.headers.get('Authorization') !== `Bearer ${supabaseKey}`) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const today = new Date();
@@ -198,39 +206,27 @@ serve(async (req: Request) => {
       throw new Error('Unable to fetch gold price from any source');
     }
 
-    // Get previous trading day's spot price (which represents closing)
-    const { data: previousDay } = await supabase
-      .from('gold_prices_daily')
-      .select('spot_price, price_date')
-      .order('price_date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    // CRITICAL: London AM = Previous day's spot price (closing price)
-    const londonAM = previousDay ? previousDay.spot_price : closingPrice * 0.995;
-
-    // London PM typically within 0.3% of spot price
-    const londonPM = closingPrice * (0.997 + Math.random() * 0.006);
-
-    // Calculate intraday prices (high/low based on AM, PM, and spot)
-    const high = Math.max(closingPrice, londonAM, londonPM) * (1 + Math.random() * 0.005);
-    const low = Math.min(closingPrice, londonAM, londonPM) * (1 - Math.random() * 0.005);
-    const average = (closingPrice + high + low + londonAM + londonPM) / 5;
+    // Les fournisseurs interrogés renvoient un cours observé, pas les fixings
+    // officiels LBMA AM/PM ni les extrêmes intrajournaliers. La version
+    // précédente fabriquait ces valeurs avec Math.random(), ce qui est
+    // inacceptable pour une donnée financière. Les colonnes historiques étant
+    // obligatoires, elles reçoivent toutes le même cours effectivement observé.
+    const observedPrice = parseFloat(closingPrice.toFixed(2));
 
     // Insert daily price (using actual table columns only)
     const { error: insertError } = await supabase
       .from('gold_prices_daily')
       .insert({
         price_date: todayStr,
-        london_am_rate: parseFloat(londonAM.toFixed(2)),
-        london_pm_rate: parseFloat(londonPM.toFixed(2)),
-        spot_price: parseFloat(closingPrice.toFixed(2)),
-        high_price: parseFloat(high.toFixed(2)),
-        low_price: parseFloat(low.toFixed(2)),
-        average_price: parseFloat(average.toFixed(2)),
-        source: 'API (Automated)',
+        london_am_rate: observedPrice,
+        london_pm_rate: observedPrice,
+        spot_price: observedPrice,
+        high_price: observedPrice,
+        low_price: observedPrice,
+        average_price: observedPrice,
+        source: 'API marché — cours observé',
         currency: 'USD',
-        notes: 'Automated daily import at market close',
+        notes: 'Cours unique observé auprès d’un fournisseur externe ; aucun fixing LBMA AM/PM reconstitué.',
       });
 
     if (insertError) {

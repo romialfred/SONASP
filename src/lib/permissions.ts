@@ -1,25 +1,27 @@
 import { UserRole, UserProfile } from '@/types/auth';
 
 export const PERMISSIONS = {
-  SALES_VIEW: 'view',
-  SALES_CREATE: 'create',
-  SALES_APPROVE: 'approve',
-  CUSTOMERS_VIEW: 'view',
-  CUSTOMERS_CREATE: 'create',
-  CUSTOMERS_EDIT: 'edit',
-  CUSTOMERS_MANAGE: 'manage',
-  LICENSES_VIEW: 'view',
-  LICENSES_CREATE: 'create',
-  LICENSES_REQUEST: 'request',
-  LICENSES_APPROVE: 'approve',
-  USERS_VIEW: 'view',
-  USERS_MANAGE: 'manage',
-  REPORTS_VIEW: 'view',
-  REPORTS_GENERATE: 'generate',
-  SETTINGS_VIEW: 'view',
-  SETTINGS_MANAGE: 'manage',
+  // Chaque permission est qualifiée par son domaine. Des valeurs génériques
+  // comme "view" accordaient auparavant un accès transversal involontaire.
+  SALES_VIEW: 'sales:view',
+  SALES_CREATE: 'sales:create',
+  SALES_APPROVE: 'sales:approve',
+  CUSTOMERS_VIEW: 'customers:view',
+  CUSTOMERS_CREATE: 'customers:create',
+  CUSTOMERS_EDIT: 'customers:edit',
+  CUSTOMERS_MANAGE: 'customers:manage',
+  LICENSES_VIEW: 'licenses:view',
+  LICENSES_CREATE: 'licenses:create',
+  LICENSES_REQUEST: 'licenses:request',
+  LICENSES_APPROVE: 'licenses:approve',
+  USERS_VIEW: 'users:view',
+  USERS_MANAGE: 'users:manage',
+  REPORTS_VIEW: 'reports:view',
+  REPORTS_GENERATE: 'reports:generate',
+  SETTINGS_VIEW: 'settings:view',
+  SETTINGS_MANAGE: 'settings:manage',
   SYSTEM_SETTINGS_MANAGE: 'system_settings_manage',
-  AUDIT_VIEW: 'view',
+  AUDIT_VIEW: 'audit:view',
 } as const;
 
 const FULL_ACCESS_PERMISSIONS = [...new Set(Object.values(PERMISSIONS))];

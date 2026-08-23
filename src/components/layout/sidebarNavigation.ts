@@ -17,7 +17,6 @@ import {
   PackageCheck,
   Settings,
   SlidersHorizontal,
-  Sparkles,
   TrendingUp,
   Truck,
   Users,
@@ -270,13 +269,6 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         path: '/dashboard/production-modern',
         icon: Building2,
         color: '#10976b',
-      },
-      {
-        id: 'assistance-ia',
-        label: 'Assistant IA',
-        path: '/analytics/assistant',
-        icon: Sparkles,
-        color: '#7c3aed',
       },
       {
         id: 'rapports-institutionnels',

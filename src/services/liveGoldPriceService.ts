@@ -52,16 +52,23 @@ async function fetchFromGoldPriceOrg(): Promise<LiveGoldPrice | null> {
       const goldItem = data.items.find((item: any) => item.curr === 'XAU');
 
       if (goldItem && goldItem.xauPrice) {
+        const change24h = Number.isFinite(Number(goldItem.chgXau))
+          ? Number(goldItem.chgXau)
+          : undefined;
+        const changePercent24h = Number.isFinite(Number(goldItem.pcXau))
+          ? Number(goldItem.pcXau)
+          : undefined;
+
         return {
           price: goldItem.xauPrice,
           timestamp: Date.now(),
           source: 'GoldPrice.org',
           currency: 'USD',
-          high24h: goldItem.highPrice || goldItem.xauPrice * 1.008,
-          low24h: goldItem.lowPrice || goldItem.xauPrice * 0.992,
-          change24h: goldItem.chgXau || 0,
-          changePercent24h: goldItem.pcXau || 0,
-          openPrice: goldItem.xauPrice - (goldItem.chgXau || 0),
+          high24h: Number.isFinite(Number(goldItem.highPrice)) ? Number(goldItem.highPrice) : undefined,
+          low24h: Number.isFinite(Number(goldItem.lowPrice)) ? Number(goldItem.lowPrice) : undefined,
+          change24h,
+          changePercent24h,
+          openPrice: change24h === undefined ? undefined : goldItem.xauPrice - change24h,
         };
       }
     }
@@ -69,40 +76,6 @@ async function fetchFromGoldPriceOrg(): Promise<LiveGoldPrice | null> {
     return null;
   } catch (error) {
     console.error('GoldPrice.org error:', error);
-    return null;
-  }
-}
-
-/**
- * Fetch gold price from Metals-API.com (Alternative endpoint)
- */
-async function fetchFromMetalsDevAPI(): Promise<LiveGoldPrice | null> {
-  try {
-    // Using metals-api.com free tier endpoint
-    const response = await fetch('https://metals-api.com/api/latest?access_key=YOUR_FREE_KEY&base=USD&symbols=XAU');
-
-    if (!response.ok) {
-      console.warn('Metals-API.com request failed:', response.status);
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (data && data.success && data.rates && data.rates.XAU) {
-      // Convert rate to price per ounce
-      const pricePerOz = 1 / data.rates.XAU;
-
-      return {
-        price: pricePerOz,
-        timestamp: data.timestamp * 1000,
-        source: 'Metals-API',
-        currency: 'USD',
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Metals-API error:', error);
     return null;
   }
 }
@@ -141,33 +114,6 @@ async function fetchFromCoinbaseCommerce(): Promise<LiveGoldPrice | null> {
 }
 
 /**
- * Fallback to mock realistic gold price if all APIs fail
- * This ensures the UI always has data to display
- */
-function getFallbackGoldPrice(): LiveGoldPrice {
-  // Realistic gold price around current market value (2024-2025)
-  const basePrice = 2650; // Approximate current gold price
-  const randomVariation = (Math.random() - 0.5) * 20; // +/- $10 variation
-  const price = basePrice + randomVariation;
-
-  const openPrice = price * 0.998; // 0.2% variation from open
-  const change24h = price - openPrice;
-  const changePercent24h = (change24h / openPrice) * 100;
-
-  return {
-    price: price,
-    timestamp: Date.now(),
-    source: 'Fallback Estimate',
-    currency: 'USD',
-    openPrice: openPrice,
-    high24h: price * 1.005,
-    low24h: price * 0.995,
-    change24h: change24h,
-    changePercent24h: changePercent24h,
-  };
-}
-
-/**
  * Fetch real-time gold price with comprehensive fallback strategy
  */
 export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
@@ -189,16 +135,11 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
     price = await fetchFromCoinbaseCommerce();
   }
 
-  // Fallback to Metals-API
+  // Aucune valeur de repli n'est fabriquee. Une indisponibilite doit rester
+  // visible : un cours invente peut contaminer une vente ou un rapprochement.
   if (!price) {
-    console.log('Coinbase failed, trying Metals-API...');
-    price = await fetchFromMetalsDevAPI();
-  }
-
-  // If all APIs fail, use realistic fallback
-  if (!price) {
-    console.warn('All APIs failed, using fallback realistic price');
-    price = getFallbackGoldPrice();
+    console.warn('Toutes les sources de cours ont échoué ; aucun cours ne sera affiché.');
+    return null;
   }
 
   // Update cache

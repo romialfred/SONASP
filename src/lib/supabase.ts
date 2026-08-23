@@ -4,7 +4,8 @@ import type { Database } from '@/types/database';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const AUTH_STORAGE_KEY = 'gold-shipper-auth';
+const AUTH_STORAGE_KEY = 'sonasp-auth';
+const LEGACY_AUTH_STORAGE_KEY = 'gold-shipper-auth';
 const AUTH_PERSISTENCE_KEY = 'sonasp-auth-persistence';
 
 /**
@@ -28,6 +29,8 @@ const authStorage = {
 
 export function configureAuthPersistence(_legacyRememberMe?: boolean) {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+  window.sessionStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
   window.localStorage.removeItem(AUTH_PERSISTENCE_KEY);
 }
 
@@ -54,7 +57,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'gold-shipper-web',
+      'X-Client-Info': 'sonasp-web',
     },
   },
   db: {

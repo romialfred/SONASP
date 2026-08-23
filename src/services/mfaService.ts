@@ -195,19 +195,9 @@ export const mfaService = {
     }
     const { error } = await supabase.auth.updateUser({ password: nouveau });
     if (error) throw error;
-
-    const { data: utilisateur } = await supabase.auth.getUser();
-    if (utilisateur?.user) {
-      const { error: erreurProfil } = await supabase.from('user_profiles')
-        .update({
-          must_change_password: false,
-          password_changed_at: new Date().toISOString(),
-        })
-        .eq('id', utilisateur.user.id);
-      if (erreurProfil) {
-        throw new Error('Le mot de passe a été modifié, mais l’activation du compte n’a pas pu être finalisée. Réessayez.');
-      }
-    }
+    // La base observe le remplacement réel du secret dans auth.users et lève
+    // elle-même le marqueur de première connexion. Le navigateur ne peut donc
+    // pas déclarer le changement sans l'avoir effectivement réalisé.
   },
 
   /* --------------------------------------------------------- Administration */

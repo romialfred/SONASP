@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,12 +10,10 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 interface PricingCalculatorProps {
   availableStockOz: number;
-  miningCompanyId?: string;
   onMechanismSelect?: (mechanism: PricingMechanism, comparison: PricingComparison) => void;
 }
 
-export function PricingCalculator({ availableStockOz, miningCompanyId, onMechanismSelect }: PricingCalculatorProps) {
-  const navigate = useNavigate();
+export function PricingCalculator({ availableStockOz, onMechanismSelect }: PricingCalculatorProps) {
   const {
     alertState,
     showError,
@@ -47,100 +44,56 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
   };
 
   const handleCalculate = async () => {
-    console.log('🔵 [SIMULATE] Button clicked - Starting calculation');
-    console.log('🔵 [SIMULATE] Available stock:', availableStockOz);
-    console.log('🔵 [SIMULATE] Quantity input:', quantityOz);
-
     const qtyInOz = getQuantityInOz();
-    console.log('🔵 [SIMULATE] Calculated quantity in oz:', qtyInOz);
 
     // Add tolerance for floating point comparison (0.01 oz = ~0.31 grams tolerance)
     const tolerance = 0.01;
 
     if (isNaN(qtyInOz) || qtyInOz <= 0) {
-      console.error('❌ [SIMULATE] Invalid quantity', {
-        qtyInOz,
-        isNaN: isNaN(qtyInOz),
-        isZeroOrNegative: qtyInOz <= 0
-      });
       showError(
-        'The quantity entered is invalid. Please ensure you have entered a valid positive number.',
-        'Invalid Quantity'
+        'La quantité saisie doit être un nombre strictement positif.',
+        'Quantité invalide'
       );
       return;
     }
 
     if (qtyInOz > (availableStockOz + tolerance)) {
-      console.error('❌ [SIMULATE] Quantity exceeds stock', {
-        qtyInOz,
-        availableStockOz,
-        difference: qtyInOz - availableStockOz
-      });
       showError(
-        `The quantity entered (${qtyInOz.toFixed(2)} oz) exceeds available stock (${availableStockOz.toFixed(2)} oz).`,
-        'Insufficient Stock'
+        `La quantité saisie (${qtyInOz.toFixed(2)} oz) dépasse le stock disponible (${availableStockOz.toFixed(2)} oz).`,
+        'Stock insuffisant'
       );
       return;
     }
 
-    console.log('✅ [SIMULATE] Quantity validation passed');
     setLoading(true);
-    console.log('🔵 [SIMULATE] Loading state set to true');
 
     try {
-      console.log('🔵 [SIMULATE] Calling calculatePricingComparison...');
-      const startTime = Date.now();
-
       const result = await calculatePricingComparison(qtyInOz);
 
-      const duration = Date.now() - startTime;
-      console.log(`🔵 [SIMULATE] API call completed in ${duration}ms`);
-      console.log('🔵 [SIMULATE] Result:', {
-        success: result.success,
-        hasData: !!result.data,
-        error: result.error
-      });
-
       if (result.success && result.data) {
-        console.log('✅ [SIMULATE] Calculation successful');
-        console.log('🔵 [SIMULATE] Mechanisms count:', result.data.mechanisms?.length);
-        console.log('🔵 [SIMULATE] Recommended mechanism:', result.data.recommendedMechanism);
-
         // Sort mechanisms by benefit (highest to lowest)
         const sortedMechanisms = [...result.data.mechanisms].sort((a, b) => b.benefit - a.benefit);
-        console.log('✅ [SIMULATE] Mechanisms sorted');
 
         setComparison({
           ...result.data,
           mechanisms: sortedMechanisms
         });
         setSelectedMechanism(result.data.recommendedMechanism);
-        console.log('✅ [SIMULATE] State updated - Display should show');
       } else {
-        console.error('❌ [SIMULATE] Calculation failed:', result.error);
-        console.error('❌ [SIMULATE] Full result object:', JSON.stringify(result, null, 2));
-
         showError(
-          `Unable to calculate pricing: ${result.error || 'Unknown error'}\n\n` +
-          `This may be caused by missing gold price data. Please contact your administrator.`,
-          'Calculation Error'
+          `Le calcul n’a pas abouti : ${result.error || 'cours de l’or indisponible'}.`,
+          'Calcul indisponible'
         );
       }
     } catch (error: any) {
-      console.error('❌ [SIMULATE] Exception caught:', error);
-      console.error('❌ [SIMULATE] Error stack:', error?.stack);
-      console.error('❌ [SIMULATE] Error name:', error?.name);
-      console.error('❌ [SIMULATE] Error message:', error?.message);
+      console.error('[PricingCalculator] Calculation failed:', error);
 
       showError(
-        `An unexpected error occurred: ${error?.message || 'Unknown error'}\n\n` +
-        `Please check the console for details or contact support.`,
-        'Unexpected Error'
+        'Le calcul est momentanément indisponible. Réessayez ou contactez l’administrateur.',
+        'Erreur de calcul'
       );
     } finally {
       setLoading(false);
-      console.log('🔵 [SIMULATE] Loading state set to false');
-      console.log('🔵 [SIMULATE] Calculation complete');
     }
   };
 
@@ -149,19 +102,6 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
     if (onMechanismSelect && comparison) {
       onMechanismSelect(mechanism, comparison);
     }
-  };
-
-  const handleContinueWithMechanism = (mechanism: PricingMechanism) => {
-    // Navigate to sale creation with mechanism data
-    navigate('/sales/new', {
-      state: {
-        mechanismData: mechanism,
-        quantityOz: getQuantityInOz(),
-        availableStockOz,
-        preselectedSellerId: miningCompanyId,
-        lockSeller: true
-      }
-    });
   };
 
   const getMechanismIcon = (mechanism: string) => {
@@ -366,18 +306,9 @@ export function PricingCalculator({ availableStockOz, miningCompanyId, onMechani
                     </p>
 
                     {isSelected && (
-                      <div className="pt-1">
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleContinueWithMechanism(mechanism);
-                          }}
-                        >
-                          Continue with {mechanism.displayName}
-                        </Button>
-                      </div>
+                      <p className="pt-1 text-center text-xs font-semibold text-blue-700">
+                        Mécanisme sélectionné
+                      </p>
                     )}
                   </div>
                 </Card>

@@ -41,6 +41,7 @@ export const saleDetailSchema = saleSummarySchema.extend({
   net_proceeds: numericField,
   royalty_amount: numericField,
   notes: z.string().optional().nullable(),
+  mechanism_type: z.string().optional().nullable(),
 });
 
 export const saleSummaryListSchema = z.array(saleSummarySchema);
@@ -64,7 +65,7 @@ export type SaleStatus =
   | 'approved'
   | 'rejected';
 
-const SALE_STATUS_MAP: Record<string, SaleStatus> = {
+const SALE_STATUS_MAP: Partial<Record<string, SaleStatus>> = {
   create_sales: 'create_sales',
   pending_management_approval: 'pending_management_approval',
   management_approved: 'management_approved',

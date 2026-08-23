@@ -3,8 +3,6 @@ import { Card } from '@/components/ui/Card';
 import {
   RefreshCw,
   Clock,
-  ArrowUpRight,
-  ArrowDownRight,
   Globe,
 } from 'lucide-react';
 import {
@@ -135,7 +133,7 @@ export function LiveFxRatePanel() {
       )}
 
       {/* FX Rate Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {CURRENCY_PAIRS.map((currencyInfo) => {
           const rate = fxRates.get(currencyInfo.pair);
 
@@ -149,16 +147,10 @@ export function LiveFxRatePanel() {
             );
           }
 
-          const mockChange = (Math.random() - 0.5) * 0.02 * rate.rate;
-          const mockChangePercent = (mockChange / rate.rate) * 100;
-          const isPositive = mockChange >= 0;
-
           return (
             <Card
               key={currencyInfo.pair}
-              className={`bg-gradient-to-br from-white ${
-                isPositive ? 'to-green-50 border-l-4 border-green-500' : 'to-red-50 border-l-4 border-red-500'
-              } transition-all hover:shadow-md`}
+              className="border-l-4 border-emerald-600 bg-gradient-to-br from-white to-emerald-50/40 transition-all hover:shadow-md"
             >
               <div className="p-3">
                 <div className="flex items-center justify-between mb-1.5">
@@ -181,28 +173,15 @@ export function LiveFxRatePanel() {
                     <span className="text-[10px] text-gray-400 uppercase font-medium">{currencyInfo.pair.split('/')[0]}</span>
                   </div>
 
-                  <div className="flex items-center gap-1 mt-1">
-                    {isPositive ? (
-                      <ArrowUpRight className="w-3.5 h-3.5 text-green-600" />
-                    ) : (
-                      <ArrowDownRight className="w-3.5 h-3.5 text-red-600" />
-                    )}
-                    <p
-                      className={`text-xs font-medium ${
-                        isPositive ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {isPositive ? '+' : ''}
-                      {mockChange.toFixed(6)} ({isPositive ? '+' : ''}
-                      {mockChangePercent.toFixed(2)}%)
-                    </p>
-                  </div>
+                  <p className="mt-1 text-xs font-medium text-emerald-700">
+                    Source&nbsp;: {rate.source}
+                  </p>
 
                   <div className="mt-2 pt-2 border-t border-gray-200">
                     <div className="flex justify-between text-[10px] text-gray-500">
-                      <span>Live Rate</span>
+                      <span>Taux observé</span>
                       <span className="font-medium text-gray-700">
-                        {formatFxRate(rate.rate, currencyInfo.pair.includes('XOF') ? 2 : 6)}
+                        {new Date(rate.timestamp).toLocaleTimeString('fr-FR')}
                       </span>
                     </div>
                   </div>

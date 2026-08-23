@@ -25,12 +25,7 @@ export function UnifiedStatusFlow({
   className = '',
   compact = false
 }: UnifiedStatusFlowProps) {
-  // Cast du statut pour TypeScript
-  const status = currentStatus as UnifiedStatus;
-  const statusConfig = UNIFIED_STATUS_CONFIG[status];
-  
-  // Si le statut n'est pas reconnu, utiliser les valeurs par défaut
-  if (!statusConfig) {
+  if (!(currentStatus in UNIFIED_STATUS_CONFIG)) {
     return (
       <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
         <p className="text-sm text-yellow-800">
@@ -40,12 +35,15 @@ export function UnifiedStatusFlow({
     );
   }
 
+  const status = currentStatus as UnifiedStatus;
+  const statusConfig = UNIFIED_STATUS_CONFIG[status];
+
   const progressPercentage = getProgressPercentage(status);
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`${compact ? 'space-y-2' : 'space-y-4'} ${className}`}>
       {/* En-tête Statut Actuel */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+      <div className={`bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg ${compact ? 'p-3' : 'p-4'}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-2xl">{statusConfig.icon}</span>
@@ -64,7 +62,7 @@ export function UnifiedStatusFlow({
               <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-indigo-600"
-                  style={{ width: `${progressPercentage}%` }}
+                  style={{ width: `${String(progressPercentage)}%` }}
                 />
               </div>
               <span className="text-xs font-bold">{progressPercentage}%</span>

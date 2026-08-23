@@ -178,7 +178,10 @@ export const tracabiliteVenteService = {
       supabase
         .from('snp_artisan_ventes_or')
         .select('id, numero_recu, date_vente, quantite_grammes, statut, artisan:snp_artisans_miniers(nom, prenoms)'),
-      supabase.from(TABLE).select('source_type, achat_mine_id, artisan_vente_id, quantite_oz'),
+      supabase
+        .from(TABLE)
+        .select('source_type, achat_mine_id, artisan_vente_id, quantite_oz')
+        .is('released_at', null),
     ]);
 
     if (mines.error) throw mines.error;
@@ -215,20 +218,4 @@ export const tracabiliteVenteService = {
     }));
   },
 
-  /** Enregistre la composition d'une vente. */
-  async affecter(saleId: string, affectations: Affectation[]): Promise<void> {
-    if (!affectations.length) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from(TABLE).insert(
-      affectations.map((part) => ({
-        sale_id: saleId,
-        source_type: part.source_type,
-        achat_mine_id: part.source_type === 'achat_mine' ? part.source_id : null,
-        artisan_vente_id: part.source_type === 'achat_artisan' ? part.source_id : null,
-        quantite_oz: part.quantite_oz,
-        created_by: user?.id,
-      }))
-    );
-    if (error) throw error;
-  },
 };

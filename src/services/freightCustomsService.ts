@@ -150,7 +150,7 @@ export const freightCustomsService = {
         *,
         shipping_preparation:shipping_preparations(
           *,
-          mining_companies(id, name),
+          mining_companies(id, name, address, city, localite, country, tax_id),
           items:shipping_preparation_items(
             *,
             daily_productions(
@@ -417,7 +417,7 @@ export const freightCustomsService = {
         total_weight_grams,
         total_weight_oz,
         destination,
-        mining_companies(id, name),
+          mining_companies(id, name, address, city, localite, country, tax_id),
         freight_customs_operations(id)
       `)
       .eq('status', 'shipped')

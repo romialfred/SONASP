@@ -90,25 +90,25 @@ export function UsersListPage() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData?.session;
-
-      let comptes: Record<string, unknown>[] = [];
-      const viaFonction = session
-        ? await safeFetch<{ users?: Record<string, unknown>[] }>(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
-            { headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } }
-          )
-        : { ok: false as const, data: undefined };
-
-      if (viaFonction.ok && viaFonction.data?.users) {
-        comptes = viaFonction.data.users;
-      } else {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        comptes = data || [];
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!session?.access_token || !anonKey) {
+        throw new Error('Votre session d’administration n’est pas disponible.');
       }
+
+      // La liste complète ne retombe jamais sur une lecture directe du profil :
+      // l'autorisation d'administration et l'AAL2 sont vérifiés côté serveur.
+      const viaFonction = await safeFetch<{ users?: Record<string, unknown>[] }>(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-users`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: anonKey,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      if (!viaFonction.ok) throw new Error(viaFonction.error.message);
+      const comptes = viaFonction.data.users ?? [];
 
       const companyIds = Array.from(new Set(
         comptes
@@ -187,7 +187,7 @@ export function UsersListPage() {
       return;
     }
 
-    const confirme = await demanderConfirmation({
+    const decision = await demanderConfirmation({
       title: user.is_active ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?',
       message: user.is_active
         ? `${user.full_name || user.email} perdra immédiatement l’accès à la plateforme.`
@@ -195,15 +195,20 @@ export function UsersListPage() {
       confirmText: user.is_active ? 'Désactiver' : 'Réactiver',
       cancelText: 'Annuler',
       severity: user.is_active ? 'danger' : 'info',
+      requireComment: true,
+      commentPlaceholder: user.is_active
+        ? 'Motif de la désactivation…'
+        : 'Motif de la réactivation…',
     });
-    if (!confirme) return;
+    if (typeof decision !== 'string' || decision.trim().length < 5) return;
 
     setEnCours(user.id);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ is_active: !user.is_active })
-        .eq('id', user.id);
+      const { error } = await supabase.rpc('snp_definir_statut_compte', {
+        p_utilisateur_id: user.id,
+        p_actif: !user.is_active,
+        p_motif: decision.trim(),
+      });
       if (error) throw error;
       addToast(user.is_active ? 'Compte désactivé' : 'Compte réactivé', 'success');
       await charger();

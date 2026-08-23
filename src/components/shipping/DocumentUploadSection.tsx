@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Card } from '../ui/Card';
 import { supabase } from '@/lib/supabase';
+import { secureRandomId } from '@/lib/secureRandom';
 
 interface Document {
   id: string;
@@ -51,8 +52,8 @@ export function DocumentUploadSection({
       setUploading(true);
       setError(null);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${shippingId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileExt = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+      const fileName = `${shippingId}/${secureRandomId()}.${fileExt}`;
       const filePath = `shipping-documents/${fileName}`;
 
       const { error: uploadError } = await supabase.storage

@@ -9,6 +9,7 @@ import {
   ExportInvoiceData
 } from '@/services/freightInvoiceGenerationService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { PAYS_NATIONAL } from '@/constants/site';
 
 interface GenerateInvoiceModalProps {
   operation: FreightCustomsOperation;
@@ -23,6 +24,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
   const shipping = operation.shipping_preparation;
   const miningCompany = shipping?.mining_companies;
+  const savedInvoice = operation.invoice_data;
 
   // Form data for Bullion Summary
   const [bullionFormData, setbullionFormData] = useState({
@@ -34,30 +36,30 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   // Form data for Export Invoice
   const [invoiceFormData, setInvoiceFormData] = useState({
     // Sender (auto-filled)
-    senderName: miningCompany?.name || '',
-    senderAddress: miningCompany?.address || '',
-    senderCity: '',
-    senderCountry: 'Mali',
-    senderNIF: miningCompany?.nif || '',
+    senderName: savedInvoice?.sender_name || miningCompany?.name || '',
+    senderAddress: savedInvoice?.sender_address || miningCompany?.address || '',
+    senderCity: savedInvoice?.sender_city || miningCompany?.city || miningCompany?.localite || '',
+    senderCountry: savedInvoice?.sender_country || miningCompany?.country || PAYS_NATIONAL,
+    senderNIF: savedInvoice?.sender_nif || miningCompany?.tax_id || '',
 
     // Recipient
-    recipientName: 'Rand Refinery Ltd.',
-    recipientAddress: 'Refinery Road, Industries West',
-    recipientCity: 'Germiston, 1400 South Africa',
-    recipientCountry: 'South Africa',
-    recipientPhone: '+27(0) 11-418-9000',
+    recipientName: savedInvoice?.recipient_name || shipping?.destination || '',
+    recipientAddress: savedInvoice?.recipient_address || '',
+    recipientCity: savedInvoice?.recipient_city || '',
+    recipientCountry: savedInvoice?.recipient_country || '',
+    recipientPhone: savedInvoice?.recipient_phone || '',
 
     // Mine
-    mineName: '',
-    mineLocation: '',
+    mineName: savedInvoice?.mine_name || miningCompany?.name || '',
+    mineLocation: miningCompany?.localite || miningCompany?.city || '',
 
     // Financial
-    exchangeRateFCFAUSD: 561.0000,
-    metalPriceCFAPerKg: 68713000,
+    exchangeRateFCFAUSD: savedInvoice?.exchange_rate_fcfa_usd || 0,
+    metalPriceCFAPerKg: savedInvoice?.metal_price_cfa_per_kg || 0,
 
     // Boxes
-    numberOfBoxes: 2,
-    boxType: 'Plastic Box'
+    numberOfBoxes: savedInvoice?.number_of_boxes || 0,
+    boxType: savedInvoice?.box_type || 'Boîte sécurisée'
   });
 
   const generateBullionSummary = async () => {
@@ -68,6 +70,14 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
     if (!shipping?.items || shipping.items.length === 0) {
       showNotification('error', 'Aucune barre trouvée dans l\'expédition');
+      return;
+    }
+
+    if (!miningCompany?.name) {
+      showNotification(
+        'error',
+        'La société minière d’origine doit être renseignée avant de générer le document.',
+      );
       return;
     }
 
@@ -95,6 +105,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       });
 
       const summaryData: BullionSummaryData = {
+        issuerName: miningCompany.name,
         reportDate: bullionFormData.reportDate,
         shipmentNumber: shipping.reference_number,
         bars,
@@ -130,6 +141,18 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   const generateExportInvoice = async () => {
     if (!invoiceFormData.senderName || !invoiceFormData.recipientName) {
       showNotification('error', 'Veuillez remplir les informations expéditeur et destinataire');
+      return;
+    }
+
+    if (
+      invoiceFormData.exchangeRateFCFAUSD <= 0 ||
+      invoiceFormData.metalPriceCFAPerKg <= 0 ||
+      invoiceFormData.numberOfBoxes <= 0
+    ) {
+      showNotification(
+        'error',
+        'Renseignez un taux de change, un prix du métal et un nombre de boîtes strictement positifs.',
+      );
       return;
     }
 
@@ -303,7 +326,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     type="text"
                     value={bullionFormData.reportDate}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, reportDate: e.target.value })}
-                    placeholder="31-Oct-25"
+                    placeholder="31-août-26"
                   />
                 </div>
                 <div>
@@ -327,7 +350,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     type="text"
                     value={bullionFormData.operatorName}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, operatorName: e.target.value })}
-                    placeholder="SIDIKI SIDIBE"
+                    placeholder="Nom du responsable"
                     required
                   />
                 </div>
@@ -339,7 +362,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     type="text"
                     value={bullionFormData.financeName}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, financeName: e.target.value })}
-                    placeholder="MOUHAMAD TERA"
+                    placeholder="Nom du destinataire"
                     required
                   />
                 </div>
@@ -400,7 +423,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                       type="text"
                       value={invoiceFormData.senderCity}
                       onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderCity: e.target.value })}
-                      placeholder="Bamako"
+                      placeholder="Ouagadougou"
                     />
                   </div>
                   <div>
@@ -463,7 +486,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                       type="text"
                       value={invoiceFormData.mineName}
                       onChange={(e) => setInvoiceFormData({ ...invoiceFormData, mineName: e.target.value })}
-                      placeholder="Yanfolila"
+                      placeholder="Nom officiel de la mine"
                     />
                   </div>
                   <div>

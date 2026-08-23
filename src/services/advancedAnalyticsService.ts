@@ -373,7 +373,7 @@ export class AdvancedAnalyticsService {
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .in('status', ['completed', 'payment_received'])
-        .eq('seller_type', 'mining_company');
+        .in('seller_type', ['mining_company', 'sonasp']);
 
       if (salesError) {
         console.error('Error fetching revenue by company:', salesError);
@@ -416,7 +416,7 @@ export class AdvancedAnalyticsService {
 
       return Object.entries(companyRevenue).map(([companyId, totals]: [string, any]) => ({
         companyId,
-        companyName: companyMap.get(companyId) || 'Unknown',
+        companyName: companyMap.get(companyId) || 'Inconnu',
         totalRevenue: totals.totalRevenue,
         totalRoyalties: totals.totalRoyalties,
         totalQuantityOz: totals.totalQuantityOz,

@@ -54,7 +54,6 @@ const PaymentCreate = lazyNamed(() => import('./pages/payments/PaymentCreate'), 
 const PaymentDetailsPage = lazyNamed(() => import('./pages/payments/PaymentDetailsPage'), 'PaymentDetailsPage');
 const PaymentRecordPage = lazyNamed(() => import('./pages/payments/PaymentRecordPage'), 'PaymentRecordPage');
 const VirtualPaymentsPage = lazyNamed(() => import('./pages/payments/VirtualPaymentsPage'), 'VirtualPaymentsPage');
-const AnalyticsDashboard = lazyNamed(() => import('./pages/analytics/AnalyticsDashboardEnhanced'), 'AnalyticsDashboardEnhanced');
 const AnalyticsIntelligenceCenter = lazyNamed(() => import('./pages/analytics/AnalyticsIntelligenceCenter'), 'AnalyticsIntelligenceCenter');
 const ReportsDashboard = lazyNamed(() => import('./pages/reports/ReportsDashboard'), 'ReportsDashboard');
 const UsersListPage = lazyNamed(() => import('./pages/admin/UsersListPage'), 'UsersListPage');
@@ -123,7 +122,6 @@ const RapportQuantites = lazy(() => import('./pages/artisan-minier/RapportQuanti
 const RapportTaxesRoyalties = lazy(() => import('./pages/artisan-minier/RapportTaxesRoyalties'));
 const ArtisanalSiteProduction = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteProduction'));
 
-const AiAssistantPage = lazy(() => import('./pages/analytics/AiAssistantPage'));
 const AchatsMines = lazy(() => import('./pages/production/AchatsMines'));
 const PlansAchatPage = lazy(() => import('./pages/achats/PlansAchatPage'));
 const PlanAchatDetails = lazy(() => import('./pages/achats/PlanAchatDetails'));
@@ -462,15 +460,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PaymentsPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/analytics/assistant"
-              element={
-                <ProtectedRoute>
-                  <AiAssistantPage />
                 </ProtectedRoute>
               }
             />
@@ -1029,9 +1018,20 @@ function AppRoutes() {
             />
 
             <Route
+              path="/sales/approve/:saleId"
+              element={
+                <ProtectedRoute>
+                  <CustomerSaleApproval />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/sales/approve/:saleId/:token"
               element={
-                <CustomerSaleApproval />
+                <ProtectedRoute>
+                  <CustomerSaleApproval />
+                </ProtectedRoute>
               }
             />
 
@@ -1323,15 +1323,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['customer']}>
                   <CustomerDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/analytics/legacy"
-              element={
-                <ProtectedRoute>
-                  <AnalyticsDashboard />
                 </ProtectedRoute>
               }
             />

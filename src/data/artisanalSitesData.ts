@@ -1,5 +1,3 @@
-import type { ArtisanalSite, SiteProduction } from '@/types/artisanalSite';
-
 /**
  * Limite nationale simplifiée issue de geoBoundaries (BFA ADM0, gbOpen).
  * Les coordonnées restent en longitude/latitude afin de permettre une projection SVG légère.
@@ -29,73 +27,4 @@ export const BURKINA_FASO_BOUNDARY: ReadonlyArray<readonly [number, number]> = [
   [1.5469, 11.4602], [1.6375, 11.4015], [1.7557, 11.4172], [1.8842, 11.438],
   [2.3096, 11.6808], [2.3701, 11.8182], [2.3717, 11.9414], [2.1541, 12.4116],
   [2.2678, 12.4749], [1.4333, 12.7434], [0.9921, 13.084],
-];
-
-const now = '2026-08-17T08:00:00.000Z';
-
-export const DEMO_ARTISANAL_SITES: ArtisanalSite[] = [
-  {
-    id: 'site-kalsaka', code: 'SA-NOR-2026-0001', name: 'Site artisanal de Kalsaka', status: 'active',
-    region: 'Nord', province: 'Yatenga', locality: 'Kalsaka', areaHectares: 42.5,
-    exploitationType: 'artisanale', authorizedMiners: 180, activeMiners: 146,
-    averageHoleDepthMeters: 23, authorizedChemicals: ['Borax', 'Charbon actif'],
-    latitude: 13.178, longitude: -1.992, photos: [],
-    manager: { role: 'site_manager', fullName: 'Issa Ouédraogo', phone: '+226 70 12 34 56', email: 'issa.ouedraogo@sonasp.bf' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Awa Kaboré', phone: '+226 76 22 18 04', email: 'awa.kabore@sonasp.bf' },
-    notes: 'Site pilote pour le suivi numérique des productions.', createdAt: now, updatedAt: now,
-  },
-  {
-    id: 'site-poura', code: 'SA-BOU-2026-0002', name: 'Site artisanal de Poura', status: 'active',
-    region: 'Boucle du Mouhoun', province: 'Balé', locality: 'Poura', areaHectares: 61,
-    exploitationType: 'semi_mecanisee', authorizedMiners: 240, activeMiners: 211,
-    averageHoleDepthMeters: 31, authorizedChemicals: ['Borax'], latitude: 11.586, longitude: -2.753, photos: [],
-    manager: { role: 'site_manager', fullName: 'Moussa Traoré', phone: '+226 71 03 19 47', email: 'moussa.traore@sonasp.bf' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Aminata Sanou', phone: '+226 75 14 09 38' },
-    createdAt: now, updatedAt: now,
-  },
-  {
-    id: 'site-gaoua', code: 'SA-SUD-2026-0003', name: 'Site artisanal de Gaoua', status: 'active',
-    region: 'Sud-Ouest', province: 'Poni', locality: 'Gaoua', areaHectares: 37.8,
-    exploitationType: 'mixte', authorizedMiners: 160, activeMiners: 128,
-    averageHoleDepthMeters: 18, authorizedChemicals: ['Borax', 'Charbon actif'], latitude: 10.325, longitude: -3.174, photos: [],
-    manager: { role: 'site_manager', fullName: 'Jean Kambou', phone: '+226 70 38 15 42' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Fatou Somé', phone: '+226 74 11 60 28', email: 'fatou.some@sonasp.bf' },
-    createdAt: now, updatedAt: now,
-  },
-  {
-    id: 'site-kongoussi', code: 'SA-CEN-2026-0004', name: 'Site artisanal de Kongoussi', status: 'active',
-    region: 'Centre-Nord', province: 'Bam', locality: 'Kongoussi', areaHectares: 54.2,
-    exploitationType: 'artisanale', authorizedMiners: 205, activeMiners: 174,
-    averageHoleDepthMeters: 27, authorizedChemicals: ['Borax'], latitude: 13.325, longitude: -1.535, photos: [],
-    manager: { role: 'site_manager', fullName: 'Adama Sawadogo', phone: '+226 78 21 07 55' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Salif Ilboudo', phone: '+226 72 44 10 63' },
-    createdAt: now, updatedAt: now,
-  },
-  {
-    id: 'site-hounde', code: 'SA-HAU-2026-0005', name: 'Site artisanal de Houndé', status: 'planned',
-    region: 'Hauts-Bassins', province: 'Tuy', locality: 'Houndé', areaHectares: 48,
-    exploitationType: 'semi_mecanisee', authorizedMiners: 190, activeMiners: 0,
-    averageHoleDepthMeters: 25, authorizedChemicals: ['Borax', 'Charbon actif'], latitude: 11.5, longitude: -3.516, photos: [],
-    manager: { role: 'site_manager', fullName: 'Clarisse Zongo', phone: '+226 77 04 31 82' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Poste à pourvoir', phone: '' },
-    createdAt: now, updatedAt: now,
-  },
-  {
-    id: 'site-gorom', code: 'SA-SAH-2026-0006', name: 'Site artisanal de Gorom-Gorom', status: 'suspended',
-    region: 'Sahel', province: 'Oudalan', locality: 'Gorom-Gorom', areaHectares: 32.4,
-    exploitationType: 'artisanale', authorizedMiners: 120, activeMiners: 0,
-    averageHoleDepthMeters: 20, authorizedChemicals: ['Borax'], latitude: 14.443, longitude: -0.235, photos: [],
-    manager: { role: 'site_manager', fullName: 'Oumar Dicko', phone: '+226 70 09 28 64' },
-    collectionOfficer: { role: 'collection_officer', fullName: 'Mariam Diallo', phone: '+226 75 33 06 77' },
-    createdAt: now, updatedAt: now,
-  },
-];
-
-export const DEMO_SITE_PRODUCTIONS: SiteProduction[] = [
-  { id: 'prod-001', siteId: 'site-kalsaka', productionDate: '2026-08-01', goldWeightGrams: 18420, revenueFcfa: 824500000, taxesFcfa: 24735000, artisanCount: 146, createdAt: now },
-  { id: 'prod-002', siteId: 'site-poura', productionDate: '2026-08-02', goldWeightGrams: 26750, revenueFcfa: 1198000000, taxesFcfa: 35940000, artisanCount: 211, createdAt: now },
-  { id: 'prod-003', siteId: 'site-gaoua', productionDate: '2026-08-05', goldWeightGrams: 13980, revenueFcfa: 625300000, taxesFcfa: 18759000, artisanCount: 128, createdAt: now },
-  { id: 'prod-004', siteId: 'site-kongoussi', productionDate: '2026-08-07', goldWeightGrams: 21100, revenueFcfa: 944700000, taxesFcfa: 28341000, artisanCount: 174, createdAt: now },
-  { id: 'prod-005', siteId: 'site-kalsaka', productionDate: '2026-07-11', goldWeightGrams: 16900, revenueFcfa: 756900000, taxesFcfa: 22707000, artisanCount: 139, createdAt: now },
-  { id: 'prod-006', siteId: 'site-poura', productionDate: '2026-07-14', goldWeightGrams: 23850, revenueFcfa: 1068000000, taxesFcfa: 32040000, artisanCount: 203, createdAt: now },
 ];

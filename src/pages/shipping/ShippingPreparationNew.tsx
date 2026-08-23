@@ -221,13 +221,6 @@ export default function ShippingPreparationNew() {
     if (error) throw error;
     setFreightCompanies(data || []);
 
-    // Set default to "Brinks Freight Express Limited" if not in edit mode
-    if (!isEditMode && data && data.length > 0) {
-      const defaultFreight = data.find(c => c.name.toLowerCase().includes('brinks'));
-      if (defaultFreight) {
-        setSelectedFreightCompanyId(defaultFreight.id);
-      }
-    }
   };
 
   const loadRefineries = async () => {
@@ -240,13 +233,6 @@ export default function ShippingPreparationNew() {
     if (error) throw error;
     setRefineries(data || []);
 
-    // Set default to "Rand Refinery" if not in edit mode
-    if (!isEditMode && data && data.length > 0) {
-      const defaultRefinery = data.find(r => r.name.toLowerCase().includes('rand'));
-      if (defaultRefinery) {
-        setSelectedRefineryId(defaultRefinery.id);
-      }
-    }
   };
 
   const loadDepositors = async (miningCompanyId: string) => {

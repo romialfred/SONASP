@@ -77,7 +77,6 @@ describe('section « Rapports et analyses »', () => {
     expect(section?.groups.map((groupe) => groupe.label)).toEqual([
       'Analyses des ventes',
       'Rapports de production',
-      'Assistant IA',
       'Rapports institutionnels',
       'Performance nationale',
     ]);

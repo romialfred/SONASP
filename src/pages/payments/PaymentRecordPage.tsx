@@ -13,7 +13,10 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { createPayment, getCurrentFXRate, compareFXRates } from '@/services/paymentService';
-import { createFxAnalysis } from '@/services/fxAnalysisService';
+import {
+  createFxAnalysis,
+  fetchFxRatesFromMultipleSources,
+} from '@/services/fxAnalysisService';
 
 interface Customer {
   id: string;
@@ -37,6 +40,9 @@ interface FXComparison {
   date: string;
   variance_percent: number;
 }
+
+const errorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
@@ -136,27 +142,23 @@ export function PaymentRecordPage() {
       const comparison = await compareFXRates(formData.currency, 'USD');
 
       if (comparison.success && comparison.data) {
-        const mockComparisons: FXComparison[] = [
+        const historicalComparisons: FXComparison[] = [
           {
-            source: 'European Central Bank',
+            source: 'Dernier taux enregistré',
             rate: comparison.data.current_rate,
-            date: new Date().toISOString().split('T')[0],
+            date: comparison.data.current_date,
+            variance_percent: comparison.data.change_percentage
+          },
+          {
+            source: 'Taux enregistré précédent',
+            rate: comparison.data.previous_rate,
+            date: comparison.data.previous_date,
             variance_percent: 0
-          },
-          {
-            source: 'Commercial Bank',
-            rate: comparison.data.current_rate * 0.98,
-            date: new Date().toISOString().split('T')[0],
-            variance_percent: -2.0
-          },
-          {
-            source: 'XE.com',
-            rate: comparison.data.current_rate * 1.01,
-            date: new Date().toISOString().split('T')[0],
-            variance_percent: 1.0
           }
         ];
-        setFxComparisons(mockComparisons);
+        setFxComparisons(historicalComparisons);
+      } else {
+        setFxComparisons([]);
       }
     } catch (error) {
       console.error('Error fetching FX rates:', error);
@@ -214,17 +216,29 @@ export function PaymentRecordPage() {
         // Create FX analysis if currency is not USD
         if (formData.currency !== 'USD') {
           try {
-            // Get rates from comparisons
-            const ecbRate = fxComparisons.find(c => c.source === 'European Central Bank')?.rate || null;
-            const commercialRate = fxComparisons.find(c => c.source === 'Commercial Bank')?.rate || null;
-            const xeRate = fxComparisons.find(c => c.source === 'XE.com')?.rate || null;
+            const rateSources = await fetchFxRatesFromMultipleSources(
+              `${formData.currency}/USD`,
+              formData.expectedDate
+            );
+            const sources = rateSources.data;
+            const hasIndependentRate = Boolean(
+              sources?.ecb_rate || sources?.revolut_rate || sources?.bceao_rate
+            );
+
+            if (!rateSources.success || !sources || !hasIndependentRate) {
+              alert.success(
+                'Paiement enregistré. Aucune source de change indépendante n’était disponible pour produire une analyse.'
+              );
+              navigate('/payments');
+              return;
+            }
 
             const fxAnalysisResult = await createFxAnalysis({
               payment_id: paymentId,
               customer_rate: parseFloat(formData.fxRate),
-              ecb_rate: ecbRate,
-              revolut_rate: commercialRate,
-              bceao_rate: xeRate,
+              ecb_rate: sources.ecb_rate,
+              revolut_rate: sources.revolut_rate,
+              bceao_rate: sources.bceao_rate,
               amount_paid: parseFloat(formData.amount),
               payment_currency: formData.currency,
               currency_pair: `${formData.currency}/USD`,
@@ -250,9 +264,9 @@ export function PaymentRecordPage() {
       } else {
         alert.error(result.error || 'Failed to record payment');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error recording payment:', error);
-      alert.error(error.message || 'Failed to record payment');
+      alert.error(errorMessage(error, 'Failed to record payment'));
     } finally {
       setSubmitting(false);
     }

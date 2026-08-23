@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { DEMO_ARTISANAL_SITES, DEMO_SITE_PRODUCTIONS } from '@/data/artisanalSitesData';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
 import { buildProductionFromArtisanSales } from '@/services/artisanalSiteInsights';
@@ -12,59 +11,7 @@ import type {
   SiteProductionSummary,
 } from '@/types/artisanalSite';
 
-// Clé versionnée : un changement de format du jeu de démonstration invalide le cache local.
-const SITES_STORAGE_KEY = 'sonasp:artisanal-sites:v2';
-const PRODUCTIONS_STORAGE_KEY = 'sonasp:artisanal-site-productions:v2';
-
-let fallbackMode = false;
-
-type DatabaseError = {
-  code?: string;
-  message?: string;
-};
-
 type SiteRow = Record<string, unknown>;
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-
-const createId = () =>
-  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const isFallbackEligible = (error: unknown) => {
-  const candidate = error as DatabaseError;
-  const message = candidate?.message?.toLowerCase() || '';
-  return (
-    candidate?.code === '42P01' ||
-    candidate?.code === 'PGRST205' ||
-    candidate?.code === 'PGRST204' ||
-    message.includes('failed to fetch') ||
-    message.includes('artisanal_sites')
-  );
-};
-
-const readLocal = <T>(key: string, defaults: T): T => {
-  if (typeof window === 'undefined') return clone(defaults);
-  const stored = window.localStorage.getItem(key);
-  if (!stored) {
-    window.localStorage.setItem(key, JSON.stringify(defaults));
-    return clone(defaults);
-  }
-
-  try {
-    return JSON.parse(stored) as T;
-  } catch {
-    window.localStorage.setItem(key, JSON.stringify(defaults));
-    return clone(defaults);
-  }
-};
-
-const writeLocal = <T>(key: string, data: T) => {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(key, JSON.stringify(data));
-  }
-};
 
 const assignmentFor = (
   assignments: SiteRow[],
@@ -143,76 +90,40 @@ export const summarizeSiteProduction = (
     .sort((a, b) => b.productionKilograms - a.productionKilograms);
 
 const listSites = async (): Promise<ArtisanalSite[]> => {
-  try {
-    const [{ data: sites, error: sitesError }, { data: assignments, error: assignmentsError }] =
-      await Promise.all([
-        supabase.from('artisanal_sites').select('*').order('name'),
-        supabase.from('artisanal_site_assignments').select('*'),
-      ]);
+  const [{ data: sites, error: sitesError }, { data: assignments, error: assignmentsError }] =
+    await Promise.all([
+      supabase.from('artisanal_sites').select('*').order('name'),
+      supabase.from('artisanal_site_assignments').select('*'),
+    ]);
 
-    if (sitesError) throw sitesError;
-    if (assignmentsError) throw assignmentsError;
-    fallbackMode = false;
-    return (sites || []).map((row) => mapSiteRow(row as SiteRow, (assignments || []) as SiteRow[]));
-  } catch (error) {
-    if (!isFallbackEligible(error)) throw error;
-    fallbackMode = true;
-    return readLocal(SITES_STORAGE_KEY, DEMO_ARTISANAL_SITES);
-  }
+  if (sitesError) throw sitesError;
+  if (assignmentsError) throw assignmentsError;
+  return (sites || []).map((row) => mapSiteRow(row as SiteRow, (assignments || []) as SiteRow[]));
 };
 
 /**
  * Charge les sites et leur production.
  *
  * La production n'est pas saisie site par site : elle est **reconstituée** à partir
- * des ventes d'or déclarées par les artisans rattachés à chaque site. Le jeu de
- * démonstration local ne sert que lorsque les tables ne sont pas joignables.
+ * des ventes d'or déclarées par les artisans rattachés à chaque site. Une panne de
+ * données remonte explicitement à l'interface ; aucun jeu fictif ne lui est substitué.
  */
 const loadSiteData = async (): Promise<{ sites: ArtisanalSite[]; productions: SiteProduction[] }> => {
   const sites = await listSites();
-  let productions: SiteProduction[] = [];
-
-  try {
-    const [artisans, sales] = await Promise.all([
-      artisanMinierService.getAll(),
-      artisanGoldSalesService.getAll(),
-    ]);
-    productions = buildProductionFromArtisanSales(sites, (artisans || []) as ArtisanMinier[], sales || []);
-  } catch (error) {
-    if (!isFallbackEligible(error)) throw error;
-    fallbackMode = true;
-  }
-
-  if (productions.length === 0 && fallbackMode) {
-    return { sites, productions: readLocal(PRODUCTIONS_STORAGE_KEY, DEMO_SITE_PRODUCTIONS) };
-  }
+  const [artisans, sales] = await Promise.all([
+    artisanMinierService.getAll(),
+    artisanGoldSalesService.getAll(),
+  ]);
+  const productions = buildProductionFromArtisanSales(
+    sites,
+    (artisans || []) as ArtisanMinier[],
+    sales || []
+  );
   return { sites, productions };
 };
 
-const saveLocalSite = (input: ArtisanalSiteInput): ArtisanalSite => {
-  const sites = readLocal(SITES_STORAGE_KEY, DEMO_ARTISANAL_SITES);
-  const existing = input.id ? sites.find((site) => site.id === input.id) : undefined;
-  const timestamp = new Date().toISOString();
-  const site: ArtisanalSite = {
-    ...input,
-    id: existing?.id || input.id || createId(),
-    manager: { ...input.manager, role: 'site_manager' },
-    collectionOfficer: { ...input.collectionOfficer, role: 'collection_officer' },
-    createdAt: existing?.createdAt || timestamp,
-    updatedAt: timestamp,
-  };
-  const next = existing
-    ? sites.map((candidate) => (candidate.id === site.id ? site : candidate))
-    : [site, ...sites];
-  writeLocal(SITES_STORAGE_KEY, next);
-  return site;
-};
-
 const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
-  if (fallbackMode) return saveLocalSite(input);
-
-  try {
-    const payload = {
+  const payload = {
       ...(input.id ? { id: input.id } : {}),
       code: input.code,
       name: input.name,
@@ -230,13 +141,13 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
       longitude: input.longitude,
       photos: input.photos || [],
       notes: input.notes || null,
-    };
-    const { data, error } = await supabase
-      .from('artisanal_sites')
-      .upsert(payload)
-      .select()
-      .single();
-    if (error) throw error;
+  };
+  const { data, error } = await supabase
+    .from('artisanal_sites')
+    .upsert(payload)
+    .select()
+    .single();
+  if (error) throw error;
 
     const siteId = data.id as string;
     const { error: deleteError } = await supabase
@@ -259,13 +170,7 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
       .insert(assignments)
       .select();
     if (assignmentError) throw assignmentError;
-    fallbackMode = false;
-    return mapSiteRow(data as SiteRow, (savedAssignments || []) as SiteRow[]);
-  } catch (error) {
-    if (!isFallbackEligible(error)) throw error;
-    fallbackMode = true;
-    return saveLocalSite(input);
-  }
+  return mapSiteRow(data as SiteRow, (savedAssignments || []) as SiteRow[]);
 };
 
 export const artisanalSiteService = {
@@ -276,5 +181,5 @@ export const artisanalSiteService = {
     const sites = await listSites();
     return sites.find((site) => site.id === id) || null;
   },
-  isUsingLocalFallback: () => fallbackMode,
+  isUsingLocalFallback: () => false,
 };

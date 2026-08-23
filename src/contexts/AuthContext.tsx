@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { Session, AuthChangeEvent, User as SupabaseUser } from '@supabase/supabase-js';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { configureAuthPersistence, supabase } from '@/lib/supabase';
-import { UserProfile, AuthState, UserRole } from '@/types/auth';
+import { UserProfile, AuthState } from '@/types/auth';
 import { beginSessionActivity, clearSessionActivity, SessionManager } from '@/lib/sessionManager';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
@@ -20,17 +20,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_ROLES: UserRole[] = ['owner', 'factory', 'airport', 'refinery', 'customer', 'mine', 'manager', 'management', 'admin'];
-const OWNER_ACCOUNT_EMAILS = new Set(['romuald.tiegnan@gmail.com']);
 const profileRequests = new Map<string, Promise<UserProfile | null>>();
-
-const getTrustedAuthRole = (authUser: SupabaseUser): UserRole | null => {
-  if (authUser.email && OWNER_ACCOUNT_EMAILS.has(authUser.email.toLowerCase())) {
-    return 'owner';
-  }
-  const role = authUser.app_metadata?.role;
-  return USER_ROLES.includes(role as UserRole) ? role as UserRole : null;
-};
 
 export const isMissingUserProfileError = (
   error: { code?: string } | null | undefined
@@ -70,12 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resolveProfileResult = (
     profile: UserProfile | null,
-    authUser?: SupabaseUser | null
   ): { profile: UserProfile | null; error: string | null } => {
     if (profile) {
-      const trustedRole = authUser ? getTrustedAuthRole(authUser) : null;
       return {
-        profile: trustedRole === 'owner' ? { ...profile, role: 'owner' } : profile,
+        // Le rôle vient exclusivement du profil autoritatif protégé par RLS.
+        // Une adresse e-mail ou une app_metadata ne peut pas promouvoir un
+        // compte en Owner depuis le navigateur.
+        profile,
         error: null,
       };
     }
@@ -274,20 +265,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // délai perçu entre la validation et l'ouverture du tableau de bord.
         void Promise.all([
           logSecurityEvent(data.user.id, 'login_success', { email: normalizedEmail }),
-          supabase
-            .from('user_profiles')
-            .update({
-              last_login_at: new Date().toISOString(),
-              failed_login_attempts: 0,
-            })
-            .eq('id', data.user.id),
+          supabase.rpc('snp_enregistrer_connexion'),
         ]);
         beginSessionActivity();
       }
 
       return {};
     } catch (error: any) {
-      return { error: error.message || 'An unexpected error occurred' };
+      return { error: error.message || 'Une erreur inattendue est survenue.' };
     }
   };
 
@@ -339,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/modifier-mot-de-passe`,
       });
 
       if (error) {
@@ -349,7 +334,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await logSecurityEvent(null, 'password_reset_requested', { email });
       return {};
     } catch (error: any) {
-      return { error: error.message || 'An unexpected error occurred' };
+      return { error: error.message || 'Une erreur inattendue est survenue.' };
     }
   };
 
@@ -391,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[Auth] refreshProfile: profile fetch failed', error);
       }
 
-      const { profile: resolvedProfile, error } = resolveProfileResult(profile, user);
+      const { profile: resolvedProfile, error } = resolveProfileResult(profile);
 
       setState(prev => ({
         ...prev,
@@ -452,7 +437,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (!mounted) return;
               const { data: { session: currentSession } } = await supabase.auth.getSession();
               if (currentSession?.user.id !== session.user.id) return;
-              const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+              const { profile: resolvedProfile, error } = resolveProfileResult(profile);
               setState(prev => ({
                 ...prev,
                 user: resolvedProfile,
@@ -572,7 +557,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (!mounted) return;
               const { data: { session: currentSession } } = await supabase.auth.getSession();
               if (currentSession?.user.id !== session.user.id) return;
-              const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+              const { profile: resolvedProfile, error } = resolveProfileResult(profile);
               setState(prev => ({
                 ...prev,
                 user: resolvedProfile,
@@ -630,7 +615,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (error) {
             console.error('[Auth] Profile fetch failed on USER_UPDATED event:', error);
           }
-          const { profile: resolvedProfile, error } = resolveProfileResult(profile, session.user);
+          const { profile: resolvedProfile, error } = resolveProfileResult(profile);
           setState(prev => ({
             ...prev,
             user: resolvedProfile,

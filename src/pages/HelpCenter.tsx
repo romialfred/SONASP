@@ -91,8 +91,8 @@ export default function HelpCenter() {
                 <Book className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight">Gold Shipper - Help Center</h1>
-                <p className="text-amber-50 text-sm">Professional Documentation & Workflows</p>
+                <h1 className="text-xl font-bold tracking-tight">Centre d’aide SONASP</h1>
+                <p className="text-amber-50 text-sm">Guides fonctionnels et règles de sécurité</p>
               </div>
             </div>
             <Button
@@ -101,7 +101,7 @@ export default function HelpCenter() {
               className="bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-md"
             >
               <Home className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Retour au tableau de bord
             </Button>
           </div>
 
@@ -110,14 +110,16 @@ export default function HelpCenter() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search documentation, guides, workflows..."
+              placeholder="Rechercher un guide, un module ou une règle…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-12 py-3 bg-white/90 backdrop-blur-sm border-white/40 text-gray-900 placeholder-gray-500 shadow-md"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
+                aria-label="Effacer la recherche"
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
@@ -133,7 +135,7 @@ export default function HelpCenter() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <Card className="p-4 sticky top-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Catégories</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => handleCategoryFilter(null)}
@@ -145,7 +147,7 @@ export default function HelpCenter() {
                 >
                   <div className="flex items-center gap-2">
                     <Book className="h-4 w-4" />
-                    <span>All Topics</span>
+                    <span>Tous les sujets</span>
                   </div>
                 </button>
                 {helpCategories.map((category) => {
@@ -165,34 +167,34 @@ export default function HelpCenter() {
                         <span className="text-sm">{category.title}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1 ml-6">
-                        {category.articles.length} articles
+                        {category.articles.length} article{category.articles.length > 1 ? 's' : ''}
                       </p>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Popular Topics */}
+              {/* Accès rapides */}
               <div className="mt-6 pt-6 border-t">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Popular Topics</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Accès rapides</h4>
                 <div className="space-y-2">
                   <button
                     onClick={() => handleArticleClick('batch-workflow')}
                     className="w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
-                    Batch Workflow
+                    Chaîne de traitement
                   </button>
                   <button
                     onClick={() => handleArticleClick('presales-overview')}
                     className="w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
-                    Pre-Sales Guide
+                    Achats SONASP
                   </button>
                   <button
                     onClick={() => handleArticleClick('sales-overview')}
                     className="w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
-                    Sales Process
+                    Circuit de vente
                   </button>
                 </div>
               </div>
@@ -205,7 +207,7 @@ export default function HelpCenter() {
             {searchQuery && searchResults.length > 0 && (
               <Card className="p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-4">
-                  Search Results ({searchResults.length})
+                  Résultats de recherche ({searchResults.length})
                 </h3>
                 <div className="space-y-3">
                   {searchResults.map((article) => (
@@ -240,9 +242,9 @@ export default function HelpCenter() {
             {searchQuery && searchResults.length === 0 && (
               <Card className="p-12 text-center">
                 <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun résultat</h3>
                 <p className="text-gray-600">
-                  Try different keywords or browse categories below
+                  Essayez un autre mot-clé ou parcourez les catégories.
                 </p>
               </Card>
             )}
@@ -256,7 +258,7 @@ export default function HelpCenter() {
                   size="sm"
                   className="mb-4"
                 >
-                  ← Back to Help Center
+                  ← Retour au centre d’aide
                 </Button>
 
                 <Card className="p-8">
@@ -275,7 +277,7 @@ export default function HelpCenter() {
                       ))}
                     </div>
                     <p className="text-sm text-gray-500 mt-4">
-                      Last updated: {new Date(currentArticle.lastUpdated).toLocaleDateString()}
+                      Mis à jour le {new Date(currentArticle.lastUpdated).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
 
@@ -301,10 +303,10 @@ export default function HelpCenter() {
                     >{currentArticle.content}</ReactMarkdown>
                   </div>
 
-                  {/* Related Modules */}
+                  {/* Modules associés */}
                   {currentArticle.relatedModules && currentArticle.relatedModules.length > 0 && (
                     <div className="mt-8 pt-8 border-t">
-                      <h3 className="font-semibold text-gray-900 mb-3">Related Modules</h3>
+                      <h3 className="font-semibold text-gray-900 mb-3">Modules associés</h3>
                       <div className="flex flex-wrap gap-2">
                         {currentArticle.relatedModules.map((module) => (
                           <span
@@ -318,10 +320,10 @@ export default function HelpCenter() {
                     </div>
                   )}
 
-                  {/* Related Articles */}
+                  {/* Articles associés */}
                   {relatedArticles.length > 0 && (
                     <div className="mt-8 pt-8 border-t">
-                      <h3 className="font-semibold text-gray-900 mb-4">Related Articles</h3>
+                      <h3 className="font-semibold text-gray-900 mb-4">Articles associés</h3>
                       <div className="grid gap-3">
                         {relatedArticles.map((article) => (
                           <button

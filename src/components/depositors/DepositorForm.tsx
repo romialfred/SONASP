@@ -277,26 +277,26 @@ export function DepositorForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Telephone
+                Téléphone
               </label>
               <Input
                 type="tel"
                 value={formData.telephone || ''}
                 onChange={(e) => handleChange('telephone', e.target.value)}
-                placeholder="+224 xxx xx xx xx"
+                placeholder="+226 00 00 00 00"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cellphone <span className="text-red-500">*</span>
+                Téléphone mobile <span className="text-red-500">*</span>
               </label>
               <Input
                 type="tel"
                 value={formData.cellphone || ''}
                 onChange={(e) => handleChange('cellphone', e.target.value)}
                 className={errors.contact ? 'border-red-500' : ''}
-                placeholder="+224 xxx xx xx xx"
+                placeholder="+226 00 00 00 00"
               />
               {errors.contact && (
                 <p className="mt-1 text-sm text-red-600">{errors.contact}</p>
@@ -305,16 +305,16 @@ export function DepositorForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Group Email (Optional)
+                Courriel du groupe (facultatif)
               </label>
               <Input
                 type="email"
                 value={formData.group_email || ''}
                 onChange={(e) => handleChange('group_email', e.target.value)}
-                placeholder="group@company.com"
+                placeholder="groupe@entreprise.bf"
               />
               <p className="mt-1 text-xs text-gray-500">
-                For group distribution lists
+                Pour une liste de diffusion partagée
               </p>
             </div>
 
@@ -327,7 +327,7 @@ export function DepositorForm({
                     onChange={(e) => handleChange('is_primary', e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Primary Contact</span>
+                  <span className="ml-2 text-sm text-gray-700">Contact principal</span>
                 </label>
 
                 <label className="flex items-center">
@@ -337,7 +337,7 @@ export function DepositorForm({
                     onChange={(e) => handleChange('is_backup', e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Backup Contact</span>
+                  <span className="ml-2 text-sm text-gray-700">Contact suppléant</span>
                 </label>
               </div>
             </div>
@@ -350,7 +350,7 @@ export function DepositorForm({
                 value={formData.notes || ''}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 rows={3}
-                placeholder="Additional information..."
+                placeholder="Informations complémentaires…"
               />
             </div>
           </div>

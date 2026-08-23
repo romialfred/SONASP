@@ -1,7 +1,7 @@
 /**
  * Depositor Service
  * Manages depositor contacts (signatories and approvers) for mining companies
- * Based on Rand Refinery Depositor Contact Distribution List
+ * Les catégories sont génériques et ne présélectionnent aucun partenaire externe.
  */
 
 import { supabase } from '@/lib/supabase';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_ARTISANAL_SITES } from '@/data/artisanalSitesData';
+import { DEMO_ARTISANAL_SITES } from '@/test/fixtures/artisanalSites';
 import type { ArtisanMinier } from './artisanMinierService';
 import type { CarteProfessionnelle } from './carteProfessionnelleService';
 import {

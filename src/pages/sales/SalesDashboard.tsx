@@ -20,6 +20,7 @@ import {
 import { SALES_STATUSES } from '@/constants/salesStatuses';
 import { coherenceStockService, type Coherence } from '@/services/coherenceStockService';
 import { stockSonaspService } from '@/services/stockSonaspService';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface Sale {
   id: string;
@@ -31,6 +32,16 @@ interface Sale {
   status: SaleStatus;
   createdDate: string;
 }
+
+type RevenueChartPoint = { month: string } & Record<string, string | number>;
+
+const isNonEmptyString = (value: string | null): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const formatChartCurrency = (value: unknown): string => {
+  const amount = typeof value === 'number' ? value : Number(value);
+  return formatCurrency(Number.isFinite(amount) ? amount : 0);
+};
 
 type StatusDisplay = {
   label: string;
@@ -126,8 +137,9 @@ export function SalesDashboard() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const mountedRef = useRef(false);
-  const [revenueByCustomer, setRevenueByCustomer] = useState<any[]>([]);
-  const [revenueByMiningCompany, setRevenueByMiningCompany] = useState<any[]>([]);
+  const isMounted = () => mountedRef.current;
+  const [revenueByCustomer, setRevenueByCustomer] = useState<RevenueChartPoint[]>([]);
+  const [revenueByMiningCompany, setRevenueByMiningCompany] = useState<RevenueChartPoint[]>([]);
   const [metrics, setMetrics] = useState({
     availableInventory: 0,
     pendingSales: 0,
@@ -147,10 +159,26 @@ export function SalesDashboard() {
     try {
       console.log('[SalesDashboard] Loading metrics...');
 
-      // Load sales metrics first (this is critical)
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales')
-        .select('status, final_proceeds, created_at');
+      const [
+        salesResult,
+        inventoryResult,
+        miningCompaniesResult,
+        customersResult,
+        refineriesResult,
+        transportCompaniesResult,
+      ] = await Promise.all([
+        supabase.from('sales').select('status, final_proceeds, created_at'),
+        supabase
+          .from('gold_inventory')
+          .select('quantity_available_oz')
+          .eq('transaction_type', 'entry'),
+        supabase.from('mining_companies').select('id', { count: 'exact', head: true }),
+        supabase.from('customers').select('id', { count: 'exact', head: true }),
+        supabase.from('refineries').select('id', { count: 'exact', head: true }),
+        supabase.from('transport_companies').select('id', { count: 'exact', head: true }),
+      ]);
+
+      const { data: salesData, error: salesError } = salesResult;
 
       if (salesError) {
         console.error('[SalesDashboard] Error loading sales:', salesError);
@@ -160,63 +188,43 @@ export function SalesDashboard() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const pending = salesData?.filter(s => s.status === SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES)?.length || 0;
+      const pending = salesData.filter(s => s.status === SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL || s.status === SALES_STATUSES.CREATE_SALES).length;
 
       // Monthly Revenue: All sales this month except rejected ones
-      const monthlyRevenue = salesData?.filter(s => {
+      const monthlyRevenue = salesData.filter(s => {
+        if (!s.created_at) return false;
         const saleDate = new Date(s.created_at);
         const isThisMonth = saleDate >= startOfMonth;
         const isNotRejected = s.status !== SALES_STATUSES.MANAGEMENT_REJECTED && s.status !== SALES_STATUSES.CUSTOMER_REJECTED;
         return isThisMonth && isNotRejected;
-      })?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+      }).reduce((sum, s) => sum + s.final_proceeds, 0);
 
-      const completedThisMonth = salesData?.filter(s => new Date(s.created_at) >= startOfMonth && (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED))?.length || 0;
+      const completedThisMonth = salesData.filter(s =>
+        s.created_at !== null &&
+        new Date(s.created_at) >= startOfMonth &&
+        (s.status === SALES_STATUSES.COMPLETED || s.status === SALES_STATUSES.PAYMENT_RECEIVED)
+      ).length;
 
       // Pending Payment: All sales awaiting payment including virtual payments
-      const pendingPayment = salesData?.filter(s =>
+      const pendingPayment = salesData.filter(s =>
         s.status === SALES_STATUSES.CUSTOMER_APPROVED ||
         s.status === SALES_STATUSES.WAITING_FOR_PAYMENT ||
         s.status === SALES_STATUSES.VIRTUAL_PAYMENT
-      )?.length || 0;
+      ).length;
 
-      const pendingPaymentAmount = salesData?.filter(s =>
+      const pendingPaymentAmount = salesData.filter(s =>
         s.status === SALES_STATUSES.CUSTOMER_APPROVED ||
         s.status === SALES_STATUSES.WAITING_FOR_PAYMENT ||
         s.status === SALES_STATUSES.VIRTUAL_PAYMENT
-      )?.reduce((sum, s) => sum + (s.final_proceeds || 0), 0) || 0;
+      ).reduce((sum, s) => sum + s.final_proceeds, 0);
 
-      // Try to load inventory (optional - won't break if table doesn't exist)
-      let totalInventory = 0;
-      try {
-        const { data: inventoryData, error: inventoryError } = await supabase
-          .from('gold_inventory')
-          .select('quantity_available_oz')
-          .eq('transaction_type', 'entry');
-
-        if (inventoryError) {
-          console.warn('[SalesDashboard] gold_inventory table not available or column missing:', inventoryError.message);
-          // Fallback: calculate from batches
-          const { data: batchesData } = await supabase
-            .from('batches')
-            .select('weight_ounces')
-            .eq('status', 'processed');
-
-          totalInventory = batchesData?.reduce((sum, b) => sum + (b.weight_ounces || 0), 0) || 0;
-        } else {
-          totalInventory = inventoryData?.reduce((sum, item) => sum + (item.quantity_available_oz || 0), 0) || 0;
-        }
-      } catch (invError) {
-        console.warn('[SalesDashboard] Inventory check failed, using 0:', invError);
-        totalInventory = 0;
+      if (inventoryResult.error) {
+        console.warn('[SalesDashboard] Inventaire indisponible :', inventoryResult.error.message);
       }
-
-      // Load stakeholders data
-      const [miningCompaniesResult, customersResult, refineriesResult, transportCompaniesResult] = await Promise.all([
-        supabase.from('mining_companies').select('id', { count: 'exact', head: true }),
-        supabase.from('customers').select('id', { count: 'exact', head: true }),
-        supabase.from('refineries').select('id', { count: 'exact', head: true }),
-        supabase.from('transport_companies').select('id', { count: 'exact', head: true }),
-      ]);
+      const totalInventory = (inventoryResult.data ?? []).reduce(
+        (sum, item) => sum + item.quantity_available_oz,
+        0
+      );
 
       const stakeholders = {
         miningCompanies: miningCompaniesResult.count || 0,
@@ -243,9 +251,9 @@ export function SalesDashboard() {
         pendingPaymentAmount,
         stakeholders,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SalesDashboard] Error loading metrics:', error);
-      setPageError('Failed to load sales metrics: ' + error.message);
+      setPageError(errorMessage(error, 'Impossible de charger les indicateurs de vente.'));
     }
   }, []);
 
@@ -266,7 +274,7 @@ export function SalesDashboard() {
         return;
       }
 
-      if (!salesData || salesData.length === 0) {
+      if (salesData.length === 0) {
         console.log('[SalesDashboard] No sales data found');
         setRevenueByCustomer([]);
         setRevenueByMiningCompany([]);
@@ -274,8 +282,8 @@ export function SalesDashboard() {
       }
 
       // Get unique customer IDs and seller IDs
-      const customerIds = [...new Set(salesData.map(s => s.customer_id).filter(Boolean))];
-      const sellerIds = [...new Set(salesData.filter(s => s.seller_type === 'mining_company').map(s => s.seller_id).filter(Boolean))];
+      const customerIds = [...new Set(salesData.map(s => s.customer_id).filter(isNonEmptyString))];
+      const sellerIds = [...new Set(salesData.map(s => s.seller_id).filter(isNonEmptyString))];
 
       // Load customers in parallel
       const { data: customersData } = await supabase
@@ -290,50 +298,53 @@ export function SalesDashboard() {
         .in('id', sellerIds);
 
       // Create lookup maps
-      const customerMap = new Map(customersData?.map(c => [c.id, c.name]) || []);
-      const miningCompanyMap = new Map(miningCompaniesData?.map(m => [m.id, m.name]) || []);
+      const customerMap = new Map((customersData ?? []).map(c => [c.id, c.name]));
+      const miningCompanyMap = new Map((miningCompaniesData ?? []).map(m => [m.id, m.name]));
 
       // Process data for monthly revenue by customer
       const monthlyRevenueByCustomer: { [key: string]: { [month: string]: number } } = {};
       const monthlyRevenueByMiningCompany: { [key: string]: { [month: string]: number } } = {};
 
-      salesData.forEach((sale: any) => {
+      salesData.forEach((sale) => {
+        if (!sale.created_at) return;
         const date = new Date(sale.created_at);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const customerName = customerMap.get(sale.customer_id) || t('pages.sales.unknownClient');
-        const miningCompanyName = sale.seller_type === 'mining_company'
-          ? (miningCompanyMap.get(sale.seller_id) || t('pages.sales.unknownMine'))
-          : t('pages.sales.other');
+        const monthKey = `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const customerName = customerMap.get(sale.customer_id) ?? t('pages.sales.unknownClient');
+        const miningCompanyName = sale.seller_type === 'sonasp'
+          ? 'SONASP'
+          : sale.seller_type === 'mining_company'
+            ? (miningCompanyMap.get(sale.seller_id ?? '') ?? t('pages.sales.unknownMine'))
+            : t('pages.sales.other');
 
         // By customer
-        if (!monthlyRevenueByCustomer[customerName]) {
+        if (!(customerName in monthlyRevenueByCustomer)) {
           monthlyRevenueByCustomer[customerName] = {};
         }
         monthlyRevenueByCustomer[customerName][monthKey] =
-          (monthlyRevenueByCustomer[customerName][monthKey] || 0) + (sale.final_proceeds || 0);
+          (monthlyRevenueByCustomer[customerName][monthKey] ?? 0) + sale.final_proceeds;
 
         // By mining company
-        if (!monthlyRevenueByMiningCompany[miningCompanyName]) {
+        if (!(miningCompanyName in monthlyRevenueByMiningCompany)) {
           monthlyRevenueByMiningCompany[miningCompanyName] = {};
         }
         monthlyRevenueByMiningCompany[miningCompanyName][monthKey] =
-          (monthlyRevenueByMiningCompany[miningCompanyName][monthKey] || 0) + (sale.final_proceeds || 0);
+          (monthlyRevenueByMiningCompany[miningCompanyName][monthKey] ?? 0) + sale.final_proceeds;
       });
 
       // Generate 12 months labels
       const months = [];
       for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+        months.push(`${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, '0')}`);
       }
 
       // Format data for charts - By Customer
       const customerChartData = months.map(month => {
         const monthLabel = new Date(month + '-01').toLocaleDateString(i18n.language, { month: 'short', year: '2-digit' });
-        const dataPoint: any = { month: monthLabel };
+        const dataPoint: RevenueChartPoint = { month: monthLabel };
 
         Object.keys(monthlyRevenueByCustomer).forEach(customer => {
-          dataPoint[customer] = monthlyRevenueByCustomer[customer][month] || 0;
+          dataPoint[customer] = monthlyRevenueByCustomer[customer][month] ?? 0;
         });
 
         return dataPoint;
@@ -342,10 +353,10 @@ export function SalesDashboard() {
       // Format data for charts - By Mining Company
       const miningCompanyChartData = months.map(month => {
         const monthLabel = new Date(month + '-01').toLocaleDateString(i18n.language, { month: 'short', year: '2-digit' });
-        const dataPoint: any = { month: monthLabel };
+        const dataPoint: RevenueChartPoint = { month: monthLabel };
 
         Object.keys(monthlyRevenueByMiningCompany).forEach(company => {
-          dataPoint[company] = monthlyRevenueByMiningCompany[company][month] || 0;
+          dataPoint[company] = monthlyRevenueByMiningCompany[company][month] ?? 0;
         });
 
         return dataPoint;
@@ -357,7 +368,7 @@ export function SalesDashboard() {
     } catch (error) {
       console.error('[SalesDashboard] Error processing chart data:', error);
     }
-  }, []);
+  }, [i18n.language, t]);
 
   const loadSales = useCallback(async () => {
     setLoading(true);
@@ -382,7 +393,7 @@ export function SalesDashboard() {
 
       if (!parsed.success) {
         console.error('Sales data validation failed', parsed.error.issues);
-        if (!mountedRef.current) {
+        if (!isMounted()) {
           return;
         }
         setSales([]);
@@ -390,7 +401,7 @@ export function SalesDashboard() {
         return;
       }
 
-      if (!mountedRef.current) {
+      if (!isMounted()) {
         return;
       }
 
@@ -410,7 +421,7 @@ export function SalesDashboard() {
       await loadMetrics();
     } catch (error) {
       console.error('Error fetching sales:', error);
-      if (!mountedRef.current) {
+      if (!isMounted()) {
         return;
       }
       setPageError(
@@ -418,7 +429,7 @@ export function SalesDashboard() {
       );
       setSales([]);
     } finally {
-      if (mountedRef.current) {
+      if (isMounted()) {
         setLoading(false);
       }
     }
@@ -434,10 +445,10 @@ export function SalesDashboard() {
       const sonasp = await stockSonaspService.identifiant();
       if (!sonasp) return;
       const resultat = await coherenceStockService.controler(sonasp.id);
-      if (mountedRef.current) setCoherence(resultat);
+      if (isMounted()) setCoherence(resultat);
     } catch (raison) {
       console.warn('Contrôle de cohérence indisponible :', raison);
-      if (mountedRef.current) setCoherence(null);
+      if (isMounted()) setCoherence(null);
     }
   }, []);
 
@@ -453,7 +464,7 @@ export function SalesDashboard() {
   }, [loadSales, loadChartData, controlerCoherence]);
 
   const handleRetry = () => {
-      if (!mountedRef.current) {
+      if (!isMounted()) {
         return;
       }
       void loadSales();
@@ -531,7 +542,7 @@ export function SalesDashboard() {
                     <button
                       type="button"
                       className="underline"
-                      onClick={() => navigate(`/sales/${vente.id}`)}
+                      onClick={() => { void navigate(`/sales/${vente.id}`); }}
                     >
                       {vente.numero}
                     </button>{' '}
@@ -706,7 +717,7 @@ export function SalesDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                    <Tooltip formatter={formatChartCurrency} contentStyle={{ fontSize: 12 }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                     {revenueByCustomer.length > 0 && Object.keys(revenueByCustomer[0])
                       .filter(key => key !== 'month')
@@ -750,7 +761,7 @@ export function SalesDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: 12 }} />
+                    <Tooltip formatter={formatChartCurrency} contentStyle={{ fontSize: 12 }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                     {revenueByMiningCompany.length > 0 && Object.keys(revenueByMiningCompany[0])
                       .filter(key => key !== 'month')
@@ -866,9 +877,6 @@ export function SalesDashboard() {
                 {activeSales.map((sale) => {
                   const status = STATUS_DISPLAY_MAP[sale.status] ?? STATUS_DISPLAY_MAP.pending;
                 const StatusIcon = status.icon;
-
-                const unitPrice =
-                  sale.quantity > 0 ? formatCurrency(sale.amount / sale.quantity) : 'N/A';
 
                 // Get background color based on status
                 const getStatusBgColor = () => {

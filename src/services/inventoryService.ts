@@ -362,7 +362,7 @@ export async function calculateInventoryMetrics() {
   }
 }
 
-export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'mansa_ressources') {
+export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mining_company' | 'sonasp') {
   try {
     // If no seller specified, return total inventory
     if (!sellerId || !sellerType) {
@@ -403,9 +403,8 @@ export async function getInventoryBySeller(sellerId?: string, sellerType?: 'mini
       };
     }
 
-    // For Mansa (when selling their own inventory to external customers)
-    // This would be inventory that has been purchased from mining companies
-    // For now, return all available inventory as it belongs to Mansa after purchase
+    // Le stock SONASP consolide les entrées acquises auprès des mines et des
+    // artisans avant leur vente aux acheteurs externes.
     const { data, error } = await supabase
       .from('gold_inventory')
       .select('quantity_available_oz, final_fine_grams, final_fine_oz')

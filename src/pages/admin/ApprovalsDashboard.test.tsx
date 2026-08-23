@@ -50,10 +50,10 @@ function stub(table: string) {
 }
 
 const demandes: ApprovalRequest[] = [
-  { id: 'a1', status: 'pending', approval_type: 'sale', entity_id: 'v1', requested_at: '2026-08-10' },
-  { id: 'a2', status: 'approved', approval_type: 'production', entity_id: 'p1', requested_at: '2026-08-09' },
-  { id: 'a3', status: 'rejected', approval_type: 'production', entity_id: 'p2', requested_at: '2026-08-08' },
-  { id: 'a4', status: 'pending', approval_type: 'production', entity_id: 'p3', requested_at: '2026-08-07' },
+  { id: 'a1', status: 'pending', request_type: 'sale', entity_id: 'v1', requested_at: '2026-08-10' },
+  { id: 'a2', status: 'approved', request_type: 'production', entity_id: 'p1', requested_at: '2026-08-09' },
+  { id: 'a3', status: 'rejected', request_type: 'production', entity_id: 'p2', requested_at: '2026-08-08' },
+  { id: 'a4', status: 'pending', request_type: 'production', entity_id: 'p3', requested_at: '2026-08-07' },
 ];
 
 describe('décomptes des approbations', () => {

@@ -13,7 +13,6 @@ import { GoldSalesFlowDiagram } from '@/components/sales/GoldSalesFlowDiagram';
 import {
   Store,
   TrendingUp,
-  AlertCircle,
   CheckCircle,
   Lightbulb,
 } from 'lucide-react';
@@ -24,14 +23,13 @@ import {
   type QuantityRecommendation,
 } from '@/services/goldTradeSpaceService';
 import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
+import { getAuthorizedCustomersForMine } from '@/services/goldSalesSettingsService';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
 
 interface Customer {
   id: string;
   name: string;
-  email: string;
-  country: string;
 }
 
 interface MiningCompany {
@@ -39,6 +37,8 @@ interface MiningCompany {
   name: string;
   abbreviation: string;
   country: string;
+  code: string;
+  company_type: 'production_mine' | 'institution' | 'parent_company';
 }
 
 export function GoldTradeSpace() {
@@ -60,7 +60,6 @@ export function GoldTradeSpace() {
 
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedRefinery, setSelectedRefinery] = useState('');
-  const [mansaResourcesId, setMansaResourcesId] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
 
@@ -79,40 +78,43 @@ export function GoldTradeSpace() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [customersRes, refineriesRes, miningCompaniesRes] = await Promise.all([
-        supabase.from('customers').select('id, name, email, country').order('name'),
+      const [refineriesRes, miningCompaniesRes] = await Promise.all([
         getApprovedRefineries(),
-        supabase.from('mining_companies').select('id, name, abbreviation, country, code').eq('is_active', true).order('name'),
+        supabase
+          .from('mining_companies')
+          .select('id, name, abbreviation, country, code, company_type')
+          .eq('is_active', true)
+          .order('name'),
       ]);
-
-      if (customersRes.data) {
-        setCustomers(customersRes.data);
-
-        const mansaResources = customersRes.data.find(c =>
-          c.name?.toLowerCase().includes('mansa resources') ||
-          c.name?.toLowerCase().includes('mansa ressources')
-        );
-
-        if (mansaResources) {
-          setMansaResourcesId(mansaResources.id);
-          setSelectedCustomer(mansaResources.id);
-        }
-      }
 
       if (refineriesRes.success && refineriesRes.data) {
         setRefineries(refineriesRes.data);
       }
 
+      if (miningCompaniesRes.error) throw miningCompaniesRes.error;
+
       // L'espace de négoce est celui de la SONASP : c'est elle qui vend hors du
       // Burkina, avec l'or acheté aux mines industrielles et aux artisans.
       const sonasp = (miningCompaniesRes.data || []).find(
-        (c: any) => c.code?.toUpperCase() === 'SONASP'
+        (company) => company.code?.toUpperCase() === 'SONASP'
+          && company.company_type === 'institution'
       );
       if (sonasp) {
         setVendeur(sonasp);
         setSelectedMiningCompany(sonasp.id);
+
+        const authorizedCustomers = await getAuthorizedCustomersForMine(sonasp.id);
+        if (!authorizedCustomers.success) {
+          throw new Error(authorizedCustomers.error?.message || 'Clients autorisés indisponibles.');
+        }
+        setCustomers(
+          authorizedCustomers.data.map((customer) => ({
+            id: customer.customer_id,
+            name: customer.customer_name,
+          }))
+        );
       } else {
-        alert.error("La SONASP n'est pas enregistrée dans le référentiel des sociétés.");
+        alert.error("La SONASP active n'est pas enregistrée comme institution dans le référentiel.");
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -166,7 +168,15 @@ export function GoldTradeSpace() {
 
   const handleCreateSale = () => {
     if (!selectedMechanism || !comparisonData) {
-      alert.error('Please complete the simulation first');
+      alert.error('Effectuez d’abord le calcul et sélectionnez un mécanisme de vente.');
+      return;
+    }
+    if (!selectedCustomer) {
+      alert.error('Sélectionnez un client autorisé avant de poursuivre.');
+      return;
+    }
+    if (selectedMechanism.mechanism === 'in_process' && !selectedRefinery) {
+      alert.error('Sélectionnez la raffinerie de destination avant de poursuivre.');
       return;
     }
 
@@ -179,6 +189,7 @@ export function GoldTradeSpace() {
         preselectedSellerId: selectedMiningCompany,
         lockSeller: true,
         preselectedCustomerId: selectedCustomer || null,
+        preselectedRefineryId: selectedRefinery || null,
       }
     });
   };
@@ -322,7 +333,6 @@ export function GoldTradeSpace() {
             {selectedMiningCompany && availableStock > 0 && (
               <PricingCalculator
                 availableStockOz={availableStock}
-                miningCompanyId={selectedMiningCompany}
                 onMechanismSelect={(mechanism, comparison) => {
                   handleMechanismSelect(mechanism);
                   handleCalculationComplete(comparison);
@@ -373,34 +383,17 @@ export function GoldTradeSpace() {
                       </label>
                       <div className="relative">
                         <Select
-                        value={selectedCustomer}
-                        disabled={!!mansaResourcesId}
-                        onChange={(e) => setSelectedCustomer(e.target.value)}
-                        className="bg-amber-50 border-amber-300 cursor-not-allowed"
+                          value={selectedCustomer}
+                          onChange={(e) => setSelectedCustomer(e.target.value)}
                         >
-                        <option value="">{t('tradeSpace.selectCustomerPlaceholder')}</option>
-                        {customers.map((customer) => (
-                          <option key={customer.id} value={customer.id}>
-                            {customer.name} ({customer.country})
-                          </option>
-                        ))}
+                          <option value="">{t('tradeSpace.selectCustomerPlaceholder')}</option>
+                          {customers.map((customer) => (
+                            <option key={customer.id} value={customer.id}>
+                              {customer.name}
+                            </option>
+                          ))}
                         </Select>
-                        {mansaResourcesId && (
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-10 pointer-events-none">
-                            <span className="text-xs font-bold text-amber-700 bg-amber-200 px-2 py-1 rounded">
-                              Default
-                            </span>
-                          </div>
-                        )}
                       </div>
-                      {mansaResourcesId && (
-                        <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded-md border border-amber-200">
-                          <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                          <p className="text-xs text-amber-800">
-                            <strong>Policy:</strong> All mines sell exclusively to Mansa Resources S.A.
-                          </p>
-                        </div>
-                      )}
                     </div>
 
                     {selectedMechanism.mechanism === 'in_process' && (
@@ -424,7 +417,7 @@ export function GoldTradeSpace() {
 
                     <Button
                       onClick={handleCreateSale}
-                      disabled={!comparisonData || (selectedMechanism.mechanism === 'in_process' && !selectedRefinery)}
+                      disabled={!comparisonData || !selectedCustomer || (selectedMechanism.mechanism === 'in_process' && !selectedRefinery)}
                       className="w-full"
                       size="lg"
                     >

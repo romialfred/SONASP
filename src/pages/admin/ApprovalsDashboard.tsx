@@ -14,7 +14,7 @@ export type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 export interface ApprovalRequest {
   id: string;
   status: string;
-  approval_type: string;
+  request_type: string;
   entity_id: string | null;
   requested_at: string | null;
   [key: string]: unknown;
@@ -70,7 +70,10 @@ export function ApprovalsDashboard() {
       setDemandes(lignes);
 
       const premiereVente = lignes.find(
-        (demande) => demande.status === 'pending' && demande.approval_type === 'sale' && demande.entity_id
+        (demande) =>
+          demande.status === 'pending' &&
+          ['sale', 'sale_approval'].includes(demande.request_type) &&
+          demande.entity_id
       );
       if (premiereVente?.entity_id) {
         const { data: vente } = await supabase
@@ -162,7 +165,7 @@ export function ApprovalsDashboard() {
             <div className="approvals__layout">
               <div className="approvals__liste">
                 {visibles.map((demande) =>
-                  demande.approval_type === 'sale' ? (
+                  ['sale', 'sale_approval'].includes(demande.request_type) ? (
                     <SalesApprovalCard
                       key={demande.id}
                       approval={demande}

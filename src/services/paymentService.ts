@@ -354,6 +354,8 @@ export async function compareFXRates(
   data?: {
     current_rate: number;
     previous_rate: number;
+    current_date: string;
+    previous_date: string;
     change_percentage: number;
     trend: 'up' | 'down' | 'stable';
   };
@@ -385,6 +387,8 @@ export async function compareFXRates(
       data: {
         current_rate: currentRate,
         previous_rate: previousRate,
+        current_date: data[0].rate_date,
+        previous_date: data[1].rate_date,
         change_percentage: changePercentage,
         trend,
       },

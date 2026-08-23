@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { secureRandomId } from '@/lib/secureRandom';
 
 /** Nombre maximal de photos par site. */
 export const MAX_SITE_PHOTOS = 3;
@@ -34,12 +35,7 @@ export function compressImage(file: File): Promise<string> {
   });
 }
 
-const createPath = () =>
-  `sites/${
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
-  }.jpg`;
+const createPath = () => `sites/${secureRandomId()}.jpg`;
 
 /**
  * Téléverse une photo dans le bucket privé et renvoie la **référence** à stocker.

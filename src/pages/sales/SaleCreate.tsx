@@ -13,9 +13,7 @@ import { Loading } from '@/components/ui/Loading';
 import { WeightInput, gramsToOunces, ouncesToGrams } from '@/components/ui/WeightInput';
 import { calculateSaleProceeds, formatCurrency } from '@/utils/salesUtils';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
-import { INITIAL_SALE_STATUS } from '@/constants/salesStatuses';
 import {
   getAuthorizedCustomersForMine,
   checkSaleAuthorization,
@@ -25,7 +23,7 @@ import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspServ
 import { composer, tracabiliteVenteService, validerComposition } from '@/services/tracabiliteVenteService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
-import { createSaleInventoryTransactions } from '@/services/inventoryTransactionService';
+import { createExportSale } from '@/services/saleCreationService';
 
 interface MiningCompany {
   id: string;
@@ -37,13 +35,13 @@ interface MiningCompany {
 export function SaleCreate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
   const alert = useAlert();
 
   // Extract data from navigation state (from Gold Trade Space simulation or Inventory)
   const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
   const initialQuantity = (location.state as any)?.quantityOz || 0;
   const preselectedCustomerId = (location.state as any)?.preselectedCustomerId; // New: preselected customer
+  const preselectedRefineryId = (location.state as any)?.preselectedRefineryId;
 
   const [formData, setFormData] = useState({
     customerId: preselectedCustomerId || '',
@@ -53,7 +51,8 @@ export function SaleCreate() {
     freightCost: '',
     otherCosts: '',
     mechanismType: mechanismData?.mechanism || '',
-    mechanismDisplayName: mechanismData?.displayName || ''
+    mechanismDisplayName: mechanismData?.displayName || '',
+    inProcessRefineryId: preselectedRefineryId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,20 +91,6 @@ export function SaleCreate() {
     }
   }, [formData.customerId, authorizedCustomers]);
 
-  // Auto-update invoice preview when form data changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (formData.miningCompanyId && formData.customerId && formData.quantityOz && formData.londonAMRate) {
-        updateInvoicePreviewData();
-      } else {
-        setShowInvoicePreview(false);
-        setInvoicePreviewData(null);
-      }
-    }, 500); // Debounce to avoid too many updates
-
-    return () => clearTimeout(timer);
-  }, [formData.miningCompanyId, formData.customerId, formData.quantityOz, formData.londonAMRate, formData.freightCost, formData.otherCosts]);
-
   /**
    * Le vendeur d'une vente hors du Burkina est la SONASP, jamais la mine.
    * La mine vend sa production à la SONASP (module « Achats aux mines ») ; la
@@ -115,13 +100,16 @@ export function SaleCreate() {
     try {
       const { data, error } = await supabase
         .from('mining_companies')
-        .select('id, name, abbreviation, country, code')
+        .select('id, name, abbreviation, country, code, company_type')
         .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
 
-      const sonasp = (data || []).find(c => (c as any).code?.toUpperCase() === 'SONASP');
+      const sonasp = (data || []).find(
+        (company) => company.code?.toUpperCase() === 'SONASP'
+          && company.company_type === 'institution'
+      );
       if (!sonasp) {
         alert.error("La SONASP n'est pas enregistrée comme société : la vente à l'export est impossible.");
         return;
@@ -197,28 +185,32 @@ export function SaleCreate() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.miningCompanyId) {
-      newErrors.miningCompanyId = 'Please select a seller';
+      newErrors.miningCompanyId = 'Le vendeur SONASP est indisponible.';
     }
 
     // Check if seller has inventory
     if (formData.miningCompanyId && availableInventoryOz === 0) {
-      newErrors.miningCompanyId = 'This mining company has no inventory available. Please add gold to inventory first.';
+      newErrors.miningCompanyId = 'Aucun stock SONASP n’est disponible pour cette vente.';
     }
 
     if (!formData.customerId) {
-      newErrors.customerId = 'Please select a customer';
+      newErrors.customerId = 'Sélectionnez un client autorisé.';
+    }
+
+    if (formData.mechanismType === 'in_process' && !formData.inProcessRefineryId) {
+      newErrors.inProcessRefineryId = 'La raffinerie de destination est obligatoire.';
     }
 
     const quantity = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0');
     if (!formData.quantityOz || quantity === 0 || isNaN(quantity) || quantity <= 0) {
-      newErrors.quantityOz = 'Please enter a valid quantity';
+      newErrors.quantityOz = 'Saisissez une quantité valide.';
     } else if (quantity > availableInventoryOz) {
-      newErrors.quantityOz = `Quantity exceeds available inventory (${availableInventoryOz.toFixed(3)} oz)`;
+      newErrors.quantityOz = `La quantité dépasse le stock disponible (${availableInventoryOz.toFixed(3)} oz).`;
     }
 
     const londonRate = parseFloat(formData.londonAMRate);
     if (!formData.londonAMRate || isNaN(londonRate) || londonRate <= 0) {
-      newErrors.londonAMRate = 'Please enter a valid sale price';
+      newErrors.londonAMRate = 'Saisissez un prix de vente valide.';
     }
 
     setErrors(newErrors);
@@ -319,11 +311,7 @@ export function SaleCreate() {
     }
 
     setShowCalculations(true);
-
-    // Generate invoice preview data only (no PDF generation)
-    setTimeout(() => {
-      updateInvoicePreviewData();
-    }, 100);
+    await updateInvoicePreviewData();
   };
 
   const handleSubmit = async () => {
@@ -346,103 +334,32 @@ export function SaleCreate() {
         return;
       }
 
-      const calculations = calculateSaleProceeds(
-        requestedQuantityOz,
-        parseFloat(formData.londonAMRate),
-        parseFloat(formData.freightCost) || 0,
-        parseFloat(formData.otherCosts) || 0
+      const result = await createExportSale({
+        customerId: formData.customerId,
+        sellerId: formData.miningCompanyId,
+        quantityOz: requestedQuantityOz,
+        londonAmRate: parseFloat(formData.londonAMRate),
+        freightCost: parseFloat(formData.freightCost) || 0,
+        otherCosts: parseFloat(formData.otherCosts) || 0,
+        mechanismType: formData.mechanismType,
+        inProcessRefineryId: formData.inProcessRefineryId || undefined,
+        lots: composition.affectations,
+      });
+
+      if (!result.success || !result.data) {
+        alert.error(result.error || "La vente n'a pas pu être créée.");
+        return;
+      }
+
+      alert.success(
+        `Vente ${result.data.sale_number} enregistrée et transmise à la direction pour validation.`
       );
-
-      const currentYear = new Date().getFullYear();
-      const { data: latestSale } = await supabase
-        .from('sales')
-        .select('sale_number')
-        .like('sale_number', `SL-${currentYear}-%`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      let saleNumber;
-      if (latestSale?.sale_number) {
-        const lastNumber = parseInt(latestSale.sale_number.split('-')[2]);
-        saleNumber = `SL-${currentYear}-${String(lastNumber + 1).padStart(3, '0')}`;
-      } else {
-        saleNumber = `SL-${currentYear}-001`;
-      }
-
-      const { data, error } = await supabase
-        .from('sales')
-        .insert([
-          {
-            sale_number: saleNumber,
-            sale_date: new Date().toISOString().split('T')[0],
-            customer_id: formData.customerId,
-            seller_id: formData.miningCompanyId,
-            seller_type: 'mining_company',
-            is_internal_sale: false,
-            quantity_oz: requestedQuantityOz,
-            london_am_rate: parseFloat(formData.londonAMRate),
-            freight_cost: parseFloat(formData.freightCost) || 0,
-            other_costs: parseFloat(formData.otherCosts) || 0,
-            gross_proceeds: calculations.grossProceeds,
-            net_proceeds: calculations.netProceeds,
-            royalty_amount: calculations.royalties,
-            final_proceeds: calculations.finalAmount,
-            total_amount: calculations.finalAmount,
-            currency: 'USD',
-            status: INITIAL_SALE_STATUS,
-            mechanism_type: formData.mechanismType || null,
-            created_by: user?.id
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Database error:', error);
-        alert.error("Échec de l’enregistrement de la vente.");
-        throw error;
-      }
-
-      // Composition de la vente : quels achats la servent, et pour quelle part.
-      // Une vente sans origine tracée vaut un stock non justifié : l'échec se
-      // signale plutôt que de rester muet.
-      try {
-        await tracabiliteVenteService.affecter(data.id, composition.affectations);
-      } catch (raisonLots) {
-        console.error('Erreur d’affectation des lots :', raisonLots);
-        alert.error("Vente enregistrée, mais son origine n’a pas pu être tracée. Signalez-le à l’administrateur.");
-      }
-
-      // Create inventory transactions (exit for seller, entry for buyer)
-      if (data) {
-        const inventoryResult = await createSaleInventoryTransactions(
-          data.id,
-          formData.miningCompanyId,
-          'mining_company',
-          formData.customerId,
-          requestedQuantityOz,
-          user?.id
-        );
-
-        if (!inventoryResult.success) {
-          console.warn('Warning: Sale created but inventory transactions failed:', inventoryResult.error);
-          alert.warning(
-            `Sale ${saleNumber} created successfully, but inventory tracking encountered an issue. ` +
-            `Please verify inventory manually.`
-          );
-        } else {
-          console.log('Inventory transactions created successfully');
-        }
-      }
-
-      // Success - navigate to sales dashboard
-      alert.success(`Sale ${saleNumber} created successfully!`);
       setTimeout(() => {
         navigate('/sales');
       }, 100);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating sale:', error);
+      alert.error("La vente n'a pas pu être créée. Aucune écriture partielle n'a été conservée.");
     } finally {
       setSubmitting(false);
     }
@@ -551,6 +468,12 @@ export function SaleCreate() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {errors.inProcessRefineryId && (
+          <Alert type="error" title="Raffinerie requise">
+            {errors.inProcessRefineryId} Revenez à l’espace de négoce pour choisir une raffinerie agréée.
+          </Alert>
         )}
 
         {/* Seller and Customer Selection */}

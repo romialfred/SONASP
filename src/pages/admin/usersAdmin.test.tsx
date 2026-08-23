@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   getSession: vi.fn(),
   safeFetch: vi.fn(),
+  rpc: vi.fn(),
   addToast: vi.fn(),
   confirmer: vi.fn(),
   currentUser: { id: 'moi' } as { id: string } | null,
@@ -46,7 +47,7 @@ vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.current
 vi.mock('@/lib/apiClient', () => ({ safeFetch: mocks.safeFetch }));
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: { from: mocks.from, auth: { getSession: mocks.getSession } },
+  supabase: { from: mocks.from, rpc: mocks.rpc, auth: { getSession: mocks.getSession } },
 }));
 
 vi.mock('@/components/admin/UserStatsCard', () => ({ default: () => <div>Statistiques du compte</div> }));
@@ -137,9 +138,9 @@ describe('UsersListPage', () => {
     mocks.updates = [];
     mocks.selects = [];
     mocks.currentUser = { id: 'moi' };
-    mocks.confirmer.mockResolvedValue(true);
-    mocks.getSession.mockResolvedValue({ data: { session: null } });
-    mocks.safeFetch.mockResolvedValue({ ok: false });
+    mocks.confirmer.mockResolvedValue('Compte de test clôturé');
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    mocks.getSession.mockResolvedValue({ data: { session: { access_token: 'jwt-aal2' } } });
     mocks.reponses = {
       user_profiles: [
         { id: 'u1', full_name: 'Awa KABORE', email: 'awa@sonasp.bf', role: 'admin', phone: '+226 70 00 00 01', mining_company_id: 'c1', is_active: true, last_login_at: '2026-08-10T09:00:00Z', created_at: '2026-01-01' },
@@ -148,6 +149,11 @@ describe('UsersListPage', () => {
       mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
       user_site_assignments: [{ user_id: 'u1', site_id: 's1', sites: { name: 'Site Essakane' } }],
     };
+    mocks.safeFetch.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      data: { users: mocks.reponses.user_profiles || [] },
+    }));
     mocks.from.mockImplementation((table: string) => stub(table));
   });
 
@@ -198,7 +204,11 @@ describe('UsersListPage', () => {
 
     await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
     expect(mocks.confirmer.mock.calls[0][0]).toMatchObject({ severity: 'danger' });
-    await waitFor(() => expect(mocks.updates).toContainEqual({ is_active: false }));
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('snp_definir_statut_compte', {
+      p_utilisateur_id: 'u1',
+      p_actif: false,
+      p_motif: 'Compte de test clôturé',
+    }));
   });
 
   it('n’enregistre rien si la confirmation est refusée', async () => {
@@ -209,7 +219,7 @@ describe('UsersListPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Désactiver Awa KABORE' }));
 
     await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
-    expect(mocks.updates).toHaveLength(0);
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it('empêche un administrateur de désactiver son propre compte', async () => {
@@ -222,7 +232,7 @@ describe('UsersListPage', () => {
   });
 
   it('signale un échec de chargement', async () => {
-    mocks.reponses.user_profiles = null;
+    mocks.safeFetch.mockResolvedValue({ ok: false, error: { message: 'offline' } });
     render(<UsersListPage />);
 
     await waitFor(() => expect(screen.getByText('offline')).toBeInTheDocument());

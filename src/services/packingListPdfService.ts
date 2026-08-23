@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { roundUpToFixed } from '@/utils/numberUtils';
+import { PAYS_NATIONAL } from '@/constants/site';
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -69,7 +70,7 @@ export class PackingListPdfService {
     doc.rect(pageWidth - margin - 70, yPos - 5, 70, 15);
     doc.text(data.miningCompany, pageWidth - margin - 35, yPos, { align: 'center' });
     doc.setFontSize(8);
-    doc.text('HUMMINGBIRD RESOURCES', pageWidth - margin - 35, yPos + 5, { align: 'center' });
+    doc.text('MINE D’ORIGINE', pageWidth - margin - 35, yPos + 5, { align: 'center' });
 
     yPos += 10;
 
@@ -90,13 +91,13 @@ export class PackingListPdfService {
     doc.text('From:', fromX, fromY);
     doc.setFont('helvetica', 'normal');
     fromY += 5;
-    doc.text('Societe des Mines de Komana SA', fromX, fromY);
+    doc.text('SONASP', fromX, fromY);
     fromY += 4;
-    doc.text('Magnambougou Faso Kanu', fromX, fromY);
+    doc.text('Société Nationale des Substances Précieuses', fromX, fromY);
     fromY += 4;
-    doc.text('Commune VI', fromX, fromY);
+    doc.text(data.miningCompany, fromX, fromY);
     fromY += 4;
-    doc.text('Bamako, Mali', fromX, fromY);
+    doc.text(`Ouagadougou, ${PAYS_NATIONAL}`, fromX, fromY);
 
     yPos += 15;
 

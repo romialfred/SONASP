@@ -4,14 +4,11 @@ import Button from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal';
 import TextArea from '@/components/ui/TextArea';
-import { approveVariance } from '@/services/receivingValidationService';
-import { approveRefining } from '@/services/refiningValidationService';
-import { approveRequest, rejectRequest } from '@/services/approvalService';
-import { useAuth } from '@/contexts/AuthContext';
+import { approveRequest, rejectRequest, type ApprovalRequest } from '@/services/approvalService';
 import { useAlert } from '@/hooks/useAlert';
 
 interface ApprovalRequestCardProps {
-  approval: any;
+  approval: ApprovalRequest;
   onApproved?: () => void;
   onRejected?: () => void;
 }
@@ -21,17 +18,16 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
-  const { user } = useAuth();
   const alert = useAlert();
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      batch_receipt: 'Batch Receipt Variance',
-      refining_process: 'Refining Process',
-      sale: 'Sale Approval',
-      sale_approval: 'Sale Approval',
-      payment: 'Payment Approval',
-      payment_approval: 'Payment Approval',
+      batch_receipt: 'Écart de réception',
+      refining_process: 'Raffinage',
+      sale: 'Validation de vente',
+      sale_approval: 'Validation de vente',
+      payment: 'Validation de paiement',
+      payment_approval: 'Validation de paiement',
     };
     return labels[type] || type;
   };
@@ -52,32 +48,16 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
     setProcessing(true);
 
     try {
-      let result;
-
-      if (approval.request_type === 'batch_receipt') {
-        result = await approveVariance(approval.entity_id, approval.entity_id);
-      } else if (approval.request_type === 'refining_process') {
-        result = await approveRefining(approval.entity_id, approval.entity_id);
-      } else if (approval.request_type === 'sale' || approval.request_type === 'sale_approval') {
-        // Handle sale approval through approvalService
-        if (!user?.email) {
-          alert.error('User email not found');
-          setProcessing(false);
-          return;
-        }
-        result = await approveRequest(approval.id, user.email);
-      } else {
-        result = { success: false, error: 'Unknown approval type: ' + approval.request_type };
-      }
+      const result = await approveRequest(approval.id);
 
       if (result.success) {
-        alert.success('Approval processed successfully');
+        alert.success('La décision a été enregistrée.');
         onApproved?.();
       } else {
-        alert.error('Error approving: ' + result.error);
+        alert.error(result.error || "La demande n'a pas pu être approuvée.");
       }
-    } catch (error: any) {
-      alert.error('Error: ' + error.message);
+    } catch {
+      alert.error("La demande n'a pas pu être approuvée.");
     } finally {
       setProcessing(false);
       setShowApproveModal(false);
@@ -85,30 +65,24 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
   };
 
   const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      alert.warning('Please provide a reason for rejection');
+    if (rejectionReason.trim().length < 5) {
+      alert.warning('Précisez un motif de rejet comportant au moins 5 caractères.');
       return;
     }
 
     setProcessing(true);
 
     try {
-      if (!user?.email) {
-        alert.error('User email not found');
-        setProcessing(false);
-        return;
-      }
-
-      const result = await rejectRequest(approval.id, user.email, rejectionReason);
+      const result = await rejectRequest(approval.id, undefined, rejectionReason);
 
       if (result.success) {
-        alert.success('Request rejected successfully');
+        alert.success('Le rejet a été enregistré.');
         onRejected?.();
       } else {
-        alert.error('Error rejecting: ' + result.error);
+        alert.error(result.error || "La demande n'a pas pu être rejetée.");
       }
-    } catch (error: any) {
-      alert.error('Error: ' + error.message);
+    } catch {
+      alert.error("La demande n'a pas pu être rejetée.");
     } finally {
       setProcessing(false);
       setShowRejectModal(false);
@@ -127,17 +101,17 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
                 </span>
                 <span className="flex items-center gap-1 text-xs text-gray-500">
                   <Clock className="w-3 h-3" />
-                  {new Date(approval.requested_at).toLocaleDateString()}
+                  {approval.requested_at ? new Date(approval.requested_at).toLocaleDateString('fr-FR') : '—'}
                 </span>
               </div>
               <CardTitle className="text-lg">
-                {approval.entity_type === 'batch' ? `Batch Approval Required` : 'Approval Required'}
+                {approval.entity_type === 'batch' ? 'Validation du lot requise' : 'Validation requise'}
               </CardTitle>
             </div>
             {approval.status === 'pending' && (
               <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
                 <AlertTriangle className="w-4 h-4" />
-                Pending
+                En attente
               </span>
             )}
           </div>
@@ -151,11 +125,11 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-gray-600">Requested by</p>
-              <p className="font-medium text-gray-900">{approval.requested_by || 'System'}</p>
+              <p className="text-gray-600">Demandée par</p>
+              <p className="font-medium text-gray-900">{approval.requested_by || 'Système'}</p>
             </div>
             <div>
-              <p className="text-gray-600">Entity ID</p>
+              <p className="text-gray-600">Référence technique</p>
               <p className="font-medium text-gray-900 font-mono text-xs">
                 {approval.entity_id.slice(0, 8)}...
               </p>
@@ -171,7 +145,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
                 size="sm"
               >
                 <CheckCircle className="w-4 h-4" />
-                Approve
+                Approuver
               </Button>
               <Button
                 variant="outline"
@@ -180,7 +154,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
                 size="sm"
               >
                 <XCircle className="w-4 h-4" />
-                Reject
+                Rejeter
               </Button>
             </div>
           )}
@@ -188,14 +162,16 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
           {approval.status === 'approved' && (
             <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
               <CheckCircle className="w-4 h-4" />
-              <span>Approved on {new Date(approval.approved_at).toLocaleDateString()}</span>
+              <span>
+                Approuvée le {approval.approved_at ? new Date(approval.approved_at).toLocaleDateString('fr-FR') : '—'}
+              </span>
             </div>
           )}
 
           {approval.status === 'rejected' && (
             <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
               <XCircle className="w-4 h-4" />
-              <span>Rejected</span>
+              <span>Rejetée</span>
             </div>
           )}
         </CardContent>
@@ -203,55 +179,55 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
 
       <Modal isOpen={showApproveModal} onClose={() => setShowApproveModal(false)}>
         <ModalHeader onClose={() => setShowApproveModal(false)}>
-          Confirm Approval
+          Confirmer l’approbation
         </ModalHeader>
         <ModalBody>
           <div className="space-y-4">
             <p className="text-gray-700">
-              Are you sure you want to approve this {getTypeLabel(approval.request_type).toLowerCase()}?
+              Confirmez-vous l’approbation de cette demande « {getTypeLabel(approval.request_type)} » ?
             </p>
             {approval.comments && (
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-gray-900 mb-1">Request Details:</p>
+                <p className="text-sm font-medium text-gray-900 mb-1">Détails de la demande :</p>
                 <p className="text-sm text-gray-700">{approval.comments}</p>
               </div>
             )}
             <p className="text-sm text-gray-600">
-              This action will update the batch status and allow it to proceed to the next stage.
+              La décision et l’objet métier associé seront mis à jour dans une même transaction.
             </p>
           </div>
         </ModalBody>
         <ModalFooter>
           <Button variant="ghost" onClick={() => setShowApproveModal(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button variant="primary" onClick={handleApprove} loading={processing}>
             <CheckCircle className="w-4 h-4 mr-2" />
-            Approve
+            Approuver
           </Button>
         </ModalFooter>
       </Modal>
 
       <Modal isOpen={showRejectModal} onClose={() => setShowRejectModal(false)}>
         <ModalHeader onClose={() => setShowRejectModal(false)}>
-          Reject Request
+          Rejeter la demande
         </ModalHeader>
         <ModalBody>
           <div className="space-y-4">
             <p className="text-gray-700">
-              Please provide a reason for rejecting this request:
+              Indiquez le motif précis du rejet :
             </p>
             <TextArea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               rows={4}
-              placeholder="Enter rejection reason..."
+              placeholder="Motif du rejet…"
             />
           </div>
         </ModalBody>
         <ModalFooter>
           <Button variant="ghost" onClick={() => setShowRejectModal(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button
             variant="outline"
@@ -260,7 +236,7 @@ export function ApprovalRequestCard({ approval, onApproved, onRejected }: Approv
             className="text-red-600 hover:bg-red-50 border-red-200"
           >
             <XCircle className="w-4 h-4 mr-2" />
-            Reject
+            Rejeter
           </Button>
         </ModalFooter>
       </Modal>

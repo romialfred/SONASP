@@ -121,13 +121,13 @@ async function fetchExchangeRates(supabase: any) {
     console.log('Fetching FX rates by calling fetch-daily-fx-rates edge function...');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     const response = await fetch(`${supabaseUrl}/functions/v1/fetch-daily-fx-rates`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
       },
     });
 
@@ -155,13 +155,13 @@ async function fetchGoldPrices(supabase: any) {
     console.log('Fetching gold prices by calling fetch-daily-lbma-prices edge function...');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     const response = await fetch(`${supabaseUrl}/functions/v1/fetch-daily-lbma-prices`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
       },
     });
 

@@ -130,8 +130,8 @@ describe('NationalDashboardLayout', () => {
     expect(signe(documents)).toContain('lucide-plus');
 
     // Une entrée sans sous-menu ne porte aucun signe : rien à déplier.
-    const assistant = screen.getByRole('link', { name: 'Assistant IA' });
-    expect(assistant.querySelectorAll('svg')).toHaveLength(1);
+    const rapports = screen.getByRole('link', { name: 'Rapports institutionnels' });
+    expect(rapports.querySelectorAll('svg')).toHaveLength(1);
 
     // Chaque entrée de premier niveau porte sa pastille d'icône.
     expect(container.querySelectorAll('.national-sidebar__icon').length).toBeGreaterThan(10);
@@ -170,7 +170,7 @@ describe('NationalDashboardLayout', () => {
     premier.unmount();
 
     render(
-      <MemoryRouter initialEntries={['/analytics/assistant']}>
+      <MemoryRouter initialEntries={['/analytics']}>
         <NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout>
       </MemoryRouter>
     );

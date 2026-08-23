@@ -38,11 +38,12 @@ import {
   SaleStatus,
 } from '@/lib/schemas/sales';
 import { useAlert } from '@/hooks/useAlert';
-import { approveSale, rejectSale } from '@/services/salesService';
-import { useAuth } from '@/contexts/AuthContext';
+import { approveSale, rejectSale } from '@/services/approvalService';
 import { SalesWorkflowProgressPanel } from '@/components/sales/SalesWorkflowProgressPanel';
 import { getSaleDocuments, downloadSaleDocument, type SaleDocument } from '@/services/saleDocumentsService';
 import { tracabiliteVenteService, type Affectation } from '@/services/tracabiliteVenteService';
+import { errorMessage as getErrorMessage } from '@/lib/errorMessage';
+import { z } from 'zod';
 
 interface SaleDetailsCustomer {
   name: string;
@@ -80,6 +81,12 @@ interface SaleDetailsView {
   calculations: SaleCalculations;
   mechanismType?: string | null;
 }
+
+const ytdSaleListSchema = z.array(z.object({
+  quantity_oz: z.coerce.number().catch(0),
+  final_proceeds: z.coerce.number().catch(0),
+  royalty_amount: z.coerce.number().catch(0),
+}));
 
 const getPaymentTerms = (mechanismType: string | null | undefined) => {
   if (!mechanismType) {
@@ -154,7 +161,6 @@ export function SaleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const alert = useAlert();
-  const { user } = useAuth();
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -167,6 +173,7 @@ export function SaleDetails() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const mountedRef = useRef(false);
+  const isMounted = () => mountedRef.current;
 
   const loadSaleDetails = useCallback(async () => {
     if (!id) {
@@ -202,15 +209,6 @@ export function SaleDetails() {
         throw response.error;
       }
 
-      if (!response.data) {
-        if (!mountedRef.current) {
-          return;
-        }
-        setSale(null);
-        setErrorMessage('Sale not found');
-        return;
-      }
-
       const parsed = saleDetailSchema.safeParse(response.data);
 
       if (!parsed.success) {
@@ -239,17 +237,19 @@ export function SaleDetails() {
       if (record.customer?.id) {
         const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
 
-        const { data: ytdSales } = await supabase
+        const { data: ytdSalesRaw } = await supabase
           .from('sales')
           .select('quantity_oz, unit_price, final_proceeds, royalty_amount')
           .eq('customer_id', record.customer.id)
           .gte('created_at', startOfYear);
 
-        if (ytdSales && ytdSales.length > 0) {
+        const ytdResult = ytdSaleListSchema.safeParse(ytdSalesRaw ?? []);
+        if (ytdResult.success && ytdResult.data.length > 0) {
+          const ytdSales = ytdResult.data;
           ytdTransactions = ytdSales.length;
-          ytdGoldSold = ytdSales.reduce((sum, s) => sum + (s.quantity_oz || 0), 0);
-          ytdAmount = ytdSales.reduce((sum, s) => sum + (s.final_proceeds || 0), 0);
-          ytdRoyalties = ytdSales.reduce((sum, s) => sum + (s.royalty_amount || 0), 0);
+          ytdGoldSold = ytdSales.reduce((sum, currentSale) => sum + currentSale.quantity_oz, 0);
+          ytdAmount = ytdSales.reduce((sum, currentSale) => sum + currentSale.final_proceeds, 0);
+          ytdRoyalties = ytdSales.reduce((sum, currentSale) => sum + currentSale.royalty_amount, 0);
           ytdAvgPrice = ytdGoldSold > 0 ? ytdAmount / ytdGoldSold : 0;
         }
       }
@@ -290,25 +290,20 @@ export function SaleDetails() {
       // Load real documents from database/storage
       const documentsResult = await getSaleDocuments(record.id);
 
-      if (documentsResult.success && documentsResult.data) {
-        if (mountedRef.current) {
-          setDocuments(documentsResult.data);
-        }
+      if (documentsResult.success) {
+        if (isMounted()) setDocuments(documentsResult.data ?? []);
       } else {
         console.warn('Failed to load documents:', documentsResult.error);
-        // Set empty documents array if loading fails
-        if (mountedRef.current) {
-          setDocuments([]);
-        }
+        if (isMounted()) setDocuments([]);
       }
       // Origine de l'or vendu. Un échec ici ne doit pas emporter la fiche :
       // la composition s'affiche alors comme non disponible, sans invention.
       try {
-        const lots = await tracabiliteVenteService.lotsDeVente(id as string);
-        if (mountedRef.current) setOrigine(lots);
+        const lots = await tracabiliteVenteService.lotsDeVente(id);
+        if (isMounted()) setOrigine(lots);
       } catch (raison) {
         console.warn('Composition de la vente indisponible :', raison);
-        if (mountedRef.current) setOrigine(null);
+        if (isMounted()) setOrigine(null);
       }
     } catch (error) {
       console.error('Error fetching sale details:', error);
@@ -414,7 +409,7 @@ export function SaleDetails() {
   };
 
   const handleApprove = async () => {
-    if (!id || !user?.email) {
+    if (!id) {
       alert.error('Unable to approve sale: Missing required information');
       return;
     }
@@ -423,7 +418,7 @@ export function SaleDetails() {
     console.log('Approving sale with notes:', approvalNotes);
 
     try {
-      const result = await approveSale(id, user.email, approvalNotes);
+      const result = await approveSale(id, undefined, approvalNotes);
 
       if (result.success) {
         alert.success('Sale approved successfully! Customer will be notified by email.');
@@ -439,9 +434,9 @@ export function SaleDetails() {
       } else {
         alert.error(`Failed to approve sale: ${result.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving sale:', error);
-      alert.error(`Error approving sale: ${error.message || 'Unknown error'}`);
+      alert.error(getErrorMessage(error, 'Unable to approve sale.'));
     } finally {
       setIsApproving(false);
     }
@@ -453,7 +448,7 @@ export function SaleDetails() {
       return;
     }
 
-    if (!id || !user?.email) {
+    if (!id) {
       alert.error('Unable to reject sale: Missing required information');
       return;
     }
@@ -462,7 +457,7 @@ export function SaleDetails() {
     console.log('Rejecting sale with reason:', rejectionReason);
 
     try {
-      const result = await rejectSale(id, user.email, rejectionReason);
+      const result = await rejectSale(id, undefined, rejectionReason);
 
       if (result.success) {
         alert.success('Sale rejected successfully');
@@ -478,11 +473,29 @@ export function SaleDetails() {
       } else {
         alert.error(`Failed to reject sale: ${result.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting sale:', error);
-      alert.error(`Error rejecting sale: ${error.message || 'Unknown error'}`);
+      alert.error(getErrorMessage(error, 'Unable to reject sale.'));
     } finally {
       setIsRejecting(false);
+    }
+  };
+
+  const handleDocumentOpen = async (document: SaleDocument) => {
+    if (document.fileUrl) {
+      window.open(document.fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    try {
+      const result = await downloadSaleDocument(document.type, document.documentId, id);
+      if (result.success && result.url) {
+        window.open(result.url, '_blank', 'noopener,noreferrer');
+      } else {
+        alert.info(`Le document « ${document.label} » n'est pas encore disponible.`);
+      }
+    } catch (reason) {
+      alert.error(getErrorMessage(reason, 'Le téléchargement du document a échoué.'));
     }
   };
 
@@ -895,7 +908,7 @@ export function SaleDetails() {
                         Reject Sale
                       </Button>
                     </div>
-                  ) : sale.status === 'pending_for_customer_approval' ? (
+                  ) : (
                     <div className="space-y-4">
                       <div className="text-center py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                         <Clock className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
@@ -906,79 +919,11 @@ export function SaleDetails() {
                           Email sent to customer
                         </p>
                       </div>
-                      <div className="pt-3 border-t border-gray-200">
-                        <p className="text-xs text-gray-600 mb-3 text-center">
-                          Administrator override options:
-                        </p>
-                        <div className="space-y-2">
-                          <Button
-                            onClick={async () => {
-                              if (!id || !user?.email) return;
-                              setIsApproving(true);
-                              try {
-                                const { data, error } = await supabase
-                                  .from('sales')
-                                  .update({ status: 'customer_approved' })
-                                  .eq('id', id)
-                                  .select()
-                                  .single();
-
-                                if (!error) {
-                                  alert.success('Sale approved as customer (admin override)');
-                                  await loadSaleDetails();
-                                } else {
-                                  alert.error('Failed to override: ' + error.message);
-                                }
-                              } catch (err: any) {
-                                alert.error('Error: ' + err.message);
-                              } finally {
-                                setIsApproving(false);
-                              }
-                            }}
-                            disabled={isApproving}
-                            size="sm"
-                            className="w-full bg-green-600 hover:bg-green-700 text-xs"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Approve as Customer
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              if (!id || !user?.email) return;
-                              const reason = prompt('Rejection reason:');
-                              if (!reason) return;
-
-                              setIsRejecting(true);
-                              try {
-                                const { error } = await supabase
-                                  .from('sales')
-                                  .update({ status: 'customer_rejected' })
-                                  .eq('id', id);
-
-                                if (!error) {
-                                  alert.success('Sale rejected (admin override)');
-                                  await loadSaleDetails();
-                                } else {
-                                  alert.error('Failed to override: ' + error.message);
-                                }
-                              } catch (err: any) {
-                                alert.error('Error: ' + err.message);
-                              } finally {
-                                setIsRejecting(false);
-                              }
-                            }}
-                            disabled={isRejecting}
-                            size="sm"
-                            variant="outline"
-                            className="w-full text-red-600 border-red-600 hover:bg-red-50 text-xs"
-                          >
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Reject as Customer
-                          </Button>
-                        </div>
-                      </div>
+                      <p className="border-t border-gray-200 pt-3 text-center text-xs text-gray-600">
+                        La décision doit être prise depuis le lien sécurisé adressé au client.
+                      </p>
                     </div>
-                  ) : null}
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1015,18 +960,18 @@ export function SaleDetails() {
                 {documents.map((doc, index) => {
                   // Map icon name string to actual icon component
                   const getIconComponent = (iconName: string): LucideIcon => {
-                    const iconMap: Record<string, LucideIcon> = {
+                    const iconMap: Partial<Record<string, LucideIcon>> = {
                       Package,
                       Gem,
                       Receipt,
                       FlaskConical,
                       FileText,
                     };
-                    return iconMap[iconName] || FileText;
+                    return iconMap[iconName] ?? FileText;
                   };
 
                   const Icon = getIconComponent(doc.icon);
-                  const docKey = doc.documentId || `${doc.type}-${index}`;
+                  const docKey = doc.documentId ?? `${doc.type}-${String(index)}`;
 
                   return (
                     <div
@@ -1057,32 +1002,7 @@ export function SaleDetails() {
                             size="sm"
                             variant="outline"
                             className="w-full flex items-center justify-center gap-1 text-xs py-1 group-hover:bg-primary-50 group-hover:border-primary-400 transition-colors"
-                            onClick={async () => {
-                              // If document has direct URL, open it
-                              if (doc.fileUrl) {
-                                window.open(doc.fileUrl, '_blank');
-                                return;
-                              }
-
-                              // Otherwise, try to download via service
-                              try {
-                                const result = await downloadSaleDocument(
-                                  doc.type,
-                                  doc.documentId,
-                                  id
-                                );
-
-                                if (result.success && result.url) {
-                                  window.open(result.url, '_blank');
-                                } else {
-                                  alert.info(`Generating ${doc.label}...`);
-                                  // For generated documents (bullion summary, sales invoice),
-                                  // this would trigger PDF generation
-                                }
-                              } catch (error: any) {
-                                alert.error(`Failed to download: ${error.message}`);
-                              }
-                            }}
+                            onClick={() => { void handleDocumentOpen(doc); }}
                           >
                             <Download className="w-3 h-3" />
                             {doc.fileName ? 'Download' : 'View'}
@@ -1169,7 +1089,7 @@ export function SaleDetails() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleApprove}
+                    onClick={() => { void handleApprove(); }}
                     disabled={isApproving}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
@@ -1220,7 +1140,7 @@ export function SaleDetails() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleReject}
+                    onClick={() => { void handleReject(); }}
                     disabled={isRejecting || !rejectionReason.trim()}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >

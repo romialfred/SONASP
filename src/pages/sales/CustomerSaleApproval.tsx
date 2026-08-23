@@ -15,8 +15,11 @@ import {
   Clock,
   Mail
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { customerApproveSale, customerRejectSale } from '@/services/salesService';
+import {
+  approveCustomerSale,
+  loadCustomerSaleForDecision,
+  rejectCustomerSale,
+} from '@/services/customerSaleDecisionService';
 import { formatCurrency } from '@/utils/salesUtils';
 
 interface Sale {
@@ -93,7 +96,7 @@ const getPaymentTermsSummary = (mechanismType: string | null | undefined) => {
 };
 
 export function CustomerSaleApproval() {
-  const { saleId, token } = useParams<{ saleId: string; token: string }>();
+  const { saleId } = useParams<{ saleId: string }>();
   const navigate = useNavigate();
 
   const [sale, setSale] = useState<Sale | null>(null);
@@ -118,33 +121,11 @@ export function CustomerSaleApproval() {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('sales')
-        .select(`
-          *,
-          customer:customers(
-            name,
-            email,
-            country
-          )
-        `)
-        .eq('id', saleId)
-        .maybeSingle();
-
-      if (fetchError) {
-        throw fetchError;
+      const result = await loadCustomerSaleForDecision(saleId);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Vente introuvable.');
       }
-
-      if (!data) {
-        throw new Error('Sale not found');
-      }
-
-      // Customer can approve when status is 'pending_for_customer_approval' (management approved, awaiting customer)
-      if (data.status !== 'pending_for_customer_approval') {
-        throw new Error('This sale is not available for customer approval. Current status: ' + data.status);
-      }
-
-      setSale(data as Sale);
+      setSale(result.data as Sale);
     } catch (err: any) {
       console.error('Error loading sale:', err);
       setError(err.message || 'Failed to load sale details');
@@ -154,13 +135,13 @@ export function CustomerSaleApproval() {
   };
 
   const handleApprove = async () => {
-    if (!sale || !sale.customer?.email) return;
+    if (!sale) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const result = await customerApproveSale(sale.id, sale.customer.email);
+      const result = await approveCustomerSale(sale.id);
 
       if (result.success) {
         setActionType('approve');
@@ -177,8 +158,8 @@ export function CustomerSaleApproval() {
   };
 
   const handleReject = async () => {
-    if (!sale || !sale.customer?.email || !rejectionReason.trim()) {
-      setError('Please provide a reason for rejection');
+    if (!sale || rejectionReason.trim().length < 5) {
+      setError('Veuillez préciser le motif du refus (5 caractères minimum).');
       return;
     }
 
@@ -186,11 +167,7 @@ export function CustomerSaleApproval() {
     setError(null);
 
     try {
-      const result = await customerRejectSale(
-        sale.id,
-        sale.customer.email,
-        rejectionReason
-      );
+      const result = await rejectCustomerSale(sale.id, rejectionReason);
 
       if (result.success) {
         setActionType('reject');

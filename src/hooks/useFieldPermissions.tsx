@@ -189,8 +189,12 @@ export function ProtectedField({
   return <>{children}</>;
 }
 
-// Helper function to mask sensitive data
-export function maskSensitiveData(value: string | number, moduleName: string, fieldName: string): string {
+// Hook de masquage : son nom explicite garantit le respect des règles React.
+export function useMaskedSensitiveData(
+  value: string | number,
+  moduleName: string,
+  fieldName: string,
+): string {
   const { canViewField } = useFieldPermissions();
 
   if (canViewField(moduleName, fieldName)) {

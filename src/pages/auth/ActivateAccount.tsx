@@ -1,536 +1,96 @@
-import { useState, useEffect } from 'react';
-import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertTriangle, ArrowLeft, KeyRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import Button from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import PasswordInput from '@/components/ui/PasswordInput';
-import {
-  CheckCircle,
-  Lock,
-  Shield,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Loader,
-} from 'lucide-react';
 
-interface PasswordRequirement {
-  label: string;
-  test: (password: string) => boolean;
-  met: boolean;
-}
-
+/**
+ * Route de compatibilite pour les anciens liens `/activate-account`.
+ *
+ * L'ancien parcours demandait et comparait un mot de passe provisoire dans le
+ * navigateur, puis ecrivait directement des marqueurs d'activation et de MFA.
+ * Ces operations sont desormais reservees a Supabase Auth et aux controles
+ * serveur. Un lien moderne cree d'abord une session de recuperation signee et
+ * conduit l'utilisateur vers `/modifier-mot-de-passe`.
+ */
 export default function ActivateAccount() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
-
-  const [step, setStep] = useState<'verify' | 'password' | '2fa' | 'policies' | 'complete'>('verify');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Token validation
-  const [tokenValid, setTokenValid] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [tokenType, setTokenType] = useState<string | null>(null);
-  const [temporaryPasswordRequired, setTemporaryPasswordRequired] = useState<string | null>(null);
-
-  // Form state
-  const [temporaryPassword, setTemporaryPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // 2FA state
-
-  // Policies state
-  const [acceptedGDPR, setAcceptedGDPR] = useState(false);
-  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
-  const [acceptedCookies, setAcceptedCookies] = useState(false);
-
-  // Password requirements
-  const [requirements, setRequirements] = useState<PasswordRequirement[]>([
-    { label: 'At least 12 characters', test: (p) => p.length >= 12, met: false },
-    { label: 'Contains uppercase letter', test: (p) => /[A-Z]/.test(p), met: false },
-    { label: 'Contains lowercase letter', test: (p) => /[a-z]/.test(p), met: false },
-    { label: 'Contains number', test: (p) => /[0-9]/.test(p), met: false },
-    { label: 'Contains special character', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p), met: false },
-  ]);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid activation link. Please check your email and try again.');
-      return;
-    }
+    let active = true;
 
-    validateToken();
-  }, [token]);
+    const orienter = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!active) return;
 
-  useEffect(() => {
-    const updatedRequirements = requirements.map((req) => ({
-      ...req,
-      met: req.test(newPassword),
-    }));
-    setRequirements(updatedRequirements);
-  }, [newPassword]);
-
-  const validateToken = async () => {
-    try {
-      setLoading(true);
-      const { data, error: tokenError } = await supabase.rpc('validate_activation_token', {
-        p_token: token,
-      });
-
-      if (tokenError) throw tokenError;
-
-      if (!data || data.length === 0 || !data[0].is_valid) {
-        setError('This activation link has expired or is invalid. Please contact your administrator.');
+      if (!error && data.session) {
+        navigate('/modifier-mot-de-passe', { replace: true });
         return;
       }
 
-      const tokenData = data[0];
-      setTokenValid(true);
-      setUserId(tokenData.user_id);
-      setTokenType(tokenData.token_type);
-      setTemporaryPasswordRequired(tokenData.temporary_password);
-      setStep('password');
-    } catch (err: any) {
-      setError(err.message || 'Failed to validate activation link');
-    } finally {
-      setLoading(false);
-    }
-  };
+      setChecking(false);
+    };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (temporaryPassword !== temporaryPasswordRequired) {
-      setError('Temporary password is incorrect');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    if (!requirements.every((req) => req.met)) {
-      setError('Password does not meet all requirements');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Validate password strength
-      const { data: isValid, error: validationError } = await supabase.rpc(
-        'validate_password_strength',
-        { password: newPassword }
-      );
-
-      if (validationError || !isValid) {
-        setError('Password does not meet strength requirements');
-        return;
-      }
-
-      // Update password using Supabase Auth
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updateError) throw updateError;
-
-      // Record password change in history
-      await supabase.from('password_history').insert({
-        user_id: userId,
-        password_hash: 'hashed_' + Date.now(), // In production, properly hash
-        changed_by: userId,
-      });
-
-      // Move to 2FA setup
-      await setup2FA();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update password');
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Le pas du second facteur ne prepare plus rien : le secret est produit et
-   * detenu par GoTrue, et le composant d'enrolement s'en charge.
-   */
-  const setup2FA = () => {
-    setStep('2fa');
-    setLoading(false);
-  };
-
-  /**
-   * Appele une fois l'enrolement confirme par la base — laquelle a exige deux
-   * preuves : un facteur reellement verifie, et une session elevee a `aal2`.
-   */
-  const apres2FA = async () => {
-    setError(null);
-    try {
-      if (userId) {
-        await supabase.from('user_2fa_setup').insert({
-          user_id: userId,
-          verified_at: new Date().toISOString(),
-          authenticator_app: 'microsoft_authenticator',
-        });
-      }
-      setStep('policies');
-    } catch (err: any) {
-      setError(err.message || 'L’activation du second facteur n’a pas pu être consignée.');
-    }
-  };
-
-  const handlePoliciesAcceptance = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!acceptedGDPR || !acceptedPrivacy || !acceptedCookies) {
-      setError('You must accept all policies to activate your account');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Record policy acceptance
-      const { error: acceptanceError } = await supabase.from('user_acceptance_logs').insert({
-        user_id: userId,
-        accepted_gdpr: acceptedGDPR,
-        accepted_privacy: acceptedPrivacy,
-        accepted_cookies: acceptedCookies,
-        ip_address: 'client_ip', // Get from request in production
-        user_agent: navigator.userAgent,
-      });
-
-      if (acceptanceError) throw acceptanceError;
-
-      // Mark account as activated
-      await supabase
-        .from('user_profiles')
-        .update({
-          account_activated: true,
-          activation_completed_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-
-      // Mark token as used
-      await supabase.rpc('mark_token_used', { p_token: token });
-
-      setStep('complete');
-      setLoading(false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to complete activation');
-      setLoading(false);
-    }
-  };
-
-  // Helper functions
-  const passwordStrength = () => {
-    const metCount = requirements.filter((req) => req.met).length;
-    if (metCount === 0) return { label: '', color: '' };
-    if (metCount <= 2) return { label: 'Weak', color: 'text-red-600' };
-    if (metCount <= 4) return { label: 'Medium', color: 'text-yellow-600' };
-    return { label: 'Strong', color: 'text-green-600' };
-  };
-
-  if (loading && step === 'verify') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <Loader className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
-          <p className="text-gray-600">Validating activation link...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !tokenValid) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Activation Error</h1>
-          </div>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">{error}</p>
-          </div>
-          <Button
-            variant="primary"
-            onClick={() => navigate('/login')}
-            className="w-full"
-          >
-            Return to Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
+    void orienter();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-            {step === 'password' && <Lock className="h-8 w-8 text-primary-600" />}
-            {step === '2fa' && <Shield className="h-8 w-8 text-primary-600" />}
-            {step === 'policies' && <CheckCircle className="h-8 w-8 text-primary-600" />}
-            {step === 'complete' && <CheckCircle className="h-8 w-8 text-green-600" />}
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {tokenType === 'password_reset' ? 'Reset Your Password' : 'Activate Your Account'}
-          </h1>
-          <p className="text-gray-600">
-            {step === 'password' && 'Set up your secure password'}
-            {step === '2fa' && 'Configure Two-Factor Authentication'}
-            {step === 'policies' && 'Accept Terms and Policies'}
-            {step === 'complete' && 'Your account is now active!'}
-          </p>
-        </div>
+    <main className="grid min-h-screen place-items-center bg-[#f8f5ec] p-5">
+      <section
+        className="w-full max-w-md border border-slate-200 border-t-4 border-t-amber-500 bg-white p-7 shadow-xl shadow-emerald-950/10 sm:p-9"
+        aria-labelledby="activation-title"
+        aria-busy={checking}
+      >
+        <img src="/SONASP v2.png" alt="SONASP" className="h-auto w-32" />
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
-
-        {/* Step 1: Password Setup */}
-        {step === 'password' && (
-          <form onSubmit={handlePasswordSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Temporary Password
-              </label>
-              <PasswordInput
-                value={temporaryPassword}
-                onChange={(e) => setTemporaryPassword(e.target.value)}
-                placeholder="Enter temporary password from email"
-                required
-              />
+        {checking ? (
+          <div className="mt-8" role="status" aria-live="polite">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+              <KeyRound aria-hidden="true" className="h-5 w-5 animate-pulse" />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter your new password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {newPassword && (
-                <p className={`text-sm mt-1 font-medium ${passwordStrength().color}`}>
-                  Password strength: {passwordStrength().label}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your new password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Password Requirements */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Password must contain:</p>
-              <ul className="space-y-2">
-                {requirements.map((req, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm">
-                    {req.met ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
-                    )}
-                    <span className={req.met ? 'text-green-700' : 'text-gray-600'}>
-                      {req.label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading || !requirements.every((req) => req.met)}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader className="animate-spin h-5 w-5 mr-2" />
-                  Setting password...
-                </>
-              ) : (
-                'Continue to 2FA Setup'
-              )}
-            </Button>
-          </form>
-        )}
-
-        {/* Step 2: 2FA Setup */}
-        {step === '2fa' && (
-          <TwoFactorSetup obligatoire onComplete={() => void apres2FA()} />
-        )}
-
-        {step === 'policies' && (
-          <form onSubmit={handlePoliciesAcceptance} className="space-y-6">
-            <p className="text-sm text-gray-600">
-              Before you can access your account, you must read and accept our policies:
+            <h1 id="activation-title" className="mt-5 text-2xl font-semibold text-slate-900">
+              Vérification du lien
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Nous vérifions la session sécurisée associée à votre invitation.
             </p>
-
-            <div className="space-y-4">
-              <label className="flex items-start gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={acceptedGDPR}
-                  onChange={(e) => setAcceptedGDPR(e.target.checked)}
-                  className="mt-1 h-5 w-5 text-primary-600 focus:ring-primary-500"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">GDPR Compliance</p>
-                  <p className="text-sm text-gray-600">
-                    I understand and accept the GDPR data processing terms.{' '}
-                    <a href="/policies/gdpr" target="_blank" className="text-primary-600 underline">
-                      Read policy
-                    </a>
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={acceptedPrivacy}
-                  onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                  className="mt-1 h-5 w-5 text-primary-600 focus:ring-primary-500"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Privacy Policy</p>
-                  <p className="text-sm text-gray-600">
-                    I have read and agree to the Privacy Policy.{' '}
-                    <a
-                      href="/policies/privacy"
-                      target="_blank"
-                      className="text-primary-600 underline"
-                    >
-                      Read policy
-                    </a>
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={acceptedCookies}
-                  onChange={(e) => setAcceptedCookies(e.target.checked)}
-                  className="mt-1 h-5 w-5 text-primary-600 focus:ring-primary-500"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Cookie Policy</p>
-                  <p className="text-sm text-gray-600">
-                    I accept the use of cookies as described in the Cookie Policy.{' '}
-                    <a
-                      href="/policies/cookies"
-                      target="_blank"
-                      className="text-primary-600 underline"
-                    >
-                      Read policy
-                    </a>
-                  </p>
-                </div>
-              </label>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-amber-50 text-amber-700">
+              <AlertTriangle aria-hidden="true" className="h-5 w-5" />
             </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading || !acceptedGDPR || !acceptedPrivacy || !acceptedCookies}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader className="animate-spin h-5 w-5 mr-2" />
-                  Completing activation...
-                </>
-              ) : (
-                'Accept and Activate Account'
-              )}
-            </Button>
-          </form>
-        )}
-
-        {/* Step 4: Complete */}
-        {step === 'complete' && (
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full">
-              <CheckCircle className="h-12 w-12 text-green-600" />
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+              Lien d’activation remplacé
+            </p>
+            <h1 id="activation-title" className="mt-2 text-2xl font-semibold text-slate-900">
+              Demandez un nouveau lien sécurisé
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Cet ancien lien ne permet plus de transmettre un mot de passe provisoire. Utilisez la
+              procédure de récupération pour recevoir un lien signé et limité dans le temps.
+            </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <Link
+                to="/recuperer-acces"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+              >
+                Recevoir un lien
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700"
+              >
+                <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                Retour à la connexion
+              </Link>
             </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Activated!</h2>
-              <p className="text-gray-600">
-                Your account has been successfully activated. You can now log in to Gold Shipper.
-              </p>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-left">
-              <p className="text-sm text-green-800">
-                <strong>Next steps:</strong>
-              </p>
-              <ul className="list-disc list-inside text-sm text-green-700 mt-2 space-y-1">
-                <li>Use your email and new password to log in</li>
-                <li>You'll be prompted for your 2FA code from Microsoft Authenticator</li>
-                <li>Explore your dashboard and available features</li>
-              </ul>
-            </div>
-
-            <Button variant="primary" onClick={() => navigate('/login')} className="w-full">
-              Go to Login
-            </Button>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

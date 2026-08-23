@@ -51,4 +51,20 @@ describe('permissions Owner', () => {
     expect(hasPermission(manager, PERMISSIONS.SALES_APPROVE)).toBe(false);
     expect(hasGlobalPlatformAccess(manager)).toBe(false);
   });
+
+  it('isole strictement les permissions de chaque domaine fonctionnel', () => {
+    const factory = { ...owner, id: 'factory-id', role: 'factory' as const };
+
+    expect(hasPermission(factory, PERMISSIONS.LICENSES_VIEW)).toBe(true);
+    expect(hasPermission(factory, PERMISSIONS.REPORTS_VIEW)).toBe(true);
+    expect(hasPermission(factory, PERMISSIONS.SALES_VIEW)).toBe(false);
+    expect(hasPermission(factory, PERMISSIONS.CUSTOMERS_VIEW)).toBe(false);
+    expect(hasPermission(factory, PERMISSIONS.SETTINGS_VIEW)).toBe(false);
+    expect(hasPermission(factory, PERMISSIONS.AUDIT_VIEW)).toBe(false);
+  });
+
+  it('n’utilise aucune valeur de permission ambiguë ou dupliquée', () => {
+    const values = Object.values(PERMISSIONS);
+    expect(new Set(values).size).toBe(values.length);
+  });
 });

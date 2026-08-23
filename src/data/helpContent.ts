@@ -17,151 +17,235 @@ export interface HelpCategory {
   articles: HelpArticle[];
 }
 
+const lastUpdated = '2026-08-22';
+
 export const helpCategories: HelpCategory[] = [
   {
     id: 'getting-started',
-    title: 'Getting Started',
+    title: 'Prise en main',
     icon: 'Rocket',
-    description: 'Introduction to Gold Shipper and basic concepts',
+    description: 'Comprendre le périmètre SONASP et retrouver les fonctions utiles.',
     articles: [
       {
         id: 'welcome',
-        title: 'Welcome to Gold Shipper',
+        title: 'Bienvenue sur la plateforme SONASP',
         category: 'getting-started',
-        tags: ['introduction', 'overview'],
-        content: '# Welcome to Gold Shipper\n\nGold Shipper is a comprehensive platform for managing gold and silver shipments across West African operations.\n\n## **Key Features**\n\n- **Batch Management** - Track gold shipments from mine to sale\n- **Pre-Sales** - Sell validated batches before inventory arrives\n- **Sales Management** - Complete sales workflow with approvals\n- **Inventory Tracking** - Real-time inventory management\n- **Analytics** - Comprehensive reporting and insights\n\n## **User Roles**\n\n- **Factory** - Create and ship batches\n- **Airport** - Receive and validate shipments\n- **Refinery** - Process and refine gold\n- **Management** - Approve sales and monitor operations\n- **Customer** - View and approve sales',
-        lastUpdated: '2025-11-03',
+        tags: ['SONASP', 'présentation', 'navigation'],
+        relatedModules: ['navigation', 'security'],
+        content: `# Plateforme nationale SONASP
+
+La plateforme accompagne la collecte, le contrôle, l'achat et la vente des substances précieuses au Burkina Faso. Les informations visibles dépendent du rôle de l'utilisateur et, pour les comptes rattachés à une mine, du périmètre de cette société.
+
+## Repères principaux
+
+- **Tableaux de bord** : synthèse des opérations autorisées.
+- **Production et expéditions** : prévisions, déclarations, analyses, enlèvements et expéditions.
+- **Achats et ventes** : décisions, pièces justificatives et suivi des règlements.
+- **Administration** : comptes, rôles et habilitations, réservés aux responsables autorisés.
+
+Les chiffres affichés proviennent des enregistrements accessibles à votre compte. Une absence de données n'est pas remplacée par une valeur de démonstration.`,
+        lastUpdated,
       },
       {
         id: 'navigation',
-        title: 'Navigating the Platform',
+        title: 'Naviguer selon son rôle',
         category: 'getting-started',
-        tags: ['navigation', 'menu', 'interface'],
-        content: '# Navigating the Platform\n\n## **Main Navigation**\n\nThe sidebar contains all main modules grouped by category.\n\n### **Batches Section**\n- **Batches** - View and manage all gold batches\n- **Shipping** - Track shipments and transportation\n- **Refining** - Monitor refining process\n\n### **Marketplace Section**\n- **Trade Space** - Gold trading and pricing simulation\n- **Gold Prices** - Track London AM rates\n- **FX Rates** - Monitor exchange rates\n\n### **Sales Section**\n- **Pre-Sales** - Create and manage pre-sales\n- **Sales** - Regular sales management\n- **Payments** - Track customer payments',
-        lastUpdated: '2025-11-03',
+        tags: ['menu', 'rôle', 'mine', 'périmètre'],
+        relatedModules: ['navigation', 'security'],
+        content: `# Naviguer selon son rôle
+
+Le menu latéral présente uniquement les modules ouverts par vos habilitations.
+
+## Utilisateur d'une société minière
+
+Le compte ouvre le périmètre de la société à laquelle il est rattaché. Les listes, indicateurs et documents restent cloisonnés à cette mine.
+
+## Administrateur général
+
+Le compte **Owner** dispose du périmètre national. Le sélecteur de mine dans l'en-tête permet de consulter une société sans modifier le rattachement des utilisateurs.
+
+## Bonnes pratiques
+
+1. Vérifiez la société sélectionnée avant une consultation ou une décision.
+2. Utilisez le fil d'Ariane pour revenir au niveau précédent.
+3. Fermez la session dès que vous quittez un poste partagé.`,
+        lastUpdated,
       },
     ],
   },
   {
     id: 'batch-management',
-    title: 'Batch Management',
+    title: 'Production et expéditions',
     icon: 'Package',
-    description: 'Creating, tracking, and managing gold batches',
+    description: "Suivre la matière depuis la déclaration jusqu'à l'expédition.",
     articles: [
       {
         id: 'create-batch',
-        title: 'Creating a New Batch',
+        title: 'Enregistrer une opération de production',
         category: 'batch-management',
-        tags: ['batch', 'create', 'form', 'factory'],
-        relatedModules: ['batches', 'shipping'],
-        content: '# Creating a New Batch\n\n---\n\n## **Prerequisites**\n\n**Required Permissions:**\n- User must have **Factory** role\n- Must have **BATCHES_CREATE** permission\n\n---\n\n## **Step-by-Step Process**\n\n### **Step 1: Navigate to Batches**\n\nNavigate to **Batches** in the sidebar menu and click the **New Batch** button.\n\n**Location:** Menu → Batches → New Batch\n\n---\n\n### **Step 2: Fill Basic Information**\n\nComplete the following required fields:\n\n| Field | Description | Format | Example |\n|-------|-------------|--------|-------|\n| **Shipping Date** | Date when batch leaves the mine | DD/MM/YYYY | 03/11/2025 |\n| **Mining Company** | Select the origin mining company | Dropdown | Mansa Resources |\n| **Weight** | Enter weight in grams | Numeric (g) | 5000 |\n\n> **Note:** Weight conversion to troy ounces is automatic\n>\n> **Formula:** oz = grams ÷ 31.1034768\n\n---\n\n### **Step 3: Add Documents** *(Optional)*\n\nUpload supporting documentation:\n\n- **Shipping documents** - Transport manifest\n- **Customs documents** - Export certificates  \n- **Quality certificates** - Assay reports\n\n**Supported formats:** PDF, DOCX, PNG, JPG (Max 10MB per file)\n\n---\n\n### **Step 4: Review and Submit**\n\nBefore submitting, verify:\n\n✓ **Batch Number** - Auto-generated (Format: B-YYMM-####)\n✓ **Weight Conversion** - Grams to ounces calculated\n✓ **Notes** - Any additional information\n✓ **All Required Fields** - Marked with red asterisk\n\nClick **Create Batch** to submit.\n\n---\n\n## **Automatic System Actions**\n\nUpon successful creation, the system automatically:\n\n1. ✅ **Generates** unique batch number\n2. ✅ **Sets** initial status to SHIPPED\n3. ✅ **Calculates** weight in troy ounces\n4. ✅ **Creates** audit log entry\n5. ✅ **Notifies** airport receiving team\n6. ✅ **Updates** dashboard metrics',
-        lastUpdated: '2025-11-03',
+        tags: ['production', 'lot', 'analyse', 'expédition'],
+        relatedModules: ['production', 'shipping', 'inventory'],
+        content: `# Enregistrer une production
+
+Avant toute saisie, vérifiez la période, le site et la société minière affichés.
+
+1. Ouvrez le module **Production** autorisé pour votre rôle.
+2. Renseignez la date, le site, le poids et les caractéristiques disponibles.
+3. Joignez les justificatifs demandés par le processus métier.
+4. Relisez la saisie, puis enregistrez-la.
+
+Une donnée enregistrée doit rester traçable. N'utilisez pas une valeur estimée comme résultat d'analyse définitif et ne téléversez pas de document qui ne correspond pas à l'opération.`,
+        lastUpdated,
       },
       {
         id: 'batch-workflow',
-        title: 'Batch Workflow & Status Flow',
+        title: 'Chaîne de traitement de la matière',
         category: 'batch-management',
-        tags: ['workflow', 'status', 'process'],
-        relatedModules: ['batches', 'receiving', 'refining'],
-        content: '# Batch Workflow & Status Flow\n\n---\n\n## **BPMN 2.0 Workflow Diagram**\n\n```\n┌─────────────┐\n│   START     │ Factory Creates Batch\n│  (Factory)  │\n└──────┬──────┘\n       │\n       ▼\n┌─────────────────────┐\n│    SHIPPED          │ ◉ Start Event\n│ (Initial Status)    │ Batch leaves mine\n└──────┬──────────────┘\n       │ Automatic\n       ▼\n┌─────────────────────┐\n│ WAITING_AIRPORT     │ ⧗ Timer Event\n│     RECEIPT         │ In transit\n└──────┬──────────────┘\n       │ Manual Action\n       ▼\n┌─────────────────────┐\n│ RECEIVED_AT_AIRPORT │ ✓ User Task\n│   (Airport Team)    │ Receipt confirmed\n└──────┬──────────────┘\n       │ Validation\n       ▼\n┌─────────────────────┐\n│ VALIDATED_FOR       │ ✓ User Task\n│    TRANSPORT        │ ⚡ PRE-SALES OK ⚡\n└──────┬──────────────┘\n       │ Transport\n       ▼\n┌─────────────────────┐\n│ RECEIVED_AT_REFINERY│ ✓ User Task\n│   (Refinery Team)   │ Batch at refinery\n└──────┬──────────────┘\n       │ Processing\n       ▼\n┌─────────────────────┐\n│    PROCESSING       │ ⚙ Service Task\n│  (Refining Gold)    │ Melting & Refining\n└──────┬──────────────┘\n       │ Complete\n       ▼\n┌─────────────────────┐\n│    INVENTORY        │ ✓ User Task\n│ (Processed Gold)    │ Added to stock\n└──────┬──────────────┘\n       │ Approve\n       ▼\n┌─────────────────────┐\n│  READY_FOR_SALE     │ ✓ User Task\n│ (Available Stock)   │ Ready to sell\n└──────┬──────────────┘\n       │ Allocate\n       ▼\n┌─────────────────────┐\n│ ALLOCATED_TO_SALE   │ ⚙ Business Rule\n│  (Reserved)         │ Linked to customer\n└──────┬──────────────┘\n       │ Payment\n       ▼\n┌─────────────────────┐\n│       SOLD          │ ◉ End Event\n│  (Final Status)     │ Complete\n└─────────────────────┘\n```\n\n---\n\n## **BPMN Legend**\n\n| Symbol | Meaning | Description |\n|--------|---------|-------------|\n| **◉** | Start/End Event | Beginning or completion of process |\n| **✓** | User Task | Requires manual user action |\n| **⚙** | Service Task | Automated system action |\n| **⧗** | Timer Event | Time-based waiting period |\n| **◆** | Gateway | Decision point or parallel paths |\n| **⚡** | Important Note | Critical information |\n\n---\n\n## **Status Descriptions**\n\n### **1. SHIPPED** [Factory]\n\n**Triggered by:** Factory user creates batch\n**Actor:** Factory Manager\n**Next Status:** WAITING_AIRPORT_RECEIPT\n\n**Description:**\nBatch has left the mining site and is in transit to airport facility.\n\n---\n\n### **2. WAITING_AIRPORT_RECEIPT** [In Transit]\n\n**Triggered by:** Automatic (after SHIPPED)\n**Actor:** System / Transport\n**Next Status:** RECEIVED_AT_AIRPORT\n\n**Description:**\nBatch is expected at airport. Airport team notified.\n\n**Duration:** Typically 1-3 days\n\n---\n\n### **3. RECEIVED_AT_AIRPORT** [Airport]\n\n**Triggered by:** Airport team confirmation\n**Actor:** Airport Receiving Officer\n**Next Status:** VALIDATED_FOR_TRANSPORT\n\n**Description:**\nPhysical receipt confirmed. Weight variance check performed.\n\n**Required Actions:**\n- ✓ Physical inspection\n- ✓ Weight verification\n- ✓ Document validation\n- ✓ Variance report (if needed)\n\n---\n\n### **4. VALIDATED_FOR_TRANSPORT** [Airport]\n\n**Triggered by:** Airport validation\n**Actor:** Airport Supervisor\n**Next Status:** WAITING_REFINERY_RECEIPT\n\n**⚡ SPECIAL:** Batch is **PRE-SALES ELIGIBLE** at this stage\n\n**Description:**\nBatch validated and ready for refinery transport. Can be sold before processing.\n\n**Business Rule:**\nPre-sales allowed for validated batches with estimated fineness.',
-        lastUpdated: '2025-11-03',
+        tags: ['workflow', 'traçabilité', 'enlèvement', 'expédition'],
+        relatedModules: ['production', 'shipping', 'inventory'],
+        content: `# Chaîne de traitement
+
+Le parcours opérationnel relie les étapes suivantes :
+
+**Prévision → Déclaration → Analyse laboratoire → Enlèvement → Expédition → Réception → Stock SONASP**
+
+Chaque transition dépend des droits de l'utilisateur et de l'état réel de l'opération. Les étapes sensibles doivent conserver leur auteur, leur date et les pièces associées.
+
+## En cas de blocage
+
+- contrôlez le statut courant ;
+- vérifiez que les données obligatoires et les documents sont présents ;
+- confirmez que votre rôle autorise la transition ;
+- contactez un administrateur si le périmètre de la mine n'est pas correct.
+
+Ne recréez pas une opération pour contourner un statut bloqué : cela romprait la traçabilité.`,
+        lastUpdated,
       },
     ],
   },
   {
     id: 'presales',
-    title: 'Pre-Sales Module',
+    title: 'Achats SONASP',
     icon: 'PackagePlus',
-    description: 'Selling batches before inventory arrives',
+    description: 'Suivre les engagements et acquisitions auprès des producteurs.',
     articles: [
       {
         id: 'presales-overview',
-        title: 'Pre-Sales Overview',
+        title: 'Du producteur au stock SONASP',
         category: 'presales',
-        tags: ['pre-sales', 'overview', 'concept'],
-        relatedModules: ['presales', 'sales', 'inventory'],
-        content: '# Pre-Sales Overview\n\n## **What is a Pre-Sale?**\n\nA pre-sale allows you to sell a validated batch **before** it arrives at the factory. This enables:\n\n- **Locking in prices early**\n- **Securing customer commitments**\n- **Improving cash flow**\n- **Reducing market risk**\n\n---\n\n## **Eligibility Criteria**\n\n### **Batch Requirements**\n\n✓ Status must be **VALIDATED_FOR_TRANSPORT**\n✓ Must be from **airport validation**\n✓ No existing active pre-sale\n✓ Weight variance within tolerance\n\n---\n\n## **Process Flow**\n\n1. **Batch Validated** - Airport confirms batch ready\n2. **Create Pre-Sale** - Sales team creates pre-sale\n3. **Management Approval** - Management reviews and approves\n4. **Customer Approval** - Customer confirms purchase\n5. **Batch Arrives** - Physical batch arrives at factory\n6. **Reconciliation** - Compare estimated vs actual\n7. **Conversion** - Pre-sale converts to regular sale\n8. **Payment** - Payment processed',
-        lastUpdated: '2025-11-03',
+        tags: ['achat', 'SONASP', 'producteur', 'validation'],
+        relatedModules: ['purchases', 'inventory', 'payments'],
+        content: `# Du producteur au stock SONASP
+
+Les productions industrielles et artisanales suivent leur circuit d'achat propre. La SONASP est identifiée par son code institutionnel **SONASP**, jamais par une approximation de nom.
+
+Une acquisition doit être fondée sur une production ou une vente source, une quantité contrôlée, un prix explicite et les validations requises. Le stock disponible ne doit augmenter qu'après une opération métier enregistrée et traçable.
+
+Si la source, le poids ou le prix manque, l'opération doit rester incomplète plutôt que recevoir une valeur fictive.`,
+        lastUpdated,
       },
     ],
   },
   {
     id: 'sales',
-    title: 'Sales Management',
+    title: 'Ventes et règlements',
     icon: 'ShoppingCart',
-    description: 'Managing regular sales and customer approvals',
+    description: 'Préparer une vente extérieure et suivre ses décisions.',
     articles: [
       {
         id: 'sales-overview',
-        title: 'Sales Process Overview',
+        title: 'Circuit de vente SONASP',
         category: 'sales',
-        tags: ['sales', 'workflow', 'process'],
-        relatedModules: ['sales', 'customers', 'inventory'],
-        content: '# Sales Process Overview\n\n## **Sales Workflow**\n\n### **1. CREATE_SALES** (Initial)\n\nSales person creates a new sale from available inventory.\n\n### **2. PENDING_MANAGEMENT_APPROVAL**\n\nManagement reviews sale details and pricing.\n\n### **3. PENDING_CUSTOMER_APPROVAL**\n\nCustomer receives notification and approves purchase.\n\n### **4. PENDING_PAYMENT**\n\nWaiting for customer payment confirmation.\n\n### **5. PAYMENT_RECEIVED**\n\nPayment confirmed. Transaction complete.\n\n---\n\n## **Key Features**\n\n- **Price Calculation** - Automatic calculation with London AM rates\n- **Multi-Currency** - Support for USD, EUR, XOF, GNF\n- **Approval Workflow** - Management and customer approval\n- **Payment Tracking** - Complete payment lifecycle\n- **Commission Calculation** - Automatic royalties (3%)\n- **FX Rate Tracking** - Real-time exchange rates',
-        lastUpdated: '2025-11-03',
+        tags: ['vente', 'client', 'approbation', 'paiement'],
+        relatedModules: ['sales', 'customers', 'inventory', 'payments'],
+        content: `# Circuit de vente SONASP
+
+La SONASP centralise le stock national acquis et constitue le vendeur institutionnel vers les clients extérieurs enregistrés.
+
+## Principes
+
+1. Sélectionner un acheteur actif et un stock réellement disponible.
+2. Utiliser le cours et le taux de change datés affichés par la plateforme.
+3. Soumettre la proposition aux niveaux d'approbation configurés.
+4. Conserver séparément la décision interne et l'acceptation du client.
+5. Enregistrer le règlement avec ses justificatifs avant la clôture.
+
+Une vente refusée ou annulée n'est pas effacée : son historique reste consultable selon les habilitations.`,
+        lastUpdated,
       },
     ],
   },
   {
     id: 'inventory',
-    title: 'Inventory Management',
+    title: 'Stock et traçabilité',
     icon: 'Warehouse',
-    description: 'Managing gold and silver inventory',
+    description: 'Comprendre les quantités disponibles, réservées et vendues.',
     articles: [
       {
         id: 'inventory-overview',
-        title: 'Inventory System Overview',
+        title: 'Lecture du stock national',
         category: 'inventory',
-        tags: ['inventory', 'stock', 'management'],
-        relatedModules: ['inventory', 'batches', 'sales'],
-        content: '# Inventory Management\n\n## **Inventory Sources**\n\n### **From Batches**\n\nWhen a batch completes refining:\n- Status changes to "processed" or "inventory"\n- Gold automatically added to inventory\n- Weight and fineness recorded\n- Ready for sale\n\n### **From Pre-Sales**\n\nWhen pre-sale converts:\n- Inventory allocated to customer\n- Remaining balance available\n- Reconciliation complete\n\n---\n\n## **Stock Types**\n\n### **Available Stock**\n\nGold ready for sale, not allocated to any sale.\n\n### **Allocated Stock**\n\nGold reserved for specific sales, awaiting payment.\n\n### **Sold Stock**\n\nGold sold and paid for, awaiting delivery.\n\n---\n\n## **Tracking**\n\n- **Real-time balances** - Current stock levels\n- **Batch traceability** - Complete audit trail\n- **Valuation** - Current market value\n- **Movement history** - All transactions logged',
-        lastUpdated: '2025-11-03',
+        tags: ['stock', 'traçabilité', 'quantité', 'inventaire'],
+        relatedModules: ['inventory', 'production', 'sales'],
+        content: `# Lecture du stock national
+
+- **Disponible** : quantité contrôlée qui n'est pas engagée dans une vente.
+- **Réservé** : quantité affectée à une opération en cours.
+- **Vendu** : quantité rattachée à une vente finalisée selon le processus autorisé.
+
+Les totaux doivent pouvoir être rapprochés de leurs opérations sources. Si un découvert ou une incohérence apparaît, aucune nouvelle vente ne doit être créée avant régularisation.`,
+        lastUpdated,
       },
     ],
   },
   {
     id: 'system',
-    title: 'System & Administration',
+    title: 'Sécurité et administration',
     icon: 'Settings',
-    description: 'User management, permissions, and system settings',
+    description: 'Protéger les comptes, rôles, périmètres et sessions.',
     articles: [
       {
         id: 'user-roles',
-        title: 'User Roles & Permissions',
+        title: 'Comptes, habilitations et double authentification',
         category: 'system',
-        tags: ['users', 'roles', 'permissions', 'security'],
-        content: '# User Roles & Permissions\n\n## **Available Roles**\n\n### **Factory**\n\n**Responsibilities:**\n- Create new batches\n- Ship batches to airport\n- Upload documents\n- View batch status\n\n### **Airport**\n\n**Responsibilities:**\n- Confirm batch receipt\n- Validate for transport\n- Manage variance reports\n- Track shipments\n\n### **Refinery**\n\n**Responsibilities:**\n- Confirm batch receipt\n- Process and refine gold\n- Record fineness data\n- Manage inventory\n\n### **Management**\n\n**Responsibilities:**\n- Approve sales\n- Monitor all operations\n- Access analytics\n- Manage users\n- Configure system\n\n### **Customer**\n\n**Responsibilities:**\n- View assigned sales\n- Approve purchases\n- Submit payment proof\n- Download invoices',
-        lastUpdated: '2025-11-03',
+        tags: ['compte', 'MFA', '2FA', 'rôle', 'session'],
+        relatedModules: ['security', 'users', 'navigation'],
+        content: `# Sécurité des comptes
+
+Chaque utilisateur reçoit un rôle et, lorsqu'il travaille pour une mine, un rattachement explicite à cette société. Les droits doivent suivre le principe du moindre privilège.
+
+## Activation
+
+Le lien reçu par courriel permet à l'utilisateur de définir son mot de passe. L'enrôlement à la double authentification est ensuite obligatoire avant l'accès aux modules protégés.
+
+## Session
+
+Une alerte prévient l'utilisateur avant l'expiration pour inactivité. Sans reprise volontaire, la session est fermée. La fermeture de l'onglet ne doit pas transformer une session de navigateur en connexion persistante.
+
+Ne partagez jamais un code de double authentification, un lien d'activation ou un mot de passe.`,
+        lastUpdated,
       },
     ],
   },
 ];
 
 export function searchHelpContent(query: string): HelpArticle[] {
-  const lowercaseQuery = query.toLowerCase();
-  const results: HelpArticle[] = [];
+  const normalizedQuery = query.trim().toLocaleLowerCase('fr');
+  if (!normalizedQuery) return [];
 
-  helpCategories.forEach((category) => {
-    category.articles.forEach((article) => {
-      const matchesTitle = article.title.toLowerCase().includes(lowercaseQuery);
-      const matchesTags = article.tags.some((tag) =>
-        tag.toLowerCase().includes(lowercaseQuery)
-      );
-      const matchesContent = article.content.toLowerCase().includes(lowercaseQuery);
-      const matchesCategory = category.title.toLowerCase().includes(lowercaseQuery);
-
-      if (matchesTitle || matchesTags || matchesContent || matchesCategory) {
-        results.push(article);
-      }
-    });
-  });
-
-  return results;
+  return helpCategories.flatMap((category) =>
+    category.articles.filter((article) =>
+      article.title.toLocaleLowerCase('fr').includes(normalizedQuery)
+      || article.tags.some((tag) => tag.toLocaleLowerCase('fr').includes(normalizedQuery))
+      || article.content.toLocaleLowerCase('fr').includes(normalizedQuery)
+      || category.title.toLocaleLowerCase('fr').includes(normalizedQuery)
+    )
+  );
 }
 
 export function getArticleById(id: string): HelpArticle | null {
   for (const category of helpCategories) {
-    const article = category.articles.find((a) => a.id === id);
+    const article = category.articles.find((candidate) => candidate.id === id);
     if (article) return article;
   }
   return null;
@@ -169,21 +253,13 @@ export function getArticleById(id: string): HelpArticle | null {
 
 export function getRelatedArticles(articleId: string): HelpArticle[] {
   const article = getArticleById(articleId);
-  if (!article || !article.relatedModules) return [];
+  if (!article?.relatedModules) return [];
 
-  const related: HelpArticle[] = [];
-  helpCategories.forEach((category) => {
-    category.articles.forEach((a) => {
-      if (a.id !== articleId && a.relatedModules) {
-        const hasCommonModule = a.relatedModules.some((module) =>
-          article.relatedModules?.includes(module)
-        );
-        if (hasCommonModule) {
-          related.push(a);
-        }
-      }
-    });
-  });
-
-  return related.slice(0, 3);
+  return helpCategories
+    .flatMap((category) => category.articles)
+    .filter((candidate) =>
+      candidate.id !== articleId
+      && candidate.relatedModules?.some((module) => article.relatedModules?.includes(module))
+    )
+    .slice(0, 3);
 }

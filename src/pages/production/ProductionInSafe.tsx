@@ -18,6 +18,7 @@ import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui
 import { ProductionStatusBadge } from '@/components/production/ProductionStatusBadge';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ProductionStatus } from '@/constants/productionStatuses';
 import {
   bornesPeriodes,
@@ -99,6 +100,8 @@ const STATUTS_FILTRABLES: Array<{ valeur: string; libelle: string }> = [
 ];
 
 export function ProductionInSafe() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
 
   const [productions, setProductions] = useState<LigneProduction[]>([]);
@@ -112,7 +115,7 @@ export function ProductionInSafe() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const [filtresOuverts, setFiltresOuverts] = useState(false);
-  const [compagnieFiltre, setCompagnieFiltre] = useState('all');
+  const [compagnieFiltre, setCompagnieFiltre] = useState(mineCompanyId || 'all');
   const [statutFiltre, setStatutFiltre] = useState('all');
 
   const parDefaut = useMemo(() => bornesPeriodes(), []);
@@ -121,14 +124,16 @@ export function ProductionInSafe() {
   const periodeInvalide = periode.debut > periode.fin;
 
   const chargerCompagnies = useCallback(async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('mining_companies')
       .select('id, name')
       .eq('is_active', true)
       .order('name');
+    if (mineCompanyId) query = query.eq('id', mineCompanyId);
+    const { data, error } = await query;
     if (error) throw error;
     setCompagnies(data || []);
-  }, []);
+  }, [mineCompanyId]);
 
   /**
    * Une barre quitte le coffre au départ de son expédition. Le rattachement seul
@@ -291,7 +296,7 @@ export function ProductionInSafe() {
     (periode.debut === parDefaut.annee.debut && periode.fin === parDefaut.annee.fin ? 0 : 1);
 
   const reinitialiser = () => {
-    setCompagnieFiltre('all');
+    setCompagnieFiltre(mineCompanyId || 'all');
     setStatutFiltre('all');
     setPeriode(parDefaut.annee);
   };
@@ -382,8 +387,8 @@ export function ProductionInSafe() {
                 </label>
                 <label className="sn-field">
                   <span className="sn-field__label">Compagnie minière</span>
-                  <select value={compagnieFiltre} onChange={(evenement) => setCompagnieFiltre(evenement.target.value)}>
-                    <option value="all">Toutes les compagnies</option>
+                  <select value={compagnieFiltre} disabled={Boolean(mineCompanyId)} onChange={(evenement) => setCompagnieFiltre(evenement.target.value)}>
+                    {!mineCompanyId && <option value="all">Toutes les compagnies</option>}
                     {compagnies.map((compagnie) => (
                       <option key={compagnie.id} value={compagnie.id}>
                         {compagnie.name}

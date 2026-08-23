@@ -27,6 +27,7 @@ import {
   type StockNational,
 } from './inventoryOverviewData';
 import './inventory-overview.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 const onces = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const entier = new Intl.NumberFormat('fr-FR');
@@ -52,6 +53,8 @@ export function part(valeur: number, total: number): number | null {
 
 export function InventoryManagement() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isMine = Boolean(user?.mining_company_id);
   const [stock, setStock] = useState<StockNational>(STOCK_VIDE);
   const [chargement, setChargement] = useState(true);
   const [actualisation, setActualisation] = useState(false);
@@ -130,16 +133,20 @@ export function InventoryManagement() {
         <PageHeader
           icon={Boxes}
           title="Suivi des stocks d’or"
-          subtitle="Vue nationale et détaillée : coffres, mines, transit, aéroport et créances."
+          subtitle={isMine
+            ? "Vue consolidée de votre mine : coffres, transit, aéroport et créances."
+            : "Vue nationale et détaillée : coffres, mines, transit, aéroport et créances."}
           breadcrumb={[{ label: 'Suivi des stocks' }, { label: 'Stock d’or' }]}
           actions={
             <>
               <button type="button" className="sn-btn" onClick={() => void charger(true)} disabled={actualisation}>
                 <RefreshCw className={actualisation ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
               </button>
-              <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/inventory/add')}>
-                <Plus aria-hidden="true" /> Nouvelle entrée
-              </button>
+              {!isMine && (
+                <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/inventory/add')}>
+                  <Plus aria-hidden="true" /> Nouvelle entrée
+                </button>
+              )}
             </>
           }
         />
@@ -163,14 +170,14 @@ export function InventoryManagement() {
         ) : (
           <div className="stocks__grille">
             <div className="stocks__principal">
-              {/* --- Socle national --- */}
-              <section className="stocks__socle" aria-label="Stock national">
+              {/* Les politiques RLS limitent ce socle à la mine connectée. */}
+              <section className="stocks__socle" aria-label={isMine ? 'Stock de la mine' : 'Stock national'}>
                 <header>
                   <span className="stocks__socle-icone" aria-hidden="true">
                     <Landmark />
                   </span>
                   <div>
-                    <p>Or national sous suivi</p>
+                    <p>{isMine ? 'Or de la mine sous suivi' : 'Or national sous suivi'}</p>
                     <strong>{formatOz(socle)}</strong>
                     <small>{formatKg(socle)} · coffres, transit, aéroport et créances</small>
                   </div>
@@ -219,13 +226,15 @@ export function InventoryManagement() {
                         aria-valuenow={pourcentage === null ? undefined : Math.round(pourcentage)}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        aria-label={`Part de ${poste.libelle} dans l’or national`}
+                        aria-label={`Part de ${poste.libelle} dans l’or ${isMine ? 'de la mine' : 'national'}`}
                       >
                         <span style={{ width: `${Math.min(pourcentage || 0, 100)}%` }} />
                       </div>
                       <small>
                         {/* Aucune part n'est calculée sur un socle vide. */}
-                        {pourcentage === null ? '—' : `${entier.format(Math.round(pourcentage))} % du national`} ·{' '}
+                        {pourcentage === null
+                          ? '—'
+                          : `${entier.format(Math.round(pourcentage))} % ${isMine ? 'du stock de la mine' : 'du national'}`} ·{' '}
                         {poste.detail}
                       </small>
                     </article>
@@ -243,7 +252,7 @@ export function InventoryManagement() {
                 icon={FlaskConical}
                 tone="blue"
                 title="Origine de la matière"
-                description="D’où vient l’or que la SONASP détient."
+                description={isMine ? "Origine de l’or suivi pour votre société." : "D’où vient l’or que la SONASP détient."}
               >
                 <div className="stocks__origines">
                   <article>
@@ -254,7 +263,7 @@ export function InventoryManagement() {
                     <strong>{formatOz(stock.totalOz)}</strong>
                     <p>{formatKg(stock.totalOz)}</p>
                     <small>
-                      Or raffiné revenu de la raffinerie et porté au stock national,
+                      Or raffiné revenu de la raffinerie et porté au stock {isMine ? 'de la mine' : 'national'},
                       sur {entier.format(stock.parMine.length)} société(s).
                     </small>
                   </article>
@@ -304,7 +313,7 @@ export function InventoryManagement() {
               <Section
                 id="par-mine"
                 icon={Building2}
-                title={`Stock par société minière (${stock.parMine.length})`}
+                title={isMine ? 'Détail du stock de votre mine' : `Stock par société minière (${stock.parMine.length})`}
                 description="Or raffiné détenu au nom de chaque société."
               >
                 {stock.parMine.length === 0 ? (

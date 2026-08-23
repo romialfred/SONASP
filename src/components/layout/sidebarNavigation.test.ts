@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_GROUPS, NAVIGATION_SECTIONS } from './sidebarNavigation';
+import type { UserProfile } from '@/types/auth';
+import { ALL_GROUPS, NAVIGATION_SECTIONS, getNavigationSectionsForUser } from './sidebarNavigation';
 
 /**
  * Aucun intitulé de la barre latérale ne doit passer sur deux lignes.
@@ -109,5 +110,26 @@ describe('navigation', () => {
       return routes.filter((route, index) => routes.indexOf(route) !== index);
     });
     expect(doublons).toEqual([]);
+  });
+
+  it('projette pour une mine les modules industriels sans Achats aux mines', () => {
+    const mine = {
+      id: 'mine-user', email: 'mine@example.bf', full_name: 'Mine Exemple', phone: null,
+      role: 'mine', mining_company_id: 'mine-1', site_ids: [], is_active: true,
+      is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const sections = getNavigationSectionsForUser(mine);
+    const routes = sections.flatMap((section) => section.groups.flatMap((group) =>
+      group.children?.map((item) => item.path) || [group.path]
+    ));
+
+    expect(sections.map((section) => section.id)).toEqual(['industrielles']);
+    expect(routes).toContain('/production/daily');
+    expect(routes).toContain('/shipping/preparation');
+    expect(routes).toContain('/sales');
+    expect(routes).not.toContain('/production/achats-mines');
+    expect(routes).not.toContain('/inventory/add');
   });
 });

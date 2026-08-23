@@ -11,6 +11,7 @@ import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { exportLicenseService, CreateLicenseData } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MiningCompany {
   id: string;
@@ -135,6 +136,8 @@ const FIELD_HELP: Record<string, FieldHelp> = {
 };
 
 export function ExportLicenseForm() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -153,7 +156,7 @@ export function ExportLicenseForm() {
   // Form state
   const [formData, setFormData] = useState<CreateLicenseData>({
     license_number: '',
-    mining_company_id: '',
+    mining_company_id: mineCompanyId || '',
     request_date: new Date().toISOString().split('T')[0],
     start_date: new Date().toISOString().split('T')[0],
     end_date: '',
@@ -190,11 +193,13 @@ export function ExportLicenseForm() {
   };
 
   const loadMiningCompanies = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('mining_companies')
       .select('id, name, code, company_type')
       .eq('is_active', true)
       .order('name');
+    if (mineCompanyId) query = query.eq('id', mineCompanyId);
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -455,6 +460,7 @@ export function ExportLicenseForm() {
                     </label>
                     <select
                       value={formData.mining_company_id}
+                      disabled={Boolean(mineCompanyId)}
                       onChange={(e) =>
                         setFormData({ ...formData, mining_company_id: e.target.value })
                       }
@@ -462,7 +468,7 @@ export function ExportLicenseForm() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      <option value="">-- Sélectionner --</option>
+                      {!mineCompanyId && <option value="">-- Sélectionner --</option>}
                       {miningCompanies.map((company) => (
                         <option key={company.id} value={company.id}>
                           {company.name} ({company.code})

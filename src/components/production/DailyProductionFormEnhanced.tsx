@@ -18,6 +18,7 @@ import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { roundUpToFixed } from '@/utils/numberUtils';
 import { SITE_NATIONAL } from '@/constants/site';
+import { minePortalService } from '@/services/minePortalService';
 
 interface DailyProductionFormProps {
   production?: DailyProduction | null;
@@ -41,7 +42,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     estimated_gold_pct: production?.estimated_gold_pct?.toString() || production?.estimated_fineness_pct?.toString() || '',
     estimated_silver_pct: production?.estimated_silver_pct?.toString() || '',
     bar_reference: production?.bar_reference || '',
-    mining_company_id: production?.mining_company_id || '',
+    mining_company_id: production?.mining_company_id || user?.mining_company_id || '',
     notes: production?.notes || '',
   });
 
@@ -116,11 +117,15 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
 
   const loadMiningCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mining_companies')
         .select('id, name, code, abbreviation, company_type')
         .eq('is_active', true)
         .order('name');
+      if (user?.mining_company_id) {
+        query = query.eq('id', user.mining_company_id);
+      }
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -295,15 +300,35 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       console.log('🏢 Mining company ID:', formData.mining_company_id);
 
       if (production?.id) {
-        const updated = await dailyProductionService.updateProduction(production.id, data);
+        const updated = user?.mining_company_id
+          ? await minePortalService.updateProduction({
+              productionId: production.id,
+              productionDate: data.production_date,
+              bullionGrams: data.bullion_grams,
+              finenessPct: data.estimated_fineness_pct,
+              barReference: data.bar_reference,
+              notes: data.notes,
+            })
+          : await dailyProductionService.updateProduction(production.id, data);
         console.log('✅ Production mise à jour:', updated);
         showSuccess('Production mise à jour avec succès!', 'Mise à jour réussie');
         // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
         await new Promise(resolve => setTimeout(resolve, 1500));
       } else {
-        const newProduction = await dailyProductionService.createProduction(data);
-        console.log('✅ Production créée:', newProduction);
-        showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+        if (user?.mining_company_id) {
+          await minePortalService.declareProduction({
+            productionDate: data.production_date,
+            bullionGrams: data.bullion_grams,
+            finenessPct: data.estimated_fineness_pct,
+            barReference: data.bar_reference,
+            notes: data.notes,
+          });
+          showSuccess('Production créée avec succès.', 'Production créée');
+        } else {
+          const newProduction = await dailyProductionService.createProduction(data);
+          console.log('✅ Production créée:', newProduction);
+          showSuccess(`Production créée avec succès!\nID: ${newProduction.id.substring(0, 8)}...\nDate: ${newProduction.production_date}\nSite: ${newProduction.site_id}`, 'Production créée');
+        }
         // Attendre 1.5 secondes avant de fermer pour que l'utilisateur voie le message
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
@@ -429,6 +454,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                 </label>
                 <select
                   value={formData.mining_company_id}
+                  disabled={Boolean(user?.mining_company_id)}
                   onChange={(e) => handleChange('mining_company_id', e.target.value)}
                   onFocus={() => setActiveField('mining_company_id')}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${

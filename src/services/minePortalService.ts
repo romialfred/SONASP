@@ -395,6 +395,32 @@ export const minePortalService = {
     assertRpcResult(result, 'La déclaration de production n’a pas pu être transmise.');
   },
 
+  async updateProduction(input: {
+    productionId: string;
+    productionDate: string;
+    bullionGrams: number;
+    finenessPct: number;
+    barReference?: string;
+    notes?: string;
+  }): Promise<void> {
+    const result = await supabase.rpc('snp_portail_mine_modifier_production', {
+      p_production_id: input.productionId,
+      p_date_production: input.productionDate,
+      p_poids_brut_grammes: input.bullionGrams,
+      p_teneur_estimee_pct: input.finenessPct,
+      p_reference_barre: input.barReference?.trim() || null,
+      p_notes: input.notes?.trim() || null,
+    });
+    assertRpcResult(result, 'La production n’a pas pu être modifiée.');
+  },
+
+  async deleteProduction(productionId: string): Promise<void> {
+    const result = await supabase.rpc('snp_portail_mine_supprimer_production', {
+      p_production_id: productionId,
+    });
+    assertRpcResult(result, 'La production n’a pas pu être supprimée.');
+  },
+
   async respondToRequest(requestId: string, decision: MineRequestDecision, reason?: string): Promise<void> {
     const result = await supabase.rpc('snp_portail_mine_repondre_demande', {
       p_demande_id: requestId,

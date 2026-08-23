@@ -13,6 +13,8 @@ import { ProductionChart } from '@/components/production/ProductionChart';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
+import { useAuth } from '@/contexts/AuthContext';
+import { minePortalService } from '@/services/minePortalService';
 import './production.css';
 
 export interface MiningCompany {
@@ -98,6 +100,8 @@ export function lignesExport(
 }
 
 export function DailyProductionPage() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
   const emplacement = useLocation();
   // La fiche d'une déclaration renvoie ici pour la modifier : sans cela, le
@@ -118,23 +122,25 @@ export function DailyProductionPage() {
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [periode, setPeriode] = useState<PeriodeProduction>(periodeParDefaut());
-  const [compagnieFiltre, setCompagnieFiltre] = useState('all');
+  const [compagnieFiltre, setCompagnieFiltre] = useState(mineCompanyId || 'all');
   const [formOuvert, setFormOuvert] = useState(false);
   const [selection, setSelection] = useState<DailyProduction | null>(null);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
 
   const chargerCompagnies = useCallback(async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('mining_companies')
       .select('id, name, company_type')
       .eq('is_active', true)
       .order('name');
+    if (mineCompanyId) query = query.eq('id', mineCompanyId);
+    const { data, error } = await query;
     if (error) {
       setErreur(errorMessage(error, 'Impossible de charger les compagnies minières.'));
       return;
     }
     setCompagnies(filterOperationalMiningCompanies(data || []));
-  }, []);
+  }, [mineCompanyId]);
 
   const chargerProductions = useCallback(async () => {
     setLoading(true);
@@ -194,7 +200,7 @@ export function DailyProductionPage() {
 
   const reinitialiser = () => {
     setPeriode(periodeParDefaut());
-    setCompagnieFiltre('all');
+    setCompagnieFiltre(mineCompanyId || 'all');
   };
 
   const cumuls = useMemo(() => cumulsProduction(visibles), [visibles]);
@@ -213,7 +219,8 @@ export function DailyProductionPage() {
     if (!confirme) return;
 
     try {
-      await dailyProductionService.deleteProduction(id);
+      if (mineCompanyId) await minePortalService.deleteProduction(id);
+      else await dailyProductionService.deleteProduction(id);
       await chargerProductions();
     } catch (reason) {
       showError(errorMessage(reason, 'Suppression impossible.'));
@@ -357,8 +364,8 @@ export function DailyProductionPage() {
                 </label>
                 <label className="sn-field">
                   <span className="sn-field__label">Compagnie minière</span>
-                  <select value={compagnieFiltre} onChange={(event) => setCompagnieFiltre(event.target.value)}>
-                    <option value="all">Toutes les compagnies</option>
+                  <select value={compagnieFiltre} disabled={Boolean(mineCompanyId)} onChange={(event) => setCompagnieFiltre(event.target.value)}>
+                    {!mineCompanyId && <option value="all">Toutes les compagnies</option>}
                     {compagnies.map((compagnie) => (
                       <option key={compagnie.id} value={compagnie.id}>
                         {compagnie.name}

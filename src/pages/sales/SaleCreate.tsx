@@ -23,7 +23,9 @@ import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspServ
 import { composer, tracabiliteVenteService, validerComposition } from '@/services/tracabiliteVenteService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
-import { createExportSale } from '@/services/saleCreationService';
+import { createExportSale, createMineExportSale } from '@/services/saleCreationService';
+import { useAuth } from '@/contexts/AuthContext';
+import { mineStockService, type MineExportableStock } from '@/services/mineStockService';
 
 interface MiningCompany {
   id: string;
@@ -33,6 +35,9 @@ interface MiningCompany {
 }
 
 export function SaleCreate() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
+  const isMineAccount = Boolean(mineCompanyId);
   const navigate = useNavigate();
   const location = useLocation();
   const alert = useAlert();
@@ -45,7 +50,7 @@ export function SaleCreate() {
 
   const [formData, setFormData] = useState({
     customerId: preselectedCustomerId || '',
-    miningCompanyId: '', // Renseigné au chargement : la SONASP est toujours la vendeuse.
+    miningCompanyId: '', // Renseigné au chargement depuis le périmètre authentifié.
     quantityOz: initialQuantity || 0,
     londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '',
     freightCost: '',
@@ -64,6 +69,7 @@ export function SaleCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [availableInventory, setAvailableInventory] = useState({ availableOz: 0, availableGrams: 0 });
   const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
+  const [mineStock, setMineStock] = useState<MineExportableStock | null>(null);
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
@@ -91,31 +97,30 @@ export function SaleCreate() {
     }
   }, [formData.customerId, authorizedCustomers]);
 
-  /**
-   * Le vendeur d'une vente hors du Burkina est la SONASP, jamais la mine.
-   * La mine vend sa production à la SONASP (module « Achats aux mines ») ; la
-   * SONASP revend ensuite aux raffineurs internationaux l'or qu'elle détient.
-   */
   const fetchMiningCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mining_companies')
         .select('id, name, abbreviation, country, code, company_type')
         .eq('is_active', true)
         .order('name');
+      if (mineCompanyId) query = query.eq('id', mineCompanyId);
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      const sonasp = (data || []).find(
-        (company) => company.code?.toUpperCase() === 'SONASP'
-          && company.company_type === 'institution'
-      );
-      if (!sonasp) {
-        alert.error("La SONASP n'est pas enregistrée comme société : la vente à l'export est impossible.");
+      const seller = mineCompanyId
+        ? (data || []).find((company) => company.id === mineCompanyId)
+        : (data || []).find(
+            (company) => company.code?.toUpperCase() === 'SONASP'
+              && company.company_type === 'institution'
+          );
+      if (!seller) {
+        alert.error("La société vendeuse n'est pas disponible : la vente à l'export est impossible.");
         return;
       }
-      setSelectedMiningCompany(sonasp);
-      setFormData(prev => ({ ...prev, miningCompanyId: sonasp.id }));
+      setSelectedMiningCompany(seller);
+      setFormData(prev => ({ ...prev, miningCompanyId: seller.id }));
     } catch (error) {
       console.error('Error fetching mining companies:', error);
       alert.error("Échec du chargement du vendeur.");
@@ -148,24 +153,31 @@ export function SaleCreate() {
 
     try {
       setLoadingInventory(true);
-      const stock = await stockSonaspService.stock(formData.miningCompanyId);
-      setStockExport(stock);
-      setAvailableInventory({ availableOz: stock.disponibleOz, availableGrams: stock.disponibleGrammes });
+      if (isMineAccount) {
+        const stock = await mineStockService.stock(formData.miningCompanyId);
+        setMineStock(stock);
+        setStockExport(null);
+        setAvailableInventory({ availableOz: stock.availableOz, availableGrams: stock.availableGrams });
+      } else {
+        const stock = await stockSonaspService.stock(formData.miningCompanyId);
+        setStockExport(stock);
+        setMineStock(null);
+        setAvailableInventory({ availableOz: stock.disponibleOz, availableGrams: stock.disponibleGrammes });
+      }
     } catch (error) {
       console.error('Error fetching inventory:', error);
       setStockExport(null);
+      setMineStock(null);
       setAvailableInventory({ availableOz: 0, availableGrams: 0 });
     } finally {
       setLoadingInventory(false);
     }
   };
 
-  // Le stock opposable est celui de la SONASP, calculé ici : une valeur reçue
-  // par la navigation décrirait le stock d'une mine, pas le sien.
   const availableInventoryOz = availableInventory.availableOz;
 
   const handleInputChange = (field: string, value: string) => {
-    // Le vendeur est la SONASP : aucune saisie ne le change.
+    // Le vendeur provient du compte authentifié et ne peut jamais être remplacé.
     if (field === 'miningCompanyId') {
       return;
     }
@@ -185,12 +197,12 @@ export function SaleCreate() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.miningCompanyId) {
-      newErrors.miningCompanyId = 'Le vendeur SONASP est indisponible.';
+      newErrors.miningCompanyId = 'La société vendeuse est indisponible.';
     }
 
     // Check if seller has inventory
     if (formData.miningCompanyId && availableInventoryOz === 0) {
-      newErrors.miningCompanyId = 'Aucun stock SONASP n’est disponible pour cette vente.';
+      newErrors.miningCompanyId = 'Aucun stock exportable n’est disponible pour cette vente.';
     }
 
     if (!formData.customerId) {
@@ -321,30 +333,34 @@ export function SaleCreate() {
     try {
       const requestedQuantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
 
-      // Contrôle de couverture : la vente doit être servie par des achats
-      // réellement enregistrés. Le stock de la SONASP n'est pas un inventaire
-      // physique à son nom mais la somme de ce qu'elle a acheté aux mines et
-      // aux artisans, diminuée de ce qu'elle a déjà vendu.
-      const lots = await tracabiliteVenteService.lotsDisponibles();
-      const composition = composer(lots, requestedQuantityOz);
-      const refus = validerComposition(composition, requestedQuantityOz);
-      if (refus) {
-        alert.error(refus);
-        setSubmitting(false);
-        return;
+      const composition = isMineAccount
+        ? { affectations: [], resteOz: 0, couverte: true }
+        : composer(await tracabiliteVenteService.lotsDisponibles(), requestedQuantityOz);
+      if (!isMineAccount) {
+        const refus = validerComposition(composition, requestedQuantityOz);
+        if (refus) {
+          alert.error(refus);
+          setSubmitting(false);
+          return;
+        }
       }
 
-      const result = await createExportSale({
+      const commonSale = {
         customerId: formData.customerId,
-        sellerId: formData.miningCompanyId,
         quantityOz: requestedQuantityOz,
         londonAmRate: parseFloat(formData.londonAMRate),
         freightCost: parseFloat(formData.freightCost) || 0,
         otherCosts: parseFloat(formData.otherCosts) || 0,
         mechanismType: formData.mechanismType,
         inProcessRefineryId: formData.inProcessRefineryId || undefined,
-        lots: composition.affectations,
-      });
+      };
+      const result = isMineAccount
+        ? await createMineExportSale(commonSale)
+        : await createExportSale({
+            ...commonSale,
+            sellerId: formData.miningCompanyId,
+            lots: composition.affectations,
+          });
 
       if (!result.success || !result.data) {
         alert.error(result.error || "La vente n'a pas pu être créée.");
@@ -396,16 +412,16 @@ export function SaleCreate() {
             disabled={submitting}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Retour
           </Button>
           <div>
             <h1 className="font-heading text-3xl font-bold text-gray-900">
-              Create New Sale
+              Créer une vente export
             </h1>
             <p className="text-gray-600 mt-1">
               {mechanismData
                 ? `Based on ${mechanismData.displayName} pricing mechanism`
-                : 'Configure gold sale parameters'}
+                : 'Définissez la quantité, le client et les conditions de vente'}
             </p>
           </div>
         </div>
@@ -486,7 +502,7 @@ export function SaleCreate() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Vendeur : la SONASP, seule exportatrice */}
+              {/* Vendeur déterminé par le compte authentifié */}
               <div>
                 <div className="mb-2">
                   <label className="block text-sm font-medium text-gray-900 mb-1">
@@ -494,8 +510,9 @@ export function SaleCreate() {
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <p className="text-xs text-gray-600">
-                    Les ventes hors du Burkina sont conclues par la SONASP, avec l’or qu’elle a acheté aux mines
-                    industrielles et aux artisans miniers.
+                    {isMineAccount
+                      ? "Votre société peut vendre à l’international la production qui n’a pas été rachetée par la SONASP."
+                      : "La SONASP vend à l’international l’or qu’elle a acquis auprès des mines et des artisans miniers."}
                   </p>
                 </div>
 
@@ -504,7 +521,7 @@ export function SaleCreate() {
                     <Building2 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">Vendeur indisponible</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      La SONASP n’est pas enregistrée dans le référentiel des sociétés.
+                      La société rattachée à votre compte n’est pas disponible dans le référentiel.
                     </p>
                   </div>
                 )}
@@ -558,10 +575,27 @@ export function SaleCreate() {
                         </div>
                       )}
 
+                      {mineStock && !loadingInventory && (
+                        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-amber-200 pt-3 text-xs">
+                          <div>
+                            <p className="text-gray-600">Production déclarée</p>
+                            <p className="text-gray-900">{mineStock.productionOz.toFixed(3)} oz</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Rachetée par la SONASP</p>
+                            <p className="text-gray-900">{mineStock.purchasedBySonaspOz.toFixed(3)} oz</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Déjà engagée à l’export</p>
+                            <p className="text-gray-900">{mineStock.soldByMineOz.toFixed(3)} oz</p>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="mt-2 pt-2 border-t border-amber-200">
                         <div className="flex items-center gap-2 text-xs text-amber-800">
                           <Lock className="h-3 w-3" />
-                          <span>Le vendeur est la SONASP et ne peut pas être modifié.</span>
+                          <span>Le vendeur est déterminé par votre compte et ne peut pas être modifié.</span>
                         </div>
                       </div>
                     </div>
@@ -573,10 +607,18 @@ export function SaleCreate() {
                       </Alert>
                     )}
 
-                    {!loadingInventory && availableInventoryOz === 0 && !stockExport?.decouvert && (
+                    {mineStock?.overAllocated && (
+                      <Alert type="error" title="Production surallouée" className="mt-3">
+                        Les achats SONASP et les ventes engagées dépassent la production déclarée. Aucune nouvelle vente
+                        n’est autorisée avant régularisation.
+                      </Alert>
+                    )}
+
+                    {!loadingInventory && availableInventoryOz === 0 && !stockExport?.decouvert && !mineStock?.overAllocated && (
                       <Alert type="warning" title="Aucun stock disponible" className="mt-3">
-                        La SONASP ne détient aucune once mobilisable. Enregistrez un achat auprès d’une mine
-                        industrielle ou d’un artisan minier avant de créer une vente.
+                        {isMineAccount
+                          ? "Toute votre production disponible est déjà rachetée ou engagée dans une vente."
+                          : "La SONASP ne détient aucune once mobilisable. Enregistrez un achat avant de créer une vente."}
                       </Alert>
                     )}
                   </div>

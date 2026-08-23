@@ -23,9 +23,11 @@ import {
   type QuantityRecommendation,
 } from '@/services/goldTradeSpaceService';
 import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
+import { mineStockService, type MineExportableStock } from '@/services/mineStockService';
 import { getAuthorizedCustomersForMine } from '@/services/goldSalesSettingsService';
 import { supabase } from '@/lib/supabase';
 import { useAlert } from '@/hooks/useAlert';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Customer {
   id: string;
@@ -45,11 +47,15 @@ export function GoldTradeSpace() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const alert = useAlert();
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
+  const isMine = Boolean(mineCompanyId);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [refineries, setRefineries] = useState<any[]>([]);
   const [vendeur, setVendeur] = useState<MiningCompany | null>(null);
   const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
+  const [stockMine, setStockMine] = useState<MineExportableStock | null>(null);
 
   const [selectedMiningCompany, setSelectedMiningCompany] = useState('');
   const [availableStock, setAvailableStock] = useState(0);
@@ -93,17 +99,19 @@ export function GoldTradeSpace() {
 
       if (miningCompaniesRes.error) throw miningCompaniesRes.error;
 
-      // L'espace de négoce est celui de la SONASP : c'est elle qui vend hors du
-      // Burkina, avec l'or acheté aux mines industrielles et aux artisans.
-      const sonasp = (miningCompaniesRes.data || []).find(
-        (company) => company.code?.toUpperCase() === 'SONASP'
-          && company.company_type === 'institution'
-      );
-      if (sonasp) {
-        setVendeur(sonasp);
-        setSelectedMiningCompany(sonasp.id);
+      // Le vendeur n'est jamais choisi par le navigateur : pour une mine il
+      // vient du profil authentifié, pour l'administration il s'agit de la SONASP.
+      const seller = isMine
+        ? (miningCompaniesRes.data || []).find((company) => company.id === mineCompanyId)
+        : (miningCompaniesRes.data || []).find(
+            (company) => company.code?.toUpperCase() === 'SONASP'
+              && company.company_type === 'institution'
+          );
+      if (seller) {
+        setVendeur(seller);
+        setSelectedMiningCompany(seller.id);
 
-        const authorizedCustomers = await getAuthorizedCustomersForMine(sonasp.id);
+        const authorizedCustomers = await getAuthorizedCustomersForMine(seller.id);
         if (!authorizedCustomers.success) {
           throw new Error(authorizedCustomers.error?.message || 'Clients autorisés indisponibles.');
         }
@@ -114,11 +122,15 @@ export function GoldTradeSpace() {
           }))
         );
       } else {
-        alert.error("La SONASP active n'est pas enregistrée comme institution dans le référentiel.");
+        alert.error(
+          isMine
+            ? "Votre compte n'est rattaché à aucune mine active."
+            : "La SONASP active n'est pas enregistrée comme institution dans le référentiel."
+        );
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert.error('Failed to load marketplace data');
+      alert.error("Impossible de charger l'espace de négoce.");
     } finally {
       setLoading(false);
     }
@@ -132,11 +144,20 @@ export function GoldTradeSpace() {
     }
 
     try {
-      // Stock exportable de la SONASP : achats aux mines et aux artisans,
-      // diminués des ventes déjà conclues à l'international.
-      const stock = await stockSonaspService.stock(selectedMiningCompany);
-      setStockExport(stock);
-      const result = { success: true, availableOz: stock.disponibleOz, error: null };
+      const stock = isMine
+        ? await mineStockService.stock()
+        : await stockSonaspService.stock(selectedMiningCompany);
+      if (isMine) {
+        setStockMine(stock as MineExportableStock);
+        setStockExport(null);
+      } else {
+        setStockExport(stock as StockSonasp);
+        setStockMine(null);
+      }
+      const availableOz = isMine
+        ? (stock as MineExportableStock).availableOz
+        : (stock as StockSonasp).disponibleOz;
+      const result = { success: true, availableOz, error: null };
 
       if (result.success) {
         const totalStock = result.availableOz || 0;
@@ -226,15 +247,19 @@ export function GoldTradeSpace() {
 
         {/* Main Content Area - Adjusts based on panel state */}
         <div className="space-y-6 max-w-full">
-          {/* Vendeur : la SONASP et son stock exportable */}
+          {/* Vendeur et stock exportable dérivés du compte authentifié */}
           <Card className="bg-amber-50 border-amber-200">
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <Store className="w-6 h-6 text-amber-700" />
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Vendeur : {vendeur?.name || 'SONASP'}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Vendeur : {vendeur?.name || (isMine ? 'Société minière' : 'SONASP')}
+                  </h3>
                   <p className="text-sm text-gray-600">
-                    Ventes hors du Burkina, avec l’or acheté aux mines industrielles et aux artisans miniers.
+                    {isMine
+                      ? "Vente internationale du reliquat de production non racheté par la SONASP."
+                      : "Ventes hors du Burkina, avec l’or acheté aux mines industrielles et aux artisans miniers."}
                   </p>
                 </div>
               </div>
@@ -267,6 +292,23 @@ export function GoldTradeSpace() {
                     </div>
                   </div>
                 )}
+
+                {stockMine && (
+                  <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <p className="text-gray-600">Production déclarée</p>
+                      <p className="text-gray-900">{stockMine.productionOz.toFixed(3)} oz</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Racheté par la SONASP</p>
+                      <p className="text-gray-900">{stockMine.purchasedBySonaspOz.toFixed(3)} oz</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Déjà engagé à l’export</p>
+                      <p className="text-gray-900">{stockMine.soldByMineOz.toFixed(3)} oz</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {stockExport?.decouvert && (
@@ -275,7 +317,13 @@ export function GoldTradeSpace() {
                 </p>
               )}
 
-              {!stockExport && !loading && (
+              {stockMine?.overAllocated && (
+                <p className="text-sm text-red-700">
+                  La production est déjà surallouée. Régularisez les rachats ou les ventes avant toute nouvelle opération.
+                </p>
+              )}
+
+              {!stockExport && !stockMine && !loading && (
                 <p className="text-sm text-gray-600">Stock indisponible : source « achats et ventes » non lue.</p>
               )}
             </div>

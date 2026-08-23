@@ -39,7 +39,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 import { cn } from '@/utils/cn';
 import { RouteFallback } from '@/components/common/RouteFallback';
-import { ALL_GROUPS, NAVIGATION_SECTIONS } from './sidebarNavigation';
+import { getNavigationSectionsForUser } from './sidebarNavigation';
 import { OwnerMineSwitcher } from './OwnerMineSwitcher';
 import './national-dashboard-layout.css';
 
@@ -90,6 +90,7 @@ function getRoleLabel(role?: string) {
     airport: 'Expéditions',
     refinery: 'Raffinerie',
     customer: 'Utilisateur',
+    mine: 'Société minière',
   };
 
   return labels[role || ''] || 'Utilisateur';
@@ -111,6 +112,14 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const navigationSections = useMemo(() => getNavigationSectionsForUser(user), [user]);
+  const navigationGroups = useMemo(
+    () => navigationSections.flatMap((section) => section.groups),
+    [navigationSections]
+  );
+  const dashboardPath = user && user.role !== 'owner' && user.mining_company_id
+    ? '/portail-mine'
+    : '/dashboard';
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     localStorage.getItem('sidebar:collapsed') === 'true'
@@ -127,7 +136,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     let meilleurId: string | null = null;
     let meilleureLongueur = -1;
 
-    ALL_GROUPS.forEach((group) => {
+    navigationGroups.forEach((group) => {
       (group.children || []).forEach((item) => {
         const correspond =
           location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
@@ -139,7 +148,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     });
 
     return meilleurId;
-  }, [location.pathname]);
+  }, [location.pathname, navigationGroups]);
   /**
    * Groupe deplie. Un seul a la fois : ouvrir le suivant referme le precedent.
    *
@@ -259,7 +268,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     if (location.pathname === path) return true;
     if (path === '/dashboard' || !location.pathname.startsWith(`${path}/`)) return false;
 
-    const navigationPaths = ALL_GROUPS.flatMap((group) => [
+    const navigationPaths = navigationGroups.flatMap((group) => [
       group.path,
       ...(group.children?.map((item) => item.path) || []),
     ]);
@@ -302,8 +311,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
         {/* Seul intitule « Tableau de bord » de la barre : la vue nationale consolidee.
             Les vues propres a un module s'appellent « Vue d'ensemble ». */}
         <Link
-          to="/dashboard"
-          className={cn('national-sidebar__dashboard-link', isActive('/dashboard') && 'is-active')}
+          to={dashboardPath}
+          className={cn('national-sidebar__dashboard-link', isActive(dashboardPath) && 'is-active')}
           onClick={() => setMobileOpen(false)}
         >
           <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
@@ -312,7 +321,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           <span>Tableau de bord</span>
         </Link>
 
-        {NAVIGATION_SECTIONS.map((section) => (
+        {navigationSections.map((section) => (
           <section className="national-sidebar__section" key={section.id} aria-label={section.title}>
             <h2 className="national-sidebar__section-heading">{section.title}</h2>
 

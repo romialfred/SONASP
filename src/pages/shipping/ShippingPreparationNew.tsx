@@ -15,6 +15,7 @@ import { depositorService, Depositor } from '@/services/depositorService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PackingListPdfService } from '@/services/packingListPdfService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DailyProduction {
   id: string;
@@ -72,6 +73,8 @@ interface PendingDocument {
 }
 
 export default function ShippingPreparationNew() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
@@ -100,7 +103,7 @@ export default function ShippingPreparationNew() {
   const [errorTechnicalDetails, setErrorTechnicalDetails] = useState<string | undefined>(undefined);
 
   // Form state
-  const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState('');
+  const [selectedMiningCompanyId, setSelectedMiningCompanyId] = useState(mineCompanyId || '');
   const [expeditionLotNumber, setExpeditionLotNumber] = useState('');
   const [selectedLicenseId, setSelectedLicenseId] = useState('');
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
@@ -120,6 +123,10 @@ export default function ShippingPreparationNew() {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (mineCompanyId && !isEditMode) void handleMiningCompanyChange(mineCompanyId);
+  }, [mineCompanyId, isEditMode]);
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -153,11 +160,13 @@ export default function ShippingPreparationNew() {
   };
 
   const loadMiningCompanies = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('mining_companies')
       .select('id, name, code, is_active')
       .eq('is_active', true)
       .order('name');
+    if (mineCompanyId) query = query.eq('id', mineCompanyId);
+    const { data, error } = await query;
 
     if (error) throw error;
     setMiningCompanies(data || []);
@@ -841,9 +850,9 @@ export default function ShippingPreparationNew() {
                     value={selectedMiningCompanyId}
                     onChange={(e) => handleMiningCompanyChange(e.target.value)}
                     className="w-full px-3 py-1.5 border border-blue-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white text-xs font-medium"
-                    disabled={loading}
+                    disabled={loading || Boolean(mineCompanyId)}
                   >
-                    <option value="">-- Sélectionner une compagnie minière --</option>
+                    {!mineCompanyId && <option value="">-- Sélectionner une compagnie minière --</option>}
                     {miningCompanies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name} ({company.code})

@@ -89,7 +89,6 @@ const BudgetManagementPage = lazyNamed(() => import('./pages/production/BudgetMa
 const ExportLicensesPage = lazyNamed(() => import('./pages/production/ExportLicensesPage'), 'ExportLicensesPage');
 const ExportLicenseForm = lazyNamed(() => import('./pages/production/ExportLicenseForm'), 'ExportLicenseForm');
 const ExportLicenseDetails = lazyNamed(() => import('./pages/production/ExportLicenseDetails'), 'ExportLicenseDetails');
-const ForecastManagementPage = lazyNamed(() => import('./pages/performance/ForecastManagementPage'), 'ForecastManagementPage');
 const ShippingDashboard = lazy(() => import('./pages/shipping/ShippingDashboard'));
 const ShippingPreparationNew = lazy(() => import('./pages/shipping/ShippingPreparationNew'));
 const ShippingPreparationDetailsEnhanced = lazy(() => import('./pages/shipping/ShippingPreparationDetailsEnhanced'));
@@ -191,15 +190,6 @@ function AppRoutes() {
           <Route path="/modifier-mot-de-passe" element={<UpdatePassword />} />
 
           <Route
-            path="/portail-mine/*"
-            element={
-              <MinePortalGuard>
-                <MinePortalPage />
-              </MinePortalGuard>
-            }
-          />
-
-          <Route
             path="/portail-direction/*"
             element={
               <ProtectedRoute allowedRoles={['manager']}>
@@ -220,6 +210,15 @@ function AppRoutes() {
           <Route path="/settings" element={<Navigate to="/parameters" replace />} />
 
           <Route element={<NationalDashboardChrome />}>
+            <Route
+              path="/portail-mine"
+              element={
+                <MinePortalGuard>
+                  <MinePortalPage />
+                </MinePortalGuard>
+              }
+            />
+
             <Route
               path="/dashboard"
               element={
@@ -439,7 +438,7 @@ function AppRoutes() {
             <Route
               path="/inventory"
               element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <ProtectedRoute allowedRoles={['refinery', 'management', 'mine']}>
                   <InventoryManagement />
                 </ProtectedRoute>
               }
@@ -579,7 +578,7 @@ function AppRoutes() {
             <Route
               path="/production/daily"
               element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProtectedRoute allowedRoles={['factory', 'management', 'mine']}>
                   <DailyProductionPage />
                 </ProtectedRoute>
               }
@@ -588,7 +587,7 @@ function AppRoutes() {
             <Route
               path="/production/licenses"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <ExportLicensesPage />
                 </ProtectedRoute>
               }
@@ -597,7 +596,7 @@ function AppRoutes() {
             <Route
               path="/performance/budgets"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <BudgetManagementPage />
                 </ProtectedRoute>
               }
@@ -942,7 +941,7 @@ function AppRoutes() {
             <Route
               path="/inventory/silver"
               element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <ProtectedRoute allowedRoles={['refinery', 'management', 'mine']}>
                   <SilverInventoryManagement />
                 </ProtectedRoute>
               }
@@ -962,7 +961,7 @@ function AppRoutes() {
             <Route
               path="/refining"
               element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <ProtectedRoute allowedRoles={['refinery', 'management', 'mine']}>
                   <RefiningProcess />
                 </ProtectedRoute>
               }
@@ -971,7 +970,7 @@ function AppRoutes() {
             <Route
               path="/refining/freight-shipments"
               element={
-                <ProtectedRoute allowedRoles={['refinery', 'management']}>
+                <ProtectedRoute allowedRoles={['refinery', 'management', 'mine']}>
                   <FreightShipmentsRefining />
                 </ProtectedRoute>
               }
@@ -1149,7 +1148,7 @@ function AppRoutes() {
             <Route
               path="/production/:id"
               element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProtectedRoute allowedRoles={['factory', 'management', 'mine']}>
                   <ProductionDetails />
                 </ProtectedRoute>
               }
@@ -1158,7 +1157,7 @@ function AppRoutes() {
             <Route
               path="/production/in-safe"
               element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProtectedRoute allowedRoles={['factory', 'management', 'mine']}>
                   <ProductionInSafe />
                 </ProtectedRoute>
               }
@@ -1167,7 +1166,7 @@ function AppRoutes() {
             <Route
               path="/production/licenses/new"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <ExportLicenseForm />
                 </ProtectedRoute>
               }
@@ -1176,7 +1175,7 @@ function AppRoutes() {
             <Route
               path="/production/licenses/edit/:id"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <ExportLicenseForm />
                 </ProtectedRoute>
               }
@@ -1185,7 +1184,7 @@ function AppRoutes() {
             <Route
               path="/production/licenses/:id"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <ExportLicenseDetails />
                 </ProtectedRoute>
               }
@@ -1194,8 +1193,8 @@ function AppRoutes() {
             <Route
               path="/performance/forecasts"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
-                  <ForecastManagementPage />
+                <ProtectedRoute allowedRoles={['management', 'mine']}>
+                  <BudgetManagementPage initialMode="forecast" />
                 </ProtectedRoute>
               }
             />
@@ -1329,7 +1328,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/freight-companies"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'mine']}>
                   <FreightCompaniesPage />
                 </ProtectedRoute>
               }
@@ -1338,7 +1337,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/refinery-plants"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'mine']}>
                   <RefineryPlantsPage />
                 </ProtectedRoute>
               }

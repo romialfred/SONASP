@@ -45,6 +45,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.REPORTS_VIEW,
   ],
   mine: [
+    PERMISSIONS.SALES_VIEW,
+    PERMISSIONS.SALES_CREATE,
+    PERMISSIONS.CUSTOMERS_VIEW,
+    PERMISSIONS.LICENSES_VIEW,
+    PERMISSIONS.LICENSES_REQUEST,
     PERMISSIONS.REPORTS_VIEW,
   ],
   manager: [
@@ -59,24 +64,33 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   admin: FULL_ACCESS_PERMISSIONS,
 };
 
+function permissionsFor(user: UserProfile): string[] {
+  // Les premiers comptes sociétés portaient historiquement le rôle `customer`.
+  // Le rattachement autoritatif à une mine prévaut afin qu'ils reçoivent la
+  // même matrice que les comptes `mine`, sans élargir les comptes clients.
+  return user.mining_company_id
+    ? ROLE_PERMISSIONS.mine
+    : (ROLE_PERMISSIONS[user.role] || []);
+}
+
 export function hasPermission(user: UserProfile | null, permission: string): boolean {
   if (!user || !user.is_active) return false;
 
-  const rolePermissions = ROLE_PERMISSIONS[user.role] || [];
+  const rolePermissions = permissionsFor(user);
   return rolePermissions.includes(permission);
 }
 
 export function hasAnyPermission(user: UserProfile | null, permissions: string[]): boolean {
   if (!user || !user.is_active) return false;
 
-  const rolePermissions = ROLE_PERMISSIONS[user.role] || [];
+  const rolePermissions = permissionsFor(user);
   return permissions.some(permission => rolePermissions.includes(permission));
 }
 
 export function hasAllPermissions(user: UserProfile | null, permissions: string[]): boolean {
   if (!user || !user.is_active) return false;
 
-  const rolePermissions = ROLE_PERMISSIONS[user.role] || [];
+  const rolePermissions = permissionsFor(user);
   return permissions.every(permission => rolePermissions.includes(permission));
 }
 

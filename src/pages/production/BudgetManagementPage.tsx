@@ -21,6 +21,7 @@ import { supabase } from '../../lib/supabase';
 import { PALETTE_PRODUCTION } from '@/components/production/chartPalette';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { PageHeader } from '@/components/ui/sn';
+import { useAuth } from '@/contexts/AuthContext';
 import './budget-management.css';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -36,6 +37,7 @@ import {
   MonthlyBudgetInput,
   QuarterlyForecastInput
 } from '../../services/annualBudgetService';
+import { minePortalService } from '@/services/minePortalService';
 
 interface MiningCompany {
   id: string;
@@ -255,7 +257,9 @@ function ProductionBrowserTab({
   );
 }
 
-export function BudgetManagementPage() {
+export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?: 'budget' | 'forecast' }) {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
@@ -267,11 +271,13 @@ export function BudgetManagementPage() {
   ];
 
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [mode, setMode] = useState<'budget' | 'forecast'>('budget');
-  const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
+  const [mode, setMode] = useState<'budget' | 'forecast'>(initialMode);
+  const [selectedQuarter, setSelectedQuarter] = useState<number | null>(
+    initialMode === 'forecast' ? Math.ceil(currentMonth / 3) : null
+  );
   const [activeTab, setActiveTab] = useState<'matrix' | 'browser'>('matrix');
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(mineCompanyId || '');
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -294,10 +300,10 @@ export function BudgetManagementPage() {
 
   useEffect(() => {
     // Auto-select "ALL" if no company selected
-    if (miningCompanies.length > 0 && !selectedCompanyId) {
+    if (!mineCompanyId && miningCompanies.length > 0 && !selectedCompanyId) {
       setSelectedCompanyId('ALL');
     }
-  }, [miningCompanies]);
+  }, [mineCompanyId, miningCompanies, selectedCompanyId]);
 
   useEffect(() => {
     if (selectedCompanyId) {
@@ -307,11 +313,13 @@ export function BudgetManagementPage() {
 
   const loadMiningCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mining_companies')
         .select('id, name, company_type')
         .eq('is_active', true)
         .order('name');
+      if (mineCompanyId) query = query.eq('id', mineCompanyId);
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -456,6 +464,23 @@ export function BudgetManagementPage() {
     try {
       setSaving(true);
 
+      if (mineCompanyId) {
+        const budgetInputs: MonthlyBudgetInput[] = Array.from({ length: 12 }, (_, i) => {
+          const month = i + 1;
+          const existingBudget = monthlyBudgets.find(mb => mb.month === month);
+          return { month, budget_oz: pendingBudgets[month] ?? existingBudget?.budget_oz ?? 0 };
+        });
+        await Promise.all(budgetInputs.map((input) => minePortalService.submitMonthlyBudget({
+          year: selectedYear,
+          month: input.month,
+          budgetOz: input.budget_oz,
+        })));
+        setPendingBudgets({});
+        await loadBudgetData();
+        showSuccess('Budget annuel enregistré avec succès');
+        return;
+      }
+
       // Use getOrCreateAnnualBudget to avoid duplicate creation (409 conflict)
       let budget = await annualBudgetService.getOrCreateAnnualBudget(
         selectedYear,
@@ -505,6 +530,29 @@ export function BudgetManagementPage() {
 
     try {
       setSaving(true);
+
+      if (mineCompanyId) {
+        const quarterMonths = annualBudgetService.getQuarterMonths(selectedQuarter);
+        await Promise.all(quarterMonths.map((month) => {
+          const existingForecast = quarterlyForecasts.find(
+            qf => qf.quarter === selectedQuarter && qf.month === month
+          );
+          const existingBudget = monthlyBudgets.find(mb => mb.month === month);
+          return minePortalService.submitForecast({
+            year: selectedYear,
+            month,
+            forecastOz: pendingForecasts[`${selectedQuarter}-${month}`]
+              ?? existingForecast?.forecast_oz
+              ?? existingBudget?.budget_oz
+              ?? 0,
+            notes: `Révision T${selectedQuarter}`,
+          });
+        }));
+        setPendingForecasts({});
+        await loadBudgetData();
+        showSuccess(`Forecast T${selectedQuarter} enregistré avec succès`);
+        return;
+      }
 
       // Ensure annual budget exists before saving forecasts
       let budget = annualBudget;
@@ -804,9 +852,10 @@ export function BudgetManagementPage() {
                   <select
                     value={selectedCompanyId}
                     onChange={e => setSelectedCompanyId(e.target.value)}
+                    disabled={Boolean(mineCompanyId)}
                     className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
-                    <option value="ALL">Sélectionner Toutes les Mines</option>
+                    {!mineCompanyId && <option value="ALL">Sélectionner Toutes les Mines</option>}
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}

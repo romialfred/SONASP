@@ -20,7 +20,9 @@ import {
 import { SALES_STATUSES } from '@/constants/salesStatuses';
 import { coherenceStockService, type Coherence } from '@/services/coherenceStockService';
 import { stockSonaspService } from '@/services/stockSonaspService';
+import { mineStockService } from '@/services/mineStockService';
 import { errorMessage } from '@/lib/errorMessage';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Sale {
   id: string;
@@ -51,6 +53,8 @@ type StatusDisplay = {
 
 export function SalesDashboard() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const isMine = Boolean(user?.mining_company_id);
   const [coherence, setCoherence] = useState<Coherence | null>(null);
 
   const STATUS_DISPLAY_MAP: Partial<Record<SaleStatus, StatusDisplay>> & {
@@ -221,10 +225,12 @@ export function SalesDashboard() {
       if (inventoryResult.error) {
         console.warn('[SalesDashboard] Inventaire indisponible :', inventoryResult.error.message);
       }
-      const totalInventory = (inventoryResult.data ?? []).reduce(
-        (sum, item) => sum + item.quantity_available_oz,
-        0
-      );
+      const totalInventory = isMine
+        ? (await mineStockService.stock()).availableOz
+        : (inventoryResult.data ?? []).reduce(
+            (sum, item) => sum + item.quantity_available_oz,
+            0
+          );
 
       const stakeholders = {
         miningCompanies: miningCompaniesResult.count || 0,
@@ -255,7 +261,7 @@ export function SalesDashboard() {
       console.error('[SalesDashboard] Error loading metrics:', error);
       setPageError(errorMessage(error, 'Impossible de charger les indicateurs de vente.'));
     }
-  }, []);
+  }, [isMine]);
 
   const loadChartData = useCallback(async () => {
     try {
@@ -441,6 +447,13 @@ export function SalesDashboard() {
    * un stock entamé sans origine connue.
    */
   const controlerCoherence = useCallback(async () => {
+    // Ce contrôle compare les ventes SONASP aux lots achetés. Il n'est pas
+    // applicable aux ventes directes d'une mine, dont le plafond est contrôlé
+    // atomiquement par snp_creer_vente_export_mine().
+    if (isMine) {
+      if (isMounted()) setCoherence(null);
+      return;
+    }
     try {
       const sonasp = await stockSonaspService.identifiant();
       if (!sonasp) return;
@@ -450,7 +463,7 @@ export function SalesDashboard() {
       console.warn('Contrôle de cohérence indisponible :', raison);
       if (isMounted()) setCoherence(null);
     }
-  }, []);
+  }, [isMine]);
 
   useEffect(() => {
     mountedRef.current = true;

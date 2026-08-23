@@ -11621,12 +11621,25 @@ export type Database = {
         Args: {
           p_customer_id: string
           p_freight_cost?: number
+          p_in_process_refinery_id?: string | null
           p_london_am_rate: number
           p_lots?: Json
           p_mechanism_type?: string | null
           p_other_costs?: number
           p_quantity_oz: number
           p_seller_id: string
+        }
+        Returns: Json
+      }
+      snp_creer_vente_export_mine: {
+        Args: {
+          p_customer_id: string
+          p_freight_cost?: number
+          p_in_process_refinery_id?: string | null
+          p_london_am_rate: number
+          p_mechanism_type?: string | null
+          p_other_costs?: number
+          p_quantity_oz: number
         }
         Returns: Json
       }
@@ -11827,6 +11840,21 @@ export type Database = {
           p_securise: boolean
           p_uid: string
         }
+        Returns: undefined
+      }
+      snp_portail_mine_modifier_production: {
+        Args: {
+          p_date_production: string
+          p_notes?: string | null
+          p_poids_brut_grammes: number
+          p_production_id: string
+          p_reference_barre?: string | null
+          p_teneur_estimee_pct: number
+        }
+        Returns: string
+      }
+      snp_portail_mine_supprimer_production: {
+        Args: { p_production_id: string }
         Returns: undefined
       }
       snp_notifications_resume: {
@@ -12040,6 +12068,17 @@ export type Database = {
         }[]
       }
       snp_societe_utilisateur: { Args: never; Returns: string }
+      snp_stock_exportable_mine: {
+        Args: never
+        Returns: {
+          disponible_grammes: number
+          disponible_oz: number
+          production_oz: number
+          rachete_sonasp_oz: number
+          suralloue: boolean
+          vendu_mine_oz: number
+        }[]
+      }
       snp_societes_eligibles_paiement: {
         Args: never
         Returns: {

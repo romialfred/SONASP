@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import { hasGlobalPlatformAccess, hasPermission, isReadOnlyManager } from '@/lib/permissions';
 import { PlatformLoading } from '@/components/common/PlatformLoading';
+import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -91,15 +92,10 @@ export function ProtectedRoute({
     );
   }
 
-  // Un compte de société reste dans son portail, même si une ancienne route
-  // interne n'a pas encore de restriction de rôle explicite. Son périmètre
-  // autoritatif vient du profil, jamais de l'URL.
-  if (
-    (user.role === 'mine' || user.mining_company_id)
-    && !hasGlobalPlatformAccess(user)
-    && !location.pathname.startsWith('/portail-mine')
-    && !['/profile', '/help'].includes(location.pathname)
-  ) {
+  // Une mine utilise désormais les vrais modules industriels. L'allowlist
+  // empêche toutefois qu'une route historique sans `allowedRoles` ouvre une
+  // fonction SONASP par saisie directe de son URL.
+  if (isMineScopedUser(user) && !isMineRouteAllowed(location.pathname)) {
     return <Navigate to="/portail-mine" replace />;
   }
 
@@ -113,7 +109,10 @@ export function ProtectedRoute({
     return <Navigate to="/portail-direction" replace />;
   }
 
-  if (allowedRoles && !hasGlobalPlatformAccess(user) && !allowedRoles.includes(user.role)) {
+  const roleAutorise = !allowedRoles
+    || allowedRoles.includes(user.role)
+    || (isMineScopedUser(user) && allowedRoles.includes('mine'));
+  if (allowedRoles && !hasGlobalPlatformAccess(user) && !roleAutorise) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">

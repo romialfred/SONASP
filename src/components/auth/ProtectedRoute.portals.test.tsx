@@ -27,6 +27,8 @@ function renderRoute(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/dashboard" element={<ProtectedRoute><div>Interne SONASP</div></ProtectedRoute>} />
+        <Route path="/production/daily" element={<ProtectedRoute allowedRoles={['mine']}><div>Production mine</div></ProtectedRoute>} />
+        <Route path="/production/achats-mines" element={<ProtectedRoute><div>Achats SONASP</div></ProtectedRoute>} />
         <Route path="/portail-mine" element={<div>Portail société</div>} />
         <Route path="/portail-direction" element={<div>Portail Direction</div>} />
       </Routes>
@@ -42,6 +44,19 @@ describe('ProtectedRoute — frontières de portail', () => {
     renderRoute('/dashboard');
     expect(screen.getByText('Portail société')).toBeInTheDocument();
     expect(screen.queryByText('Interne SONASP')).not.toBeInTheDocument();
+  });
+
+  it('ouvre les modules industriels autorisés à un ancien compte société customer', () => {
+    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    renderRoute('/production/daily');
+    expect(screen.getByText('Production mine')).toBeInTheDocument();
+  });
+
+  it('refuse explicitement le module Achats aux mines au compte société', () => {
+    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    renderRoute('/production/achats-mines');
+    expect(screen.getByText('Portail société')).toBeInTheDocument();
+    expect(screen.queryByText('Achats SONASP')).not.toBeInTheDocument();
   });
 
   it('renvoie un Manager vers la vue consultative', () => {

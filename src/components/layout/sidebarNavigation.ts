@@ -22,6 +22,8 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import type { UserProfile } from '@/types/auth';
+import { isMineScopedUser } from '@/lib/mineAccess';
 
 export type NavigationItem = {
   label: string;
@@ -289,3 +291,53 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
 
 /** Tous les groupes, toutes sections confondues. */
 export const ALL_GROUPS: NavigationGroup[] = NAVIGATION_SECTIONS.flatMap((section) => section.groups);
+
+const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
+  production: new Set([
+    '/production/daily',
+    '/production/in-safe',
+    '/production/licenses',
+    '/performance/budgets',
+    '/performance/forecasts',
+  ]),
+  'achats-industriels': new Set([
+    '/contrats',
+    '/achats/demandes',
+    '/requisitions',
+    '/achats/reglements',
+  ]),
+  shipping: new Set([
+    '/shipping/preparation',
+    '/shipping/preparation/new',
+    '/freight',
+    '/freight-customs',
+  ]),
+  refining: new Set(['/refining', '/refining/freight-shipments']),
+  inventory: new Set(['/inventory', '/inventory/silver']),
+  market: new Set(['/sales/trade-space', '/gold-prices', '/fx-rates']),
+  sales: new Set(['/sales', '/customers', '/payments']),
+  stakeholders: new Set([
+    '/stakeholders/freight-companies',
+    '/stakeholders/refinery-plants',
+  ]),
+  documents: new Set(['/documents/assay-certificates', '/reports']),
+};
+
+/** Navigation unique, projetée selon le périmètre autoritatif du compte. */
+export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
+  if (!isMineScopedUser(user)) return NAVIGATION_SECTIONS;
+
+  const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');
+  if (!industrial) return [];
+
+  return [{
+    ...industrial,
+    groups: industrial.groups.flatMap((group) => {
+      const allowed = MINE_GROUP_CHILDREN[group.id];
+      if (!allowed) return [];
+      const children = group.children?.filter((item) => allowed.has(item.path)) || [];
+      if (children.length === 0) return [];
+      return [{ ...group, path: children[0].path, children }];
+    }),
+  }];
+}

@@ -1,4 +1,4 @@
-import { Component, ReactNode } from 'react';
+import { Component, ReactNode, useEffect, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
@@ -78,6 +78,72 @@ class BaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 }
 
+const DYNAMIC_IMPORT_ERROR =
+  /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed/i;
+
+function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error }) {
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine);
+  const requiresReload = DYNAMIC_IMPORT_ERROR.test(`${error?.name ?? ''} ${error?.message ?? ''}`);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleRetry = () => {
+    if (!isOnline) return;
+    if (requiresReload) {
+      window.location.reload();
+      return;
+    }
+    reset();
+  };
+
+  const title = !isOnline
+    ? 'Connexion Internet interrompue'
+    : requiresReload
+      ? 'Rechargement du tableau de bord nécessaire'
+      : 'Une erreur est survenue';
+  const description = !isOnline
+    ? 'Le tableau de bord ne peut pas terminer son chargement hors ligne. Rétablissez la connexion Internet, puis rechargez la page.'
+    : requiresReload
+      ? 'La connexion est rétablie. Rechargez la page pour terminer le chargement de la version actuelle.'
+      : 'Cette page n’a pas pu être chargée. Vous pouvez réessayer ou ouvrir une autre rubrique.';
+  const actionLabel = !isOnline ? 'En attente du réseau' : requiresReload ? 'Recharger la page' : 'Réessayer';
+
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center bg-gray-50" aria-live="polite">
+      <div className="max-w-md w-full bg-white border border-gray-200 rounded-lg shadow-sm p-6 text-center">
+        <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+          <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
+        <p className="text-sm text-gray-600">{description}</p>
+        <button
+          type="button"
+          onClick={handleRetry}
+          disabled={!isOnline}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
+          {actionLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AppErrorBoundary({ children }: { children: ReactNode }) {
   return <BaseErrorBoundary>{children}</BaseErrorBoundary>;
 }
@@ -96,27 +162,7 @@ export function RouteErrorBoundary({
     <BaseErrorBoundary
       onReset={onReset}
       resetKey={resetKey}
-      fallback={(reset) => (
-        <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white border border-gray-200 rounded-lg shadow-sm p-6 text-center">
-            <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
-              <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">We hit a snag</h2>
-            <p className="text-sm text-gray-600">
-              This view encountered an error while loading. Please try refreshing the page or navigating to another section.
-            </p>
-            <button
-              type="button"
-              onClick={reset}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" aria-hidden="true" />
-              Try again
-            </button>
-          </div>
-        </div>
-      )}
+      fallback={(reset, error) => <RouteErrorFallback reset={reset} error={error} />}
     >
       {children}
     </BaseErrorBoundary>

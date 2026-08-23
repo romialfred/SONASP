@@ -242,7 +242,7 @@ BEGIN
     RAISE EXCEPTION 'Le poids doit être strictement positif.';
   END IF;
   IF p_teneur_estimee_pct IS NULL OR p_teneur_estimee_pct <= 0 OR p_teneur_estimee_pct > 100 THEN
-    RAISE EXCEPTION 'La teneur estimée doit être comprise entre 0 et 100 %.';
+    RAISE EXCEPTION 'La teneur estimée doit être comprise entre 0 et 100 %%.';
   END IF;
   IF length(coalesce(p_notes, '')) > 2000 THEN RAISE EXCEPTION 'Les observations sont trop longues.'; END IF;
   SELECT upper(coalesce(nullif(code, ''), 'MINE')) INTO v_code
@@ -310,7 +310,7 @@ BEGIN
     RAISE EXCEPTION 'Le poids doit être strictement positif.';
   END IF;
   IF p_teneur_estimee_pct IS NULL OR p_teneur_estimee_pct <= 0 OR p_teneur_estimee_pct > 100 THEN
-    RAISE EXCEPTION 'La teneur estimée doit être comprise entre 0 et 100 %.';
+    RAISE EXCEPTION 'La teneur estimée doit être comprise entre 0 et 100 %%.';
   END IF;
   IF length(coalesce(p_notes, '')) > 2000 THEN
     RAISE EXCEPTION 'Les observations sont trop longues.';

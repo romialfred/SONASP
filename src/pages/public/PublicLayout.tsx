@@ -101,9 +101,14 @@ function PublicLayoutInner() {
   }, [menuOpen]);
 
   const navigationLabel = locale === 'fr' ? 'Navigation principale' : 'Main navigation';
-  const coursFormate = prixGrammeFcfa === null
+  const valeurCours = prixGrammeFcfa ?? cours?.price ?? null;
+  const coursFormate = valeurCours === null
     ? '—'
-    : new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-US', { maximumFractionDigits: 0 }).format(prixGrammeFcfa);
+    : new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-US', {
+      minimumFractionDigits: prixGrammeFcfa === null ? 2 : 0,
+      maximumFractionDigits: prixGrammeFcfa === null ? 2 : 0,
+    }).format(valeurCours);
+  const uniteCours = prixGrammeFcfa === null && cours ? `${cours.currency} / oz` : 'FCFA / g';
   const variation = cours?.changePercent24h;
   const heureCours = derniereMaj?.toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
     hour: '2-digit',
@@ -131,8 +136,8 @@ function PublicLayoutInner() {
               <path d="m8 10 21 14M24 3l5 21M8 10h28" fill="none" stroke="rgba(255,255,255,.38)" strokeWidth="1.25" />
             </svg>
             <strong>{locale === 'fr' ? 'Cours de l’or' : 'Gold price'} <span>• 24K</span></strong>
-            <data value={prixGrammeFcfa ?? undefined} className={prixGrammeFcfa === null ? 'is-unavailable' : undefined}>
-              {coursFormate} <small>FCFA / g</small>
+            <data value={valeurCours ?? undefined} className={valeurCours === null ? 'is-unavailable' : undefined}>
+              {coursFormate} <small>{uniteCours}</small>
             </data>
             {typeof variation === 'number' && (
               <span className={`institutional-bar__change${variation < 0 ? ' is-negative' : ''}`}>
@@ -146,7 +151,7 @@ function PublicLayoutInner() {
             <small className="institutional-bar__updated">
               {coursEnChargement
                 ? (locale === 'fr' ? 'Actualisation…' : 'Updating…')
-                : prixGrammeFcfa !== null && heureCours
+                : valeurCours !== null && heureCours
                   ? `${locale === 'fr' ? 'Mis à jour à' : 'Updated at'} ${heureCours}`
                   : (locale === 'fr' ? 'Cours indisponible' : 'Price unavailable')}
             </small>

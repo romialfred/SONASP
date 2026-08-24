@@ -10,7 +10,9 @@
     "build:fresh": "node scripts/clean-build-cache.mjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "typecheck": "npm run typecheck:database && npm run typecheck:compiler",
+    "typecheck:database": "node scripts/check-database-type-coverage.mjs",
+    "typecheck:compiler": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"

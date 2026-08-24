@@ -342,6 +342,169 @@ export type Database = {
           },
         ]
       }
+      artisanal_site_assignments: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string
+          role: string
+          site_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone: string
+          role: string
+          site_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string
+          role?: string
+          site_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artisanal_site_assignments_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "artisanal_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artisanal_site_productions: {
+        Row: {
+          artisan_count: number
+          created_at: string
+          created_by: string | null
+          gold_weight_grams: number
+          id: string
+          notes: string | null
+          production_date: string
+          revenue_fcfa: number
+          site_id: string
+          taxes_fcfa: number
+        }
+        Insert: {
+          artisan_count?: number
+          created_at?: string
+          created_by?: string | null
+          gold_weight_grams: number
+          id?: string
+          notes?: string | null
+          production_date: string
+          revenue_fcfa?: number
+          site_id: string
+          taxes_fcfa?: number
+        }
+        Update: {
+          artisan_count?: number
+          created_at?: string
+          created_by?: string | null
+          gold_weight_grams?: number
+          id?: string
+          notes?: string | null
+          production_date?: string
+          revenue_fcfa?: number
+          site_id?: string
+          taxes_fcfa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artisanal_site_productions_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "artisanal_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artisanal_sites: {
+        Row: {
+          active_miners: number
+          area_hectares: number
+          authorized_chemicals: string[]
+          authorized_miners: number
+          average_hole_depth_m: number
+          code: string
+          created_at: string
+          created_by: string | null
+          exploitation_type: string
+          id: string
+          latitude: number
+          locality: string
+          longitude: number
+          name: string
+          notes: string | null
+          photos: string[]
+          province: string
+          region: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active_miners?: number
+          area_hectares: number
+          authorized_chemicals?: string[]
+          authorized_miners?: number
+          average_hole_depth_m?: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          exploitation_type: string
+          id?: string
+          latitude: number
+          locality: string
+          longitude: number
+          name: string
+          notes?: string | null
+          photos?: string[]
+          province: string
+          region: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active_miners?: number
+          area_hectares?: number
+          authorized_chemicals?: string[]
+          authorized_miners?: number
+          average_hole_depth_m?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          exploitation_type?: string
+          id?: string
+          latitude?: number
+          locality?: string
+          longitude?: number
+          name?: string
+          notes?: string | null
+          photos?: string[]
+          province?: string
+          region?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       assay_certificates: {
         Row: {
           approval_notes: string | null
@@ -6396,6 +6559,65 @@ export type Database = {
           },
         ]
       }
+      snp_artisan_infractions: {
+        Row: {
+          artisan_id: string
+          conclusion: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
+          created_at: string | null
+          created_by: string | null
+          date_cloture: string | null
+          date_infraction: string
+          description: string
+          documents: Json | null
+          id: string
+          lieu: string | null
+          remarques: string | null
+          statut_traitement: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
+          type_infraction: string
+          updated_at: string | null
+        }
+        Insert: {
+          artisan_id: string
+          conclusion?: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
+          created_at?: string | null
+          created_by?: string | null
+          date_cloture?: string | null
+          date_infraction: string
+          description: string
+          documents?: Json | null
+          id?: string
+          lieu?: string | null
+          remarques?: string | null
+          statut_traitement?: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
+          type_infraction: string
+          updated_at?: string | null
+        }
+        Update: {
+          artisan_id?: string
+          conclusion?: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
+          created_at?: string | null
+          created_by?: string | null
+          date_cloture?: string | null
+          date_infraction?: string
+          description?: string
+          documents?: Json | null
+          id?: string
+          lieu?: string | null
+          remarques?: string | null
+          statut_traitement?: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
+          type_infraction?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_artisan_infractions_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snp_artisan_ventes_or: {
         Row: {
           acheteur_comptoir_organization_id: string | null
@@ -10423,7 +10645,52 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_artisan_paiements_resume: {
+        Row: {
+          artisan_id: string | null
+          nom: string | null
+          nombre_paiements: number | null
+          nombre_ventes: number | null
+          numero_carte: string | null
+          prenoms: string | null
+          solde_du: number | null
+          total_brut: number | null
+          total_net: number | null
+          total_paye: number | null
+          total_taxes: number | null
+        }
+        Relationships: []
+      }
+      v_paiements_en_attente: {
+        Row: {
+          artisan_id: string | null
+          artisan_nom_complet: string | null
+          date_facture: string | null
+          date_vente: string | null
+          facture_id: string | null
+          jours_attente: number | null
+          montant_net_a_payer: number | null
+          numero_carte: string | null
+          numero_facture: string | null
+          reference_vente: string | null
+          statut_paiement: string | null
+          telephone: string | null
+          vente_id: string | null
+        }
+        Relationships: []
+      }
+      v_taxes_a_reverser: {
+        Row: {
+          exercice_fiscal: string | null
+          libelle_taxe: string | null
+          montant_total: number | null
+          nombre_transactions: number | null
+          periode_fiscale: string | null
+          statut_reversement: string | null
+          type_taxe: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_audit_fields: { Args: { target_table: string }; Returns: undefined }
@@ -12331,6 +12598,8 @@ export type Database = {
         | "RELEASE"
         | "ADJUST"
         | "EXPIRE"
+      snp_conclusion_infraction: "reconnu" | "soupçonne" | "complice" | "innocente"
+      snp_statut_traitement_infraction: "en_cours" | "cloture"
       refinery_status:
         | "waiting_for_refinery_approval"
         | "refinery_approved"
@@ -12569,6 +12838,8 @@ export const Constants = {
         "ADJUST",
         "EXPIRE",
       ],
+      snp_conclusion_infraction: ["reconnu", "soupçonne", "complice", "innocente"],
+      snp_statut_traitement_infraction: ["en_cours", "cloture"],
       refinery_status: [
         "waiting_for_refinery_approval",
         "refinery_approved",

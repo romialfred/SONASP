@@ -3,9 +3,21 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
+import { CAPABILITIES, type CapabilityCode } from '@/lib/capabilities';
 
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: vi.fn() }));
 const mockedUseAuth = vi.mocked(useAuth);
+const relationReadCapabilities: CapabilityCode[] = [
+  CAPABILITIES.MINE_OPERATE,
+  CAPABILITIES.SONASP_WORKFLOW_READ,
+  CAPABILITIES.SONASP_PREPARE,
+];
+const contractWriteCapabilities: CapabilityCode[] = [
+  CAPABILITIES.MINE_OPERATE,
+  CAPABILITIES.SONASP_PREPARE,
+];
+const requisitionWriteCapabilities: CapabilityCode[] = [CAPABILITIES.SONASP_PREPARE];
+const paymentWriteCapabilities: CapabilityCode[] = [CAPABILITIES.FINANCE_EXECUTE];
 
 const baseUser = {
   id: 'user-1', email: 'user@sonasp.bf', full_name: 'Utilisateur', phone: null,
@@ -29,10 +41,12 @@ function renderRoute(path: string) {
         <Route path="/dashboard" element={<ProtectedRoute><div>Interne SONASP</div></ProtectedRoute>} />
         <Route path="/production/daily" element={<ProtectedRoute allowedRoles={['mine']}><div>Production mine</div></ProtectedRoute>} />
         <Route path="/stakeholders/depositors/new" element={<ProtectedRoute allowedRoles={['management', 'admin', 'mine']}><div>Nouveau dépositaire</div></ProtectedRoute>} />
-        <Route path="/contrats/nouveau" element={<ProtectedRoute><div>Proposition de contrat</div></ProtectedRoute>} />
-        <Route path="/requisitions/:id" element={<ProtectedRoute><div>Réquisition reçue</div></ProtectedRoute>} />
-        <Route path="/requisitions/nouvelle" element={<ProtectedRoute><div>Émission de réquisition</div></ProtectedRoute>} />
-        <Route path="/achats/reglements/nouveau" element={<ProtectedRoute><div>Création de règlement</div></ProtectedRoute>} />
+        <Route path="/contrats/nouveau" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={contractWriteCapabilities}><div>Proposition de contrat</div></ProtectedRoute>} />
+        <Route path="/contrats/:id/modifier" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={contractWriteCapabilities}><div>Modification de contrat</div></ProtectedRoute>} />
+        <Route path="/requisitions/:id" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={relationReadCapabilities}><div>Réquisition reçue</div></ProtectedRoute>} />
+        <Route path="/requisitions/:id/modifier" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={requisitionWriteCapabilities}><div>Modification de réquisition</div></ProtectedRoute>} />
+        <Route path="/requisitions/nouvelle" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={requisitionWriteCapabilities}><div>Émission de réquisition</div></ProtectedRoute>} />
+        <Route path="/achats/reglements/nouveau" element={<ProtectedRoute allowedRoles={['management', 'mine']} requiredAnyCapabilities={paymentWriteCapabilities}><div>Création de règlement</div></ProtectedRoute>} />
         <Route path="/production/achats-mines" element={<ProtectedRoute><div>Achats SONASP</div></ProtectedRoute>} />
         <Route path="/portail-mine" element={<div>Portail société</div>} />
         <Route path="/portail-direction" element={<div>Portail Direction</div>} />
@@ -64,13 +78,54 @@ describe('ProtectedRoute — frontières de portail', () => {
   });
 
   it('autorise une société à proposer un contrat et consulter une réquisition reçue', () => {
-    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      mining_company_id: 'mine-1',
+      capabilities: ['mine.operate'],
+    }));
     const proposition = renderRoute('/contrats/nouveau');
     expect(screen.getByText('Proposition de contrat')).toBeInTheDocument();
     proposition.unmount();
 
     renderRoute('/requisitions/req-1');
     expect(screen.getByText('Réquisition reçue')).toBeInTheDocument();
+  });
+
+  it('refuse toutes les routes privées au tenant dont mine.operate a été retirée', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      mining_company_id: 'mine-1',
+      capabilities: [],
+    }));
+    renderRoute('/requisitions/req-1');
+    expect(screen.getByText('Habilitation Société minière requise')).toBeInTheDocument();
+    expect(screen.queryByText('Réquisition reçue')).not.toBeInTheDocument();
+  });
+
+  it('ne transforme pas un client sans tenant en opérateur de mine', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      capabilities: ['customer.operate'],
+    }));
+    renderRoute('/requisitions/req-1');
+    expect(screen.getByText('Accès refusé')).toBeInTheDocument();
+    expect(screen.queryByText('Réquisition reçue')).not.toBeInTheDocument();
+  });
+
+  it('empêche la modification directe des contrats et réquisitions SONASP', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      mining_company_id: 'mine-1',
+      capabilities: ['mine.operate'],
+    }));
+    const contrat = renderRoute('/contrats/contrat-1/modifier');
+    expect(screen.getByText('Portail société')).toBeInTheDocument();
+    expect(screen.queryByText('Modification de contrat')).not.toBeInTheDocument();
+    contrat.unmount();
+
+    renderRoute('/requisitions/req-1/modifier');
+    expect(screen.getByText('Portail société')).toBeInTheDocument();
+    expect(screen.queryByText('Modification de réquisition')).not.toBeInTheDocument();
   });
 
   it('empêche une société d’émettre une réquisition ou son propre règlement', () => {
@@ -83,6 +138,30 @@ describe('ProtectedRoute — frontières de portail', () => {
     renderRoute('/achats/reglements/nouveau');
     expect(screen.getByText('Portail société')).toBeInTheDocument();
     expect(screen.queryByText('Création de règlement')).not.toBeInTheDocument();
+  });
+
+  it('sépare la préparation métier de l’exécution financière côté SONASP', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      role: 'management',
+      capabilities: ['sonasp.prepare'],
+    }));
+    const preparation = renderRoute('/requisitions/nouvelle');
+    expect(screen.getByText('Émission de réquisition')).toBeInTheDocument();
+    preparation.unmount();
+
+    const paiementRefuse = renderRoute('/achats/reglements/nouveau');
+    expect(screen.getByText('Habilitations insuffisantes')).toBeInTheDocument();
+    expect(screen.queryByText('Création de règlement')).not.toBeInTheDocument();
+    paiementRefuse.unmount();
+
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      role: 'management',
+      capabilities: ['sonasp.finance.execute'],
+    }));
+    renderRoute('/achats/reglements/nouveau');
+    expect(screen.getByText('Création de règlement')).toBeInTheDocument();
   });
 
   it('refuse explicitement le module Achats aux mines au compte société', () => {

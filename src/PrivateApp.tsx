@@ -12,11 +12,34 @@ import { MandatoryMfaGate } from './components/auth/MandatoryMfaGate';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
 import { PERMISSIONS } from './lib/permissions';
+import { CAPABILITIES, type CapabilityCode } from './lib/capabilities';
 import { SONASP_COMPTOIR_INBOX_CAPABILITIES } from './lib/sonaspComptoirAccess';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
 import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
 import { LegacyShippingPreparationEditRedirect } from './components/shipping/LegacyShippingPreparationEditRedirect';
+
+const MINE_RELATION_READ_CAPABILITIES: CapabilityCode[] = [
+  CAPABILITIES.MINE_OPERATE,
+  CAPABILITIES.SONASP_WORKFLOW_READ,
+  CAPABILITIES.SONASP_PREPARE,
+  CAPABILITIES.SONASP_APPROVE,
+  CAPABILITIES.FINANCE_EXECUTE,
+  CAPABILITIES.FINANCE_RECONCILE,
+];
+
+const MINE_CONTRACT_WRITE_CAPABILITIES: CapabilityCode[] = [
+  CAPABILITIES.MINE_OPERATE,
+  CAPABILITIES.SONASP_PREPARE,
+];
+
+const SONASP_REQUISITION_WRITE_CAPABILITIES: CapabilityCode[] = [
+  CAPABILITIES.SONASP_PREPARE,
+];
+
+const SONASP_PAYMENT_WRITE_CAPABILITIES: CapabilityCode[] = [
+  CAPABILITIES.FINANCE_EXECUTE,
+];
 
 function lazyNamed<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
@@ -593,11 +616,25 @@ function AppRoutes() {
             />
             <Route
               path="/achats/reglements"
-              element={<ProtectedRoute><ReglementsAchatPage /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <ReglementsAchatPage />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/achats/reglements/nouveau"
-              element={<ProtectedRoute><ReglementForm /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={SONASP_PAYMENT_WRITE_CAPABILITIES}
+                >
+                  <ReglementForm />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/achats/comptes"
@@ -608,40 +645,103 @@ function AppRoutes() {
                 en tiroir. « nouveau » precede « :id » pour ne pas etre capte par lui. */}
             <Route
               path="/contrats"
-              element={<ProtectedRoute><ContratsPage /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <ContratsPage />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/contrats/pilotage"
-              element={<ProtectedRoute><PilotageContrats /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <PilotageContrats />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/contrats/nouveau"
-              element={<ProtectedRoute><ContratForm /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_CONTRACT_WRITE_CAPABILITIES}
+                >
+                  <ContratForm />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/contrats/:id"
-              element={<ProtectedRoute><ContratDetails /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <ContratDetails />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/contrats/:id/modifier"
-              element={<ProtectedRoute><ContratForm /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_CONTRACT_WRITE_CAPABILITIES}
+                >
+                  <ContratForm />
+                </ProtectedRoute>
+              )}
             />
 
             <Route
               path="/requisitions"
-              element={<ProtectedRoute><RequisitionsPage /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <RequisitionsPage />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/requisitions/nouvelle"
-              element={<ProtectedRoute><RequisitionForm /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={SONASP_REQUISITION_WRITE_CAPABILITIES}
+                >
+                  <RequisitionForm />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/requisitions/:id"
-              element={<ProtectedRoute><RequisitionDetails /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={MINE_RELATION_READ_CAPABILITIES}
+                >
+                  <RequisitionDetails />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/requisitions/:id/modifier"
-              element={<ProtectedRoute><RequisitionForm /></ProtectedRoute>}
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'mine']}
+                  requiredAnyCapabilities={SONASP_REQUISITION_WRITE_CAPABILITIES}
+                >
+                  <RequisitionForm />
+                </ProtectedRoute>
+              )}
             />
 
             <Route

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasGlobalPlatformAccess } from '@/lib/permissions';
 import type { UserProfile } from '@/types/auth';
 import { Loading } from '@/components/ui/Loading';
+import { isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
 
 type MinePortalAccess = {
   companyId: string;
@@ -51,6 +52,15 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
 
   const canChooseCompany = hasGlobalPlatformAccess(user);
   const requestedCompanyId = new URLSearchParams(location.search).get('mine')?.trim() || null;
+
+  if (!canChooseCompany && isMineTenantProfile(user) && !isMineScopedUser(user)) {
+    return (
+      <GuardMessage
+        title="Habilitation Société minière requise"
+        description="Votre société est rattachée, mais la capacité mine.operate n’est pas active sur ce compte."
+      />
+    );
+  }
 
   if (!user.mining_company_id && !canChooseCompany) {
     return (

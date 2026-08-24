@@ -63,7 +63,7 @@ const formaterHorodatage = (iso: string | null | undefined) => {
 export function RequisitionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isMine } = useMineWorkspace();
+  const { isMine, companyId } = useMineWorkspace();
 
   const [requisition, setRequisition] = useState<Requisition | null>(null);
   const [execution, setExecution] = useState<ExecutionRequisition | null>(null);
@@ -97,7 +97,7 @@ export function RequisitionDetails() {
     setChargement(true);
     setErreur(null);
     try {
-      const fiche = await requisitionsService.requisition(id);
+      const fiche = await requisitionsService.requisition(id, isMine ? companyId : undefined);
       if (!fiche) throw new Error('Cette réquisition n’existe pas ou a été supprimée.');
       setRequisition(fiche);
 
@@ -122,7 +122,7 @@ export function RequisitionDetails() {
     } finally {
       setChargement(false);
     }
-  }, [id, isMine]);
+  }, [companyId, id, isMine]);
 
   useEffect(() => {
     void charger();
@@ -266,7 +266,7 @@ export function RequisitionDetails() {
               : ''
           }
           breadcrumb={[
-            { label: 'Achats d’or' },
+            { label: isMine ? 'Relations avec la SONASP' : 'Achats d’or', to: isMine ? '/portail-mine' : undefined },
             { label: 'Réquisitions', to: '/requisitions' },
             { label: requisition?.reference || '…' },
           ]}
@@ -356,7 +356,7 @@ export function RequisitionDetails() {
                     disabled={action !== null || commentaireMine.trim().length < 5}
                     onClick={() => void repondreCommeMine('contester')}
                   >
-                    Contester
+                    Rejeter / contester
                   </button>
                   <button
                     type="button"
@@ -364,7 +364,9 @@ export function RequisitionDetails() {
                     disabled={action !== null || commentaireMine.trim().length < 5}
                     onClick={() => void repondreCommeMine('approuver')}
                   >
-                    <CheckCircle2 aria-hidden="true" /> Approuver et transmettre
+                    <CheckCircle2 aria-hidden="true" /> {requisition.regime_juridique === 'accord_requis'
+                      ? 'Approuver et transmettre'
+                      : 'Accuser réception sans réserve'}
                   </button>
                 </div>
               </section>

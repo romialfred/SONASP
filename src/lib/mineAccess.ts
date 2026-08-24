@@ -1,4 +1,5 @@
 import type { UserProfile } from '@/types/auth';
+import { CAPABILITIES } from '@/lib/capabilities';
 
 /**
  * Routes fonctionnelles du portail national ouvertes aux sociétés minières.
@@ -49,23 +50,44 @@ const MINE_FORBIDDEN_ROUTES = [
   '/sales/approve',
 ] as const;
 
+const MINE_FORBIDDEN_PATTERNS = [
+  /^\/contrats\/[^/]+\/modifier$/,
+  /^\/requisitions\/[^/]+\/modifier$/,
+] as const;
+
 function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
 export function isMineScopedUser(
-  user: Pick<UserProfile, 'is_active' | 'role' | 'mining_company_id'> | null
+  user: Pick<UserProfile, 'is_active' | 'role' | 'mining_company_id' | 'capabilities'> | null
+): boolean {
+  if (!user?.is_active || user.role === 'owner' || !(user.role === 'mine' || user.mining_company_id)) {
+    return false;
+  }
+
+  // Une liste fournie par le serveur est autoritative : le rattachement au
+  // tenant ne remplace pas l'habilitation opérationnelle. L'absence de liste
+  // conserve uniquement la compatibilité des anciens profils déjà rattachés.
+  return Array.isArray(user.capabilities)
+    ? user.capabilities.includes(CAPABILITIES.MINE_OPERATE)
+    : true;
+}
+
+export function isMineTenantProfile(
+  user: Pick<UserProfile, 'is_active' | 'role' | 'mining_company_id'> | null,
 ): boolean {
   return Boolean(
     user?.is_active
       && user.role !== 'owner'
-      && (user.role === 'mine' || user.mining_company_id)
+      && (user.role === 'mine' || user.mining_company_id),
   );
 }
 
 export function isMineRouteAllowed(pathname: string): boolean {
   const normalized = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   if (MINE_FORBIDDEN_ROUTES.some((route) => matchesPrefix(normalized, route))) return false;
+  if (MINE_FORBIDDEN_PATTERNS.some((pattern) => pattern.test(normalized))) return false;
 
   // La fiche d'une production réutilise `/production/:id`, sans ouvrir pour
   // autant la page SONASP `/production/achats-mines`.

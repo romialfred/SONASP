@@ -1,10 +1,26 @@
 import { describe, expect, it } from 'vitest';
+import { CAPABILITIES } from './capabilities';
 import { isMineRouteAllowed, isMineScopedUser } from './mineAccess';
 
 describe('matrice d’accès du portail Mine', () => {
   it('reconnaît le périmètre par le rattachement, y compris pour un rôle historique customer', () => {
     expect(isMineScopedUser({ is_active: true, role: 'customer', mining_company_id: 'mine-1' })).toBe(true);
     expect(isMineScopedUser({ is_active: true, role: 'customer', mining_company_id: null })).toBe(false);
+  });
+
+  it('considère la liste explicite de capacités comme autoritative', () => {
+    expect(isMineScopedUser({
+      is_active: true,
+      role: 'customer',
+      mining_company_id: 'mine-1',
+      capabilities: [CAPABILITIES.MINE_OPERATE],
+    })).toBe(true);
+    expect(isMineScopedUser({
+      is_active: true,
+      role: 'customer',
+      mining_company_id: 'mine-1',
+      capabilities: [],
+    })).toBe(false);
   });
 
   it.each([
@@ -19,6 +35,7 @@ describe('matrice d’accès du portail Mine', () => {
   it.each([
     '/production/achats-mines', '/achats/plans', '/achats/comptes',
     '/inventory/add', '/sales/approve/123', '/admin/users',
+    '/contrats/contrat-1/modifier', '/requisitions/req-1/modifier',
   ])('refuse %s', (route) => {
     expect(isMineRouteAllowed(route)).toBe(false);
   });

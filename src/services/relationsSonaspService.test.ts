@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   getUser: vi.fn(),
   inserted: [] as unknown[],
+  filters: [] as Array<[string, unknown]>,
 }));
 
 vi.mock('@/lib/supabase', () => ({
@@ -21,6 +22,7 @@ describe('relations Mine avec la SONASP', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.inserted = [];
+    mocks.filters = [];
     mocks.getUser.mockResolvedValue({ data: { user: { id: 'mine-user-1' } } });
     mocks.rpc.mockResolvedValue({ data: { id: 'req-1', statut: 'accusee' }, error: null });
     mocks.from.mockImplementation(() => {
@@ -30,6 +32,11 @@ describe('relations Mine avec la SONASP', () => {
         return query;
       });
       query.select = vi.fn(() => query);
+      query.eq = vi.fn((column: string, value: unknown) => {
+        mocks.filters.push([column, value]);
+        return query;
+      });
+      query.maybeSingle = vi.fn(async () => ({ data: { id: 'resource-1' }, error: null }));
       query.single = vi.fn(async () => ({ data: { id: 'ctr-1', statut: 'soumis' }, error: null }));
       return query;
     });
@@ -43,6 +50,32 @@ describe('relations Mine avec la SONASP', () => {
       p_decision: 'approuver',
       p_commentaire: 'Accord après vérification',
     });
+  });
+
+  it('refuse une réponse insuffisamment motivée avant tout appel réseau', async () => {
+    await expect(requisitionsService.repondreMine('req-1', 'contester', 'non'))
+      .rejects.toThrow('au moins 5 caractères');
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('ajoute le tenant autoritatif à la lecture d’une réquisition', async () => {
+    await requisitionsService.requisition('req-1', 'mine-1');
+
+    expect(mocks.from).toHaveBeenCalledWith('snp_requisitions');
+    expect(mocks.filters).toEqual([
+      ['id', 'req-1'],
+      ['mining_company_id', 'mine-1'],
+    ]);
+  });
+
+  it('ajoute le tenant autoritatif à la lecture d’un contrat', async () => {
+    await contratsService.contrat('ctr-1', 'mine-1');
+
+    expect(mocks.from).toHaveBeenCalledWith('snp_contrats');
+    expect(mocks.filters).toEqual([
+      ['id', 'ctr-1'],
+      ['mining_company_id', 'mine-1'],
+    ]);
   });
 
   it('force une proposition de contrat au statut soumis et à l’auteur connecté', async () => {

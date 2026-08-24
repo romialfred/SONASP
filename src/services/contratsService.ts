@@ -467,13 +467,13 @@ export const contratsService = {
     return (lancerSiErreur(await requete) || []) as Contrat[];
   },
 
-  async contrat(id: string): Promise<Contrat | null> {
-    const reponse = await supabase
+  async contrat(id: string, miningCompanyId?: string | null): Promise<Contrat | null> {
+    let requete = supabase
       .from('snp_contrats')
       .select('*, mining_company:mining_companies(id, name, code)')
-      .eq('id', id)
-      .maybeSingle();
-    return (lancerSiErreur(reponse) as Contrat) || null;
+      .eq('id', id);
+    if (miningCompanyId) requete = requete.eq('mining_company_id', miningCompanyId);
+    return (lancerSiErreur(await requete.maybeSingle()) as Contrat) || null;
   },
 
   async creer(contrat: Partial<Contrat>): Promise<Contrat> {

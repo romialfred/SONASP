@@ -66,7 +66,7 @@ export const STATUTS_A_MOTIVER: StatutContrat[] = ['rejete', 'suspendu', 'resili
 export function ContratDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isMine } = useMineWorkspace();
+  const { isMine, companyId } = useMineWorkspace();
 
   const [contrat, setContrat] = useState<Contrat | null>(null);
   const [execution, setExecution] = useState<ExecutionContrat | null>(null);
@@ -92,7 +92,7 @@ export function ContratDetails() {
     setChargement(true);
     setErreur(null);
     try {
-      const fiche = await contratsService.contrat(id);
+      const fiche = await contratsService.contrat(id, isMine ? companyId : undefined);
       if (!fiche) throw new Error('Ce contrat n’existe pas ou a été supprimé.');
       setContrat(fiche);
 
@@ -115,7 +115,7 @@ export function ContratDetails() {
     } finally {
       setChargement(false);
     }
-  }, [id, isMine]);
+  }, [companyId, id, isMine]);
 
   useEffect(() => {
     void charger();
@@ -208,7 +208,7 @@ export function ContratDetails() {
               : ''
           }
           breadcrumb={[
-            { label: 'Achats d’or' },
+            { label: isMine ? 'Relations avec la SONASP' : 'Achats d’or', to: isMine ? '/portail-mine' : undefined },
             { label: 'Contrats', to: '/contrats' },
             { label: contrat?.numero_contrat || '…' },
           ]}

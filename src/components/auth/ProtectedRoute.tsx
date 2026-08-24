@@ -11,7 +11,7 @@ import {
 import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorRouteAllowed, isCollectorScopedUser } from '@/lib/collectorAccess';
-import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
+import { isMineRouteAllowed, isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
 import { hasAnyCapability, type CapabilityCode } from '@/lib/capabilities';
 
 interface ProtectedRouteProps {
@@ -128,6 +128,20 @@ export function ProtectedRoute({
   // y compris lorsqu'elles sont saisies directement dans la barre d'adresse.
   if (isComptoirScopedUser(user) && !isComptoirRouteAllowed(location.pathname)) {
     return <Navigate to="/portail-comptoir" replace />;
+  }
+
+  // Le tenant ne confère jamais à lui seul les droits d'exploitation. Si le
+  // serveur a fourni une liste de capacités sans `mine.operate`, aucune route
+  // privée n'est ouverte, même si mining_company_id est encore renseigné.
+  if (isMineTenantProfile(user) && !isMineScopedUser(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Habilitation Société minière requise</h2>
+          <p className="text-gray-600">Votre rattachement est connu, mais la capacité mine.operate n’est pas active.</p>
+        </div>
+      </div>
+    );
   }
 
   // Une mine utilise désormais les vrais modules industriels. L'allowlist

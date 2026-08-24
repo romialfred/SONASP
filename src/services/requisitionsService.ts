@@ -299,13 +299,13 @@ export const requisitionsService = {
     return (lancerSiErreur(await requete) || []) as Requisition[];
   },
 
-  async requisition(id: string): Promise<Requisition | null> {
-    const reponse = await supabase
+  async requisition(id: string, miningCompanyId?: string | null): Promise<Requisition | null> {
+    let requete = supabase
       .from('snp_requisitions')
       .select('*, mining_company:mining_companies(id, name, code), contrat:snp_contrats(id, numero_contrat, intitule)')
-      .eq('id', id)
-      .maybeSingle();
-    return (lancerSiErreur(reponse) as Requisition) || null;
+      .eq('id', id);
+    if (miningCompanyId) requete = requete.eq('mining_company_id', miningCompanyId);
+    return (lancerSiErreur(await requete.maybeSingle()) as Requisition) || null;
   },
 
   async creer(requisition: Partial<Requisition>): Promise<Requisition> {
@@ -342,10 +342,19 @@ export const requisitionsService = {
     decision: 'approuver' | 'contester',
     commentaire: string
   ): Promise<Requisition> {
+    const commentaireNormalise = commentaire.trim();
+    if (!id.trim()) throw new Error('La réquisition à traiter est obligatoire.');
+    if (!['approuver', 'contester'].includes(decision)) {
+      throw new Error('La décision transmise est invalide.');
+    }
+    if (commentaireNormalise.length < 5) {
+      throw new Error('Le commentaire doit contenir au moins 5 caractères.');
+    }
+
     const reponse = await supabase.rpc('snp_portail_mine_repondre_requisition', {
       p_requisition_id: id,
       p_decision: decision,
-      p_commentaire: commentaire.trim(),
+      p_commentaire: commentaireNormalise,
     });
     return lancerSiErreur(reponse) as Requisition;
   },

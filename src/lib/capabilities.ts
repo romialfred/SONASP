@@ -128,6 +128,14 @@ export function hasCapability(
     return user.capabilities.includes(capability);
   }
 
+  // Compatibilité des profils historiques : avant l'introduction du rôle
+  // `mine`, les comptes de sociétés étaient parfois enregistrés `customer`.
+  // Le rattachement ne vaut que lorsque le serveur n'a encore renvoyé aucune
+  // liste autoritative de capacités.
+  if (capability === CAPABILITIES.MINE_OPERATE && user.mining_company_id) {
+    return true;
+  }
+
   return ROLE_CAPABILITY_FALLBACK[user.role]?.includes(capability) ?? false;
 }
 

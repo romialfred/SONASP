@@ -72,6 +72,21 @@ describe('MinePortalGuard', () => {
     expect(screen.getByText('Mine autorisée mine-1')).toBeInTheDocument();
   });
 
+  it('refuse un tenant lorsque la liste explicite ne contient pas mine.operate', () => {
+    mockedUseAuth.mockReturnValue(auth({ user: { ...mineUser, capabilities: [] } }));
+    render(<MemoryRouter><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
+    expect(screen.getByText('Habilitation Société minière requise')).toBeInTheDocument();
+    expect(screen.queryByText(/Mine autorisée/)).not.toBeInTheDocument();
+  });
+
+  it('autorise un tenant explicitement habilité mine.operate', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      user: { ...mineUser, capabilities: ['mine.operate'] },
+    }));
+    render(<MemoryRouter><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
+    expect(screen.getByText('Mine autorisée mine-1')).toBeInTheDocument();
+  });
+
   it('renvoie l’Owner vers le tableau de bord lorsqu’aucune mine n’est choisie', () => {
     mockedUseAuth.mockReturnValue(auth({
       user: { ...mineUser, role: 'owner', mining_company_id: null },

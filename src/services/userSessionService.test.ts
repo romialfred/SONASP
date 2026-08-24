@@ -5,12 +5,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   from: vi.fn(),
+  invoke: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     rpc: mocks.rpc,
     from: mocks.from,
+    functions: {
+      invoke: mocks.invoke,
+    },
   },
 }));
 
@@ -47,6 +51,7 @@ describe('userSessionService — frontière RPC sécurisée', () => {
   beforeEach(() => {
     mocks.rpc.mockReset();
     mocks.from.mockReset();
+    mocks.invoke.mockReset();
   });
 
   it('enregistre la session courante sans transmettre de token, hash ou adresse IP', async () => {
@@ -137,14 +142,75 @@ describe('userSessionService — frontière RPC sécurisée', () => {
     });
   });
 
-  it('révoque toutes les sessions via RPC en conservant la session courante par défaut', async () => {
-    mocks.rpc.mockResolvedValue({ data: 3, error: null });
+  it('révoque toutes les sessions via la fonction serveur sans transmettre de rôle ni de token', async () => {
+    mocks.invoke.mockResolvedValue({
+      data: {
+        success: true,
+        mode: 'application_registry_only',
+        revoked_count: 3,
+        application_sessions_revoked: true,
+        refresh_tokens_revoked: false,
+        access_tokens_revoked: false,
+      },
+      error: null,
+    });
 
     await expect(userSessionService.revokeAll(TARGET_ID)).resolves.toBe(3);
-    expect(mocks.rpc).toHaveBeenCalledWith('snp_sessions_revoquer_toutes', {
-      p_user_id: TARGET_ID,
-      p_excepter_session_courante: true,
-      p_motif: 'Révocation globale depuis la gestion des sessions',
+    expect(mocks.invoke).toHaveBeenCalledWith('revoke-user-sessions', {
+      body: {
+        target_user_id: TARGET_ID,
+        except_current_session: true,
+        reason: 'Révocation globale depuis la gestion des sessions',
+      },
+    });
+    const serializedBody = JSON.stringify(mocks.invoke.mock.calls[0][1]);
+    expect(serializedBody).not.toMatch(/token|role|capability/iu);
+    expect(mocks.rpc).not.toHaveBeenCalledWith('snp_sessions_revoquer_toutes', expect.anything());
+  });
+
+  it('expose explicitement le niveau de garantie pour une révocation self forte', async () => {
+    mocks.invoke.mockResolvedValue({
+      data: {
+        success: true,
+        mode: 'strong_self_others',
+        revoked_count: 2,
+        application_sessions_revoked: true,
+        refresh_tokens_revoked: true,
+        access_tokens_revoked: false,
+      },
+      error: null,
+    });
+
+    await expect(userSessionService.revokeAllSecurely()).resolves.toMatchObject({
+      mode: 'strong_self_others',
+      refresh_tokens_revoked: true,
+      access_tokens_revoked: false,
+    });
+  });
+
+  it('rejette une réponse qui prétend révoquer les refresh tokens d’une cible tierce', async () => {
+    mocks.invoke.mockResolvedValue({
+      data: {
+        success: true,
+        mode: 'application_registry_only',
+        revoked_count: 2,
+        application_sessions_revoked: true,
+        refresh_tokens_revoked: true,
+        access_tokens_revoked: false,
+      },
+      error: null,
+    });
+
+    await expect(userSessionService.revokeAllSecurely(TARGET_ID)).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+    });
+  });
+
+  it('échoue fermé si la fonction de révocation forte est indisponible', async () => {
+    mocks.invoke.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(userSessionService.revokeAll(TARGET_ID)).rejects.toMatchObject({
+      code: 'NETWORK',
     });
   });
 

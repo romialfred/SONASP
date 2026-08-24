@@ -25,6 +25,19 @@ export interface UserSessionSummary {
   revocation_reason: string | null;
 }
 
+export type SessionRevocationMode =
+  | 'strong_self_global'
+  | 'strong_self_others'
+  | 'application_registry_only';
+
+export interface SecureSessionRevocationResult {
+  mode: SessionRevocationMode;
+  revoked_count: number;
+  application_sessions_revoked: true;
+  refresh_tokens_revoked: boolean;
+  access_tokens_revoked: false;
+}
+
 type SessionRpcName =
   | 'snp_session_enregistrer'
   | 'snp_session_signaler_activite'
@@ -137,6 +150,40 @@ function singleSession(data: unknown, operation: UserSessionOperation): UserSess
   return parseSession(data, operation);
 }
 
+function parseSecureRevocation(data: unknown): SecureSessionRevocationResult {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) invalidResponse('revoke-all');
+  const row = data as Record<string, unknown>;
+  if (FORBIDDEN_RESPONSE_FIELDS.some((field) => field in row)) invalidResponse('revoke-all');
+  const modes: SessionRevocationMode[] = [
+    'strong_self_global',
+    'strong_self_others',
+    'application_registry_only',
+  ];
+  if (
+    row.success !== true
+    || typeof row.mode !== 'string'
+    || !modes.includes(row.mode as SessionRevocationMode)
+    || typeof row.revoked_count !== 'number'
+    || !Number.isSafeInteger(row.revoked_count)
+    || row.revoked_count < 0
+    || row.application_sessions_revoked !== true
+    || typeof row.refresh_tokens_revoked !== 'boolean'
+    || row.access_tokens_revoked !== false
+  ) invalidResponse('revoke-all');
+
+  const mode = row.mode as SessionRevocationMode;
+  const strongMode = mode === 'strong_self_global' || mode === 'strong_self_others';
+  if (row.refresh_tokens_revoked !== strongMode) invalidResponse('revoke-all');
+
+  return {
+    mode,
+    revoked_count: row.revoked_count as number,
+    application_sessions_revoked: true,
+    refresh_tokens_revoked: row.refresh_tokens_revoked as boolean,
+    access_tokens_revoked: false,
+  };
+}
+
 function deviceType(userAgent: string): string {
   if (/tablet|ipad/iu.test(userAgent)) return 'tablet';
   if (/mobile|android|iphone/iu.test(userAgent)) return 'mobile';
@@ -149,6 +196,30 @@ function browserName(userAgent: string): string {
   if (/chrome\//iu.test(userAgent)) return 'Chrome';
   if (/safari\//iu.test(userAgent)) return 'Safari';
   return 'Autre';
+}
+
+async function revokeAllSecurely(
+  userId?: string,
+  exceptCurrentSession = true,
+  reason = 'Révocation globale depuis la gestion des sessions',
+): Promise<SecureSessionRevocationResult> {
+  if (userId !== undefined) requiredUuid(userId, 'revoke-all');
+  const motif = reason.trim();
+  if (motif.length < 10 || motif.length > 500) invalidResponse('revoke-all');
+  try {
+    const { data, error } = await supabase.functions.invoke('revoke-user-sessions', {
+      body: {
+        target_user_id: userId ?? null,
+        except_current_session: exceptCurrentSession,
+        reason: motif,
+      },
+    });
+    if (error) throw new UserSessionServiceError('revoke-all', 'EDGE_ERROR');
+    return parseSecureRevocation(data);
+  } catch (error) {
+    if (error instanceof UserSessionServiceError) throw error;
+    throw new UserSessionServiceError('revoke-all', 'NETWORK');
+  }
 }
 
 export function isTerminalCurrentSessionError(error: unknown): boolean {
@@ -211,15 +282,9 @@ export const userSessionService = {
     exceptCurrentSession = true,
     reason = 'Révocation globale depuis la gestion des sessions',
   ): Promise<number> {
-    if (userId !== undefined) requiredUuid(userId, 'revoke-all');
-    const motif = reason.trim();
-    if (motif.length < 10 || motif.length > 500) invalidResponse('revoke-all');
-    const data = await callRpc('snp_sessions_revoquer_toutes', 'revoke-all', {
-      p_user_id: userId ?? null,
-      p_excepter_session_courante: exceptCurrentSession,
-      p_motif: motif,
-    });
-    if (typeof data !== 'number' || !Number.isSafeInteger(data) || data < 0) invalidResponse('revoke-all');
-    return data;
+    const resultat = await revokeAllSecurely(userId, exceptCurrentSession, reason);
+    return resultat.revoked_count;
   },
+
+  revokeAllSecurely,
 };

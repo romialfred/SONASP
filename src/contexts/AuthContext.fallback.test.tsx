@@ -12,6 +12,7 @@ const authMocks = vi.hoisted(() => ({
   registerCurrentSession: vi.fn(),
   reportActivity: vi.fn(),
   revokeSession: vi.fn(),
+  revokeAllSecurely: vi.fn(),
   isTerminalSessionError: vi.fn(),
   sessionActivityCallback: null as (() => Promise<void>) | null,
   profileResult: null as Record<string, unknown> | null,
@@ -62,6 +63,7 @@ vi.mock('@/services/userSessionService', () => ({
     registerCurrentSession: authMocks.registerCurrentSession,
     reportActivity: authMocks.reportActivity,
     revoke: authMocks.revokeSession,
+    revokeAllSecurely: authMocks.revokeAllSecurely,
   },
 }));
 
@@ -102,6 +104,15 @@ function SignInProbe() {
   );
 }
 
+function SignOutProbe() {
+  const { initialized, signOut, user } = useAuth();
+  return (
+    <button type="button" disabled={!initialized || !user} onClick={() => void signOut()}>
+      Déconnexion test
+    </button>
+  );
+}
+
 describe('AuthProvider profile fallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -119,6 +130,13 @@ describe('AuthProvider profile fallback', () => {
     });
     authMocks.reportActivity.mockResolvedValue(undefined);
     authMocks.revokeSession.mockResolvedValue(undefined);
+    authMocks.revokeAllSecurely.mockResolvedValue({
+      mode: 'strong_self_global',
+      revoked_count: 2,
+      application_sessions_revoked: true,
+      refresh_tokens_revoked: true,
+      access_tokens_revoked: false,
+    });
     authMocks.isTerminalSessionError.mockReturnValue(false);
   });
 
@@ -367,5 +385,58 @@ describe('AuthProvider profile fallback', () => {
 
     expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
     expect(screen.getByTestId('auth-state')).toHaveAttribute('data-user-id', '');
+  });
+
+  it('révoque registre et refresh tokens avant de purger localement une déconnexion manuelle', async () => {
+    authMocks.profileResult = {
+      id: 'active-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent actif',
+      role: 'management',
+      is_active: true,
+    };
+    authMocks.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'active-123' } } },
+      error: null,
+    });
+
+    render(<AuthProvider><SignOutProbe /></AuthProvider>);
+    const button = await screen.findByRole('button', { name: 'Déconnexion test' });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(authMocks.revokeAllSecurely).toHaveBeenCalledWith(
+      undefined,
+      false,
+      'Déconnexion globale volontaire par le titulaire du compte',
+    ));
+    expect(authMocks.revokeSession).not.toHaveBeenCalled();
+    expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('retombe sur la révocation courante et le signOut global si l’Edge est indisponible', async () => {
+    authMocks.profileResult = {
+      id: 'active-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent actif',
+      role: 'management',
+      is_active: true,
+    };
+    authMocks.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'active-123' } } },
+      error: null,
+    });
+    authMocks.revokeAllSecurely.mockRejectedValue(new Error('edge unavailable'));
+
+    render(<AuthProvider><SignOutProbe /></AuthProvider>);
+    const button = await screen.findByRole('button', { name: 'Déconnexion test' });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(authMocks.revokeSession).toHaveBeenCalledWith(
+      '33333333-3333-4333-8333-333333333333',
+      'Déconnexion volontaire de la session courante',
+    ));
+    expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'global' });
   });
 });

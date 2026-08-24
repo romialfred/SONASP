@@ -373,17 +373,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const serverSessionId = serverSessionIdRef.current;
       serverSessionIdRef.current = null;
       serverSessionRegistrationRef.current = null;
+      let refreshTokensRevokedByEdge = false;
       if (serverSessionId) {
         try {
-          await userSessionService.revoke(serverSessionId, 'Déconnexion volontaire de la session courante');
+          const resultat = await userSessionService.revokeAllSecurely(
+            undefined,
+            false,
+            'Déconnexion globale volontaire par le titulaire du compte',
+          );
+          refreshTokensRevokedByEdge = resultat.mode === 'strong_self_global';
         } catch {
-          // La déconnexion Supabase ne doit jamais être bloquée par l'audit.
+          try {
+            await userSessionService.revoke(serverSessionId, 'Déconnexion volontaire de la session courante');
+          } catch {
+            // La déconnexion Supabase ne doit jamais être bloquée par l'audit.
+          }
         }
       }
 
-      // Now call Supabase signOut
+      // L'Edge a déjà révoqué tous les refresh tokens en mode fort. Le scope
+      // local purge alors le stockage de cet onglet sans refaire une révocation
+      // globale. En fallback, le client demande lui-même le scope global.
       console.log('[Auth] Calling supabase.auth.signOut()');
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: refreshTokensRevokedByEdge ? 'local' : 'global' });
 
       // Clear state immediately (don't wait for onAuthStateChange)
       console.log('[Auth] Clearing auth state');

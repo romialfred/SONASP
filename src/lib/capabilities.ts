@@ -14,6 +14,8 @@ export const CAPABILITIES = {
   COMPTOIR_MANAGE: 'comptoir.manage',
   COLLECTORS_MANAGE: 'collectors.manage',
   COLLECTOR_OPERATE: 'collector.operate',
+  ARTISAN_CARDS_MANAGE: 'artisan.cards.manage',
+  ARTISAN_PAYMENT_METHODS_MANAGE: 'artisan.payment-methods.manage',
   MINE_OPERATE: 'mine.operate',
   FACTORY_OPERATE: 'factory.operate',
   AIRPORT_OPERATE: 'airport.operate',
@@ -137,6 +139,22 @@ export function hasCapability(
   }
 
   return ROLE_CAPABILITY_FALLBACK[user.role]?.includes(capability) ?? false;
+}
+
+/**
+ * Une capability sensible n'est jamais déduite du rôle ni du statut Owner.
+ * Sa présence dans la liste autoritative prouve que le serveur a aussi validé
+ * les conditions de session (notamment l'AAL2 et les overrides actifs).
+ */
+export function hasSensitiveCapability(
+  user: UserProfile | null | undefined,
+  capability: CapabilityCode,
+): boolean {
+  return Boolean(
+    user?.is_active
+    && Array.isArray(user.capabilities)
+    && user.capabilities.includes(capability),
+  );
 }
 
 export function hasAnyCapability(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { UserProfile } from '@/types/auth';
-import { CAPABILITIES, hasCapability } from './capabilities';
+import { CAPABILITIES, hasCapability, hasSensitiveCapability } from './capabilities';
 
 const profile = (overrides: Partial<UserProfile>): UserProfile => ({
   id: 'user-id',
@@ -43,5 +43,29 @@ describe('capacités frontend', () => {
   it('refuse toute capacité à un compte désactivé, même si elle est renvoyée', () => {
     const inactive = profile({ is_active: false, capabilities: [CAPABILITIES.ACCOUNTS_MANAGE] });
     expect(hasCapability(inactive, CAPABILITIES.ACCOUNTS_MANAGE)).toBe(false);
+  });
+
+  it('ne déduit jamais les capabilities artisan sensibles du seul rôle admin', () => {
+    const adminAal1 = profile({ role: 'admin', capabilities: undefined });
+    expect(hasCapability(adminAal1, CAPABILITIES.ARTISAN_CARDS_MANAGE)).toBe(false);
+    expect(hasCapability(adminAal1, CAPABILITIES.ARTISAN_PAYMENT_METHODS_MANAGE)).toBe(false);
+
+    const adminAal2 = profile({
+      role: 'admin',
+      capabilities: [
+        CAPABILITIES.ARTISAN_CARDS_MANAGE,
+        CAPABILITIES.ARTISAN_PAYMENT_METHODS_MANAGE,
+      ],
+    });
+    expect(hasCapability(adminAal2, CAPABILITIES.ARTISAN_CARDS_MANAGE)).toBe(true);
+    expect(hasCapability(adminAal2, CAPABILITIES.ARTISAN_PAYMENT_METHODS_MANAGE)).toBe(true);
+  });
+
+  it('exige une capability autoritative même pour Owner sur une opération sensible', () => {
+    const ownerAal1 = profile({ role: 'owner', capabilities: undefined });
+    expect(hasSensitiveCapability(ownerAal1, CAPABILITIES.ARTISAN_CARDS_MANAGE)).toBe(false);
+
+    const ownerAal2 = profile({ role: 'owner', capabilities: [CAPABILITIES.ARTISAN_CARDS_MANAGE] });
+    expect(hasSensitiveCapability(ownerAal2, CAPABILITIES.ARTISAN_CARDS_MANAGE)).toBe(true);
   });
 });

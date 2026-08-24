@@ -21,6 +21,8 @@ import { Badge, ChoiceCards, Field, Note, Section, Segmented } from '@/component
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import {
   LIBELLES_MOYEN,
@@ -180,6 +182,11 @@ export interface ArtisanMinierFormProps {
 
 export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinierFormProps) {
   const isEditMode = Boolean(artisan?.id);
+  const { user } = useAuth();
+  const canManagePaymentMethods = hasSensitiveCapability(
+    user,
+    CAPABILITIES.ARTISAN_PAYMENT_METHODS_MANAGE,
+  );
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
 
   const [values, setValues] = useState<ArtisanFormValues>(() => valuesFromArtisan(artisan));
@@ -190,6 +197,9 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
   const [pieceFile, setPieceFile] = useState<File | null>(null);
   const [cartePreview, setCartePreview] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [verifyingMoyenId, setVerifyingMoyenId] = useState<string | null>(null);
+  const [reviewReasons, setReviewReasons] = useState<Record<string, string>>({});
+  const [dirtyMoyenIds, setDirtyMoyenIds] = useState<Set<string>>(() => new Set());
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -299,18 +309,25 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
    * Le premier moyen ajoute devient le principal : sans marque, l'ecran de
    * paiement n'aurait rien a preselectionner.
    */
-  const ajouterMoyen = () =>
+  const ajouterMoyen = () => {
+    if (!canManagePaymentMethods) return;
     setMoyens((courants) => {
       const nouveau = { ...MOYEN_VIDE(artisan?.id || ''), est_principal: courants.length === 0 };
       return [...courants, nouveau];
     });
+  };
 
-  const modifierMoyen = <C extends keyof MoyenPaiement>(index: number, champ: C, valeur: MoyenPaiement[C]) =>
+  const modifierMoyen = <C extends keyof MoyenPaiement>(index: number, champ: C, valeur: MoyenPaiement[C]) => {
+    if (!canManagePaymentMethods) return;
+    const id = moyens[index]?.id;
+    if (id) setDirtyMoyenIds((current) => new Set(current).add(id));
     setMoyens((courants) =>
       courants.map((moyen, rang) => (rang === index ? { ...moyen, [champ]: valeur } : moyen))
     );
+  };
 
-  const retirerMoyen = (index: number) =>
+  const retirerMoyen = (index: number) => {
+    if (!canManagePaymentMethods) return;
     setMoyens((courants) => {
       const restants = courants.filter((_, rang) => rang !== index);
       // Retirer le principal laisserait la liste sans defaut.
@@ -318,8 +335,11 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
         ? appliquerPrincipalUnique(restants, 0)
         : restants;
     });
+  };
 
-  const erreurMoyens = moyens.map(validerMoyen).find(Boolean) || null;
+  const erreurMoyens = canManagePaymentMethods
+    ? moyens.map(validerMoyen).find(Boolean) || null
+    : null;
 
   useEffect(() => {
     if (!artisan?.id) return;
@@ -332,6 +352,35 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
       monte = false;
     };
   }, [artisan?.id]);
+
+  const handleReviewMoyen = async (moyen: MoyenPaiement, approuve: boolean) => {
+    if (!canManagePaymentMethods || !moyen.id || verifyingMoyenId) return;
+    if (dirtyMoyenIds.has(moyen.id)) {
+      showError('Enregistrez d’abord les modifications avant de vérifier cette coordonnée.');
+      return;
+    }
+    const motif = reviewReasons[moyen.id]?.trim();
+    if (!approuve && (!motif || motif.length < 10)) {
+      showError('Le rejet exige un motif d’au moins dix caractères.');
+      return;
+    }
+
+    setVerifyingMoyenId(moyen.id);
+    try {
+      const reviewed = await artisanMoyenPaiementService.verifier(
+        moyen.id,
+        approuve,
+        approuve ? undefined : motif,
+      );
+      setMoyens((current) => current.map((item) => (item.id === reviewed.id ? reviewed : item)));
+      setReviewReasons((current) => ({ ...current, [moyen.id as string]: '' }));
+      showSuccess(approuve ? 'Moyen de paiement vérifié' : 'Moyen de paiement rejeté et désactivé');
+    } catch (reason) {
+      showError(reason instanceof Error ? reason.message : 'La vérification du moyen de paiement a échoué.');
+    } finally {
+      setVerifyingMoyenId(null);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -354,7 +403,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
       const artisanId = enregistre?.id || artisan?.id;
       const echecs: string[] = [];
 
-      if (artisanId) {
+      if (artisanId && canManagePaymentMethods) {
         try {
           await artisanMoyenPaiementService.remplacerPourArtisan(artisanId, moyens);
         } catch {
@@ -681,6 +730,12 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
             {/* Les coordonnées étaient frappées à chaque règlement, sur l'écran de
                 paiement : ressaisie du numéro à chaque fois, et aucune garantie que le
                 compte crédité appartienne à l'artisan. */}
+            {!canManagePaymentMethods && (
+              <Note tone="warning" icon={AlertCircle}>
+                Consultation uniquement : une session AAL2 avec la capability de gestion des moyens de paiement est requise.
+              </Note>
+            )}
+
             {moyens.length === 0 ? (
               <Note tone="warning" icon={AlertCircle}>
                 Aucun moyen de paiement enregistré. Sans coordonnée, cet artisan ne pourra
@@ -700,23 +755,38 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                             type="radio"
                             name="moyen-principal"
                             checked={Boolean(moyen.est_principal)}
-                            onChange={() => setMoyens((courants) => appliquerPrincipalUnique(courants, index))}
+                            disabled={!canManagePaymentMethods}
+                            onChange={() => {
+                              if (!canManagePaymentMethods) return;
+                              setDirtyMoyenIds((current) => {
+                                const next = new Set(current);
+                                moyens.forEach((item) => item.id && next.add(item.id));
+                                return next;
+                              });
+                              setMoyens((courants) => appliquerPrincipalUnique(courants, index));
+                            }}
                           />
                           <span>Principal</span>
                         </label>
-                        <button
-                          type="button"
-                          aria-label={`Retirer le moyen ${index + 1}`}
-                          onClick={() => retirerMoyen(index)}
-                        >
-                          <X aria-hidden="true" />
-                        </button>
+                        <Badge tone={moyen.verifie_le ? 'success' : moyen.actif === false ? 'danger' : 'warning'}>
+                          {moyen.verifie_le ? 'Vérifié' : moyen.actif === false ? 'Rejeté / désactivé' : 'À vérifier'}
+                        </Badge>
+                        {canManagePaymentMethods && (
+                          <button
+                            type="button"
+                            aria-label={`Retirer le moyen ${index + 1}`}
+                            onClick={() => retirerMoyen(index)}
+                          >
+                            <X aria-hidden="true" />
+                          </button>
+                        )}
                       </header>
 
                       <div className="artisan-form__moyen-champs">
                         <Field label="Type" required>
                           <select
                             value={moyen.type}
+                            disabled={!canManagePaymentMethods}
                             onChange={(event) =>
                               modifierMoyen(index, 'type', event.target.value as TypeMoyenPaiement)
                             }
@@ -732,6 +802,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                         <Field label="Titulaire du compte" required hint="Nom porté sur le compte">
                           <input
                             value={moyen.titulaire}
+                            disabled={!canManagePaymentMethods}
                             onChange={(event) => modifierMoyen(index, 'titulaire', event.target.value)}
                             placeholder="Nom tel qu’enregistré auprès de l’opérateur"
                           />
@@ -741,6 +812,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                           <Field label="Numéro de téléphone" required>
                             <input
                               value={moyen.numero_telephone || ''}
+                              disabled={!canManagePaymentMethods}
                               onChange={(event) => modifierMoyen(index, 'numero_telephone', event.target.value)}
                               placeholder="+226 __ __ __ __"
                             />
@@ -752,6 +824,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                             <Field label="Banque" required>
                               <input
                                 value={moyen.banque || ''}
+                                disabled={!canManagePaymentMethods}
                                 onChange={(event) => modifierMoyen(index, 'banque', event.target.value)}
                                 placeholder="Établissement teneur du compte"
                               />
@@ -759,6 +832,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                             <Field label="Numéro de compte" required>
                               <input
                                 value={moyen.numero_compte || ''}
+                                disabled={!canManagePaymentMethods}
                                 onChange={(event) => modifierMoyen(index, 'numero_compte', event.target.value)}
                                 placeholder="RIB ou IBAN"
                               />
@@ -766,21 +840,61 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                             <Field label="Code SWIFT" hint="Pour un virement international">
                               <input
                                 value={moyen.code_swift || ''}
+                                disabled={!canManagePaymentMethods}
                                 onChange={(event) => modifierMoyen(index, 'code_swift', event.target.value)}
                               />
                             </Field>
                           </>
                         )}
                       </div>
+
+                      {canManagePaymentMethods && moyen.id && moyen.actif !== false && !moyen.verifie_le && (
+                        <div className="artisan-form__moyen-review">
+                          <label htmlFor={`review-reason-${moyen.id}`}>Motif de rejet</label>
+                          <input
+                            id={`review-reason-${moyen.id}`}
+                            value={reviewReasons[moyen.id] || ''}
+                            onChange={(event) => setReviewReasons((current) => ({
+                              ...current,
+                              [moyen.id as string]: event.target.value,
+                            }))}
+                            placeholder="Au moins 10 caractères pour un rejet"
+                            disabled={verifyingMoyenId === moyen.id}
+                          />
+                          <button
+                            type="button"
+                            className="sn-btn sn-btn--primary sn-btn--sm"
+                            disabled={verifyingMoyenId !== null || dirtyMoyenIds.has(moyen.id)}
+                            onClick={() => void handleReviewMoyen(moyen, true)}
+                          >
+                            {verifyingMoyenId === moyen.id && <Loader2 className="sn-spin" aria-hidden="true" />}
+                            Vérifier
+                          </button>
+                          <button
+                            type="button"
+                            className="sn-btn sn-btn--sm"
+                            disabled={
+                              verifyingMoyenId !== null
+                              || dirtyMoyenIds.has(moyen.id)
+                              || (reviewReasons[moyen.id]?.trim().length || 0) < 10
+                            }
+                            onClick={() => void handleReviewMoyen(moyen, false)}
+                          >
+                            Rejeter
+                          </button>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
               </ul>
             )}
 
-            <button type="button" className="sn-btn artisan-form__ajout-moyen" onClick={ajouterMoyen}>
-              <Plus aria-hidden="true" /> Ajouter un moyen de paiement
-            </button>
+            {canManagePaymentMethods && (
+              <button type="button" className="sn-btn artisan-form__ajout-moyen" onClick={ajouterMoyen}>
+                <Plus aria-hidden="true" /> Ajouter un moyen de paiement
+              </button>
+            )}
 
             {erreurMoyens && (
               <Note tone="danger" icon={AlertCircle}>

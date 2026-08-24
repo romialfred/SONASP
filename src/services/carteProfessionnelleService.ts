@@ -1,12 +1,21 @@
 import { supabase } from '@/lib/supabase';
-import { secureNumericCode } from '@/lib/secureRandom';
+
+export type CarteProfessionnelleStatut =
+  | 'en_cours'
+  | 'validee'
+  | 'en_exploitation'
+  | 'expiree'
+  | 'suspendue'
+  | 'annulee';
 
 export interface CarteProfessionnelle {
   id: string;
   artisan_id: string;
   numero_carte: string;
-  statut: 'en_cours' | 'validee' | 'en_exploitation' | 'expiree' | 'suspendue' | 'annulee';
-  date_delivrance: string;
+  statut: CarteProfessionnelleStatut;
+  date_emission?: string;
+  /** Alias historique encore employé par certains écrans. */
+  date_delivrance?: string;
   date_expiration: string;
   validee_par?: string;
   validee_le?: string;
@@ -21,6 +30,81 @@ export interface CarteProfessionnelle {
   numero_securite?: string;
   created_at?: string;
   updated_at?: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+}
+
+interface CarteRpcError {
+  code?: string;
+  message?: string;
+}
+
+type CarteRpcParameters =
+  | {
+      p_carte_id: string;
+      p_expected_statut: CarteProfessionnelleStatut;
+      p_nouveau_statut: CarteProfessionnelleStatut;
+      p_motif: string | null;
+    }
+  | {
+      p_artisan_id: string;
+      p_date_expiration: string | null;
+      p_observations: string | null;
+    };
+
+const carteRpcClient = supabase as unknown as {
+  rpc(
+    functionName: 'snp_transition_carte_professionnelle' | 'snp_renouveler_carte_professionnelle',
+    parameters: CarteRpcParameters,
+  ): PromiseLike<{ data: CarteProfessionnelle | null; error: CarteRpcError | null }>;
+};
+
+const TRANSITIONS_AUTORISEES: Record<CarteProfessionnelleStatut, readonly CarteProfessionnelleStatut[]> = {
+  en_cours: ['validee', 'annulee'],
+  validee: ['en_exploitation', 'suspendue', 'annulee'],
+  en_exploitation: ['suspendue', 'expiree', 'annulee'],
+  suspendue: ['validee', 'annulee'],
+  expiree: [],
+  annulee: [],
+};
+
+export class CarteProfessionnelleConflictError extends Error {
+  constructor() {
+    super('La carte a changé d’état entre-temps. Actualisez la page avant de réessayer.');
+    this.name = 'CarteProfessionnelleConflictError';
+  }
+}
+
+export class CarteProfessionnelleMutationUnavailableError extends Error {
+  constructor() {
+    super('Cette modification de carte ne dispose pas encore d’une opération serveur sécurisée.');
+    this.name = 'CarteProfessionnelleMutationUnavailableError';
+  }
+}
+
+function nullableText(value?: string): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function assertTransition(
+  expected: CarteProfessionnelleStatut,
+  next: CarteProfessionnelleStatut,
+  motif?: string,
+): void {
+  if (!TRANSITIONS_AUTORISEES[expected].includes(next)) {
+    throw new Error(`Transition de carte interdite : ${expected} vers ${next}.`);
+  }
+  if ((next === 'suspendue' || next === 'annulee') && (motif?.trim().length || 0) < 10) {
+    throw new Error('La suspension ou l’annulation exige un motif d’au moins dix caractères.');
+  }
+}
+
+function throwCarteRpcError(error: CarteRpcError): never {
+  if (error.code === '40001' || error.message?.includes('Conflit optimiste')) {
+    throw new CarteProfessionnelleConflictError();
+  }
+  throw error;
 }
 
 export const carteProfessionnelleService = {
@@ -158,198 +242,59 @@ export const carteProfessionnelleService = {
     return filteredData;
   },
 
-  async valider(carteId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
+  async transitionner(
+    carteId: string,
+    expectedStatut: CarteProfessionnelleStatut,
+    nouveauStatut: CarteProfessionnelleStatut,
+    motif?: string,
+  ): Promise<CarteProfessionnelle> {
+    assertTransition(expectedStatut, nouveauStatut, motif);
+    const { data, error } = await carteRpcClient.rpc('snp_transition_carte_professionnelle', {
+      p_carte_id: carteId,
+      p_expected_statut: expectedStatut,
+      p_nouveau_statut: nouveauStatut,
+      p_motif: nullableText(motif),
+    });
 
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .update({
-        statut: 'validee',
-        validee_par: user?.id,
-        validee_le: new Date().toISOString()
-      })
-      .eq('id', carteId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    if (data) {
-      await supabase
-        .from('snp_artisan_activities')
-        .insert([
-          {
-            artisan_id: data.artisan_id,
-            carte_id: carteId,
-            type_activite: 'validation',
-            description: 'Carte professionnelle validée',
-            created_by: user?.id
-          }
-        ]);
-    }
-
+    if (error) throwCarteRpcError(error);
+    if (!data) throw new Error('Le serveur n’a pas confirmé la transition de la carte.');
     return data;
   },
 
-  async suspendre(carteId: string, motif: string) {
-    const { data: { user } } = await supabase.auth.getUser();
+  async valider(carteId: string, expectedStatut: CarteProfessionnelleStatut = 'en_cours') {
+    return this.transitionner(carteId, expectedStatut, 'validee');
+  },
 
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .update({
-        statut: 'suspendue',
-        suspendue_par: user?.id,
-        suspendue_le: new Date().toISOString(),
-        motif_suspension: motif
-      })
-      .eq('id', carteId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    if (data) {
-      await supabase
-        .from('snp_artisan_activities')
-        .insert([
-          {
-            artisan_id: data.artisan_id,
-            carte_id: carteId,
-            type_activite: 'suspension',
-            description: `Carte suspendue: ${motif}`,
-            created_by: user?.id
-          }
-        ]);
-    }
-
-    return data;
+  async suspendre(
+    carteId: string,
+    expectedStatut: Extract<CarteProfessionnelleStatut, 'validee' | 'en_exploitation'>,
+    motif: string,
+  ) {
+    return this.transitionner(carteId, expectedStatut, 'suspendue', motif);
   },
 
   async reactiver(carteId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
+    return this.transitionner(carteId, 'suspendue', 'validee');
+  },
 
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .update({
-        statut: 'validee',
-        suspendue_par: null,
-        suspendue_le: null,
-        motif_suspension: null
-      })
-      .eq('id', carteId)
-      .select()
-      .single();
+  async renouveler(artisanId: string, dateExpiration?: string, observations?: string) {
+    const { data, error } = await carteRpcClient.rpc('snp_renouveler_carte_professionnelle', {
+      p_artisan_id: artisanId,
+      p_date_expiration: nullableText(dateExpiration),
+      p_observations: nullableText(observations),
+    });
 
     if (error) throw error;
-
-    if (data) {
-      await supabase
-        .from('snp_artisan_activities')
-        .insert([
-          {
-            artisan_id: data.artisan_id,
-            carte_id: carteId,
-            type_activite: 'validation',
-            description: 'Carte réactivée après suspension',
-            created_by: user?.id
-          }
-        ]);
-    }
-
+    if (!data) throw new Error('Le serveur n’a pas confirmé le renouvellement de la carte.');
     return data;
   },
 
-  async renouveler(artisanId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const oldCartes = await this.getByArtisanId(artisanId);
-
-    for (const oldCarte of oldCartes || []) {
-      if (oldCarte.statut !== 'expiree' && oldCarte.statut !== 'annulee') {
-        await supabase
-          .from('snp_cartes_professionnelles')
-          .update({ statut: 'expiree' })
-          .eq('id', oldCarte.id);
-      }
-    }
-
-    const { data: artisan } = await supabase
-      .from('snp_artisans_miniers')
-      .select('numero_carte')
-      .eq('id', artisanId)
-      .single();
-
-    if (!artisan) throw new Error('Artisan not found');
-
-    const numeroSecurite = secureNumericCode(10);
-
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .insert([
-        {
-          artisan_id: artisanId,
-          numero_carte: artisan.numero_carte,
-          statut: 'en_cours',
-          date_delivrance: new Date().toISOString().split('T')[0],
-          date_expiration: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          numero_securite: numeroSecurite,
-          qr_code_data: JSON.stringify({
-            numero_carte: artisan.numero_carte,
-            artisan_id: artisanId,
-            numero_securite: numeroSecurite
-          })
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    if (data) {
-      await supabase
-        .from('snp_artisan_activities')
-        .insert([
-          {
-            artisan_id: artisanId,
-            carte_id: data.id,
-            type_activite: 'renouvellement',
-            description: 'Carte professionnelle renouvelée',
-            created_by: user?.id
-          }
-        ]);
-    }
-
-    return data;
+  async updateCartePdfUrl(_carteId: string, _pdfUrl: string, _rectoUrl?: string, _versoUrl?: string) {
+    throw new CarteProfessionnelleMutationUnavailableError();
   },
 
-  async updateCartePdfUrl(carteId: string, pdfUrl: string, rectoUrl?: string, versoUrl?: string) {
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .update({
-        carte_pdf_url: pdfUrl,
-        carte_recto_url: rectoUrl,
-        carte_verso_url: versoUrl
-      })
-      .eq('id', carteId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async updateQrCodeUrl(carteId: string, qrCodeUrl: string) {
-    const { data, error } = await supabase
-      .from('snp_cartes_professionnelles')
-      .update({
-        qr_code_url: qrCodeUrl
-      })
-      .eq('id', carteId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  async updateQrCodeUrl(_carteId: string, _qrCodeUrl: string) {
+    throw new CarteProfessionnelleMutationUnavailableError();
   },
 
   /**

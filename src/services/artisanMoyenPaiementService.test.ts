@@ -1,7 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  from: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn(),
+  remove: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: { rpc: mocks.rpc, from: mocks.from },
+}));
 import {
   MOYEN_VIDE,
   appliquerPrincipalUnique,
+  artisanMoyenPaiementService,
   coordonneeMasquee,
   libelleMoyen,
   moyenParDefaut,
@@ -101,5 +114,113 @@ describe('moyenParDefaut', () => {
   it('écarte les moyens désactivés', () => {
     expect(moyenParDefaut([mobile({ id: 'm1', actif: false })])).toBeNull();
     expect(moyenParDefaut([])).toBeNull();
+  });
+});
+
+describe('artisanMoyenPaiementService — mutations RPC-only', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.rpc.mockResolvedValue({ data: mobile({ id: 'm1' }), error: null });
+  });
+
+  it('crée uniquement par la RPC sans acteur, vérificateur ni audit client', async () => {
+    await artisanMoyenPaiementService.creer(mobile());
+
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_upsert_artisan_moyen_paiement', {
+      p_artisan_id: 'a1',
+      p_type: 'orange_money',
+      p_titulaire: 'KABORE Awa',
+      p_moyen_id: null,
+      p_libelle: null,
+      p_numero_telephone: '+22670112233',
+      p_banque: null,
+      p_numero_compte: null,
+      p_code_swift: null,
+      p_est_principal: false,
+      p_actif: true,
+      p_observations: null,
+    });
+    const params = mocks.rpc.mock.calls[0][1];
+    expect(params).not.toHaveProperty('created_by');
+    expect(params).not.toHaveProperty('updated_by');
+    expect(params).not.toHaveProperty('verifie_par');
+    expect(params).not.toHaveProperty('verifie_le');
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('vérifie par la RPC de double contrôle avec le seul motif métier', async () => {
+    await artisanMoyenPaiementService.verifier('m1', true);
+
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_verifier_artisan_moyen_paiement', {
+      p_moyen_id: 'm1',
+      p_approuve: true,
+      p_motif: null,
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('refuse un rejet sans motif avant tout appel RPC', async () => {
+    await expect(artisanMoyenPaiementService.verifier('m1', false, 'trop bref'))
+      .rejects.toThrow('d’au moins dix caractères');
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('propage les refus AAL2, capability, tenant et double contrôle sans fallback', async () => {
+    const refusal = { code: '42501', message: 'Double contrôle requis : le saisissant ne vérifie pas sa coordonnée.' };
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: refusal });
+
+    await expect(artisanMoyenPaiementService.verifier('m1', true)).rejects.toBe(refusal);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('conserve le rattachement serveur lors d’une modification malgré un payload forgé', async () => {
+    const result = Promise.resolve({ data: mobile({ id: 'm1', artisan_id: 'a1' }), error: null });
+    const query: Record<string, unknown> = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      single: vi.fn(() => result),
+    };
+    query.select = vi.fn(() => query);
+    query.eq = vi.fn(() => query);
+    mocks.from.mockReturnValue(query);
+
+    await artisanMoyenPaiementService.modifier(
+      'm1',
+      { artisan_id: 'artisan-hors-tenant', titulaire: 'Nouveau titulaire' } as never,
+    );
+
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'snp_upsert_artisan_moyen_paiement',
+      expect.objectContaining({
+        p_moyen_id: 'm1',
+        p_artisan_id: 'a1',
+        p_titulaire: 'Nouveau titulaire',
+      }),
+    );
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
+  it('remplace la liste par SELECT puis RPC sans mutation PostgREST', async () => {
+    const result = Promise.resolve({ data: [mobile({ id: 'obsolete' })], error: null });
+    const query: Record<string, unknown> = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      insert: mocks.insert,
+      update: mocks.update,
+      delete: mocks.remove,
+      then: result.then.bind(result),
+    };
+    query.select = vi.fn(() => query);
+    query.eq = vi.fn(() => query);
+    mocks.from.mockReturnValue(query);
+
+    await artisanMoyenPaiementService.remplacerPourArtisan('a1', [bancaire({ id: 'm2' })]);
+
+    expect(mocks.from).toHaveBeenCalledWith('snp_artisan_moyens_paiement');
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
   });
 });

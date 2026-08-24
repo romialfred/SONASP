@@ -9,6 +9,15 @@ const mocks = vi.hoisted(() => ({
   getCartesEnCours: vi.fn(),
   valider: vi.fn(),
   showAlert: vi.fn(),
+  auth: {
+    user: {
+      id: 'admin-1',
+      role: 'admin',
+      is_active: true,
+      capabilities: ['artisan.cards.manage'],
+    },
+    profileLoading: false,
+  },
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -22,6 +31,10 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({ showAlert: mocks.showAlert }),
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mocks.auth,
 }));
 
 vi.mock('@/services/carteProfessionnelleService', () => ({
@@ -56,6 +69,13 @@ const cards = [
 describe('CarteValidation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.auth.user = {
+      id: 'admin-1',
+      role: 'admin',
+      is_active: true,
+      capabilities: ['artisan.cards.manage'],
+    };
+    mocks.auth.profileLoading = false;
     mocks.getDashboardStats.mockResolvedValue({ total: 40, en_cours: 2, validees: 31, expirees: 5, suspendues: 2 });
     mocks.getCartesEnCours.mockResolvedValue(cards);
     mocks.valider.mockResolvedValue({});
@@ -82,7 +102,7 @@ describe('CarteValidation', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: /Valider/ })[0]);
 
-    await waitFor(() => expect(mocks.valider).toHaveBeenCalledWith('c1'));
+    await waitFor(() => expect(mocks.valider).toHaveBeenCalledWith('c1', 'en_cours'));
     expect(mocks.showAlert).toHaveBeenCalledWith('Carte SONASP/AM/2026/000012 validée', 'success');
     await waitFor(() => expect(mocks.getCartesEnCours).toHaveBeenCalledTimes(2));
   });
@@ -113,5 +133,36 @@ describe('CarteValidation', () => {
     await waitFor(() =>
       expect(mocks.showAlert).toHaveBeenCalledWith('Erreur lors du chargement des données', 'error')
     );
+  });
+
+  it('reste fermé sans capability AAL2 et ne charge aucune donnée sensible', async () => {
+    mocks.auth.user = {
+      id: 'admin-aal1',
+      role: 'admin',
+      is_active: true,
+      capabilities: [],
+    };
+
+    render(<CarteValidation />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('session AAL2');
+    expect(screen.queryByRole('button', { name: /Valider/ })).not.toBeInTheDocument();
+    expect(mocks.getDashboardStats).not.toHaveBeenCalled();
+    expect(mocks.getCartesEnCours).not.toHaveBeenCalled();
+  });
+
+  it('affiche le refus de double contrôle renvoyé par le serveur', async () => {
+    mocks.valider.mockRejectedValueOnce(
+      new Error('Double contrôle requis : l’émetteur ne valide pas sa carte.'),
+    );
+    render(<CarteValidation />);
+    await waitFor(() => expect(screen.getByText('KABORE Awa')).toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Valider/ })[0]);
+
+    await waitFor(() => expect(mocks.showAlert).toHaveBeenCalledWith(
+      'Double contrôle requis : l’émetteur ne valide pas sa carte.',
+      'error',
+    ));
   });
 });

@@ -13,6 +13,7 @@ import type { ArtisanMinier } from '@/services/artisanMinierService';
 const mocks = vi.hoisted(() => ({
   listerMoyens: vi.fn(),
   remplacerMoyens: vi.fn(),
+  verifierMoyen: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   uploadDocument: vi.fn(),
@@ -21,6 +22,18 @@ const mocks = vi.hoisted(() => ({
   showError: vi.fn(),
   onSuccess: vi.fn(),
   onCancel: vi.fn(),
+  auth: {
+    user: {
+      id: 'admin-1',
+      role: 'admin',
+      is_active: true,
+      capabilities: ['artisan.payment-methods.manage'],
+    },
+  },
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mocks.auth,
 }));
 
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
@@ -51,6 +64,7 @@ vi.mock('@/services/artisanMoyenPaiementService', async () => {
     artisanMoyenPaiementService: {
       listerParArtisan: mocks.listerMoyens,
       remplacerPourArtisan: mocks.remplacerMoyens,
+      verifier: mocks.verifierMoyen,
     },
   };
 });
@@ -145,6 +159,13 @@ describe('ArtisanMinierForm', () => {
     mocks.preview.mockResolvedValue('data:image/png;base64,AAA');
     mocks.listerMoyens.mockResolvedValue([]);
     mocks.remplacerMoyens.mockResolvedValue(undefined);
+    mocks.verifierMoyen.mockResolvedValue({});
+    mocks.auth.user = {
+      id: 'admin-1',
+      role: 'admin',
+      is_active: true,
+      capabilities: ['artisan.payment-methods.manage'],
+    };
   });
 
   const remplirFiche = () => {
@@ -253,5 +274,89 @@ describe('ArtisanMinierForm', () => {
     expect(
       Number(volet.getByRole('progressbar', { name: 'Complétude de la fiche' }).getAttribute('aria-valuenow'))
     ).toBeGreaterThan(0);
+  });
+
+  it('rend les coordonnées en lecture seule sans capability AAL2 et ne tente aucune mutation', async () => {
+    mocks.auth.user = {
+      id: 'admin-aal1',
+      role: 'admin',
+      is_active: true,
+      capabilities: [],
+    };
+    mocks.listerMoyens.mockResolvedValue([{
+      id: 'm1',
+      artisan_id: 'a9',
+      type: 'orange_money',
+      titulaire: 'TRAORE Modibo',
+      numero_telephone: '+22370000001',
+      est_principal: true,
+      actif: true,
+      verifie_le: null,
+    }]);
+
+    render(<ArtisanMinierForm artisan={artisanMalien} onCancel={mocks.onCancel} onSuccess={mocks.onSuccess} />);
+
+    await waitFor(() => expect(screen.getByText(/Consultation uniquement/)).toBeInTheDocument());
+    expect(screen.getByDisplayValue('TRAORE Modibo')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Vérifier' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ajouter un moyen/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Mettre à jour la fiche/ }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalled());
+    expect(mocks.remplacerMoyens).not.toHaveBeenCalled();
+  });
+
+  it('expose l’état de vérification et relaie le refus serveur de double contrôle', async () => {
+    mocks.listerMoyens.mockResolvedValue([{
+      id: 'm1',
+      artisan_id: 'a9',
+      type: 'orange_money',
+      titulaire: 'TRAORE Modibo',
+      numero_telephone: '+22370000001',
+      est_principal: true,
+      actif: true,
+      verifie_le: null,
+    }]);
+    mocks.verifierMoyen.mockRejectedValueOnce(
+      new Error('Double contrôle requis : le saisissant ne vérifie pas sa coordonnée.'),
+    );
+
+    render(<ArtisanMinierForm artisan={artisanMalien} onCancel={mocks.onCancel} onSuccess={mocks.onSuccess} />);
+    await waitFor(() => expect(screen.getByText('À vérifier')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
+
+    await waitFor(() => expect(mocks.verifierMoyen).toHaveBeenCalledWith('m1', true, undefined));
+    expect(mocks.showError).toHaveBeenCalledWith(
+      'Double contrôle requis : le saisissant ne vérifie pas sa coordonnée.',
+    );
+  });
+
+  it('affiche l’état vérifié confirmé par la RPC et retire les actions de revue', async () => {
+    const moyen = {
+      id: 'm1',
+      artisan_id: 'a9',
+      type: 'orange_money',
+      titulaire: 'TRAORE Modibo',
+      numero_telephone: '+22370000001',
+      est_principal: true,
+      actif: true,
+      verifie_le: null,
+    };
+    mocks.listerMoyens.mockResolvedValue([moyen]);
+    mocks.verifierMoyen.mockResolvedValueOnce({
+      ...moyen,
+      verifie_le: '2026-08-24T20:00:00Z',
+      verifie_par: 'controleur-2',
+    });
+
+    render(<ArtisanMinierForm artisan={artisanMalien} onCancel={mocks.onCancel} onSuccess={mocks.onSuccess} />);
+    await waitFor(() => expect(screen.getByText('À vérifier')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
+
+    await waitFor(() => expect(screen.getByText('Vérifié')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Vérifier' })).not.toBeInTheDocument();
+    expect(mocks.showSuccess).toHaveBeenCalledWith('Moyen de paiement vérifié');
   });
 });

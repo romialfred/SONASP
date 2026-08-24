@@ -23,6 +23,8 @@ import {
   type Column,
 } from '@/components/ui/sn';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import type { ArtisanMinier } from '@/services/artisanMinierService';
@@ -57,6 +59,8 @@ const formatDate = (value?: string) => {
 
 export default function CarteValidation() {
   const navigate = useNavigate();
+  const { user, profileLoading } = useAuth();
+  const canManageCards = hasSensitiveCapability(user, CAPABILITIES.ARTISAN_CARDS_MANAGE);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -81,17 +85,25 @@ export default function CarteValidation() {
   };
 
   useEffect(() => {
+    if (profileLoading) return;
+    if (!canManageCards) {
+      setLoading(false);
+      return;
+    }
     void loadData();
-  }, []);
+  }, [canManageCards, profileLoading]);
 
   const handleValidate = async (carte: CarteRow) => {
     setValidating(carte.id);
     try {
-      await carteProfessionnelleService.valider(carte.id);
+      await carteProfessionnelleService.valider(carte.id, carte.statut);
       showAlert(`Carte ${carte.numero_carte} validée`, 'success');
       await loadData();
-    } catch {
-      showAlert('Erreur lors de la validation', 'error');
+    } catch (reason) {
+      showAlert(
+        reason instanceof Error ? reason.message : 'Erreur lors de la validation',
+        'error',
+      );
     } finally {
       setValidating(null);
     }
@@ -172,18 +184,28 @@ export default function CarteValidation() {
         />
 
         <div style={{ marginTop: 16 }}>
-          <StatGrid
-            ariaLabel="Indicateurs des cartes professionnelles"
-            items={[
-              { label: 'En attente de validation', value: integer.format(stats?.en_cours || 0), icon: Clock3, tone: 'gold' },
-              { label: 'Cartes validées', value: integer.format(stats?.validees || 0), icon: BadgeCheck, tone: 'green' },
-              { label: 'Cartes expirées', value: integer.format(stats?.expirees || 0), icon: XCircle, tone: 'red' },
-              { label: 'Cartes suspendues', value: integer.format(stats?.suspendues || 0), icon: ShieldCheck, tone: 'violet' },
-            ]}
-          />
+          {canManageCards ? (
+            <StatGrid
+              ariaLabel="Indicateurs des cartes professionnelles"
+              items={[
+                { label: 'En attente de validation', value: integer.format(stats?.en_cours || 0), icon: Clock3, tone: 'gold' },
+                { label: 'Cartes validées', value: integer.format(stats?.validees || 0), icon: BadgeCheck, tone: 'green' },
+                { label: 'Cartes expirées', value: integer.format(stats?.expirees || 0), icon: XCircle, tone: 'red' },
+                { label: 'Cartes suspendues', value: integer.format(stats?.suspendues || 0), icon: ShieldCheck, tone: 'violet' },
+              ]}
+            />
+          ) : (
+            <div role="alert" className="sn-empty-state">
+              <ShieldCheck aria-hidden="true" />
+              <strong>Validation non autorisée</strong>
+              <p>
+                Une session AAL2 avec la capability d’administration des cartes professionnelles est requise.
+              </p>
+            </div>
+          )}
         </div>
 
-        <div style={{ marginTop: 12 }}>
+        {canManageCards && <div style={{ marginTop: 12 }}>
           <Section
             id="pending"
             icon={ClipboardCheck}
@@ -214,7 +236,7 @@ export default function CarteValidation() {
               />
             )}
           </Section>
-        </div>
+        </div>}
       </div>
     </NationalDashboardLayout>
   );

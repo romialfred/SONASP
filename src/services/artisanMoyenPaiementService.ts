@@ -24,7 +24,74 @@ export interface MoyenPaiement {
   est_principal: boolean;
   actif: boolean;
   verifie_le?: string | null;
+  verifie_par?: string | null;
   observations?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+}
+
+export type MoyenPaiementEditable = Pick<
+  MoyenPaiement,
+  | 'artisan_id'
+  | 'type'
+  | 'libelle'
+  | 'numero_telephone'
+  | 'banque'
+  | 'numero_compte'
+  | 'code_swift'
+  | 'titulaire'
+  | 'est_principal'
+  | 'actif'
+  | 'observations'
+>;
+
+interface MoyenRpcError {
+  code?: string;
+  message?: string;
+}
+
+const moyenRpcClient = supabase as unknown as {
+  rpc(
+    functionName: 'snp_upsert_artisan_moyen_paiement' | 'snp_verifier_artisan_moyen_paiement',
+    parameters: Record<string, unknown>,
+  ): PromiseLike<{ data: MoyenPaiement | null; error: MoyenRpcError | null }>;
+};
+
+function nullableText(value?: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function editablePayload(moyen: MoyenPaiement, actif = moyen.actif !== false): Record<string, unknown> {
+  return {
+    p_artisan_id: moyen.artisan_id,
+    p_type: moyen.type,
+    p_titulaire: moyen.titulaire.trim(),
+    p_moyen_id: moyen.id || null,
+    p_libelle: nullableText(moyen.libelle),
+    p_numero_telephone: nullableText(moyen.numero_telephone),
+    p_banque: nullableText(moyen.banque),
+    p_numero_compte: nullableText(moyen.numero_compte),
+    p_code_swift: nullableText(moyen.code_swift),
+    p_est_principal: Boolean(moyen.est_principal),
+    p_actif: actif,
+    p_observations: nullableText(moyen.observations),
+  };
+}
+
+async function upsertMoyen(moyen: MoyenPaiement, actif = moyen.actif !== false): Promise<MoyenPaiement> {
+  const message = validerMoyen(moyen);
+  if (message) throw new Error(message);
+
+  const { data, error } = await moyenRpcClient.rpc(
+    'snp_upsert_artisan_moyen_paiement',
+    editablePayload(moyen, actif),
+  );
+  if (error) throw error;
+  if (!data) throw new Error('Le serveur n’a pas confirmé le moyen de paiement.');
+  return data;
 }
 
 export const TYPES_MOBILE: TypeMoyenPaiement[] = ['orange_money', 'moov_money', 'wave', 'mobile_money'];
@@ -125,37 +192,44 @@ export const artisanMoyenPaiementService = {
   },
 
   async creer(moyen: MoyenPaiement): Promise<MoyenPaiement> {
-    const message = validerMoyen(moyen);
-    if (message) throw new Error(message);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from(TABLE)
-      .insert([{ ...moyen, created_by: user?.id, updated_by: user?.id }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as MoyenPaiement;
+    return upsertMoyen({ ...moyen, id: undefined });
   },
 
-  async modifier(id: string, moyen: Partial<MoyenPaiement>): Promise<MoyenPaiement> {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
+  async modifier(
+    id: string,
+    moyen: Partial<Omit<MoyenPaiementEditable, 'artisan_id'>>,
+  ): Promise<MoyenPaiement> {
+    const { data: current, error } = await supabase
       .from(TABLE)
-      .update({ ...moyen, updated_by: user?.id, updated_at: new Date().toISOString() })
+      .select('*')
       .eq('id', id)
-      .select()
       .single();
-
     if (error) throw error;
-    return data as MoyenPaiement;
+    if (!current) throw new Error('Moyen de paiement introuvable.');
+    const existing = current as MoyenPaiement;
+    return upsertMoyen({ ...existing, ...moyen, artisan_id: existing.artisan_id, id });
   },
 
   /** Désactivation plutôt que suppression : un règlement passé y renvoie. */
   async desactiver(id: string): Promise<void> {
-    const { error } = await supabase.from(TABLE).update({ actif: false }).eq('id', id);
+    const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single();
     if (error) throw error;
+    if (!data) throw new Error('Moyen de paiement introuvable.');
+    await upsertMoyen({ ...(data as MoyenPaiement), id }, false);
+  },
+
+  async verifier(id: string, approuve: boolean, motif?: string): Promise<MoyenPaiement> {
+    if (!approuve && (motif?.trim().length || 0) < 10) {
+      throw new Error('Le rejet exige un motif d’au moins dix caractères.');
+    }
+    const { data, error } = await moyenRpcClient.rpc('snp_verifier_artisan_moyen_paiement', {
+      p_moyen_id: id,
+      p_approuve: approuve,
+      p_motif: nullableText(motif),
+    });
+    if (error) throw error;
+    if (!data) throw new Error('Le serveur n’a pas confirmé la vérification du moyen de paiement.');
+    return data;
   },
 
   /**
@@ -163,11 +237,9 @@ export const artisanMoyenPaiementService = {
    * Employé par le formulaire de fiche, qui présente la liste complète.
    */
   async remplacerPourArtisan(artisanId: string, moyens: MoyenPaiement[]): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-
     const { data: existants, error: lecture } = await supabase
       .from(TABLE)
-      .select('id')
+      .select('*')
       .eq('artisan_id', artisanId)
       .eq('actif', true);
     if (lecture) throw lecture;
@@ -175,29 +247,16 @@ export const artisanMoyenPaiementService = {
     const conserves = new Set(moyens.map((moyen) => moyen.id).filter(Boolean));
     const aRetirer = (existants || []).map((ligne) => ligne.id).filter((id) => !conserves.has(id));
 
-    // Le retrait précède l'ajout : l'index d'unicité du moyen principal
-    // refuserait deux principaux le temps de la bascule.
-    if (aRetirer.length > 0) {
-      const { error } = await supabase.from(TABLE).update({ actif: false }).in('id', aRetirer);
-      if (error) throw error;
+    const byId = new Map((existants || []).map((ligne) => [ligne.id, ligne as MoyenPaiement]));
+
+    // Le retrait précède l'ajout : la RPC maintient l'unicité du principal sous verrou.
+    for (const id of aRetirer) {
+      const existant = byId.get(id);
+      if (existant) await upsertMoyen(existant, false);
     }
 
     for (const moyen of moyens) {
-      const message = validerMoyen(moyen);
-      if (message) throw new Error(message);
-
-      if (moyen.id) {
-        const { error } = await supabase
-          .from(TABLE)
-          .update({ ...moyen, updated_by: user?.id, updated_at: new Date().toISOString() })
-          .eq('id', moyen.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from(TABLE)
-          .insert([{ ...moyen, artisan_id: artisanId, created_by: user?.id, updated_by: user?.id }]);
-        if (error) throw error;
-      }
+      await upsertMoyen({ ...moyen, artisan_id: artisanId });
     }
   },
 };

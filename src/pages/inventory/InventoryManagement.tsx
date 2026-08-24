@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  Activity,
   Boxes,
   Building2,
+  ChevronRight,
   Coins,
   FlaskConical,
   Landmark,
@@ -13,6 +15,7 @@ import {
   Plane,
   Plus,
   RefreshCw,
+  TrendingUp,
   Truck,
   Wallet,
 } from 'lucide-react';
@@ -24,10 +27,13 @@ import {
   GRAMMES_PAR_ONCE,
   ozVersKg,
   STOCK_VIDE,
+  type PosteStock,
+  type TendanceStock,
   type StockNational,
 } from './inventoryOverviewData';
 import './inventory-overview.css';
 import { useAuth } from '@/contexts/AuthContext';
+import { StockHistoryDialog } from './StockHistoryDialog';
 
 const onces = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const entier = new Intl.NumberFormat('fr-FR');
@@ -51,6 +57,41 @@ export function part(valeur: number, total: number): number | null {
   return (valeur / total) * 100;
 }
 
+function StockTrend({ points }: { points: TendanceStock[] }) {
+  const donnees = points.length > 0 ? points : [{ cle: 'aucune', libelle: '—', valeurOz: 0 }];
+  const maximum = Math.max(...donnees.map((point) => point.valeurOz), 0);
+  const largeur = 420;
+  const hauteur = 92;
+  const marge = 8;
+  const x = (index: number) => marge + (index * (largeur - marge * 2)) / Math.max(donnees.length - 1, 1);
+  const y = (value: number) => hauteur - marge - (maximum > 0 ? (value / maximum) * (hauteur - marge * 2) : 0);
+  const chemin = donnees.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(index)} ${y(point.valeurOz)}`).join(' ');
+  const total = donnees.reduce((somme, point) => somme + point.valeurOz, 0);
+  const actifs = donnees.filter((point) => point.valeurOz > 0).length;
+
+  return (
+    <figure className="stocks__tendance">
+      <figcaption>
+        <span><TrendingUp aria-hidden="true" /> Entrées sur 6 mois</span>
+        <strong>{formatOz(total)}</strong>
+        <small>{actifs} mois avec mouvement</small>
+      </figcaption>
+      <svg viewBox={`0 0 ${largeur} ${hauteur}`} role="img" aria-label={`Tendance des entrées de stock sur six mois : ${formatOz(total)} au total`}>
+        <path className="stocks__tendance-zone" d={`${chemin} L ${x(donnees.length - 1)} ${hauteur - marge} L ${x(0)} ${hauteur - marge} Z`} />
+        <path className="stocks__tendance-ligne" d={chemin} />
+        {donnees.map((point, index) => (
+          <circle key={point.cle} cx={x(index)} cy={y(point.valeurOz)} r="3" />
+        ))}
+      </svg>
+      <ul aria-label="Valeurs mensuelles des entrées">
+        {donnees.map((point) => (
+          <li key={point.cle}><span>{point.libelle}</span><b>{onces.format(point.valeurOz)}</b></li>
+        ))}
+      </ul>
+    </figure>
+  );
+}
+
 export function InventoryManagement() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,6 +100,7 @@ export function InventoryManagement() {
   const [chargement, setChargement] = useState(true);
   const [actualisation, setActualisation] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [posteOuvert, setPosteOuvert] = useState<PosteStock | null>(null);
 
   const charger = useCallback(async (actualiser = false) => {
     if (actualiser) setActualisation(true);
@@ -86,46 +128,51 @@ export function InventoryManagement() {
   const postes = useMemo(
     () => [
       {
-        cle: 'disponible',
+        cle: 'disponible' as const,
         libelle: 'Disponible à la vente',
         icone: Coins,
         valeur: stock.disponibleOz,
-        detail: 'Non engagé, mobilisable immédiatement',
+        detail: 'Mobilisable',
       },
       {
-        cle: 'alloue',
+        cle: 'alloue' as const,
         libelle: 'Alloué à des ventes',
         icone: Wallet,
         valeur: stock.allloueOz,
-        detail: 'Réservé sur des ventes en cours',
+        detail: 'Réservé',
       },
       {
-        cle: 'raffinerie',
+        cle: 'raffinerie' as const,
         libelle: 'Chez la raffinerie',
         icone: Truck,
         valeur: stock.enRouteOz,
-        detail: 'Expédié ou en cours de traitement',
+        detail: 'En traitement',
       },
       {
-        cle: 'reintegrer',
+        cle: 'reintegrer' as const,
         libelle: 'Raffiné, à réintégrer',
         icone: PackageCheck,
         valeur: stock.aReintegrerOz,
         detail: stock.aReintegrerLots > 0
-          ? `${stock.aReintegrerLots} lot(s) traités, en attente de saisie`
-          : 'Aucun lot en attente de saisie',
+          ? `${stock.aReintegrerLots} lot(s) à saisir`
+          : 'Aucun lot',
         alerte: stock.aReintegrerOz > 0,
       },
       {
-        cle: 'aeroport',
+        cle: 'aeroport' as const,
         libelle: 'À l’aéroport',
         icone: Plane,
         valeur: stock.aeroportOz,
-        detail: 'Lots constitués, en attente d’embarquement',
+        detail: 'Prêt à expédier',
       },
     ],
     [stock]
   );
+  const posteSelectionne = postes.find((poste) => poste.cle === posteOuvert) || null;
+  const historiqueSelectionne = posteOuvert
+    ? stock.historique.filter((ligne) => ligne.poste === posteOuvert)
+    : [];
+  const transitActifOz = stock.transit.reduce((total, ligne) => total + ligne.quantiteOz, 0);
 
   return (
     <NationalDashboardLayout>
@@ -172,34 +219,36 @@ export function InventoryManagement() {
             <div className="stocks__principal">
               {/* Les politiques RLS limitent ce socle à la mine connectée. */}
               <section className="stocks__socle" aria-label={isMine ? 'Stock de la mine' : 'Stock national'}>
-                <header>
-                  <span className="stocks__socle-icone" aria-hidden="true">
-                    <Landmark />
-                  </span>
-                  <div>
-                    <p>{isMine ? 'Or de la mine sous suivi' : 'Or national sous suivi'}</p>
-                    <strong>{formatOz(socle)}</strong>
-                    <small>{formatKg(socle)} · coffres, transit, aéroport et créances</small>
-                  </div>
-                </header>
+                <div className="stocks__socle-apercu">
+                  <header>
+                    <span className="stocks__socle-icone" aria-hidden="true"><Landmark /></span>
+                    <div>
+                      <p>{isMine ? 'Position consolidée' : 'Position nationale'}</p>
+                      <strong>{formatOz(socle)}</strong>
+                      <small>{formatKg(socle)} sous suivi</small>
+                    </div>
+                    <span className="stocks__statut"><Activity aria-hidden="true" /> Données à jour</span>
+                  </header>
 
-                <dl className="stocks__socle-detail">
-                  <div>
-                    <dt>En coffre</dt>
-                    <dd>{formatOz(stock.totalOz)}</dd>
-                    <span>{formatKg(stock.totalOz)}</span>
-                  </div>
-                  <div>
-                    <dt>Hors coffre</dt>
-                    <dd>{formatOz(horsCoffre)}</dd>
-                    <span>{formatKg(horsCoffre)}</span>
-                  </div>
-                  <div>
-                    <dt>Déjà vendu</dt>
-                    <dd>{formatOz(stock.venduOz)}</dd>
-                    <span>{formatKg(stock.venduOz)}</span>
-                  </div>
-                </dl>
+                  <dl className="stocks__socle-detail">
+                    <div>
+                      <dt>En coffre</dt>
+                      <dd>{formatOz(stock.totalOz)}</dd>
+                      <span>{formatKg(stock.totalOz)}</span>
+                    </div>
+                    <div>
+                      <dt>Hors coffre</dt>
+                      <dd>{formatOz(horsCoffre)}</dd>
+                      <span>{part(horsCoffre, socle) === null ? '—' : `${Math.round(part(horsCoffre, socle) || 0)} % du total`}</span>
+                    </div>
+                    <div>
+                      <dt>Déjà vendu</dt>
+                      <dd>{formatOz(stock.venduOz)}</dd>
+                      <span>{formatKg(stock.venduOz)}</span>
+                    </div>
+                  </dl>
+                </div>
+                <StockTrend points={stock.tendance} />
               </section>
 
               {/* --- Postes --- */}
@@ -208,9 +257,13 @@ export function InventoryManagement() {
                   const Icone = poste.icone;
                   const pourcentage = part(poste.valeur, socle);
                   return (
-                    <article
+                    <button
+                      type="button"
                       key={poste.cle}
                       className={`stocks__poste${'alerte' in poste && poste.alerte ? ' est-en-attente' : ''}`}
+                      onClick={() => setPosteOuvert(poste.cle)}
+                      aria-haspopup="dialog"
+                      aria-label={`Voir l’historique : ${poste.libelle}, ${formatOz(poste.valeur)}`}
                     >
                       <header>
                         <span aria-hidden="true">
@@ -230,14 +283,13 @@ export function InventoryManagement() {
                       >
                         <span style={{ width: `${Math.min(pourcentage || 0, 100)}%` }} />
                       </div>
-                      <small>
-                        {/* Aucune part n'est calculée sur un socle vide. */}
-                        {pourcentage === null
-                          ? '—'
-                          : `${entier.format(Math.round(pourcentage))} % ${isMine ? 'du stock de la mine' : 'du national'}`} ·{' '}
-                        {poste.detail}
-                      </small>
-                    </article>
+                      <footer>
+                        <small>
+                          {pourcentage === null ? '—' : `${entier.format(Math.round(pourcentage))} %`} · {poste.detail}
+                        </small>
+                        <ChevronRight aria-hidden="true" />
+                      </footer>
+                    </button>
                   );
                 })}
               </section>
@@ -247,14 +299,15 @@ export function InventoryManagement() {
                   mine industrielle : `gold_inventory` n'offre aucun autre
                   rattachement. L'or acheté aux artisans se compte donc à part,
                   pour ce qu'il est — une matière détenue, en attente de fonte. */}
-              <Section
-                id="origines"
-                icon={FlaskConical}
-                tone="blue"
-                title="Origine de la matière"
-                description={isMine ? "Origine de l’or suivi pour votre société." : "D’où vient l’or que la SONASP détient."}
-              >
-                <div className="stocks__origines">
+              {!isMine && (
+                <Section
+                  id="origines"
+                  icon={FlaskConical}
+                  tone="blue"
+                  title="Origine de la matière"
+                  description="D’où vient l’or que la SONASP détient."
+                >
+                  <div className="stocks__origines">
                   <article>
                     <header>
                       <span aria-hidden="true"><Building2 /></span>
@@ -306,8 +359,9 @@ export function InventoryManagement() {
                       </button>
                     )}
                   </article>
-                </div>
-              </Section>
+                  </div>
+                </Section>
+              )}
 
               {/* --- Stock par mine --- */}
               <Section
@@ -375,25 +429,24 @@ export function InventoryManagement() {
             {/* --- Volet de droite --- */}
             <aside className="stocks__volet" aria-label="Engagements et acheminements">
               <section className="stocks__carte stocks__creances">
-                <h3>Vendu non réglé</h3>
+                <header><span>Créances ouvertes</span><Wallet aria-hidden="true" /></header>
                 <p className="stocks__creances-valeur">{formatOz(stock.venduNonPayeOz)}</p>
                 <p className="stocks__creances-montant">
-                  {/* Un total n'a de sens qu'en devise unique. */}
                   {stock.venduNonPayeDevise
                     ? `${entier.format(Math.round(stock.venduNonPayeMontant))} ${stock.venduNonPayeDevise}`
-                    : '— (devises multiples)'}
-                </p>
-                <p className="stocks__carte-note">
-                  Or sorti du stock dont le règlement n’est pas encaissé. Une vente sans ligne de
-                  paiement y est comptée.
+                    : 'Devises multiples'}
                 </p>
                 <button type="button" className="sn-btn" onClick={() => navigate('/payments')}>
-                  Voir les paiements
+                  Paiements <ChevronRight aria-hidden="true" />
                 </button>
               </section>
 
               <section className="stocks__carte">
-                <h3>Acheminements en cours</h3>
+                <header><span>En transit</span><Truck aria-hidden="true" /></header>
+                <div className="stocks__carte-kpis">
+                  <strong>{stock.transit.length}</strong><span>expédition(s)</span>
+                  <b>{formatOz(transitActifOz)}</b>
+                </div>
                 {stock.transit.length === 0 ? (
                   <p className="stocks__carte-note">Aucune expédition en cours.</p>
                 ) : (
@@ -413,22 +466,28 @@ export function InventoryManagement() {
                   </ul>
                 )}
                 <button type="button" className="sn-btn" onClick={() => navigate('/freight')}>
-                  Suivi des expéditions
+                  Expéditions <ChevronRight aria-hidden="true" />
                 </button>
               </section>
 
               <section className="stocks__carte">
-                <h3>Aéroport</h3>
+                <header><span>À l’aéroport</span><Plane aria-hidden="true" /></header>
                 <p className="stocks__creances-valeur">{formatOz(stock.aeroportOz)}</p>
-                <p className="stocks__carte-note">
-                  Lots préparés et scellés, en attente de dédouanement ou d’embarquement.
-                </p>
+                <p className="stocks__carte-note">Prêt pour dédouanement ou embarquement.</p>
                 <button type="button" className="sn-btn" onClick={() => navigate('/shipping/preparation')}>
-                  Voir les préparations
+                  Préparations <ChevronRight aria-hidden="true" />
                 </button>
               </section>
             </aside>
           </div>
+        )}
+        {posteSelectionne && (
+          <StockHistoryDialog
+            titre={posteSelectionne.libelle}
+            totalOz={posteSelectionne.valeur}
+            lignes={historiqueSelectionne}
+            onClose={() => setPosteOuvert(null)}
+          />
         )}
       </div>
     </NationalDashboardLayout>

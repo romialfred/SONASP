@@ -121,6 +121,20 @@ describe('navigation', () => {
     expect(doublons).toEqual([]);
   });
 
+  it('regroupe la prévision annuelle et le forecast dans une seule entrée', () => {
+    const production = ALL_GROUPS.find((group) => group.id === 'production');
+    const planification = production?.children?.filter((item) =>
+      item.path === '/performance/budgets' || item.path === '/performance/forecasts'
+    );
+
+    expect(planification).toEqual([
+      expect.objectContaining({
+        label: 'Prévisions & Forecast',
+        path: '/performance/budgets',
+      }),
+    ]);
+  });
+
   it('projette pour une mine les modules industriels sans Achats aux mines', () => {
     const mine = {
       id: 'mine-user', email: 'mine@example.bf', full_name: 'Mine Exemple', phone: null,

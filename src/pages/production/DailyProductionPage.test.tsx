@@ -288,7 +288,7 @@ describe('DailyProductionPage', () => {
     render(<DailyProductionPage />);
 
     expect(await screen.findByText('Formulaire de production')).toBeInTheDocument();
-    expect(screen.getByText('Modifier la déclaration')).toBeInTheDocument();
+    expect(screen.getByText('Modifier la production')).toBeInTheDocument();
     // L'état est consommé : un retour arrière ne rouvre pas le formulaire.
     expect(mocks.navigate).toHaveBeenCalledWith('.', { replace: true, state: null });
   });

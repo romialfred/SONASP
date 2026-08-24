@@ -15,6 +15,7 @@ import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLa
 import { Badge, EmptyState, Note, PageHeader, Section, Segmented, StatGrid } from '@/components/ui/sn';
 import { exportLicenseService, type ExportLicense } from '@/services/exportLicenseService';
 import { errorMessage } from '@/lib/errorMessage';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import './export-licenses.css';
 
 const GRAMMES_PAR_ONCE = 31.1034768;
@@ -98,6 +99,15 @@ export function cumulsLicences(licences: ExportLicense[], maintenant = new Date(
   };
 }
 
+/** Deuxième barrière côté client, en complément de la requête et de la RLS. */
+export function limiterLicencesAuPerimetre(
+  licences: ExportLicense[],
+  miningCompanyId: string | null
+): ExportLicense[] {
+  if (!miningCompanyId) return licences;
+  return licences.filter((licence) => licence.mining_company_id === miningCompanyId);
+}
+
 const periode = (licence: ExportLicense) => {
   const format = (valeur: string, avecAnnee: boolean) =>
     new Date(valeur).toLocaleDateString('fr-FR', {
@@ -110,6 +120,7 @@ const periode = (licence: ExportLicense) => {
 
 export function ExportLicensesPage() {
   const navigate = useNavigate();
+  const { isMine, companyId, companyCode } = useMineWorkspace();
   const [licences, setLicences] = useState<ExportLicense[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -119,7 +130,13 @@ export function ExportLicensesPage() {
     setChargement(true);
     setErreur(null);
     try {
-      setLicences(await exportLicenseService.getAllLicenses());
+      if (isMine && !companyId) {
+        throw new Error('Aucune société minière n’est rattachée à ce compte.');
+      }
+      const resultat = isMine && companyId
+        ? await exportLicenseService.getLicensesByCompany(companyId)
+        : await exportLicenseService.getAllLicenses();
+      setLicences(limiterLicencesAuPerimetre(resultat, isMine ? companyId : null));
     } catch (raison) {
       // L'échec n'était consigné qu'au journal : l'écran restait vide sans un mot.
       setErreur(errorMessage(raison, 'Impossible de charger les licences d’exportation.'));
@@ -127,7 +144,7 @@ export function ExportLicensesPage() {
     } finally {
       setChargement(false);
     }
-  }, []);
+  }, [companyId, isMine]);
 
   useEffect(() => {
     void charger();
@@ -140,11 +157,13 @@ export function ExportLicensesPage() {
 
   return (
     <NationalDashboardLayout>
-      <div className="sn-page licences">
+      <div className={`sn-page licences${isMine ? ' licences--mine' : ''}`}>
         <PageHeader
           icon={FileText}
           title="Licences d’exportation"
-          subtitle="Volumes autorisés, consommés et restants par compagnie minière."
+          subtitle={isMine
+            ? `Autorisations, échéances et volumes disponibles${companyCode ? ` pour ${companyCode}` : ''}.`
+            : 'Vue consolidée des autorisations et des volumes exportables.'}
           breadcrumb={[{ label: 'Production' }, { label: 'Licences d’exportation' }]}
           actions={
             <button
@@ -195,8 +214,8 @@ export function ExportLicensesPage() {
         <Section
           id="licences"
           icon={FileText}
-          title={`Licences (${visibles.length})`}
-          description="Chaque fiche donne le volume autorisé, ce qui reste et l’échéance."
+          title={`Autorisations (${visibles.length})`}
+          description="Consultez le quota, la consommation et la date de validité de chaque licence."
         >
           <div className="licences__filtres">
             <Segmented
@@ -261,10 +280,12 @@ export function ExportLicensesPage() {
                       <header className="licence__tete">
                         <div>
                           <h4>{licence.license_number}</h4>
-                          <p>
-                            {licence.mining_company?.name || 'Compagnie non renseignée'}
-                            {licence.mining_company?.code && <code>{licence.mining_company.code}</code>}
-                          </p>
+                          {!isMine && (
+                            <p>
+                              {licence.mining_company?.name || 'Compagnie non renseignée'}
+                              {licence.mining_company?.code && <code>{licence.mining_company.code}</code>}
+                            </p>
+                          )}
                         </div>
                         <div className="licence__etats">
                           <Badge tone={LIBELLES_ETAT[etat].ton} icon={IconeEtat}>
@@ -284,18 +305,18 @@ export function ExportLicensesPage() {
                           <dd>{licence.issuing_institution || '—'}</dd>
                         </div>
                         <div>
-                          <dt>Période</dt>
+                          <dt>Validité</dt>
                           <dd>{periode(licence)}</dd>
                         </div>
                         <div>
-                          <dt>Autorisée</dt>
+                          <dt>Quota autorisé</dt>
                           <dd className="licence__valeur">
                             {kilos(licence.authorized_quantity_grams)} kg
                             <small>{onces(licence.authorized_quantity_grams)} oz</small>
                           </dd>
                         </div>
                         <div>
-                          <dt>Reste</dt>
+                          <dt>Disponible</dt>
                           <dd className="licence__valeur">
                             {kilos(licence.remaining_quantity_grams)} kg
                             <small>{onces(licence.remaining_quantity_grams)} oz</small>

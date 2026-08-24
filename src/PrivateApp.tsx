@@ -55,8 +55,10 @@ const PaymentCreate = lazyNamed(() => import('./pages/payments/PaymentCreate'), 
 const PaymentDetailsPage = lazyNamed(() => import('./pages/payments/PaymentDetailsPage'), 'PaymentDetailsPage');
 const PaymentRecordPage = lazyNamed(() => import('./pages/payments/PaymentRecordPage'), 'PaymentRecordPage');
 const VirtualPaymentsPage = lazyNamed(() => import('./pages/payments/VirtualPaymentsPage'), 'VirtualPaymentsPage');
-const AnalyticsIntelligenceCenter = lazyNamed(() => import('./pages/analytics/AnalyticsIntelligenceCenter'), 'AnalyticsIntelligenceCenter');
-const ReportsDashboard = lazyNamed(() => import('./pages/reports/ReportsDashboard'), 'ReportsDashboard');
+const BusinessIntelligenceWorkspace = lazyNamed(
+  () => import('./pages/analytics/BusinessIntelligenceWorkspace'),
+  'BusinessIntelligenceWorkspace',
+);
 const UsersListPage = lazyNamed(() => import('./pages/admin/UsersListPage'), 'UsersListPage');
 const UserManagementModern = lazyNamed(() => import('./pages/admin/UserManagementModern'), 'UserManagementModern');
 const UserPermissionsPage = lazyNamed(() => import('./pages/admin/UserPermissionsPage'), 'UserPermissionsPage');
@@ -1159,7 +1161,34 @@ function AppRoutes() {
               path="/analytics"
               element={
                 <ProtectedRoute>
-                  <AnalyticsIntelligenceCenter />
+                  <BusinessIntelligenceWorkspace view="national" />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analytics/national"
+              element={
+                <ProtectedRoute>
+                  <BusinessIntelligenceWorkspace view="national" />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analytics/ventes"
+              element={
+                <ProtectedRoute>
+                  <BusinessIntelligenceWorkspace view="sales" />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analytics/production"
+              element={
+                <ProtectedRoute>
+                  <BusinessIntelligenceWorkspace view="production" />
                 </ProtectedRoute>
               }
             />
@@ -1168,7 +1197,7 @@ function AppRoutes() {
               path="/reports"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.REPORTS_VIEW}>
-                  <ReportsDashboard />
+                  <BusinessIntelligenceWorkspace view="institutional" />
                 </ProtectedRoute>
               }
             />

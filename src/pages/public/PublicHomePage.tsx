@@ -84,14 +84,16 @@ function HeroSection() {
               </span>
             ))}
           </div>
+          <div className="public-hero-flow" aria-label={locale === 'fr' ? 'Flux Mine, SONASP, Marché' : 'Mine, SONASP, Market flow'}>
+            <div><span><Pickaxe aria-hidden="true" /></span><strong>Mine</strong></div>
+            <i aria-hidden="true"><ArrowRight /></i>
+            <div><span><Landmark aria-hidden="true" /></span><strong>SONASP</strong></div>
+            <i aria-hidden="true"><ArrowRight /></i>
+            <div><span><Globe2 aria-hidden="true" /></span><strong>{locale === 'fr' ? 'Marché' : 'Market'}</strong></div>
+          </div>
         </div>
-        <MinePortalPreview />
-        <div className="public-hero-flow" aria-label={locale === 'fr' ? 'Flux Mine, SONASP, Marché' : 'Mine, SONASP, Market flow'}>
-          <div><span><Pickaxe aria-hidden="true" /></span><strong>Mine</strong></div>
-          <i aria-hidden="true"><ArrowRight /></i>
-          <div><span><Landmark aria-hidden="true" /></span><strong>SONASP</strong></div>
-          <i aria-hidden="true"><ArrowRight /></i>
-          <div><span><Globe2 aria-hidden="true" /></span><strong>{locale === 'fr' ? 'Marché' : 'Market'}</strong></div>
+        <div className="public-hero__showcase">
+          <MinePortalPreview />
         </div>
       </div>
     </section>

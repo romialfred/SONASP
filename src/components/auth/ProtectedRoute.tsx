@@ -19,6 +19,20 @@ interface ProtectedRouteProps {
   fallbackPath?: string;
 }
 
+const ADMINISTRATIVE_COMPATIBILITY_PATHS = [
+  '/admin/transport-companies',
+  '/admin/refineries',
+  '/admin/gold-sales-settings',
+  '/admin/modules',
+  '/admin/messagerie',
+] as const;
+
+function isAdministrativeCompatibilityPath(pathname: string): boolean {
+  return ADMINISTRATIVE_COMPATIBILITY_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
 export function ProtectedRoute({
   children,
   allowedRoles,
@@ -126,7 +140,9 @@ export function ProtectedRoute({
     || allowedRoles.includes(user.role)
     || (isMineScopedUser(user) && allowedRoles.includes('mine'));
   const perimetreAdministrateurAutorise = Boolean(
-    allowedRoles?.includes('management') && hasAdministrativePlatformAccess(user),
+    allowedRoles?.includes('management')
+    && hasAdministrativePlatformAccess(user)
+    && isAdministrativeCompatibilityPath(location.pathname),
   );
   if (
     allowedRoles

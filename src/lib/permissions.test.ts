@@ -44,11 +44,14 @@ describe('permissions Owner', () => {
     expect(hasGlobalPlatformAccess(inactiveOwner)).toBe(false);
   });
 
-  it('accorde à l’administrateur l’accès fonctionnel sans le rendre propriétaire', () => {
+  it('limite l’administrateur au socle sans le rendre propriétaire ni acteur métier', () => {
     const admin = { ...owner, id: 'admin-id', role: 'admin' as const };
     expect(hasAdministrativePlatformAccess(admin)).toBe(true);
     expect(hasGlobalPlatformAccess(admin)).toBe(false);
-    expect(hasAllPermissions(admin, Object.values(PERMISSIONS))).toBe(true);
+    expect(hasPermission(admin, PERMISSIONS.USERS_MANAGE)).toBe(true);
+    expect(hasPermission(admin, PERMISSIONS.SETTINGS_MANAGE)).toBe(true);
+    expect(hasPermission(admin, PERMISSIONS.SALES_CREATE)).toBe(false);
+    expect(hasPermission(admin, PERMISSIONS.SALES_APPROVE)).toBe(false);
   });
 
   it('dirige tout représentant de mine vers le portail dédié', () => {

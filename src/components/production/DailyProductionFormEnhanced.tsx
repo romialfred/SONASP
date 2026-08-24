@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Building2, Save, X, FileText, Upload } from 'lucide-react';
+import { Save, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
-import { Card } from '@/components/ui/Card';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { CustomConfirm } from '@/components/ui/CustomConfirm';
@@ -60,9 +59,6 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
   const [documents, setDocuments] = useState<ProductionDocument[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const { alertState, confirmState, showSuccess, showError, closeAlert, closeConfirm } = useCustomAlert();
-  const mineCompany = mineCompanyId
-    ? miningCompanies.find((company) => company.id === mineCompanyId) || null
-    : null;
   const effectiveCompanyId = mineCompanyId || formData.mining_company_id;
 
   useEffect(() => {
@@ -105,14 +101,14 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
         .lte('production_date', today);
 
       if (ytdData && ytdData.length > 0) {
-        const total = ytdData.reduce((sum, p) => sum + p.estimated_oz, 0);
-        const avgFineness = ytdData.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / ytdData.length;
+        const total = ytdData.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0);
+        const avgFineness = ytdData.reduce((sum, p) => sum + (p.estimated_fineness_pct ?? 0), 0) / ytdData.length;
         setYtdSummary({
           total_estimated_oz: total,
           avg_fineness_pct: avgFineness,
           record_count: ytdData.length,
-          total_bullion_grams: ytdData.reduce((sum, p) => sum + p.bullion_grams, 0),
-          total_pure_gold_grams: ytdData.reduce((sum, p) => sum + p.pure_gold_grams, 0)
+          total_bullion_grams: ytdData.reduce((sum, p) => sum + (p.bullion_grams ?? 0), 0),
+          total_pure_gold_grams: ytdData.reduce((sum, p) => sum + (p.pure_gold_grams ?? 0), 0)
         });
       }
     } catch (error) {
@@ -414,38 +410,13 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
     <>
     <div className="production-form-shell">
       <div className="production-form-shell__main">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {production ? 'Modifier la production' : 'Nouvelle production journalière'}
-                {mineCompany && <span className="production-form__mine-title"> — {mineCompany.name}</span>}
-              </h2>
-              {mineCompanyId && (
-                <p className="production-form__scope">
-                  <Building2 aria-hidden="true" /> Enregistrement sécurisé dans le périmètre de {mineCompany?.name || 'votre mine'}
-                </p>
-              )}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              size="sm"
-            >
-              <X className="w-4 h-4 mr-1" />
-              Annuler
-            </Button>
-          </div>
-
-          {/* Period Summaries - Removed as per user request */}
-
+        <div className="production-entry-card">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className={`grid grid-cols-1 gap-4 ${mineCompanyId ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
               {/* Production Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date de Production *
+                  Date de production *
                 </label>
                 <input
                   type="date"
@@ -492,7 +463,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               {/* Bar Reference - Read Only */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bar Reference
+                  Référence de barre
                 </label>
                 <Input
                   type="text"
@@ -542,7 +513,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                     ) : (
                       <p className="text-sm text-gray-600">= {roundUpToFixed(bullionInGrams, 2)} g</p>
                     )}
-                    <p className="text-xs text-gray-500">Reference: 1 oz = 31.10 g</p>
+                    <p className="text-xs text-gray-500">1 oz = 31,1035 g</p>
                   </div>
                 )}
               </div>
@@ -591,9 +562,9 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
             </div>
 
             {/* Calculated Fields */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="production-calculation">
               <h3 className="text-sm font-semibold text-blue-900 mb-3">
-                Métriques Automatiques
+                Résultat calculé
               </h3>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -651,21 +622,19 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                 </div>
               )}
 
-              <p className="text-xs text-blue-600 mt-3">
-                Or fin = doré × titre or ÷ 100  ·  Argent = doré × titre argent ÷ 100  ·  Onces = grammes ÷ 31,1034768
-              </p>
+              <p className="production-calculation-note">Calcul automatique à partir du poids et des teneurs saisis.</p>
             </div>
 
             {/* Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notes
+                Commentaires
               </label>
               <TextArea
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 onFocus={() => setActiveField('notes')}
-                placeholder="Notes supplémentaires sur la production..."
+                placeholder="Précision utile sur cette production (facultatif)"
                 rows={3}
               />
             </div>
@@ -677,7 +646,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                   <div className="flex items-center gap-2">
                     <FileText className="w-5 h-5 text-gray-600" />
                     <h3 className="text-sm font-semibold text-gray-900">
-                      Documents Attachés
+                      Pièces jointes
                     </h3>
                     <span className="text-xs text-gray-500">({documents.length})</span>
                   </div>
@@ -688,7 +657,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
                     className="bg-emerald-600 hover:bg-emerald-700"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Ajouter un Document
+                    Ajouter un document
                   </Button>
                 </div>
 
@@ -728,14 +697,14 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
       </div>
 
-      <aside className="production-form-shell__guide" aria-label="Aide contextuelle">
+      <aside className="production-form-shell__guide" aria-label="Repères de saisie">
         <FieldGuidePanel
+          title="Champs du formulaire"
           fields={dailyProductionFieldGuides}
           activeField={activeField}
-          contextual
           excludeFields={mineCompanyId ? ['mining_company_id'] : []}
         />
       </aside>

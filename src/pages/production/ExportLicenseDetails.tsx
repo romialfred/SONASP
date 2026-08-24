@@ -8,6 +8,7 @@ import { exportLicenseService, ExportLicense } from '@/services/exportLicenseSer
 import { supabase } from '@/lib/supabase';
 import { formatDateStandard } from '@/utils/dateUtils';
 import { formatStatusFr } from '@/utils/statusFormatter';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ShipmentInfo {
   id: string;
@@ -18,6 +19,8 @@ interface ShipmentInfo {
 }
 
 export function ExportLicenseDetails() {
+  const { user } = useAuth();
+  const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();
   const { id } = useParams();
   const [license, setLicense] = useState<ExportLicense | null>(null);
@@ -28,13 +31,18 @@ export function ExportLicenseDetails() {
     if (id) {
       loadLicenseData(id);
     }
-  }, [id]);
+  }, [id, mineCompanyId]);
 
   const loadLicenseData = async (licenseId: string) => {
     try {
       setLoading(true);
-      const licenseData = await exportLicenseService.getLicenseById(licenseId);
+      const licenseData = await exportLicenseService.getLicenseById(licenseId, mineCompanyId);
       setLicense(licenseData);
+
+      if (!licenseData) {
+        setShipments([]);
+        return;
+      }
 
       // Load shipments using this license
       const { data: shipmentsData } = await supabase

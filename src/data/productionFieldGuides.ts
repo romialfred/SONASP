@@ -19,15 +19,21 @@ export const dailyProductionFieldGuides = {
   },
   bullion_grams: {
     title: 'Doré pesé',
-    description: 'Poids total (auto converti en oz)',
+    description: 'Poids total du doré, automatiquement converti en onces.',
     example: '11270 g',
     required: true
   },
   estimated_gold_pct: {
     title: 'Teneur en or (%)',
-    description: 'Part d’or fin dans le doré, de 0 à 100 %',
+    description: 'Part estimée d’or fin dans le doré, de 0 à 100 %.',
     example: '92.1%',
     required: true
+  },
+  estimated_silver_pct: {
+    title: 'Teneur en argent (%)',
+    description: 'Part estimée d’argent dans le doré, de 0 à 100 %.',
+    example: '5,2 %',
+    required: false
   },
   pure_gold_grams: {
     title: 'Or fin (g)',
@@ -42,17 +48,17 @@ export const dailyProductionFieldGuides = {
     readOnly: true
   },
   notes: {
-    title: 'Notes',
-    description: 'Commentaires (optionnel)',
-    example: 'Production exceptionnelle',
+    title: 'Commentaires',
+    description: 'Précision utile sur la production, si nécessaire.',
+    example: 'Coulée de contrôle',
     required: false
   }
 };
 
 export const forecastFieldGuides = {
   forecast_date: {
-    title: 'Forecast Date',
-    description: 'Date pour laquelle la prévision est établie',
+    title: 'Date de référence',
+    description: 'Premier jour de la période prévue.',
     tips: [
       'Date de référence pour la période',
       'Pour les prévisions hebdomadaires: premier jour de la semaine',
@@ -61,8 +67,8 @@ export const forecastFieldGuides = {
     required: true
   },
   period_type: {
-    title: 'Period Type',
-    description: 'Type de période de prévision',
+    title: 'Type de période',
+    description: 'Durée couverte par la prévision.',
     tips: [
       'Daily: Prévision quotidienne',
       'Weekly: Prévision hebdomadaire (7 jours)',
@@ -78,8 +84,8 @@ export const forecastFieldGuides = {
     required: true
   },
   forecast_oz: {
-    title: 'Forecast (Oz)',
-    description: 'Production prévue en onces troy',
+    title: 'Prévision (oz)',
+    description: 'Volume de production attendu.',
     tips: [
       'Basé sur les performances historiques',
       'Conditions normales d\'opération',
@@ -90,8 +96,8 @@ export const forecastFieldGuides = {
     required: false
   },
   budget_oz: {
-    title: 'Budget (Oz)',
-    description: 'Objectif budgétaire en onces troy',
+    title: 'Budget (oz)',
+    description: 'Objectif budgétaire de la période.',
     tips: [
       'Objectif fixé par la direction',
       'Généralement supérieur au forecast',
@@ -102,8 +108,8 @@ export const forecastFieldGuides = {
     required: false
   },
   notes: {
-    title: 'Notes',
-    description: 'Notes sur les prévisions',
+    title: 'Commentaires',
+    description: 'Hypothèse ou précision utile.',
     tips: [
       'Hypothèses utilisées',
       'Facteurs pris en compte',

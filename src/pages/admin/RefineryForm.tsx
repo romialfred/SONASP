@@ -270,7 +270,7 @@ export function RefineryForm() {
           </Section>
 
           <Section
-            id="contact"
+            id="contact-section"
             icon={Contact}
             tone="violet"
             title="Contact référent"

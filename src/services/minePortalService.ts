@@ -125,6 +125,27 @@ export interface MinePortalRequisition {
   mining_company_id: string;
 }
 
+export interface MinePortalShipment {
+  id: string;
+  expedition_lot_number: string | null;
+  status: string;
+  created_at: string;
+  total_weight_oz: number | null;
+  mining_company_id: string;
+}
+
+export interface MinePortalSale {
+  id: string;
+  sale_number: string;
+  status: string;
+  sale_date: string;
+  quantity_oz: number;
+  final_proceeds: number;
+  currency: string;
+  seller_id: string;
+  seller_type: string;
+}
+
 export interface MinePortalSituation {
   facture_total: number;
   facture_payee: number;
@@ -151,6 +172,8 @@ export interface MinePortalSnapshot {
   payments: MinePortalPayment[];
   analyses: MinePortalAnalysis[];
   requisitions: MinePortalRequisition[];
+  shipments: MinePortalShipment[];
+  sales: MinePortalSale[];
   documents: MinePortalDocument[];
   situation: MinePortalSituation | null;
 }
@@ -205,6 +228,25 @@ function assertRpcResult(
 
 type SupabaseError = { message?: string; code?: string; details?: string };
 type SupabaseResult<T> = { data: T | null; error: SupabaseError | null };
+
+/**
+ * Les fonctions du portail Mine sont livrées par les migrations du portail.
+ * Le client généré peut être momentanément en retard sur ces RPC pendant le
+ * développement local ; ce pont conserve un résultat typé sans propager de
+ * conversion non sûre dans chaque opération.
+ */
+async function callMineRpc(
+  functionName: string,
+  parameters: Record<string, unknown>,
+): Promise<SupabaseResult<unknown>> {
+  const rpc = supabase.rpc as unknown as (
+    this: typeof supabase,
+    name: string,
+    args?: Record<string, unknown>,
+  ) => PromiseLike<SupabaseResult<unknown>>;
+
+  return await rpc.call(supabase, functionName, parameters);
+}
 
 function isMissingReceptionColumn(error: SupabaseError | null): boolean {
   if (!error) return false;
@@ -288,7 +330,7 @@ export const minePortalService = {
 
     const request = (async () => {
 
-    const [companyResult, budgetsResult, monthlyBudgetsResult, forecastsResult, productionsResult, contractsResult, requestsResult, invoicesResult, paymentsResult, analysesResult, requisitionsResult, documentsResult, situationResult] = await Promise.all([
+    const [companyResult, budgetsResult, monthlyBudgetsResult, forecastsResult, productionsResult, contractsResult, requestsResult, invoicesResult, paymentsResult, analysesResult, requisitionsResult, shipmentsResult, salesResult, documentsResult, situationResult] = await Promise.all([
       supabase.from('mining_companies').select('id, name, abbreviation, code, country, region, province, localite, is_active').eq('id', companyId).eq('is_active', true).maybeSingle(),
       supabase.from('annual_budgets').select('id, year, mining_company_id').eq('mining_company_id', companyId).order('year', { ascending: false }).limit(4),
       supabase.from('monthly_budgets').select('id, annual_budget_id, month, budget_oz, daily_budget_oz, mining_company_id').eq('mining_company_id', companyId).order('month', { ascending: true }),
@@ -300,6 +342,8 @@ export const minePortalService = {
       loadPayments(companyId),
       supabase.from('snp_analyses_teneur').select('id, reference, statut, date_prelevement, teneur_declaree_pct, teneur_retenue_pct, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(6),
       supabase.from('snp_requisitions').select('id, reference, objet, statut, date_notification, quantite_oz, unite, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(6),
+      supabase.from('shipping_preparations').select('id, expedition_lot_number, status, created_at, total_weight_oz, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(8),
+      supabase.from('sales').select('id, sale_number, status, sale_date, quantity_oz, final_proceeds, currency, seller_id, seller_type').eq('seller_type', 'mining_company').eq('seller_id', companyId).order('sale_date', { ascending: false }).limit(8),
       supabase.from('mining_company_documents').select('id, mining_company_id, doc_type, file_name, file_path, file_size, mime_type, created_at').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(20),
       supabase.rpc('snp_situation_societe', { p_mining_company_id: companyId }).maybeSingle(),
     ]) as [
@@ -314,6 +358,8 @@ export const minePortalService = {
       SupabaseResult<MinePortalPayment[]>,
       SupabaseResult<MinePortalAnalysis[]>,
       SupabaseResult<MinePortalRequisition[]>,
+      SupabaseResult<MinePortalShipment[]>,
+      SupabaseResult<MinePortalSale[]>,
       SupabaseResult<MinePortalDocument[]>,
       SupabaseResult<MinePortalSituation>,
     ];
@@ -322,6 +368,7 @@ export const minePortalService = {
       throw new MinePortalDataError('La société minière rattachée est introuvable ou inactive.');
     }
     if (situationResult.error) throw new MinePortalDataError('Impossible de charger la situation financière.');
+    if (salesResult.error) throw new MinePortalDataError('Impossible de charger les ventes.');
 
     const company: MinePortalCompany = {
       id: companyResult.data.id,
@@ -345,6 +392,10 @@ export const minePortalService = {
       payments: rowsForCompany(paymentsResult, companyId, 'les règlements'),
       analyses: rowsForCompany(analysesResult, companyId, 'les analyses'),
       requisitions: rowsForCompany(requisitionsResult, companyId, 'les réquisitions'),
+      shipments: rowsForCompany(shipmentsResult, companyId, 'les expéditions'),
+      sales: (salesResult.data || []).filter(
+        (sale) => sale.seller_type === 'mining_company' && sale.seller_id === companyId
+      ),
       documents: rowsForCompany(documentsResult, companyId, 'les documents'),
       situation: situationResult.data || null,
     };
@@ -360,7 +411,7 @@ export const minePortalService = {
   },
 
   async submitForecast(input: { year: number; month: number; forecastOz: number; notes?: string }): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_soumettre_prevision', {
+    const result = await callMineRpc('snp_portail_mine_soumettre_prevision', {
       p_annee: input.year,
       p_mois: input.month,
       p_prevision_oz: input.forecastOz,
@@ -370,7 +421,7 @@ export const minePortalService = {
   },
 
   async submitMonthlyBudget(input: { year: number; month: number; budgetOz: number }): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_soumettre_budget', {
+    const result = await callMineRpc('snp_portail_mine_soumettre_budget', {
       p_annee: input.year,
       p_mois: input.month,
       p_budget_oz: input.budgetOz,
@@ -385,7 +436,7 @@ export const minePortalService = {
     barReference?: string;
     notes?: string;
   }): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_declarer_production', {
+    const result = await callMineRpc('snp_portail_mine_declarer_production', {
       p_date_production: input.productionDate,
       p_poids_brut_grammes: input.bullionGrams,
       p_teneur_estimee_pct: input.finenessPct,
@@ -403,7 +454,7 @@ export const minePortalService = {
     barReference?: string;
     notes?: string;
   }): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_modifier_production', {
+    const result = await callMineRpc('snp_portail_mine_modifier_production', {
       p_production_id: input.productionId,
       p_date_production: input.productionDate,
       p_poids_brut_grammes: input.bullionGrams,
@@ -415,14 +466,14 @@ export const minePortalService = {
   },
 
   async deleteProduction(productionId: string): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_supprimer_production', {
+    const result = await callMineRpc('snp_portail_mine_supprimer_production', {
       p_production_id: productionId,
     });
     assertRpcResult(result, 'La production n’a pas pu être supprimée.');
   },
 
   async respondToRequest(requestId: string, decision: MineRequestDecision, reason?: string): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_repondre_demande', {
+    const result = await callMineRpc('snp_portail_mine_repondre_demande', {
       p_demande_id: requestId,
       p_decision: decision,
       p_motif: reason?.trim() || null,
@@ -431,7 +482,7 @@ export const minePortalService = {
   },
 
   async respondToPayment(paymentId: string, decision: MinePaymentDecision, reason?: string): Promise<void> {
-    const result = await supabase.rpc('snp_portail_mine_repondre_reglement', {
+    const result = await callMineRpc('snp_portail_mine_repondre_reglement', {
       p_reglement_id: paymentId,
       p_decision: decision,
       p_motif: reason?.trim() || null,
@@ -450,7 +501,7 @@ export const minePortalService = {
 
     if (upload.error) throw new MinePortalDataError('Le fichier n’a pas pu être téléversé.');
 
-    const registration = await supabase.rpc('snp_portail_mine_enregistrer_document', {
+    const registration = await callMineRpc('snp_portail_mine_enregistrer_document', {
       p_chemin_temporaire: upload.data.path,
       p_nom_fichier: input.file.name,
       p_type_document: input.documentType,

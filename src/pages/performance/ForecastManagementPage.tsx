@@ -92,9 +92,9 @@ export function ForecastManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Production Forecasts</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Prévisions de production</h1>
           <p className="text-gray-600 mt-1">
-            Gestion des prévisions et budgets de production
+            Objectifs et révisions par période.
           </p>
         </div>
         <Button
@@ -102,7 +102,7 @@ export function ForecastManagementPage() {
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Nouvelle Prévision
+          Nouvelle prévision
         </Button>
       </div>
 
@@ -111,14 +111,14 @@ export function ForecastManagementPage() {
         {showForm && (
           <Card className="lg:col-span-2 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Saisir une Prévision
+              Ajouter une prévision
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de Référence *
+                    Date de référence *
                   </label>
                   <input
                     type="date"
@@ -135,7 +135,7 @@ export function ForecastManagementPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type de Période *
+                    Type de période *
                   </label>
                   <select
                     value={formData.period_type}
@@ -158,7 +158,7 @@ export function ForecastManagementPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Forecast (Oz)
+                    Prévision (oz)
                   </label>
                   <Input
                     type="number"
@@ -175,7 +175,7 @@ export function ForecastManagementPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Budget (Oz)
+                    Budget (oz)
                   </label>
                   <Input
                     type="number"
@@ -193,7 +193,7 @@ export function ForecastManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
+                  Commentaires
                 </label>
                 <textarea
                   value={formData.notes}
@@ -224,12 +224,11 @@ export function ForecastManagementPage() {
         {showForm && (
           <div className="lg:col-span-1">
             <div className="sticky top-6">
-              <Card className="bg-gray-50">
-                <FieldGuidePanel
-                  fieldGuides={forecastFieldGuides}
-                  activeField={activeField}
-                />
-              </Card>
+              <FieldGuidePanel
+                title="Champs du formulaire"
+                fieldGuides={forecastFieldGuides}
+                activeField={activeField}
+              />
             </div>
           </div>
         )}
@@ -238,7 +237,7 @@ export function ForecastManagementPage() {
         <Card className={showForm ? 'lg:col-span-3' : 'lg:col-span-3'}>
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
-              Prévisions Enregistrées
+              Prévisions enregistrées
             </h2>
           </div>
 

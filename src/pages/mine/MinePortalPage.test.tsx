@@ -21,7 +21,7 @@ vi.mock('@/services/minePortalService', async (importOriginal) => {
 const snapshot = {
   company: { id: 'mine-1', name: 'Mine Exemple', code: 'MEX' },
   budgets: [], monthlyBudgets: [], forecasts: [], productions: [], documents: [],
-  contracts: [], requests: [], invoices: [], payments: [], analyses: [], requisitions: [],
+  contracts: [], requests: [], invoices: [], payments: [], analyses: [], requisitions: [], shipments: [], sales: [],
   situation: null,
 };
 const mockedLoad = vi.mocked(minePortalService.load);
@@ -37,9 +37,9 @@ describe('MinePortalPage recentré', () => {
     mockedLoad.mockResolvedValue(snapshot);
     render(<MemoryRouter><MinePortalPage /></MemoryRouter>);
 
-    await screen.findByRole('heading', { name: 'Mine Exemple' });
+    await screen.findByRole('heading', { name: 'Accueil' });
     expect(mockedLoad).toHaveBeenCalledWith('mine-1', { force: false });
-    expect(screen.getByRole('link', { name: /Production journalière/ })).toHaveAttribute('href', '/production/daily');
+    expect(screen.getByRole('link', { name: /Production/ })).toHaveAttribute('href', '/production/daily');
     expect(screen.getByRole('link', { name: /Expéditions/ })).toHaveAttribute('href', '/shipping/preparation');
     expect(screen.getByRole('link', { name: /Marché et ventes/ })).toHaveAttribute('href', '/sales/trade-space');
     expect(screen.queryByText('Achats aux mines')).not.toBeInTheDocument();
@@ -54,14 +54,32 @@ describe('MinePortalPage recentré', () => {
 
     expect(await screen.findByText('Périmètre indisponible')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Mine Exemple' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Accueil' })).toBeInTheDocument());
     expect(mockedLoad).toHaveBeenLastCalledWith('mine-1', { force: true });
   });
 
-  it('signale la consultation transversale de l’Owner', async () => {
+  it('ne surcharge plus la page avec un message de consultation Owner', async () => {
     portalAccess.canChooseCompany = true;
     mockedLoad.mockResolvedValue(snapshot);
     render(<MemoryRouter><MinePortalPage /></MemoryRouter>);
-    expect(await screen.findByText(/Mode consultation Owner/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Accueil' })).toBeInTheDocument();
+    expect(screen.queryByText(/Mode consultation Owner/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/modules industriels sont communs/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Modules' })).toBeInTheDocument();
+  });
+
+  it('réserve les indicateurs et analyses à la vue tableau de bord', async () => {
+    mockedLoad.mockResolvedValue(snapshot);
+    render(
+      <MemoryRouter initialEntries={['/portail-mine?vue=tableau-de-bord']}>
+        <MinePortalPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Tableau de bord' })).toBeInTheDocument();
+    expect(screen.getByText('Production récente')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Production et objectifs' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Situation financière' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Modules' })).not.toBeInTheDocument();
   });
 });

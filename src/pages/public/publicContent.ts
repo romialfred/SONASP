@@ -119,7 +119,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       security: 'Sécurité',
       news: 'Actualités',
       login: 'Connexion',
-      portal: 'Accéder au Portail Mine',
+      portal: 'Portail SONASP',
       about: 'À propos',
       assistance: 'Assistance',
     },
@@ -128,7 +128,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       title: 'L’or du Burkina, collecté et valorisé dans un cadre souverain.',
       description:
         'La plateforme sécurisée qui relie les mines, la SONASP et les institutions pour piloter la production, les achats, les ventes et les paiements.',
-      primary: 'Accéder au Portail Mine',
+      primary: 'Portail SONASP',
       secondary: 'Découvrir la plateforme',
       reassurance: ['Accès sécurisé', 'Données souveraines', 'Opérations auditées'],
     },
@@ -274,7 +274,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
     finalCta: {
       title: 'Accédez à votre espace et pilotez vos opérations avec la SONASP',
       description: 'Le Portail Mine centralise vos déclarations, vos engagements, vos expéditions, vos factures, vos paiements et vos documents.',
-      portal: 'Accéder au Portail Mine',
+      portal: 'Portail SONASP',
       assistance: 'Contacter l’assistance',
     },
     footer: {
@@ -294,7 +294,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       security: 'Security',
       news: 'News',
       login: 'Sign in',
-      portal: 'Access the Mine Portal',
+      portal: 'SONASP Portal',
       about: 'About',
       assistance: 'Support',
     },
@@ -302,7 +302,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
       eyebrow: 'National gold collection and sales platform',
       title: 'Burkina Faso’s gold, collected and valued within a sovereign framework.',
       description: 'The secure platform connecting mining companies, SONASP and public institutions to manage production, purchases, sales and payments.',
-      primary: 'Access the Mine Portal',
+      primary: 'SONASP Portal',
       secondary: 'Discover the platform',
       reassurance: ['Secure access', 'Sovereign data', 'Auditable operations'],
     },
@@ -401,7 +401,7 @@ export const publicContent: Record<PublicLocale, PublicContent> = {
     finalCta: {
       title: 'Access your workspace and manage operations with SONASP',
       description: 'The Mine Portal centralizes declarations, commitments, shipments, invoices, payments and documents.',
-      portal: 'Access the Mine Portal',
+      portal: 'SONASP Portal',
       assistance: 'Contact support',
     },
     footer: {

@@ -36,7 +36,7 @@ describe('vitrine publique SONASP', () => {
   });
 
   it('présente les parcours métier essentiels et relie le CTA au portail sécurisé', async () => {
-    renderHome();
+    const { container } = renderHome();
 
     expect(screen.getByRole('heading', {
       level: 1,
@@ -60,7 +60,12 @@ describe('vitrine publique SONASP', () => {
     expect(screen.getByRole('heading', { name: 'La SONASP, pivot national vers les marchés internationaux' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Production nationale' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Porte de sortie Marchés internationaux/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /accéder au portail mine/i })[0]).toHaveAttribute('href', '/portail-mine');
+    expect(screen.getAllByRole('link', { name: /portail sonasp/i })[0]).toHaveAttribute('href', '/portail-mine');
+
+    const heroFlow = container.querySelector('.public-hero-flow');
+    expect(heroFlow).toBeInTheDocument();
+    expect(heroFlow?.closest('.public-hero__content')).toBeInTheDocument();
+    expect(heroFlow?.closest('.public-hero__showcase')).toBeNull();
 
     await waitFor(() => {
       expect(screen.getByText('Aucune publication n’est disponible pour le moment.')).toBeInTheDocument();

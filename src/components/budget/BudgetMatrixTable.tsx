@@ -45,36 +45,6 @@ export function BudgetMatrixTable({
     });
   };
 
-  const getQuarterColor = (quarter: number) => {
-    const colors = {
-      1: {
-        bg: 'bg-gradient-to-r from-blue-50 to-blue-100',
-        border: 'border-blue-300',
-        icon: 'bg-blue-600',
-        text: 'text-blue-900'
-      },
-      2: {
-        bg: 'bg-gradient-to-r from-emerald-50 to-emerald-100',
-        border: 'border-emerald-300',
-        icon: 'bg-emerald-600',
-        text: 'text-emerald-900'
-      },
-      3: {
-        bg: 'bg-gradient-to-r from-amber-50 to-amber-100',
-        border: 'border-amber-300',
-        icon: 'bg-amber-600',
-        text: 'text-amber-900'
-      },
-      4: {
-        bg: 'bg-gradient-to-r from-purple-50 to-purple-100',
-        border: 'border-purple-300',
-        icon: 'bg-purple-600',
-        text: 'text-purple-900'
-      }
-    };
-    return colors[quarter as keyof typeof colors];
-  };
-
   const getBudgetValue = (month: number): number => {
     if (pendingBudgets[month] !== undefined) {
       return pendingBudgets[month];
@@ -139,29 +109,28 @@ export function BudgetMatrixTable({
     const isActive = selectedQuarter === quarter;
     const showForecastColumns = mode === 'forecast' && isActive;
     const isExpanded = expandedQuarters[quarter];
-    const colors = getQuarterColor(quarter);
 
     return (
       <div key={quarter} className="mb-4 last:mb-0">
         {/* Quarter Header - Always Visible */}
         <div
           className={`
-            flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all cursor-pointer hover:shadow-md
-            ${colors.bg} ${colors.border} shadow-sm
+            flex items-center justify-between px-4 py-3 rounded-lg border transition-colors cursor-pointer
+            ${isActive ? 'border-emerald-300 bg-emerald-50/60' : 'border-slate-200 bg-white hover:bg-slate-50'}
           `}
           onClick={() => toggleQuarter(quarter)}
         >
           <div className="flex items-center gap-2.5">
             {isExpanded ? (
-              <ChevronDown className={`w-4 h-4 ${colors.text}`} />
+              <ChevronDown className="w-4 h-4 text-slate-600" />
             ) : (
-              <ChevronRight className={`w-4 h-4 ${colors.text}`} />
+              <ChevronRight className="w-4 h-4 text-slate-600" />
             )}
-            <div className={`p-1 rounded ${colors.icon}`}>
-              <Calendar className="w-3.5 h-3.5 text-white" />
+            <div className="p-1.5 rounded-md bg-emerald-50 border border-emerald-100">
+              <Calendar className="w-3.5 h-3.5 text-emerald-700" />
             </div>
-            <span className={`text-sm ${colors.text}`}>
-              T{quarter}
+            <span className="text-sm font-semibold text-slate-800">
+              Trimestre {quarter}
             </span>
 
             {/* Month Names when collapsed */}
@@ -174,8 +143,8 @@ export function BudgetMatrixTable({
 
           <div className="flex items-center gap-5 text-xs">
             <div className="text-right">
-              <span className="text-slate-500 text-[10px] block mb-0.5">Budget</span>
-              <span className="text-sm text-slate-900">
+              <span className="text-slate-500 text-[10px] block mb-0.5">Prévision</span>
+              <span className="text-sm font-semibold text-slate-900">
                 {formatNumberWithSpaces(quarterTotals.budget, 2)}
                 <span className="text-[10px] ml-1 text-slate-500">oz</span>
               </span>
@@ -183,10 +152,10 @@ export function BudgetMatrixTable({
             {showForecastColumns && (
               <>
                 <div className="text-right">
-                  <span className="text-blue-600 text-[10px] block mb-0.5">Forecast</span>
-                  <span className="text-sm text-blue-700">
+                  <span className="text-slate-500 text-[10px] block mb-0.5">Révision</span>
+                  <span className="text-sm font-semibold text-slate-900">
                     {formatNumberWithSpaces(quarterTotals.forecast, 2)}
-                    <span className="text-[10px] ml-1 text-blue-500">oz</span>
+                    <span className="text-[10px] ml-1 text-slate-500">oz</span>
                   </span>
                 </div>
                 <div className="text-right">
@@ -208,27 +177,27 @@ export function BudgetMatrixTable({
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs text-slate-600 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">
                     Mois
                   </th>
-                  <th className="px-3 py-2 text-center text-xs text-slate-600 uppercase tracking-wide">
+                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600">
                     Jours
                   </th>
-                  <th className="px-3 py-2 text-right text-xs text-slate-600 uppercase tracking-wide">
-                    Budget (OZ)
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">
+                    Prévision (oz)
                   </th>
-                  <th className="px-3 py-2 text-right text-xs text-slate-500 uppercase tracking-wide">
-                    /Jour
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500">
+                    Par jour
                   </th>
                   {showForecastColumns && (
                     <>
-                      <th className="px-3 py-2 text-right text-xs text-blue-600 uppercase tracking-wide bg-blue-50/50">
-                        Forecast (OZ)
+                      <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">
+                        Révision (oz)
                       </th>
-                      <th className="px-3 py-2 text-right text-xs text-blue-500 uppercase tracking-wide bg-blue-50/50">
-                        /Jour
+                      <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500">
+                        Par jour
                       </th>
-                      <th className="px-3 py-2 text-center text-xs text-slate-600 uppercase tracking-wide bg-blue-50/30">
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600">
                         Écart
                       </th>
                     </>
@@ -253,7 +222,7 @@ export function BudgetMatrixTable({
                       className={`
                         transition-colors duration-100
                         ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}
-                        ${editable ? 'hover:bg-blue-50/30' : 'hover:bg-slate-50'}
+                        hover:bg-emerald-50/20
                       `}
                     >
                       <td className="px-3 py-2 text-xs text-slate-900 capitalize">
@@ -292,7 +261,7 @@ export function BudgetMatrixTable({
                       </td>
                       {showForecastColumns && (
                         <>
-                          <td className="px-3 py-2 bg-blue-50/20">
+                          <td className="px-3 py-2">
                             <input
                               type="number"
                               step="0.01"
@@ -308,8 +277,8 @@ export function BudgetMatrixTable({
                               className={`
                                 w-32 px-2 py-1 text-right text-sm rounded border transition-all
                                 ${focusedCell === `forecast-${month}`
-                                  ? 'border-blue-500 ring-1 ring-blue-300 bg-blue-50'
-                                  : 'border-blue-200 hover:border-blue-300'
+                                  ? 'border-emerald-500 ring-1 ring-emerald-200 bg-emerald-50/40'
+                                  : 'border-slate-200 hover:border-slate-300'
                                 }
                                 ${!editable
                                   ? 'bg-slate-50 text-slate-400 cursor-not-allowed'
@@ -320,10 +289,10 @@ export function BudgetMatrixTable({
                               placeholder={formatNumberWithSpaces(budget, 2)}
                             />
                           </td>
-                          <td className="px-3 py-2 text-xs text-right text-blue-600 bg-blue-50/20">
+                          <td className="px-3 py-2 text-xs text-right text-slate-600">
                             {formatNumberWithSpaces(dailyForecast, 2)}
                           </td>
-                          <td className="px-3 py-2 bg-blue-50/10">
+                          <td className="px-3 py-2">
                             <div className="flex flex-col items-end gap-0.5">
                               <span className={`text-xs ${variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                                 {variance >= 0 ? '+' : ''}{formatNumberWithSpaces(variance, 2)}
@@ -354,7 +323,7 @@ export function BudgetMatrixTable({
       <div className="flex items-center justify-between">
         <button
           onClick={toggleAllQuarters}
-          className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-all shadow-sm hover:shadow"
+          className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
         >
           {allExpanded ? (
             <>
@@ -372,15 +341,14 @@ export function BudgetMatrixTable({
 
       {/* Info Banner */}
       {mode === 'forecast' && selectedQuarter && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3 shadow-sm">
-          <div className="bg-blue-500 rounded-full p-1.5 mt-0.5 flex-shrink-0">
-            <Info className="w-4 h-4 text-white" />
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-3 flex items-start gap-3">
+          <div className="bg-white border border-emerald-200 rounded-full p-1.5 mt-0.5 flex-shrink-0">
+            <Info className="w-4 h-4 text-emerald-700" />
           </div>
           <div className="flex-1">
-            <p className="text-blue-900 mb-1 text-xs">Mode Forecast - Révision T{selectedQuarter}</p>
-            <p className="text-xs text-blue-700 leading-relaxed">
-              Modifiez les prévisions pour les 3 mois du trimestre sélectionné.
-              Les calculs journaliers et les écarts sont automatiques.
+            <p className="text-emerald-900 mb-1 text-xs font-semibold">Révision du trimestre {selectedQuarter}</p>
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              Ajustez les trois mois sélectionnés ; les écarts sont calculés automatiquement.
             </p>
           </div>
         </div>

@@ -29,6 +29,12 @@ import {
 } from '@/services/userPermissionsService';
 import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
 import { assignableRoles, canAssignRole, canManageAccount } from '@/lib/roleHierarchy';
+import {
+  OPERATIONAL_CAPABILITY_OPTIONS,
+  operationalCapabilitiesForRole,
+  type OperationalCapabilityMap,
+} from '@/lib/capabilities';
+import { userCapabilitiesService } from '@/services/userCapabilitiesService';
 import type { UserRole } from '@/types/auth';
 import './admin.css';
 
@@ -74,12 +80,20 @@ export const DROITS: Array<{ clef: DroitClef; label: string }> = [
 ];
 
 /** Première obligation non satisfaite de l'étape « identité », ou `null`. */
-export function validateIdentite(form: UserFormData, _isEditMode: boolean): string | null {
+export function validateIdentite(
+  form: UserFormData,
+  _isEditMode: boolean,
+  indisponibilites: ReadonlyMap<string, string> = new Map(),
+): string | null {
   if (!form.fullName.trim()) return 'Le nom complet est obligatoire.';
   if (!form.email.trim()) return 'L’adresse e-mail est obligatoire.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'L’adresse e-mail est invalide.';
   if (!form.role) return 'Sélectionnez un rôle.';
   if (form.role === 'mine' && form.miningCompanyIds.length !== 1) return 'Rattachez le compte Société minière à une compagnie unique.';
+  if (form.role === 'mine') {
+    const indisponibilite = indisponibilites.get(form.miningCompanyIds[0]);
+    if (indisponibilite) return indisponibilite;
+  }
   return null;
 }
 
@@ -102,10 +116,37 @@ export function appliquerGabarit(
   return resultat;
 }
 
-interface MiningCompany {
+export interface MiningCompany {
   id: string;
   name: string;
   abbreviation: string | null;
+  is_active: boolean;
+}
+
+export interface MiningCompanyAccount {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  is_active: boolean;
+  mining_company_id: string;
+}
+
+export function indisponibiliteSocieteMiniere(
+  compagnie: MiningCompany,
+  comptes: MiningCompanyAccount[],
+  utilisateurModifie?: string | null,
+): { message: string; compte: MiningCompanyAccount | null } | null {
+  if (compagnie.is_active === false) {
+    return { message: 'La société minière sélectionnée est inactive.', compte: null };
+  }
+
+  const compte = comptes.find((candidat) =>
+    candidat.mining_company_id === compagnie.id && candidat.id !== utilisateurModifie
+  ) ?? null;
+
+  return compte
+    ? { message: 'Cette société minière possède déjà un compte.', compte }
+    : null;
 }
 
 export function UserManagementModern() {
@@ -126,18 +167,40 @@ export function UserManagementModern() {
   const [modules, setModules] = useState<PermissionModule[]>([]);
   const [permissionsEnBase, setPermissionsEnBase] = useState<PermissionMap>({});
   const [permissions, setPermissions] = useState<Record<string, ModulePermission>>({});
+  const [capacitesEnBase, setCapacitesEnBase] = useState<OperationalCapabilityMap>(
+    operationalCapabilitiesForRole(''),
+  );
+  const [capacites, setCapacites] = useState<OperationalCapabilityMap>(
+    operationalCapabilitiesForRole(''),
+  );
   const [compagnies, setCompagnies] = useState<MiningCompany[]>([]);
+  const [comptesCompagnies, setComptesCompagnies] = useState<MiningCompanyAccount[]>([]);
 
   const charger = useCallback(async () => {
     setLoading(true);
     setErreur(null);
     try {
-      const { data: societes, error: erreurSocietes } = await supabase
-        .from('mining_companies')
-        .select('id, name, abbreviation')
-        .order('name');
+      const [resultatSocietes, resultatComptesCompagnies] = await Promise.all([
+        supabase
+          .from('mining_companies')
+          .select('id, name, abbreviation, is_active')
+          .order('name'),
+        supabase
+          .from('user_profiles')
+          .select('id, full_name, email, is_active, mining_company_id')
+          .eq('role', 'mine')
+          .not('mining_company_id', 'is', null),
+      ]);
+      const { data: societes, error: erreurSocietes } = resultatSocietes;
       if (erreurSocietes) throw erreurSocietes;
-      setCompagnies(societes || []);
+      setCompagnies((societes || []).map((societe) => ({
+        ...societe,
+        // Une valeur historique nulle ne doit jamais rendre une société sélectionnable.
+        is_active: societe.is_active === true,
+      })));
+      const { data: comptesMines, error: erreurComptesMines } = resultatComptesCompagnies;
+      if (erreurComptesMines) throw erreurComptesMines;
+      setComptesCompagnies((comptesMines || []) as MiningCompanyAccount[]);
 
       // `user_permissions.module_id` référence `modules`, et non `snp_modules` comme
       // cet écran le faisait : les droits accordés portaient alors des identifiants
@@ -171,6 +234,13 @@ export function UserManagementModern() {
           isActive: profil?.is_active !== false,
         });
 
+        const capacitesRole = operationalCapabilitiesForRole((profil.role as UserRole) || '');
+        const { overrides, error: erreurCapacites } = await userCapabilitiesService.load(userId);
+        if (erreurCapacites) setErreur(erreurCapacites);
+        const capacitesEffectives = { ...capacitesRole, ...overrides };
+        setCapacitesEnBase(capacitesEffectives);
+        setCapacites(capacitesEffectives);
+
         const { permissions: persistees, error: erreurPermissions } = await userPermissionsService.load(userId);
         if (erreurPermissions) setErreur(erreurPermissions);
         setPermissionsEnBase(persistees);
@@ -192,7 +262,30 @@ export function UserManagementModern() {
   const setValue = <K extends keyof UserFormData>(clef: K, valeur: UserFormData[K]) =>
     setForm((current) => ({ ...current, [clef]: valeur }));
 
-  const erreurIdentite = validateIdentite(form, isEditMode);
+  const setRole = (role: UserRole) => {
+    setForm((current) => ({
+      ...current,
+      role,
+      miningCompanyIds: role === 'mine' && current.role === 'mine'
+        ? current.miningCompanyIds
+        : [],
+    }));
+    const defaults = operationalCapabilitiesForRole(role);
+    setCapacites(defaults);
+    if (!isEditMode) setCapacitesEnBase(defaults);
+  };
+
+  const indisponibilitesCompagnies = useMemo(() => new Map(
+    compagnies.flatMap((compagnie) => {
+      const indisponibilite = indisponibiliteSocieteMiniere(
+        compagnie,
+        comptesCompagnies,
+        userId,
+      );
+      return indisponibilite ? [[compagnie.id, indisponibilite.message] as const] : [];
+    }),
+  ), [compagnies, comptesCompagnies, userId]);
+  const erreurIdentite = validateIdentite(form, isEditMode, indisponibilitesCompagnies);
   const editionPropreCompte = Boolean(userId && utilisateurCourant?.id === userId);
   const peutAdministrerCompte = !isEditMode || Boolean(
     roleInitial
@@ -224,7 +317,7 @@ export function UserManagementModern() {
 
   const enregistrer = async () => {
     if (saving) return;
-    const message = validateIdentite(form, isEditMode);
+    const message = validateIdentite(form, isEditMode, indisponibilitesCompagnies);
     if (message) {
       setErreur(message);
       setEtape(1);
@@ -265,6 +358,7 @@ export function UserManagementModern() {
           is_active: form.isActive,
           mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
           permissions: permissionsEnregistrees,
+          capabilities: capacites,
         });
         if (!resultat.success || !resultat.user) {
           throw new Error(resultat.error || 'La création du compte a échoué.');
@@ -296,6 +390,13 @@ export function UserManagementModern() {
           utilisateurCourant.id
         );
         if (!resultat.success) throw new Error(resultat.error);
+
+        const resultatCapacites = await userCapabilitiesService.save(
+          identifiant,
+          capacitesEnBase,
+          capacites,
+        );
+        if (!resultatCapacites.success) throw new Error(resultatCapacites.error);
       }
 
       addToast(
@@ -486,7 +587,7 @@ export function UserManagementModern() {
                         value={role}
                         checked={form.role === role}
                         disabled={editionPropreCompte || !peutAdministrerCompte}
-                        onChange={() => setValue('role', role)}
+                        onChange={() => setRole(role)}
                       />
                       <span>
                         <strong>{roleLabel(role)}</strong>
@@ -512,28 +613,60 @@ export function UserManagementModern() {
                   description="Aucune compagnie n’est enregistrée : le rattachement est impossible."
                 />
               ) : (
-                <ul className="compte__compagnies">
-                  {compagnies.map((compagnie) => {
-                    const retenue = form.miningCompanyIds.includes(compagnie.id);
-                    return (
-                      <li key={compagnie.id}>
-                        <label className={retenue ? 'is-checked' : ''}>
-                          <input
-                          type="radio"
-                          name="mining-company"
-                          checked={retenue}
-                          disabled={editionPropreCompte || !peutAdministrerCompte}
-                          onChange={() => setValue('miningCompanyIds', [compagnie.id])}
-                          />
-                          <span>
-                            <strong>{compagnie.name}</strong>
-                            {compagnie.abbreviation && <small>{compagnie.abbreviation}</small>}
-                          </span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <>
+                  <div className="compte__disponibilite" aria-live="polite">
+                    <strong>
+                      {compagnies.length - indisponibilitesCompagnies.size} disponible(s)
+                    </strong>
+                    <span>sur {compagnies.length} société(s) minière(s)</span>
+                  </div>
+                  <ul className="compte__compagnies">
+                    {compagnies.map((compagnie) => {
+                      const retenue = form.miningCompanyIds.includes(compagnie.id);
+                      const indisponibilite = indisponibiliteSocieteMiniere(
+                        compagnie,
+                        comptesCompagnies,
+                        userId,
+                      );
+                      const indisponible = Boolean(indisponibilite);
+                      return (
+                        <li key={compagnie.id}>
+                          <label className={[
+                            retenue ? 'is-checked' : '',
+                            indisponible ? 'is-unavailable' : '',
+                          ].filter(Boolean).join(' ')}>
+                            <input
+                              type="radio"
+                              name="mining-company"
+                              checked={retenue}
+                              disabled={
+                                indisponible
+                                || editionPropreCompte
+                                || !peutAdministrerCompte
+                              }
+                              onChange={() => setValue('miningCompanyIds', [compagnie.id])}
+                            />
+                            <span>
+                              <strong>{compagnie.name}</strong>
+                              {indisponibilite?.compte ? (
+                                <small>
+                                  Compte : {indisponibilite.compte.full_name || indisponibilite.compte.email}
+                                </small>
+                              ) : compagnie.abbreviation ? <small>{compagnie.abbreviation}</small> : null}
+                            </span>
+                            {indisponible ? (
+                              <Badge tone="neutral">
+                                {indisponibilite?.compte ? 'Compte déjà créé' : 'Inactive'}
+                              </Badge>
+                            ) : (
+                              <Badge tone="success">Disponible</Badge>
+                            )}
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
               )}
             </Section>}
 
@@ -567,6 +700,48 @@ export function UserManagementModern() {
             title={`Habilitations (${modulesOuverts} module(s) ouverts)`}
             description="Retirer la consultation retire les droits qui en dépendent."
           >
+            <div className="compte__responsabilites">
+              <div>
+                <strong>Responsabilités métier</strong>
+                <p>
+                  Elles complètent le rôle de portail. Le serveur contrôle chaque étape et interdit
+                  l’auto-approbation, même si plusieurs responsabilités sont cochées.
+                </p>
+              </div>
+              {form.role === 'manager' && (
+                <Note tone="info" icon={Lock}>
+                  Le profil Manager reste strictement en lecture seule : aucune responsabilité
+                  opérationnelle ne peut lui être attribuée.
+                </Note>
+              )}
+              <ul className="compte__roles">
+                {OPERATIONAL_CAPABILITY_OPTIONS.map((option) => (
+                  <li key={option.code}>
+                    <label className={capacites[option.code] ? 'is-checked' : ''}>
+                      <input
+                        type="checkbox"
+                        checked={capacites[option.code]}
+                        disabled={
+                          form.role === 'manager'
+                          || editionPropreCompte
+                          || !peutAdministrerCompte
+                        }
+                        onChange={() => setCapacites((current) => ({
+                          ...current,
+                          [option.code]: !current[option.code],
+                        }))}
+                        aria-label={option.label}
+                      />
+                      <span>
+                        <strong>{option.label}</strong>
+                        <small>{option.description}</small>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div className="compte__gabarits">
               <span className="sn-field__label">Gabarits</span>
               <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'aucun'))}>

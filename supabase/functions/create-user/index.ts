@@ -1,13 +1,10 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
+import { isInteractiveAccountRole } from '../_shared/account-role-policy.ts';
 import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
 
-const ROLES = new Set([
-  'owner', 'admin', 'management', 'manager', 'mine',
-  'factory', 'airport', 'refinery', 'customer',
-]);
-const ROLES_CREATEURS = new Set(['owner', 'admin', 'management']);
+const ROLES_CREATEURS = new Set(['owner', 'admin']);
 const NIVEAUX_ROLE: Record<string, number> = {
   owner: 100,
   admin: 80,
@@ -39,6 +36,33 @@ interface RequeteCreation {
   is_active?: unknown;
   mining_company_id?: unknown;
   permissions?: unknown;
+  capabilities?: unknown;
+}
+
+const CAPACITES_OPERATIONNELLES = new Set([
+  'sonasp.prepare',
+  'sonasp.approve',
+  'sonasp.finance.execute',
+  'sonasp.finance.reconcile',
+  'comptoir.manage',
+  'collectors.manage',
+  'collector.operate',
+]);
+
+function normaliserCapacites(brut: unknown, role: string): Array<{ code: string; allowed: boolean }> {
+  if (brut === undefined || brut === null) return [];
+  if (typeof brut !== 'object' || Array.isArray(brut)) {
+    throw new ErreurPublique(400, 'Les responsabilités métier sont illisibles.');
+  }
+
+  const entries = Object.entries(brut as Record<string, unknown>);
+  if (entries.some(([code, allowed]) => !CAPACITES_OPERATIONNELLES.has(code) || typeof allowed !== 'boolean')) {
+    throw new ErreurPublique(400, 'Une responsabilité métier est inconnue ou invalide.');
+  }
+  if (role === 'manager' && entries.some(([, allowed]) => allowed)) {
+    throw new ErreurPublique(400, 'Le profil Manager est strictement limité à la lecture.');
+  }
+  return entries.map(([code, allowed]) => ({ code, allowed: allowed as boolean }));
 }
 
 class ErreurPublique extends Error {
@@ -180,9 +204,14 @@ Deno.serve(async (req: Request) => {
       throw new ErreurPublique(400, 'Renseignez une adresse e-mail valide.');
     }
     if (!nomComplet) throw new ErreurPublique(400, 'Le nom complet est obligatoire.');
-    if (!ROLES.has(role)) throw new ErreurPublique(400, 'Le rôle sélectionné n’est pas reconnu.');
-    if (role === 'owner' && roleActeur !== 'owner') {
-      throw new ErreurPublique(403, 'Seul un propriétaire peut créer un autre compte propriétaire.');
+    if (role === 'owner') {
+      throw new ErreurPublique(
+        403,
+        'Le rôle Propriétaire est réservé au script sécurisé de continuité.',
+      );
+    }
+    if (!isInteractiveAccountRole(role)) {
+      throw new ErreurPublique(400, 'Le rôle sélectionné n’est pas reconnu ou attribuable.');
     }
     if ((NIVEAUX_ROLE[role] ?? Number.POSITIVE_INFINITY) > (NIVEAUX_ROLE[roleActeur] ?? -1)) {
       throw new ErreurPublique(403, 'Vous ne pouvez pas créer un compte d’un niveau supérieur au vôtre.');
@@ -195,9 +224,31 @@ Deno.serve(async (req: Request) => {
     }
 
     if (societeMiniere) {
-      const { data: societe } = await admin
-        .from('mining_companies').select('id').eq('id', societeMiniere).maybeSingle();
-      if (!societe) throw new ErreurPublique(400, 'La société minière sélectionnée est introuvable.');
+      const { data: societe, error: erreurSociete } = await admin
+        .from('mining_companies')
+        .select('id, is_active')
+        .eq('id', societeMiniere)
+        .maybeSingle();
+      if (erreurSociete) throw new Error(`société minière: ${erreurSociete.message}`);
+      if (!societe?.is_active) {
+        throw new ErreurPublique(400, 'La société minière sélectionnée est inactive ou introuvable.');
+      }
+
+      // Cette vérification fournit une réponse immédiate et lisible. L'index
+      // unique et le verrou de base restent l'autorité en cas de deux requêtes
+      // simultanées entre cette lecture et l'insertion du profil.
+      const { data: comptesSociete, error: erreurCompteSociete } = await admin
+        .from('user_profiles')
+        .select('id')
+        .eq('role', 'mine')
+        .eq('mining_company_id', societeMiniere)
+        .limit(1);
+      if (erreurCompteSociete) {
+        throw new Error(`contrôle du compte minier: ${erreurCompteSociete.message}`);
+      }
+      if ((comptesSociete?.length ?? 0) > 0) {
+        throw new ErreurPublique(409, 'Cette société minière possède déjà un compte.');
+      }
     }
 
     const { data: profilExistant } = await admin
@@ -205,6 +256,7 @@ Deno.serve(async (req: Request) => {
     if (profilExistant) throw new ErreurPublique(409, 'Un compte utilise déjà cette adresse e-mail.');
 
     const permissions = normaliserPermissions(corps.permissions, role);
+    const capacites = normaliserCapacites(corps.capabilities, role);
     if (permissions.length > 0) {
       const ids = [...new Set(permissions.map((permission) => permission.module_id))];
       const { data: modules, error: erreurModules } = await admin.from('modules').select('id').in('id', ids);
@@ -242,7 +294,35 @@ Deno.serve(async (req: Request) => {
       must_change_password: true,
       password_changed_at: null,
     });
-    if (erreurProfil) throw new Error(`profil: ${erreurProfil.message}`);
+    if (erreurProfil) {
+      const conflitCompteMine = role === 'mine' && (
+        erreurProfil.code === '23505'
+        || /compte_mine|mining_company|société minière/i.test(erreurProfil.message)
+      );
+      if (conflitCompteMine) {
+        throw new ErreurPublique(409, 'Cette société minière possède déjà un compte.');
+      }
+      throw new Error(`profil: ${erreurProfil.message}`);
+    }
+
+    if (capacites.length > 0) {
+      const cleAnon = Deno.env.get('SUPABASE_ANON_KEY');
+      if (!cleAnon) throw new ErreurPublique(503, 'Le service d’habilitation est indisponible.');
+      const clientActeur = createClient(urlSupabase, cleAnon, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: autorisation } },
+      });
+      for (const capacite of capacites) {
+        const { error } = await clientActeur.rpc('snp_definir_capacite_utilisateur', {
+          p_user_id: utilisateurCree,
+          p_capability_code: capacite.code,
+          p_allowed: capacite.allowed,
+          p_reason: `${capacite.allowed ? 'Attribution' : 'Retrait'} lors de la création sécurisée du compte`,
+          p_valid_until: null,
+        });
+        if (error) throw new Error(`responsabilités: ${error.message}`);
+      }
+    }
 
     if (permissions.length > 0) {
       const { error: erreurPermissions } = await admin.from('user_permissions').insert(

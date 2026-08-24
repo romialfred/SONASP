@@ -1,4 +1,5 @@
 import { UserRole, UserProfile } from '@/types/auth';
+import { CAPABILITIES, hasCapability } from '@/lib/capabilities';
 
 export const PERMISSIONS = {
   // Chaque permission est qualifiée par son domaine. Des valeurs génériques
@@ -61,7 +62,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.AUDIT_VIEW,
   ],
   management: FULL_ACCESS_PERMISSIONS,
-  admin: FULL_ACCESS_PERMISSIONS,
+  // L'Administrateur gère le socle et le support. Il ne prépare, n'approuve
+  // et n'exécute plus les opérations métier par simple héritage de rôle.
+  admin: [
+    PERMISSIONS.USERS_VIEW,
+    PERMISSIONS.USERS_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
+    PERMISSIONS.SETTINGS_MANAGE,
+    PERMISSIONS.SYSTEM_SETTINGS_MANAGE,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
 };
 
 function permissionsFor(user: UserProfile): string[] {
@@ -132,7 +143,8 @@ export function isReadOnlyManager(user: UserProfile | null): boolean {
  */
 export function isSalesApprover(user: UserProfile | null): boolean {
   if (!user || !user.is_active) return false;
-  return user.is_sales_approver === true || isManagement(user);
+  return user.is_sales_approver === true
+    || hasCapability(user, CAPABILITIES.SONASP_APPROVE);
 }
 
 export function canAccessSite(user: UserProfile | null, siteId: string): boolean {

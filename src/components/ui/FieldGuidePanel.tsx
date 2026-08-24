@@ -34,7 +34,7 @@ interface FieldGuidePanelProps {
 }
 
 export function FieldGuidePanel({
-  title = 'Guide de saisie',
+  title = 'Repères de saisie',
   guides = [],
   activeField,
   fields,
@@ -56,17 +56,14 @@ export function FieldGuidePanel({
     : availableGuides;
 
   return (
-    <div className="sticky top-4">
-      {/* En-tete neutre : le vert plein donnait au guide plus de poids qu'au
-          formulaire qu'il accompagne. */}
+    <div className="sticky top-4 field-guide-panel">
       <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-gray-200 bg-slate-50 px-3 py-2 text-slate-700">
         <Info className="h-3.5 w-3.5" />
         <h2 className="text-xs font-semibold uppercase tracking-wide">{title}</h2>
       </div>
 
-      {/* Content */}
       <div className="rounded-b-lg border border-gray-200 bg-white p-3 shadow-sm">
-        <div className={contextual ? 'space-y-2' : 'space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1'}>
+        <div className="space-y-1.5">
           {visibleGuides.length > 0 ? (
             visibleGuides.map((guide, index) => {
               const isActive = activeField === guide.field;
@@ -96,25 +93,15 @@ export function FieldGuidePanel({
                       )}
                     </div>
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{guide.description}</p>
-                  {guide.example && (
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      <span className="font-medium">Ex :</span> {guide.example}
-                    </p>
-                  )}
-                  {contextual && (
-                    <p className="mt-2 border-t border-slate-100 pt-2 text-[10.5px] leading-snug text-slate-400">
-                      L’aide s’adapte au champ actuellement sélectionné.
-                    </p>
-                  )}
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+                    {guide.description}
+                    {guide.example && <span className="text-slate-400"> · Ex. {guide.example}</span>}
+                  </p>
                 </div>
               );
             })
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Info className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Aucun guide disponible</p>
-            </div>
+            <p className="py-3 text-center text-xs text-gray-500">Aucun repère disponible.</p>
           )}
         </div>
       </div>

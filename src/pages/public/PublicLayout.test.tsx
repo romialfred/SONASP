@@ -13,7 +13,7 @@ vi.mock('@/hooks/useCoursOr', () => ({
 }));
 
 describe('header de la vitrine publique', () => {
-  it('conserve quatre menus sur le header et un seul accès principal au Portail Mine', () => {
+  it('conserve quatre menus sur le header et un seul accès principal au Portail SONASP', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -35,7 +35,7 @@ describe('header de la vitrine publique', () => {
     ]);
     expect(within(header).queryByRole('link', { name: 'Actualités' })).not.toBeInTheDocument();
     expect(within(header).queryByRole('link', { name: 'Connexion' })).not.toBeInTheDocument();
-    expect(within(header).getByRole('link', { name: 'Accéder au Portail Mine' }))
+    expect(within(header).getByRole('link', { name: 'Portail SONASP' }))
       .toHaveAttribute('href', '/portail-mine');
     expect(within(navigation).getByRole('link', { name: 'La plateforme' }))
       .toHaveAttribute('aria-current', 'location');

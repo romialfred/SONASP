@@ -61,8 +61,9 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  // L'Owner choisit le périmètre depuis l'en-tête national. Une ouverture
-  // directe de l'ancienne page de supervision n'a plus de raison d'être.
+  // Le shell national ne propose plus de sélecteur global de mine. Un Owner ne
+  // peut donc ouvrir cet espace que depuis un lien métier portant un périmètre
+  // explicite et vérifiable dans l'URL.
   if (canChooseCompany && !requestedCompanyId) {
     return <Navigate to="/dashboard" replace />;
   }

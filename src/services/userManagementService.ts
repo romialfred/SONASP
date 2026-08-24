@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { PermissionMap } from '@/services/userPermissionsService';
+import type { OperationalCapabilityMap } from '@/lib/capabilities';
 
 export interface CreateUserRequest {
   email: string;
@@ -9,6 +10,7 @@ export interface CreateUserRequest {
   is_active?: boolean;
   mining_company_id?: string | null;
   permissions?: PermissionMap;
+  capabilities?: OperationalCapabilityMap;
 }
 
 export interface CreateUserResponse {

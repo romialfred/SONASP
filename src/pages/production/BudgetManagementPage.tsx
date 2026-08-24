@@ -81,9 +81,9 @@ function ProductionBrowserTab({
 
       return {
         Mois: month,
-        Budget: Math.round(Number(budget)),
-        Actual: Math.round(Number(actual)),
-        Forecast: Math.round(Number(forecast))
+        'Prévision annuelle': Math.round(Number(budget)),
+        Réalisé: Math.round(Number(actual)),
+        'Révision trimestrielle': Math.round(Number(forecast))
       };
     });
 
@@ -121,18 +121,21 @@ function ProductionBrowserTab({
 
       return {
         name: month.substring(0, 3),
-        Budget: Math.round(Number(budget)),
-        Actual: Math.round(Number(actual)),
-        Forecast: Math.round(Number(forecast))
+        Prévision: Math.round(Number(budget)),
+        Réalisé: Math.round(Number(actual)),
+        Révision: Math.round(Number(forecast))
       };
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="budget-browser">
       {/* Header with Export Button */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg  text-slate-800">Production réalisée — vue annuelle</h3>
+      <div className="budget-browser__header">
+        <div>
+          <h3>Suivi annuel</h3>
+          <p>Prévision, réalisé et dernière révision mensuelle.</p>
+        </div>
         <Button onClick={exportData} variant="primary" size="sm">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -142,21 +145,21 @@ function ProductionBrowserTab({
       </div>
 
       {/* Matrix Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      <div className="budget-browser__table-wrap">
+        <table className="budget-browser__table">
           <thead>
-            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white">
-              <th className="px-4 py-3 text-left text-xs  uppercase tracking-wider border border-slate-500">
+            <tr>
+              <th>
                 Mois
               </th>
-              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-blue-600">
-                Budget (oz)
+              <th>
+                Prévision (oz)
               </th>
-              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-emerald-600">
+              <th>
                 Réalisé (oz)
               </th>
-              <th className="px-4 py-3 text-center text-xs  uppercase tracking-wider border border-slate-500 bg-amber-600">
-                Forecast (oz)
+              <th>
+                Révision (oz)
               </th>
             </tr>
           </thead>
@@ -179,39 +182,35 @@ function ProductionBrowserTab({
               return (
                 <tr
                   key={month}
-                  className={`
-                    ${isQuarterStart ? 'border-t-2 border-slate-400' : ''}
-                    ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
-                    hover:bg-blue-50 transition-colors
-                  `}
+                  className={isQuarterStart ? 'is-quarter-start' : undefined}
                 >
-                  <td className="px-4 py-3 text-sm  text-slate-700 border border-slate-200">
+                  <td>
                     {month}
                   </td>
-                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-blue-50/50">
+                  <td>
                     {formatNumberWithSpaces(budget, 2)}
                   </td>
-                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-emerald-50/50">
+                  <td>
                     {formatNumberWithSpaces(actual, 2)}
                   </td>
-                  <td className="px-4 py-3 text-sm  text-right border border-slate-200 bg-amber-50/50">
+                  <td>
                     {formatNumberWithSpaces(forecast, 2)}
                   </td>
                 </tr>
               );
             })}
             {/* Total Row */}
-            <tr className="bg-gradient-to-r from-slate-700 to-slate-600 text-white  border-t-2 border-slate-800">
-              <td className="px-4 py-3 text-sm uppercase tracking-wide border border-slate-500">
-                Total Annuel
+            <tr className="budget-browser__total">
+              <td>
+                Total annuel
               </td>
-              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+              <td>
                 {formatNumberWithSpaces(monthlyBudgets.reduce((sum, mb) => sum + (mb.budget_oz || 0), 0), 2)}
               </td>
-              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+              <td>
                 {formatNumberWithSpaces(Object.values(monthlyActuals).reduce((sum, val) => sum + (val || 0), 0), 2)}
               </td>
-              <td className="px-4 py-3 text-sm text-right border border-slate-500">
+              <td>
                 {formatNumberWithSpaces(quarterlyForecasts.reduce((sum, qf) => sum + (qf.forecast_oz || 0), 0), 2)}
               </td>
             </tr>
@@ -220,10 +219,10 @@ function ProductionBrowserTab({
       </div>
 
       {/* Bar Chart */}
-      <div className="space-y-3">
-        <h3 className="text-sm  text-slate-700 uppercase tracking-wider flex items-center gap-2">
+      <div className="budget-browser__chart">
+        <h3>
           <BarChart3 className="w-4 h-4 text-slate-600" />
-          Comparaison mensuelle : budget, réalisé, prévision
+          Évolution mensuelle
         </h3>
         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <ResponsiveContainer width="100%" height={400}>
@@ -246,9 +245,9 @@ function ProductionBrowserTab({
               <Legend
                 wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 600 }}
               />
-              <Bar dataKey="Budget" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Actual" fill={PALETTE_PRODUCTION[0]} name="Réalisé" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Forecast" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Prévision" fill="#36584d" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="Réalisé" fill={PALETTE_PRODUCTION[0]} radius={[5, 5, 0, 0]} />
+              <Bar dataKey="Révision" fill="#c99116" radius={[5, 5, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -485,7 +484,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
         })));
         setPendingBudgets({});
         await loadBudgetData();
-        showSuccess('Budget annuel enregistré avec succès');
+        showSuccess('Prévision annuelle enregistrée');
         return;
       }
 
@@ -516,10 +515,10 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
       setMonthlyBudgets(savedBudgets);
       setPendingBudgets({});
 
-      showSuccess('Budget annuel enregistré avec succès');
+      showSuccess('Prévision annuelle enregistrée');
     } catch (error) {
       console.error('Error saving budgets:', error);
-      showError('Erreur lors de l\'enregistrement du budget');
+      showError('Impossible d\'enregistrer la prévision');
     } finally {
       setSaving(false);
     }
@@ -558,7 +557,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
         }));
         setPendingForecasts({});
         await loadBudgetData();
-        showSuccess(`Forecast T${selectedQuarter} enregistré avec succès`);
+        showSuccess(`Révision du trimestre ${selectedQuarter} enregistrée`);
         return;
       }
 
@@ -607,21 +606,16 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
       });
 
       setPendingForecasts({});
-      showSuccess(`Forecast T${selectedQuarter} enregistré avec succès`);
+      showSuccess(`Révision du trimestre ${selectedQuarter} enregistrée`);
     } catch (error) {
       console.error('Error saving forecasts:', error);
-      showError('Erreur lors de l\'enregistrement du forecast');
+      showError('Impossible d\'enregistrer la révision');
     } finally {
       setSaving(false);
     }
   };
 
   const handleModeChange = (newMode: 'budget' | 'forecast') => {
-    if (newMode === 'forecast' && !annualBudget) {
-      showError('Veuillez d\'abord créer et enregistrer le budget annuel');
-      return;
-    }
-
     setMode(newMode);
 
     if (newMode === 'forecast') {
@@ -776,23 +770,21 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
             <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-                <p className="text-lg text-slate-700 ">Chargement du budget...</p>
-                <p className="text-sm text-slate-500 mt-2">Récupération des données budgétaires</p>
+                <p className="text-lg text-slate-700 ">Chargement des prévisions…</p>
+                <p className="text-sm text-slate-500 mt-2">Récupération des objectifs de production</p>
               </div>
             </div>
           ) : (
             <>
           <PageHeader
             icon={Target}
-            title={mineCompanyId
-              ? `Gestion budgétaire — ${miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'votre mine'}`
-              : 'Gestion budgétaire'}
+            title="Prévisions de production"
             subtitle={
               mode === 'budget'
-                ? 'Configuration du budget annuel de production, en onces d’or.'
-                : `Révision trimestrielle — T${selectedQuarter}.`
+                ? 'Objectifs mensuels et suivi de la production annuelle.'
+                : `Révision du trimestre ${selectedQuarter || ''}.`
             }
-            breadcrumb={[{ label: 'Production' }, { label: 'Gestion budgétaire' }]}
+            breadcrumb={[{ label: 'Production' }, { label: 'Prévisions' }]}
             actions={
               <>
                 <button type="button" className="sn-btn" onClick={() => navigate('/production/daily')}>
@@ -840,13 +832,13 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
               <div className="flex items-center gap-4">
                 {/* Year Selector */}
                 <div className="flex items-center gap-2">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-md p-1.5 shadow-sm">
-                    <Calendar className="w-4 h-4 text-white" />
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-md p-1.5">
+                    <Calendar className="w-4 h-4 text-emerald-700" />
                   </div>
                   <select
                     value={selectedYear}
                     onChange={e => setSelectedYear(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow"
+                    className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 text-sm text-slate-700"
                   >
                     {getAvailableYears().map(year => (
                       <option key={year} value={year}>{year}</option>
@@ -854,24 +846,17 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                   </select>
                 </div>
 
-                {mineCompanyId ? (
-                  <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
-                    <div className="rounded-md bg-emerald-600 p-1.5 shadow-sm">
-                      <Building2 className="h-4 w-4 text-white" />
-                    </div>
-                    <span>{miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'Votre société minière'}</span>
-                  </div>
-                ) : (
+                {!mineCompanyId && (
                 <div className="flex items-center gap-2">
-                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-md p-1.5 shadow-sm">
-                    <Building2 className="w-4 h-4 text-white" />
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-md p-1.5">
+                    <Building2 className="w-4 h-4 text-emerald-700" />
                   </div>
                   <select
                     value={selectedCompanyId}
                     onChange={e => setSelectedCompanyId(e.target.value)}
                     className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm  text-slate-700 shadow-sm hover:shadow transition-shadow min-w-[200px]"
                   >
-                    <option value="ALL">Sélectionner Toutes les Mines</option>
+                    <option value="ALL">Toutes les mines</option>
                     {miningCompanies.map(company => (
                       <option key={company.id} value={company.id}>{company.name}</option>
                     ))}
@@ -892,29 +877,27 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                     `}
                   >
                     <Lock className="w-3.5 h-3.5" />
-                    Budget Annuel
+                    Prévision annuelle
                   </button>
                   <button
                     onClick={() => handleModeChange('forecast')}
-                    disabled={!annualBudget}
                     className={`
                       flex items-center gap-2 px-4 py-2 rounded-md text-xs  transition-all duration-200
                       ${mode === 'forecast'
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm'
+                        ? 'bg-emerald-700 text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                       }
-                      ${!annualBudget ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
                   >
                     <TrendingUp className="w-3.5 h-3.5" />
-                    Forecast
+                    Forecast trimestriel
                   </button>
                 </div>
 
                 {/* Quarter Selector (Forecast Mode) */}
                 {mode === 'forecast' && (
                   <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-slate-200">
-                    <span className="text-xs  text-slate-700">Trimestre:</span>
+                    <span className="text-xs text-slate-700">Trimestre</span>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4].map(quarter => {
                         const canRevise = annualBudgetService.canReviseQuarter(quarter, currentMonth);
@@ -928,7 +911,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                             className={`
                               relative px-3 py-1.5 text-xs  rounded-md transition-all duration-200
                               ${selectedQuarter === quarter
-                                ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm'
+                                ? 'bg-emerald-700 text-white shadow-sm'
                                 : status === 'completed'
                                 ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
                                 : status === 'active'
@@ -964,13 +947,13 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                 className={`
                   flex-1 px-6 py-3 text-sm  transition-all
                   ${activeTab === 'matrix'
-                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                    ? 'bg-white text-emerald-700 border-b-2 border-emerald-700'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }
                   ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
-                {mode === 'budget' ? 'Matrice budgétaire' : 'Matrice de prévisions'}
+                {mode === 'budget' ? 'Prévisions mensuelles' : 'Révision trimestrielle'}
               </button>
               <button
                 onClick={() => !refreshing && setActiveTab('browser')}
@@ -978,13 +961,13 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                 className={`
                   flex-1 px-6 py-3 text-sm  transition-all
                   ${activeTab === 'browser'
-                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                    ? 'bg-white text-emerald-700 border-b-2 border-emerald-700'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }
                   ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
-                Production réalisée
+                Réalisé annuel
               </button>
             </div>
 
@@ -1030,25 +1013,25 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
       {/* Colonne de synthese */}
       {!loading && (
-      <aside className="budget-page__synthese" aria-label="Synthèse budgétaire">
+      <aside className="budget-page__synthese" aria-label="Synthèse des prévisions">
         <div className="budget-page__synthese-corps">
 
         {activeTab === 'browser' ? (
           /* Production Browser Performance Sidebar */
           <>
           {/* Performance Annuelle */}
-          <div className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-lg p-4 text-white shadow-lg border border-slate-600/50">
+          <div className="bg-slate-800 rounded-lg p-4 text-white shadow-sm border border-slate-700">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="bg-white/15 rounded-lg p-1.5">
                   <Target className="w-4 h-4" />
                 </div>
-                <span className="text-xs  uppercase tracking-wide">Performance Annuelle</span>
+                <span className="text-xs font-semibold">Suivi annuel</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">Budget :</span>
+                <span className="text-xs text-slate-300">Prévision :</span>
                 <span className="text-sm ">{formatNumberWithSpaces(calculateYearTotal(), 2)} oz</span>
               </div>
               <div className="flex items-center justify-between">
@@ -1065,7 +1048,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                     const yearBudget = calculateYearTotal();
                     const yearActual = Object.values(monthlyActuals).reduce((sum, val) => sum + Math.round(Number(val || 0)), 0);
                     const yearVariance = yearActual - yearBudget;
-                    const yearVariancePercent = yearBudget > 0 ? ((yearVariance / yearBudget) * 100) : -100;
+                    const yearVariancePercent = yearBudget > 0 ? ((yearVariance / yearBudget) * 100) : 0;
                     const isPositive = yearVariancePercent >= 0;
                     const isWarning = yearVariancePercent >= -10 && yearVariancePercent < 0;
                     const dotColor = isPositive ? 'bg-green-500' : isWarning ? 'bg-yellow-500' : 'bg-red-500';
@@ -1089,9 +1072,9 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
           {/* Performance par Trimestre */}
           <div className="space-y-3">
-            <h3 className="text-xs  text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-slate-600" />
-              Performance par Trimestre
+              Suivi par trimestre
             </h3>
 
             {[1, 2, 3, 4].map(quarter => {
@@ -1113,7 +1096,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                 return sum + Math.round(Number(monthlyActuals[month] || 0));
               }, 0);
               const variance = quarterActual - quarterBudget;
-              const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : -100;
+              const variancePercent = quarterBudget > 0 ? (variance / quarterBudget) * 100 : 0;
               const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
 
               const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
@@ -1123,14 +1106,16 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                 red: { bg: 'bg-red-500', text: 'text-red-600', border: 'border-red-300', light: 'bg-red-50' }
               }[trafficLight];
 
-              const quarterSummary = variancePercent >= 0
-                ? `Excellent trimestre avec performance ${variancePercentFormatted} au-dessus du budget. Objectifs largement dépassés.`
+              const quarterSummary = quarterBudget === 0
+                ? 'Aucune prévision saisie.'
+                : variancePercent >= 0
+                ? 'Objectif atteint.'
                 : variancePercent >= -10
-                ? `Performance légèrement en dessous du budget (${variancePercentFormatted}). Ajustements mineurs nécessaires.`
-                : `Performance critique avec écart de ${variancePercentFormatted} du budget. Action corrective urgente requise.`;
+                ? 'Écart modéré à suivre.'
+                : 'Écart important à analyser.';
 
               return (
-                <div key={quarter} className={`bg-white rounded-lg border-2 ${trafficColor.border} shadow-sm p-3 hover:shadow-md transition-shadow`}>
+                <div key={quarter} className="bg-white rounded-lg border border-slate-200 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${trafficColor.bg} shadow-sm`}></div>
@@ -1143,7 +1128,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
                   <div className="space-y-1.5 mb-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Budget:</span>
+                      <span className="text-slate-600">Prévision :</span>
                       <span className=" text-slate-800">{formatNumberWithSpaces(quarterBudget, 2)} oz</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
@@ -1159,7 +1144,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                   </div>
 
                   {/* Summary Text */}
-                  <div className={`${trafficColor.light} rounded-md p-2 border ${trafficColor.border}`}>
+                  <div className="bg-slate-50 rounded-md p-2 border border-slate-100">
                     <p className="text-[10px] leading-relaxed text-slate-700">
                       {quarterSummary}
                     </p>
@@ -1171,9 +1156,9 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
           {/* Performance Mensuelle */}
           <div className="space-y-2.5">
-            <h3 className="text-xs  text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-slate-600" />
-              Performance Mensuelle
+              Suivi mensuel
             </h3>
 
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm divide-y divide-slate-100">
@@ -1185,7 +1170,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
                 const actual = Math.round(Number(monthlyActuals[monthNum] || 0));
                 const variance = actual - budget;
-                const variancePercent = budget > 0 ? (variance / budget) * 100 : -100;
+                const variancePercent = budget > 0 ? (variance / budget) * 100 : 0;
                 const variancePercentFormatted = formatPercentage(variancePercent, 1, true);
 
                 const trafficLight = variancePercent >= 0 ? 'green' : variancePercent >= -10 ? 'orange' : 'red';
@@ -1222,13 +1207,13 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
           /* Budget/Forecast Matrix Sidebar (Original) */
           <>
           {/* Total Annuel Section - Always shows annual total */}
-          <div className="bg-gradient-to-br from-slate-600/90 via-slate-700/85 to-slate-800/90 rounded-lg p-3 text-white shadow-md border border-slate-500/30">
+          <div className="bg-slate-800 rounded-lg p-3 text-white shadow-sm border border-slate-700">
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">
                 <div className="bg-white/15 rounded-md p-1">
                   <Target className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px]  uppercase tracking-wide">Total Annuel</span>
+                <span className="text-[10px] font-semibold">Total annuel</span>
               </div>
               <span className="text-[9px] font-medium text-slate-200 flex items-center gap-1">
                 <Clock className="w-2.5 h-2.5" />
@@ -1243,13 +1228,13 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
 
           {/* Trimestre Total Section - Only in forecast mode */}
           {mode === 'forecast' && selectedQuarter && (
-            <div className="bg-gradient-to-br from-teal-600/85 via-teal-700/80 to-cyan-700/85 rounded-lg p-3 text-white shadow-md border border-teal-500/30">
+            <div className="bg-emerald-800 rounded-lg p-3 text-white shadow-sm border border-emerald-700">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
                   <div className="bg-white/15 rounded-md p-1">
                     <TrendingUp className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-[10px]  uppercase tracking-wide">Total T{selectedQuarter}</span>
+                  <span className="text-[10px] font-semibold">Total trimestre {selectedQuarter}</span>
                 </div>
                 <span className="text-[9px] font-medium text-teal-100 flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
@@ -1269,7 +1254,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
             <div className="space-y-2.5">
               <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                 <PieChart className="w-4 h-4 text-slate-600" />
-                Budget par Trimestre
+                Prévision par trimestre
               </h3>
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <ResponsiveContainer width="100%" height={280}>
@@ -1293,7 +1278,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                       dataKey="value"
                     >
                       {getQuarterlyDistributionData().map((_entry, index) => {
-                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                        const colors = ['#36584d', '#4f7468', '#76958b', '#a8bbb4'];
                         return <Cell key={`cell-${index}`} fill={colors[index]} />;
                       })}
                     </Pie>
@@ -1316,7 +1301,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
             <div className="space-y-2.5">
               <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-slate-600" />
-                Budget Mensuel
+                Prévision mensuelle
               </h3>
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <ResponsiveContainer width="100%" height={450}>
@@ -1343,10 +1328,10 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
                       {getMonthlyBudgetData().map((_entry, index) => {
                         const colors = [
-                          '#3b82f6', '#10b981', '#f59e0b', // Q1
-                          '#06b6d4', '#14b8a6', '#84cc16', // Q2
-                          '#f59e0b', '#f97316', '#ef4444', // Q3
-                          '#8b5cf6', '#a855f7', '#6366f1'  // Q4
+                          '#36584d', '#41665a', '#4c7468',
+                          '#578276', '#638f84', '#6f9c91',
+                          '#7ca99e', '#89b5ab', '#97c1b7',
+                          '#a6ccc2', '#b6d7ce', '#c7e2da'
                         ];
                         return <Cell key={`cell-${index}`} fill={colors[index]} />;
                       })}
@@ -1364,7 +1349,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
               <div className="space-y-2.5">
                 <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                   <PieChart className="w-4 h-4 text-slate-600" />
-                  Distribution T{selectedQuarter} par Mois
+                  Répartition du trimestre {selectedQuarter}
                 </h3>
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                   <ResponsiveContainer width="100%" height={280}>
@@ -1408,7 +1393,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
               <div className="space-y-2.5">
                 <h3 className="text-xs  text-slate-700 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-slate-600" />
-                  Distribution Annuelle par Trimestre
+                  Répartition annuelle par trimestre
                 </h3>
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                   <ResponsiveContainer width="100%" height={280}>
@@ -1453,9 +1438,9 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
           {/* Quarter Progress */}
           {mode === 'forecast' && (
             <div className="space-y-3">
-              <h3 className="text-xs  text-slate-700 uppercase tracking-wider flex items-center gap-2 px-1">
+              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-2 px-1">
                 <BarChart3 className="w-4 h-4 text-slate-500" />
-                Progrès des Révisions
+                Suivi des révisions
               </h3>
 
               <div className="space-y-2">
@@ -1501,17 +1486,17 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
           )}
 
           {/* Info Box */}
-          <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200/50 shadow-sm">
+          <div className="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100">
             <div className="flex items-start gap-3">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 shadow-sm">
-                <Info className="w-4 h-4 text-white" />
+              <div className="bg-white border border-emerald-200 rounded-lg p-2">
+                <Info className="w-4 h-4 text-emerald-700" />
               </div>
               <div className="flex-1">
-                <h4 className="text-xs  text-blue-900 mb-2 uppercase tracking-wide">Aide</h4>
-                <p className="text-xs text-blue-700 leading-relaxed">
+                <h4 className="text-xs font-semibold text-emerald-900 mb-1">Aide</h4>
+                <p className="text-xs text-emerald-800 leading-relaxed">
                   {mode === 'budget'
-                    ? 'Définissez le budget mensuel pour chaque mois de l\'année. Les valeurs sont en onces d\'or. Sélectionnez une compagnie minière ou visualisez le total du groupe.'
-                    : 'Révisez les prévisions trimestrielles basées sur les performances actuelles et les projections futures. Ajustez les valeurs selon les conditions du marché.'
+                    ? 'Saisissez l\'objectif mensuel en onces.'
+                    : 'Ajustez les trois mois du trimestre sélectionné.'
                   }
                 </p>
               </div>

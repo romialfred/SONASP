@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   GRAMMES_PAR_ONCE,
+  construireTendanceStock,
+  construireHistoriqueMouvements,
   grouperParMine,
   lireLignes,
   orFin,
@@ -26,6 +28,47 @@ describe('conversions', () => {
   it('convertit les onces en kilogrammes', () => {
     expect(ozVersKg(1000)).toBeCloseTo((1000 * GRAMMES_PAR_ONCE) / 1000, 6);
     expect(ozVersKg(0)).toBe(0);
+  });
+});
+
+describe('construireTendanceStock', () => {
+  it('regroupe les entrées réelles sur les six derniers mois et conserve les mois vides', () => {
+    const tendance = construireTendanceStock(
+      [
+        { entry_date: '2026-08-04', final_fine_oz: 120 },
+        { entry_date: '2026-08-18', final_fine_oz: 30 },
+        { entry_date: '2026-06-01', final_fine_oz: 75 },
+        { entry_date: '2025-12-01', final_fine_oz: 999 },
+      ],
+      new Date('2026-08-24T00:00:00Z')
+    );
+
+    expect(tendance.map((point) => point.cle)).toEqual([
+      '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08',
+    ]);
+    expect(tendance.map((point) => point.valeurOz)).toEqual([0, 0, 0, 75, 0, 150]);
+  });
+
+  it('ignore une date invalide', () => {
+    const tendance = construireTendanceStock(
+      [{ entry_date: 'date-invalide', final_fine_oz: 100 }],
+      new Date('2026-08-24T00:00:00Z')
+    );
+    expect(tendance.every((point) => point.valeurOz === 0)).toBe(true);
+  });
+});
+
+describe('construireHistoriqueMouvements', () => {
+  it('classe les allocations et retours dans le poste correspondant', () => {
+    const historique = construireHistoriqueMouvements([
+      { id: 'm1', transaction_type: 'allocation', transaction_date: '2026-08-22', transaction_reference: 'VTE-001', quantity_oz: -40 },
+      { id: 'm2', transaction_type: 'deallocation', transaction_date: '2026-08-23', transaction_reference: 'VTE-001', quantity_oz: 10 },
+      { id: 'm3', transaction_type: 'exit', transaction_date: '2026-08-24', transaction_reference: 'VTE-002', quantity_oz: -25 },
+    ]);
+
+    expect(historique.map((ligne) => ligne.poste)).toEqual(['alloue', 'disponible']);
+    expect(historique[0].quantiteOz).toBe(40);
+    expect(historique.some((ligne) => ligne.id === 'm3')).toBe(false);
   });
 });
 

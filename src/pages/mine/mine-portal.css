@@ -1,0 +1,422 @@
+.mine-portal-page .sn-page__head {
+  min-height: 48px;
+}
+
+.mine-portal-page .sn-page__icon {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border-radius: 12px;
+}
+
+.mine-portal-page .sn-page__head h2 {
+  font-size: 20px;
+}
+
+.mine-portal-page .sn-page__subtitle {
+  margin-top: 2px;
+}
+
+.mine-portal-page .sn-stats {
+  margin-top: 12px;
+}
+
+.mine-portal-page #mine-modules {
+  margin-top: 12px;
+}
+
+.mine-portal-page #mine-modules .sn-section__head {
+  min-height: 54px;
+  padding: 10px 16px;
+  background: #fff;
+}
+
+.mine-portal-page #mine-modules .sn-section__icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border-radius: 10px;
+}
+
+.mine-portal-page #mine-modules .sn-section__body {
+  padding: 14px;
+  background: #f8faf9;
+}
+
+.mine-module-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mine-module-card {
+  --module-accent: #0f7a56;
+  --module-soft: #eaf7f1;
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  min-height: 108px;
+  align-items: center;
+  padding: 17px 15px;
+  gap: 13px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--module-accent) 18%, #e0e7e4);
+  border-top: 3px solid var(--module-accent);
+  color: #10243e;
+  background: #fff;
+  border-radius: 13px;
+  box-shadow: 0 4px 14px rgb(16 36 62 / 6%);
+  text-decoration: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.mine-module-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  content: '';
+  background: var(--module-accent);
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.mine-module-card:hover {
+  transform: translateY(-3px) scale(1.012);
+  border-color: color-mix(in srgb, var(--module-accent) 34%, #dce5e1);
+  box-shadow: 0 10px 22px rgb(16 36 62 / 9%);
+}
+
+.mine-module-card:hover::before,
+.mine-module-card:focus-visible::before {
+  opacity: 1;
+}
+
+.mine-module-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--module-accent) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.mine-module-card__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--module-accent);
+  background: var(--module-soft);
+  border-radius: 11px;
+}
+
+.mine-module-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mine-module-card__copy {
+  min-width: 0;
+}
+
+.mine-module-card__copy strong,
+.mine-module-card__copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mine-module-card__copy strong {
+  color: #10243e;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mine-module-card__copy small {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.mine-module-card__arrow {
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.mine-module-card:hover .mine-module-card__arrow {
+  color: var(--module-accent);
+  transform: translate(1px, -1px);
+}
+
+.mine-module-card--blue {
+  --module-accent: #2563b8;
+  --module-soft: #edf4ff;
+}
+
+.mine-module-card--violet {
+  --module-accent: #6d4bc3;
+  --module-soft: #f3efff;
+}
+
+.mine-module-card--amber {
+  --module-accent: #b97800;
+  --module-soft: #fff7e5;
+}
+
+.mine-dashboard .sn-stats {
+  margin-top: 12px;
+}
+
+.mine-dashboard__grid {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.mine-dashboard__grid--lower {
+  grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.55fr);
+}
+
+.mine-dashboard__grid > .sn-section {
+  min-width: 0;
+  margin: 0;
+}
+
+.mine-performance-chart {
+  min-height: 224px;
+}
+
+.mine-performance-chart__legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  color: #64748b;
+  font-size: 10.5px;
+}
+
+.mine-performance-chart__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mine-performance-chart__legend span::before {
+  width: 8px;
+  height: 8px;
+  content: '';
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.mine-performance-chart .is-actual { color: #0f8b62; }
+.mine-performance-chart .is-budget { color: #d69a00; }
+.mine-performance-chart .is-forecast { color: #6d5ce0; }
+
+.mine-performance-chart__columns {
+  display: grid;
+  min-height: 196px;
+  margin-top: 8px;
+  padding: 12px 8px 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  border-bottom: 1px solid #dfe6e2;
+  background: repeating-linear-gradient(to bottom, #fff 0, #fff 45px, #eef2f0 46px);
+}
+
+.mine-performance-chart__month {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1fr auto auto;
+  text-align: center;
+}
+
+.mine-performance-chart__bars {
+  display: flex;
+  min-height: 140px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mine-performance-chart__bars span {
+  display: block;
+  width: min(14px, 24%);
+  min-height: 0;
+  background: currentColor;
+  border-radius: 3px 3px 0 0;
+  transition: height 240ms ease;
+}
+
+.mine-performance-chart__bars .is-budget { opacity: 0.65; }
+.mine-performance-chart__bars .is-forecast { opacity: 0.48; }
+
+.mine-performance-chart__month strong {
+  margin-top: 6px;
+  color: #32465d;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.mine-performance-chart__month small {
+  padding-bottom: 6px;
+  overflow: hidden;
+  color: #748397;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mine-finance-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.mine-finance-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 8px 11px;
+  gap: 12px;
+  border: 1px solid #e1e8e5;
+  background: #fbfcfc;
+  border-radius: 9px;
+}
+
+.mine-finance-summary span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mine-finance-summary strong {
+  color: #10243e;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mine-finance-summary strong.is-alert { color: #b3261e; }
+
+.mine-finance-summary > .mine-finance-summary__progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+.mine-finance-summary__progress progress {
+  width: 100%;
+  height: 6px;
+  grid-column: 1 / -1;
+  accent-color: #0f8b62;
+}
+
+.mine-pending-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.mine-pending-grid a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 10px 12px;
+  gap: 12px;
+  border: 1px solid #e2e8e5;
+  color: #33485f;
+  background: #fff;
+  border-radius: 9px;
+  text-decoration: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.mine-pending-grid a:hover,
+.mine-pending-grid a:focus-visible {
+  border-color: #b9d9ca;
+  background: #f4faf7;
+}
+
+.mine-pending-grid span { font-size: 11px; font-weight: 600; }
+.mine-pending-grid strong { color: #0f7a56; font-size: 18px; font-variant-numeric: tabular-nums; }
+
+.mine-activity-list {
+  display: grid;
+}
+
+.mine-activity-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 7px 3px;
+  gap: 16px;
+  border-bottom: 1px solid #edf1ef;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mine-activity-list a:last-child { border-bottom: 0; }
+.mine-activity-list a:hover strong { color: #0f7a56; }
+.mine-activity-list strong,
+.mine-activity-list small { display: block; }
+.mine-activity-list strong { color: #20364e; font-size: 11.5px; }
+.mine-activity-list small { margin-top: 2px; color: #7b8998; font-size: 10px; }
+.mine-activity-list b { color: #0f7a56; font-size: 11.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.mine-dashboard__empty {
+  display: grid;
+  min-height: 150px;
+  margin: 0;
+  place-items: center;
+  color: #7b8998;
+  font-size: 12px;
+}
+
+@media (max-width: 1280px) {
+  .mine-module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mine-dashboard__grid,
+  .mine-dashboard__grid--lower {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .mine-portal-page {
+    padding-inline: 14px;
+  }
+
+  .mine-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mine-module-card {
+    min-height: 88px;
+  }
+
+  .mine-performance-chart__columns { gap: 5px; padding-inline: 2px; }
+  .mine-performance-chart__bars { gap: 2px; }
+  .mine-pending-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mine-module-card,
+  .mine-module-card::before,
+  .mine-module-card__arrow {
+    transition: none;
+  }
+
+  .mine-module-card:hover,
+  .mine-module-card:hover .mine-module-card__arrow {
+    transform: none;
+  }
+
+  .mine-performance-chart__bars span { transition: none; }
+}

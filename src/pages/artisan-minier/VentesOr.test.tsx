@@ -22,6 +22,8 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({
     alertState: { isOpen: false, message: '', type: 'info' },

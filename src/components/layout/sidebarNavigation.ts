@@ -111,8 +111,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Achats aux mines', path: '/production/achats-mines', icon: CircleDollarSign, color: '#d79a00' },
           { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
           { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
-          { label: 'Budgets', path: '/performance/budgets', icon: BarChart3, color: '#8b5cf6' },
-          { label: 'Prévisions', path: '/performance/forecasts', icon: TrendingUp, color: '#14b8a6' },
+          { label: 'Prévisions & Forecast', path: '/performance/budgets', icon: TrendingUp, color: '#14b8a6' },
         ],
       },
       {
@@ -260,23 +259,23 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'vue-ventes',
         label: 'Analyses des ventes',
-        path: '/sales',
+        path: '/analytics/ventes',
         icon: CircleDollarSign,
-        color: '#ec4899',
+        color: '#087956',
       },
       {
         id: 'vue-production',
         label: 'Rapports de production',
-        path: '/dashboard/production-modern',
+        path: '/analytics/production',
         icon: Building2,
-        color: '#10976b',
+        color: '#087956',
       },
       {
         id: 'rapports-institutionnels',
         label: 'Rapports institutionnels',
         path: '/reports',
         icon: FileText,
-        color: '#2f6fec',
+        color: '#087956',
       },
       {
         id: 'performance-nationale',

@@ -265,7 +265,7 @@ export function TransportCompanyForm() {
           </Section>
 
           <Section
-            id="contact"
+            id="contact-section"
             icon={Contact}
             tone="violet"
             title="Contact et adresse"

@@ -80,6 +80,28 @@ class ExportLicenseService {
   }
 
   /**
+   * Récupérer toutes les licences d'une société, quel que soit leur statut.
+   *
+   * Le filtre explicite complète la RLS : une page du portail Mine ne lance
+   * jamais une lecture nationale avant de filtrer côté navigateur.
+   */
+  async getLicensesByCompany(miningCompanyId: string): Promise<ExportLicense[]> {
+    if (!miningCompanyId.trim()) return [];
+
+    const { data, error } = await supabase
+      .from('export_licenses')
+      .select(`
+        *,
+        mining_company:mining_companies(id, name, code)
+      `)
+      .eq('mining_company_id', miningCompanyId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
    * Récupérer les licences actives pour une compagnie minière
    */
   async getActiveLicensesByCompany(miningCompanyId: string): Promise<ExportLicense[]> {
@@ -102,15 +124,18 @@ class ExportLicenseService {
   /**
    * Récupérer une licence par ID
    */
-  async getLicenseById(id: string): Promise<ExportLicense | null> {
-    const { data, error } = await supabase
+  async getLicenseById(id: string, miningCompanyId?: string | null): Promise<ExportLicense | null> {
+    let query = supabase
       .from('export_licenses')
       .select(`
         *,
         mining_company:mining_companies(id, name, code)
       `)
-      .eq('id', id)
-      .maybeSingle();
+      .eq('id', id);
+
+    if (miningCompanyId) query = query.eq('mining_company_id', miningCompanyId);
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     return data;

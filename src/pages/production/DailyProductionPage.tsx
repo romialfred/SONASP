@@ -301,10 +301,10 @@ export function DailyProductionPage() {
           <Section
             id="saisie"
             icon={Plus}
-            title={selection ? 'Modifier la déclaration' : 'Nouvelle déclaration'}
+            title={selection ? 'Modifier la production' : 'Ajouter une production'}
             description={mineName
-              ? `${mineName} · doré pesé, titre estimé et référence de barre.`
-              : 'Doré pesé, titre estimé et référence de barre.'}
+              ? `Saisie pour ${mineName}`
+              : 'Poids, teneurs et référence de barre.'}
           >
             <DailyProductionFormEnhanced
               production={selection}

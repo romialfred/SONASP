@@ -12,15 +12,58 @@
 
 .production-form-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 310px);
   align-items: start;
-  gap: 20px;
+  gap: 16px;
 }
 
 .production-form-shell__main { min-width: 0; }
 
 .production-form-shell__guide {
   min-width: 0;
+}
+
+.production-entry-card {
+  padding: 18px;
+  border: 1px solid #dfe7e3;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(16 36 62 / 4%);
+}
+
+.production-entry-card form > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 16px;
+}
+
+.production-entry-card label {
+  margin-bottom: 6px;
+  color: #33485f;
+  font-size: 12px;
+}
+
+.production-calculation {
+  padding: 13px 15px;
+  border: 1px solid #d8e6de;
+  background: #f5faf7;
+  border-radius: 10px;
+}
+
+.production-calculation h3 { margin-bottom: 9px; color: #145842; }
+.production-calculation label { color: #60766d; }
+.production-calculation [class*='text-xl'] { color: #173e32; font-size: 17px; }
+.production-calculation-note { margin: 10px 0 0; color: #6a7d76; font-size: 10.5px; }
+
+.production-form-shell__guide .field-guide-panel > div:first-child {
+  background: #f4f7f5;
+}
+
+.production-form-shell__guide .field-guide-panel > div:last-child {
+  padding: 8px;
+  box-shadow: none;
+}
+
+.production-form-shell__guide .field-guide-panel [class*='border-l-2'] {
+  padding-block: 6px;
 }
 
 .production-form__mine-title {

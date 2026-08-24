@@ -7,6 +7,7 @@ import {
   etatLicence,
   filtrerLicences,
   kilos,
+  limiterLicencesAuPerimetre,
   onces,
   tauxUtilisation,
 } from './ExportLicensesPage';
@@ -15,6 +16,12 @@ import type { ExportLicense } from '@/services/exportLicenseService';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   getAllLicenses: vi.fn(),
+  getLicensesByCompany: vi.fn(),
+  workspace: {
+    isMine: false,
+    companyId: null as string | null,
+    companyCode: null as string | null,
+  },
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -27,7 +34,14 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 }));
 
 vi.mock('@/services/exportLicenseService', () => ({
-  exportLicenseService: { getAllLicenses: mocks.getAllLicenses },
+  exportLicenseService: {
+    getAllLicenses: mocks.getAllLicenses,
+    getLicensesByCompany: mocks.getLicensesByCompany,
+  },
+}));
+
+vi.mock('@/hooks/useMineWorkspace', () => ({
+  useMineWorkspace: () => mocks.workspace,
 }));
 
 const MAINTENANT = new Date('2026-08-19T12:00:00Z');
@@ -115,10 +129,21 @@ describe('cumulsLicences', () => {
   });
 });
 
+describe('limiterLicencesAuPerimetre', () => {
+  it('écarte toute licence appartenant à une autre société', () => {
+    const autreMine = licence({ id: '8', mining_company_id: 'm2' });
+    expect(limiterLicencesAuPerimetre([active, autreMine], 'm1').map((item) => item.id)).toEqual(['1']);
+  });
+});
+
 describe('ExportLicensesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.workspace.isMine = false;
+    mocks.workspace.companyId = null;
+    mocks.workspace.companyCode = null;
     mocks.getAllLicenses.mockResolvedValue([active, expiree, epuisee]);
+    mocks.getLicensesByCompany.mockResolvedValue([active, expiree, epuisee]);
   });
 
   it('affiche les cumuls et les fiches', async () => {
@@ -165,5 +190,26 @@ describe('ExportLicensesPage', () => {
 
     await screen.findByText('EXP-7');
     expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
+  it('charge uniquement le périmètre de la mine et écarte une réponse incohérente', async () => {
+    mocks.workspace.isMine = true;
+    mocks.workspace.companyId = 'm1';
+    mocks.workspace.companyCode = 'SOPAMIB';
+    const licenceEssakane = licence({
+      id: '9',
+      mining_company_id: 'm2',
+      license_number: 'EXP-ESK-2026-0001',
+      mining_company: { id: 'm2', name: 'Essakane SA', code: 'ESK' },
+    });
+    mocks.getLicensesByCompany.mockResolvedValue([active, licenceEssakane]);
+
+    render(<ExportLicensesPage />);
+
+    await screen.findByText('EXP-1');
+    expect(mocks.getLicensesByCompany).toHaveBeenCalledWith('m1');
+    expect(mocks.getAllLicenses).not.toHaveBeenCalled();
+    expect(screen.queryByText('EXP-ESK-2026-0001')).not.toBeInTheDocument();
+    expect(screen.queryByText('SEMAFO Boungou Gold Mine')).not.toBeInTheDocument();
   });
 });

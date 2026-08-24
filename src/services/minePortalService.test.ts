@@ -51,6 +51,8 @@ describe('minePortalService', () => {
         { id: 'a2', reference: 'ANA-AUTRE', statut: 'analysee', date_prelevement: null, teneur_declaree_pct: 91, teneur_retenue_pct: null, mining_company_id: 'mine-2' },
       ], error: null },
       snp_requisitions: { data: [], error: null },
+      shipping_preparations: { data: [], error: null },
+      sales: { data: [], error: null },
     };
     mocks.from.mockImplementation((table: string) => builder(table));
     mocks.rpc.mockImplementation(() => ({
@@ -66,10 +68,13 @@ describe('minePortalService', () => {
       'annual_budgets', 'monthly_budgets', 'quarterly_forecasts', 'daily_production',
       'snp_contrats', 'snp_demandes_achat', 'snp_factures_achat', 'snp_reglements_achat',
       'snp_analyses_teneur', 'snp_requisitions', 'mining_company_documents',
+      'shipping_preparations',
     ];
     scopedTables.forEach((table) => {
       expect(mocks.filters).toContainEqual({ table, column: 'mining_company_id', value: 'mine-1' });
     });
+    expect(mocks.filters).toContainEqual({ table: 'sales', column: 'seller_type', value: 'mining_company' });
+    expect(mocks.filters).toContainEqual({ table: 'sales', column: 'seller_id', value: 'mine-1' });
     expect(mocks.rpc).toHaveBeenCalledWith('snp_situation_societe', { p_mining_company_id: 'mine-1' });
     expect(snapshot.analyses.map((item) => item.reference)).toEqual(['ANA-1']);
     expect(snapshot.company.name).toBe('Mine A');

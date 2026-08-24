@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, FileText, Plus, X, HelpCircle, Info } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Plus, X, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { SuccessDialog } from '@/components/ui/SuccessDialog';
+import { NotificationDialog } from '@/components/ui/NotificationDialog';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { exportLicenseService, CreateLicenseData } from '@/services/exportLicenseService';
 import { supabase } from '@/lib/supabase';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { useAuth } from '@/contexts/AuthContext';
+import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 
 interface MiningCompany {
   id: string;
@@ -37,7 +38,7 @@ interface FieldHelp {
 const FIELD_HELP: Record<string, FieldHelp> = {
   license_number: {
     title: 'Numéro de Licence',
-    description: 'Identifiant unique de la licence d\'exportation généré automatiquement selon le format standard.',
+    description: 'Référence unique générée automatiquement.',
     example: 'EXP-SMD-2025-0001',
     tips: [
       'Format: EXP-[CODE]-[ANNÉE]-[NUMÉRO]',
@@ -47,7 +48,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   mining_company: {
     title: 'Compagnie Minière',
-    description: 'La société propriétaire de la production d\'or qui demande l\'autorisation d\'exportation.',
+    description: 'Société propriétaire de l’or à exporter.',
     tips: [
       'Sélectionnez la compagnie concernée',
       'Seules les compagnies actives sont listées',
@@ -56,7 +57,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   request_date: {
     title: 'Date de Demande',
-    description: 'Date à laquelle la demande de licence d\'exportation a été officiellement soumise aux autorités.',
+    description: 'Jour de dépôt de la demande.',
     tips: [
       'Généralement la date du jour',
       'Ne peut pas être dans le futur',
@@ -65,7 +66,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   issuing_institution: {
     title: 'Institution Émettrice',
-    description: 'Organisme gouvernemental ou autorité qui délivre la licence d\'exportation.',
+    description: 'Autorité qui délivre la licence.',
     example: 'Ministère des Mines et de la Géologie',
     tips: [
       'Nom complet de l\'institution',
@@ -75,7 +76,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   start_date: {
     title: 'Date de Début',
-    description: 'Date à partir de laquelle la licence devient valide et les exportations sont autorisées.',
+    description: 'Premier jour de validité de la licence.',
     tips: [
       'Doit être après la date de demande',
       'Généralement la date d\'émission',
@@ -84,7 +85,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   end_date: {
     title: 'Date de Fin',
-    description: 'Date d\'expiration de la licence. Au-delà, aucune exportation n\'est autorisée avec cette licence.',
+    description: 'Dernier jour de validité de la licence.',
     tips: [
       'Doit être après la date de début',
       'Durée typique: 6 à 12 mois',
@@ -93,7 +94,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   authorized_quantity: {
     title: 'Quantité Autorisée',
-    description: 'Poids total d\'or (en grammes) autorisé à l\'exportation pour cette licence.',
+    description: 'Poids maximal d’or autorisé à l’exportation.',
     example: '100,000 grammes = 100 kg',
     tips: [
       'Exprimé en grammes uniquement',
@@ -104,7 +105,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   average_price: {
     title: 'Prix Moyen de Vente',
-    description: 'Prix moyen estimé ou convenu pour la vente de l\'or exporté (USD par gramme).',
+    description: 'Prix de vente estimé en USD par gramme.',
     example: '75.50 USD/g',
     tips: [
       'Optionnel mais recommandé',
@@ -115,7 +116,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   comments: {
     title: 'Commentaires',
-    description: 'Notes additionnelles, conditions particulières ou observations concernant cette licence.',
+    description: 'Condition ou précision utile sur la licence.',
     tips: [
       'Champ libre et optionnel',
       'Restrictions spéciales',
@@ -125,7 +126,7 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   },
   documents: {
     title: 'Documents Joints',
-    description: 'Fichiers PDF ou documents officiels liés à la licence (copie licence, autorisations, etc.).',
+    description: 'Justificatifs associés à la licence.',
     tips: [
       'Plusieurs documents possibles',
       'Nom descriptif recommandé',
@@ -183,8 +184,8 @@ export function ExportLicenseForm() {
       await loadMiningCompanies();
 
       if (isEditMode && id) {
-        await loadLicense(id);
-        await loadDocuments(id);
+        const licenceAccessible = await loadLicense(id);
+        if (licenceAccessible) await loadDocuments(id);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -212,7 +213,7 @@ export function ExportLicenseForm() {
   };
 
   const loadLicense = async (licenseId: string) => {
-    const license = await exportLicenseService.getLicenseById(licenseId);
+    const license = await exportLicenseService.getLicenseById(licenseId, mineCompanyId);
     if (license) {
       setFormData({
         license_number: license.license_number,
@@ -226,7 +227,9 @@ export function ExportLicenseForm() {
         comments: license.comments || '',
         notes: license.notes || '',
       });
+      return true;
     }
+    return false;
   };
 
   const loadDocuments = async (licenseId: string) => {
@@ -334,7 +337,7 @@ export function ExportLicenseForm() {
             const fileExt = doc.file.name.split('.').pop();
             const fileName = `${licenseId}/${Date.now()}.${fileExt}`;
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
               .from('export-license-documents')
               .upload(fileName, doc.file);
 
@@ -387,8 +390,6 @@ export function ExportLicenseForm() {
     );
   }
 
-  const currentHelp = FIELD_HELP[activeField] || FIELD_HELP.license_number;
-
   return (
     <MainLayout>
       <div className="flex h-full">
@@ -408,11 +409,10 @@ export function ExportLicenseForm() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {isEditMode ? 'Modifier la Licence' : 'Nouvelle Licence d\'Exportation'}
-                  {mineName && <span className="text-emerald-700"> — {mineName}</span>}
+                  {isEditMode ? 'Modifier la licence' : 'Nouvelle licence d\'exportation'}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Enregistrez les informations de la licence d'exportation
+                  Autorisation, période et quantité exportable.
                 </p>
               </div>
             </div>
@@ -776,64 +776,21 @@ export function ExportLicenseForm() {
           </div>
         </div>
 
-        {/* Help Panel - Right Side */}
-        <div className="w-96 bg-gradient-to-b from-blue-50 to-white border-l border-gray-200 p-6 overflow-y-auto">
-          <div className="sticky top-0">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <Info className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Guide d'Aide</h3>
-                <p className="text-xs text-gray-600">Informations contextuelles</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-blue-900 text-lg mb-2">
-                  {currentHelp.title}
-                </h4>
-                <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                  {currentHelp.description}
-                </p>
-              </div>
-
-              {currentHelp.example && (
-                <div className="bg-white border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-blue-800 mb-1">Exemple</p>
-                  <p className="text-sm font-mono text-gray-800">{currentHelp.example}</p>
-                </div>
-              )}
-
-              {currentHelp.tips && currentHelp.tips.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Conseils :</p>
-                  <ul className="space-y-2">
-                    {currentHelp.tips.map((tip, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                        <span className="text-blue-500 font-bold">•</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="mt-6 pt-4 border-t border-blue-100">
-                <p className="text-xs text-gray-500 italic">
-                  💡 Survolez ou cliquez sur un champ pour voir son aide détaillée
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="w-80 border-l border-gray-200 bg-slate-50 p-4">
+          <FieldGuidePanel
+            title="Champs du formulaire"
+            fieldGuides={FIELD_HELP}
+            activeField={activeField}
+            excludeFields={mineCompanyId ? ['mining_company'] : []}
+          />
         </div>
       </div>
 
       {/* Success Dialog */}
-      <SuccessDialog
+      <NotificationDialog
         isOpen={showSuccessDialog}
         onClose={() => setShowSuccessDialog(false)}
+        type="success"
         title={isEditMode ? "Licence Mise à Jour" : "Licence Créée"}
         message={
           isEditMode

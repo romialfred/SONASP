@@ -6,6 +6,7 @@ import {
   DESCRIPTIONS_ROLE,
   EMPTY_USER_FORM,
   appliquerGabarit,
+  indisponibiliteSocieteMiniere,
   validateIdentite,
 } from './UserManagementModern';
 import { EMPTY_PERMISSION } from '@/services/userPermissionsService';
@@ -18,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   listModules: vi.fn(),
   load: vi.fn(),
   save: vi.fn(),
+  loadCapabilities: vi.fn(),
+  saveCapabilities: vi.fn(),
   createUser: vi.fn(),
   addToast: vi.fn(),
   reponses: {} as Record<string, unknown[] | null>,
@@ -36,8 +39,16 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 }));
 
 vi.mock('@/components/ui/Toast', () => ({ useToast: () => ({ addToast: mocks.addToast }) }));
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'admin' } }) }));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'admin', role: 'admin', is_active: true, mining_company_id: null } }),
+}));
 vi.mock('@/services/userManagementService', () => ({ createUser: mocks.createUser }));
+vi.mock('@/services/userCapabilitiesService', () => ({
+  userCapabilitiesService: {
+    load: mocks.loadCapabilities,
+    save: mocks.saveCapabilities,
+  },
+}));
 
 vi.mock('@/services/userPermissionsService', async () => {
   const reel = await vi.importActual<typeof import('@/services/userPermissionsService')>(
@@ -58,6 +69,7 @@ function stub(table: string) {
   const builder: Record<string, unknown> = {};
   builder.select = vi.fn(() => builder);
   builder.eq = vi.fn(() => builder);
+  builder.not = vi.fn(() => builder);
   builder.order = vi.fn(() => builder);
   builder.maybeSingle = vi.fn(() =>
     Promise.resolve(enEchec ? { data: null, error: { message: 'écriture refusée' } } : { data: (rows || [])[0] ?? null, error: null })
@@ -100,6 +112,11 @@ describe('validation du compte', () => {
       'Rattachez le compte Société minière à une compagnie unique.'
     );
     expect(validateIdentite({ ...formValide, role: 'mine', miningCompanyIds: ['c1'] }, false)).toBeNull();
+    expect(validateIdentite(
+      { ...formValide, role: 'mine', miningCompanyIds: ['c1'] },
+      false,
+      new Map([['c1', 'Cette société minière possède déjà un compte.']]),
+    )).toBe('Cette société minière possède déjà un compte.');
     expect(validateIdentite(formValide, false)).toBeNull();
     expect(validateIdentite({ ...formValide, role: 'manager', miningCompanyIds: [] }, false)).toBeNull();
     expect(validateIdentite(formValide, true)).toBeNull();
@@ -116,6 +133,20 @@ describe('validation du compte', () => {
     expect(appliquerGabarit(base, 'consultation').m1).toMatchObject({ can_view: true, can_create: false });
     expect(appliquerGabarit(base, 'aucun').m1).toMatchObject({ can_view: false });
   });
+
+  it('considère une société occupée par un autre compte comme indisponible', () => {
+    const compagnie = { id: 'c1', name: 'Essakane SA', abbreviation: 'ESK', is_active: true };
+    const comptes = [{
+      id: 'u1',
+      full_name: 'Compte Essakane',
+      email: 'mine@essakane.bf',
+      is_active: false,
+      mining_company_id: 'c1',
+    }];
+
+    expect(indisponibiliteSocieteMiniere(compagnie, comptes, null)?.compte?.id).toBe('u1');
+    expect(indisponibiliteSocieteMiniere(compagnie, comptes, 'u1')).toBeNull();
+  });
 });
 
 describe('UserManagementModern', () => {
@@ -127,10 +158,12 @@ describe('UserManagementModern', () => {
     mocks.listModules.mockResolvedValue({ modules });
     mocks.load.mockResolvedValue({ permissions: {} });
     mocks.save.mockResolvedValue({ success: true });
+    mocks.loadCapabilities.mockResolvedValue({ overrides: {}, error: null });
+    mocks.saveCapabilities.mockResolvedValue({ success: true });
     mocks.createUser.mockResolvedValue({ success: true, user: { id: 'nouveau' } });
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     mocks.reponses = {
-      mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
+      mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK', is_active: true }],
       user_profiles: [],
       user_site_assignments: [],
     };
@@ -143,12 +176,11 @@ describe('UserManagementModern', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Administrateur/ }));
   };
 
-  it('propose les rôles de portail, propriétaire et administrateur compris', async () => {
+  it('propose les rôles attribuables sans exposer Propriétaire', async () => {
     render(<UserManagementModern />);
     await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
 
-    // La liste s'arrêtait à cinq rôles : impossible de créer un administrateur.
-    expect(screen.getByRole('radio', { name: /Propriétaire/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Propriétaire/ })).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Administrateur/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Direction/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Société minière/ })).toBeInTheDocument();
@@ -164,6 +196,19 @@ describe('UserManagementModern', () => {
 
     remplirIdentite();
     expect(screen.getByRole('button', { name: /Habilitations/ })).not.toBeDisabled();
+  });
+
+  it('présente les responsabilités métier sans créer de nouveaux rôles de portail', async () => {
+    render(<UserManagementModern />);
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
+
+    remplirIdentite();
+    fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
+
+    expect(screen.getByLabelText('SONASP Gestionnaire')).toBeInTheDocument();
+    expect(screen.getByLabelText('SONASP Approbateur')).toBeInTheDocument();
+    expect(screen.getByLabelText('Comptoir d’achat')).toBeInTheDocument();
+    expect(screen.getByLabelText('Agent Collecteur')).toBeInTheDocument();
   });
 
   it('annonce le parcours sécurisé sans exposer de mot de passe provisoire', async () => {
@@ -191,6 +236,10 @@ describe('UserManagementModern', () => {
     expect(mocks.createUser.mock.calls[0][0]).toMatchObject({ mining_company_id: null });
     expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
     expect(mocks.createUser.mock.calls[0][0].permissions.m1).toMatchObject({ can_view: true });
+    expect(mocks.createUser.mock.calls[0][0].capabilities).toMatchObject({
+      'sonasp.prepare': false,
+      'sonasp.approve': false,
+    });
     expect(mocks.save).not.toHaveBeenCalled();
     expect(mocks.navigate).toHaveBeenCalledWith('/users');
   });
@@ -228,6 +277,31 @@ describe('UserManagementModern', () => {
       mining_company_id: 'c1',
     });
     expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
+  });
+
+  it('affiche les mines déjà rattachées en grisé sans permettre leur sélection', async () => {
+    mocks.reponses.mining_companies = [
+      { id: 'c1', name: 'Essakane SA', abbreviation: 'ESK', is_active: true },
+      { id: 'c2', name: 'SOPAMIB', abbreviation: 'SPM', is_active: true },
+    ];
+    mocks.reponses.user_profiles = [{
+      id: 'u-essakane',
+      full_name: 'Compte Essakane',
+      email: 'portail@essakane.bf',
+      role: 'mine',
+      is_active: false,
+      mining_company_id: 'c1',
+    }];
+
+    render(<UserManagementModern />);
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('radio', { name: /Société minière/ }));
+
+    expect(screen.getByRole('radio', { name: /Essakane SA/ })).toBeDisabled();
+    expect(screen.getByText('Compte déjà créé')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /SOPAMIB/ })).toBeEnabled();
+    expect(screen.getByText('1 disponible(s)')).toBeInTheDocument();
   });
 
   it('restitue un échec de création', async () => {

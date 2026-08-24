@@ -20,11 +20,13 @@ export const ROLE_LEVEL: Record<UserRole, number> = {
   customer: 20,
 };
 
-export const ACCOUNT_ADMIN_ROLES: UserRole[] = ['owner', 'admin', 'management'];
+export const ACCOUNT_ADMIN_ROLES: UserRole[] = ['owner', 'admin'];
 
 export function canAssignRole(actorRole: UserRole | null | undefined, targetRole: UserRole): boolean {
   if (!actorRole || !ACCOUNT_ADMIN_ROLES.includes(actorRole)) return false;
-  if (targetRole === 'owner' && actorRole !== 'owner') return false;
+  // Le rôle Owner est un compte de secours hors parcours interactif. Même un
+  // Owner connecté ne peut ni le proposer ni l'attribuer depuis le portail.
+  if (targetRole === 'owner') return false;
   return ROLE_LEVEL[targetRole] <= ROLE_LEVEL[actorRole];
 }
 

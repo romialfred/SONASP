@@ -22,16 +22,29 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 describe('ProtectedRoute Administrateur', () => {
-  it('ouvre un module opérationnel limité historiquement à la Direction', () => {
+  it('n’ouvre plus un module métier limité à la Direction', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/artisan-sites']}>
         <ProtectedRoute allowedRoles={['management']}>
           <div>Sites artisanaux</div>
         </ProtectedRoute>
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Sites artisanaux')).toBeInTheDocument();
+    expect(screen.queryByText('Sites artisanaux')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Accès refusé' })).toBeInTheDocument();
+  });
+
+  it('conserve les référentiels techniques historiquement déclarés Direction', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/modules']}>
+        <ProtectedRoute allowedRoles={['management']}>
+          <div>Référentiel des modules</div>
+        </ProtectedRoute>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Référentiel des modules')).toBeInTheDocument();
   });
 
   it('ne transforme pas l’administrateur en compte de portail métier', () => {

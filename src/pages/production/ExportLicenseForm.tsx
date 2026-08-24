@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, FileText, Plus, X, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Plus, X, HelpCircle, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -13,6 +13,8 @@ import { supabase } from '@/lib/supabase';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { useAuth } from '@/contexts/AuthContext';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface MiningCompany {
   id: string;
@@ -136,7 +138,171 @@ const FIELD_HELP: Record<string, FieldHelp> = {
   }
 };
 
+function MineExportLicenseRequestForm() {
+  const navigate = useNavigate();
+  const { companyName } = useMineWorkspace();
+  const [requestedQuantityGrams, setRequestedQuantityGrams] = useState('');
+  const [desiredExportDate, setDesiredExportDate] = useState('');
+  const [destination, setDestination] = useState('');
+  const [reason, setReason] = useState('');
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+
+  const submitRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setRequestError(null);
+    try {
+      await exportLicenseService.submitMineLicenseRequest({
+        requestedQuantityGrams: Number(requestedQuantityGrams),
+        desiredExportDate,
+        destination,
+        reason,
+        comment,
+      });
+      setRequestSent(true);
+    } catch (cause) {
+      setRequestError(errorMessage(cause, 'Impossible de transmettre la demande de licence.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="mx-auto max-w-3xl p-6">
+        <div className="mb-6 flex items-center gap-4">
+          <Button onClick={() => navigate('/production/licenses')} variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Retour
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Demander une licence d’exportation</h1>
+            <p className="text-sm text-gray-600">
+              {companyName || 'Votre société'} soumet la demande ; seule l’autorité compétente délivre la licence et fixe son quota.
+            </p>
+          </div>
+        </div>
+
+        {requestSent ? (
+          <Card className="border-emerald-200 bg-emerald-50 p-6" role="status">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-6 w-6 text-emerald-700" aria-hidden="true" />
+              <div>
+                <h2 className="font-bold text-emerald-950">Demande transmise à la SONASP</h2>
+                <p className="mt-1 text-sm text-emerald-900">
+                  Elle reste en attente d’instruction. Aucun numéro, statut ni quota de licence n’a été créé par votre compte.
+                </p>
+                <Button className="mt-4" onClick={() => navigate('/production/licenses')}>
+                  Revenir aux licences
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <form onSubmit={submitRequest}>
+            {requestError && (
+              <div className="mb-4 flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+                <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span>{requestError}</span>
+              </div>
+            )}
+
+            <Card className="space-y-5 p-6">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="requested-quantity" className="mb-2 block text-sm font-medium text-gray-700">
+                    Quantité demandée (grammes) *
+                  </label>
+                  <Input
+                    id="requested-quantity"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={requestedQuantityGrams}
+                    onChange={(event) => setRequestedQuantityGrams(event.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="desired-export-date" className="mb-2 block text-sm font-medium text-gray-700">
+                    Date d’export souhaitée *
+                  </label>
+                  <Input
+                    id="desired-export-date"
+                    type="date"
+                    min={new Date().toISOString().slice(0, 10)}
+                    value={desiredExportDate}
+                    onChange={(event) => setDesiredExportDate(event.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="request-destination" className="mb-2 block text-sm font-medium text-gray-700">
+                  Destination prévue *
+                </label>
+                <Input
+                  id="request-destination"
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value)}
+                  placeholder="Pays, raffinerie ou destination douanière"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="request-reason" className="mb-2 block text-sm font-medium text-gray-700">
+                  Motif de la demande *
+                </label>
+                <TextArea
+                  id="request-reason"
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  rows={4}
+                  minLength={10}
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">10 caractères minimum.</p>
+              </div>
+
+              <div>
+                <label htmlFor="request-comment" className="mb-2 block text-sm font-medium text-gray-700">
+                  Commentaire complémentaire
+                </label>
+                <TextArea
+                  id="request-comment"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  rows={3}
+                />
+              </div>
+            </Card>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => navigate('/production/licenses')}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={submitting} aria-busy={submitting} className="gap-2">
+                <Send className="h-4 w-4" aria-hidden="true" />
+                {submitting ? 'Transmission…' : 'Transmettre la demande'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    </MainLayout>
+  );
+}
+
 export function ExportLicenseForm() {
+  const { isMine } = useMineWorkspace();
+  return isMine ? <MineExportLicenseRequestForm /> : <SonaspExportLicenseForm />;
+}
+
+function SonaspExportLicenseForm() {
   const { user } = useAuth();
   const mineCompanyId = user?.mining_company_id || null;
   const navigate = useNavigate();

@@ -62,6 +62,33 @@ export interface UpdateLicenseData extends Partial<CreateLicenseData> {
   status?: 'pending' | 'active' | 'expired' | 'exhausted' | 'suspended' | 'cancelled';
 }
 
+export interface MineExportLicenseRequestInput {
+  requestedQuantityGrams: number;
+  desiredExportDate: string;
+  destination: string;
+  reason: string;
+  comment?: string;
+}
+
+export interface MineExportLicenseRequest {
+  id: string;
+  mining_company_id: string;
+  requested_quantity_grams: number;
+  desired_export_date: string;
+  destination: string;
+  reason: string;
+  comment: string | null;
+  status: string;
+  submitted_by: string;
+  submitted_at: string;
+  created_at: string;
+  updated_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  decision_reason: string | null;
+  license_id: string | null;
+}
+
 /**
  * Certains environnements historiques conservent le reliquat dans une colonne
  * ordinaire. Une licence nouvellement créée peut donc revenir avec `NULL` tant
@@ -84,6 +111,29 @@ export function normalizeExportLicenseQuota(license: ExportLicense): ExportLicen
     used_quantity_grams: usedQuantity,
     remaining_quantity_grams: Math.max(0, Number.isFinite(remainingQuantity) ? remainingQuantity : 0),
   };
+}
+
+/** Défense UI supplémentaire : la requête et la RLS restent autoritatives. */
+export function isExportLicenseSelectable(
+  license: ExportLicense,
+  miningCompanyId: string,
+  today = new Date().toISOString().slice(0, 10),
+): boolean {
+  return Boolean(
+    miningCompanyId
+      && license.mining_company_id === miningCompanyId
+      && license.status === 'active'
+      && license.start_date <= today
+      && license.end_date >= today
+      && Number(license.remaining_quantity_grams) > 0,
+  );
+}
+
+export class ExportLicenseWorkflowUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ExportLicenseWorkflowUnavailableError';
+  }
 }
 
 class ExportLicenseService {
@@ -147,7 +197,7 @@ class ExportLicenseService {
     if (error) throw error;
     return (data || [])
       .map((license) => normalizeExportLicenseQuota(license as ExportLicense))
-      .filter((license) => license.remaining_quantity_grams > 0);
+      .filter((license) => isExportLicenseSelectable(license, miningCompanyId, today));
   }
 
   /**
@@ -257,100 +307,73 @@ class ExportLicenseService {
     licenseId: string,
     requiredQuantity: number
   ): Promise<LicenseAvailability> {
-    try {
-      const { data, error } = await supabase.rpc('check_license_availability', {
-        p_license_id: licenseId,
-        p_required_quantity: requiredQuantity,
-      });
-
-      if (error) {
-        console.error('RPC error:', error);
-        // If function doesn't exist, provide manual check
-        if (error.message.includes('does not exist')) {
-          return await this.manualLicenseCheck(licenseId, requiredQuantity);
-        }
-        throw error;
-      }
-
-      if (!data || data.length === 0) {
-        return {
-          is_available: false,
-          remaining_quantity: 0,
-          message: 'Impossible de vérifier la disponibilité',
-        };
-      }
-
-      const result = data[0] as LicenseAvailability;
-      if (result.remaining_quantity == null || !Number.isFinite(Number(result.remaining_quantity))) {
-        return await this.manualLicenseCheck(licenseId, requiredQuantity);
-      }
-
-      return {
-        ...result,
-        remaining_quantity: Number(result.remaining_quantity),
-      };
-    } catch (error: any) {
-      console.error('License check error:', error);
-      // Fallback to manual check
-      return await this.manualLicenseCheck(licenseId, requiredQuantity);
-    }
-  }
-
-  /**
-   * Vérification manuelle si la fonction RPC n'existe pas
-   */
-  private async manualLicenseCheck(
-    licenseId: string,
-    requiredQuantity: number
-  ): Promise<LicenseAvailability> {
-    const license = await this.getLicenseById(licenseId);
-
-    if (!license) {
-      return {
-        is_available: false,
-        remaining_quantity: 0,
-        message: 'Licence introuvable',
-      };
+    if (!licenseId.trim() || !Number.isFinite(requiredQuantity) || requiredQuantity <= 0) {
+      throw new Error('Une licence et une quantité strictement positive sont requises.');
     }
 
-    if (license.status !== 'active') {
-      return {
-        is_available: false,
-        remaining_quantity: license.remaining_quantity_grams,
-        message: `Licence ${license.license_number} : statut "${license.status}" (doit être "active")`,
-      };
-    }
+    const { data, error } = await supabase.rpc('check_license_availability', {
+      p_license_id: licenseId,
+      p_required_quantity: requiredQuantity,
+    });
+    if (error) throw error;
 
-    const today = new Date().toISOString().split('T')[0];
-    if (license.start_date > today) {
-      return {
-        is_available: false,
-        remaining_quantity: license.remaining_quantity_grams,
-        message: `Licence ${license.license_number} valide à partir du ${license.start_date}`,
-      };
-    }
-
-    if (license.end_date < today) {
-      return {
-        is_available: false,
-        remaining_quantity: license.remaining_quantity_grams,
-        message: `Licence ${license.license_number} expirée le ${license.end_date}`,
-      };
-    }
-
-    if (license.remaining_quantity_grams < requiredQuantity) {
-      return {
-        is_available: false,
-        remaining_quantity: license.remaining_quantity_grams,
-        message: `Quantité insuffisante. Disponible: ${license.remaining_quantity_grams.toFixed(2)}g, Requis: ${requiredQuantity.toFixed(2)}g`,
-      };
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result || result.remaining_quantity == null
+      || !Number.isFinite(Number(result.remaining_quantity))) {
+      throw new ExportLicenseWorkflowUnavailableError(
+        'La vérification sécurisée du quota n’a renvoyé aucun résultat exploitable.',
+      );
     }
 
     return {
-      is_available: true,
-      remaining_quantity: license.remaining_quantity_grams,
-      message: `✅ Quantité disponible: ${license.remaining_quantity_grams.toFixed(2)}g`,
+      is_available: Boolean(result.is_available),
+      remaining_quantity: Number(result.remaining_quantity),
+      message: String(result.message || ''),
     };
+  }
+
+  /** Soumet une demande ; le tenant, l’auteur et le statut sont dérivés en base. */
+  async submitMineLicenseRequest(
+    input: MineExportLicenseRequestInput,
+  ): Promise<MineExportLicenseRequest> {
+    const destination = input.destination.trim();
+    const reason = input.reason.trim();
+    const comment = input.comment?.trim() || null;
+    if (!Number.isFinite(input.requestedQuantityGrams) || input.requestedQuantityGrams <= 0) {
+      throw new Error('La quantité demandée doit être strictement positive.');
+    }
+    if (!input.desiredExportDate) throw new Error('La date d’export souhaitée est obligatoire.');
+    if (input.desiredExportDate < new Date().toISOString().slice(0, 10)) {
+      throw new Error('La date d’export souhaitée ne peut pas être passée.');
+    }
+    if (destination.length < 2) throw new Error('La destination est obligatoire.');
+    if (reason.length < 10) throw new Error('Le motif doit contenir au moins 10 caractères.');
+
+    const { data, error } = await supabase.rpc(
+      'snp_portail_mine_soumettre_demande_licence_export',
+      {
+        p_quantite_demandee_grammes: input.requestedQuantityGrams,
+        p_date_export_souhaitee: input.desiredExportDate,
+        p_destination: destination,
+        p_motif: reason,
+        p_commentaire: comment,
+      },
+    );
+    if (error) {
+      const message = String(error.message || '');
+      if (error.code === '42883' || /does not exist|schema cache|function/i.test(message)) {
+        throw new ExportLicenseWorkflowUnavailableError(
+          'Le service sécurisé de demande de licence n’est pas disponible. Contactez la SONASP ; aucune demande n’a été enregistrée.',
+        );
+      }
+      throw error;
+    }
+    if (!data || typeof data !== 'object') {
+      throw new ExportLicenseWorkflowUnavailableError(
+        'La demande n’a pas pu être confirmée par le service sécurisé.',
+      );
+    }
+    return data as MineExportLicenseRequest;
   }
 
   /**

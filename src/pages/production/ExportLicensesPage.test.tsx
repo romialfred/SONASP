@@ -154,6 +154,7 @@ describe('ExportLicensesPage', () => {
 
     expect(screen.getByText('EXP-1')).toBeInTheDocument();
     expect(screen.getAllByText('SEMAFO Boungou Gold Mine')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: 'Nouvelle licence' })).toBeInTheDocument();
   });
 
   it('filtre sur les licences en cours', async () => {
@@ -211,5 +212,10 @@ describe('ExportLicensesPage', () => {
     expect(mocks.getAllLicenses).not.toHaveBeenCalled();
     expect(screen.queryByText('EXP-ESK-2026-0001')).not.toBeInTheDocument();
     expect(screen.queryByText('SEMAFO Boungou Gold Mine')).not.toBeInTheDocument();
+
+    const requestButton = screen.getByRole('button', { name: 'Soumettre une demande' });
+    expect(screen.queryByRole('button', { name: 'Nouvelle licence' })).not.toBeInTheDocument();
+    fireEvent.click(requestButton);
+    expect(mocks.navigate).toHaveBeenCalledWith('/production/licenses/new');
   });
 });

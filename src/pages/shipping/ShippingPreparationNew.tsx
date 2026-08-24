@@ -10,12 +10,17 @@ import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { BusinessErrorDialog } from '@/components/ui/BusinessErrorDialog';
 import { supabase } from '@/lib/supabase';
 import { shippingPreparationService, ShippingPreparation } from '@/services/shippingPreparationService';
-import { exportLicenseService, ExportLicense } from '@/services/exportLicenseService';
+import {
+  exportLicenseService,
+  isExportLicenseSelectable,
+  type ExportLicense,
+} from '@/services/exportLicenseService';
 import { depositorService, Depositor } from '@/services/depositorService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PackingListPdfService } from '@/services/packingListPdfService';
 import { useAuth } from '@/contexts/AuthContext';
+import { ShippingLicenseSelect } from '@/components/shipping/ShippingLicenseSelect';
 
 interface DailyProduction {
   id: string;
@@ -324,19 +329,35 @@ export default function ShippingPreparationNew() {
   };
 
   const loadActiveLicenses = async (companyId: string) => {
+    if (mineCompanyId && companyId !== mineCompanyId) {
+      setAvailableLicenses([]);
+      setSelectedLicenseId('');
+      setLicenseWarning('❌ Le périmètre de cette société minière n’est pas autorisé.');
+      return;
+    }
     try {
       const licenses = await exportLicenseService.getActiveLicensesByCompany(companyId);
-      setAvailableLicenses(licenses);
+      const selectableLicenses = licenses.filter((license) =>
+        isExportLicenseSelectable(license, companyId));
+      setAvailableLicenses(selectableLicenses);
 
-      if (licenses.length === 0) {
+      if (selectableLicenses.length === 0) {
         setLicenseWarning('⚠️ Aucune licence active disponible pour cette compagnie');
       }
     } catch (error) {
       console.error('Error loading licenses:', error);
+      setAvailableLicenses([]);
+      setSelectedLicenseId('');
+      setLicenseWarning('❌ Impossible de charger les licences et leur quota libre.');
     }
   };
 
   const handleLicenseChange = async (licenseId: string) => {
+    if (licenseId && !availableLicenses.some((license) => license.id === licenseId)) {
+      setSelectedLicenseId('');
+      setLicenseWarning('❌ Cette licence n’est pas active dans le périmètre sélectionné.');
+      return;
+    }
     setSelectedLicenseId(licenseId);
     setLicenseWarning('');
 
@@ -355,10 +376,11 @@ export default function ShippingPreparationNew() {
         if (!availability.is_available) {
           setLicenseWarning(`❌ ${availability.message}`);
         } else {
-          setLicenseWarning(`✅ Quantité disponible: ${availability.remaining_quantity.toLocaleString()}g`);
+          setLicenseWarning(`✅ Quota libre: ${availability.remaining_quantity.toLocaleString()}g`);
         }
       } catch (error) {
         console.error('Error checking license:', error);
+        setLicenseWarning('❌ Impossible de vérifier le quota sécurisé de la licence.');
       }
     }
   };
@@ -381,18 +403,37 @@ export default function ShippingPreparationNew() {
     // Re-validate license if selected
     if (selectedLicenseId) {
       const totalNetWeight = newSelections.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
-      exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight).then(availability => {
-        if (!availability.is_available) {
-          setLicenseWarning(`❌ ${availability.message}`);
-        } else {
-          setLicenseWarning(`✅ Quantité disponible: ${availability.remaining_quantity.toLocaleString()}g`);
-        }
-      });
+      void exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight)
+        .then((availability) => {
+          if (!availability.is_available) {
+            setLicenseWarning(`❌ ${availability.message}`);
+          } else {
+            setLicenseWarning(`✅ Quota libre: ${availability.remaining_quantity.toLocaleString()}g`);
+          }
+        })
+        .catch(() => setLicenseWarning('❌ Impossible de vérifier le quota sécurisé de la licence.'));
     }
   };
 
   const handleRemoveProduction = (productionId: string) => {
-    setSelectedProductions(selectedProductions.filter(sp => sp.production.id !== productionId));
+    const remainingSelections = selectedProductions.filter(sp => sp.production.id !== productionId);
+    setSelectedProductions(remainingSelections);
+    if (!selectedLicenseId) return;
+    const totalNetWeight = remainingSelections.reduce(
+      (sum, selection) => sum + selection.production.pure_gold_grams,
+      0,
+    );
+    if (totalNetWeight <= 0) {
+      setLicenseWarning('');
+      return;
+    }
+    void exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight)
+      .then((availability) => setLicenseWarning(
+        availability.is_available
+          ? `✅ Quota libre: ${availability.remaining_quantity.toLocaleString()}g`
+          : `❌ ${availability.message}`,
+      ))
+      .catch(() => setLicenseWarning('❌ Impossible de vérifier le quota sécurisé de la licence.'));
   };
 
   const handleSealNumber1Change = (productionId: string, value: string) => {
@@ -617,6 +658,15 @@ export default function ShippingPreparationNew() {
     if (!selectedLicenseId) {
       setErrorTitle('Licence d\'exportation requise');
       setErrorMessage('Veuillez sélectionner une licence d\'exportation valide.');
+      setShowErrorDialog(true);
+      return;
+    }
+
+    if (!availableLicenses.some((license) =>
+      license.id === selectedLicenseId
+      && isExportLicenseSelectable(license, effectiveCompanyId))) {
+      setErrorTitle('Licence non autorisée');
+      setErrorMessage('La licence choisie n’est plus active, n’appartient pas au tenant ou ne dispose plus de quota libre.');
       setShowErrorDialog(true);
       return;
     }
@@ -868,37 +918,13 @@ export default function ShippingPreparationNew() {
                 )}
 
                 {/* License Selection */}
-                <div>
-                  <label className="block text-xs font-semibold text-green-900 mb-2 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5" />
-                    Licence d'Exportation *
-                  </label>
-                  <select
-                    value={selectedLicenseId}
-                    onChange={(e) => handleLicenseChange(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-green-300 rounded-md focus:ring-1 focus:ring-green-500 bg-white text-xs font-medium"
-                    disabled={loading || !selectedMiningCompanyId || availableLicenses.length === 0}
-                  >
-                    <option value="">
-                      {!selectedMiningCompanyId
-                        ? '-- Sélectionner d\'abord une compagnie --'
-                        : availableLicenses.length === 0
-                        ? '-- Aucune licence active disponible --'
-                        : '-- Sélectionner une licence --'}
-                    </option>
-                    {availableLicenses.map((license) => (
-                      <option key={license.id} value={license.id}>
-                        {license.license_number} - Restant: {license.remaining_quantity_grams.toLocaleString()}g
-                        (Expire: {new Date(license.end_date).toLocaleDateString('fr-FR')})
-                      </option>
-                    ))}
-                  </select>
-                  {selectedMiningCompanyId && availableLicenses.length === 0 && (
-                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-                      ⚠️ Aucune licence d'exportation active pour cette compagnie.
-                    </div>
-                  )}
-                </div>
+                <ShippingLicenseSelect
+                  companyId={effectiveCompanyId}
+                  licenses={availableLicenses}
+                  value={selectedLicenseId}
+                  loading={loading}
+                  onChange={(licenseId) => void handleLicenseChange(licenseId)}
+                />
               </div>
 
               {/* License Warning - Full Width */}

@@ -171,7 +171,7 @@ export function ExportLicensesPage() {
               className="sn-btn sn-btn--primary"
               onClick={() => navigate('/production/licenses/new')}
             >
-              <Plus aria-hidden="true" /> Nouvelle licence
+              <Plus aria-hidden="true" /> {isMine ? 'Soumettre une demande' : 'Nouvelle licence'}
             </button>
           }
         />
@@ -250,7 +250,7 @@ export function ExportLicensesPage() {
                   className="sn-btn sn-btn--primary"
                   onClick={() => navigate('/production/licenses/new')}
                 >
-                  Nouvelle licence
+                  {isMine ? 'Soumettre une demande' : 'Nouvelle licence'}
                 </button>
               }
             />

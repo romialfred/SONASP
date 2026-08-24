@@ -1,8 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  exportLicenseService,
+  ExportLicenseWorkflowUnavailableError,
+  isExportLicenseSelectable,
   normalizeExportLicenseQuota,
   type ExportLicense,
 } from './exportLicenseService';
+
+const mocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  rpc: vi.fn(),
+  filters: [] as Array<[string, string, unknown]>,
+  licenses: [] as ExportLicense[],
+}));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: mocks.from,
+    rpc: mocks.rpc,
+    auth: { getUser: vi.fn() },
+  },
+}));
 
 const license = (overrides: Partial<ExportLicense> = {}): ExportLicense => ({
   id: 'license-1',
@@ -53,5 +71,126 @@ describe('reliquat des licences d’exportation', () => {
     }));
 
     expect(normalized.remaining_quantity_grams).toBe(0);
+  });
+});
+
+describe('licences sélectionnables pour une expédition', () => {
+  it('exige le tenant, le statut actif, la période courante et un quota libre', () => {
+    expect(isExportLicenseSelectable(license(), 'mine-1', '2026-08-24')).toBe(true);
+    expect(isExportLicenseSelectable(license({ mining_company_id: 'mine-2' }), 'mine-1', '2026-08-24')).toBe(false);
+    expect(isExportLicenseSelectable(license({ status: 'pending' }), 'mine-1', '2026-08-24')).toBe(false);
+    expect(isExportLicenseSelectable(license({ start_date: '2026-09-01' }), 'mine-1', '2026-08-24')).toBe(false);
+    expect(isExportLicenseSelectable(license({ end_date: '2026-08-23' }), 'mine-1', '2026-08-24')).toBe(false);
+    expect(isExportLicenseSelectable(license({ remaining_quantity_grams: 0 }), 'mine-1', '2026-08-24')).toBe(false);
+  });
+});
+
+describe('exportLicenseService sécurisé', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.filters = [];
+    mocks.licenses = [license()];
+    mocks.from.mockImplementation(() => {
+      const query: Record<string, unknown> = {};
+      query.select = vi.fn(() => query);
+      query.eq = vi.fn((column: string, value: unknown) => {
+        mocks.filters.push(['eq', column, value]);
+        return query;
+      });
+      query.lte = vi.fn((column: string, value: unknown) => {
+        mocks.filters.push(['lte', column, value]);
+        return query;
+      });
+      query.gte = vi.fn((column: string, value: unknown) => {
+        mocks.filters.push(['gte', column, value]);
+        return query;
+      });
+      query.order = vi.fn(async () => ({ data: mocks.licenses, error: null }));
+      return query;
+    });
+  });
+
+  it('charge seulement les licences actives du tenant et réapplique les invariants', async () => {
+    mocks.licenses = [
+      license(),
+      license({ id: 'other', mining_company_id: 'mine-2' }),
+      license({ id: 'pending', status: 'pending' }),
+      license({ id: 'empty', remaining_quantity_grams: 0 }),
+    ];
+
+    const result = await exportLicenseService.getActiveLicensesByCompany('mine-1');
+
+    expect(result.map((item) => item.id)).toEqual(['license-1']);
+    expect(mocks.filters).toEqual(expect.arrayContaining([
+      ['eq', 'mining_company_id', 'mine-1'],
+      ['eq', 'status', 'active'],
+      ['lte', 'start_date', expect.any(String)],
+      ['gte', 'end_date', expect.any(String)],
+    ]));
+  });
+
+  it('utilise exclusivement la RPC pour vérifier le quota', async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{ is_available: true, remaining_quantity: 2500, message: 'Disponible' }],
+      error: null,
+    });
+
+    await expect(exportLicenseService.checkLicenseAvailability('license-1', 1000))
+      .resolves.toEqual({ is_available: true, remaining_quantity: 2500, message: 'Disponible' });
+    expect(mocks.rpc).toHaveBeenCalledWith('check_license_availability', {
+      p_license_id: 'license-1',
+      p_required_quantity: 1000,
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('propage un refus RPC sans vérification locale de secours', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'Conflit de quota' } });
+
+    await expect(exportLicenseService.checkLicenseAvailability('license-1', 1000))
+      .rejects.toMatchObject({ message: 'Conflit de quota' });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('soumet la demande Mine par la signature RPC sans tenant ni statut client', async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: { id: 'request-1', status: 'soumis' },
+      error: null,
+    });
+
+    await exportLicenseService.submitMineLicenseRequest({
+      requestedQuantityGrams: 120_000,
+      desiredExportDate: '2026-09-30',
+      destination: '  Suisse  ',
+      reason: '  Export planifié trimestriel  ',
+      comment: '  Traitement prioritaire  ',
+    });
+
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'snp_portail_mine_soumettre_demande_licence_export',
+      {
+        p_quantite_demandee_grammes: 120_000,
+        p_date_export_souhaitee: '2026-09-30',
+        p_destination: 'Suisse',
+        p_motif: 'Export planifié trimestriel',
+        p_commentaire: 'Traitement prioritaire',
+      },
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('signale explicitement une RPC de demande absente sans fallback DML', async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: '42883', message: 'function does not exist' },
+    });
+
+    await expect(exportLicenseService.submitMineLicenseRequest({
+      requestedQuantityGrams: 120_000,
+      desiredExportDate: '2026-09-30',
+      destination: 'Suisse',
+      reason: 'Export planifié trimestriel',
+    })).rejects.toBeInstanceOf(ExportLicenseWorkflowUnavailableError);
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });

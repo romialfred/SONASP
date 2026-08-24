@@ -36,6 +36,7 @@ describe('matrice d’accès du portail Mine', () => {
     '/production/achats-mines', '/achats/plans', '/achats/comptes',
     '/inventory/add', '/sales/approve/123', '/admin/users',
     '/contrats/contrat-1/modifier', '/requisitions/req-1/modifier',
+    '/production/licenses/edit/licence-1',
   ])('refuse %s', (route) => {
     expect(isMineRouteAllowed(route)).toBe(false);
   });

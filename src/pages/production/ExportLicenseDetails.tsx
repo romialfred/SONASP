@@ -8,7 +8,8 @@ import { exportLicenseService, ExportLicense } from '@/services/exportLicenseSer
 import { supabase } from '@/lib/supabase';
 import { formatDateStandard } from '@/utils/dateUtils';
 import { formatStatusFr } from '@/utils/statusFormatter';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface ShipmentInfo {
   id: string;
@@ -19,24 +20,28 @@ interface ShipmentInfo {
 }
 
 export function ExportLicenseDetails() {
-  const { user } = useAuth();
-  const mineCompanyId = user?.mining_company_id || null;
+  const { isMine, companyId: mineCompanyId } = useMineWorkspace();
   const navigate = useNavigate();
   const { id } = useParams();
   const [license, setLicense] = useState<ExportLicense | null>(null);
   const [shipments, setShipments] = useState<ShipmentInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
       loadLicenseData(id);
     }
-  }, [id, mineCompanyId]);
+  }, [id, isMine, mineCompanyId]);
 
   const loadLicenseData = async (licenseId: string) => {
     try {
       setLoading(true);
-      const licenseData = await exportLicenseService.getLicenseById(licenseId, mineCompanyId);
+      setLoadError(null);
+      const licenseData = await exportLicenseService.getLicenseById(
+        licenseId,
+        isMine ? mineCompanyId : undefined,
+      );
       setLicense(licenseData);
 
       if (!licenseData) {
@@ -45,15 +50,22 @@ export function ExportLicenseDetails() {
       }
 
       // Load shipments using this license
-      const { data: shipmentsData } = await supabase
+      let shipmentQuery = supabase
         .from('shipping_preparations')
         .select('id, expedition_lot_number, total_net_weight_grams, status, prepared_at')
-        .eq('license_id', licenseId)
+        .eq('license_id', licenseId);
+      if (isMine && mineCompanyId) {
+        shipmentQuery = shipmentQuery.eq('mining_company_id', mineCompanyId);
+      }
+      const { data: shipmentsData, error: shipmentsError } = await shipmentQuery
         .order('prepared_at', { ascending: false });
+      if (shipmentsError) throw shipmentsError;
 
       setShipments(shipmentsData || []);
     } catch (error) {
-      console.error('Error loading license data:', error);
+      setLoadError(errorMessage(error, 'Impossible de charger cette licence.'));
+      setLicense(null);
+      setShipments([]);
     } finally {
       setLoading(false);
     }
@@ -75,7 +87,10 @@ export function ExportLicenseDetails() {
         <div className="p-6">
           <Card className="p-12 text-center">
             <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-300" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Licence non trouvée</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {loadError ? 'Chargement impossible' : 'Licence non trouvée'}
+            </h3>
+            {loadError && <p className="mb-4 text-sm text-red-700" role="alert">{loadError}</p>}
             <Button onClick={() => navigate('/production/licenses')}>
               Retour à la liste
             </Button>
@@ -85,7 +100,9 @@ export function ExportLicenseDetails() {
     );
   }
 
-  const usagePercentage = (license.used_quantity_grams / license.authorized_quantity_grams) * 100;
+  const usagePercentage = license.authorized_quantity_grams > 0
+    ? (license.used_quantity_grams / license.authorized_quantity_grams) * 100
+    : 0;
   const daysRemaining = Math.ceil((new Date(license.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   const getStatusBadge = () => {
@@ -126,14 +143,16 @@ export function ExportLicenseDetails() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge()}
-            <Button
-              onClick={() => navigate(`/production/licenses/edit/${id}`)}
-              size="sm"
-              className="gap-1.5"
-            >
-              <Edit className="w-3.5 h-3.5" />
-              Modifier
-            </Button>
+            {!isMine && (
+              <Button
+                onClick={() => navigate(`/production/licenses/edit/${id}`)}
+                size="sm"
+                className="gap-1.5"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                Modifier
+              </Button>
+            )}
           </div>
         </div>
 

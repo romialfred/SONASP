@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-export type SensitiveUploadProfile = 'mining-company-document';
+export type SensitiveUploadProfile = 'mining-company-document' | 'assay-certificate';
 
 export class SensitiveUploadGatewayError extends Error {
   constructor() {

@@ -79,6 +79,26 @@ describe('sensitiveUploadGateway', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
+  it('route aussi les certificats d’analyse par le profil fermé dédié', async () => {
+    const file = new File(['%PDF-1.7\n%%EOF'], 'analyse.pdf', { type: 'application/pdf' });
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      validationStatus: 'format_validated',
+      resource: { id: 'certificate-1' },
+    }), { status: 201, headers: { 'Content-Type': 'application/json' } }));
+
+    await uploadSensitiveFile(
+      'assay-certificate',
+      file,
+      { shippingPreparationId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', fileName: file.name },
+      { mimeType: 'application/pdf' },
+    );
+
+    expect(mocks.fetch.mock.calls[0][0]).toBe(
+      'https://project.supabase.co/functions/v1/sensitive-upload?profile=assay-certificate',
+    );
+  });
+
   it('ne propage pas les détails techniques renvoyés par le serveur', async () => {
     const file = new File(['x'], 'preuve.pdf', { type: 'application/pdf' });
     mocks.fetch.mockResolvedValue(new Response(JSON.stringify({

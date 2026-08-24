@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ErreurValidationUploadServeur,
+  POLITIQUE_CERTIFICAT_ANALYSE,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
   signatureCorrespond,
   validerUploadServeur,
@@ -108,6 +109,22 @@ describe('secure-upload', () => {
       bytes: encodeur.encode('%PDF-1.7\n%%EOF'),
     }, { ...POLITIQUE_DOCUMENT_SOCIETE_MINIERE, maxBytes: 4 })).toThrowError(
       expect.objectContaining({ code: 'size' }),
+    );
+  });
+
+  it('limite le certificat d’analyse au PDF et à 10 Mio côté serveur', () => {
+    expect(POLITIQUE_CERTIFICAT_ANALYSE.maxBytes).toBe(10 * 1024 * 1024);
+    expect(() => validerUploadServeur({
+      fileName: 'certificat.png',
+      declaredMimeType: 'image/png',
+      bytes: new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+        0, 0, 0, 0, 0x49, 0x48, 0x44, 0x52,
+        ...new Array(9).fill(0),
+        0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+      ]),
+    }, POLITIQUE_CERTIFICAT_ANALYSE)).toThrowError(
+      expect.objectContaining({ code: 'extension' }),
     );
   });
 });

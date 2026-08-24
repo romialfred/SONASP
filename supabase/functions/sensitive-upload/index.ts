@@ -1,11 +1,19 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import {
+  autoriserCertificatAnalyse,
+  parseMetadonneesCertificatAnalyse,
+  type MetadonneesCertificatAnalyse,
+} from '../_shared/assay-certificate-upload-policy.ts';
+import {
   autoriserDocumentSociete,
   parseMetadonneesDocumentSociete,
   type MetadonneesDocumentSociete,
 } from '../_shared/company-document-upload-policy.ts';
-import { POLITIQUE_DOCUMENT_SOCIETE_MINIERE } from '../_shared/secure-upload.ts';
+import {
+  POLITIQUE_CERTIFICAT_ANALYSE,
+  POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
+} from '../_shared/secure-upload.ts';
 import {
   createSensitiveUploadHandler,
   type ContextePersistanceUpload,
@@ -14,13 +22,19 @@ import {
   type ResultatAutorisationUpload,
 } from './handler.ts';
 
-const BUCKET = 'mining-company-documents';
+const BUCKET_DOCUMENT_SOCIETE = 'mining-company-documents';
+const BUCKET_CERTIFICAT_ANALYSE = 'ASSAY-CERTIFICATES';
 const PROFILE_DOCUMENT_SOCIETE = 'mining-company-document';
+const PROFILE_CERTIFICAT_ANALYSE = 'assay-certificate';
 
 const profiles: Record<string, ProfilGatewayUpload> = {
   [PROFILE_DOCUMENT_SOCIETE]: {
     policy: POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
     parseMetadata: parseMetadonneesDocumentSociete,
+  },
+  [PROFILE_CERTIFICAT_ANALYSE]: {
+    policy: POLITIQUE_CERTIFICAT_ANALYSE,
+    parseMetadata: parseMetadonneesCertificatAnalyse,
   },
 };
 
@@ -47,9 +61,6 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
     profiles,
 
     async authorize({ profileId, token, metadata }): Promise<ResultatAutorisationUpload> {
-      if (profileId !== PROFILE_DOCUMENT_SOCIETE) return { allowed: false, status: 403 };
-      const document = metadata as MetadonneesDocumentSociete;
-
       const { data: authentification, error: erreurAuth } = await admin.auth.getUser(token);
       const utilisateur = authentification.user;
       if (erreurAuth || !utilisateur) return { allowed: false, status: 401 };
@@ -58,58 +69,113 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
-      const [profil, cible, capaciteReferentiels, capacitePreparation] = await Promise.all([
-        admin
-          .from('user_profiles')
-          .select('id, is_active, mining_company_id')
-          .eq('id', utilisateur.id)
-          .maybeSingle(),
-        admin
-          .from('mining_companies')
-          .select('id, is_active')
-          .eq('id', document.companyId)
-          .maybeSingle(),
-        clientActeur.rpc('snp_actor_has_capability', {
-          p_capability_code: 'referentials.manage',
-        }),
-        clientActeur.rpc('snp_actor_has_capability', {
-          p_capability_code: 'sonasp.prepare',
-        }),
-      ]);
-      if (
-        profil.error || cible.error || capaciteReferentiels.error || capacitePreparation.error
-      ) return { allowed: false, status: 503 };
-      if (!profil.data || profil.data.id !== utilisateur.id || !cible.data) {
-        return { allowed: false, status: 403 };
+
+      if (profileId === PROFILE_DOCUMENT_SOCIETE) {
+        const document = metadata as MetadonneesDocumentSociete;
+        const [session, profil, cible, capaciteReferentiels, capacitePreparation] = await Promise.all([
+          clientActeur.rpc('snp_session_signaler_activite'),
+          admin
+            .from('user_profiles')
+            .select('id, is_active, mining_company_id')
+            .eq('id', utilisateur.id)
+            .maybeSingle(),
+          admin
+            .from('mining_companies')
+            .select('id, is_active')
+            .eq('id', document.companyId)
+            .maybeSingle(),
+          clientActeur.rpc('snp_actor_has_capability', {
+            p_capability_code: 'referentials.manage',
+          }),
+          clientActeur.rpc('snp_actor_has_capability', {
+            p_capability_code: 'sonasp.prepare',
+          }),
+        ]);
+        if (
+          session.error || profil.error || cible.error
+          || capaciteReferentiels.error || capacitePreparation.error
+        ) return { allowed: false, status: 503 };
+        if (
+          (session.data as { is_active?: unknown } | null)?.is_active !== true
+          || !profil.data || profil.data.id !== utilisateur.id || !cible.data
+        ) return { allowed: false, status: 403 };
+
+        const capabilities = new Set<string>();
+        if (capaciteReferentiels.data === true) capabilities.add('referentials.manage');
+        if (capacitePreparation.data === true) capabilities.add('sonasp.prepare');
+        const autorisation = autoriserDocumentSociete({
+          actorId: utilisateur.id,
+          assurance: niveauAssurance(token),
+          actorActive: profil.data.is_active === true,
+          actorMiningCompanyId: profil.data.mining_company_id,
+          capabilities,
+          targetCompanyId: cible.data.id,
+          targetCompanyActive: cible.data.is_active === true,
+        });
+        return autorisation
+          ? { allowed: true, ...autorisation }
+          : { allowed: false, status: 403 };
       }
 
-      const capabilities = new Set<string>();
-      if (capaciteReferentiels.data === true) capabilities.add('referentials.manage');
-      if (capacitePreparation.data === true) capabilities.add('sonasp.prepare');
-      const autorisation = autoriserDocumentSociete({
-        actorId: utilisateur.id,
-        assurance: niveauAssurance(token),
-        actorActive: profil.data.is_active === true,
-        actorMiningCompanyId: profil.data.mining_company_id,
-        capabilities,
-        targetCompanyId: cible.data.id,
-        targetCompanyActive: cible.data.is_active === true,
-      });
-      return autorisation
-        ? { allowed: true, ...autorisation }
-        : { allowed: false, status: 403 };
+      if (profileId === PROFILE_CERTIFICAT_ANALYSE) {
+        const certificat = metadata as MetadonneesCertificatAnalyse;
+        const [session, permission, cible] = await Promise.all([
+          clientActeur.rpc('snp_session_signaler_activite'),
+          clientActeur.rpc('snp_sec_can_prepare_shipping', {
+            p_shipping_id: certificat.shippingPreparationId,
+          }),
+          admin
+            .from('shipping_preparations')
+            .select('id')
+            .eq('id', certificat.shippingPreparationId)
+            .maybeSingle(),
+        ]);
+        if (session.error || permission.error || cible.error) {
+          return { allowed: false, status: 503 };
+        }
+        const autorisation = autoriserCertificatAnalyse({
+          actorId: utilisateur.id,
+          activeSession: (session.data as { is_active?: unknown } | null)?.is_active === true,
+          canPrepareShipping: permission.data === true,
+          shippingPreparationId: certificat.shippingPreparationId,
+          targetExists: cible.data?.id === certificat.shippingPreparationId,
+        });
+        return autorisation
+          ? { allowed: true, ...autorisation }
+          : { allowed: false, status: 403 };
+      }
+
+      return { allowed: false, status: 403 };
     },
 
     async persist(input: ContextePersistanceUpload) {
-      if (input.profileId !== PROFILE_DOCUMENT_SOCIETE) throw new Error('unknown_upload_profile');
-      const metadata = input.metadata as MetadonneesDocumentSociete;
-      if (metadata.companyId !== input.tenantId) throw new Error('tenant_mismatch');
-
       const maintenant = new Date();
       const annee = maintenant.getUTCFullYear();
       const mois = String(maintenant.getUTCMonth() + 1).padStart(2, '0');
       const chemin = `${input.tenantId}/format-validated/${annee}/${mois}/${crypto.randomUUID()}.${input.file.extension}`;
-      const depot = await admin.storage.from(BUCKET).upload(chemin, input.bytes, {
+
+      const profilPersistance = input.profileId === PROFILE_DOCUMENT_SOCIETE
+        ? {
+          bucket: BUCKET_DOCUMENT_SOCIETE,
+          table: 'mining_company_documents',
+        }
+        : input.profileId === PROFILE_CERTIFICAT_ANALYSE
+          ? {
+            bucket: BUCKET_CERTIFICAT_ANALYSE,
+            table: 'assay_certificates',
+          }
+          : null;
+      if (!profilPersistance) throw new Error('unknown_upload_profile');
+      if (
+        input.profileId === PROFILE_DOCUMENT_SOCIETE
+        && (input.metadata as MetadonneesDocumentSociete).companyId !== input.tenantId
+      ) throw new Error('tenant_mismatch');
+      if (
+        input.profileId === PROFILE_CERTIFICAT_ANALYSE
+        && (input.metadata as MetadonneesCertificatAnalyse).shippingPreparationId !== input.tenantId
+      ) throw new Error('tenant_mismatch');
+
+      const depot = await admin.storage.from(profilPersistance.bucket).upload(chemin, input.bytes, {
         contentType: input.file.mimeType,
         cacheControl: '0',
         upsert: false,
@@ -118,41 +184,75 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         throw new Error('storage_write_failed');
       }
 
-      const { data: document, error: erreurDocument } = await admin
-        .from('mining_company_documents')
-        .insert({
-          mining_company_id: input.tenantId,
-          doc_type: metadata.documentType,
-          file_name: input.file.safeFileName,
-          file_path: chemin,
-          file_size: input.bytes.byteLength,
-          mime_type: input.file.mimeType,
-          uploaded_by: input.actorId,
-        })
-        .select('id, mining_company_id, doc_type, file_name, file_path, file_size, mime_type, uploaded_by, created_at')
-        .single();
+      let ressource: Record<string, unknown> | null = null;
+      let erreurRessource: unknown = null;
+      try {
+        if (input.profileId === PROFILE_DOCUMENT_SOCIETE) {
+          const metadata = input.metadata as MetadonneesDocumentSociete;
+          const resultat = await admin.from(profilPersistance.table).insert({
+            mining_company_id: input.tenantId,
+            doc_type: metadata.documentType,
+            file_name: input.file.safeFileName,
+            file_path: chemin,
+            file_size: input.bytes.byteLength,
+            mime_type: input.file.mimeType,
+            uploaded_by: input.actorId,
+          })
+            .select('id, mining_company_id, doc_type, file_name, file_path, file_size, mime_type, uploaded_by, created_at')
+            .single();
+          ressource = resultat.data;
+          erreurRessource = resultat.error;
+        } else {
+          const resultat = await admin.from(profilPersistance.table).insert({
+            shipping_preparation_id: input.tenantId,
+            file_name: input.file.safeFileName,
+            file_path: chemin,
+            file_size: input.bytes.byteLength,
+            mime_type: input.file.mimeType,
+            uploaded_by: input.actorId,
+            parsing_status: 'pending',
+            approval_status: 'pending',
+            approved_by: null,
+            approved_at: null,
+          })
+            .select('*')
+            .single();
+          ressource = resultat.data;
+          erreurRessource = resultat.error;
+        }
+      } catch {
+        erreurRessource = new Error('document_registration_failed');
+      }
 
-      if (erreurDocument || !document) {
-        const nettoyage = await admin.storage.from(BUCKET).remove([chemin]);
-        if (nettoyage.error) console.error('[sensitive-upload] Nettoyage Storage incomplet.');
+      if (erreurRessource || !ressource) {
+        try {
+          const nettoyage = await admin.storage.from(profilPersistance.bucket).remove([chemin]);
+          if (nettoyage.error) console.error('[sensitive-upload] Nettoyage Storage incomplet.');
+        } catch {
+          console.error('[sensitive-upload] Nettoyage Storage indisponible.');
+        }
         throw new Error('document_registration_failed');
       }
 
       // L'audit ne contient ni nom original, ni octets, ni jeton de session.
-      const { error: erreurAudit } = await admin.from('security_events').insert({
-        user_id: input.actorId,
-        event_type: 'sensitive_upload_format_validated',
-        details: {
-          profile: input.profileId,
-          tenant_id: input.tenantId,
-          resource_id: document.id,
-          mime_type: input.file.mimeType,
-          size_bytes: input.bytes.byteLength,
-        },
-      });
-      if (erreurAudit) console.error('[sensitive-upload] Audit secondaire indisponible.');
+      try {
+        const { error: erreurAudit } = await admin.from('security_events').insert({
+          user_id: input.actorId,
+          event_type: 'sensitive_upload_format_validated',
+          details: {
+            profile: input.profileId,
+            tenant_id: input.tenantId,
+            resource_id: ressource.id,
+            mime_type: input.file.mimeType,
+            size_bytes: input.bytes.byteLength,
+          },
+        });
+        if (erreurAudit) console.error('[sensitive-upload] Audit secondaire indisponible.');
+      } catch {
+        console.error('[sensitive-upload] Audit secondaire indisponible.');
+      }
 
-      return document;
+      return ressource;
     },
   };
 

@@ -6,8 +6,10 @@ import {
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import type { ExtractedAssayData } from './pdfParsingService';
+import { uploadSensitiveFile } from './sensitiveUploadGateway';
 
 const ASSAY_CERTIFICATES_BUCKET = PRIVATE_STORAGE_BUCKETS.assayCertificates;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface AssayCertificate {
   id: string;
@@ -74,54 +76,74 @@ export interface ParsedCertificateResult {
   confidence?: number;
 }
 
+function isUploadedAssayCertificate(
+  value: unknown,
+  expected: {
+    shippingPreparationId: string;
+    extension: string;
+    fileSize: number;
+    mimeType: string;
+  },
+): value is AssayCertificate {
+  if (!value || typeof value !== 'object') return false;
+  const certificate = value as Partial<AssayCertificate>;
+  const escapedShippingId = expected.shippingPreparationId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedExtension = expected.extension.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const expectedPath = new RegExp(
+    `^${escapedShippingId}/format-validated/[0-9]{4}/(?:0[1-9]|1[0-2])/[0-9a-f-]{36}\\.${escapedExtension}$`,
+    'i',
+  );
+  return typeof certificate.id === 'string'
+    && UUID.test(certificate.id)
+    && certificate.shipping_preparation_id === expected.shippingPreparationId
+    && typeof certificate.file_name === 'string'
+    && !/[\\/\u0000-\u001f\u007f]/u.test(certificate.file_name)
+    && typeof certificate.file_path === 'string'
+    && expectedPath.test(certificate.file_path)
+    && certificate.file_size === expected.fileSize
+    && certificate.mime_type === expected.mimeType
+    && certificate.parsing_status === 'pending'
+    && certificate.approval_status === 'pending'
+    && certificate.approved_by === null
+    && certificate.approved_at === null
+    && typeof certificate.uploaded_by === 'string'
+    && UUID.test(certificate.uploaded_by)
+    && typeof certificate.created_at === 'string'
+    && Number.isFinite(Date.parse(certificate.created_at));
+}
+
 /**
  * Upload assay certificate PDF
  */
 export async function uploadAssayCertificate(
   shippingPreparationId: string,
   file: File,
-  userId: string
+  _userId: string,
 ): Promise<{ success: boolean; data?: AssayCertificate; error?: string }> {
   try {
+    if (!UUID.test(shippingPreparationId)) {
+      return { success: false, error: 'La préparation d’expédition est invalide.' };
+    }
     const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.assayCertificate);
-    const fileName = `${shippingPreparationId}_${Date.now()}.${validatedFile.extension}`;
-    const filePath = `${shippingPreparationId}/${fileName}`;
-
-    // Upload file to storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(ASSAY_CERTIFICATES_BUCKET)
-      .upload(filePath, file, {
-        contentType: validatedFile.mimeType,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      return { success: false, error: uploadError.message };
-    }
-
-    // Create certificate record
-    const { data: certificate, error: dbError } = await supabase
-      .from('assay_certificates')
-      .insert({
-        shipping_preparation_id: shippingPreparationId,
-        file_path: uploadData.path,
-        file_name: file.name,
-        file_size: file.size,
-        mime_type: validatedFile.mimeType,
-        uploaded_by: userId,
-        parsing_status: 'pending',
-        approval_status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      return { success: false, error: dbError.message };
-    }
+    const certificate = await uploadSensitiveFile(
+      'assay-certificate',
+      file,
+      { shippingPreparationId, fileName: file.name },
+      { mimeType: validatedFile.mimeType },
+    );
+    if (!isUploadedAssayCertificate(certificate, {
+      shippingPreparationId,
+      extension: validatedFile.extension,
+      fileSize: file.size,
+      mimeType: validatedFile.mimeType,
+    })) return { success: false, error: 'La confirmation du dépôt est invalide.' };
 
     return { success: true, data: certificate };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Le certificat n’a pas pu être déposé.',
+    };
   }
 }
 

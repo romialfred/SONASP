@@ -1,6 +1,6 @@
 import { PALETTE_PRODUCTION } from './chartPalette';
 import { Card } from '@/components/ui/Card';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from '@/lib/recharts';
 import { Calendar } from 'lucide-react';
 
 interface MonthlyData {

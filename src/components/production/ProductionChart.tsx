@@ -1,5 +1,5 @@
 import { PALETTE_PRODUCTION } from './chartPalette';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from '@/lib/recharts';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, Calendar } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';

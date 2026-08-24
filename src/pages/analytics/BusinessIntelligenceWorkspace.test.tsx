@@ -24,7 +24,7 @@ vi.mock('@/services/businessIntelligenceExportService', () => ({
   shareBIReport: vi.fn(),
 }));
 
-vi.mock('recharts', () => ({
+vi.mock('@/lib/recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Area: () => null,

@@ -8,7 +8,7 @@ import {
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
   Tooltip, XAxis, YAxis,
-} from 'recharts';
+} from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
   EMPTY_DASHBOARD,

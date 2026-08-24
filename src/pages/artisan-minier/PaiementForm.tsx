@@ -48,7 +48,6 @@ import {
   moyenParDefaut,
   type MoyenPaiement,
 } from '@/services/artisanMoyenPaiementService';
-import { telechargerFacturePaiementArtisan } from '@/services/factureArtisanPdfService';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 import './paiement-form.css';
 
@@ -365,12 +364,13 @@ export default function PaiementForm() {
       notes,
     }) as PaiementArtisan;
 
-  const telechargerFacture = () => {
+  const telechargerFacture = async () => {
     if (!facture || !vente) {
       showError('Le dossier est incomplet : facture ou vente manquante.');
       return;
     }
     try {
+      const { telechargerFacturePaiementArtisan } = await import('@/services/factureArtisanPdfService');
       telechargerFacturePaiementArtisan(buildInvoicePayload(facture, paiementCourant(), artisan, vente));
     } catch {
       showError('La génération de la facture PDF a échoué.');
@@ -402,7 +402,7 @@ export default function PaiementForm() {
         cancelText: 'Plus tard',
         severity: 'info',
       });
-      if (veutFacture) telechargerFacture();
+      if (veutFacture) await telechargerFacture();
 
       navigate('/artisan-minier/paiements');
     } catch {
@@ -473,7 +473,7 @@ export default function PaiementForm() {
               <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
                 <ArrowLeft aria-hidden="true" /> Dossiers
               </button>
-              <button type="button" className="sn-btn" onClick={telechargerFacture}>
+              <button type="button" className="sn-btn" onClick={() => void telechargerFacture()}>
                 <Download aria-hidden="true" /> Facture PDF
               </button>
             </>

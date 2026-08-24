@@ -5,7 +5,7 @@ import {
   requireStorageObjectPath,
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
-import { extractTextFromPDF, extractAssayData } from './pdfParsingService';
+import type { ExtractedAssayData } from './pdfParsingService';
 
 const ASSAY_CERTIFICATES_BUCKET = PRIVATE_STORAGE_BUCKETS.assayCertificates;
 
@@ -152,6 +152,7 @@ export async function getCertificateSignedUrl(
  */
 export async function parsePDFText(file: File): Promise<string> {
   try {
+    const { extractTextFromPDF } = await import('./pdfParsingService');
     const result = await extractTextFromPDF(file);
     return result.text;
   } catch (error) {
@@ -163,10 +164,10 @@ export async function parsePDFText(file: File): Promise<string> {
 /**
  * Extract assay data from text using pattern matching (enhanced)
  */
-export function extractAssayDataFromText(text: string): Partial<AssayCertificateData> {
-  // Use the new enhanced extraction
-  const extracted = extractAssayData(text);
-
+function mapAssayDataFromText(
+  text: string,
+  extracted: ExtractedAssayData
+): Partial<AssayCertificateData> {
   const data: Partial<AssayCertificateData> = {
     certificate_number: extracted.certificateNumber,
     certificate_date: extracted.certificateDate,
@@ -332,6 +333,13 @@ export function extractAssayDataFromText(text: string): Partial<AssayCertificate
   return data;
 }
 
+export async function extractAssayDataFromText(
+  text: string
+): Promise<Partial<AssayCertificateData>> {
+  const { extractAssayData } = await import('./pdfParsingService');
+  return mapAssayDataFromText(text, extractAssayData(text));
+}
+
 /**
  * Parse certificate and save data
  */
@@ -350,8 +358,9 @@ export async function parseCertificate(
     const text = await parsePDFText(file);
 
     // Extract structured data from text
+    const { extractAssayData } = await import('./pdfParsingService');
     const assayData = extractAssayData(text);
-    const extractedData = extractAssayDataFromText(text);
+    const extractedData = mapAssayDataFromText(text, assayData);
 
     // Update certificate with extracted summary data for quick access
     // Only update columns that exist in assay_certificates table

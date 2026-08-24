@@ -11,7 +11,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { nombre } from './roleDashboardData';

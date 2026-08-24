@@ -36,7 +36,7 @@ vi.mock('@/services/artisanalSiteService', () => ({
   artisanalSiteService: { listSites: mocks.listSites },
 }));
 
-vi.mock('recharts', () => ({
+vi.mock('@/lib/recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LineChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PieChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,

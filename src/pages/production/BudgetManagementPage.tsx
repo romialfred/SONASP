@@ -15,7 +15,7 @@ import {
   Building2,
   PieChart
 } from 'lucide-react';
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from '@/lib/recharts';
 import { downloadExcelWorkbook } from '@/lib/excelExport';
 import { supabase } from '../../lib/supabase';
 import { PALETTE_PRODUCTION } from '@/components/production/chartPalette';

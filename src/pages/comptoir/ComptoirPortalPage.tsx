@@ -23,7 +23,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import {

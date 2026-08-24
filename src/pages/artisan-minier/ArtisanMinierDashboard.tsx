@@ -26,7 +26,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { BurkinaTerritoryMap } from '@/components/artisanal-sites/BurkinaTerritoryMap';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';

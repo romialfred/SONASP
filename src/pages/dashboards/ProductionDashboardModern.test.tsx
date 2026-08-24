@@ -26,7 +26,7 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('recharts', () => {
+vi.mock('@/lib/recharts', () => {
   const Boite = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   const Vide = () => null;
   return {

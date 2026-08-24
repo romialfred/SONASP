@@ -73,7 +73,7 @@ vi.mock('@/lib/supabase', () => {
   };
 });
 
-vi.mock('recharts', () => {
+vi.mock('@/lib/recharts', () => {
   const Wrapper = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
   return {
     ResponsiveContainer: Wrapper,

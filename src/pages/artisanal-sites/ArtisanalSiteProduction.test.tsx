@@ -30,7 +30,7 @@ vi.mock('@/services/artisanalSiteService', () => ({
   summarizeSiteProduction: () => [],
 }));
 
-vi.mock('recharts', () => ({
+vi.mock('@/lib/recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   BarChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Bar: () => null,

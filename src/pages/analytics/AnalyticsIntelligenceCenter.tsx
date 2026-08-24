@@ -37,7 +37,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Area,
-} from 'recharts';
+} from '@/lib/recharts';
 import { AdvancedAnalyticsService } from '@/services/advancedAnalyticsService';
 import { formatCurrency } from '@/utils/salesUtils';
 

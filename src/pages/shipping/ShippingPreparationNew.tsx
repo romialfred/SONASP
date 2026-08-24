@@ -18,7 +18,6 @@ import {
 import { depositorService, Depositor } from '@/services/depositorService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { PackingListPdfService } from '@/services/packingListPdfService';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShippingLicenseSelect } from '@/components/shipping/ShippingLicenseSelect';
 
@@ -553,6 +552,7 @@ export default function ShippingPreparationNew() {
       };
 
       // Envoyer via Outlook
+      const { PackingListPdfService } = await import('@/services/packingListPdfService');
       await PackingListPdfService.sendViaOutlook(packingListData);
 
     } catch (error) {

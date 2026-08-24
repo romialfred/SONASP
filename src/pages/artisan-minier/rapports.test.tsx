@@ -45,7 +45,7 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 }));
 
 // Recharts ne se mesure pas dans jsdom : les graphiques sont neutralisés.
-vi.mock('recharts', () => {
+vi.mock('@/lib/recharts', () => {
   const Boite = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   const Vide = () => null;
   return {

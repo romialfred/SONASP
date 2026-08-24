@@ -33,7 +33,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/lib/recharts';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DecompositionTree } from '@/components/reports/DecompositionTree';
 import {

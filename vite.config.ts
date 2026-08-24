@@ -265,20 +265,6 @@ export default defineConfig(({ mode }) => {
     port: 5180,
     strictPort: true,
   },
-  build: {
-    rollupOptions: {
-      output: {
-        // Recharts réexporte plusieurs primitives qui s'importent entre elles.
-        // Les laisser réparties entre les chunks de pages produit des cycles de
-        // chargement Rollup. Toutes les primitives du paquet restent donc dans
-        // un même chunk, chargé uniquement par les vues qui affichent un graphe.
-        manualChunks(id) {
-          if (id.includes('/node_modules/recharts/')) return 'recharts';
-          return undefined;
-        },
-      },
-    },
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

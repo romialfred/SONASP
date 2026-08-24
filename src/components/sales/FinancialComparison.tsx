@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/Card';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from '@/lib/recharts';
 import { TrendingUp, Award, DollarSign, Percent } from 'lucide-react';
 import { type PricingMechanism } from '@/services/goldTradeSpaceService';
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight, Boxes, RefreshCw, Scale, ShoppingBasket, Store } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import { comptoirPortalService, type ComptoirStockMovement } from '@/services/comptoirPortalService';

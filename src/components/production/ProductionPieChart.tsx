@@ -1,5 +1,5 @@
 import { PALETTE_PRODUCTION } from './chartPalette';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from '@/lib/recharts';
 import { Card } from '@/components/ui/Card';
 import { PieChartIcon } from 'lucide-react';
 import { DailyProduction } from '@/services/dailyProductionService';

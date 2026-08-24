@@ -35,7 +35,6 @@ import {
   type MoyenPaiement,
   type TypeMoyenPaiement,
 } from '@/services/artisanMoyenPaiementService';
-import { carteProfessionnelleGeneratorService } from '@/services/carteProfessionnelleGeneratorService';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { getCitiesByRegion, getRegionsByCountry, SAHEL_COUNTRIES } from '@/data/burkinaFasoData';
 import './artisan-form.css';
@@ -271,6 +270,9 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
     }
     setGenerating(true);
     try {
+      const { carteProfessionnelleGeneratorService } = await import(
+        '@/services/carteProfessionnelleGeneratorService'
+      );
       const apercu = await carteProfessionnelleGeneratorService.generatePreviewDataUrl(
         {
           type_personne: values.type_personne,

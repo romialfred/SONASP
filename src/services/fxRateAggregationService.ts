@@ -63,11 +63,13 @@ let fxRateCache: Map<string, { data: LiveFxRate; timestamp: number }> = new Map(
 const CACHE_DURATION = 60 * 1000;
 
 /**
- * Fetch live FX rate for a currency pair
+ * Lit le dernier taux publié dans le référentiel SONASP.
+ *
+ * Les API de marché sont interrogées par la tâche Edge planifiée. Les appeler
+ * depuis le navigateur provoquait des erreurs CORS et créait plusieurs valeurs
+ * concurrentes sur un même écran.
  */
 export async function fetchLiveFxRate(currencyPair: string): Promise<LiveFxRate | null> {
-  const [base, quote] = currencyPair.split('/');
-
   // Check cache
   const cached = fxRateCache.get(currencyPair);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -75,67 +77,33 @@ export async function fetchLiveFxRate(currencyPair: string): Promise<LiveFxRate 
   }
 
   try {
-    // Try Frankfurter API first
-    const response = await fetch(
-      `https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${quote}`
-    );
+    const { data, error } = await supabase
+      .from('fx_rates_daily')
+      .select('currency_pair, rate, rate_date, bid_rate, ask_rate, spread, updated_at')
+      .eq('currency_pair', currencyPair)
+      .order('rate_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (response.ok) {
-      const data = await response.json();
-      const rate = data.rates[quote];
+    if (error || !data) return null;
+    const rate = Number(data.rate);
+    if (!Number.isFinite(rate) || rate <= 0) return null;
 
-      if (rate) {
-        const liveRate: LiveFxRate = {
-          currencyPair,
-          rate,
-          timestamp: Date.now(),
-          source: 'Frankfurter',
-        };
+    const parsedTimestamp = Date.parse(data.updated_at ?? data.rate_date);
+    const liveRate: LiveFxRate = {
+      currencyPair,
+      rate,
+      bidRate: data.bid_rate === null ? undefined : Number(data.bid_rate),
+      askRate: data.ask_rate === null ? undefined : Number(data.ask_rate),
+      spread: data.spread === null ? undefined : Number(data.spread),
+      timestamp: Number.isFinite(parsedTimestamp) ? parsedTimestamp : Date.now(),
+      source: 'Référentiel SONASP',
+    };
 
-        // Cache it
-        fxRateCache.set(currencyPair, {
-          data: liveRate,
-          timestamp: Date.now(),
-        });
-
-        // Record for aggregation
-        recordIntradayFxRate(currencyPair, rate);
-
-        return liveRate;
-      }
-    }
-
-    // Fallback to ExchangeRate-API
-    const fallbackResponse = await fetch(
-      `https://api.exchangerate-api.com/v4/latest/${base}`
-    );
-
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      const rate = fallbackData.rates[quote];
-
-      if (rate) {
-        const liveRate: LiveFxRate = {
-          currencyPair,
-          rate,
-          timestamp: Date.now(),
-          source: 'ExchangeRate-API',
-        };
-
-        fxRateCache.set(currencyPair, {
-          data: liveRate,
-          timestamp: Date.now(),
-        });
-
-        recordIntradayFxRate(currencyPair, rate);
-
-        return liveRate;
-      }
-    }
-
-    return null;
+    fxRateCache.set(currencyPair, { data: liveRate, timestamp: Date.now() });
+    return liveRate;
   } catch (error) {
-    console.error(`Error fetching FX rate for ${currencyPair}:`, error);
+    console.error(`Erreur de lecture du taux ${currencyPair}:`, error);
     return null;
   }
 }

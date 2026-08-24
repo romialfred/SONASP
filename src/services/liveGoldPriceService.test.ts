@@ -36,13 +36,13 @@ describe('liveGoldPriceService', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('retourne null plutôt que de fabriquer un cours lorsque toutes les sources échouent', async () => {
+  it('retourne null sans contacter une origine tierce lorsque le référentiel échoue', async () => {
     mockReferentialResult({ data: null, error: { code: 'NETWORK_ERROR' } });
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+    vi.stubGlobal('fetch', vi.fn());
 
     await expect(fetchLiveGoldPrice()).resolves.toBeNull();
     expect(mocks.from).toHaveBeenCalledWith('gold_prices_daily');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('utilise le référentiel SONASP sans appel direct à une origine CORS tierce', async () => {
@@ -73,16 +73,11 @@ describe('liveGoldPriceService', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('bascule sur Coinbase si le référentiel est temporairement indisponible', async () => {
+  it('ne substitue pas un jeton privé au cours officiel si le référentiel est indisponible', async () => {
     mockReferentialResult({ data: null, error: { code: 'PGRST000' } });
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { amount: '3111.25' } }),
-    }));
+    vi.stubGlobal('fetch', vi.fn());
 
-    await expect(fetchLiveGoldPrice()).resolves.toMatchObject({
-      price: 3111.25,
-      source: 'Coinbase (PAXG)',
-    });
+    await expect(fetchLiveGoldPrice()).resolves.toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

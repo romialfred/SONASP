@@ -16,7 +16,7 @@ import { ComposedChartWidget } from '@/components/charts/ComposedChartWidget';
 import { FxAnalysisTab } from '@/components/fx/FxAnalysisTab';
 import { FxRateComparison } from '@/components/fx/FxRateComparison';
 import { LiveFxRatePanel } from '@/components/prices/LiveFxRatePanel';
-import * as XLSX from 'xlsx';
+import { downloadExcelWorkbook } from '@/lib/excelExport';
 import { useAlert } from '@/hooks/useAlert';
 
 type TabType = 'daily' | 'monthly' | 'customer' | 'analysis' | 'comparison';
@@ -404,7 +404,7 @@ export function FxRatesPage() {
     return months[month - 1];
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     let data: any[] = [];
     let filename = '';
     let sheetName = '';
@@ -451,15 +451,7 @@ export function FxRatesPage() {
       sheetName = 'Customer Rates';
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-    // Set column widths
-    const colWidths = Object.keys(data[0] || {}).map(() => ({ wch: 15 }));
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, filename);
+    await downloadExcelWorkbook([{ name: sheetName, rows: data, widths: Object.keys(data[0] || {}).map(() => 15) }], filename);
   };
 
   // Prepare chart data

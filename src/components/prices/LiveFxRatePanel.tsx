@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import {
   RefreshCw,
-  Clock,
   Globe,
 } from 'lucide-react';
 import {
@@ -25,7 +24,6 @@ export function LiveFxRatePanel() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState<string | null>(null);
 
   const fetchFxData = async (isManual = false) => {
@@ -41,14 +39,13 @@ export function LiveFxRatePanel() {
       if (rates.size > 0) {
         setFxRates(rates);
         setLastUpdate(new Date());
-        setCountdown(60);
         setError(null);
       } else {
-        setError('Unable to fetch live FX rates');
+        setError('Les taux de change ne sont pas disponibles dans le référentiel.');
       }
     } catch (error) {
       console.error('Error fetching FX rates:', error);
-      setError('Connection error');
+      setError('Le référentiel des changes est momentanément indisponible.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,20 +53,7 @@ export function LiveFxRatePanel() {
   };
 
   useEffect(() => {
-    fetchFxData();
-
-    const interval = setInterval(() => {
-      fetchFxData();
-    }, 60000);
-
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 60));
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(countdownInterval);
-    };
+    void fetchFxData();
   }, []);
 
   if (loading) {
@@ -97,18 +81,18 @@ export function LiveFxRatePanel() {
               <Globe className="w-5 h-5 text-emerald-300" />
             </div>
             <div>
-              <p className="text-slate-200 text-xs font-medium">Live Foreign Exchange Rates</p>
+              <p className="text-slate-200 text-xs font-medium">Référentiel des changes</p>
               <div className="flex items-baseline gap-3 mt-0.5">
                 <span className="text-xl font-bold text-white">
-                  {fxRates.size} Currency Pairs
+                  {fxRates.size} paires de devises
                 </span>
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-emerald-300 font-medium">Real-time</span>
+                  <span className="text-xs text-emerald-300 font-medium">Données publiées</span>
                 </div>
               </div>
               <p className="text-slate-300 text-xs mt-0.5">
-                Updated: {lastUpdate.toLocaleTimeString()} • Source: Frankfurter API
+                Consulté à {lastUpdate.toLocaleTimeString('fr-FR')} · Source SONASP
               </p>
             </div>
           </div>
@@ -141,7 +125,7 @@ export function LiveFxRatePanel() {
             return (
               <Card key={currencyInfo.pair} className="bg-gray-50">
                 <div className="p-6">
-                  <p className="text-sm text-gray-400">Loading {currencyInfo.pair}...</p>
+                  <p className="text-sm text-gray-400">Taux {currencyInfo.pair} indisponible</p>
                 </div>
               </Card>
             );
@@ -192,29 +176,9 @@ export function LiveFxRatePanel() {
         })}
       </div>
 
-      {/* Info Bar */}
-      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs text-slate-600">
-                Last updated: {lastUpdate.toLocaleTimeString()}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-emerald-600">Live Data</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Next update in: {countdown}s</span>
-            {refreshing && (
-              <span className="text-emerald-600 font-medium">Updating...</span>
-            )}
-          </div>
-        </div>
-      </div>
+      <p className="mb-6 text-xs text-slate-500">
+        Actualisation uniquement sur demande afin de préserver le contexte de travail.
+      </p>
     </>
   );
 }

@@ -5,6 +5,7 @@ import type {
   BIView,
 } from '@/services/businessIntelligenceService';
 import { BI_DIMENSION_LABELS } from '@/services/businessIntelligenceService';
+import { downloadExcelWorkbook } from '@/lib/excelExport';
 
 export interface BIExportContext {
   title: string;
@@ -84,8 +85,6 @@ const detailRows = (model: BIModel) =>
   }));
 
 export async function exportBIExcel(model: BIModel, context: BIExportContext) {
-  const XLSX = await import('xlsx');
-  const workbook = XLSX.utils.book_new();
   const metadata = [
     { Champ: 'Rapport', Valeur: context.title },
     { Champ: 'Objet', Valeur: context.subtitle },
@@ -115,17 +114,8 @@ export async function exportBIExcel(model: BIModel, context: BIExportContext) {
     ['Métadonnées', metadata],
   ] as const;
 
-  sheets.forEach(([name, rows]) => {
-    const sheet = XLSX.utils.json_to_sheet(rows);
-    sheet['!cols'] = Object.keys(rows[0] || {}).map((key) => ({
-      wch: Math.min(42, Math.max(14, key.length + 3)),
-    }));
-    XLSX.utils.book_append_sheet(workbook, sheet, name);
-  });
-
-  const content = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
-  download(
-    new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+  await downloadExcelWorkbook(
+    sheets.map(([name, rows]) => ({ name, rows: [...rows] as Array<Record<string, unknown>> })),
     fileName(context, 'xlsx'),
   );
 }

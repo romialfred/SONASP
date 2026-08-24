@@ -557,14 +557,8 @@ export class ArtisanAnalyticsService {
 
   async exporterRapportExcel(type: string, donnees: any[]): Promise<Blob> {
     try {
-      const XLSX = await import('xlsx');
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(donnees);
-
-      XLSX.utils.book_append_sheet(workbook, worksheet, type);
-
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const { buildExcelWorkbook } = await import('@/lib/excelExport');
+      return await buildExcelWorkbook([{ name: type, rows: donnees }]);
     } catch (error) {
       console.error('Erreur exporterRapportExcel:', error);
       throw error;

@@ -78,36 +78,9 @@ async function fetchFromSonaspReferential(): Promise<LiveGoldPrice | null> {
 }
 
 /**
- * Fetch from Coinbase Commerce (Alternative cryptocurrency-based gold price)
- */
-async function fetchFromCoinbaseCommerce(): Promise<LiveGoldPrice | null> {
-  try {
-    // Using public Coinbase API for PAXG (tokenized gold)
-    const response = await fetch('https://api.coinbase.com/v2/prices/PAXG-USD/spot');
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-
-    if (data && data.data && data.data.amount) {
-      const price = parseFloat(data.data.amount);
-
-      return {
-        price: price,
-        timestamp: Date.now(),
-        source: 'Coinbase (PAXG)',
-        currency: 'USD',
-      };
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Fetch real-time gold price with comprehensive fallback strategy
+ * Lit le dernier cours publié par le référentiel autoritatif SONASP.
+ * Les fournisseurs externes sont interrogés exclusivement côté serveur par la
+ * tâche planifiée : le navigateur ne doit jamais dépendre de leur politique CORS.
  */
 export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
   // Check cache first
@@ -118,12 +91,7 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
 
   // Le référentiel interne est la source autoritative et ne dépend pas du CORS
   // d'un fournisseur public tiers.
-  let price = await fetchFromSonaspReferential();
-
-  // Fallback to Coinbase (PAXG tokenized gold)
-  if (!price) {
-    price = await fetchFromCoinbaseCommerce();
-  }
+  const price = await fetchFromSonaspReferential();
 
   // Aucune valeur de repli n'est fabriquee. Une indisponibilite doit rester
   // visible : un cours invente peut contaminer une vente ou un rapprochement.
@@ -132,12 +100,10 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
   }
 
   // Update cache
-  if (price) {
-    priceCache = {
-      data: price,
-      timestamp: now,
-    };
-  }
+  priceCache = {
+    data: price,
+    timestamp: now,
+  };
 
   return price;
 }

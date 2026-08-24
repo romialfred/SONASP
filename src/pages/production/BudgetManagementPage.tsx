@@ -16,7 +16,7 @@ import {
   PieChart
 } from 'lucide-react';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
-import * as XLSX from 'xlsx';
+import { downloadExcelWorkbook } from '@/lib/excelExport';
 import { supabase } from '../../lib/supabase';
 import { PALETTE_PRODUCTION } from '@/components/production/chartPalette';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -64,7 +64,7 @@ function ProductionBrowserTab({
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
 
-  const exportData = () => {
+  const exportData = async () => {
     const data = months.map((month, index) => {
       const monthNum = index + 1;
       const quarter = Math.ceil(monthNum / 3);
@@ -87,21 +87,10 @@ function ProductionBrowserTab({
       };
     });
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Production Browser');
-
-    // Style the header row
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const address = XLSX.utils.encode_col(C) + "1";
-      if (!ws[address]) continue;
-      ws[address].s = { font: { bold: true }, fill: { fgColor: { rgb: "4F81BD" } } };
-    }
-
-    ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
-
-    XLSX.writeFile(wb, `Production_Browser_${new Date().toISOString().split('T')[0]}.xlsx`);
+    await downloadExcelWorkbook(
+      [{ name: 'Production', rows: data, widths: [14, 18, 14, 20] }],
+      `Production_${new Date().toISOString().split('T')[0]}.xlsx`,
+    );
   };
 
   const getChartData = () => {

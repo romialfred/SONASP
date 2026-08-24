@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { downloadExcelWorkbook } from '@/lib/excelExport';
 import { FreightShipmentStatus } from './freightShipmentService';
 import { AVAILABLE_COLUMNS } from '@/components/refining/ColumnSelectorModal';
 
@@ -157,7 +157,7 @@ function getColumnValue(shipment: FreightShipment, columnId: string): any {
   }
 }
 
-export function exportToExcel(
+export async function exportToExcel(
   shipments: FreightShipment[],
   selectedColumns: string[],
   filename: string = 'refining_process_export'
@@ -173,31 +173,11 @@ export function exportToExcel(
     selectedColumns.map(colId => getColumnValue(shipment, colId))
   );
 
-  // Créer le workbook
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-
-  // Définir la largeur des colonnes
   const colWidths = selectedColumns.map(colId => {
     const col = AVAILABLE_COLUMNS.find(c => c.id === colId);
     const label = col?.label || '';
-    return { wch: Math.max(label.length + 2, 15) };
+    return Math.max(label.length + 2, 15);
   });
-  ws['!cols'] = colWidths;
-
-  // Appliquer le style aux en-têtes
-  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-  for (let C = range.s.c; C <= range.e.c; ++C) {
-    const address = XLSX.utils.encode_col(C) + '1';
-    if (!ws[address]) continue;
-    ws[address].s = {
-      font: { bold: true },
-      fill: { fgColor: { rgb: 'E3F2FD' } },
-      alignment: { horizontal: 'center', vertical: 'center' }
-    };
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Raffinage');
 
   // Ajouter une feuille de synthèse
   const summaryData = [
@@ -219,13 +199,11 @@ export function exportToExcel(
     ['Valeur Totale (USD):', formatNumber(shipments.reduce((sum, s) => sum + s.total_value_usd, 0), 2)]
   ];
 
-  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-  wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Synthèse');
-
-  // Télécharger le fichier
   const timestamp = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `${filename}_${timestamp}.xlsx`);
+  await downloadExcelWorkbook([
+    { name: 'Raffinage', matrix: [headers, ...data], widths: colWidths },
+    { name: 'Synthèse', matrix: summaryData, widths: [30, 20] },
+  ], `${filename}_${timestamp}.xlsx`);
 }
 
 export function exportToCSV(

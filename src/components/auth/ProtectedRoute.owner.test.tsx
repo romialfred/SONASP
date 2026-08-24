@@ -23,7 +23,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 describe('ProtectedRoute Owner', () => {
   it('autorise le propriétaire même sur une route limitée à un autre rôle', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/dashboard']}>
         <ProtectedRoute allowedRoles={['factory']}>
           <div>Module protégé</div>
         </ProtectedRoute>

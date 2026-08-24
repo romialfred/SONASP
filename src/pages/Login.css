@@ -144,6 +144,11 @@
   width: clamp(184px, 15.4vw, 288px);
   height: auto;
   margin-bottom: clamp(20px, 3.9vw, 72px);
+  padding: clamp(7px, 0.6vw, 10px) clamp(10px, 0.8vw, 14px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 25, 15, 0.2);
 }
 
 .login-presentation__eyebrow {

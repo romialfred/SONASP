@@ -216,10 +216,10 @@ export function Login() {
         <section className="login-presentation" aria-label={t('login.officialPlatform')}>
           <img
             className="login-presentation__logo"
-            src="/sonasp-logo-clair.png"
+            src="/sonasp_logo.png"
             alt="SONASP"
-            width={620}
-            height={237}
+            width={621}
+            height={211}
           />
 
           <p className="login-presentation__eyebrow">

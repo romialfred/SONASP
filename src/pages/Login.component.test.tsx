@@ -67,6 +67,12 @@ describe('page de connexion SONASP', () => {
     mockedUseAuth.mockReturnValue({ signIn } as unknown as ReturnType<typeof useAuth>);
   });
 
+  it('affiche le logo officiel SONASP complet', () => {
+    renderLogin();
+
+    expect(screen.getByRole('img', { name: 'SONASP' })).toHaveAttribute('src', '/sonasp_logo.png');
+  });
+
   it('annonce les deux champs requis et place le focus sur le premier', async () => {
     const user = userEvent.setup();
     renderLogin();

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { UserProfile } from '@/types/auth';
 import { ALL_GROUPS, NAVIGATION_SECTIONS, getNavigationSectionsForUser } from './sidebarNavigation';
+import { CAPABILITIES } from '@/lib/capabilities';
+import { routePolicyFor } from '@/lib/routeAccessRegistry';
 
 /**
  * Aucun intitulé de la barre latérale ne doit passer sur deux lignes.
@@ -250,5 +252,43 @@ describe('navigation de la boîte Comptoir → SONASP', () => {
     comptoir.role = 'customer';
     expect(paths(comptoir)).toContain('/portail-comptoir/ventes-sonasp');
     expect(paths(comptoir)).not.toContain('/sonasp/cessions-comptoirs');
+  });
+});
+
+describe('navigation des profils partenaires', () => {
+  const partner = (
+    role: UserProfile['role'],
+    capabilities: string[],
+    miningCompanyId: string | null = null,
+  ): UserProfile => ({
+    id: `${role}-partner`, email: `${role}@partner.bf`, full_name: role, phone: null,
+    role, mining_company_id: miningCompanyId, site_ids: [], is_active: true,
+    capabilities, is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+    email_notifications: true, batch_notifications: true, approval_notifications: true,
+    created_at: '2026-01-01', updated_at: '2026-01-01',
+  });
+  const partners = [
+    partner('mine', [CAPABILITIES.MINE_OPERATE], '9b3fcaaa-9367-4c91-a82d-788f043f33f1'),
+    partner('customer', [CAPABILITIES.COMPTOIR_MANAGE]),
+    partner('customer', [CAPABILITIES.COMPTOIR_MANAGE, CAPABILITIES.COLLECTOR_OPERATE]),
+    partner('factory', [CAPABILITIES.FACTORY_OPERATE]),
+    partner('airport', [CAPABILITIES.AIRPORT_OPERATE]),
+    partner('refinery', [CAPABILITIES.REFINERY_OPERATE]),
+    partner('customer', [CAPABILITIES.CUSTOMER_OPERATE]),
+  ];
+
+  it.each(partners)('ne présente aucune entrée nationale par défaut au profil $role/$id', (user) => {
+    const routes = getNavigationSectionsForUser(user).flatMap((section) =>
+      section.groups.flatMap((group) => [group.path, ...(group.children?.map((item) => item.path) || [])])
+    );
+    expect(routes.length).toBeGreaterThan(0);
+    expect(routes.filter((route) => routePolicyFor(route)?.national)).toEqual([]);
+  });
+
+  it('ne présente rien pour un rôle inconnu ou un partenaire désactivé', () => {
+    expect(getNavigationSectionsForUser({
+      ...partners[0], role: 'unknown-role' as UserProfile['role'],
+    })).toEqual([]);
+    expect(getNavigationSectionsForUser({ ...partners[0], is_active: false })).toEqual([]);
   });
 });

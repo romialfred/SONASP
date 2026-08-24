@@ -18,6 +18,7 @@ import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorB
 import { RouteFallback } from './components/common/RouteFallback';
 import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
 import { LegacyShippingPreparationEditRedirect } from './components/shipping/LegacyShippingPreparationEditRedirect';
+import { privateRoutePath } from './lib/routeAccessRegistry';
 
 const MINE_RELATION_READ_CAPABILITIES: CapabilityCode[] = [
   CAPABILITIES.MINE_OPERATE,
@@ -226,7 +227,7 @@ function AppRoutes() {
           <Route path="/modifier-mot-de-passe" element={<UpdatePassword />} />
 
           <Route
-            path="/portail-direction/*"
+            path={privateRoutePath('/portail-direction/*')}
             element={
               <ProtectedRoute allowedRoles={['manager']}>
                 <ManagerPortalPage />
@@ -235,7 +236,7 @@ function AppRoutes() {
           />
 
           <Route
-            path="/help"
+            path={privateRoutePath('/help')}
             element={
               <ProtectedRoute>
                 <HelpCenter />
@@ -247,55 +248,67 @@ function AppRoutes() {
 
           <Route element={<NationalDashboardChrome />}>
             <Route
-              path="/portail-collecteur"
+              path={privateRoutePath('/portail-collecteur')}
               element={
-                <CollectorPortalGuard>
-                  <CollectorPortalPage />
-                </CollectorPortalGuard>
+                <ProtectedRoute>
+                  <CollectorPortalGuard>
+                    <CollectorPortalPage />
+                  </CollectorPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/portail-collecteur/stock"
+              path={privateRoutePath('/portail-collecteur/stock')}
               element={
-                <CollectorPortalGuard>
-                  <CollectorStockPage />
-                </CollectorPortalGuard>
+                <ProtectedRoute>
+                  <CollectorPortalGuard>
+                    <CollectorStockPage />
+                  </CollectorPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/portail-collecteur/documents"
+              path={privateRoutePath('/portail-collecteur/documents')}
               element={
-                <CollectorPortalGuard>
-                  <CollectorDocumentsPage />
-                </CollectorPortalGuard>
+                <ProtectedRoute>
+                  <CollectorPortalGuard>
+                    <CollectorDocumentsPage />
+                  </CollectorPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/portail-comptoir"
+              path={privateRoutePath('/portail-comptoir')}
               element={
-                <ComptoirPortalGuard>
-                  <ComptoirPortalPage />
-                </ComptoirPortalGuard>
+                <ProtectedRoute>
+                  <ComptoirPortalGuard>
+                    <ComptoirPortalPage />
+                  </ComptoirPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/portail-comptoir/stock"
+              path={privateRoutePath('/portail-comptoir/stock')}
               element={
-                <ComptoirPortalGuard>
-                  <ComptoirStockPage />
-                </ComptoirPortalGuard>
+                <ProtectedRoute>
+                  <ComptoirPortalGuard>
+                    <ComptoirStockPage />
+                  </ComptoirPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/portail-comptoir/ventes-sonasp"
+              path={privateRoutePath('/portail-comptoir/ventes-sonasp')}
               element={
-                <ComptoirPortalGuard>
-                  <ComptoirSonaspSalesPage />
-                </ComptoirPortalGuard>
+                <ProtectedRoute>
+                  <ComptoirPortalGuard>
+                    <ComptoirSonaspSalesPage />
+                  </ComptoirPortalGuard>
+                </ProtectedRoute>
               }
             />
             <Route
-              path="/sonasp/cessions-comptoirs"
+              path={privateRoutePath('/sonasp/cessions-comptoirs')}
               element={
                 <ProtectedRoute requiredAnyCapabilities={SONASP_COMPTOIR_INBOX_CAPABILITIES}>
                   <SonaspComptoirSalesInboxPage />
@@ -303,16 +316,18 @@ function AppRoutes() {
               }
             />
             <Route
-              path="/portail-mine"
+              path={privateRoutePath('/portail-mine')}
               element={
-                <MinePortalGuard>
-                  <MinePortalPage />
-                </MinePortalGuard>
+                <ProtectedRoute>
+                  <MinePortalGuard>
+                    <MinePortalPage />
+                  </MinePortalGuard>
+                </ProtectedRoute>
               }
             />
 
             <Route
-              path="/dashboard"
+              path={privateRoutePath('/dashboard')}
               element={
                 <ProtectedRoute>
                   <GlobalDashboardEnhanced />

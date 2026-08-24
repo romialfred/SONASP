@@ -12,7 +12,15 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { full_name: 'Romuald TIEGNAN', role: 'owner' },
+    user: {
+      id: 'owner-id',
+      email: 'owner@sonasp.bf',
+      full_name: 'Romuald TIEGNAN',
+      role: 'owner',
+      mining_company_id: null,
+      is_active: true,
+      capabilities: [],
+    },
     signOut: vi.fn(),
   }),
 }));

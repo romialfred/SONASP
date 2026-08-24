@@ -44,6 +44,7 @@ import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import { getNavigationSectionsForUser, type NavigationSection } from './sidebarNavigation';
+import { accountTypeFor, homePathForAccountType } from '@/lib/routeAccessRegistry';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -165,13 +166,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
   const mineHomePath = '/portail-mine';
   const mineDashboardPath = '/portail-mine?vue=tableau-de-bord';
-  const dashboardPath = isCollector
-    ? '/portail-collecteur'
-    : isComptoir
-      ? '/portail-comptoir'
-      : isMine
-        ? mineDashboardPath
-        : '/dashboard';
+  const accountHomePath = homePathForAccountType(accountTypeFor(user));
+  const dashboardPath = isMine ? mineDashboardPath : (accountHomePath || '/login');
   const mineDashboardActive = isMine
     && location.pathname === mineHomePath
     && new URLSearchParams(location.search).get('vue') === 'tableau-de-bord';

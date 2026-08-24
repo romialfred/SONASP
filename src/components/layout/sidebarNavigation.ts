@@ -27,6 +27,11 @@ import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
 import { canAccessSonaspComptoirInbox } from '@/lib/sonaspComptoirAccess';
+import {
+  accountTypeFor,
+  canAccessPrivateRoute,
+  type AccountType,
+} from '@/lib/routeAccessRegistry';
 
 export type NavigationItem = {
   label: string;
@@ -470,6 +475,27 @@ export const ALL_GROUPS: NavigationGroup[] = [
   SONASP_COMPTOIR_NAVIGATION_SECTION,
 ].flatMap((section) => section.groups);
 
+function filterNavigationSections(
+  sections: NavigationSection[],
+  user: UserProfile,
+): NavigationSection[] {
+  return sections.flatMap((section) => {
+    const groups = section.groups.flatMap((group) => {
+      const groupAllowed = canAccessPrivateRoute(user, group.path);
+      if (!group.children?.length) return groupAllowed ? [group] : [];
+
+      const children = group.children.filter((item) => canAccessPrivateRoute(user, item.path));
+      if (children.length === 0) return groupAllowed ? [{ ...group, children: undefined }] : [];
+      return [{
+        ...group,
+        path: groupAllowed ? group.path : children[0].path,
+        children,
+      }];
+    });
+    return groups.length > 0 ? [{ ...section, groups }] : [];
+  });
+}
+
 const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
   production: new Set([
     '/production/daily',
@@ -505,18 +531,21 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
 
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
 export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
-  if (isCollectorScopedUser(user)) return COLLECTOR_NAVIGATION_SECTIONS;
-  if (isComptoirScopedUser(user)) return COMPTOIR_NAVIGATION_SECTIONS;
+  const accountType: AccountType = accountTypeFor(user);
+  if (!user || accountType === 'unknown' || accountType === 'direction') return [];
+  if (isCollectorScopedUser(user)) return filterNavigationSections(COLLECTOR_NAVIGATION_SECTIONS, user);
+  if (isComptoirScopedUser(user)) return filterNavigationSections(COMPTOIR_NAVIGATION_SECTIONS, user);
   if (!isMineScopedUser(user)) {
-    return canAccessSonaspComptoirInbox(user)
+    const candidate = canAccessSonaspComptoirInbox(user)
       ? [...NAVIGATION_SECTIONS, SONASP_COMPTOIR_NAVIGATION_SECTION]
       : NAVIGATION_SECTIONS;
+    return filterNavigationSections(candidate, user);
   }
 
   const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');
   if (!industrial) return [];
 
-  return [{
+  return filterNavigationSections([{
     ...industrial,
     groups: industrial.groups.flatMap((group) => {
       const allowed = MINE_GROUP_CHILDREN[group.id];
@@ -525,5 +554,5 @@ export function getNavigationSectionsForUser(user: UserProfile | null): Navigati
       if (children.length === 0) return [];
       return [{ ...group, path: children[0].path, children }];
     }),
-  }];
+  }], user);
 }

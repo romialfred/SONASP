@@ -13,7 +13,18 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { full_name: 'Romuald TIEGNAN', role: 'owner' }, signOut: vi.fn() }),
+  useAuth: () => ({
+    user: {
+      id: 'owner-id',
+      email: 'owner@sonasp.bf',
+      full_name: 'Romuald TIEGNAN',
+      role: 'owner',
+      mining_company_id: null,
+      is_active: true,
+      capabilities: [],
+    },
+    signOut: vi.fn(),
+  }),
 }));
 
 vi.mock('@/components/ui/ProfileErrorBanner', () => ({ ProfileErrorBanner: () => null }));

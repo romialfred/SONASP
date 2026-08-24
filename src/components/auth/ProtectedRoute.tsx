@@ -13,6 +13,7 @@ import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAcce
 import { isCollectorRouteAllowed, isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineRouteAllowed, isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
 import { hasAnyCapability, type CapabilityCode } from '@/lib/capabilities';
+import { evaluatePrivateRouteAccess } from '@/lib/routeAccessRegistry';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -144,6 +145,15 @@ export function ProtectedRoute({
     );
   }
 
+  const registryDecision = evaluatePrivateRouteAccess(user, location.pathname);
+  if (
+    !registryDecision.allowed
+    && registryDecision.redirectTo
+    && registryDecision.redirectTo !== location.pathname
+  ) {
+    return <Navigate to={registryDecision.redirectTo} replace />;
+  }
+
   // Une mine utilise désormais les vrais modules industriels. L'allowlist
   // empêche toutefois qu'une route historique sans `allowedRoles` ouvre une
   // fonction SONASP par saisie directe de son URL.
@@ -159,6 +169,40 @@ export function ProtectedRoute({
     && !['/profile', '/help'].includes(location.pathname)
   ) {
     return <Navigate to="/portail-direction" replace />;
+  }
+
+  if (!registryDecision.allowed && registryDecision.reason !== 'capability') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès refusé</h2>
+          <p className="text-gray-600 mb-6">
+            Cette route n’est pas ouverte à votre type de compte.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const roleAutorise = !allowedRoles
@@ -210,8 +254,11 @@ export function ProtectedRoute({
 
   const missingPermission = Boolean(requiredPermission && !hasPermission(user, requiredPermission));
   const missingCapability = Boolean(
-    requiredAnyCapabilities?.length
-    && !hasAnyCapability(user, requiredAnyCapabilities),
+    (!registryDecision.allowed && registryDecision.reason === 'capability')
+    || (
+      requiredAnyCapabilities?.length
+      && !hasAnyCapability(user, requiredAnyCapabilities)
+    ),
   );
 
   if (missingPermission || missingCapability) {

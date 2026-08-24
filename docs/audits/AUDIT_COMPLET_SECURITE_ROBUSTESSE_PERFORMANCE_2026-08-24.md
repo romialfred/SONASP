@@ -293,6 +293,8 @@ En parallèle, 44 tables utilisées dans `.from()` sont absentes des migrations 
 
 **Correction** : geler les migrations, extraire une baseline du live, reconstruire une base vierge, comparer catalogues/checksums, renommer chaque migration avec un timestamp unique et rendre le reset Supabase obligatoire en CI.
 
+> **Mise à jour Lot 4D — 24 août 2026** : l'inventaire local est désormais figé par checksum sans renommer ni appliquer l'historique. Le catalogue est un garde-fou de non-régression, pas une preuve d'équivalence avec le live. Les chiffres actualisés, la méthode de rapprochement et les limites sont documentés dans [BASELINE-MIGRATIONS-ET-REPRODUCTIBILITE-2026-08-24.md](BASELINE-MIGRATIONS-ET-REPRODUCTIBILITE-2026-08-24.md).
+
 ### P1-09 — Fonctions live cassées et drift des sessions
 
 Le linter DB retourne 16 erreurs et 11 avertissements : tables/colonnes supprimées, SQL dynamique invalide, agrégats incorrects, comparaisons `uuid=text`, colonnes inexistantes et fonctions FX cassées.
@@ -578,5 +580,4 @@ Chaque test doit vérifier l'UI, l'appel direct PostgREST/RPC, les effets DB, le
 
 ## 14. État du dépôt après audit
 
-L'audit n'a modifié aucun fichier source, aucune migration ni donnée. Le seul artefact ajouté est le présent rapport. Avant sa création, le dépôt local et `origin/SONASP_2026` pointaient tous deux sur `42f1441308857f0a9deb720c597db4901d8e221f` et l'arbre Git était propre.
-
+Lors de l'audit initial, aucun fichier source, aucune migration ni donnée n'avait été modifié ; le seul artefact ajouté était le présent rapport. Avant sa création, le dépôt local et `origin/SONASP_2026` pointaient tous deux sur `42f1441308857f0a9deb720c597db4901d8e221f` et l'arbre Git était propre. Cette phrase est une preuve historique, pas l'état courant après les lots correctifs. Le Lot 4D ajoute uniquement un catalogue de checksums, un contrôleur, ses tests, sa CI dédiée et le rapport de reproductibilité lié ci-dessus ; il ne renomme ni n'applique aucune migration.

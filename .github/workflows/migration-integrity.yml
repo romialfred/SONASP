@@ -1,0 +1,39 @@
+name: Migration integrity
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/migrations.catalogue*.json'
+      - 'scripts/check-migration-integrity.mjs'
+      - 'tests/migrations/migration-integrity.test.mjs'
+      - '.github/workflows/migration-integrity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/migrations.catalogue*.json'
+      - 'scripts/check-migration-integrity.mjs'
+      - 'tests/migrations/migration-integrity.test.mjs'
+      - '.github/workflows/migration-integrity.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Unit tests
+        run: node --test tests/migrations/migration-integrity.test.mjs
+      - name: Verify immutable migration catalogue
+        run: node scripts/check-migration-integrity.mjs verify

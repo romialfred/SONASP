@@ -1,0 +1,2247 @@
+{
+  "formatVersion": 1,
+  "checksumAlgorithm": "sha256",
+  "checksumCanonicalization": "SQL bytes with CRLF and CR normalized to LF; no other transformation",
+  "migrationDirectory": "supabase/migrations",
+  "policy": {
+    "canonicalPrefix": "YYYYMMDDHHMMSS as a valid UTC timestamp",
+    "canonicalFilename": "^\\d{14}_[a-z0-9]+(?:_[a-z0-9]+)*\\.sql$",
+    "ordering": "bytewise filename order; every version prefix must be unique"
+  },
+  "files": [
+    {
+      "path": "supabase/migrations/20251112_012_migrate_assay_certificates_to_shipping.sql",
+      "version": "20251112",
+      "description": "012_migrate_assay_certificates_to_shipping",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 12981,
+      "sha256": "0d4d535144fba3dbef0b4840b0fae39dee1d49ade2fdb3efa11c9b6b2a95f007"
+    },
+    {
+      "path": "supabase/migrations/20251112_013_add_license_to_shipping.sql",
+      "version": "20251112",
+      "description": "013_add_license_to_shipping",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2030,
+      "sha256": "c5bb6beb6364d3a528b1f164883786a77d70a93288365685194a5e2d95074535"
+    },
+    {
+      "path": "supabase/migrations/20251112_014_fix_daily_production_insert.sql",
+      "version": "20251112",
+      "description": "014_fix_daily_production_insert",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3861,
+      "sha256": "388cede57293a311d292dbd74a7bb28ac827149d71ab72fb8de58cd813d493a3"
+    },
+    {
+      "path": "supabase/migrations/20251112_015_fix_policy_names_length.sql",
+      "version": "20251112",
+      "description": "015_fix_policy_names_length",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2939,
+      "sha256": "585d440b88549ed24429bae8bf22bb03155d029b51c4ba0e4da4530b253b3750"
+    },
+    {
+      "path": "supabase/migrations/20251112_016_setup_production_documents_storage_policies.sql",
+      "version": "20251112",
+      "description": "016_setup_production_documents_storage_policies",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4782,
+      "sha256": "8ecba65554cf381ebfbec3ccff4a6f808658202fa3c1e0cdaefbe60fddfd8409"
+    },
+    {
+      "path": "supabase/migrations/20251112_017_setup_all_storage_buckets_policies.sql",
+      "version": "20251112",
+      "description": "017_setup_all_storage_buckets_policies",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 11401,
+      "sha256": "75628d48cb68281c9b3de86b34d3e2cc3bd40d1bbfbe4ee426363741236755fa"
+    },
+    {
+      "path": "supabase/migrations/20251113_001_fix_site_id_trigger.sql",
+      "version": "20251113",
+      "description": "001_fix_site_id_trigger",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4584,
+      "sha256": "318e4d68bd79c0ef66dcc7d1b0718fcecb8c999bf6176efd6dd586bbddd7925e"
+    },
+    {
+      "path": "supabase/migrations/20251113_002_fix_storage_policies_format.sql",
+      "version": "20251113",
+      "description": "002_fix_storage_policies_format",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 9187,
+      "sha256": "a79d7007735805f73ff16297d8cedafe5db5dbb8af13a1f130ee028ee57147ca"
+    },
+    {
+      "path": "supabase/migrations/20251113_003_fix_daily_production_display.sql",
+      "version": "20251113",
+      "description": "003_fix_daily_production_display",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 8495,
+      "sha256": "d63dbaccaca9bf6b59cd42bef506480dc9ac2fc917383efeb79976f8d39afb86"
+    },
+    {
+      "path": "supabase/migrations/20251113_004_fix_shipping_status_enum.sql",
+      "version": "20251113",
+      "description": "004_fix_shipping_status_enum",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6234,
+      "sha256": "9a5e07e642e31c03d5c64defe3670f0aa62204c606b8dd0bd7f57e87d16736c1"
+    },
+    {
+      "path": "supabase/migrations/20251113_005_fix_shipping_table_definitive.sql",
+      "version": "20251113",
+      "description": "005_fix_shipping_table_definitive",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 7533,
+      "sha256": "dac4a11ab5642b8b193ac6bbe303cd013d5ae3b61735ede43dbfe56d053d44a6"
+    },
+    {
+      "path": "supabase/migrations/20251113_006_FINAL_FIX_shipping_status.sql",
+      "version": "20251113",
+      "description": "006_FINAL_FIX_shipping_status",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 7211,
+      "sha256": "6bbbab13645ee5f0d75a14305cd90f4d300d08282d91e52aba1b265b8477cda5"
+    },
+    {
+      "path": "supabase/migrations/20251113_007_SIMPLE_shipping_fix.sql",
+      "version": "20251113",
+      "description": "007_SIMPLE_shipping_fix",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 3775,
+      "sha256": "fbf5bca86a2f660931af74a705d0ca3656e4a43cc943565ba1819b6beb4c44fa"
+    },
+    {
+      "path": "supabase/migrations/20251113_008_EMERGENCY_cleanup_shipped.sql",
+      "version": "20251113",
+      "description": "008_EMERGENCY_cleanup_shipped",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 5517,
+      "sha256": "347b5777c37f55805a5f8fafca2556ca78821670c3ff293e304ea66671a498c8"
+    },
+    {
+      "path": "supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql",
+      "version": "20251113",
+      "description": "009_ULTRA_SIMPLE_fix",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 2548,
+      "sha256": "02233e9afca72c94d8f7eb5629aaf347924a5188c68cad693b864a72d618eb53"
+    },
+    {
+      "path": "supabase/migrations/20251113_010_add_mining_company_to_budgets.sql",
+      "version": "20251113",
+      "description": "010_add_mining_company_to_budgets",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3953,
+      "sha256": "bfa20a07709809c9ed8667de1703141dc990ca55396d5f70282d13589bbff1b2"
+    },
+    {
+      "path": "supabase/migrations/20251113_011_fix_assay_certificates_storage.sql",
+      "version": "20251113",
+      "description": "011_fix_assay_certificates_storage",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3438,
+      "sha256": "3f202403d9e802ce2236ba8d04cbfbaaa9bdfcf416bdf9d47cdff2d8debc1ffb"
+    },
+    {
+      "path": "supabase/migrations/20251113_012_add_silver_tracking_to_production.sql",
+      "version": "20251113",
+      "description": "012_add_silver_tracking_to_production",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6280,
+      "sha256": "36d12840031c87e59c32dabc0ee16e55078ed889023b88e2fce478deeef0ccd7"
+    },
+    {
+      "path": "supabase/migrations/20251113_020_create_freight_customs_module.sql",
+      "version": "20251113",
+      "description": "020_create_freight_customs_module",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 9588,
+      "sha256": "8157e361f6223fa778047170c6413babb0215305cb13206eee43830b9b30439a"
+    },
+    {
+      "path": "supabase/migrations/20251114_001_add_ready_for_customs_status.sql",
+      "version": "20251114",
+      "description": "001_add_ready_for_customs_status",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3259,
+      "sha256": "20e48a9154504b7774794d6e2c5fcfb45086e6a8b3ce4aa724168c0a2a31e270"
+    },
+    {
+      "path": "supabase/migrations/20251114_002_complete_ready_for_customs.sql",
+      "version": "20251114",
+      "description": "002_complete_ready_for_customs",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 8719,
+      "sha256": "58ca4d3b6809e112e23692989e55f5e9146f0cbcba6637fe696d2fa0b2631254"
+    },
+    {
+      "path": "supabase/migrations/20251114_003_complete_status_enums_system.sql",
+      "version": "20251114",
+      "description": "003_complete_status_enums_system",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13870,
+      "sha256": "8994c520b7472754d39a37e5290d45de8f629a57b8a5ce938ffd1cac897559de"
+    },
+    {
+      "path": "supabase/migrations/20251114_004_correct_status_enums_verified.sql",
+      "version": "20251114",
+      "description": "004_correct_status_enums_verified",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 11303,
+      "sha256": "702802a6c631337300b8cb69e1191a8c9a6d094773259b719a3fdb998e6ae690"
+    },
+    {
+      "path": "supabase/migrations/20251114_005_fix_production_status_trigger.sql",
+      "version": "20251114",
+      "description": "005_fix_production_status_trigger",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4213,
+      "sha256": "3a1ba833ca049f94090192705cd646be500b243ed53dd52c8e78ed9d29b61a05"
+    },
+    {
+      "path": "supabase/migrations/20251114_006_add_shipping_status_history.sql",
+      "version": "20251114",
+      "description": "006_add_shipping_status_history",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4773,
+      "sha256": "3c0da96e5d27c5e9bacfa39c43cac6c34029b13650d0f7e72976dd9aeda754df"
+    },
+    {
+      "path": "supabase/migrations/20251114_006_add_shipping_status_history_FIXED.sql",
+      "version": "20251114",
+      "description": "006_add_shipping_status_history_FIXED",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 7221,
+      "sha256": "f50efd29d76a85e7ed78432ccbcbcaa79191762883f96cec0b838c326f8987ee"
+    },
+    {
+      "path": "supabase/migrations/20251114_007_remove_in_sale_status.sql",
+      "version": "20251114",
+      "description": "007_remove_in_sale_status",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4723,
+      "sha256": "701865e8d0443ef6b53a4fd69ebf6d0f6cca1607358b071ba300bfadc695964a"
+    },
+    {
+      "path": "supabase/migrations/20251114_008_fix_production_status_trigger_COMPLETE.sql",
+      "version": "20251114",
+      "description": "008_fix_production_status_trigger_COMPLETE",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 7364,
+      "sha256": "56704e1e152a2cf734f2b9af616016eb10dd10bf9966e6c4509ea1c5b95d5792"
+    },
+    {
+      "path": "supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql",
+      "version": "20251114",
+      "description": "009_fix_shipping_workflow_statuses",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4847,
+      "sha256": "2f0cef7a0fb1e6342ab00a6ff6f33a5d50216c12fae5d689d0911a4f9cdd887d"
+    },
+    {
+      "path": "supabase/migrations/20251114_010_remove_old_shipping_constraints.sql",
+      "version": "20251114",
+      "description": "010_remove_old_shipping_constraints",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 7251,
+      "sha256": "32b382dc0a535239b8a391c2261f2c7a6c04ff0f629ac4a88d4a216caf502153"
+    },
+    {
+      "path": "supabase/migrations/20251114_011_fix_shipping_enum_definitif.sql",
+      "version": "20251114",
+      "description": "011_fix_shipping_enum_definitif",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 10365,
+      "sha256": "da9dd683b59ed1907e956b0ca6cd344ef3c5c6f26c22a473c1face90b78f8595"
+    },
+    {
+      "path": "supabase/migrations/20251114_012_fix_license_trigger_statuses.sql",
+      "version": "20251114",
+      "description": "012_fix_license_trigger_statuses",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3900,
+      "sha256": "19081dbeb3c1a0306df9b6b2262d48a16434fe147c1fd73c74959725d6a95f61"
+    },
+    {
+      "path": "supabase/migrations/20251115_001_fix_shipping_delete_trigger.sql",
+      "version": "20251115",
+      "description": "001_fix_shipping_delete_trigger",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3272,
+      "sha256": "ccbeac8d8421868f9a60fadeff902650af9937b566b0a479dcdcf1265ed40b1f"
+    },
+    {
+      "path": "supabase/migrations/20251115_002_fix_complete_history_tracking.sql",
+      "version": "20251115",
+      "description": "002_fix_complete_history_tracking",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13769,
+      "sha256": "bb08ebaf744305a8fb52a48c3068dd222d049883321c4fe0c67ffcea1307acf5"
+    },
+    {
+      "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL.sql",
+      "version": "20251115",
+      "description": "003_complete_workflow_status_fix_CRITICAL",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 20911,
+      "sha256": "194492b1fc4028dab4be29330c4ccc1599600c2f45299d259b8f37320fca37b6"
+    },
+    {
+      "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL_CLEAN.sql",
+      "version": "20251115",
+      "description": "003_complete_workflow_status_fix_CRITICAL_CLEAN",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": "description_must_be_lower_snake_case",
+      "normalizedBytes": 17677,
+      "sha256": "c6258b79d08c693b0aa37d5dbdc8aa5db920c2a5fad3b6e2cbab0e8d1c93c1a0"
+    },
+    {
+      "path": "supabase/migrations/20251115_004_create_budget_system_tables.sql",
+      "version": "20251115",
+      "description": "004_create_budget_system_tables",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 7952,
+      "sha256": "432e091c545dc8c529544ef75f699fa5a353cff1f75eb747c7e54168b661d77e"
+    },
+    {
+      "path": "supabase/migrations/20251115_005_safe_budget_system_update.sql",
+      "version": "20251115",
+      "description": "005_safe_budget_system_update",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 10731,
+      "sha256": "830dcf6402cd21e9d105959306e624f0df48ce743cd7757966938af0d8f44254"
+    },
+    {
+      "path": "supabase/migrations/20251117_001_fix_production_to_shipping_trigger.sql",
+      "version": "20251117",
+      "description": "001_fix_production_to_shipping_trigger",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4570,
+      "sha256": "d2777a4aac0f89a8f809b124ba190cbaade8a3229124bc6ac2ecd392f09abf85"
+    },
+    {
+      "path": "supabase/migrations/20251117_002_create_freight_shipments_system.sql",
+      "version": "20251117",
+      "description": "002_create_freight_shipments_system",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13737,
+      "sha256": "bce4fa3c0e30c0ca3e3e45ba8173fcb27d4c04ccbbd5a594a053bb02117d68e8"
+    },
+    {
+      "path": "supabase/migrations/20251124_001_add_production_summary_functions.sql",
+      "version": "20251124",
+      "description": "001_add_production_summary_functions",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 9281,
+      "sha256": "147c41caa345f85f6bffeaf690bae59c63d50e638838d50ba5fb483a7ca61cf0"
+    },
+    {
+      "path": "supabase/migrations/20251128_001_fix_shipping_missing_mining_company.sql",
+      "version": "20251128",
+      "description": "001_fix_shipping_missing_mining_company",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6700,
+      "sha256": "8397736b04f3c27ae6646dc6d0888ebe40e4575f9ca2dab6128281e6286a440b"
+    },
+    {
+      "path": "supabase/migrations/20251203_001_add_expedition_lot_counter_system.sql",
+      "version": "20251203",
+      "description": "001_add_expedition_lot_counter_system",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 5102,
+      "sha256": "b4b9f73ded9985d8993e8a232237ea657513a59eaf2c4c2e90e9b08ac5c6af95"
+    },
+    {
+      "path": "supabase/migrations/20251209_001_add_refinery_freight_to_shipping.sql",
+      "version": "20251209",
+      "description": "001_add_refinery_freight_to_shipping",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6825,
+      "sha256": "28bc9464bd56eff9c83a1c010276fe31c7a70d9df77d64fc65d71d718d271bb2"
+    },
+    {
+      "path": "supabase/migrations/20251210_001_add_refining_statuses.sql",
+      "version": "20251210",
+      "description": "001_add_refining_statuses",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3346,
+      "sha256": "a77bbed83c88699c2d4fd660c80891a2ba3844208319151b8ca2005f61322ea7"
+    },
+    {
+      "path": "supabase/migrations/20251211_001_add_sales_workflow_statuses.sql",
+      "version": "20251211",
+      "description": "001_add_sales_workflow_statuses",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1751,
+      "sha256": "4d00c7f8a7c54029e60b7a46691613303dbd90ac19c1dec3a13865627b28ce0b"
+    },
+    {
+      "path": "supabase/migrations/20251226120554_26122025_01_artisan_minier_migration.sql",
+      "version": "20251226120554",
+      "description": "26122025_01_artisan_minier_migration",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 13774,
+      "sha256": "dc0d586ef21ae89568be341679e88bb3a84cc328b96d4a876462059a4b5287c7"
+    },
+    {
+      "path": "supabase/migrations/20251227_001_create_artisans_miniers_system.sql",
+      "version": "20251227",
+      "description": "001_create_artisans_miniers_system",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6323,
+      "sha256": "2fd9f837cf93fda1ae9639639a9503a3b4c3773b1671a215fc1cab2c8e23047d"
+    },
+    {
+      "path": "supabase/migrations/20251227_002_add_missing_columns_artisans.sql",
+      "version": "20251227",
+      "description": "002_add_missing_columns_artisans",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 5302,
+      "sha256": "20808df1b2bafabf993ca7320ef554906aedd8549ca95595e4f5782ac23a3f7e"
+    },
+    {
+      "path": "supabase/migrations/20260808_001_security_protect_user_profile_privileges.sql",
+      "version": "20260808",
+      "description": "001_security_protect_user_profile_privileges",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2362,
+      "sha256": "8f839f0d0acb13669c6ef2d6973a31924d2e42cb3b7d6f3c48ea2a3aaaf53b1c"
+    },
+    {
+      "path": "supabase/migrations/20260817_001_assign_romuald_owner.sql",
+      "version": "20260817",
+      "description": "001_assign_romuald_owner",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2161,
+      "sha256": "8f71288795a3c5acb49795081afa607862d794149d710db3293eabeab5772c22"
+    },
+    {
+      "path": "supabase/migrations/20260817_002_create_artisanal_sites.sql",
+      "version": "20260817",
+      "description": "002_create_artisanal_sites",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 11859,
+      "sha256": "5b88b6f139b9e77084879c38c18156652bf12b0a234235af7866cb0420870689"
+    },
+    {
+      "path": "supabase/migrations/20260817_003_add_artisanal_site_photos.sql",
+      "version": "20260817",
+      "description": "003_add_artisanal_site_photos",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1134,
+      "sha256": "c25c15d0b83aaf365b13fe564736a4a6b7ce7164c022609ed61063725786055c"
+    },
+    {
+      "path": "supabase/migrations/20260818_001_extend_mining_companies_localisation_documents.sql",
+      "version": "20260818",
+      "description": "001_extend_mining_companies_localisation_documents",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2637,
+      "sha256": "5fdcd1cca98554aea08b40e4ca78fcc3dfd3c0201f2b08dc05369048f68a717a"
+    },
+    {
+      "path": "supabase/migrations/20260819_001_carte_numero_format.sql",
+      "version": "20260819",
+      "description": "001_carte_numero_format",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2854,
+      "sha256": "71c363d5a88d489d37907db109076f16b4f0394a72e0120aa42bed54702613d4"
+    },
+    {
+      "path": "supabase/migrations/20260819_002_numero_recu_vente_or.sql",
+      "version": "20260819",
+      "description": "002_numero_recu_vente_or",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2519,
+      "sha256": "ffd40ed277a57612583c0f7ba438cac9e1db21ae7a2e14b30895608bf63cc95f"
+    },
+    {
+      "path": "supabase/migrations/20260819_003_gold_inventory_colonnes.sql",
+      "version": "20260819",
+      "description": "003_gold_inventory_colonnes",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2691,
+      "sha256": "bc7655af081c6657100b7cafde0a2b4e78098b6bb7ba2de165cb35aeaef7b02e"
+    },
+    {
+      "path": "supabase/migrations/20260819_004_artisan_moyens_paiement.sql",
+      "version": "20260819",
+      "description": "004_artisan_moyens_paiement",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4351,
+      "sha256": "21405b4c7a12d919f0d25161c382f09e8fb0715d5bb7b057ec2d16926589df62"
+    },
+    {
+      "path": "supabase/migrations/20260819_005_corriger_identification_sonasp.sql",
+      "version": "20260819",
+      "description": "005_corriger_identification_sonasp",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2248,
+      "sha256": "cd6a12d813fda3c5ce08a0328a9ef03bed2e47712a67a675e6421f4e9cbd5383"
+    },
+    {
+      "path": "supabase/migrations/20260819_006_add_sales_approver_flag.sql",
+      "version": "20260819",
+      "description": "006_add_sales_approver_flag",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 522,
+      "sha256": "75e02e4c05ae6e2c2340486211b3d9dac21a3a9e3493530d727697ef020482d9"
+    },
+    {
+      "path": "supabase/migrations/20260819_006_roles_owner_et_admin.sql",
+      "version": "20260819",
+      "description": "006_roles_owner_et_admin",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1925,
+      "sha256": "030983c87867f7170d71a56f236447cb9f3d3dd81570489b644f3b2418b3c8ca"
+    },
+    {
+      "path": "supabase/migrations/20260819_007_achats_mines.sql",
+      "version": "20260819",
+      "description": "007_achats_mines",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4353,
+      "sha256": "275d3e17df115fdf3bf0eb69b011d4e43d3cee2bc8bc01985b1e4e5d5e3a350d"
+    },
+    {
+      "path": "supabase/migrations/20260819_008_sonasp_vendeuse_export.sql",
+      "version": "20260819",
+      "description": "008_sonasp_vendeuse_export",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1298,
+      "sha256": "d80e9a7fddad03917b95f9c9117ed8e81867ce374b3debecaf216123f8370faa"
+    },
+    {
+      "path": "supabase/migrations/20260820_001_tracabilite_lots_vente.sql",
+      "version": "20260820",
+      "description": "001_tracabilite_lots_vente",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3089,
+      "sha256": "9e625b91345bd89f7c31d4fccd44fc1c1de93b756e01958263e2fac086e3291b"
+    },
+    {
+      "path": "supabase/migrations/20260820_002_site_national_burkina_faso.sql",
+      "version": "20260820",
+      "description": "002_site_national_burkina_faso",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1336,
+      "sha256": "687cc9e9b887c5829161010a16d5132402259684bbb5338ffed4e605ca495cd6"
+    },
+    {
+      "path": "supabase/migrations/20260820_003_auteurs_supprimes.sql",
+      "version": "20260820",
+      "description": "003_auteurs_supprimes",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 3251,
+      "sha256": "bd3e1716f17e29da8084e15dcf1b852494e894aa0683046bd506c3642cd14d86"
+    },
+    {
+      "path": "supabase/migrations/20260820_004_references_barres.sql",
+      "version": "20260820",
+      "description": "004_references_barres",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 1956,
+      "sha256": "9e4048a7bf7b1bdcdbb1d7ebaae1ca1105dac2a7d47be06bfdf23167f47636fc"
+    },
+    {
+      "path": "supabase/migrations/20260820_005_referentiel_burkinabe.sql",
+      "version": "20260820",
+      "description": "005_referentiel_burkinabe",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6109,
+      "sha256": "aa9e0c01569066ee687aee563582c86a7d76994d2e48ff75cbc9bb36f22947d9"
+    },
+    {
+      "path": "supabase/migrations/20260820_006_cles_auteurs_generalise.sql",
+      "version": "20260820",
+      "description": "006_cles_auteurs_generalise",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 4280,
+      "sha256": "12e08734bf0656eff872a11420ff329ba83821327571c94aa1ae954578ca17c2"
+    },
+    {
+      "path": "supabase/migrations/20260820_007_jeu_presentation_2026.sql",
+      "version": "20260820",
+      "description": "007_jeu_presentation_2026",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 22074,
+      "sha256": "046bb2d5b853d198801c8ca7404a2b7ea381447fc7ae19dc19d956ae5048f501"
+    },
+    {
+      "path": "supabase/migrations/20260820_008_libelles_metier.sql",
+      "version": "20260820",
+      "description": "008_libelles_metier",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 2957,
+      "sha256": "83f0c49a942dc955589b7bebcb1722d9fb09f8fafe60358c5ef2fca71fee5d35"
+    },
+    {
+      "path": "supabase/migrations/20260820_009_marche_or_artisanal_2026.sql",
+      "version": "20260820",
+      "description": "009_marche_or_artisanal_2026",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 10149,
+      "sha256": "7f0a87884d1f8d934a41a4d60a0a7db1a321c63f86cb8a09145a5c0b6919790f"
+    },
+    {
+      "path": "supabase/migrations/20260820_010_achats_industriels_socle.sql",
+      "version": "20260820",
+      "description": "010_achats_industriels_socle",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 22005,
+      "sha256": "724fb406d8ac69c238d464798db692053b0002b12b168187cbccfc032ca7a488"
+    },
+    {
+      "path": "supabase/migrations/20260820_011_achats_industriels_integrite.sql",
+      "version": "20260820",
+      "description": "011_achats_industriels_integrite",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13949,
+      "sha256": "ad087d6123c28c5e9b47ee55ca7aa16a5e11eb5c4d6f7f9f4664fe95d7a74580"
+    },
+    {
+      "path": "supabase/migrations/20260820_012_achats_industriels_operations.sql",
+      "version": "20260820",
+      "description": "012_achats_industriels_operations",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 31155,
+      "sha256": "ccece1b087f5afc227d77500a2021281ae44e9e48c20df9761346192f67d84ff"
+    },
+    {
+      "path": "supabase/migrations/20260820_013_achats_industriels_habilitations.sql",
+      "version": "20260820",
+      "description": "013_achats_industriels_habilitations",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 10339,
+      "sha256": "476c4e04cd91b94337f51e7db9dd4855d5fb6c2fb425bd3841633077694f3176"
+    },
+    {
+      "path": "supabase/migrations/20260820_014_reglements_comptes_et_cycle.sql",
+      "version": "20260820",
+      "description": "014_reglements_comptes_et_cycle",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 8108,
+      "sha256": "c0d0c83ad2f97d781394521f7a0eb581b32f98140c8ab876d29d7f38805c407d"
+    },
+    {
+      "path": "supabase/migrations/20260820_015_reglements_engage_contre_paye.sql",
+      "version": "20260820",
+      "description": "015_reglements_engage_contre_paye",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 12378,
+      "sha256": "1b9be49d6537da50512468785c0a5c97bfa89ffa0ff1012edb0ca2a1e5db1d44"
+    },
+    {
+      "path": "supabase/migrations/20260820_016_reglements_operations.sql",
+      "version": "20260820",
+      "description": "016_reglements_operations",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13785,
+      "sha256": "6702fbd81003f6c2a1d9f023d03cf69dd43d24d735f58c2845b13f574f8849b3"
+    },
+    {
+      "path": "supabase/migrations/20260820_017_demonstration_reglements.sql",
+      "version": "20260820",
+      "description": "017_demonstration_reglements",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 15825,
+      "sha256": "7dfc7d46526364901447becea33b61309123755a906380ce504d968fc7b4b147"
+    },
+    {
+      "path": "supabase/migrations/20260820_018_repartition_assiette.sql",
+      "version": "20260820",
+      "description": "018_repartition_assiette",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 7220,
+      "sha256": "6d71dc921b0b9545d1356e3045d6a154ee08aab6b98f548f754c3593ee4774f3"
+    },
+    {
+      "path": "supabase/migrations/20260820_019_plans_mensuels_anterieurs.sql",
+      "version": "20260820",
+      "description": "019_plans_mensuels_anterieurs",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 6939,
+      "sha256": "c1b3e44c3ec9d2dbccd7b8ede895da23062985ae19b4a885dc503843be6a6d5c"
+    },
+    {
+      "path": "supabase/migrations/20260821_020_contrats_fourniture.sql",
+      "version": "20260821",
+      "description": "020_contrats_fourniture",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 21237,
+      "sha256": "108f7b22b72b28a1487e3019e430007888dab2b7fed807d199f8e3f068597481"
+    },
+    {
+      "path": "supabase/migrations/20260821_021_contrats_operations.sql",
+      "version": "20260821",
+      "description": "021_contrats_operations",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 31953,
+      "sha256": "96dcaae814e261415072a81ee4835b8e70ed6b307046a66d944943d04864355b"
+    },
+    {
+      "path": "supabase/migrations/20260821_022_requisitions_or.sql",
+      "version": "20260821",
+      "description": "022_requisitions_or",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 17479,
+      "sha256": "f5633f84901ab987cc164d72524039fda935a94687df85ad7dc8e7bbe441d512"
+    },
+    {
+      "path": "supabase/migrations/20260821_023_requisitions_operations.sql",
+      "version": "20260821",
+      "description": "023_requisitions_operations",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 20867,
+      "sha256": "29137f0f1493afe89eeecb9835d1b6f0e3c5565f8b94d3377ce765c1e782b2d5"
+    },
+    {
+      "path": "supabase/migrations/20260821_024_analyses_teneur.sql",
+      "version": "20260821",
+      "description": "024_analyses_teneur",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 15571,
+      "sha256": "e125fba8d7df5cc744010f21f279414eb3adfa2e3c9f288e14c5fa3a9cd9456a"
+    },
+    {
+      "path": "supabase/migrations/20260821_025_alertes_et_pieces.sql",
+      "version": "20260821",
+      "description": "025_alertes_et_pieces",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 15795,
+      "sha256": "351a05443a951ca20ca8a7d10c3dce1d2804df161178c9da611e3049445b056e"
+    },
+    {
+      "path": "supabase/migrations/20260821_026_essais_rejouables.sql",
+      "version": "20260821",
+      "description": "026_essais_rejouables",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 15595,
+      "sha256": "f1842f93fd3d3ca4c912195dc15a4a85402640026cf6d9e0f289c71a289e5559"
+    },
+    {
+      "path": "supabase/migrations/20260821_027_notifications.sql",
+      "version": "20260821",
+      "description": "027_notifications",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 16597,
+      "sha256": "38d516a0b253ec61e39b06f0461c8ca30818f247b53e0f472ed1dcce45135f62"
+    },
+    {
+      "path": "supabase/migrations/20260821_028_second_facteur.sql",
+      "version": "20260821",
+      "description": "028_second_facteur",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 9642,
+      "sha256": "31418f64a321d72fbf3d9a8bd2a7f4fb019a1af73ec57e0aed641747a1b96862"
+    },
+    {
+      "path": "supabase/migrations/20260821_029_configurations_courriel_multiples.sql",
+      "version": "20260821",
+      "description": "029_configurations_courriel_multiples",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 16069,
+      "sha256": "92b952079d3065965561f9e663917f42ebc1fab4d958014880ebe8451098a4ab"
+    },
+    {
+      "path": "supabase/migrations/20260821_030_essai_messagerie.sql",
+      "version": "20260821",
+      "description": "030_essai_messagerie",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 7388,
+      "sha256": "ed874f0a1e0528a781898c70ef2adf3a651faa25ebc6cad9b50c5542cd482a74"
+    },
+    {
+      "path": "supabase/migrations/20260821_031_portail_mine_securite.sql",
+      "version": "20260821",
+      "description": "031_portail_mine_securite",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 10223,
+      "sha256": "ed934a5df53f6deed6e0b63605a3543d6c1b39b8150924c263a2548cebb592a1"
+    },
+    {
+      "path": "supabase/migrations/20260821_032_vitrine_publique.sql",
+      "version": "20260821",
+      "description": "032_vitrine_publique",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 5797,
+      "sha256": "88bc79a25f8fde3d66ecbf57ca0602e6bb480fd7cc971b67868037e1728eb8d0"
+    },
+    {
+      "path": "supabase/migrations/20260822154000_referentiel_roles_comptes.sql",
+      "version": "20260822154000",
+      "description": "referentiel_roles_comptes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 723,
+      "sha256": "bb158effad141673ea5539387b8bc0c307193721dfb3e8584036e72490b23ab9"
+    },
+    {
+      "path": "supabase/migrations/20260822163500_restreindre_emission_notifications.sql",
+      "version": "20260822163500",
+      "description": "restreindre_emission_notifications",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1722,
+      "sha256": "a4793c68740c083bd9d669435c591326c60a0ba5181da162055795d99e49cf98"
+    },
+    {
+      "path": "supabase/migrations/20260822164500_verrouiller_profils_et_mfa.sql",
+      "version": "20260822164500",
+      "description": "verrouiller_profils_et_mfa",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 15024,
+      "sha256": "324e75eeebfbff9a99eca2d0bf9e980a05a27811937e4c2d4261055f73966164"
+    },
+    {
+      "path": "supabase/migrations/20260822170000_cloisonner_perimetres_mines.sql",
+      "version": "20260822170000",
+      "description": "cloisonner_perimetres_mines",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3194,
+      "sha256": "d1142b7a6d98e637308462e3b54638c90e86b13f0483ea9660ee5e554fc27178"
+    },
+    {
+      "path": "supabase/migrations/20260822171500_decisions_ventes_atomiques.sql",
+      "version": "20260822171500",
+      "description": "decisions_ventes_atomiques",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 19142,
+      "sha256": "66aa01b4d7f242e7f487111985cb45964ce439998468c6462dcf502e05df5ca3"
+    },
+    {
+      "path": "supabase/migrations/20260822173000_creer_ventes_export_atomiquement.sql",
+      "version": "20260822173000",
+      "description": "creer_ventes_export_atomiquement",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 15869,
+      "sha256": "04dbe7c1b58ab697eba75aa51f6332c92e550115db1ec60f9b846fbcc8a13f87"
+    },
+    {
+      "path": "supabase/migrations/20260822174500_cloisonner_documents_ventes.sql",
+      "version": "20260822174500",
+      "description": "cloisonner_documents_ventes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3916,
+      "sha256": "65649f4719283a82d001f4f1cac4bedd64cb4ca9fade89cc3a612b10d8fa86af"
+    },
+    {
+      "path": "supabase/migrations/20260822180000_retirer_jeux_demonstration.sql",
+      "version": "20260822180000",
+      "description": "retirer_jeux_demonstration",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 7496,
+      "sha256": "252ac0fb36c74288a6de9d2d55669f33b9d75f499f99b1d6e80506ff1bc4c97c"
+    },
+    {
+      "path": "supabase/migrations/20260822_033_portails_societe_et_direction.sql",
+      "version": "20260822",
+      "description": "033_portails_societe_et_direction",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 28094,
+      "sha256": "c378b673944f1b670c47bdaf8ce85b387ea7e6bb24f37655e530280038b8d757"
+    },
+    {
+      "path": "supabase/migrations/20260822_034_sessions_et_mfa_obligatoires.sql",
+      "version": "20260822",
+      "description": "034_sessions_et_mfa_obligatoires",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 5355,
+      "sha256": "e11ca2ab2a33b8a4ef0707268163ecf7794b49e26a69996bbd827cf7f777a692"
+    },
+    {
+      "path": "supabase/migrations/20260823103000_corriger_marqueur_premiere_connexion.sql",
+      "version": "20260823103000",
+      "description": "corriger_marqueur_premiere_connexion",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1699,
+      "sha256": "2fb2b04fcf361644d2ed2ac0a6d82dc76fec66552bdeb73930f879fd1a9178aa"
+    },
+    {
+      "path": "supabase/migrations/20260823130000_installer_sites_artisanaux.sql",
+      "version": "20260823130000",
+      "description": "installer_sites_artisanaux",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 12925,
+      "sha256": "06d37ca472c2ddacde571595cbb407a76746953eb36d2da9d43e945331ac9f3a"
+    },
+    {
+      "path": "supabase/migrations/20260823133000_recentrer_portail_mine_industriel.sql",
+      "version": "20260823133000",
+      "description": "recentrer_portail_mine_industriel",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 47407,
+      "sha256": "97ba8270532b722efe48e1fedadce2dfcb0736b120550295f111420e0e250693"
+    },
+    {
+      "path": "supabase/migrations/20260823153000_securiser_hierarchie_comptes_et_approbateurs.sql",
+      "version": "20260823153000",
+      "description": "securiser_hierarchie_comptes_et_approbateurs",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 12892,
+      "sha256": "58d06ce4e26c010ed542599074ac29342b9e1622654712e73d352d72f1ba20cd"
+    },
+    {
+      "path": "supabase/migrations/20260823170000_verrouiller_proprietaire_hors_interface.sql",
+      "version": "20260823170000",
+      "description": "verrouiller_proprietaire_hors_interface",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2969,
+      "sha256": "96116fe60d4d0b6d64aebdc4ad01cd07ec0707b8b90f0b05a72be25085dbad80"
+    },
+    {
+      "path": "supabase/migrations/20260823180000_capacites_et_separation_fonctions.sql",
+      "version": "20260823180000",
+      "description": "capacites_et_separation_fonctions",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 23736,
+      "sha256": "d527e6bd8fcf72233c48631499ca562778f185875f4bbe46c8c4607480f7cc5f"
+    },
+    {
+      "path": "supabase/migrations/20260823190000_comptoirs_collecteurs_et_stock.sql",
+      "version": "20260823190000",
+      "description": "comptoirs_collecteurs_et_stock",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 45065,
+      "sha256": "2df94d9ef745678efdaee9fada12005167312268f16d3d14ce07ebeab48f0adf"
+    },
+    {
+      "path": "supabase/migrations/20260823200000_jeu_portail_mines_sopamib_essakane.sql",
+      "version": "20260823200000",
+      "description": "jeu_portail_mines_sopamib_essakane",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 9023,
+      "sha256": "6afbb2ac83b01a47047d893a651325c5b2d91f15bd1d4ad1adac5c7f5949ec1e"
+    },
+    {
+      "path": "supabase/migrations/20260823210000_cloisonner_licences_export_mines.sql",
+      "version": "20260823210000",
+      "description": "cloisonner_licences_export_mines",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4925,
+      "sha256": "11cb22693746455159c197ef084522be11e41a5a876ac7c2d782316b52f30f3f"
+    },
+    {
+      "path": "supabase/migrations/20260823220000_un_compte_par_societe_miniere.sql",
+      "version": "20260823220000",
+      "description": "un_compte_par_societe_miniere",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3407,
+      "sha256": "e099b4a063f579c321f80ab13f8ad786e17a028c726a9de78b9a8a6b773a7b34"
+    },
+    {
+      "path": "supabase/migrations/20260824230000_portail_comptoir_cessions_sonasp.sql",
+      "version": "20260824230000",
+      "description": "portail_comptoir_cessions_sonasp",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 20058,
+      "sha256": "9b71113c5bfdfbcdcfbb6e00ea60c53890fc4cb2efb75c36e61f019dfc55cf14"
+    },
+    {
+      "path": "supabase/migrations/20260824233000_synchroniser_reliquat_licences_export.sql",
+      "version": "20260824233000",
+      "description": "synchroniser_reliquat_licences_export",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2688,
+      "sha256": "38d20fa0b65c054dd72349d808f00e3c4fca8431e2d16f18f06c54ba6e8f40ef"
+    },
+    {
+      "path": "supabase/migrations/20260824234000_depositaires_portail_mine.sql",
+      "version": "20260824234000",
+      "description": "depositaires_portail_mine",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3425,
+      "sha256": "7fe77be406dae73eb46709d80dca1a445969ceff9d8628de09fe7b2713ae7020"
+    },
+    {
+      "path": "supabase/migrations/20260824235000_relations_sonasp_portail_mine.sql",
+      "version": "20260824235000",
+      "description": "relations_sonasp_portail_mine",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6482,
+      "sha256": "d4b380fc9c8db4817773c6bc6fe11bf55cbe94bd420ee122eac997271988cdb7"
+    },
+    {
+      "path": "supabase/migrations/20260824235500_restaurer_suivi_connexions.sql",
+      "version": "20260824235500",
+      "description": "restaurer_suivi_connexions",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 977,
+      "sha256": "7c7f250d3f92105c76038540d96c0c9a9f2f9777bf1ecccf7c923e6ffded139b"
+    },
+    {
+      "path": "supabase/migrations/20260824235700_corriger_fonctions_metier_actives.sql",
+      "version": "20260824235700",
+      "description": "corriger_fonctions_metier_actives",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6497,
+      "sha256": "bee58df69688518e2720ee3f765aea5309dd68f45b8834f9f86e96b209effc2a"
+    },
+    {
+      "path": "supabase/migrations/20260824235900_durcir_cloisonnement_p0_et_quota_export.sql",
+      "version": "20260824235900",
+      "description": "durcir_cloisonnement_p0_et_quota_export",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 96886,
+      "sha256": "7f05d7fd9339ad6ac56e44e658f7f07bada050d95b659360e69edd4217c82650"
+    },
+    {
+      "path": "supabase/migrations/20260824235930_rpc_security_definer_deny_by_default.sql",
+      "version": "20260824235930",
+      "description": "rpc_security_definer_deny_by_default",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 35698,
+      "sha256": "74a38ad926dfacf0a96efda532cc7edc74b9bb6a3669879d43de0d4ba50c2db6"
+    },
+    {
+      "path": "supabase/migrations/20260824235940_lot_4a_integrite_schema_et_portail_mine.sql",
+      "version": "20260824235940",
+      "description": "lot_4a_integrite_schema_et_portail_mine",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 26033,
+      "sha256": "ac23d84dba821b988397a21053a7f0b607d2eaea3262c36c29d62513e0679a12"
+    },
+    {
+      "path": "supabase/migrations/20260824235950_lot_4b_separation_fonctions_et_integrite_reglementaire.sql",
+      "version": "20260824235950",
+      "description": "lot_4b_separation_fonctions_et_integrite_reglementaire",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 70109,
+      "sha256": "daace92057f4ee404af3e2270e1209128b86d9524e7c748db1af86f7fbae2d5b"
+    },
+    {
+      "path": "supabase/migrations/20260824235960_lot_4c_sessions_et_lint_db.sql",
+      "version": "20260824235960",
+      "description": "lot_4c_sessions_et_lint_db",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 35712,
+      "sha256": "6c183bbf94e543c6b8c6de439ebb781f8ce4550de28b30da434e90b0b2344b9f"
+    },
+    {
+      "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
+      "version": "26122025",
+      "description": "01_artisan_minier_migration",
+      "canonical": false,
+      "prefixProblem": "prefix_must_have_14_digits",
+      "nameProblem": null,
+      "normalizedBytes": 13589,
+      "sha256": "18e3347f7f1b2ec0368d023db54dc9b84c7090b6e417a19c93e74600e6af3ce0"
+    },
+    {
+      "path": "supabase/migrations/add_export_licenses_system.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 13923,
+      "sha256": "e96b604025d73eaae88e433bd460a9494df08971b9419da229ee772c33068387"
+    },
+    {
+      "path": "supabase/migrations/add_license_quota_functions.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 8444,
+      "sha256": "94020561411174b501e297dfbdedd9384d0cacb4016e06cc3daf9acea6d545ba"
+    },
+    {
+      "path": "supabase/migrations/add_mining_company_to_shipping.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 2094,
+      "sha256": "934821c7b021ae1e2957bdabdf65247a189f034606a9224d477f2c187218aa5b"
+    },
+    {
+      "path": "supabase/migrations/add_production_documents.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 3943,
+      "sha256": "a2d3971b24dd2acd0e72ee66ddc5579612e319a3919af914727172481a9a4443"
+    },
+    {
+      "path": "supabase/migrations/add_production_status_tracking.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 4611,
+      "sha256": "cfcc3a4f126c7c8869c5c201510cffd328ef72d5e61c4546aac27ee9a21cd548"
+    },
+    {
+      "path": "supabase/migrations/add_shipping_system.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 14217,
+      "sha256": "ae39067f64460f34d83838962225ef2b79ce2198c2b978aeb49623de761e0b36"
+    },
+    {
+      "path": "supabase/migrations/add_total_weight_oz_to_shipping.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 1467,
+      "sha256": "64d5227a774d61354b9913518e84fe1e8b6e390c2bb0f6f913225e66d4b04f72"
+    },
+    {
+      "path": "supabase/migrations/fix_daily_production_rls_and_permissions.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 6451,
+      "sha256": "2ff77d26d8495b31a7f18164fa0ddd1f9e683fc9266354e053900d6ec7eb5dff"
+    },
+    {
+      "path": "supabase/migrations/fix_shipping_preparations_columns.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 2723,
+      "sha256": "98ecdaa11eb8ca426175e252cb4a596890022c8f052817cbdbe7de5225a171c2"
+    },
+    {
+      "path": "supabase/migrations/fix_shipping_rls_only.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 7868,
+      "sha256": "d671812ace4499651a21e2b8f26365b3d40515875cae25ccf28275058be4f55b"
+    },
+    {
+      "path": "supabase/migrations/unified_status_system_fixed.sql",
+      "version": null,
+      "description": null,
+      "canonical": false,
+      "prefixProblem": "missing_numeric_prefix",
+      "nameProblem": null,
+      "normalizedBytes": 17798,
+      "sha256": "177654e13dbcd32bfa8924467af3ffd90b42160a6bb63fb4269ee391db63d503"
+    }
+  ],
+  "knownStructuralDebt": {
+    "duplicateVersions": [
+      {
+        "version": "20251112",
+        "files": [
+          "supabase/migrations/20251112_012_migrate_assay_certificates_to_shipping.sql",
+          "supabase/migrations/20251112_013_add_license_to_shipping.sql",
+          "supabase/migrations/20251112_014_fix_daily_production_insert.sql",
+          "supabase/migrations/20251112_015_fix_policy_names_length.sql",
+          "supabase/migrations/20251112_016_setup_production_documents_storage_policies.sql",
+          "supabase/migrations/20251112_017_setup_all_storage_buckets_policies.sql"
+        ]
+      },
+      {
+        "version": "20251113",
+        "files": [
+          "supabase/migrations/20251113_001_fix_site_id_trigger.sql",
+          "supabase/migrations/20251113_002_fix_storage_policies_format.sql",
+          "supabase/migrations/20251113_003_fix_daily_production_display.sql",
+          "supabase/migrations/20251113_004_fix_shipping_status_enum.sql",
+          "supabase/migrations/20251113_005_fix_shipping_table_definitive.sql",
+          "supabase/migrations/20251113_006_FINAL_FIX_shipping_status.sql",
+          "supabase/migrations/20251113_007_SIMPLE_shipping_fix.sql",
+          "supabase/migrations/20251113_008_EMERGENCY_cleanup_shipped.sql",
+          "supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql",
+          "supabase/migrations/20251113_010_add_mining_company_to_budgets.sql",
+          "supabase/migrations/20251113_011_fix_assay_certificates_storage.sql",
+          "supabase/migrations/20251113_012_add_silver_tracking_to_production.sql",
+          "supabase/migrations/20251113_020_create_freight_customs_module.sql"
+        ]
+      },
+      {
+        "version": "20251114",
+        "files": [
+          "supabase/migrations/20251114_001_add_ready_for_customs_status.sql",
+          "supabase/migrations/20251114_002_complete_ready_for_customs.sql",
+          "supabase/migrations/20251114_003_complete_status_enums_system.sql",
+          "supabase/migrations/20251114_004_correct_status_enums_verified.sql",
+          "supabase/migrations/20251114_005_fix_production_status_trigger.sql",
+          "supabase/migrations/20251114_006_add_shipping_status_history.sql",
+          "supabase/migrations/20251114_006_add_shipping_status_history_FIXED.sql",
+          "supabase/migrations/20251114_007_remove_in_sale_status.sql",
+          "supabase/migrations/20251114_008_fix_production_status_trigger_COMPLETE.sql",
+          "supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql",
+          "supabase/migrations/20251114_010_remove_old_shipping_constraints.sql",
+          "supabase/migrations/20251114_011_fix_shipping_enum_definitif.sql",
+          "supabase/migrations/20251114_012_fix_license_trigger_statuses.sql"
+        ]
+      },
+      {
+        "version": "20251115",
+        "files": [
+          "supabase/migrations/20251115_001_fix_shipping_delete_trigger.sql",
+          "supabase/migrations/20251115_002_fix_complete_history_tracking.sql",
+          "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL.sql",
+          "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL_CLEAN.sql",
+          "supabase/migrations/20251115_004_create_budget_system_tables.sql",
+          "supabase/migrations/20251115_005_safe_budget_system_update.sql"
+        ]
+      },
+      {
+        "version": "20251117",
+        "files": [
+          "supabase/migrations/20251117_001_fix_production_to_shipping_trigger.sql",
+          "supabase/migrations/20251117_002_create_freight_shipments_system.sql"
+        ]
+      },
+      {
+        "version": "20251227",
+        "files": [
+          "supabase/migrations/20251227_001_create_artisans_miniers_system.sql",
+          "supabase/migrations/20251227_002_add_missing_columns_artisans.sql"
+        ]
+      },
+      {
+        "version": "20260817",
+        "files": [
+          "supabase/migrations/20260817_001_assign_romuald_owner.sql",
+          "supabase/migrations/20260817_002_create_artisanal_sites.sql",
+          "supabase/migrations/20260817_003_add_artisanal_site_photos.sql"
+        ]
+      },
+      {
+        "version": "20260819",
+        "files": [
+          "supabase/migrations/20260819_001_carte_numero_format.sql",
+          "supabase/migrations/20260819_002_numero_recu_vente_or.sql",
+          "supabase/migrations/20260819_003_gold_inventory_colonnes.sql",
+          "supabase/migrations/20260819_004_artisan_moyens_paiement.sql",
+          "supabase/migrations/20260819_005_corriger_identification_sonasp.sql",
+          "supabase/migrations/20260819_006_add_sales_approver_flag.sql",
+          "supabase/migrations/20260819_006_roles_owner_et_admin.sql",
+          "supabase/migrations/20260819_007_achats_mines.sql",
+          "supabase/migrations/20260819_008_sonasp_vendeuse_export.sql"
+        ]
+      },
+      {
+        "version": "20260820",
+        "files": [
+          "supabase/migrations/20260820_001_tracabilite_lots_vente.sql",
+          "supabase/migrations/20260820_002_site_national_burkina_faso.sql",
+          "supabase/migrations/20260820_003_auteurs_supprimes.sql",
+          "supabase/migrations/20260820_004_references_barres.sql",
+          "supabase/migrations/20260820_005_referentiel_burkinabe.sql",
+          "supabase/migrations/20260820_006_cles_auteurs_generalise.sql",
+          "supabase/migrations/20260820_007_jeu_presentation_2026.sql",
+          "supabase/migrations/20260820_008_libelles_metier.sql",
+          "supabase/migrations/20260820_009_marche_or_artisanal_2026.sql",
+          "supabase/migrations/20260820_010_achats_industriels_socle.sql",
+          "supabase/migrations/20260820_011_achats_industriels_integrite.sql",
+          "supabase/migrations/20260820_012_achats_industriels_operations.sql",
+          "supabase/migrations/20260820_013_achats_industriels_habilitations.sql",
+          "supabase/migrations/20260820_014_reglements_comptes_et_cycle.sql",
+          "supabase/migrations/20260820_015_reglements_engage_contre_paye.sql",
+          "supabase/migrations/20260820_016_reglements_operations.sql",
+          "supabase/migrations/20260820_017_demonstration_reglements.sql",
+          "supabase/migrations/20260820_018_repartition_assiette.sql",
+          "supabase/migrations/20260820_019_plans_mensuels_anterieurs.sql"
+        ]
+      },
+      {
+        "version": "20260821",
+        "files": [
+          "supabase/migrations/20260821_020_contrats_fourniture.sql",
+          "supabase/migrations/20260821_021_contrats_operations.sql",
+          "supabase/migrations/20260821_022_requisitions_or.sql",
+          "supabase/migrations/20260821_023_requisitions_operations.sql",
+          "supabase/migrations/20260821_024_analyses_teneur.sql",
+          "supabase/migrations/20260821_025_alertes_et_pieces.sql",
+          "supabase/migrations/20260821_026_essais_rejouables.sql",
+          "supabase/migrations/20260821_027_notifications.sql",
+          "supabase/migrations/20260821_028_second_facteur.sql",
+          "supabase/migrations/20260821_029_configurations_courriel_multiples.sql",
+          "supabase/migrations/20260821_030_essai_messagerie.sql",
+          "supabase/migrations/20260821_031_portail_mine_securite.sql",
+          "supabase/migrations/20260821_032_vitrine_publique.sql"
+        ]
+      },
+      {
+        "version": "20260822",
+        "files": [
+          "supabase/migrations/20260822_033_portails_societe_et_direction.sql",
+          "supabase/migrations/20260822_034_sessions_et_mfa_obligatoires.sql"
+        ]
+      }
+    ],
+    "unversionedFiles": [
+      "supabase/migrations/add_export_licenses_system.sql",
+      "supabase/migrations/add_license_quota_functions.sql",
+      "supabase/migrations/add_mining_company_to_shipping.sql",
+      "supabase/migrations/add_production_documents.sql",
+      "supabase/migrations/add_production_status_tracking.sql",
+      "supabase/migrations/add_shipping_system.sql",
+      "supabase/migrations/add_total_weight_oz_to_shipping.sql",
+      "supabase/migrations/fix_daily_production_rls_and_permissions.sql",
+      "supabase/migrations/fix_shipping_preparations_columns.sql",
+      "supabase/migrations/fix_shipping_rls_only.sql",
+      "supabase/migrations/unified_status_system_fixed.sql"
+    ],
+    "nonCanonicalPrefixes": [
+      {
+        "path": "supabase/migrations/20251112_012_migrate_assay_certificates_to_shipping.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251112_013_add_license_to_shipping.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251112_014_fix_daily_production_insert.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251112_015_fix_policy_names_length.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251112_016_setup_production_documents_storage_policies.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251112_017_setup_all_storage_buckets_policies.sql",
+        "prefix": "20251112",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_001_fix_site_id_trigger.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_002_fix_storage_policies_format.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_003_fix_daily_production_display.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_004_fix_shipping_status_enum.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_005_fix_shipping_table_definitive.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_006_FINAL_FIX_shipping_status.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_007_SIMPLE_shipping_fix.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_008_EMERGENCY_cleanup_shipped.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_010_add_mining_company_to_budgets.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_011_fix_assay_certificates_storage.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_012_add_silver_tracking_to_production.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251113_020_create_freight_customs_module.sql",
+        "prefix": "20251113",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_001_add_ready_for_customs_status.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_002_complete_ready_for_customs.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_003_complete_status_enums_system.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_004_correct_status_enums_verified.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_005_fix_production_status_trigger.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_006_add_shipping_status_history.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_006_add_shipping_status_history_FIXED.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_007_remove_in_sale_status.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_008_fix_production_status_trigger_COMPLETE.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_010_remove_old_shipping_constraints.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_011_fix_shipping_enum_definitif.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251114_012_fix_license_trigger_statuses.sql",
+        "prefix": "20251114",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_001_fix_shipping_delete_trigger.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_002_fix_complete_history_tracking.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL_CLEAN.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_004_create_budget_system_tables.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251115_005_safe_budget_system_update.sql",
+        "prefix": "20251115",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251117_001_fix_production_to_shipping_trigger.sql",
+        "prefix": "20251117",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251117_002_create_freight_shipments_system.sql",
+        "prefix": "20251117",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251124_001_add_production_summary_functions.sql",
+        "prefix": "20251124",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251128_001_fix_shipping_missing_mining_company.sql",
+        "prefix": "20251128",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251203_001_add_expedition_lot_counter_system.sql",
+        "prefix": "20251203",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251209_001_add_refinery_freight_to_shipping.sql",
+        "prefix": "20251209",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251210_001_add_refining_statuses.sql",
+        "prefix": "20251210",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251211_001_add_sales_workflow_statuses.sql",
+        "prefix": "20251211",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251227_001_create_artisans_miniers_system.sql",
+        "prefix": "20251227",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20251227_002_add_missing_columns_artisans.sql",
+        "prefix": "20251227",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260808_001_security_protect_user_profile_privileges.sql",
+        "prefix": "20260808",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260817_001_assign_romuald_owner.sql",
+        "prefix": "20260817",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260817_002_create_artisanal_sites.sql",
+        "prefix": "20260817",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260817_003_add_artisanal_site_photos.sql",
+        "prefix": "20260817",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260818_001_extend_mining_companies_localisation_documents.sql",
+        "prefix": "20260818",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_001_carte_numero_format.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_002_numero_recu_vente_or.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_003_gold_inventory_colonnes.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_004_artisan_moyens_paiement.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_005_corriger_identification_sonasp.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_006_add_sales_approver_flag.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_006_roles_owner_et_admin.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_007_achats_mines.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260819_008_sonasp_vendeuse_export.sql",
+        "prefix": "20260819",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_001_tracabilite_lots_vente.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_002_site_national_burkina_faso.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_003_auteurs_supprimes.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_004_references_barres.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_005_referentiel_burkinabe.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_006_cles_auteurs_generalise.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_007_jeu_presentation_2026.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_008_libelles_metier.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_009_marche_or_artisanal_2026.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_010_achats_industriels_socle.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_011_achats_industriels_integrite.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_012_achats_industriels_operations.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_013_achats_industriels_habilitations.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_014_reglements_comptes_et_cycle.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_015_reglements_engage_contre_paye.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_016_reglements_operations.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_017_demonstration_reglements.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_018_repartition_assiette.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260820_019_plans_mensuels_anterieurs.sql",
+        "prefix": "20260820",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_020_contrats_fourniture.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_021_contrats_operations.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_022_requisitions_or.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_023_requisitions_operations.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_024_analyses_teneur.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_025_alertes_et_pieces.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_026_essais_rejouables.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_027_notifications.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_028_second_facteur.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_029_configurations_courriel_multiples.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_030_essai_messagerie.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_031_portail_mine_securite.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260821_032_vitrine_publique.sql",
+        "prefix": "20260821",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260822_033_portails_societe_et_direction.sql",
+        "prefix": "20260822",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260822_034_sessions_et_mfa_obligatoires.sql",
+        "prefix": "20260822",
+        "reason": "prefix_must_have_14_digits"
+      },
+      {
+        "path": "supabase/migrations/20260824235960_lot_4c_sessions_et_lint_db.sql",
+        "prefix": "20260824235960",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
+        "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
+        "prefix": "26122025",
+        "reason": "prefix_must_have_14_digits"
+      }
+    ],
+    "nonCanonicalNames": [
+      {
+        "path": "supabase/migrations/20251113_006_FINAL_FIX_shipping_status.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251113_007_SIMPLE_shipping_fix.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251113_008_EMERGENCY_cleanup_shipped.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251114_006_add_shipping_status_history_FIXED.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251114_008_fix_production_status_trigger_COMPLETE.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL.sql",
+        "reason": "description_must_be_lower_snake_case"
+      },
+      {
+        "path": "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL_CLEAN.sql",
+        "reason": "description_must_be_lower_snake_case"
+      }
+    ],
+    "ambiguousOrder": [
+      {
+        "reason": "same_version_prefix",
+        "version": "20251112",
+        "files": [
+          "supabase/migrations/20251112_012_migrate_assay_certificates_to_shipping.sql",
+          "supabase/migrations/20251112_013_add_license_to_shipping.sql",
+          "supabase/migrations/20251112_014_fix_daily_production_insert.sql",
+          "supabase/migrations/20251112_015_fix_policy_names_length.sql",
+          "supabase/migrations/20251112_016_setup_production_documents_storage_policies.sql",
+          "supabase/migrations/20251112_017_setup_all_storage_buckets_policies.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20251113",
+        "files": [
+          "supabase/migrations/20251113_001_fix_site_id_trigger.sql",
+          "supabase/migrations/20251113_002_fix_storage_policies_format.sql",
+          "supabase/migrations/20251113_003_fix_daily_production_display.sql",
+          "supabase/migrations/20251113_004_fix_shipping_status_enum.sql",
+          "supabase/migrations/20251113_005_fix_shipping_table_definitive.sql",
+          "supabase/migrations/20251113_006_FINAL_FIX_shipping_status.sql",
+          "supabase/migrations/20251113_007_SIMPLE_shipping_fix.sql",
+          "supabase/migrations/20251113_008_EMERGENCY_cleanup_shipped.sql",
+          "supabase/migrations/20251113_009_ULTRA_SIMPLE_fix.sql",
+          "supabase/migrations/20251113_010_add_mining_company_to_budgets.sql",
+          "supabase/migrations/20251113_011_fix_assay_certificates_storage.sql",
+          "supabase/migrations/20251113_012_add_silver_tracking_to_production.sql",
+          "supabase/migrations/20251113_020_create_freight_customs_module.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20251114",
+        "files": [
+          "supabase/migrations/20251114_001_add_ready_for_customs_status.sql",
+          "supabase/migrations/20251114_002_complete_ready_for_customs.sql",
+          "supabase/migrations/20251114_003_complete_status_enums_system.sql",
+          "supabase/migrations/20251114_004_correct_status_enums_verified.sql",
+          "supabase/migrations/20251114_005_fix_production_status_trigger.sql",
+          "supabase/migrations/20251114_006_add_shipping_status_history.sql",
+          "supabase/migrations/20251114_006_add_shipping_status_history_FIXED.sql",
+          "supabase/migrations/20251114_007_remove_in_sale_status.sql",
+          "supabase/migrations/20251114_008_fix_production_status_trigger_COMPLETE.sql",
+          "supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql",
+          "supabase/migrations/20251114_010_remove_old_shipping_constraints.sql",
+          "supabase/migrations/20251114_011_fix_shipping_enum_definitif.sql",
+          "supabase/migrations/20251114_012_fix_license_trigger_statuses.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20251115",
+        "files": [
+          "supabase/migrations/20251115_001_fix_shipping_delete_trigger.sql",
+          "supabase/migrations/20251115_002_fix_complete_history_tracking.sql",
+          "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL.sql",
+          "supabase/migrations/20251115_003_complete_workflow_status_fix_CRITICAL_CLEAN.sql",
+          "supabase/migrations/20251115_004_create_budget_system_tables.sql",
+          "supabase/migrations/20251115_005_safe_budget_system_update.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20251117",
+        "files": [
+          "supabase/migrations/20251117_001_fix_production_to_shipping_trigger.sql",
+          "supabase/migrations/20251117_002_create_freight_shipments_system.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20251227",
+        "files": [
+          "supabase/migrations/20251227_001_create_artisans_miniers_system.sql",
+          "supabase/migrations/20251227_002_add_missing_columns_artisans.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20260817",
+        "files": [
+          "supabase/migrations/20260817_001_assign_romuald_owner.sql",
+          "supabase/migrations/20260817_002_create_artisanal_sites.sql",
+          "supabase/migrations/20260817_003_add_artisanal_site_photos.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20260819",
+        "files": [
+          "supabase/migrations/20260819_001_carte_numero_format.sql",
+          "supabase/migrations/20260819_002_numero_recu_vente_or.sql",
+          "supabase/migrations/20260819_003_gold_inventory_colonnes.sql",
+          "supabase/migrations/20260819_004_artisan_moyens_paiement.sql",
+          "supabase/migrations/20260819_005_corriger_identification_sonasp.sql",
+          "supabase/migrations/20260819_006_add_sales_approver_flag.sql",
+          "supabase/migrations/20260819_006_roles_owner_et_admin.sql",
+          "supabase/migrations/20260819_007_achats_mines.sql",
+          "supabase/migrations/20260819_008_sonasp_vendeuse_export.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20260820",
+        "files": [
+          "supabase/migrations/20260820_001_tracabilite_lots_vente.sql",
+          "supabase/migrations/20260820_002_site_national_burkina_faso.sql",
+          "supabase/migrations/20260820_003_auteurs_supprimes.sql",
+          "supabase/migrations/20260820_004_references_barres.sql",
+          "supabase/migrations/20260820_005_referentiel_burkinabe.sql",
+          "supabase/migrations/20260820_006_cles_auteurs_generalise.sql",
+          "supabase/migrations/20260820_007_jeu_presentation_2026.sql",
+          "supabase/migrations/20260820_008_libelles_metier.sql",
+          "supabase/migrations/20260820_009_marche_or_artisanal_2026.sql",
+          "supabase/migrations/20260820_010_achats_industriels_socle.sql",
+          "supabase/migrations/20260820_011_achats_industriels_integrite.sql",
+          "supabase/migrations/20260820_012_achats_industriels_operations.sql",
+          "supabase/migrations/20260820_013_achats_industriels_habilitations.sql",
+          "supabase/migrations/20260820_014_reglements_comptes_et_cycle.sql",
+          "supabase/migrations/20260820_015_reglements_engage_contre_paye.sql",
+          "supabase/migrations/20260820_016_reglements_operations.sql",
+          "supabase/migrations/20260820_017_demonstration_reglements.sql",
+          "supabase/migrations/20260820_018_repartition_assiette.sql",
+          "supabase/migrations/20260820_019_plans_mensuels_anterieurs.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20260821",
+        "files": [
+          "supabase/migrations/20260821_020_contrats_fourniture.sql",
+          "supabase/migrations/20260821_021_contrats_operations.sql",
+          "supabase/migrations/20260821_022_requisitions_or.sql",
+          "supabase/migrations/20260821_023_requisitions_operations.sql",
+          "supabase/migrations/20260821_024_analyses_teneur.sql",
+          "supabase/migrations/20260821_025_alertes_et_pieces.sql",
+          "supabase/migrations/20260821_026_essais_rejouables.sql",
+          "supabase/migrations/20260821_027_notifications.sql",
+          "supabase/migrations/20260821_028_second_facteur.sql",
+          "supabase/migrations/20260821_029_configurations_courriel_multiples.sql",
+          "supabase/migrations/20260821_030_essai_messagerie.sql",
+          "supabase/migrations/20260821_031_portail_mine_securite.sql",
+          "supabase/migrations/20260821_032_vitrine_publique.sql"
+        ]
+      },
+      {
+        "reason": "same_version_prefix",
+        "version": "20260822",
+        "files": [
+          "supabase/migrations/20260822_033_portails_societe_et_direction.sql",
+          "supabase/migrations/20260822_034_sessions_et_mfa_obligatoires.sql"
+        ]
+      }
+    ],
+    "versionWidths": [
+      {
+        "digits": 8,
+        "count": 97
+      },
+      {
+        "digits": 14,
+        "count": 30
+      }
+    ],
+    "unsupportedSqlEntries": []
+  },
+  "catalogueSha256": "69b032d312130764fc9bbf188da1c85ad23bcb124dc2b4f0d57be654fe17d061"
+}
